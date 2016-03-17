@@ -56,12 +56,12 @@ public class IntervalUnaryExpressionEvaluator
 	protected IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
 	protected Operator mOperator;
 
-	protected IntervalUnaryExpressionEvaluator(Logger logger) {
+	protected IntervalUnaryExpressionEvaluator(final Logger logger) {
 		mLogger = logger;
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(final IntervalDomainState currentState) {
 
 		final List<IEvaluationResult<IntervalDomainValue>> subEvaluatorResult = mSubEvaluator.evaluate(currentState);
 
@@ -81,24 +81,25 @@ public class IntervalUnaryExpressionEvaluator
 				returnValue = new IntervalDomainValue();
 				break;
 			default:
-				mLogger.warn(
-				        "Operator " + mOperator + " not implemented. Assuming logical interpretation to be TOP.");
+				mLogger.warn("Operator " + mOperator + " not implemented. Assuming logical interpretation to be TOP.");
 				returnBool = new BooleanValue();
 				mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 				        + ". Returning current state. Returned value is top.");
 				returnValue = new IntervalDomainValue();
+				break;
 			}
 
 			returnEvaluationResults.add(new IntervalDomainEvaluationResult(returnValue, returnBool));
 		}
 
-		assert returnEvaluationResults.size() != 0;
+		assert !returnEvaluationResults.isEmpty();
 		return IntervalUtils.mergeIfNecessary(returnEvaluationResults, 2);
 
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
 
@@ -121,7 +122,7 @@ public class IntervalUnaryExpressionEvaluator
 	}
 
 	@Override
-	public void setOperator(Object operator) {
+	public void setOperator(final Object operator) {
 		assert operator != null;
 		assert operator instanceof Operator;
 		mOperator = (Operator) operator;
@@ -138,13 +139,13 @@ public class IntervalUnaryExpressionEvaluator
 
 		switch (mOperator) {
 		case LOGICNEG:
-			sb.append("!");
+			sb.append('!');
 			break;
 		case OLD:
 			sb.append("old(");
 			break;
 		case ARITHNEGATIVE:
-			sb.append("-");
+			sb.append('-');
 			break;
 		default:
 		}
@@ -152,16 +153,15 @@ public class IntervalUnaryExpressionEvaluator
 		sb.append(mSubEvaluator);
 
 		if (mOperator == Operator.OLD) {
-			sb.append(")");
+			sb.append(')');
 		}
 
 		return sb.toString();
 	}
 
 	@Override
-	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
-	        IntervalDomainState currentState) {
-		final List<IntervalDomainState> returnList = new ArrayList<>();
+	public List<IntervalDomainState> inverseEvaluate(final IEvaluationResult<IntervalDomainValue> computedValue,
+	        final IntervalDomainState currentState) {
 		IntervalDomainValue evalValue = computedValue.getValue();
 		BooleanValue evalBool = computedValue.getBooleanValue();
 
@@ -179,6 +179,8 @@ public class IntervalUnaryExpressionEvaluator
 
 		final IntervalDomainEvaluationResult evalResult = new IntervalDomainEvaluationResult(evalValue, evalBool);
 		final List<IntervalDomainState> result = mSubEvaluator.inverseEvaluate(evalResult, currentState);
+
+		final List<IntervalDomainState> returnList = new ArrayList<>();
 		returnList.addAll(result);
 		return returnList;
 	}

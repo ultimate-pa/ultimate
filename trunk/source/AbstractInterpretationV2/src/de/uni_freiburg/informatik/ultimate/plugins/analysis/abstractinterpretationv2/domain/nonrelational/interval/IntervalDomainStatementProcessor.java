@@ -111,13 +111,13 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		processStatement(statement);
 
-		assert (oldState.getVariables().size() == 0) || (mReturnState.size() != 0);
+		assert (oldState.getVariables().isEmpty()) || (mReturnState.size() != 0);
 
 		return mReturnState;
 	}
 
 	@Override
-	protected Statement processStatement(Statement statement) {
+	protected Statement processStatement(final Statement statement) {
 		if (statement instanceof AssignmentStatement) {
 			handleAssignment((AssignmentStatement) statement);
 			return statement;
@@ -133,7 +133,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected Expression processExpression(Expression expr) {
+	protected Expression processExpression(final Expression expr) {
 
 		assert mEvaluatorFactory != null;
 
@@ -192,7 +192,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				final List<IEvaluationResult<IntervalDomainValue>> result = mExpressionEvaluator.getRootEvaluator()
 				        .evaluate(currentState);
 
-				if (result.size() == 0) {
+				if (result.isEmpty()) {
 					throw new UnsupportedOperationException(
 					        "There is supposed to be at least on evaluation result for the assingment expression.");
 				}
@@ -228,12 +228,12 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(VariableLHS lhs) {
+	protected void visit(final VariableLHS lhs) {
 		mLhsVariable = lhs.getIdentifier();
 	}
 
 	@Override
-	protected void visit(IntegerLiteral expr) {
+	protected void visit(final IntegerLiteral expr) {
 		assert mEvaluatorFactory != null;
 
 		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
@@ -243,7 +243,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(RealLiteral expr) {
+	protected void visit(final RealLiteral expr) {
 		assert mEvaluatorFactory != null;
 
 		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
@@ -412,7 +412,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(BinaryExpression expr) {
+	protected void visit(final BinaryExpression expr) {
 
 		assert mEvaluatorFactory != null;
 
@@ -463,12 +463,12 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(FunctionApplication expr) {
+	protected void visit(final FunctionApplication expr) {
 		assert mEvaluatorFactory != null;
 
 		IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator;
 
-		List<Declaration> decls = mSymbolTable.getFunctionOrProcedureDeclaration(expr.getIdentifier());
+		final List<Declaration> decls = mSymbolTable.getFunctionOrProcedureDeclaration(expr.getIdentifier());
 
 		// If we don't have a specification for the function, we return top.
 		if (decls == null || decls.isEmpty()) {
@@ -477,7 +477,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 			assert decls.get(0) instanceof FunctionDeclaration;
 
-			FunctionDeclaration fun = (FunctionDeclaration) decls.get(0);
+			final FunctionDeclaration fun = (FunctionDeclaration) decls.get(0);
 
 			// If the body is empty (as in undefined), we return top.
 			if (fun.getBody() == null) {
@@ -494,12 +494,12 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
-	private void handleHavocStatement(HavocStatement statement) {
+	private void handleHavocStatement(final HavocStatement statement) {
 		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger);
 
 		IntervalDomainState currentNewState = mOldState.copy();
 
-		for (VariableLHS var : statement.getIdentifiers()) {
+		for (final VariableLHS var : statement.getIdentifiers()) {
 			final IBoogieVar type = mOldState.getVariables().get(var.getIdentifier());
 
 			if (type.getIType() instanceof PrimitiveType) {
@@ -523,7 +523,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(IdentifierExpression expr) {
+	protected void visit(final IdentifierExpression expr) {
 		assert mEvaluatorFactory != null;
 
 		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
@@ -535,7 +535,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(UnaryExpression expr) {
+	protected void visit(final UnaryExpression expr) {
 		assert mEvaluatorFactory != null;
 
 		final INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
@@ -549,7 +549,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(BooleanLiteral expr) {
+	protected void visit(final BooleanLiteral expr) {
 		assert mEvaluatorFactory != null;
 
 		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
@@ -559,17 +559,17 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(ArrayStoreExpression expr) {
+	protected void visit(final ArrayStoreExpression expr) {
 		throw new UnsupportedOperationException("Proper array handling is not implemented.");
 	}
 
 	@Override
-	protected void visit(ArrayAccessExpression expr) {
+	protected void visit(final ArrayAccessExpression expr) {
 		throw new UnsupportedOperationException("Proper array handling is not implemented.");
 	}
 
 	@Override
-	protected void visit(IfThenElseExpression expr) {
+	protected void visit(final IfThenElseExpression expr) {
 		assert mEvaluatorFactory != null;
 
 		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
@@ -578,7 +578,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		mExpressionEvaluator.addEvaluator(evaluator);
 
 		// Create a new expression for the negative case
-		UnaryExpression newUnary = new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.LOGICNEG,
+		final UnaryExpression newUnary = new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.LOGICNEG,
 		        expr.getCondition());
 
 		// This expression should be added first to the evaluator inside the handling of processExpression.

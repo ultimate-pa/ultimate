@@ -70,7 +70,7 @@ public class IntervalBinaryExpressionEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(final IntervalDomainState currentState) {
 
 		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
@@ -79,10 +79,10 @@ public class IntervalBinaryExpressionEvaluator
 		final List<IEvaluationResult<IntervalDomainValue>> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<IntervalDomainValue>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 
@@ -216,7 +216,7 @@ public class IntervalBinaryExpressionEvaluator
 			}
 		}
 
-		assert returnList.size() != 0;
+		assert !returnList.isEmpty();
 		return IntervalUtils.mergeIfNecessary(returnList, mMaxParallelStates);
 
 	}
@@ -227,7 +227,8 @@ public class IntervalBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -253,7 +254,7 @@ public class IntervalBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void setOperator(Object operator) {
+	public void setOperator(final Object operator) {
 		assert operator != null;
 		assert operator instanceof Operator;
 
@@ -340,7 +341,7 @@ public class IntervalBinaryExpressionEvaluator
 
 		for (final IEvaluationResult<IntervalDomainValue> left : leftValue) {
 			for (final IEvaluationResult<IntervalDomainValue> right : rightValue) {
-				List<IntervalDomainState> returnStates = new ArrayList<>();
+				final List<IntervalDomainState> returnStates = new ArrayList<>();
 
 				switch (mOperator) {
 				case LOGICAND:
@@ -501,7 +502,7 @@ public class IntervalBinaryExpressionEvaluator
 
 				}
 
-				if (returnStates.size() == 0) {
+				if (returnStates.isEmpty()) {
 					returnStates.add(currentState);
 				}
 
@@ -509,12 +510,12 @@ public class IntervalBinaryExpressionEvaluator
 			}
 		}
 
-		assert returnList.size() != 0;
+		assert !returnList.isEmpty();
 		return returnList;
 	}
 
 	private IntervalDomainValue computeNewValue(final IntervalDomainValue referenceValue,
-	        final IntervalDomainValue oldValue, final IntervalDomainValue otherValue, boolean left) {
+	        final IntervalDomainValue oldValue, final IntervalDomainValue otherValue, final boolean left) {
 		IntervalDomainValue newValue;
 
 		switch (mOperator) {

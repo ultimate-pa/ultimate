@@ -70,33 +70,56 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 	private final Logger mLogger;
 
-	private boolean mIsFixpoint;
-
 	protected enum VariableType {
 		VARIABLE, BOOLEAN, ARRAY
 	}
 
+	/**
+	 * Test constructor of an {@link IntervalDomainState}.
+	 * 
+	 * <p>
+	 * <b>Note:</b> This constructor is for internal (i.e. testing) use only. Do not use except you know what you are
+	 * doing, as it could break the abstract interpretation framework if used in conjunction with other abstract
+	 * interpretation classes.
+	 * </p>
+	 */
 	protected IntervalDomainState() {
 		this(null);
 	}
 
-	protected IntervalDomainState(Logger logger) {
+	/**
+	 * Default constructor of an {@link IntervalDomainState}.
+	 * 
+	 * @param logger
+	 *            The current logger object in the current context.
+	 */
+	protected IntervalDomainState(final Logger logger) {
 		mVariablesMap = new HashMap<String, IBoogieVar>();
 		mValuesMap = new HashMap<String, IntervalDomainValue>();
 		mBooleanValuesMap = new HashMap<String, BooleanValue>();
-		mIsFixpoint = false;
 		sId++;
 		mId = sId;
 		mLogger = logger;
 	}
 
-	protected IntervalDomainState(Logger logger, Map<String, IBoogieVar> variablesMap,
-	        Map<String, IntervalDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
-	        boolean isFixpoint) {
+	/**
+	 * Creates a new instance of {@link IntervalDomainState} with given logger, variables map, values map and boolean
+	 * values map.
+	 * 
+	 * @param logger
+	 *            The current logger object in the current context.
+	 * @param variablesMap
+	 *            The map with all variable identifiers and their types.
+	 * @param valuesMap
+	 *            The values of all variables.
+	 * @param booleanValuesMap
+	 *            The values of all boolean variables.
+	 */
+	protected IntervalDomainState(final Logger logger, final Map<String, IBoogieVar> variablesMap,
+	        final Map<String, IntervalDomainValue> valuesMap, final Map<String, BooleanValue> booleanValuesMap) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
-		mIsFixpoint = isFixpoint;
 		sId++;
 		mId = sId;
 		mLogger = logger;
@@ -115,7 +138,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *            The name of the variable to get the {@link IntervalDomainValue} for.
 	 * @return A new {@link IntervalDomainValue} containing the {@link IntervalDomainValue} of the given variable.
 	 */
-	protected IntervalDomainValue getValue(String variableName) {
+	protected IntervalDomainValue getValue(final String variableName) {
 		if (!mValuesMap.containsKey(variableName)) {
 			throw new UnsupportedOperationException("There is no value of variable " + variableName + ".");
 		}
@@ -131,7 +154,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *            The name of the boolean variable to get the {@link BooleanValue} for.
 	 * @return A new {@link BooleanValue} containing the {@link BooleanValue} of the given variable.
 	 */
-	protected BooleanValue getBooleanValue(String booleanVariableName) {
+	protected BooleanValue getBooleanValue(final String booleanVariableName) {
 		if (!mBooleanValuesMap.containsKey(booleanVariableName)) {
 			throw new UnsupportedOperationException(
 			        "There is no boolean variable with name " + booleanVariableName + ".");
@@ -140,13 +163,37 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		return new BooleanValue(mBooleanValuesMap.get(booleanVariableName));
 	}
 
-	protected IntervalDomainState setValue(String name, IntervalDomainValue value) {
+	/**
+	 * Sets the value of a variable with given name to the given value.
+	 * 
+	 * @param name
+	 *            The name of the variable.
+	 * @param value
+	 *            The value to set.
+	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> where the value of the given
+	 *         variable has been set to the given value.
+	 */
+	protected IntervalDomainState setValue(final String name, final IntervalDomainValue value) {
 		final IntervalDomainState returnState = copy();
 		setValueInternally(returnState, name, value);
 		return returnState;
 	}
 
-	protected IntervalDomainState setValues(String[] vars, IntervalDomainValue[] values) {
+	/**
+	 * Sets the values of multiple given variables at once.
+	 * 
+	 * <p>
+	 * <b>Note:</b> that the values and variables arrays must have the same size.
+	 * </p>
+	 * 
+	 * @param vars
+	 *            The variables to set the values for.
+	 * @param values
+	 *            The array of values to set.
+	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> where the values of the given
+	 *         variables have been set to the given values.
+	 */
+	protected IntervalDomainState setValues(final String[] vars, final IntervalDomainValue[] values) {
 		assert vars != null;
 		assert values != null;
 		assert vars.length == values.length;
@@ -155,7 +202,17 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		        new IntervalDomainValue[0]);
 	}
 
-	protected IntervalDomainState setBooleanValue(String name, BooleanValue.Value value) {
+	/**
+	 * Sets the value of a boolean variable.
+	 * 
+	 * @param name
+	 *            The boolean variable to set the value for.
+	 * @param value
+	 *            The value to set.
+	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> where the value of the given
+	 *         variable has been set to the given value.
+	 */
+	protected IntervalDomainState setBooleanValue(final String name, final BooleanValue.Value value) {
 		assert name != null;
 		assert value != null;
 
@@ -164,18 +221,52 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		return returnState;
 	}
 
-	protected IntervalDomainState setBooleanValue(String bool, boolean value) {
+	/**
+	 * Sets the value of a boolean variable.
+	 * 
+	 * @param name
+	 *            The boolean variable to set the value for.
+	 * @param value
+	 *            The value to set.
+	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> where the value of the given
+	 *         variable has been set to the given value.
+	 */
+	protected IntervalDomainState setBooleanValue(final String bool, final boolean value) {
 		return setBooleanValue(bool, new BooleanValue(value));
 	}
 
-	protected IntervalDomainState setBooleanValue(String bool, BooleanValue value) {
+	/**
+	 * Sets the value of a boolean variable.
+	 * 
+	 * @param name
+	 *            The boolean variable to set the value for.
+	 * @param value
+	 *            The value to set.
+	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> where the value of the given
+	 *         variable has been set to the given value.
+	 */
+	protected IntervalDomainState setBooleanValue(final String bool, final BooleanValue value) {
 		assert bool != null;
 		assert value != null;
 
 		return setBooleanValue(bool, value.getValue());
 	}
 
-	protected IntervalDomainState setBooleanValues(String[] vars, BooleanValue.Value[] values) {
+	/**
+	 * Sets the values of multiple given boolean variables at once.
+	 * 
+	 * <p>
+	 * <b>Note:</b> that the values and variables arrays must have the same size.
+	 * </p>
+	 * 
+	 * @param vars
+	 *            The variables to set the values for.
+	 * @param values
+	 *            The array of values to set.
+	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> where the values of the given
+	 *         variables have been set to the given values.
+	 */
+	protected IntervalDomainState setBooleanValues(final String[] vars, final BooleanValue.Value[] values) {
 		assert vars != null;
 		assert values != null;
 		assert vars.length == values.length;
@@ -196,7 +287,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> but with updated value for the
 	 *         given array variable.
 	 */
-	protected IntervalDomainState setArrayValue(String array, IntervalDomainValue value) {
+	protected IntervalDomainState setArrayValue(final String array, final IntervalDomainValue value) {
 		assert array != null;
 		assert value != null;
 		final IntervalDomainState returnState = copy();
@@ -204,7 +295,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		return returnState;
 	}
 
-	protected IntervalDomainState setArrayValues(String[] arrays, IntervalDomainValue[] values) {
+	protected IntervalDomainState setArrayValues(final String[] arrays, final IntervalDomainValue[] values) {
 		assert arrays != null;
 		assert values != null;
 		assert arrays.length == values.length;
@@ -228,8 +319,9 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *            A list of values which corresponds to the list of boolean variable identifiers.
 	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> but with the updated values.
 	 */
-	protected IntervalDomainState setMixedValues(String[] vars, IntervalDomainValue[] values, String[] booleanVars,
-	        BooleanValue.Value[] booleanValues, String[] arrays, IntervalDomainValue[] arrayValues) {
+	protected IntervalDomainState setMixedValues(final String[] vars, final IntervalDomainValue[] values,
+	        final String[] booleanVars, final BooleanValue.Value[] booleanValues, final String[] arrays,
+	        final IntervalDomainValue[] arrayValues) {
 		assert vars != null;
 		assert values != null;
 		assert booleanVars != null;
@@ -253,7 +345,18 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		return returnState;
 	}
 
-	private static void setValueInternally(IntervalDomainState state, String name, IntervalDomainValue value) {
+	/**
+	 * Internally sets the value of a variable of a given {@link IntervalDomainState}.
+	 * 
+	 * @param state
+	 *            The state to set the variable value for.
+	 * @param name
+	 *            The name of the variable to change the value for.
+	 * @param value
+	 *            The value to set.
+	 */
+	private static void setValueInternally(final IntervalDomainState state, final String name,
+	        final IntervalDomainValue value) {
 		assert state != null;
 		assert name != null;
 		assert value != null;
@@ -262,7 +365,18 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		state.mValuesMap.put(name, value);
 	}
 
-	private static void setValueInternally(IntervalDomainState state, String name, BooleanValue value) {
+	/**
+	 * Internally sets the value of a boolean variable of a given {@link IntervalDomainState}.
+	 * 
+	 * @param state
+	 *            The state to set the variable value for.
+	 * @param name
+	 *            The name of the variable to change the value for.
+	 * @param value
+	 *            The value to set.
+	 */
+	private static void setValueInternally(final IntervalDomainState state, final String name,
+	        final BooleanValue value) {
 		assert state != null;
 		assert name != null;
 		assert state.mVariablesMap.get(name) != null : "Variable unknown";
@@ -271,7 +385,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	}
 
 	@Override
-	public IntervalDomainState addVariable(String name, IBoogieVar variable) {
+	public IntervalDomainState addVariable(final String name, final IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
@@ -280,7 +394,14 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		return returnState;
 	}
 
-	protected VariableType getVariableType(String var) {
+	/**
+	 * Returns the type of a given variable.
+	 * 
+	 * @param var
+	 *            The variable name to obtain the type for.
+	 * @return The {@link VariableType} of the variable.
+	 */
+	protected VariableType getVariableType(final String var) {
 		if (!containsVariable(var)) {
 			throw new UnsupportedOperationException("The variable " + var + " does not exist in the current state.");
 		}
@@ -306,7 +427,8 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @param variable
 	 *            The type of the variable.
 	 */
-	private static void addVariableInternally(IntervalDomainState state, String name, IBoogieVar variable) {
+	private static void addVariableInternally(final IntervalDomainState state, final String name,
+	        final IBoogieVar variable) {
 		assert state != null;
 		assert name != null;
 		assert variable != null;
@@ -338,7 +460,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	}
 
 	@Override
-	public IntervalDomainState removeVariable(String name, IBoogieVar variable) {
+	public IntervalDomainState removeVariable(final String name, final IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
@@ -349,11 +471,11 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		final Map<String, BooleanValue> newBooleanValMap = new HashMap<String, BooleanValue>(mBooleanValuesMap);
 		newBooleanValMap.remove(name);
 
-		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap);
 	}
 
 	@Override
-	public IntervalDomainState addVariables(Map<String, IBoogieVar> variables) {
+	public IntervalDomainState addVariables(final Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		if (variables.isEmpty()) {
 			// nothing to add, nothing changes
@@ -392,11 +514,11 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			}
 		}
 
-		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap);
 	}
 
 	@Override
-	public IntervalDomainState removeVariables(Map<String, IBoogieVar> variables) {
+	public IntervalDomainState removeVariables(final Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
@@ -409,11 +531,11 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			newBooleanValMap.remove(entry.getKey());
 		}
 
-		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap);
 	}
 
 	@Override
-	public boolean containsVariable(String name) {
+	public boolean containsVariable(final String name) {
 		final IBoogieVar var = mVariablesMap.get(name);
 		return var != null;
 	}
@@ -438,14 +560,6 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		}
 
 		return false;
-	}
-
-	public boolean isFixpoint() {
-		return mIsFixpoint;
-	}
-
-	public IntervalDomainState setFixpoint(boolean value) {
-		return new IntervalDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, value);
 	}
 
 	/**
@@ -481,7 +595,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	}
 
 	@Override
-	public boolean isEqualTo(IntervalDomainState other) {
+	public boolean isEqualTo(final IntervalDomainState other) {
 		if (!hasSameVariables(other)) {
 			return false;
 		}
@@ -504,12 +618,29 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	}
 
 	public IntervalDomainState copy() {
-		return new IntervalDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, mIsFixpoint);
+		return new IntervalDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap);
 	}
 
 	@Override
 	public int hashCode() {
 		return mId;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+
+		if (!(obj instanceof IntervalDomainState)) {
+			return false;
+		}
+
+		if (obj == this) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -519,7 +650,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *            The other state to check for same variables.
 	 * @return <code>true</code> iff the variables are the same, <code>false</code> otherwise.
 	 */
-	protected boolean hasSameVariables(IntervalDomainState other) {
+	protected boolean hasSameVariables(final IntervalDomainState other) {
 		if (other == null) {
 			return false;
 		}
@@ -550,18 +681,18 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *            The other state to intersect with.
 	 * @return A new {@link IAbstractState} that corresponds to the intersection of
 	 */
-	protected IntervalDomainState intersect(IntervalDomainState other) {
+	protected IntervalDomainState intersect(final IntervalDomainState other) {
 		assert other != null;
 		assert hasSameVariables(other);
 
 		final IntervalDomainState returnState = copy();
 
-		for (Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
+		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
 			        entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
 		}
 
-		for (Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
+		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
 			        new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
 		}
@@ -570,7 +701,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	}
 
 	@Override
-	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
 		if (isBottom()) {
 			return script.term("false");
 		}
@@ -600,7 +731,14 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		return acc;
 	}
 
-	private Term getTermVar(IBoogieVar var) {
+	/**
+	 * Generates an SMT {@link Term} for a given variable.
+	 * 
+	 * @param var
+	 *            The variable to generate the SMT Term for.
+	 * @return The SMT Term.
+	 */
+	private Term getTermVar(final IBoogieVar var) {
 		assert var != null : "Cannot get TermVariable from null";
 		if (var instanceof BoogieVar) {
 			final TermVariable termvar = ((BoogieVar) var).getTermVariable();
@@ -618,7 +756,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @return A new {@link IntervalDomainState} containing the same set of variables but with values set to &bot;.
 	 */
 	protected IntervalDomainState bottomState() {
-		IntervalDomainState ret = copy();
+		final IntervalDomainState ret = copy();
 		for (final Entry<String, IntervalDomainValue> entry : ret.mValuesMap.entrySet()) {
 			entry.setValue(new IntervalDomainValue(true));
 		}
@@ -642,7 +780,8 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @return A new {@link IntervalDomainState} that is the copy of <code>this</code>, where all occurring variables,
 	 *         booleans, and arrays given in the parameters are set to &top;.
 	 */
-	protected IntervalDomainState setVarsToTop(List<String> vars, List<String> bools, List<String> arrays) {
+	protected IntervalDomainState setVarsToTop(final List<String> vars, final List<String> bools,
+	        final List<String> arrays) {
 		final IntervalDomainState returnState = copy();
 
 		for (final String var : vars) {
@@ -671,7 +810,8 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @return A new {@link IntervalDomainState} that is the copy of <code>this</code>, where all occurring variables,
 	 *         booleans, and arrays given as parameters are set to &bot;.
 	 */
-	protected IntervalDomainState setVarsToBottom(List<String> vars, List<String> bools, List<String> arrays) {
+	protected IntervalDomainState setVarsToBottom(final List<String> vars, final List<String> bools,
+	        final List<String> arrays) {
 		final IntervalDomainState returnState = copy();
 
 		for (final String var : vars) {
@@ -689,7 +829,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	}
 
 	@Override
-	public IBoogieVar getVariableDeclarationType(String name) {
+	public IBoogieVar getVariableDeclarationType(final String name) {
 		assert name != null;
 		final IBoogieVar var = mVariablesMap.get(name);
 		assert var != null : "Unknown variable";
@@ -700,7 +840,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	public IntervalDomainState patch(final IntervalDomainState dominator) {
 		assert dominator != null;
 
-		IntervalDomainState returnState = copy();
+		final IntervalDomainState returnState = copy();
 
 		for (final Entry<String, IBoogieVar> var : dominator.mVariablesMap.entrySet()) {
 			if (!returnState.containsVariable(var.getKey())) {
@@ -735,7 +875,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @return A new {@link IntervalDomainState} which is the result of the merger of <code>this</code> and
 	 *         <code>other</code>.
 	 */
-	protected IntervalDomainState merge(IntervalDomainState other) {
+	protected IntervalDomainState merge(final IntervalDomainState other) {
 		assert other != null;
 
 		if (!hasSameVariables(other)) {
