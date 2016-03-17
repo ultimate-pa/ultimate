@@ -117,9 +117,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private void calculateFixpoint(final ACTION start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist = new ArrayDeque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>>();
-		final IAbstractPostOperator<STATE, ACTION, VARDECL> post = mDomain.getPostOperator();
+		final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
-		final IAbstractStateBinaryOperator<STATE> mergeOperator = mDomain.getMergeOperator();
+		final IAbstractStateBinaryOperator<STATE> mergeOp = mDomain.getMergeOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
 		worklist.add(createInitialWorklistItem(start));
@@ -128,109 +128,138 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			checkTimeout();
 
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem = worklist.removeFirst();
-			final STATE preState = currentItem.getPreState();
-			final ACTION currentAction = currentItem.getAction();
-			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
-					.getCurrentStorage();
-
 			mBenchmark.addIteration(currentItem);
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessageCurrentTransition(preState, currentAction, currentItem.getCallStackDepth()));
+				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 
-			// calculate the (abstract) effect of the current action by first
-			// declaring variables in the prestate, and then calculating their
-			// values
-			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesAfter(currentAction, preState,
-					currentStateStorage);
-
-			List<STATE> postStates;
-			if (preState == preStateWithFreshVariables) {
-				postStates = post.apply(preStateWithFreshVariables, currentAction);
-			} else {
-				// a context switch happened
-				// TODO: save the preState for evaluation of old variables
-				postStates = post.apply(preState, preStateWithFreshVariables, currentAction);
-			}
-
-			assert mDebugHelper.isPostSound(preState, preStateWithFreshVariables, postStates,
-					currentAction) : getLogMessageUnsoundPost(preState, preStateWithFreshVariables, postStates,
-							currentAction);
-
-			if (postStates.isEmpty()) {
-				// if there are no post states, we interpret this as bottom
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(getLogMessageEmptyIsBottom());
-				}
+			final List<STATE> postStates = calculateAbstractPost(currentItem, postOp, mergeOp);
+			if (postStates == null) {
 				continue;
 			}
 
-			if (postStates.size() > mMaxParallelStates) {
-				mLogger.warn(getLogMessageWarnTooManyPostStates(postStates));
-				postStates = Collections
-						.singletonList(postStates.stream().reduce((a, b) -> mergeOperator.apply(a, b)).get());
-			}
-
-			for (STATE pendingNewPostState : postStates) {
-				if (pendingNewPostState.isBottom()) {
-					// if the new abstract state is bottom, we do not enter loops and we do not add
-					// new actions to the worklist
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug(getLogMessagePostIsBottom(pendingNewPostState));
-					}
+			for (final STATE pendingNewPostState : postStates) {
+				final STATE postState = preprocessPostState(currentItem, wideningOp, pendingNewPostState);
+				if (postState == null) {
 					continue;
 				}
 
-				// check if the current state is a fixpoint
-				if (checkFixpoint(currentStateStorage, currentAction, pendingNewPostState)) {
-					continue;
-				}
+				savePostState(currentItem, postState);
 
-				if (mLoopDetector.isEnteringLoop(currentAction)) {
-					// we are entering a loop
-					loopEnter(currentItem);
-				}
+				checkReachedError(currentItem, postState, reachedErrors);
 
-				// check if we should widen after entering a new scope
-				if (mTransitionProvider.isEnteringScope(currentAction)) {
-					pendingNewPostState = widenAtScopeEntry(currentItem, wideningOp, pendingNewPostState);
-					// check if the resulting state is a fixpoint
-					if (checkFixpointAtScopeEntry(currentItem, pendingNewPostState)) {
-						// TODO: Add the summary successor here
-						continue;
-					}
-				}
-
-				final STATE newPostState = pendingNewPostState;
-
-				if (currentItem.hasActiveLoop()) {
-					// are we leaving a loop?
-					final LOCATION currentLoopHead = mTransitionProvider.getTarget(currentAction);
-					if (currentItem.isActiveLoopHead(currentLoopHead)) {
-						// we are leaving a loop
-						loopLeave(currentItem);
-					}
-				}
-
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(getLogMessageNewPostState(newPostState));
-				}
-				// add post state to this location
-				currentStateStorage.addAbstractPostState(currentAction, newPostState);
-
-				if (mTransitionProvider.isPostErrorLocation(currentAction, currentItem.getCurrentScope())
-						&& !newPostState.isBottom() && reachedErrors.add(currentAction)) {
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
-								.append(" Error state reached"));
-					}
-					mResult.reachedError(mTransitionProvider, currentItem, newPostState);
-				}
-
-				// now add successors
 				addSuccessors(worklist, currentItem, wideningOp);
 			}
+		}
+	}
+
+	private List<STATE> calculateAbstractPost(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+			final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,
+			final IAbstractStateBinaryOperator<STATE> mergeOp) {
+
+		final STATE preState = currentItem.getPreState();
+		final ACTION currentAction = currentItem.getAction();
+		final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
+				.getCurrentStorage();
+
+		// calculate the (abstract) effect of the current action by first
+		// declaring variables in the prestate, and then calculating their
+		// values
+		final STATE preStateWithFreshVariables = mVarProvider.defineVariablesAfter(currentAction, preState,
+				currentStateStorage);
+
+		List<STATE> postStates;
+		if (preState == preStateWithFreshVariables) {
+			postStates = postOp.apply(preStateWithFreshVariables, currentAction);
+		} else {
+			// a context switch happened
+			// TODO: save the preState for evaluation of old variables
+			postStates = postOp.apply(preState, preStateWithFreshVariables, currentAction);
+		}
+
+		assert mDebugHelper.isPostSound(preState, preStateWithFreshVariables, postStates,
+				currentAction) : getLogMessageUnsoundPost(preState, preStateWithFreshVariables, postStates,
+						currentAction);
+
+		if (postStates.isEmpty()) {
+			// if there are no post states, we interpret this as bottom
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(getLogMessageEmptyIsBottom());
+			}
+			return null;
+		}
+
+		if (postStates.size() > mMaxParallelStates) {
+			mLogger.warn(getLogMessageWarnTooManyPostStates(postStates));
+			postStates = Collections.singletonList(postStates.stream().reduce((a, b) -> mergeOp.apply(a, b)).get());
+		}
+		return postStates;
+	}
+
+	private STATE preprocessPostState(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+			final IAbstractStateBinaryOperator<STATE> wideningOp, STATE pendingNewPostState) {
+		if (pendingNewPostState.isBottom()) {
+			// if the new abstract state is bottom, we do not enter loops and we do not add
+			// new actions to the worklist
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(getLogMessagePostIsBottom(pendingNewPostState));
+			}
+			return null;
+		}
+
+		final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
+				.getCurrentStorage();
+		final ACTION currentAction = currentItem.getAction();
+
+		// check if the current state is a fixpoint
+		if (checkFixpoint(currentStateStorage, currentAction, pendingNewPostState)) {
+			return null;
+		}
+
+		if (mLoopDetector.isEnteringLoop(currentAction)) {
+			// we are entering a loop
+			loopEnter(currentItem);
+		}
+
+		// check if we should widen after entering a new scope
+		if (mTransitionProvider.isEnteringScope(currentAction)) {
+			pendingNewPostState = widenAtScopeEntry(currentItem, wideningOp, pendingNewPostState);
+			// check if the resulting state is a fixpoint
+			if (checkFixpointAtScopeEntry(currentItem, pendingNewPostState)) {
+				// TODO: Add the summary successor here
+				return null;
+			}
+		}
+
+		if (currentItem.hasActiveLoop()) {
+			// are we leaving a loop?
+			final LOCATION currentLoopHead = mTransitionProvider.getTarget(currentAction);
+			if (currentItem.isActiveLoopHead(currentLoopHead)) {
+				// we are leaving a loop
+				loopLeave(currentItem);
+			}
+		}
+		return pendingNewPostState;
+	}
+
+	private void savePostState(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem, STATE postState) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageNewPostState(postState));
+		}
+		// add post state to this location
+		currentItem.getCurrentStorage().addAbstractPostState(currentItem.getAction(), postState);
+	}
+
+	private void checkReachedError(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+			final STATE postState, final Set<ACTION> reachedErrors) {
+		final ACTION currentAction = currentItem.getAction();
+		if (mTransitionProvider.isPostErrorLocation(currentAction, currentItem.getCurrentScope())
+				&& !postState.isBottom() && reachedErrors.add(currentAction)) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Error state reached"));
+			}
+			mResult.reachedError(mTransitionProvider, currentItem, postState);
 		}
 	}
 
@@ -629,7 +658,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.append(newPostState.toLogString());
 	}
 
-	private StringBuilder getLogMessageCurrentTransition(final STATE preState, final ACTION current, int depth) {
+	private StringBuilder getLogMessageCurrentTransition(
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
+		final STATE preState = currentItem.getPreState();
+		final ACTION current = currentItem.getAction();
+		final int depth = currentItem.getCallStackDepth();
 		final String preStateString = preState == null ? "NULL"
 				: addHashCodeString(new StringBuilder(), preState).append(" ").append(preState.toLogString())
 						.toString();
