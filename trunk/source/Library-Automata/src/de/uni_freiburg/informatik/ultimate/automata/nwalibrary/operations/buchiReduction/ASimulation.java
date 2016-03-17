@@ -719,6 +719,13 @@ public abstract class ASimulation<LETTER, STATE> {
 	protected void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
 		boolean isDeadEnd = !getGameGraph().hasSuccessors(vertex);
+		
+		// check if an update would change progress measure
+		// this happens if 
+		// * a successor (from a possibly different SCC) has progress measure (global) infinity,
+		// * this vertex is a dead end duplicator vertex, or
+		// * this vertex has priority 1.
+		// 
 		boolean doesChangeWithUpdate = vertex.getPM(scc, getGameGraph().getGlobalInfinity()) != update(vertex,
 				localInfinity, scc);
 
