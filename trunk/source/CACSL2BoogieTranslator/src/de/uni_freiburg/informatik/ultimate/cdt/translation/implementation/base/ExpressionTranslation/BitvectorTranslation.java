@@ -475,7 +475,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
-		final Expression result = null;
+		final Expression result;
 		final String funcname;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
@@ -500,14 +500,16 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		default:
 			throw new AssertionError("unknown operation " + nodeOperator);
 		}
-		//TODO: declare FloatingPointFunction
+		declareFloatingPointFunction(loc, funcname, funcname, true, false, new CPrimitive(PRIMITIVE.BOOL), null, (CPrimitive) type1, (CPrimitive) type2);
+		//TODO: evaluate possiblities for boogiefunctionnames
+		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
 		return result;
 	}
 
 	@Override
 	public Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp,
 			CPrimitive type) {
-		Expression func = null;
+		final Expression result;
 		final String funcname;
 		switch (nodeOperator) {
 		case IASTUnaryExpression.op_minus:
@@ -517,16 +519,19 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		return func;
+		declareFloatingPointFunction(loc, funcname, funcname, true, false, type, null, (CPrimitive) type);
+		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp});
+		return result;
 	}
 
 	@Override
 	public Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2) {
-		FunctionApplication func = null;
+		FunctionApplication result;
 		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
+		boolean isRounded = true;
 		final String funcname;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
@@ -544,6 +549,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
 			funcname = "fp.rem"; //TODO: <rohlandm> check if this is correkt when the SMTtheory is reachable again
+			isRounded = false;
 			break;
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_plus:
@@ -554,8 +560,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		
-		//TODO: declareFloatingPointFunction
-		return func;
+		declareFloatingPointFunction(loc, funcname, funcname, true, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
+		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
+		return result;
 	}
 	
 	

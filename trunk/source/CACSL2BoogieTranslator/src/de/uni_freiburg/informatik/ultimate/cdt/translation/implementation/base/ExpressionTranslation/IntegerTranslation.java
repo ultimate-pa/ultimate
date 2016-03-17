@@ -714,4 +714,22 @@ public class IntegerTranslation extends AExpressionTranslation {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 
+	@Override
+	public Expression constructBinaryComparisonFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1,
+			CPrimitive type1, Expression exp2, CPrimitive type2) {
+		throw new UnsupportedOperationException("floats need bitvectors");
+	}
+
+	@Override
+	public Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp,
+			CPrimitive type) {
+		throw new UnsupportedOperationException("floats need bitvectors");
+	}
+
+	@Override
+	public Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1,
+			CPrimitive type1, Expression exp2, CPrimitive type2) {
+		throw new UnsupportedOperationException("floats need bitvectors");
+	}
+
 }
