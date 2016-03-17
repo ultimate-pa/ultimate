@@ -1,6 +1,6 @@
 # Ultimate
 [![Build Status](https://travis-ci.org/ultimate-pa/ultimate.svg)](https://travis-ci.org/ultimate-pa/ultimate)
-[![LGPL License](http://img.shields.io/badge/license-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl.html)
+[![LGPL License](http://img.shields.io/badge/license-LGPLv3-brightgreen.svg)](https://www.gnu.org/licenses/lgpl.html)
 
 Ultimate is a program analysis framework. Ultimate consists of several plugins that perform steps of a program analysis, e.g., parsing source code, transforming programs from one representation to another, or analyzing programs. Toolchains of these plugins can perform complex tasks, e.g., verify that a C program fulfills a given specification.
 
