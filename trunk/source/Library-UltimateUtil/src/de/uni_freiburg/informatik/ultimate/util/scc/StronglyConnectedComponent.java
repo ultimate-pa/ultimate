@@ -75,6 +75,13 @@ public class StronglyConnectedComponent<NODE> {
 		}
 		m_RootNode = rootNode;
 	}
+
+	@Override
+	public String toString() {
+		return String.valueOf(m_Nodes);
+	}
+	
+	
 	
 
 }
