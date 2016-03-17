@@ -53,11 +53,9 @@ import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -73,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
@@ -248,37 +245,6 @@ public class CfgBuilder {
 		return m_Graphroot;
 	}
 
-	/**
-	 * Flatten varLists. Given an array of varList where each varList can define several variables, return an array of
-	 * varLists where each varList defines only a single variable. Furthermore each variable defined in the result has
-	 * gets a prefix.
-	 */
-	private static VarList[] varLists2singletonVarListsWithPrefix(VarList[] varLists, String Prefix) {
-		ArrayList<VarList> result = new ArrayList<VarList>();
-		for (VarList varList : varLists) {
-			String[] identifiers = varList.getIdentifiers();
-			ASTType type = varList.getType();
-			for (String identifier : identifiers) {
-				String[] newId = { Prefix + identifier };
-				result.add(new VarList(null, newId, type));
-			}
-		}
-		return result.toArray(new VarList[0]);
-	}
-
-	private Expression getConjunction(List<Expression> expressions) {
-		if (expressions == null || expressions.isEmpty()) {
-			return null;
-		} else {
-			Expression conj = expressions.remove(0);
-			for (Expression expr : expressions) {
-				conj = new BinaryExpression(null, PrimitiveType.boolType, BinaryExpression.Operator.LOGICAND, conj,
-						expr);
-			}
-			return conj;
-		}
-	}
-
 	private Expression getNegation(Expression expr) {
 		if (expr == null) {
 			return null;
@@ -403,9 +369,6 @@ public class CfgBuilder {
 			m_Edges = new HashSet<CodeBlock>();
 			m_GotoEdges = new LinkedList<GotoEdge>();
 			m_Labels = new HashSet<String>();
-
-			Procedure proc = m_BoogieDeclarations.getProcImplementation().get(m_currentProcedureName);
-			// m_Boogie2smt.declareLocals(proc);
 
 			Statement[] statements = m_BoogieDeclarations.getProcImplementation().get(procName).getBody().getBlock();
 			if (statements.length == 0) {
@@ -704,40 +667,6 @@ public class CfgBuilder {
 					}
 				}
 			}
-		}
-
-		/**
-		 * Builds the control flow graph of a single procedure according to a given specification. Use this if no
-		 * implementation is available.
-		 * 
-		 * @param Name
-		 *            of the procedure for which the CFG will be build.
-		 */
-		private void buildProcedureCfgWithoutImplementation(String procName) {
-			m_currentProcedureName = procName;
-
-			Procedure proc = m_BoogieDeclarations.getProcSpecification().get(m_currentProcedureName);
-
-			// initialize the Map from labels to LocNodes for this procedure
-			m_procLocNodes = new HashMap<String, ProgramPoint>();
-			m_RootAnnot.m_LocNodes.put(procName, m_procLocNodes);
-
-			mLogger.debug("Start construction of the CFG for" + procName);
-
-			// first LocNode is the entry node of the procedure
-			ProgramPoint locNode = m_RootAnnot.m_entryNode.get(procName);
-			m_lastLabelName = locNode.getLocationName();
-			// m_locSuffix = 0;
-			m_procLocNodes.put(m_lastLabelName, locNode);
-			m_current = locNode;
-
-			assumeRequires(true);
-
-			ProgramPoint finalNode = m_RootAnnot.m_finalNode.get(m_currentProcedureName);
-			assert (m_current != locNode);
-			((CodeBlock) m_current).connectTarget(finalNode);
-
-			assertAndAssumeEnsures();
 		}
 
 		/**
