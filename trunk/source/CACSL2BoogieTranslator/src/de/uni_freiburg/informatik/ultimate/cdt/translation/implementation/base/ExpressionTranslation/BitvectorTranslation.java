@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.cdt.core.dom.ast.ASTTypeMatcher;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
@@ -61,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -306,6 +308,28 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
 	}
 
+	private void declareFloatingPointFunction(ILocation loc, String smtlibFunctionName, String boogieFunctionName,
+			boolean boogieResultTypeBool, boolean isRounded, CPrimitive resultCType, int[] indices, CPrimitive... paramCType) {
+		if (m_FunctionDeclarations.getDeclaredFunctions().containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
+			// function already declared
+			return;
+		if (isRounded) {
+			ASTType[] paramASTTypes = new ASTType[paramCType.length + 1];
+			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, resultCType);
+			int counter = 1;
+			// TODO Handling of alternative rounding modes
+			paramASTTypes[0] = new NamedType(loc,"RNE", null);
+			for (CPrimitive cType : paramCType) {
+				paramASTTypes[counter] = m_TypeHandler.ctype2asttype(loc, cType);
+				counter += 1;
+			}
+			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
+			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, resultASTType, paramASTTypes);
+		} else {
+			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
+			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
+		}
+	}
 	/**
 	 * Generate the attributes for the Boogie code that make sure that we
 	 * translate to the desired SMT functions.
