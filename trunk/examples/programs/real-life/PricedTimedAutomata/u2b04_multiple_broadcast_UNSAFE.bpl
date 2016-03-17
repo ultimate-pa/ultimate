@@ -101,7 +101,7 @@ function { :inline true } guard_t6 (v: int) returns (bool)
 function { :inline true } guard_t2 (v: int) returns (bool)
 { true }
 function { :inline true } property (v: int) returns (bool)
-{ v != 3 }
+{ v != 1 }
 
 procedure main () returns ()
 modifies sync, sync_channel, sender, delay, loc$A1_1, loc$A2_1, loc$A3_1, v, v$new, v$reset;

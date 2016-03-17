@@ -86,8 +86,8 @@ function { :inline true } property (x: real, steps: int, A_1$power: real) return
 
 procedure main () returns ()
 modifies sync, sync_channel, sender, delay, loc$A_1, loc$B_1, A_1$power, x, x$new, x$reset, steps, steps$new, steps$reset;
-requires x == 0.0;
 requires steps == 0;
+requires x == 0.0;
 requires x$new == x;
 requires steps$new == steps;
 requires !x$reset;

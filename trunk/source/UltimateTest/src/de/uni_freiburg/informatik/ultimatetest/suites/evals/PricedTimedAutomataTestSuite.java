@@ -86,6 +86,7 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 			/* ULTIMATE repo */
 //			"examples/programs/abstractInterpretation/",
 			"examples/programs/real-life/PricedTimedAutomata/",
+//			"examples/programs/real-life/PricedTimedAutomata/u2b06_batman_intermittent_no_power_SAFE.bpl",
 //			"examples/programs/abstractInterpretation/regression/loop-110517_Martin01-safe.bpl",
 			
 //			"examples/programs/abstractInterpretation/regression/loop-Goto.bpl",
