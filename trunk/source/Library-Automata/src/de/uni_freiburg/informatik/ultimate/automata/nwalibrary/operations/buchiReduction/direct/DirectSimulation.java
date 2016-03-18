@@ -38,9 +38,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
@@ -81,42 +79,6 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	private final AGameGraph<LETTER, STATE> m_Game;
 
 	/**
-	 * Creates a new direct simulation that tries to reduce the given buechi
-	 * automaton using <b>direct simulation</b>.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
-	 * <br/>
-	 * 
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
-	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework
-	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
-	 * @param logger
-	 *            Logger of the Ultimate framework.
-	 * @param buechi
-	 *            The buechi automaton to reduce with no dead ends nor with
-	 *            duplicate transitions
-	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
-	 * @param stateFactory
-	 *            The state factory used for creating states.
-	 * @throws OperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public DirectSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		this(progressTimer, logger, useSCCs, stateFactory,
-				new DirectGameGraph<>(services, progressTimer, logger, buechi, stateFactory));
-	}
-
-	/**
 	 * Creates a new direct simulation with a given graph that tries to reduce
 	 * the given buechi automaton using <b>direct simulation</b>.<br/>
 	 * After construction the simulation starts and results can be get by using
@@ -149,7 +111,6 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 
 		game.setSimulationPerformance(getSimulationPerformance());
 		m_Game = game;
-		doSimulation();
 	}
 
 	/*

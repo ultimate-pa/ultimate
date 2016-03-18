@@ -86,7 +86,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		Set<String> alphabet = new HashSet<>();
 		alphabet.add("a");
 		alphabet.add("b");
-		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, null, null, snf);
+		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(new AutomataLibraryServices(services),
+				alphabet, null, null, snf);
 
 		// Big example from Matthias cardboard
 		// buechi.addState(true, false, "q0");
@@ -180,7 +181,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		int f = 10;
 		int totalityInPerc = 5;
 		int debugPrintEvery = 10;
-		int amount = 100;
+		int amount = 1000;
 
 		System.out.println("Start comparing test 'SCC vs. nonSCC' with " + amount + " random automata (n=" + n + ", k="
 				+ k + ", f=" + f + ", totPerc=" + totalityInPerc + ")...");
@@ -198,9 +199,11 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			// Generate automaton
 			boolean useNwaInsteadDfaMethod = false;
 			if (useNwaInsteadDfaMethod) {
-				buechi = new GetRandomNwa(new AutomataLibraryServices(services), k, n, 0.2, 0, 0, (totalityInPerc + 0.0f) / 100).getResult();
+				buechi = new GetRandomNwa(new AutomataLibraryServices(services), k, n, 0.2, 0, 0,
+						(totalityInPerc + 0.0f) / 100).getResult();
 			} else {
-				buechi = new GetRandomDfa(new AutomataLibraryServices(services), n, k, f, totalityInPerc, true, false, false, false).getResult();
+				buechi = new GetRandomDfa(new AutomataLibraryServices(services), n, k, f, totalityInPerc, true, false,
+						false, false).getResult();
 			}
 
 			if (logNoErrorDebug) {
@@ -209,9 +212,15 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			}
 
 			// Check correctness
-			ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(new AutomataLibraryServices(services), snf,
-					buechi);
-			boolean errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
+			ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(
+					new AutomataLibraryServices(services), snf, buechi);
+			boolean errorOccurred = false;
+			errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
+//			try {
+//				errorOccurred = !operation.checkResult(operation.m_StateFactory);
+//			} catch (AutomataLibraryException e) {
+//				e.printStackTrace();
+//			}
 			if (errorOccurred) {
 				break;
 			}
@@ -527,9 +536,12 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			final Collection<Set<STATE>> possibleEquivalentClasses, final boolean checkOperationDeeply)
 					throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
-				new FairSimulation<>(services, services.getProgressMonitorService(),
+				new FairSimulation<LETTER, STATE>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand, useSCCs,
-						stateFactory, possibleEquivalentClasses));
+						stateFactory, possibleEquivalentClasses,
+						new FairGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
+								stateFactory)));
 	}
 
 	/**
@@ -557,7 +569,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
-			final boolean checkOperationDeeply, FairSimulation<LETTER, STATE> simulation)
+			final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
 					throws OperationCanceledException {
 		m_Services = services;
 		m_StateFactory = stateFactory;
@@ -565,7 +577,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		m_Operand = operand;
 		m_UseSCCs = useSCCs;
 		m_Logger.info(startMessage());
+		m_Logger.debug("Starting generation of Fair Game Graph...");
+		simulation.getGameGraph().generateGameGraphFromBuechi();
 		m_Simulation = simulation;
+		simulation.doSimulation();
 		m_Result = m_Simulation.getResult();
 
 		// Debugging flag

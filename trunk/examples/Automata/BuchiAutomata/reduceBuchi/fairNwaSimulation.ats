@@ -1,0 +1,36 @@
+// Author: Daniel Tischner
+// Date: 2016-03-18
+//
+// Example usage of a reduction program for Nwa automata that uses fair nwa simulation.
+
+assert(!isEmpty(nwa));
+// Before operation
+//print(nwa);
+// After operation
+print(reduceNwaFairSimulation(nwa, false));
+// Check correctness of operation
+//print(reduceNwaFairSimulation(nwa, true, true));
+
+// Use a random automaton
+//print(reduceNwaFairSimulation(removeDeadEnds(getRandomDfa(10, 2, 5))));
+
+// Some example automaton
+
+// Small circle example from mind
+
+NestedWordAutomaton nwa = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q1 q2 q3 q4},
+  initialStates = {q1},
+  finalStates = {q1},
+  callTransitions = {},
+  internalTransitions = {
+      (q1 a q2)
+	  (q2 b q3)
+	  (q3 a q4)
+	  (q4 b q1)
+  }, 
+  returnTransitions = {}
+);

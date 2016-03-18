@@ -175,8 +175,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		m_BuechiAmountOfTransitions = 0;
 		m_GraphBuildTime = 0;
 		m_GraphAmountOfEdges = 0;
-
-		generateGameGraphFromBuechi();
 	}
 
 	/*
@@ -212,29 +210,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					}
 				}
 			}
-		}
-	}
-
-	/**
-	 * Calculates the priority of a given {@link SpoilerVertex} by its
-	 * representation <i>(state spoiler is at, state duplicator is at)</i>.<br/>
-	 * Note that {@link DuplicatorVertex} objects always should have priority 2.
-	 * 
-	 * @param leftState
-	 *            The state spoiler is at
-	 * @param rightState
-	 *            The state duplicator is at
-	 * @return The calculated priority of the given {@link SpoilerVertex} which
-	 *         is 0 if the right state is final, 2 if both are final and 1 if
-	 *         only the left state is final.
-	 */
-	private int calculatePriority(final STATE leftState, final STATE rightState) {
-		if (m_Buechi.isFinal(rightState)) {
-			return 0;
-		} else if (m_Buechi.isFinal(leftState)) {
-			return 1;
-		} else {
-			return 2;
 		}
 	}
 
@@ -466,6 +441,29 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
+	 * Calculates the priority of a given {@link SpoilerVertex} by its
+	 * representation <i>(state spoiler is at, state duplicator is at)</i>.<br/>
+	 * Note that {@link DuplicatorVertex} objects always should have priority 2.
+	 * 
+	 * @param leftState
+	 *            The state spoiler is at
+	 * @param rightState
+	 *            The state duplicator is at
+	 * @return The calculated priority of the given {@link SpoilerVertex} which
+	 *         is 0 if the right state is final, 2 if both are final and 1 if
+	 *         only the left state is final.
+	 */
+	protected int calculatePriority(final STATE leftState, final STATE rightState) {
+		if (m_Buechi.isFinal(rightState)) {
+			return 0;
+		} else if (m_Buechi.isFinal(leftState)) {
+			return 1;
+		} else {
+			return 2;
+		}
+	}
+
+	/**
 	 * Equalizes two given states to each other by adding transitions so that
 	 * both have the same out- and in-going transitions.
 	 * 
@@ -510,7 +508,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			return null;
 		}
 	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -649,7 +646,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			return result;
 		}
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -657,7 +654,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
 	@Override
-	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
+	public void generateGameGraphFromBuechi() throws OperationCanceledException {
 		long graphBuildTimeStart = System.currentTimeMillis();
 
 		INestedWordAutomatonOldApi<LETTER, STATE> buechi = m_Buechi;
@@ -742,7 +739,22 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
 	}
-
+	/**
+	 * Gets the internal field of all transitions the used buechi has.
+	 * 
+	 * @return The internal field of all transitions the used buechi has
+	 */
+	protected Set<Triple<STATE, LETTER, STATE>> getBuechiTransitions() {
+		return m_BuechiTransitions;
+	}
+	/**
+	 * Gets the equivalence classes.
+	 * 
+	 * @return The equivalence classes
+	 */
+	protected UnionFind<STATE> getEquivalenceClasses() {
+		return m_EquivalenceClasses;
+	}
 	/**
 	 * Returns if the underlying buechi automaton has a given transition.
 	 * 
@@ -753,6 +765,27 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	protected boolean hasBuechiTransition(final Triple<STATE, LETTER, STATE> transition) {
 		return m_BuechiTransitions.contains(transition);
+	}
+
+	/**
+	 * Increases the internal counter of the amount of buechi states by one.
+	 */
+	protected void increaseBuechiAmountOfStates() {
+		m_BuechiAmountOfStates++;
+	}
+	
+	/**
+	 * Increases the internal counter of the amount of buechi transitions by one.
+	 */
+	protected void increaseBuechiAmountOfTransitions() {
+		m_BuechiAmountOfTransitions++;
+	}
+
+	/**
+	 * Increases the internal counter of the amount of graph edges by one.
+	 */
+	protected void increaseGraphAmountOfEdges() {
+		m_GraphAmountOfEdges++;
 	}
 
 	/**
@@ -862,5 +895,14 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		changes.removedBuechiTransition(src, a, dest);
 
 		return changes;
+	}
+
+	/**
+	 * Sets the internal field of the graphBuildTime.
+	 * 
+	 * @param graphBuildTime The graphBuildTime to set
+	 */
+	protected void setGraphBuildTime(final long graphBuildTime) {
+		m_GraphBuildTime = graphBuildTime;
 	}
 }

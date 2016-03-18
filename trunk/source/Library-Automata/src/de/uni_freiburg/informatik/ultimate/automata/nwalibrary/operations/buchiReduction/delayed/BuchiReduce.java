@@ -112,13 +112,24 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			msg.append(" W/O dead ends ").append(m_Operand.sizeInformation());
 			m_Logger.debug(msg.toString());
 		}
-		m_Result = new DelayedSimulation<LETTER, STATE>(m_Services, m_Services.getProgressMonitorService(), m_Logger,
-				m_Operand, true, stateFactory).getResult();
+
+		DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(m_Services,
+				m_Services.getProgressMonitorService(), m_Logger, m_Operand, stateFactory);
+		graph.generateGameGraphFromBuechi();
+		DelayedSimulation<LETTER, STATE> sim = new DelayedSimulation<>(m_Services.getProgressMonitorService(), m_Logger,
+				true, stateFactory, graph);
+		sim.doSimulation();
+		m_Result = sim.getResult();
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = new DelayedSimulation<LETTER, STATE>(m_Services,
-					m_Services.getProgressMonitorService(), m_Logger, m_Operand, false, stateFactory).getResult();
+			graph = new DelayedGameGraph<>(m_Services, m_Services.getProgressMonitorService(), m_Logger, m_Operand,
+					stateFactory);
+			graph.generateGameGraphFromBuechi();
+			DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(m_Services.getProgressMonitorService(),
+					m_Logger, false, stateFactory, graph);
+			nonSccSim.doSimulation();
+			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
 			if (m_Result.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}

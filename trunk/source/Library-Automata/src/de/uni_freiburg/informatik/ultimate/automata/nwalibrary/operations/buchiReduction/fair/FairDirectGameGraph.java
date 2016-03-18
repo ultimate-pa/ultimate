@@ -119,6 +119,17 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 		m_IsCurrentlyDirectGameGraph = false;
 		m_DirectSimulations = new HashSet<>();
 		m_EdgesToBeChangedForTransformation = new HashSet<>();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
+	 */
+	@Override
+	public void generateGameGraphFromBuechi() throws OperationCanceledException {
+		super.generateGameGraphFromBuechi();
 		calculateTransformationChanges();
 	}
 

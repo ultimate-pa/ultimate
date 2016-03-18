@@ -37,7 +37,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -175,7 +174,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * Copy of {@link AGameGraph#getGlobalInfinity()} for faster access.
 	 */
-	private final int m_GlobalInfinity;
+	private int m_GlobalInfinity;
 	/**
 	 * Amount of SCCs of the initial game graph version.
 	 */
@@ -224,8 +223,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework
 	 * @param progressTimer
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
@@ -239,58 +236,17 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
+	 * @param game
+	 *            The fair game graph to use for simulation.
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		this(progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList(),
-				new FairGameGraph<LETTER, STATE>(services, progressTimer, logger, buechi, stateFactory));
-	}
-
-	/**
-	 * Creates a new fair simulation that tries to reduce the given buechi
-	 * automaton using <b>fair simulation</b>. Uses a given collection of
-	 * equivalence classes to optimize the simulation.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
-	 * <br/>
-	 * 
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
-	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework
-	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
-	 * @param logger
-	 *            Logger of the Ultimate framework.
-	 * @param buechi
-	 *            The buechi automaton to reduce with no dead ends nor with
-	 *            duplicate transitions
-	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
-	 * @param stateFactory
-	 *            The state factory used for creating states.
-	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the buechi
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
-	 * @throws OperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public FairSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
+	public FairSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory, final FairGameGraph<LETTER, STATE> game)
 					throws OperationCanceledException {
-		this(progressTimer, logger, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
-				new FairGameGraph<LETTER, STATE>(services, progressTimer, logger, buechi, stateFactory));
+		this(progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList(), game);
 	}
 
 	/**
@@ -327,7 +283,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected FairSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
+	public FairSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {
@@ -340,18 +296,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		m_NotSimulatingNonTrivialVertices = new HashSet<>();
 		m_CurrentChanges = null;
 
-		m_Logger.debug("Starting generation of Fair Game Graph...");
 		m_Game = game;
 		m_Game.setSimulationPerformance(super.getSimulationPerformance());
-		m_Logger.debug("Fair Game Graph has " + m_Game.getSize() + " vertices.");
-
-		m_GlobalInfinity = m_Game.getGlobalInfinity();
 
 		m_AttemptingChanges = false;
 		m_SimulationWasAborted = false;
 		m_AmountOfSCCs = 0;
-
-		doSimulation();
 	}
 
 	/*
@@ -748,7 +698,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * buchiReduction.ASimulation#doSimulation()
 	 */
 	@Override
-	protected void doSimulation() throws OperationCanceledException {
+	public void doSimulation() throws OperationCanceledException {
+		m_Logger.debug("Fair Game Graph has " + m_Game.getSize() + " vertices.");
+		m_GlobalInfinity = m_Game.getGlobalInfinity();
+		
 		SimulationPerformance performance = super.getSimulationPerformance();
 		performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
 		performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);

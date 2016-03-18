@@ -134,7 +134,6 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		m_BuechiAmountOfTransitions = 0;
 		m_GraphBuildTime = 0;
 		m_GraphAmountOfEdges = 0;
-		generateGameGraphFromBuechi();
 	}
 
 	/**
@@ -274,7 +273,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
 	@Override
-	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
+	public void generateGameGraphFromBuechi() throws OperationCanceledException {
 		long graphBuildTimeStart = System.currentTimeMillis();
 
 		// Calculate v1 [paper ref 10]

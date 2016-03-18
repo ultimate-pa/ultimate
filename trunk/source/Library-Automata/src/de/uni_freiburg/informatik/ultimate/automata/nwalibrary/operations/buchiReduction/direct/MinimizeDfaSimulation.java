@@ -107,13 +107,23 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 
-		m_Result = new DirectSimulation<>(m_Services, m_Services.getProgressMonitorService(), m_Logger, m_Operand, true,
-				stateFactory).getResult();
+		DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(m_Services, m_Services.getProgressMonitorService(),
+				m_Logger, m_Operand, stateFactory);
+		graph.generateGameGraphFromBuechi();
+		DirectSimulation<LETTER, STATE> sim = new DirectSimulation<>(m_Services.getProgressMonitorService(), m_Logger,
+				true, stateFactory, graph);
+		sim.doSimulation();
+		m_Result = sim.getResult();
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = new DirectSimulation<LETTER, STATE>(m_Services,
-					m_Services.getProgressMonitorService(), m_Logger, m_Operand, false, stateFactory).getResult();
+			graph = new DirectGameGraph<>(m_Services, m_Services.getProgressMonitorService(), m_Logger, m_Operand,
+					stateFactory);
+			graph.generateGameGraphFromBuechi();
+			DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
+					m_Services.getProgressMonitorService(), m_Logger, false, stateFactory, graph);
+			nonSccSim.doSimulation();
+			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
 			if (m_Result.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}

@@ -137,7 +137,6 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 		m_BuechiAmountOfTransitions = 0;
 		m_GraphBuildTime = 0;
 		m_GraphAmountOfEdges = 0;
-		generateGameGraphFromBuechi();
 	}
 
 	/*
@@ -246,7 +245,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
 	@Override
-	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
+	public void generateGameGraphFromBuechi() throws OperationCanceledException {
 		long graphBuildTimeStart = System.currentTimeMillis();
 
 		// Calculate v1 [paper ref 10]

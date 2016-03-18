@@ -474,7 +474,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected void doSimulation() throws OperationCanceledException {
+	public void doSimulation() throws OperationCanceledException {
 		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
 		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
 

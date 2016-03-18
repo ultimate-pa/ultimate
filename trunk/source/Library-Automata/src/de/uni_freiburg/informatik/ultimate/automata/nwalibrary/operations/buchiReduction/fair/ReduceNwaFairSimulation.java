@@ -38,23 +38,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
- * Operation that reduces a given buechi automaton by using
- * {@link FairDirectSimulation}.<br/>
+ * Operation that reduces a given nwa automaton by using
+ * {@link FairSimulation}.<br/>
  * Once constructed the reduction automatically starts, the result can be get by
  * using {@link #getResult()}.
  * 
  * @author Daniel Tischner
  * 
  * @param <LETTER>
- *            Letter class of buechi automaton
+ *            Letter class of nwa automaton
  * @param <STATE>
- *            State class of buechi automaton
+ *            State class of nwa automaton
  */
-public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends ReduceBuchiFairSimulation<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton using SCCs as an optimization.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
@@ -63,19 +62,19 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The buechi automaton to reduce
+	 *            The nwa automaton to reduce
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
+	public ReduceNwaFairSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand)
 					throws OperationCanceledException {
 		this(services, stateFactory, operand, true, Collections.emptyList());
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
@@ -84,7 +83,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The buechi automaton to reduce
+	 *            The nwa automaton to reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -92,14 +91,14 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
+	public ReduceNwaFairSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
 			final boolean useSCCs) throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList());
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
@@ -108,12 +107,12 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The buechi automaton to reduce
+	 *            The nwa automaton to reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
 	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the buechi
+	 *            A collection of sets which contains states of the nwa
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
 	 *            optimization for the simulation
@@ -121,15 +120,15 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
+	public ReduceNwaFairSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
 			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
-				new FairDirectSimulation<LETTER, STATE>(services.getProgressMonitorService(),
+				new FairNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand, useSCCs,
 						stateFactory, possibleEquivalentClasses,
-						new FairDirectGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
+						new FairNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
 								stateFactory)));
 	}
@@ -142,6 +141,6 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 */
 	@Override
 	public String operationName() {
-		return "reduceBuchiFairDirectSimulation";
+		return "reduceNwaFairSimulation";
 	}
 }

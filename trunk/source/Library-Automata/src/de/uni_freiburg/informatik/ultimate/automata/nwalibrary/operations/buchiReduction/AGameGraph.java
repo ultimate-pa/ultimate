@@ -535,7 +535,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected abstract void generateGameGraphFromBuechi() throws OperationCanceledException;
+	public abstract void generateGameGraphFromBuechi() throws OperationCanceledException;
 
 	/**
 	 * Gets the logger used by the Ultimate framework.
