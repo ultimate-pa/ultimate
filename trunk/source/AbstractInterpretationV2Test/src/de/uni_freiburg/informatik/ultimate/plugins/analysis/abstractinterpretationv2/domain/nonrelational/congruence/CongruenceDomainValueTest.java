@@ -51,7 +51,7 @@ public class CongruenceDomainValueTest{
 		CongruenceDomainValue z6 = new CongruenceDomainValue(new BigInteger("6"));
 		CongruenceDomainValue c1 = new CongruenceDomainValue(new BigInteger("-6"), true);
 		CongruenceDomainValue c2 = new CongruenceDomainValue(new BigInteger("7"), true);
-		CongruenceDomainValue c3 = new CongruenceDomainValue(new BigInteger("0"), true);
+		CongruenceDomainValue c3 = new CongruenceDomainValue(BigInteger.ZERO, true);
 		CongruenceDomainValue c4 = new CongruenceDomainValue(new BigInteger("8"), true);
 		assertTrue(b.intersect(z4).toString().equals("{}"));
 		assertTrue(c1.intersect(c1).toString().equals("-6"));
@@ -73,7 +73,7 @@ public class CongruenceDomainValueTest{
 		CongruenceDomainValue z3 = new CongruenceDomainValue(new BigInteger("3"));
 		CongruenceDomainValue c1 = new CongruenceDomainValue(new BigInteger("-6"), true);
 		CongruenceDomainValue c2 = new CongruenceDomainValue(new BigInteger("7"), true);
-		CongruenceDomainValue c3 = new CongruenceDomainValue(new BigInteger("0"), true);
+		CongruenceDomainValue c3 = new CongruenceDomainValue(BigInteger.ZERO, true);
 		assertTrue(c3.add(z4).toString().equals("4Z"));
 		assertTrue(b.add(z4).toString().equals("{}"));
 		assertTrue(c1.add(c2).toString().equals("1"));

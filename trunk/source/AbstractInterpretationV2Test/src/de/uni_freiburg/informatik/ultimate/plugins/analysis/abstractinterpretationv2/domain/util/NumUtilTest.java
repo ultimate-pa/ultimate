@@ -71,11 +71,11 @@ public class NumUtilTest {
 		assertIntDiv("-7.6", "-.3", "+26");
 
 		try {
-			NumUtil.euclideanDivision(new BigDecimal(1), new BigDecimal(0));
+			NumUtil.euclideanDivision(BigDecimal.ONE, BigDecimal.ZERO);
 			Assert.fail("Computed 1 / 0");
 		} catch (ArithmeticException e) {}
 		try {
-			NumUtil.euclideanDivision(new BigDecimal(0), new BigDecimal(0));
+			NumUtil.euclideanDivision(BigDecimal.ZERO, BigDecimal.ZERO);
 			Assert.fail("Computed 0 / 0");
 		} catch (ArithmeticException e) {}
 	}
@@ -96,11 +96,11 @@ public class NumUtilTest {
 		assertMod("0", "-5", "0");
 
 		try {
-			NumUtil.euclideanModulo(new BigDecimal(1), new BigDecimal(0));
+			NumUtil.euclideanModulo(BigDecimal.ONE, BigDecimal.ZERO);
 			Assert.fail("Computed 1 % 0");
 		} catch (ArithmeticException e) {}
 		try {
-			NumUtil.euclideanModulo(new BigDecimal(0), new BigDecimal(0));
+			NumUtil.euclideanModulo(BigDecimal.ZERO, BigDecimal.ZERO);
 			Assert.fail("Computed 0 % 0");
 		} catch (ArithmeticException e) {}
 	}

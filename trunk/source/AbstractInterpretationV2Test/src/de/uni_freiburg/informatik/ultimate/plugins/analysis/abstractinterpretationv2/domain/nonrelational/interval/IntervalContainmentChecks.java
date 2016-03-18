@@ -123,7 +123,7 @@ public class IntervalContainmentChecks {
 		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(new BigDecimal(2)), new IntervalValue());
 
 		// Create Interval [0; \infty]
-		IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue());
+		IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(BigDecimal.ZERO), new IntervalValue());
 
 		// Expected result: true
 		assertTrue(HelperFunctions.checkInclusion(int1, int2));
@@ -136,7 +136,7 @@ public class IntervalContainmentChecks {
 		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(new BigDecimal(2)), new IntervalValue());
 
 		// Create Interval [-\infty; 0]
-		IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(new BigDecimal(0)));
+		IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(BigDecimal.ZERO));
 
 		// Expected result: true
 		assertFalse(HelperFunctions.checkInclusion(int1, int2));

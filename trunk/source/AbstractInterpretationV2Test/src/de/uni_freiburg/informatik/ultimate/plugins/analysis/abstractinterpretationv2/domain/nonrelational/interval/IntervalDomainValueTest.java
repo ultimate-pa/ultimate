@@ -52,17 +52,17 @@ public class IntervalDomainValueTest {
 
 	@Test
 	public void testBoundedIntervalValue() {
-		IntervalValue intv = new IntervalValue(new BigDecimal(0));
+		IntervalValue intv = new IntervalValue(BigDecimal.ZERO);
 
-		assertTrue(intv.getValue().equals(new BigDecimal(0)));
+		assertTrue(intv.getValue().equals(BigDecimal.ZERO));
 		assertFalse(intv.isInfinity());
 
 		IntervalValue intvNeg = new IntervalValue(new BigDecimal(-1));
 		assertTrue(intvNeg.getValue().equals(new BigDecimal(-1)));
 		assertFalse(intvNeg.isInfinity());
 
-		IntervalValue intvPos = new IntervalValue(new BigDecimal(1));
-		assertTrue(intvPos.getValue().equals(new BigDecimal(1)));
+		IntervalValue intvPos = new IntervalValue(BigDecimal.ONE);
+		assertTrue(intvPos.getValue().equals(BigDecimal.ONE));
 		assertFalse(intvPos.isInfinity());
 	}
 
@@ -78,7 +78,7 @@ public class IntervalDomainValueTest {
 
 	@Test
 	public void testBoundedInterval() {
-		IntervalDomainValue intvUpperOpen = new IntervalDomainValue(new IntervalValue(new BigDecimal(0)),
+		IntervalDomainValue intvUpperOpen = new IntervalDomainValue(new IntervalValue(BigDecimal.ZERO),
 		        new IntervalValue());
 
 		assertFalse(intvUpperOpen.getLower().isInfinity());

@@ -84,13 +84,13 @@ public class IntervalMergeTest {
 	@Test
 	public void testIntervalMergeOpen() {
 		// [10; \infty]
-		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(new BigDecimal(10)), new IntervalValue());
+		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(BigDecimal.TEN), new IntervalValue());
 
 		// [1; 10]
 		IntervalDomainValue int2 = HelperFunctions.createInterval(1, 10);
 
 		// Expected: [1; \infty]
-		IntervalDomainValue exp1 = new IntervalDomainValue(new IntervalValue(new BigDecimal(1)), new IntervalValue());
+		IntervalDomainValue exp1 = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE), new IntervalValue());
 
 		assertTrue(HelperFunctions.computeMergedInterval(int1, int2, exp1));
 	}
