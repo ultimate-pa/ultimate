@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class CegarLoopBenchmarkType implements IStatisticsType {
-	
+
 	public static final String s_Result = "Result";
 	public static final String s_OverallTime = "Overall time";
 	public static final String s_OverallIterations = "Overall iterations";
@@ -57,22 +57,28 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 	public static final String s_InterpolantCoveringCapability = "InterpolantCoveringCapability";
 	public static final String s_TotalInterpolationBenchmark = "TotalInterpolationBenchmark";
 	public static final String s_AbsIntTime = "Abstract Interpretation Time";
-	
+	public static final String s_AbsIntIterations = "Abstract Interpretation iterations";
+
 	private static final CegarLoopBenchmarkType s_Instance = new CegarLoopBenchmarkType();
-		
+
 	public static CegarLoopBenchmarkType getInstance() {
 		return s_Instance;
 	}
 
 	@Override
 	public Collection<String> getKeys() {
-		ArrayList<String> keyList = new ArrayList<String>();
-		keyList.addAll(Arrays.asList(new String[] { 
-				s_Result, s_OverallTime, s_AbsIntTime,s_OverallIterations, 
-				s_AutomataDifference, 
-				s_DeadEndRemovalTime, 
-				s_AutomataMinimizationTime, s_HoareAnnotationTime, 
-				s_BasicInterpolantAutomatonTime, s_BiggestAbstraction }));
+		final List<String> keyList = new ArrayList<String>();
+		keyList.add(s_Result);
+		keyList.add(s_OverallTime);
+		keyList.add(s_AbsIntTime);
+		keyList.add(s_OverallIterations);
+		keyList.add(s_AbsIntIterations);
+		keyList.add(s_AutomataDifference);
+		keyList.add(s_DeadEndRemovalTime);
+		keyList.add(s_AutomataMinimizationTime);
+		keyList.add(s_HoareAnnotationTime);
+		keyList.add(s_BasicInterpolantAutomatonTime);
+		keyList.add(s_BiggestAbstraction);
 		keyList.add(s_EdgeCheckerData);
 		keyList.add(s_PredicateUnifierData);
 		keyList.add(s_StatesRemovedByMinimization);
@@ -82,7 +88,7 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 		keyList.add(s_TotalInterpolationBenchmark);
 		return keyList;
 	}
-	
+
 	@Override
 	public Object aggregate(String key, Object value1, Object value2) {
 		switch (key) {
@@ -129,6 +135,7 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 			return bmData1;
 		case s_StatesRemovedByMinimization:
 		case s_OverallIterations:
+		case s_AbsIntIterations:
 			Integer number1 = (Integer) value1;
 			Integer number2 = (Integer) value2;
 			return number1 + number2;
@@ -152,7 +159,7 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 	@Override
 	public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 		StringBuilder sb = new StringBuilder();
-		
+
 		sb.append("Automizer needed ");
 		Long overallTime = (Long) benchmarkData.getValue(s_OverallTime);
 		sb.append(prettyprintNanoseconds(overallTime));
@@ -160,37 +167,41 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 		Integer overallIterations = (Integer) benchmarkData.getValue(s_OverallIterations);
 		sb.append(overallIterations);
 		sb.append(" iterations. ");
-		
+
 		sb.append("Automata difference (including EdgeChecker) took ");
 		Long differenceTime = (Long) benchmarkData.getValue(s_AutomataDifference);
 		sb.append(prettyprintNanoseconds(differenceTime));
 		sb.append(". ");
-		
+
 		sb.append("Computation of Hoare annotation took ");
 		Long hoareTime = (Long) benchmarkData.getValue(s_HoareAnnotationTime);
 		sb.append(prettyprintNanoseconds(hoareTime));
 		sb.append(". ");
-		
+
 		sb.append("Minimization removed ");
 		sb.append(benchmarkData.getValue(s_StatesRemovedByMinimization));
 		sb.append(" states and took ");
 		Long time = (Long) benchmarkData.getValue(s_AutomataMinimizationTime);
 		sb.append(prettyprintNanoseconds(time));
 		sb.append(". ");
-		
+
 		sb.append("Abstract interpretation took ");
 		Long aiTime = (Long) benchmarkData.getValue(s_AbsIntTime);
 		sb.append(prettyprintNanoseconds(aiTime));
-		sb.append(". ");
-		
+		sb.append(" and ");
+		Integer absIntIterations = (Integer) benchmarkData.getValue(s_AbsIntIterations);
+		sb.append(absIntIterations);
+		sb.append(" iterations. ");
+
 		SizeIterationPair sip = (SizeIterationPair) benchmarkData.getValue(s_BiggestAbstraction);
 		sb.append("Biggest automaton had ");
 		sb.append(sip.getSize());
 		sb.append(" states and ocurred in iteration ");
 		sb.append(sip.getIteration());
 		sb.append(".\t");
-		
-		BackwardCoveringInformation bci = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapability);
+
+		BackwardCoveringInformation bci = (BackwardCoveringInformation) benchmarkData
+				.getValue(s_InterpolantCoveringCapability);
 		sb.append(s_InterpolantCoveringCapability);
 		sb.append(": ");
 		sb.append(bci.toString());
@@ -198,79 +209,71 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 
 		sb.append("ICC %");
 		sb.append(": ");
-		sb.append(new Double(((double) bci.getSuccessfullBackwardCoverings())
-				/bci.getPotentialBackwardCoverings()).toString());
+		sb.append(new Double(((double) bci.getSuccessfullBackwardCoverings()) / bci.getPotentialBackwardCoverings())
+				.toString());
 		sb.append("\t");
-		
+
 		sb.append(s_EdgeCheckerData);
 		sb.append(": ");
-		StatisticsData ecData = 
-				(StatisticsData) benchmarkData.getValue(s_EdgeCheckerData);
+		StatisticsData ecData = (StatisticsData) benchmarkData.getValue(s_EdgeCheckerData);
 		sb.append(ecData);
 		sb.append("\t");
-		
+
 		sb.append(s_PredicateUnifierData);
 		sb.append(": ");
-		StatisticsData puData = 
-				(StatisticsData) benchmarkData.getValue(s_PredicateUnifierData);
+		StatisticsData puData = (StatisticsData) benchmarkData.getValue(s_PredicateUnifierData);
 		sb.append(puData);
 		sb.append("\t");
-		
+
 		sb.append(s_TraceCheckerBenchmark);
 		sb.append(": ");
-		StatisticsData tcData = 
-				(StatisticsData) benchmarkData.getValue(s_TraceCheckerBenchmark);
+		StatisticsData tcData = (StatisticsData) benchmarkData.getValue(s_TraceCheckerBenchmark);
 		sb.append(tcData);
 		sb.append("\t");
-		
+
 		sb.append(s_InterpolantConsolidationBenchmark);
 		sb.append(": ");
-		StatisticsData icData = 
-				(StatisticsData) benchmarkData.getValue(s_InterpolantConsolidationBenchmark);
+		StatisticsData icData = (StatisticsData) benchmarkData.getValue(s_InterpolantConsolidationBenchmark);
 		sb.append(icData);
 		sb.append("\t");
-		
-		StatisticsData tiData = 
-				(StatisticsData) benchmarkData.getValue(s_TotalInterpolationBenchmark);
+
+		StatisticsData tiData = (StatisticsData) benchmarkData.getValue(s_TotalInterpolationBenchmark);
 		if (!tiData.isEmpty()) {
 			sb.append(s_TotalInterpolationBenchmark);
 			sb.append(": ");
 			sb.append(tiData);
 		}
-		
-		
+
 		return sb.toString();
 	}
-	
+
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time/1000000000;
-		long tenthDigit = (time/100000000) % 10;
+		long seconds = time / 1000000000;
+		long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 
 	public class SizeIterationPair {
 		final int m_Size;
 		final int m_Iteration;
+
 		public SizeIterationPair(int size, int iteration) {
 			super();
 			m_Size = size;
 			m_Iteration = iteration;
 		}
+
 		public int getSize() {
 			return m_Size;
 		}
+
 		public int getIteration() {
 			return m_Iteration;
 		}
+
 		@Override
 		public String toString() {
-			return "size=" + m_Size + "occurred in iteration="
-					+ m_Iteration;
+			return "size=" + m_Size + "occurred in iteration=" + m_Iteration;
 		}
-		
-		
-		
-		
 	}
-
 }
