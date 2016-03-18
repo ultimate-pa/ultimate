@@ -35,7 +35,6 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -163,8 +162,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final STATE hierachicalPreState = currentItem.getHierachicalPreState();
 		final ACTION currentAction = currentItem.getAction();
 
-		prepareScope(currentItem);
-
 		// calculate the (abstract) effect of the current action by first
 		// declaring variables in the prestate, and then calculating their
 		// values
@@ -191,6 +188,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			}
 			return null;
 		}
+
+		prepareScope(currentItem);
 
 		if (postStates.size() > mMaxParallelStates) {
 			mLogger.warn(getLogMessageWarnTooManyPostStates(postStates));
@@ -312,7 +311,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.isSummaryWithImplementation(p.getSecond());
 		Predicate<Pair<STATE, ACTION>> filter = p -> !worklist.stream()
 				.anyMatch(w -> w.getAction() == p.getSecond() && w.getPreState() == p.getFirst());
-
 		// check if we should widen at this location before adding new successors
 		// we should widen if the current item is a transition to a loop head
 		// or it is a transition that enters a scope
@@ -327,7 +325,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					availablePostStates);
 			final Set<STATE> fixpoints = availablePostStates.stream().filter(a -> checkFixpoint(oldLoopState, a))
 					.collect(Collectors.toSet());
-			filter = filter.and(p -> !fixpoints.contains(p.getFirst()) || !mLoopDetector.isEnteringLoop(p.getSecond()));
+			if (!fixpoints.isEmpty()) {
+				filter = filter
+						.and(p -> !fixpoints.contains(p.getFirst()) || !mLoopDetector.isEnteringLoop(p.getSecond()));
+			}
 		} else if (mTransitionProvider.isEnteringScope(current)) {
 			final STATE oldScopeState = getLastStateAtScopeEntry(currentItem);
 			if (oldScopeState != null) {
@@ -337,7 +338,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 						availablePostStates);
 				final Set<STATE> fixpoints = availablePostStates.stream().filter(a -> checkFixpoint(oldScopeState, a))
 						.collect(Collectors.toSet());
-				filter = filter.and(p -> !fixpoints.contains(p.getFirst()));
+				if (!fixpoints.isEmpty()) {
+					filter = filter.and(p -> !fixpoints.contains(p.getFirst()));
+				}
 			}
 		}
 
@@ -347,8 +350,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		// do not add already existing items
 		// do not continue with fixpoints into loops
 		// then, add for each remaining pair a successor
-		availablePostStates.stream().flatMap(st -> successors.stream().map(act -> new Pair<>(st, act))).filter(filter)
-				.forEach(p -> addSuccessor(worklist, currentItem, p.getFirst(), p.getSecond()));
+		final List<Pair<STATE, ACTION>> actualSuccessors = availablePostStates.stream()
+				.flatMap(st -> successors.stream().map(act -> new Pair<>(st, act))).filter(filter)
+				.collect(Collectors.toList());
+		actualSuccessors.stream().forEach(p -> addSuccessor(worklist, currentItem, p.getFirst(), p.getSecond()));
 	}
 
 	private void addSuccessor(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
@@ -443,6 +448,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		final Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> stackAtCallLocation = currentItem
 				.getStack();
+
 		// get all stack items in the correct order that contain only calls to the current scope
 		final List<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> relevantStackItems = stackAtCallLocation
 				.stream().sequential().filter(a -> a.getFirst() == currentAction || a.getFirst() == null)
@@ -460,21 +466,31 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final List<STATE> orderedStates = relevantStackItems.stream().sequential()
 				.map(a -> a.getSecond().getAbstractPostStates(currentAction)).flatMap(a -> a.stream().sequential())
 				.collect(Collectors.toList());
-		if (!orderedStates.isEmpty()) {
-			final STATE lastState = orderedStates.get(0);
-			return lastState;
+		if (orderedStates.isEmpty()) {
+			throw new AssertionError("Could not find last state in call stack");
 		}
-
-		final Optional<STATE> lastAllState = stackAtCallLocation.stream().sequential()
-				.map(a -> a.getSecond().getAbstractPostStates(currentAction)).flatMap(a -> a.stream().sequential())
-				.findFirst();
-		if (lastAllState.isPresent()) {
-			mLogger.warn(AbsIntPrefInitializer.INDENT + " Using states from all scopes");
-			return lastAllState.get();
+		// select the last state
+		assert orderedStates.size() >= mMaxUnwindings;
+		final STATE lastState = orderedStates.get(orderedStates.size() - 2);
+		
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("CurrentAction [" + currentAction.hashCode() + "] " + currentAction);
+			mLogger.debug("Stack");
+			stackAtCallLocation.stream().sequential().map(a -> a.getFirst())
+					.map(a -> a == null ? "[G]" : "[" + a.hashCode() + "] " + a.toString()).forEach(mLogger::debug);
+			mLogger.debug("Relevant stack");
+			relevantStackItems.stream().sequential().forEach(a -> {
+				mLogger.debug(
+						a.getFirst() == null ? "[G]" : "[" + a.getFirst().hashCode() + "] " + a.getFirst().toString());
+				mLogger.debug("  " + a.getSecond().toString());
+			});
+			mLogger.debug("Ordered states [" + currentAction.hashCode() + "] " + currentAction);
+			orderedStates.stream().sequential().forEach(a -> {
+				mLogger.debug("[" + a.hashCode() + "] " + a.toLogString());
+			});
+			mLogger.debug("Selected " + lastState.hashCode());
 		}
-		mLogger.warn(AbsIntPrefInitializer.INDENT + "Could not find last state in scope at "
-				+ getHashCodeString(currentAction) + currentAction);
-		return null;
+		return lastState;
 	}
 
 	private boolean checkFixpoint(final STATE oldState, final STATE newState) {
@@ -634,36 +650,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.append(newTransition.getAction().hashCode()).append("]->");
 	}
 
-	private String getHashCodeString(final Object current) {
-		return addHashCodeString(new StringBuilder(), current).toString();
-	}
-
 	private StringBuilder addHashCodeString(final StringBuilder builder, final Object current) {
 		if (current == null) {
 			return builder.append("[?]");
 		}
 		return builder.append("[").append(current.hashCode()).append("]");
 	}
-
-	// private final class PreprocessingResult {
-	// private final STATE mState;
-	// private final Predicate<Pair<STATE, ACTION>> mFilter;
-	//
-	// private PreprocessingResult(final STATE state, final Predicate<Pair<STATE, ACTION>> filter) {
-	// mState = state;
-	// mFilter = filter;
-	// }
-	//
-	// private STATE getState() {
-	// return mState;
-	// }
-	//
-	// private Predicate<Pair<STATE, ACTION>> getFilter() {
-	// return mFilter;
-	// }
-	//
-	// private boolean isEmpty() {
-	// return mState == null;
-	// }
-	// }
 }

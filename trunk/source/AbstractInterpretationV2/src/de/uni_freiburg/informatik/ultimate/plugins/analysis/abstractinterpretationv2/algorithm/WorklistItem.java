@@ -140,14 +140,14 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	public Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> getStack() {
 		final ArrayDeque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> rtr = new ArrayDeque<>();
 		final Iterator<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> storageIter = mScopedStorages
-				.iterator();
+				.descendingIterator();
 		// first, add the global storage
 		rtr.add(new Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>(null, storageIter.next()));
 		if (mScopes == null || mScopes.isEmpty()) {
 			return rtr;
 		}
 
-		final Iterator<Pair<ACTION, STATE>> scopeIter = mScopes.iterator();
+		final Iterator<Pair<ACTION, STATE>> scopeIter = mScopes.descendingIterator();
 
 		while (scopeIter.hasNext() && storageIter.hasNext()) {
 			rtr.add(new Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>(
@@ -196,9 +196,10 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder().append("[").append(mPreState.hashCode()).append("]--[")
-				.append(mAction.hashCode()).append("]--> ? (Scope={");
-		for (final Pair<ACTION, STATE> scope : mScopes) {
-			builder.append("[").append(scope.getFirst().hashCode()).append("]");
+				.append(mAction.hashCode()).append("]--> ? (Scope={[G]");
+		final Iterator<Pair<ACTION, STATE>> iter = mScopes.descendingIterator();
+		while(iter.hasNext()){
+			builder.append("[").append(iter.next().getFirst().hashCode()).append("]");
 		}
 		builder.append("})");
 		return builder.toString();
