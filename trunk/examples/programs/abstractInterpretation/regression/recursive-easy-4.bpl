@@ -3,7 +3,7 @@
 procedure ULTIMATE.start()
 {
   var z : int;
-  call z := foo(1);    
+  call z := foo(10);    
   assert(z == 0);       
 } 
 

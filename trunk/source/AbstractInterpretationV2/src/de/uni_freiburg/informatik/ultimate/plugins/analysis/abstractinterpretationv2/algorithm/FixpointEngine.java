@@ -281,17 +281,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createInitialWorklistItem(final ACTION elem) {
 		final STATE preState = mVarProvider.defineVariablesBefore(elem, mDomain.createFreshState());
 		mStateStorage.addAbstractPreState(elem, preState);
-
-		final WorklistItem<STATE, ACTION, VARDECL, LOCATION> startItem = new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(
-				preState, elem, mStateStorage);
-		if (mTransitionProvider.isEnteringScope(elem)) {
-			startItem.addScope(elem);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(
-						new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering (initial) scope"));
-			}
-		}
-		return startItem;
+		return new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(preState, elem, mStateStorage);
 	}
 
 	private void addSuccessors(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
@@ -471,7 +461,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.map(a -> a.getSecond().getAbstractPostStates(currentAction)).flatMap(a -> a.stream().sequential())
 				.collect(Collectors.toList());
 		if (!orderedStates.isEmpty()) {
-			final STATE lastState = orderedStates.get(orderedStates.size()-1);
+			final STATE lastState = orderedStates.get(0);
 			return lastState;
 		}
 
