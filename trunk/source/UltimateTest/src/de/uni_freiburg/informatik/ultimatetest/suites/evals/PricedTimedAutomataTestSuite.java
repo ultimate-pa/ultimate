@@ -56,7 +56,10 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL 
-			new Triple<>("AutomizerBpl.xml", BPL, "PricedTimedAutomata.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation-Totalinterpolation.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Nolbe.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
@@ -104,17 +107,67 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000 ;
+		return 20 * 1000 ;
 	}
 
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
 		// @formatter:off
 		return new ColumnDefinition[] {
-				new ColumnDefinition("Runtime (ns)", "Total time", ConversionContext.Divide(1000000000, 2, " s"),
-						Aggregate.Sum, Aggregate.Average),
-				new ColumnDefinition("Allocated memory end (bytes)", "Alloc. Memory",
-						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
+				new ColumnDefinition(
+						"Overall time", "Avg. runtime",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+//				new ColumnDefinition(
+//						"Peak memory consumption (bytes)", "Mem{-}ory",
+//						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),						
+				new ColumnDefinition(
+						"Overall iterations", "Iter{-}ations",
+						ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
+//				
+//				new ColumnDefinition("InterpolantConsolidationBenchmark_InterpolantsDropped", "Interpolants dropped", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),								
+//				new ColumnDefinition("InterpolantConsolidationBenchmark_NewlyCreatedInterpolants", "Newly Created Interpolants", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),								
+//				new ColumnDefinition("EdgeCheckerBenchmarkData_Sat", "Num Sats", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),										
+//				new ColumnDefinition("EdgeCheckerBenchmarkData_Unsat", "Num Unsats", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),										
+//				new ColumnDefinition("EdgeCheckerBenchmarkData_Unknown", "Num Unknown", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),										
+//				new ColumnDefinition("EdgeCheckerBenchmarkData_NotChecked", "Num NotChecked", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),										
+//				new ColumnDefinition("InterpolantConsolidationBenchmark_NumOfHoareTripleChecks", "NumOfHTC{-}Checks{-}IC", 
+//						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Max),								
+//				new ColumnDefinition("InterpolantConsolidationBenchmark_TimeOfConsolidation", "Time{-}Of{-}Consol.", 
+//						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average)
+				
+//				new ColumnDefinition(
+//						"NumberOfCodeBlocks", null,
+//						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+//				new ColumnDefinition(
+//						"NumberOfCodeBlocksAsserted", null,
+//						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),		
+//				new ColumnDefinition(
+//						"SizeOfPredicatesFP", null,
+//						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+//				new ColumnDefinition(
+//						"SizeOfPredicatesBP", null,
+//						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+//				new ColumnDefinition(
+//						"Conjuncts in SSA", null,
+//						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+//				new ColumnDefinition(
+//						"Conjuncts in UnsatCore", null,
+//						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+//				new ColumnDefinition(
+//						"ICC %", "ICC",
+//						ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)
+				new ColumnDefinition("Minimization time", "mnmz time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("EdgeCheckerBenchmarkData_EdgeCheckerTime", "ec time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("PredicateUnifierData_Time", "pu time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("TraceCheckerBenchmark_InterpolantComputationTime", "itp time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("Automata difference", "adiff time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("Peak memory consumption (bytes)", "Peak Memory",
 						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average), };
 		// @formatter:on
