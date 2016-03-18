@@ -60,7 +60,8 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 	private IAbstractStateBinaryOperator<IntervalDomainState> mMergeOperator;
 	private IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> mPostOperator;
 
-	public IntervalDomain(Logger logger, BoogieSymbolTable symbolTable, LiteralCollection literalCollector) {
+	public IntervalDomain(final Logger logger, final BoogieSymbolTable symbolTable,
+	        final LiteralCollection literalCollector) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mLiteralCollection = literalCollector;

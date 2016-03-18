@@ -127,7 +127,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		return first.setMixedValues(vars, vals, bools, boolVals, arrays, arrayVals);
 	}
 
-	private IntervalDomainValue determineNextValue(IntervalDomainValue first, IntervalDomainValue second) {
+	private IntervalDomainValue determineNextValue(final IntervalDomainValue first, final IntervalDomainValue second) {
 		// Determine widen mode:
 		// Nothing changed, return same.
 		if (first.isEqualTo(second)) {
@@ -156,8 +156,8 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		// Upper bound is same, or upper bound of second is not larger than upper bound of first, but lower bound has
 		// changed: widen lower bound.
 		// @formatter:off
-		//    [...]
 		//   [...]
+		// [...]
 		// --------
 		// [......]
 		// @formatter:on
@@ -169,7 +169,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		return new IntervalDomainValue(widenLower(firstLower, secondLower), widenUpper(firstUpper, secondUpper));
 	}
 
-	private IntervalValue widenLower(IntervalValue firstLower, IntervalValue secondLower) {
+	private IntervalValue widenLower(final IntervalValue firstLower, final IntervalValue secondLower) {
 		if (firstLower.isInfinity() || secondLower.isInfinity()) {
 			return new IntervalValue();
 		} else {

@@ -999,7 +999,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 *            The other interval of the form [c, d].
 	 * @return min(ac, ad, bc, bd).
 	 */
-	private IntervalValue computeMinMult(IntervalDomainValue other) {
+	private IntervalValue computeMinMult(final IntervalDomainValue other) {
 
 		IntervalValue returnValue = new IntervalValue();
 		boolean valuePresent = false;
@@ -1158,7 +1158,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		return returnValue;
 	}
 
-	private IntervalValue updateIfLarger(IntervalValue oldValue, BigDecimal newValue, boolean valuePresent) {
+	private IntervalValue updateIfLarger(final IntervalValue oldValue, final BigDecimal newValue,
+	        final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) <= 0) {
 				return new IntervalValue(newValue);
@@ -1170,7 +1171,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		}
 	}
 
-	private IntervalValue updateIfSmaller(IntervalValue oldValue, BigDecimal newValue, boolean valuePresent) {
+	private IntervalValue updateIfSmaller(final IntervalValue oldValue, final BigDecimal newValue,
+	        final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) >= 0) {
 				return new IntervalValue(newValue);
@@ -1197,7 +1199,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 *            Another {@link IntervalDomainValue} of the form [x; y].
 	 * @return
 	 */
-	public IntervalDomainValue divide(IntervalDomainValue other) {
+	public IntervalDomainValue divide(final IntervalDomainValue other) {
 		return divideInternally(other);
 	}
 
@@ -1208,7 +1210,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 * @param evaluatedValue
 	 * @return
 	 */
-	public IntervalDomainValue integerDivide(IntervalDomainValue other) {
+	public IntervalDomainValue integerDivide(final IntervalDomainValue other) {
 		IntervalDomainValue result;
 
 		if (other.containsZero()) {
@@ -1254,7 +1256,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		return new IntervalDomainValue(newLower, newUpper);
 	}
 
-	private IntervalDomainValue divideInternally(IntervalDomainValue other) {
+	private IntervalDomainValue divideInternally(final IntervalDomainValue other) {
 		assert other != null;
 
 		if (isBottom() || other.isBottom()) {
@@ -1273,8 +1275,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			return new IntervalDomainValue();
 		} else {
 
-			IntervalValue lowerBound = computeMinDiv(other);
-			IntervalValue upperBound = computeMaxDiv(other);
+			final IntervalValue lowerBound = computeMinDiv(other);
+			final IntervalValue upperBound = computeMaxDiv(other);
 
 			return new IntervalDomainValue(lowerBound, upperBound);
 		}
@@ -1291,7 +1293,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 *            The other interval of the form [c; d].
 	 * @return min(a / c, a / d, b / c, b / d).
 	 */
-	private IntervalValue computeMinDiv(IntervalDomainValue other) {
+	private IntervalValue computeMinDiv(final IntervalDomainValue other) {
 		// If both are infinity, the minimum is infinity.
 		if (isInfinity() && other.isInfinity()) {
 			return new IntervalValue();
@@ -1418,7 +1420,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		return returnValue;
 	}
 
-	private BigDecimal divide(BigDecimal numerator, BigDecimal divisor) {
+	private BigDecimal divide(final BigDecimal numerator, final BigDecimal divisor) {
 		try {
 			return numerator.divide(divisor);
 		} catch (ArithmeticException e) {
@@ -1437,7 +1439,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 *            The other interval of the form [c; d].
 	 * @return max(a / c, a / d, b / c, b / d).
 	 */
-	private IntervalValue computeMaxDiv(IntervalDomainValue other) {
+	private IntervalValue computeMaxDiv(final IntervalDomainValue other) {
 		// If both are infinity, the maximum is infinity.
 		if (isInfinity() && other.isInfinity()) {
 			return new IntervalValue();

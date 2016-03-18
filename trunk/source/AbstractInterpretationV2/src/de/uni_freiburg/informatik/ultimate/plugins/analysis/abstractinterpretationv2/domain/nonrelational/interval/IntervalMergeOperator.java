@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class IntervalMergeOperator implements IAbstractStateBinaryOperator<IntervalDomainState> {
 
 	@Override
-	public IntervalDomainState apply(IntervalDomainState first, IntervalDomainState second) {
+	public IntervalDomainState apply(final IntervalDomainState first, final IntervalDomainState second) {
 		assert first != null;
 		assert second != null;
 

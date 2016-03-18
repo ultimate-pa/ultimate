@@ -627,7 +627,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj == null) {
 			return false;
 		}
@@ -636,11 +636,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			return false;
 		}
 
-		if (obj == this) {
-			return true;
-		}
-
-		return false;
+		return obj == this;
 	}
 
 	/**

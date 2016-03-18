@@ -111,7 +111,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		processStatement(statement);
 
-		assert (oldState.getVariables().isEmpty()) || (mReturnState.size() != 0);
+		assert (oldState.getVariables().isEmpty()) || (!mReturnState.isEmpty());
 
 		return mReturnState;
 	}
