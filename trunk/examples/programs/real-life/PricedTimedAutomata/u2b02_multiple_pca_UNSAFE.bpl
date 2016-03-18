@@ -146,23 +146,28 @@ inv_checked_B_1:
 step_A_1:
   if (sync == sync_none)
   {
-    goto transition$t0, transition$t1;
-transition$t0:
-    assume loc$A_1 == id0_1;
-    assume guard_t0(x,steps);
-    loc$A_1 := id1_1;
-    call schedule_reset_x(0.0);
-    sync := waiting;
-    sync_channel := chan_a;
-    sender := A_1;
-    goto step_B_1;
+    if (loc$A_1 == id1_1)
+    {
+      goto transition$t1;
 transition$t1:
-    assume loc$A_1 == id1_1;
-    assume guard_t1(x,steps);
-    loc$A_1 := id0_1;
-    steps := steps$new + 1;
-    steps$new := steps;
-    goto uppaal2boogie$step;
+      assume guard_t1(x,steps);
+      loc$A_1 := id0_1;
+      steps := steps$new + 1;
+      steps$new := steps;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$A_1 == id0_1)
+    {
+      goto transition$t0;
+transition$t0:
+      assume guard_t0(x,steps);
+      loc$A_1 := id1_1;
+      call schedule_reset_x(0.0);
+      sync := waiting;
+      sync_channel := chan_a;
+      sender := A_1;
+      goto step_B_1;
+    }
   }
   else  if (sync == waiting && sender != A_1)
   {
@@ -171,31 +176,34 @@ transition$t1:
 step_B_1:
   if (sync == sync_none)
   {
-    goto transition$t2, transition$t3;
+    if (loc$B_1 == id2_1)
+    {
+      goto transition$t2, transition$t3;
 transition$t2:
-    assume loc$B_1 == id2_1;
-    assume guard_t2(x,steps);
-    loc$B_1 := id3_1;
-    goto uppaal2boogie$step;
+      assume guard_t2(x,steps);
+      loc$B_1 := id3_1;
+      goto uppaal2boogie$step;
 transition$t3:
-    assume loc$B_1 == id2_1;
-    assume guard_t3(x,steps);
-    loc$B_1 := id2_1;
-    steps := steps$new + 1;
-    steps$new := steps;
-    goto uppaal2boogie$step;
+      assume guard_t3(x,steps);
+      loc$B_1 := id2_1;
+      steps := steps$new + 1;
+      steps$new := steps;
+      goto uppaal2boogie$step;
+    }
   }
   else  if (sync == waiting && sender != B_1)
   {
-    goto transition$t4;
+    if (loc$B_1 == id3_1)
+    {
+      goto transition$t4;
 transition$t4:
-    assume loc$B_1 == id3_1;
-    assume guard_t4(x,steps);
-    assume sync_channel == chan_a;
-    loc$B_1 := id2_1;
-    sync := sync_none;
-    call perform_resets();
-    goto uppaal2boogie$step;
+      assume guard_t4(x,steps);
+      assume sync_channel == chan_a;
+      loc$B_1 := id2_1;
+      sync := sync_none;
+      call perform_resets();
+      goto uppaal2boogie$step;
+    }
   }
   goto deadlock;
   // *** Broadcast Receivers ***

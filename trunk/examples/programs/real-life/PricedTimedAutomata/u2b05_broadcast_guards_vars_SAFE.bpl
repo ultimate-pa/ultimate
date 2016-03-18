@@ -189,32 +189,40 @@ inv_checked_A3_1:
 step_A1_1:
   if (sync == sync_none)
   {
-    goto transition$t0, transition$t1, transition$t2;
-transition$t0:
-    assume loc$A1_1 == id0_1;
-    assume guard_t0(v);
-    loc$A1_1 := id2_1;
-    sync := sync_broadcast;
-    sync_channel := chan_c;
-    sender := A1_1;
-    goto broadcast_rcv$c;
-transition$t1:
-    assume loc$A1_1 == id1_1;
-    assume guard_t1(v);
-    loc$A1_1 := id0_1;
-    sync := waiting;
-    sync_channel := chan_b;
-    sender := A1_1;
-    goto step_A3_1, step_A2_1;
+    if (loc$A1_1 == id2_1)
+    {
+      goto transition$t2;
 transition$t2:
-    assume loc$A1_1 == id2_1;
-    assume guard_t2(v);
-    loc$A1_1 := id1_1;
-    call schedule_reset_v(1);
-    sync := sync_broadcast;
-    sync_channel := chan_a;
-    sender := A1_1;
-    goto broadcast_rcv$a;
+      assume guard_t2(v);
+      loc$A1_1 := id1_1;
+      call schedule_reset_v(1);
+      sync := sync_broadcast;
+      sync_channel := chan_a;
+      sender := A1_1;
+      goto broadcast_rcv$a;
+    }
+    else    if (loc$A1_1 == id1_1)
+    {
+      goto transition$t1;
+transition$t1:
+      assume guard_t1(v);
+      loc$A1_1 := id0_1;
+      sync := waiting;
+      sync_channel := chan_b;
+      sender := A1_1;
+      goto step_A3_1, step_A2_1;
+    }
+    else    if (loc$A1_1 == id0_1)
+    {
+      goto transition$t0;
+transition$t0:
+      assume guard_t0(v);
+      loc$A1_1 := id2_1;
+      sync := sync_broadcast;
+      sync_channel := chan_c;
+      sender := A1_1;
+      goto broadcast_rcv$c;
+    }
   }
   else  if (sync == waiting && sender != A1_1)
   {
@@ -226,15 +234,17 @@ step_A2_1:
   }
   else  if (sync == waiting && sender != A2_1)
   {
-    goto transition$t4;
+    if (loc$A2_1 == id5_1)
+    {
+      goto transition$t4;
 transition$t4:
-    assume loc$A2_1 == id5_1;
-    assume guard_t4(v);
-    assume sync_channel == chan_b;
-    loc$A2_1 := id4_1;
-    sync := sync_none;
-    call perform_resets();
-    goto uppaal2boogie$step;
+      assume guard_t4(v);
+      assume sync_channel == chan_b;
+      loc$A2_1 := id4_1;
+      sync := sync_none;
+      call perform_resets();
+      goto uppaal2boogie$step;
+    }
   }
   goto deadlock;
 step_A3_1:
@@ -243,15 +253,17 @@ step_A3_1:
   }
   else  if (sync == waiting && sender != A3_1)
   {
-    goto transition$t8;
+    if (loc$A3_1 == id7_1)
+    {
+      goto transition$t8;
 transition$t8:
-    assume loc$A3_1 == id7_1;
-    assume guard_t8(v);
-    assume sync_channel == chan_b;
-    loc$A3_1 := id9_1;
-    sync := sync_none;
-    call perform_resets();
-    goto uppaal2boogie$step;
+      assume guard_t8(v);
+      assume sync_channel == chan_b;
+      loc$A3_1 := id9_1;
+      sync := sync_none;
+      call perform_resets();
+      goto uppaal2boogie$step;
+    }
   }
   goto deadlock;
   // *** Broadcast Receivers ***
@@ -260,39 +272,36 @@ broadcast_rcv$a:
   // Template A2_1
   if (sender != A2_1)
   {
-    goto transition$t5, broadcast_rcvr_done$A2_1$a$negative;
-  }
-  else
-  {
-    goto broadcast_rcvr_done$a$A2_1;
-  }
+    if (loc$A2_1 == id6_1)
+    {
+      goto transition$t5, broadcast_rcvr_done$A2_1$a$id6_1$negative;
 transition$t5:
-  assume loc$A2_1 == id6_1;
-  assume guard_t5(v);
-  loc$A2_1 := id5_1;
-  call schedule_reset_v(2);
-  goto broadcast_rcvr_done$a$A2_1;
-broadcast_rcvr_done$A2_1$a$negative:
-  assume !(loc$A2_1 == id6_1 && guard_t5(v));
+      assume guard_t5(v);
+      loc$A2_1 := id5_1;
+      call schedule_reset_v(2);
+      goto broadcast_rcvr_done$a$A2_1;
+broadcast_rcvr_done$A2_1$a$id6_1$negative:
+      assume !guard_t5(v);
+    }
+  }
 broadcast_rcvr_done$a$A2_1:
   // Template A3_1
   if (sender != A3_1)
   {
-    goto transition$t6, broadcast_rcvr_done$A3_1$a$negative;
-  }
-  else
-  {
-    goto broadcast_rcvr_done$a$A3_1;
-  }
+    if (loc$A3_1 == id8_1)
+    {
+      goto transition$t6, broadcast_rcvr_done$A3_1$a$id8_1$negative;
 transition$t6:
-  assume loc$A3_1 == id8_1;
-  assume guard_t6(v);
-  loc$A3_1 := id7_1;
-  call schedule_reset_v(v$new + 1);
-  goto broadcast_rcvr_done$a$A3_1;
-broadcast_rcvr_done$A3_1$a$negative:
-  assume !(loc$A3_1 == id8_1 && guard_t6(v));
+      assume guard_t6(v);
+      loc$A3_1 := id7_1;
+      call schedule_reset_v(v$new + 1);
+      goto broadcast_rcvr_done$a$A3_1;
+broadcast_rcvr_done$A3_1$a$id8_1$negative:
+      assume !guard_t6(v);
+    }
+  }
 broadcast_rcvr_done$a$A3_1:
+  // All receivers processed for channel a
   call perform_resets();
   sync := sync_none;
   goto uppaal2boogie$step;
@@ -302,37 +311,34 @@ broadcast_rcv$c:
   // Template A2_1
   if (sender != A2_1)
   {
-    goto transition$t3, broadcast_rcvr_done$A2_1$c$negative;
-  }
-  else
-  {
-    goto broadcast_rcvr_done$c$A2_1;
-  }
+    if (loc$A2_1 == id4_1)
+    {
+      goto transition$t3, broadcast_rcvr_done$A2_1$c$id4_1$negative;
 transition$t3:
-  assume loc$A2_1 == id4_1;
-  assume guard_t3(v);
-  loc$A2_1 := id3_1;
-  goto broadcast_rcvr_done$c$A2_1;
-broadcast_rcvr_done$A2_1$c$negative:
-  assume !(loc$A2_1 == id4_1 && guard_t3(v));
+      assume guard_t3(v);
+      loc$A2_1 := id3_1;
+      goto broadcast_rcvr_done$c$A2_1;
+broadcast_rcvr_done$A2_1$c$id4_1$negative:
+      assume !guard_t3(v);
+    }
+  }
 broadcast_rcvr_done$c$A2_1:
   // Template A3_1
   if (sender != A3_1)
   {
-    goto transition$t7, broadcast_rcvr_done$A3_1$c$negative;
-  }
-  else
-  {
-    goto broadcast_rcvr_done$c$A3_1;
-  }
+    if (loc$A3_1 == id9_1)
+    {
+      goto transition$t7, broadcast_rcvr_done$A3_1$c$id9_1$negative;
 transition$t7:
-  assume loc$A3_1 == id9_1;
-  assume guard_t7(v);
-  loc$A3_1 := id10_1;
-  goto broadcast_rcvr_done$c$A3_1;
-broadcast_rcvr_done$A3_1$c$negative:
-  assume !(loc$A3_1 == id9_1 && guard_t7(v));
+      assume guard_t7(v);
+      loc$A3_1 := id10_1;
+      goto broadcast_rcvr_done$c$A3_1;
+broadcast_rcvr_done$A3_1$c$id9_1$negative:
+      assume !guard_t7(v);
+    }
+  }
 broadcast_rcvr_done$c$A3_1:
+  // All receivers processed for channel c
   call perform_resets();
   sync := sync_none;
   goto uppaal2boogie$step;

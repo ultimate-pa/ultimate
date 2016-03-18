@@ -115,19 +115,24 @@ inv_checked_Template_1:
 step_Template_1:
   if (sync == sync_none)
   {
-    goto transition$t0, transition$t1;
-transition$t0:
-    assume loc$Template_1 == id0_1;
-    assume guard_t0(time,x);
-    loc$Template_1 := id1_1;
-    x := 0.0;
-    x$new := x;
-    goto uppaal2boogie$step;
+    if (loc$Template_1 == id1_1)
+    {
+      goto transition$t1;
 transition$t1:
-    assume loc$Template_1 == id1_1;
-    assume guard_t1(time,x);
-    loc$Template_1 := id0_1;
-    goto uppaal2boogie$step;
+      assume guard_t1(time,x);
+      loc$Template_1 := id0_1;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$Template_1 == id0_1)
+    {
+      goto transition$t0;
+transition$t0:
+      assume guard_t0(time,x);
+      loc$Template_1 := id1_1;
+      x := 0.0;
+      x$new := x;
+      goto uppaal2boogie$step;
+    }
   }
   else  if (sync == waiting && sender != Template_1)
   {

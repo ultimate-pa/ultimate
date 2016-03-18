@@ -644,170 +644,206 @@ inv_checked_ENV_1:
 step_MAC_1:
   if (sync == sync_none)
   {
-    goto transition$t1, transition$t2, transition$t3, transition$t5, transition$t8, transition$t9, transition$t11, transition$t14, transition$t15, transition$t17, transition$t18, transition$t19;
-transition$t1:
-    assume loc$MAC_1 == id1_1;
-    assume guard_t1(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id7_1;
-    sync := waiting;
-    sync_channel := chan_TX_END;
-    sender := MAC_1;
-    goto step_MEDIUM_1;
-transition$t2:
-    assume loc$MAC_1 == id2_1;
-    assume guard_t2(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id1_1;
-    sync := waiting;
-    sync_channel := chan_TX_START;
-    sender := MAC_1;
-    goto step_MEDIUM_1;
-transition$t3:
-    assume loc$MAC_1 == id9_1;
-    assume guard_t3(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id7_1;
-    goto uppaal2boogie$step;
-transition$t5:
-    assume loc$MAC_1 == id3_1;
-    assume guard_t5(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id12_1;
-    MAC_1$t := 0.0;
-    MAC_1$t$new := MAC_1$t;
-    goto uppaal2boogie$step;
-transition$t8:
-    assume loc$MAC_1 == id4_1;
-    assume guard_t8(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id3_1;
-    call schedule_reset_queue(false);
-    sync := waiting;
-    sync_channel := chan_TX_END;
-    sender := MAC_1;
-    goto step_MEDIUM_1;
-transition$t9:
-    assume loc$MAC_1 == id9_1;
-    assume guard_t9(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id4_1;
-    call schedule_reset_MAC_1$t0(0.0);
-    sync := waiting;
-    sync_channel := chan_TX_START;
-    sender := MAC_1;
-    goto step_MEDIUM_1;
-transition$t11:
-    assume loc$MAC_1 == id6_1;
-    assume guard_t11(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id5_1;
-    sync := waiting;
-    sync_channel := chan_PKT_RCV;
-    sender := MAC_1;
-    goto step_APP_RX_1;
-transition$t14:
-    assume loc$MAC_1 == id7_1;
-    assume guard_t14(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id12_1;
-    MAC_1$t := 0.0;
-    MAC_1$t$new := MAC_1$t;
-    goto uppaal2boogie$step;
-transition$t15:
-    assume loc$MAC_1 == id10_1;
-    assume guard_t15(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id7_1;
-    goto uppaal2boogie$step;
-transition$t17:
-    assume loc$MAC_1 == id11_1;
-    assume guard_t17(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id9_1;
-    goto uppaal2boogie$step;
-transition$t18:
-    assume loc$MAC_1 == id11_1;
-    assume guard_t18(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id10_1;
-    goto uppaal2boogie$step;
+    if (loc$MAC_1 == id12_1)
+    {
+      goto transition$t19;
 transition$t19:
-    assume loc$MAC_1 == id12_1;
-    assume guard_t19(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MAC_1 := id11_1;
-    MAC_1$t := 0.0;
-    MAC_1$t$new := MAC_1$t;
-    MAC_1$t0 := 0.0;
-    MAC_1$t0$new := MAC_1$t0;
-    goto uppaal2boogie$step;
+      assume guard_t19(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id11_1;
+      MAC_1$t := 0.0;
+      MAC_1$t$new := MAC_1$t;
+      MAC_1$t0 := 0.0;
+      MAC_1$t0$new := MAC_1$t0;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$MAC_1 == id11_1)
+    {
+      goto transition$t17, transition$t18;
+transition$t17:
+      assume guard_t17(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id9_1;
+      goto uppaal2boogie$step;
+transition$t18:
+      assume guard_t18(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id10_1;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$MAC_1 == id10_1)
+    {
+      goto transition$t15;
+transition$t15:
+      assume guard_t15(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id7_1;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$MAC_1 == id7_1)
+    {
+      goto transition$t14;
+transition$t14:
+      assume guard_t14(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id12_1;
+      MAC_1$t := 0.0;
+      MAC_1$t$new := MAC_1$t;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$MAC_1 == id6_1)
+    {
+      goto transition$t11;
+transition$t11:
+      assume guard_t11(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id5_1;
+      sync := waiting;
+      sync_channel := chan_PKT_RCV;
+      sender := MAC_1;
+      goto step_APP_RX_1;
+    }
+    else    if (loc$MAC_1 == id4_1)
+    {
+      goto transition$t8;
+transition$t8:
+      assume guard_t8(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id3_1;
+      call schedule_reset_queue(false);
+      sync := waiting;
+      sync_channel := chan_TX_END;
+      sender := MAC_1;
+      goto step_MEDIUM_1;
+    }
+    else    if (loc$MAC_1 == id3_1)
+    {
+      goto transition$t5;
+transition$t5:
+      assume guard_t5(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id12_1;
+      MAC_1$t := 0.0;
+      MAC_1$t$new := MAC_1$t;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$MAC_1 == id9_1)
+    {
+      goto transition$t3, transition$t9;
+transition$t3:
+      assume guard_t3(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id7_1;
+      goto uppaal2boogie$step;
+transition$t9:
+      assume guard_t9(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id4_1;
+      call schedule_reset_MAC_1$t0(0.0);
+      sync := waiting;
+      sync_channel := chan_TX_START;
+      sender := MAC_1;
+      goto step_MEDIUM_1;
+    }
+    else    if (loc$MAC_1 == id2_1)
+    {
+      goto transition$t2;
+transition$t2:
+      assume guard_t2(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id1_1;
+      sync := waiting;
+      sync_channel := chan_TX_START;
+      sender := MAC_1;
+      goto step_MEDIUM_1;
+    }
+    else    if (loc$MAC_1 == id1_1)
+    {
+      goto transition$t1;
+transition$t1:
+      assume guard_t1(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id7_1;
+      sync := waiting;
+      sync_channel := chan_TX_END;
+      sender := MAC_1;
+      goto step_MEDIUM_1;
+    }
   }
   else  if (sync == waiting && sender != MAC_1)
   {
-    goto transition$t7, transition$t12;
+    if (loc$MAC_1 == id5_1)
+    {
+      goto transition$t7, transition$t12;
 transition$t7:
-    assume loc$MAC_1 == id5_1;
-    assume guard_t7(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    assume sync_channel == chan_ACK;
-    loc$MAC_1 := id2_1;
-    sync := sync_none;
-    call perform_resets();
-    MAC_1$t0 := 0.0;
-    MAC_1$t0$new := MAC_1$t0;
-    goto uppaal2boogie$step;
+      assume guard_t7(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      assume sync_channel == chan_ACK;
+      loc$MAC_1 := id2_1;
+      sync := sync_none;
+      call perform_resets();
+      MAC_1$t0 := 0.0;
+      MAC_1$t0$new := MAC_1$t0;
+      goto uppaal2boogie$step;
 transition$t12:
-    assume loc$MAC_1 == id5_1;
-    assume guard_t12(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    assume sync_channel == chan_NO_ACK;
-    loc$MAC_1 := id7_1;
-    sync := sync_none;
-    call perform_resets();
-    goto uppaal2boogie$step;
+      assume guard_t12(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      assume sync_channel == chan_NO_ACK;
+      loc$MAC_1 := id7_1;
+      sync := sync_none;
+      call perform_resets();
+      goto uppaal2boogie$step;
+    }
   }
   goto deadlock;
 step_APP_RX_1:
   if (sync == sync_none)
   {
-    goto transition$t20, transition$t21;
+    if (loc$APP_RX_1 == id13_1)
+    {
+      goto transition$t20, transition$t21;
 transition$t20:
-    assume loc$APP_RX_1 == id13_1;
-    assume guard_t20(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$APP_RX_1 := id14_1;
-    sync := waiting;
-    sync_channel := chan_NO_ACK;
-    sender := APP_RX_1;
-    goto step_MAC_1;
+      assume guard_t20(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$APP_RX_1 := id14_1;
+      sync := waiting;
+      sync_channel := chan_NO_ACK;
+      sender := APP_RX_1;
+      goto step_MAC_1;
 transition$t21:
-    assume loc$APP_RX_1 == id13_1;
-    assume guard_t21(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$APP_RX_1 := id14_1;
-    sync := waiting;
-    sync_channel := chan_ACK;
-    sender := APP_RX_1;
-    goto step_MAC_1;
+      assume guard_t21(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$APP_RX_1 := id14_1;
+      sync := waiting;
+      sync_channel := chan_ACK;
+      sender := APP_RX_1;
+      goto step_MAC_1;
+    }
   }
   else  if (sync == waiting && sender != APP_RX_1)
   {
-    goto transition$t22;
+    if (loc$APP_RX_1 == id14_1)
+    {
+      goto transition$t22;
 transition$t22:
-    assume loc$APP_RX_1 == id14_1;
-    assume guard_t22(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    assume sync_channel == chan_PKT_RCV;
-    loc$APP_RX_1 := id13_1;
-    sync := sync_none;
-    call perform_resets();
-    APP_RX_1$t0 := 0.0;
-    APP_RX_1$t0$new := APP_RX_1$t0;
-    goto uppaal2boogie$step;
+      assume guard_t22(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      assume sync_channel == chan_PKT_RCV;
+      loc$APP_RX_1 := id13_1;
+      sync := sync_none;
+      call perform_resets();
+      APP_RX_1$t0 := 0.0;
+      APP_RX_1$t0$new := APP_RX_1$t0;
+      goto uppaal2boogie$step;
+    }
   }
   goto deadlock;
 step_APP_LZ_1:
   if (sync == sync_none)
   {
-    goto transition$t23, transition$t24;
-transition$t23:
-    assume loc$APP_LZ_1 == id15_1;
-    assume guard_t23(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$APP_LZ_1 := id16_1;
-    APP_LZ_1$t0 := 0.0;
-    APP_LZ_1$t0$new := APP_LZ_1$t0;
-    goto uppaal2boogie$step;
+    if (loc$APP_LZ_1 == id16_1)
+    {
+      goto transition$t24;
 transition$t24:
-    assume loc$APP_LZ_1 == id16_1;
-    assume guard_t24(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$APP_LZ_1 := id15_1;
-    queue := true;
-    queue$new := queue;
-    goto uppaal2boogie$step;
+      assume guard_t24(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$APP_LZ_1 := id15_1;
+      queue := true;
+      queue$new := queue;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$APP_LZ_1 == id15_1)
+    {
+      goto transition$t23;
+transition$t23:
+      assume guard_t23(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$APP_LZ_1 := id16_1;
+      APP_LZ_1$t0 := 0.0;
+      APP_LZ_1$t0$new := APP_LZ_1$t0;
+      goto uppaal2boogie$step;
+    }
   }
   else  if (sync == waiting && sender != APP_LZ_1)
   {
@@ -816,182 +852,216 @@ transition$t24:
 step_MEDIUM_1:
   if (sync == sync_none)
   {
-    goto transition$t26, transition$t28, transition$t32;
-transition$t26:
-    assume loc$MEDIUM_1 == id17_1;
-    assume guard_t26(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MEDIUM_1 := id22_1;
-    call schedule_reset_MEDIUM_1$sendCount(0);
-    call schedule_reset_channelBusy(false);
-    sync := sync_broadcast;
-    sync_channel := chan_RX_END;
-    sender := MEDIUM_1;
-    goto broadcast_rcv$RX_END;
-transition$t28:
-    assume loc$MEDIUM_1 == id18_1;
-    assume guard_t28(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MEDIUM_1 := id22_1;
-    call schedule_reset_MEDIUM_1$sendCount(0);
-    call schedule_reset_channelBusy(false);
-    sync := sync_broadcast;
-    sync_channel := chan_COLLISION;
-    sender := MEDIUM_1;
-    goto broadcast_rcv$COLLISION;
+    if (loc$MEDIUM_1 == id21_1)
+    {
+      goto transition$t32;
 transition$t32:
-    assume loc$MEDIUM_1 == id21_1;
-    assume guard_t32(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$MEDIUM_1 := id20_1;
-    sync := sync_broadcast;
-    sync_channel := chan_RX_START;
-    sender := MEDIUM_1;
-    goto broadcast_rcv$RX_START;
+      assume guard_t32(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MEDIUM_1 := id20_1;
+      sync := sync_broadcast;
+      sync_channel := chan_RX_START;
+      sender := MEDIUM_1;
+      goto broadcast_rcv$RX_START;
+    }
+    else    if (loc$MEDIUM_1 == id18_1)
+    {
+      goto transition$t28;
+transition$t28:
+      assume guard_t28(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MEDIUM_1 := id22_1;
+      call schedule_reset_MEDIUM_1$sendCount(0);
+      call schedule_reset_channelBusy(false);
+      sync := sync_broadcast;
+      sync_channel := chan_COLLISION;
+      sender := MEDIUM_1;
+      goto broadcast_rcv$COLLISION;
+    }
+    else    if (loc$MEDIUM_1 == id17_1)
+    {
+      goto transition$t26;
+transition$t26:
+      assume guard_t26(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MEDIUM_1 := id22_1;
+      call schedule_reset_MEDIUM_1$sendCount(0);
+      call schedule_reset_channelBusy(false);
+      sync := sync_broadcast;
+      sync_channel := chan_RX_END;
+      sender := MEDIUM_1;
+      goto broadcast_rcv$RX_END;
+    }
   }
   else  if (sync == waiting && sender != MEDIUM_1)
   {
-    goto transition$t25, transition$t27, transition$t29, transition$t30, transition$t31, transition$t33;
-transition$t25:
-    assume loc$MEDIUM_1 == id19_1;
-    assume guard_t25(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    assume sync_channel == chan_TX_START;
-    loc$MEDIUM_1 := id19_1;
-    sync := sync_none;
-    call perform_resets();
-    MEDIUM_1$sendCount := MEDIUM_1$sendCount$new + 1;
-    MEDIUM_1$sendCount$new := MEDIUM_1$sendCount;
-    goto uppaal2boogie$step;
-transition$t27:
-    assume loc$MEDIUM_1 == id20_1;
-    assume guard_t27(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    assume sync_channel == chan_TX_END;
-    loc$MEDIUM_1 := id17_1;
-    sync := sync_none;
-    call perform_resets();
-    MEDIUM_1$t0 := 0.0;
-    MEDIUM_1$t0$new := MEDIUM_1$t0;
-    goto uppaal2boogie$step;
-transition$t29:
-    assume loc$MEDIUM_1 == id19_1;
-    assume guard_t29(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    assume sync_channel == chan_TX_END;
-    loc$MEDIUM_1 := id18_1;
-    sync := sync_none;
-    call perform_resets();
-    MEDIUM_1$t0 := 0.0;
-    MEDIUM_1$t0$new := MEDIUM_1$t0;
-    goto uppaal2boogie$step;
-transition$t30:
-    assume loc$MEDIUM_1 == id19_1;
-    assume guard_t30(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    assume sync_channel == chan_TX_END;
-    loc$MEDIUM_1 := id19_1;
-    sync := sync_none;
-    call perform_resets();
-    MEDIUM_1$sendCount := MEDIUM_1$sendCount$new - 1;
-    MEDIUM_1$sendCount$new := MEDIUM_1$sendCount;
-    goto uppaal2boogie$step;
-transition$t31:
-    assume loc$MEDIUM_1 == id20_1;
-    assume guard_t31(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    assume sync_channel == chan_TX_START;
-    loc$MEDIUM_1 := id19_1;
-    sync := sync_none;
-    call perform_resets();
-    MEDIUM_1$sendCount := MEDIUM_1$sendCount$new + 1;
-    MEDIUM_1$sendCount$new := MEDIUM_1$sendCount;
-    goto uppaal2boogie$step;
+    if (loc$MEDIUM_1 == id22_1)
+    {
+      goto transition$t33;
 transition$t33:
-    assume loc$MEDIUM_1 == id22_1;
-    assume guard_t33(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    assume sync_channel == chan_TX_START;
-    loc$MEDIUM_1 := id21_1;
-    sync := sync_none;
-    call perform_resets();
-    MEDIUM_1$t0 := 0.0;
-    MEDIUM_1$t0$new := MEDIUM_1$t0;
-    MEDIUM_1$sendCount := 1;
-    MEDIUM_1$sendCount$new := MEDIUM_1$sendCount;
-    channelBusy := true;
-    channelBusy$new := channelBusy;
-    goto uppaal2boogie$step;
+      assume guard_t33(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      assume sync_channel == chan_TX_START;
+      loc$MEDIUM_1 := id21_1;
+      sync := sync_none;
+      call perform_resets();
+      MEDIUM_1$t0 := 0.0;
+      MEDIUM_1$t0$new := MEDIUM_1$t0;
+      MEDIUM_1$sendCount := 1;
+      MEDIUM_1$sendCount$new := MEDIUM_1$sendCount;
+      channelBusy := true;
+      channelBusy$new := channelBusy;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$MEDIUM_1 == id20_1)
+    {
+      goto transition$t27, transition$t31;
+transition$t27:
+      assume guard_t27(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      assume sync_channel == chan_TX_END;
+      loc$MEDIUM_1 := id17_1;
+      sync := sync_none;
+      call perform_resets();
+      MEDIUM_1$t0 := 0.0;
+      MEDIUM_1$t0$new := MEDIUM_1$t0;
+      goto uppaal2boogie$step;
+transition$t31:
+      assume guard_t31(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      assume sync_channel == chan_TX_START;
+      loc$MEDIUM_1 := id19_1;
+      sync := sync_none;
+      call perform_resets();
+      MEDIUM_1$sendCount := MEDIUM_1$sendCount$new + 1;
+      MEDIUM_1$sendCount$new := MEDIUM_1$sendCount;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$MEDIUM_1 == id19_1)
+    {
+      goto transition$t25, transition$t29, transition$t30;
+transition$t25:
+      assume guard_t25(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      assume sync_channel == chan_TX_START;
+      loc$MEDIUM_1 := id19_1;
+      sync := sync_none;
+      call perform_resets();
+      MEDIUM_1$sendCount := MEDIUM_1$sendCount$new + 1;
+      MEDIUM_1$sendCount$new := MEDIUM_1$sendCount;
+      goto uppaal2boogie$step;
+transition$t29:
+      assume guard_t29(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      assume sync_channel == chan_TX_END;
+      loc$MEDIUM_1 := id18_1;
+      sync := sync_none;
+      call perform_resets();
+      MEDIUM_1$t0 := 0.0;
+      MEDIUM_1$t0$new := MEDIUM_1$t0;
+      goto uppaal2boogie$step;
+transition$t30:
+      assume guard_t30(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      assume sync_channel == chan_TX_END;
+      loc$MEDIUM_1 := id19_1;
+      sync := sync_none;
+      call perform_resets();
+      MEDIUM_1$sendCount := MEDIUM_1$sendCount$new - 1;
+      MEDIUM_1$sendCount$new := MEDIUM_1$sendCount;
+      goto uppaal2boogie$step;
+    }
   }
   goto deadlock;
 step_ENV_1:
   if (sync == sync_none)
   {
-    goto transition$t34, transition$t35, transition$t36, transition$t37, transition$t38, transition$t39, transition$t40, transition$t41, transition$t44, transition$t45;
-transition$t34:
-    assume loc$ENV_1 == id23_1;
-    assume guard_t34(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id24_1;
-    goto uppaal2boogie$step;
-transition$t35:
-    assume loc$ENV_1 == id28_1;
-    assume guard_t35(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id23_1;
-    call schedule_reset_ENV_1$t0(0.0);
-    sync := waiting;
-    sync_channel := chan_TX_END;
-    sender := ENV_1;
-    goto step_MEDIUM_1;
-transition$t36:
-    assume loc$ENV_1 == id24_1;
-    assume guard_t36(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id31_1;
-    ENV_1$t := 0.0;
-    ENV_1$t$new := ENV_1$t;
-    goto uppaal2boogie$step;
-transition$t37:
-    assume loc$ENV_1 == id30_1;
-    assume guard_t37(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id24_1;
-    goto uppaal2boogie$step;
-transition$t38:
-    assume loc$ENV_1 == id27_1;
-    assume guard_t38(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id25_1;
-    goto uppaal2boogie$step;
-transition$t39:
-    assume loc$ENV_1 == id25_1;
-    assume guard_t39(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id31_1;
-    ENV_1$t := 0.0;
-    ENV_1$t$new := ENV_1$t;
-    goto uppaal2boogie$step;
-transition$t40:
-    assume loc$ENV_1 == id26_1;
-    assume guard_t40(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id25_1;
-    sync := waiting;
-    sync_channel := chan_TX_END;
-    sender := ENV_1;
-    goto step_MEDIUM_1;
-transition$t41:
-    assume loc$ENV_1 == id27_1;
-    assume guard_t41(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id26_1;
-    call schedule_reset_ENV_1$t0(0.0);
-    sync := waiting;
-    sync_channel := chan_TX_START;
-    sender := ENV_1;
-    goto step_MEDIUM_1;
-transition$t44:
-    assume loc$ENV_1 == id30_1;
-    assume guard_t44(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id28_1;
-    call schedule_reset_ENV_1$t0(0.0);
-    sync := waiting;
-    sync_channel := chan_TX_START;
-    sender := ENV_1;
-    goto step_MEDIUM_1;
+    if (loc$ENV_1 == id31_1)
+    {
+      goto transition$t45;
 transition$t45:
-    assume loc$ENV_1 == id31_1;
-    assume guard_t45(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-    loc$ENV_1 := id30_1;
-    ENV_1$t0 := 0.0;
-    ENV_1$t0$new := ENV_1$t0;
-    ENV_1$t := 0.0;
-    ENV_1$t$new := ENV_1$t;
-    goto uppaal2boogie$step;
+      assume guard_t45(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id30_1;
+      ENV_1$t0 := 0.0;
+      ENV_1$t0$new := ENV_1$t0;
+      ENV_1$t := 0.0;
+      ENV_1$t$new := ENV_1$t;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$ENV_1 == id26_1)
+    {
+      goto transition$t40;
+transition$t40:
+      assume guard_t40(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id25_1;
+      sync := waiting;
+      sync_channel := chan_TX_END;
+      sender := ENV_1;
+      goto step_MEDIUM_1;
+    }
+    else    if (loc$ENV_1 == id25_1)
+    {
+      goto transition$t39;
+transition$t39:
+      assume guard_t39(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id31_1;
+      ENV_1$t := 0.0;
+      ENV_1$t$new := ENV_1$t;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$ENV_1 == id27_1)
+    {
+      goto transition$t38, transition$t41;
+transition$t38:
+      assume guard_t38(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id25_1;
+      goto uppaal2boogie$step;
+transition$t41:
+      assume guard_t41(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id26_1;
+      call schedule_reset_ENV_1$t0(0.0);
+      sync := waiting;
+      sync_channel := chan_TX_START;
+      sender := ENV_1;
+      goto step_MEDIUM_1;
+    }
+    else    if (loc$ENV_1 == id30_1)
+    {
+      goto transition$t37, transition$t44;
+transition$t37:
+      assume guard_t37(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id24_1;
+      goto uppaal2boogie$step;
+transition$t44:
+      assume guard_t44(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id28_1;
+      call schedule_reset_ENV_1$t0(0.0);
+      sync := waiting;
+      sync_channel := chan_TX_START;
+      sender := ENV_1;
+      goto step_MEDIUM_1;
+    }
+    else    if (loc$ENV_1 == id24_1)
+    {
+      goto transition$t36;
+transition$t36:
+      assume guard_t36(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id31_1;
+      ENV_1$t := 0.0;
+      ENV_1$t$new := ENV_1$t;
+      goto uppaal2boogie$step;
+    }
+    else    if (loc$ENV_1 == id28_1)
+    {
+      goto transition$t35;
+transition$t35:
+      assume guard_t35(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id23_1;
+      call schedule_reset_ENV_1$t0(0.0);
+      sync := waiting;
+      sync_channel := chan_TX_END;
+      sender := ENV_1;
+      goto step_MEDIUM_1;
+    }
+    else    if (loc$ENV_1 == id23_1)
+    {
+      goto transition$t34;
+transition$t34:
+      assume guard_t34(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id24_1;
+      goto uppaal2boogie$step;
+    }
   }
   else  if (sync == waiting && sender != ENV_1)
   {
@@ -1003,20 +1073,19 @@ broadcast_rcv$COLLISION:
   // Template MAC_1
   if (sender != MAC_1)
   {
-    goto transition$t4, broadcast_rcvr_done$MAC_1$COLLISION$negative;
-  }
-  else
-  {
-    goto broadcast_rcvr_done$COLLISION$MAC_1;
-  }
+    if (loc$MAC_1 == id8_1)
+    {
+      goto transition$t4, broadcast_rcvr_done$MAC_1$COLLISION$id8_1$negative;
 transition$t4:
-  assume loc$MAC_1 == id8_1;
-  assume guard_t4(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-  loc$MAC_1 := id7_1;
-  goto broadcast_rcvr_done$COLLISION$MAC_1;
-broadcast_rcvr_done$MAC_1$COLLISION$negative:
-  assume !(loc$MAC_1 == id8_1 && guard_t4(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue));
+      assume guard_t4(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id7_1;
+      goto broadcast_rcvr_done$COLLISION$MAC_1;
+broadcast_rcvr_done$MAC_1$COLLISION$id8_1$negative:
+      assume !guard_t4(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+    }
+  }
 broadcast_rcvr_done$COLLISION$MAC_1:
+  // All receivers processed for channel COLLISION
   call perform_resets();
   sync := sync_none;
   goto uppaal2boogie$step;
@@ -1026,45 +1095,46 @@ broadcast_rcv$RX_END:
   // Template MAC_1
   if (sender != MAC_1)
   {
-    goto transition$t0, transition$t13, broadcast_rcvr_done$MAC_1$RX_END$negative;
-  }
-  else
-  {
-    goto broadcast_rcvr_done$RX_END$MAC_1;
-  }
-transition$t0:
-  assume loc$MAC_1 == id0_1;
-  assume guard_t0(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-  loc$MAC_1 := id7_1;
-  goto broadcast_rcvr_done$RX_END$MAC_1;
+    if (loc$MAC_1 == id8_1)
+    {
+      goto transition$t13, broadcast_rcvr_done$MAC_1$RX_END$id8_1$negative;
 transition$t13:
-  assume loc$MAC_1 == id8_1;
-  assume guard_t13(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-  loc$MAC_1 := id6_1;
-  call schedule_reset_MAC_1$t0(0.0);
-  goto broadcast_rcvr_done$RX_END$MAC_1;
-broadcast_rcvr_done$MAC_1$RX_END$negative:
-  assume !(loc$MAC_1 == id0_1 && guard_t0(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue));
-  assume !(loc$MAC_1 == id8_1 && guard_t13(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue));
+      assume guard_t13(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id6_1;
+      call schedule_reset_MAC_1$t0(0.0);
+      goto broadcast_rcvr_done$RX_END$MAC_1;
+broadcast_rcvr_done$MAC_1$RX_END$id8_1$negative:
+      assume !guard_t13(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+    }
+    else    if (loc$MAC_1 == id0_1)
+    {
+      goto transition$t0, broadcast_rcvr_done$MAC_1$RX_END$id0_1$negative;
+transition$t0:
+      assume guard_t0(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id7_1;
+      goto broadcast_rcvr_done$RX_END$MAC_1;
+broadcast_rcvr_done$MAC_1$RX_END$id0_1$negative:
+      assume !guard_t0(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+    }
+  }
 broadcast_rcvr_done$RX_END$MAC_1:
   // Template ENV_1
   if (sender != ENV_1)
   {
-    goto transition$t42, broadcast_rcvr_done$ENV_1$RX_END$negative;
-  }
-  else
-  {
-    goto broadcast_rcvr_done$RX_END$ENV_1;
-  }
+    if (loc$ENV_1 == id29_1)
+    {
+      goto transition$t42, broadcast_rcvr_done$ENV_1$RX_END$id29_1$negative;
 transition$t42:
-  assume loc$ENV_1 == id29_1;
-  assume guard_t42(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-  loc$ENV_1 := id27_1;
-  call schedule_reset_ENV_1$t0(0.0);
-  goto broadcast_rcvr_done$RX_END$ENV_1;
-broadcast_rcvr_done$ENV_1$RX_END$negative:
-  assume !(loc$ENV_1 == id29_1 && guard_t42(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue));
+      assume guard_t42(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id27_1;
+      call schedule_reset_ENV_1$t0(0.0);
+      goto broadcast_rcvr_done$RX_END$ENV_1;
+broadcast_rcvr_done$ENV_1$RX_END$id29_1$negative:
+      assume !guard_t42(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+    }
+  }
 broadcast_rcvr_done$RX_END$ENV_1:
+  // All receivers processed for channel RX_END
   call perform_resets();
   sync := sync_none;
   goto uppaal2boogie$step;
@@ -1074,49 +1144,54 @@ broadcast_rcv$RX_START:
   // Template MAC_1
   if (sender != MAC_1)
   {
-    goto transition$t6, transition$t10, transition$t16, broadcast_rcvr_done$MAC_1$RX_START$negative;
-  }
-  else
-  {
-    goto broadcast_rcvr_done$RX_START$MAC_1;
-  }
-transition$t6:
-  assume loc$MAC_1 == id3_1;
-  assume guard_t6(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-  loc$MAC_1 := id0_1;
-  goto broadcast_rcvr_done$RX_START$MAC_1;
-transition$t10:
-  assume loc$MAC_1 == id9_1;
-  assume guard_t10(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-  loc$MAC_1 := id8_1;
-  goto broadcast_rcvr_done$RX_START$MAC_1;
+    if (loc$MAC_1 == id10_1)
+    {
+      goto transition$t16, broadcast_rcvr_done$MAC_1$RX_START$id10_1$negative;
 transition$t16:
-  assume loc$MAC_1 == id10_1;
-  assume guard_t16(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-  loc$MAC_1 := id8_1;
-  goto broadcast_rcvr_done$RX_START$MAC_1;
-broadcast_rcvr_done$MAC_1$RX_START$negative:
-  assume !(loc$MAC_1 == id3_1 && guard_t6(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue));
-  assume !(loc$MAC_1 == id9_1 && guard_t10(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue));
-  assume !(loc$MAC_1 == id10_1 && guard_t16(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue));
+      assume guard_t16(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id8_1;
+      goto broadcast_rcvr_done$RX_START$MAC_1;
+broadcast_rcvr_done$MAC_1$RX_START$id10_1$negative:
+      assume !guard_t16(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+    }
+    else    if (loc$MAC_1 == id9_1)
+    {
+      goto transition$t10, broadcast_rcvr_done$MAC_1$RX_START$id9_1$negative;
+transition$t10:
+      assume guard_t10(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id8_1;
+      goto broadcast_rcvr_done$RX_START$MAC_1;
+broadcast_rcvr_done$MAC_1$RX_START$id9_1$negative:
+      assume !guard_t10(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+    }
+    else    if (loc$MAC_1 == id3_1)
+    {
+      goto transition$t6, broadcast_rcvr_done$MAC_1$RX_START$id3_1$negative;
+transition$t6:
+      assume guard_t6(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$MAC_1 := id0_1;
+      goto broadcast_rcvr_done$RX_START$MAC_1;
+broadcast_rcvr_done$MAC_1$RX_START$id3_1$negative:
+      assume !guard_t6(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+    }
+  }
 broadcast_rcvr_done$RX_START$MAC_1:
   // Template ENV_1
   if (sender != ENV_1)
   {
-    goto transition$t43, broadcast_rcvr_done$ENV_1$RX_START$negative;
-  }
-  else
-  {
-    goto broadcast_rcvr_done$RX_START$ENV_1;
-  }
+    if (loc$ENV_1 == id30_1)
+    {
+      goto transition$t43, broadcast_rcvr_done$ENV_1$RX_START$id30_1$negative;
 transition$t43:
-  assume loc$ENV_1 == id30_1;
-  assume guard_t43(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
-  loc$ENV_1 := id29_1;
-  goto broadcast_rcvr_done$RX_START$ENV_1;
-broadcast_rcvr_done$ENV_1$RX_START$negative:
-  assume !(loc$ENV_1 == id30_1 && guard_t43(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue));
+      assume guard_t43(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+      loc$ENV_1 := id29_1;
+      goto broadcast_rcvr_done$RX_START$ENV_1;
+broadcast_rcvr_done$ENV_1$RX_START$id30_1$negative:
+      assume !guard_t43(ENV_1$t,MAC_1$t0,APP_LZ_1$t0,ENV_1$t0,MAC_1$t,MEDIUM_1$t0,APP_RX_1$t0,MEDIUM_1$sendCount,channelBusy,queue);
+    }
+  }
 broadcast_rcvr_done$RX_START$ENV_1:
+  // All receivers processed for channel RX_START
   call perform_resets();
   sync := sync_none;
   goto uppaal2boogie$step;
