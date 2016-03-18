@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
  * Edge in a recursive control flow graph that represents a set of CodeBlocks of
  * which only one is executed.
  */
-public class ParallelComposition extends CodeBlock {
+public class ParallelComposition extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = -221110423926589618L;
 	private final List<CodeBlock> m_CodeBlocks;
@@ -155,6 +156,11 @@ public class ParallelComposition extends CodeBlock {
 
 	public List<CodeBlock> getCodeBlocks() {
 		return Collections.unmodifiableList(m_CodeBlocks);
+	}
+
+	@Override
+	public TransFormula getTransformula() {
+		return getTransitionFormula();
 	}
 
 }

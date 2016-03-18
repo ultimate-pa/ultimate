@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
@@ -63,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public abstract class CodeBlock extends RCFGEdge {
+public abstract class CodeBlock extends RCFGEdge implements IAction {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be

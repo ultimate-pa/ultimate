@@ -31,6 +31,8 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 
 /**
  * Edge in a recursive control flow graph that represents a procedure call.
@@ -45,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrint
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class Call extends CodeBlock {
+public class Call extends CodeBlock implements ICallAction {
 
 	private static final long serialVersionUID = 5047439633229508126L;
 
@@ -92,6 +94,11 @@ public class Call extends CodeBlock {
 	@Override
 	public String toString() {
 		return BoogiePrettyPrinter.print(m_CallStatement);
+	}
+
+	@Override
+	public TransFormula getLocalVarsAssignment() {
+		return getTransitionFormula();
 	}
 
 }
