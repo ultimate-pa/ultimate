@@ -43,23 +43,25 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
  */
-@SuppressWarnings("unused")
 public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 
-	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-			//### BPL 
 			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation-Totalinterpolation.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Nolbe.epf"),
+
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation+AI_OCT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation-Totalinterpolation+AI_OCT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack+AI_OCT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Nolbe+AI_OCT.epf"),
+			
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
@@ -69,45 +71,21 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_WO_CON_Debug.epf"),
-			
-			//### C
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_SMTInterpol.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),			
 	};
 
 
 
 	private static final String[] INPUT = new String[] {
-			/* ULTIMATE repo */
-//			"examples/programs/abstractInterpretation/",
 			"examples/programs/real-life/PricedTimedAutomata/",
 //			"examples/programs/real-life/PricedTimedAutomata/u2b06_batman_intermittent_no_power_SAFE.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-110517_Martin01-safe.bpl",
-			
-//			"examples/programs/abstractInterpretation/regression/loop-Goto.bpl",
-			
 
-			// ################################# Bugs #########################
-			// ########### Here are representatives of current bugs ########### 
-
-			//Unknown Term
-//			"examples/svcomp/eca-rers2012/Problem17_label25_false-unreach-call.c",
-//			"examples/svcomp/product-lines/elevator_spec1_product29_true-unreach-call.cil.c"
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 20 * 1000 ;
+		return 20 * 1000;
 	}
 
 	@Override
@@ -117,13 +95,13 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 				new ColumnDefinition(
 						"Overall time", "Avg. runtime",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
-//				new ColumnDefinition(
-//						"Peak memory consumption (bytes)", "Mem{-}ory",
-//						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),						
+				new ColumnDefinition(
+						"Peak memory consumption (bytes)", "Mem{-}ory",
+						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),						
 				new ColumnDefinition(
 						"Overall iterations", "Iter{-}ations",
 						ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
-//				
+
 //				new ColumnDefinition("InterpolantConsolidationBenchmark_InterpolantsDropped", "Interpolants dropped", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),								
 //				new ColumnDefinition("InterpolantConsolidationBenchmark_NewlyCreatedInterpolants", "Newly Created Interpolants", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),								
 //				new ColumnDefinition("EdgeCheckerBenchmarkData_Sat", "Num Sats", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),										
