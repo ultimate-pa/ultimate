@@ -296,7 +296,7 @@ public class AffineRelation {
 			}
 		}
 		{
-			if (!m_OriginalTerm.getSort().isNumericSort() && 
+			if (!m_AffineTerm.getSort().isNumericSort() && 
 					!termsCoeff.abs().equals(Rational.ONE)) {
 				// for bitvectors we may only divide by 1 or -1
 				throw new NotAffineException("No affine representation "
