@@ -63,8 +63,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 ////			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 ////			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 ////			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_WO_CON_Debug.epf"),
 			
@@ -86,15 +86,17 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 			"examples/programs/abstractInterpretation/regression",
-//			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
+//			"examples/programs/abstractInterpretation/regression/loop-nested-assume-unsafe.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-//		return 30 * 1000 * 1000;
-		return 30 * 1000 ;
+		return 30 * 1000 * 1000;
+//		return 30 * 1000 ;
 	}
 
 	@Override
