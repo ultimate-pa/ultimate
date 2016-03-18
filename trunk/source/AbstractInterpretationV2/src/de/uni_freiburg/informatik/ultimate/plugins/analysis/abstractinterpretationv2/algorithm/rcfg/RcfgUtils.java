@@ -26,7 +26,7 @@ public final class RcfgUtils {
 			return false;
 		}
 		if (current instanceof Return) {
-			Return currReturn = (Return) current;
+			final Return currReturn = (Return) current;
 			assert currentScope instanceof Call;
 			return currReturn.getCorrespondingCall().equals(currentScope);
 		}
@@ -37,14 +37,8 @@ public final class RcfgUtils {
 		if (!(successor instanceof CodeBlock)) {
 			return false;
 		}
-
 		final CodeBlock cbSucc = (CodeBlock) successor;
-		if (cbSucc instanceof Return) {
-			if (!RcfgUtils.isAllowedReturn(cbSucc, lastCall)) {
-				return false;
-			}
-		}
-		return true;
+		return !(cbSucc instanceof Return) || RcfgUtils.isAllowedReturn(cbSucc, lastCall);
 	}
 
 	public static <E extends RCFGEdge> Collection<CodeBlock> getValidCodeBlocks(final Collection<E> candidates,
@@ -73,7 +67,7 @@ public final class RcfgUtils {
 	/**
 	 * @return true iff <code>action</code> is a summary for <code>call</code>
 	 */
-	public static boolean isSummaryForCall(CodeBlock action, CodeBlock possibleCall) {
+	public static boolean isSummaryForCall(final CodeBlock action, final CodeBlock possibleCall) {
 		if (possibleCall instanceof Call && action instanceof Summary) {
 			final Call call = (Call) possibleCall;
 			final Summary summary = (Summary) action;
@@ -81,5 +75,4 @@ public final class RcfgUtils {
 		}
 		return false;
 	}
-
 }
