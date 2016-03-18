@@ -100,7 +100,8 @@ public class FaultLocalizationRelevanceChecker {
 			Term[] unsatCore = m_ManagedScript.getUnsatCore(this);
 			for (Term term : unsatCore) {
 				ApplicationTerm appTerm = (ApplicationTerm) term;
-				if (appTerm.equals(IncrementalHoareTripleChecker.s_IdTransitionFormula)) {
+				if (appTerm.getFunction().getApplicationString().equals(
+						IncrementalHoareTripleChecker.s_IdTransitionFormula)) {
 					return true;
 				}
 			}
