@@ -36,33 +36,14 @@ NestedWordAutomaton nwa = (
   }
 );
 */
-// Small circle example from mind
-/*
-NestedWordAutomaton nwa = (
-  callAlphabet = { },
-  internalAlphabet = {a b},
-  returnAlphabet = { },
-  states = {q1 q2 q3 q4},
-  initialStates = {q1},
-  finalStates = {q1},
-  callTransitions = {},
-  internalTransitions = {
-      (q1 a q2)
-	  (q2 b q3)
-	  (q3 a q4)
-	  (q4 b q1)
-  }, 
-  returnTransitions = {}
-);
-*/
 // Generated corresponding game graph
 
 NestedWordAutomaton nwa = (
 	callAlphabet = { },
 	internalAlphabet = {a},
 	returnAlphabet = { },
-	states = {"q1,q1,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1{[€,q0],[q0,q0],[€,€],[q0,€]}"},
-	initialStates = {"q1,q1,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1{[€,q0],[q0,q0],[€,€],[q0,€]}"},
+	states = {"q1,q1,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0,r/q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0,c{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1,r/q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1,c{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1{[€,q0],[q0,q0],[€,€],[q0,€]}"},
+	initialStates = {"q1,q1,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0,r/q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0,c{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1,r/q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1,c{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1{[€,q0],[q0,q0],[€,€],[q0,€]}"},
 	finalStates = { },
 	callTransitions = { },
 	internalTransitions = {

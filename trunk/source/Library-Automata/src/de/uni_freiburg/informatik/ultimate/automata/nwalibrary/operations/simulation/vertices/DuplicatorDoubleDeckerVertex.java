@@ -55,6 +55,19 @@ import java.util.HashSet;
 public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> {
 
 	/**
+	 * The state <tt>hier</tt> such that the vertex represents a move with the
+	 * transition <tt>(pred(q), hier, a, q0)</tt> or <tt>null</tt> if not set.
+	 * This field should only be used if the type of the used transition is
+	 * {@link TransitionType#RETURN}.
+	 */
+	private STATE m_HierPred;
+	/**
+	 * The type of the transition, i.e. if it stands for an internal, call or
+	 * return transition.
+	 */
+	private final TransitionType m_TransitionType;
+
+	/**
 	 * Internal set of all down state configurations of the vertex.
 	 */
 	private final HashSet<VertexDownState<STATE>> vertexDownStates;
@@ -78,11 +91,16 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 *            The state duplicator is at, interpreted as up state
 	 * @param a
 	 *            The letter spoiler used before
+	 * @param transitionType
+	 *            The type of the transition, i.e. if it stands for an internal,
+	 *            call or return transition
 	 */
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a) {
+			final LETTER a, final TransitionType transitionType) {
 		super(priority, b, q0, q1, a);
 		vertexDownStates = new HashSet<>();
+		m_TransitionType = transitionType;
+		m_HierPred = null;
 	}
 
 	/**
@@ -97,6 +115,20 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 		return vertexDownStates.add(vertexDownState);
 	}
 
+	/**
+	 * Gets the state <tt>hier</tt> such that the vertex represents a move with
+	 * the transition <tt>(pred(q), hier, a, q0)</tt> or <tt>null</tt> if not
+	 * set. This field should only be used if the type of the used transition is
+	 * {@link TransitionType#RETURN}.
+	 * 
+	 * @return The state <tt>hier</tt> such that the vertex represents a move
+	 *         with the transition <tt>(pred(q), hier, a, q0)</tt> or
+	 *         <tt>null</tt> if not set.
+	 */
+	public STATE getHierPred() {
+		return m_HierPred;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -107,6 +139,9 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	public String getName() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getQ0() + "," + getQ1() + "," + getLetter());
+		if (m_TransitionType.equals(TransitionType.RETURN) && m_HierPred != null) {
+			sb.append("/" + m_HierPred);
+		}
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
 		for (VertexDownState<STATE> vertexDownState : vertexDownStates) {
@@ -118,6 +153,15 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 		}
 		sb.append("}");
 		return sb.toString();
+	}
+
+	/**
+	 * Gets the type of the transition represented by this vertex.
+	 * 
+	 * @return The type of the transition represented by this vertex.
+	 */
+	public TransitionType getTransitionType() {
+		return m_TransitionType;
 	}
 
 	/**
@@ -142,6 +186,19 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 */
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
 		return vertexDownStates.contains(vertexDownState);
+	}
+
+	/**
+	 * Sets the state <tt>hier</tt> such that the vertex represents a move with
+	 * the transition <tt>(pred(q), hier, a, q0)</tt>. This field should only be
+	 * set if the type of the used transition is {@link TransitionType#RETURN}.
+	 * The field is <tt>null</tt> by default.
+	 * 
+	 * @param hierPred
+	 *            The state to set
+	 */
+	public void setHierPred(STATE hierPred) {
+		m_HierPred = hierPred;
 	}
 
 	/*

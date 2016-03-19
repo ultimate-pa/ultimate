@@ -41,8 +41,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.VertexDownState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.DuplicatorDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.SpoilerDoubleDeckerVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.TransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
@@ -117,12 +119,21 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 				// Generate Duplicator vertices (leftState, rightState, letter)
 				for (LETTER letter : nwa.lettersInternalIncoming(leftState)) {
-					// TODO We need to also account for call and return
-					// transitions.
-					// TODO Further, how do we add those to duplicatorVertices
-					// since they only accept LETTER.
 					DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(2,
-							false, leftState, rightState, letter);
+							false, leftState, rightState, letter, TransitionType.INTERNAL);
+					applyVertexDownStatesToVertex(duplicatorVertex, nwa);
+					addDuplicatorVertex(duplicatorVertex);
+				}
+				for (LETTER letter : nwa.lettersCallIncoming(leftState)) {
+					DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(2,
+							false, leftState, rightState, letter, TransitionType.CALL);
+					applyVertexDownStatesToVertex(duplicatorVertex, nwa);
+					addDuplicatorVertex(duplicatorVertex);
+				}
+				for (IncomingReturnTransition<LETTER, STATE> transition : nwa.returnPredecessors(leftState)) {
+					DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(2,
+							false, leftState, rightState, transition.getLetter(), TransitionType.RETURN);
+					duplicatorVertex.setHierPred(transition.getHierPred());
 					applyVertexDownStatesToVertex(duplicatorVertex, nwa);
 					addDuplicatorVertex(duplicatorVertex);
 				}
@@ -144,7 +155,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 		// TODO Overhaul this for the use with NWA,
 		// also generate summarize-edges
-		
+
 		// Generate edges
 		for (STATE edgeDest : nwa.getStates()) {
 			for (IncomingInternalTransition<LETTER, STATE> trans : nwa.internalPredecessors(edgeDest)) {
