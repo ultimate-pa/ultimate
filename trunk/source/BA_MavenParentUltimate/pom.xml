@@ -250,7 +250,6 @@
 		<module>../AbstractInterpretationV2</module>
 		<module>../AutomatonDeltaDebugger</module>
 		<module>../WitnessPrinter</module>
-		<module>../Library-Lethal</module>
 	</modules>
 
 	<profiles>
