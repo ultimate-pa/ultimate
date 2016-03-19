@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
- * Operation that reduces a given nwa automaton by using
- * {@link FairSimulation}.<br/>
+ * Operation that reduces a given nwa automaton by using {@link FairSimulation}.
+ * <br/>
  * Once constructed the reduction automatically starts, the result can be get by
  * using {@link #getResult()}.
  * 
@@ -50,7 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <STATE>
  *            State class of nwa automaton
  */
-public class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFairSimulation<LETTER, STATE>
+		implements IOperation<LETTER, STATE> {
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
@@ -67,9 +68,8 @@ public class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFairSimul
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaFairSimulation(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand)
-					throws OperationCanceledException {
+	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		this(services, stateFactory, operand, true, Collections.emptyList());
 	}
 
@@ -91,9 +91,9 @@ public class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFairSimul
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaFairSimulation(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
-			final boolean useSCCs) throws OperationCanceledException {
+	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
+					throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList());
 	}
 
@@ -120,10 +120,9 @@ public class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFairSimul
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaFairSimulation(final AutomataLibraryServices services,
-			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
-			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
-					throws OperationCanceledException {
+	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final Collection<Set<STATE>> possibleEquivalentClasses) throws OperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
 				new FairNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand, useSCCs,

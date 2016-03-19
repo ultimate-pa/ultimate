@@ -136,34 +136,6 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		m_GraphAmountOfEdges = 0;
 	}
 
-	/**
-	 * Gets the amount of {@link SpoilerVertex} objects that exist in the game
-	 * graph with representation (q0, q1). Since there can be such vertices with
-	 * the extra bit false and true the returned value is between zero and two.
-	 * 
-	 * @param q0
-	 *            The state spoiler is at
-	 * @param q1
-	 *            The state duplicator is at
-	 * @return The amount of {@link SpoilerVertex} objects that exist in the
-	 *         game graph with representation (q0, q1). Since there can be such
-	 *         vertices with the extra bit false and true the returned value is
-	 *         between zero and two.
-	 */
-	private int getAmountOfBitsForSpoilerVertix(final STATE q0, final STATE q1) {
-		int amount = 0;
-
-		if (getSpoilerVertex(q0, q1, false) != null) {
-			amount++;
-		}
-
-		if (getSpoilerVertex(q0, q1, true) != null) {
-			amount++;
-		}
-
-		return amount;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -171,7 +143,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() throws OperationCanceledException {
+	public NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() throws OperationCanceledException {
 		SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
@@ -366,5 +338,33 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		}
 
 		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
+	}
+
+	/**
+	 * Gets the amount of {@link SpoilerVertex} objects that exist in the game
+	 * graph with representation (q0, q1). Since there can be such vertices with
+	 * the extra bit false and true the returned value is between zero and two.
+	 * 
+	 * @param q0
+	 *            The state spoiler is at
+	 * @param q1
+	 *            The state duplicator is at
+	 * @return The amount of {@link SpoilerVertex} objects that exist in the
+	 *         game graph with representation (q0, q1). Since there can be such
+	 *         vertices with the extra bit false and true the returned value is
+	 *         between zero and two.
+	 */
+	private int getAmountOfBitsForSpoilerVertix(final STATE q0, final STATE q1) {
+		int amount = 0;
+
+		if (getSpoilerVertex(q0, q1, false) != null) {
+			amount++;
+		}
+
+		if (getSpoilerVertex(q0, q1, true) != null) {
+			amount++;
+		}
+
+		return amount;
 	}
 }

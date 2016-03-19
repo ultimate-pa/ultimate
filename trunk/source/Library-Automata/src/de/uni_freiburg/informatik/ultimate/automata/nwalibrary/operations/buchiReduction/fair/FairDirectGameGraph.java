@@ -125,6 +125,26 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.fair.FairGameGraph#generateBuchiAutomatonFromGraph()
+	 */
+	@Override
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
+			throws OperationCanceledException {
+		if (m_IsCurrentlyDirectGameGraph) {
+			// For the direct simulation we won't generate an expensive unused
+			// result since we only need the progress measure results for
+			// optimization, not the resulting automaton.
+			return null;
+		} else {
+			// Use the original fair generation
+			return super.generateBuchiAutomatonFromGraph();
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
 	@Override
@@ -203,26 +223,6 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 					}
 				}
 			}
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * buchiReduction.fair.FairGameGraph#generateBuchiAutomatonFromGraph()
-	 */
-	@Override
-	protected INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
-			throws OperationCanceledException {
-		if (m_IsCurrentlyDirectGameGraph) {
-			// For the direct simulation we won't generate an expensive unused
-			// result since we only need the progress measure results for
-			// optimization, not the resulting automaton.
-			return null;
-		} else {
-			// Use the original fair generation
-			return super.generateBuchiAutomatonFromGraph();
 		}
 	}
 

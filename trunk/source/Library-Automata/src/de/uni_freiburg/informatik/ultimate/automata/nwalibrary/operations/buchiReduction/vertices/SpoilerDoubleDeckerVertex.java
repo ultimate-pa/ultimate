@@ -1,8 +1,5 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
- * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -29,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices;
 
+import java.util.HashSet;
+
 /**
  * A vertex representing that its <i>Spoiler</i>s turn in the game defined by a
  * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph
@@ -40,17 +39,23 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchi
  * whereas <i>Duplicator</i> now is at q1 and later must respond to
  * <i>Spoiler</i>s decision. The bit encodes extra information if needed.
  * 
+ * This object extends regular SpoilerVertices by giving it a set of down
+ * states. Both, the left and right, states can have multiple down states. Thus
+ * a vertex represents a combination of double decker states.
+ * 
  * @author Daniel Tischner
- * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
- * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
- * @date 16.01.2012
  * 
  * @param <LETTER>
- *            Letter class of buechi automaton
+ *            Letter class of nwa automaton
  * @param <STATE>
- *            State class of buechi automaton
+ *            State class of nwa automaton
  */
-public class SpoilerVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
+public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVertex<LETTER, STATE> {
+
+	/**
+	 * Internal set of all down state configurations of the vertex.
+	 */
+	private final HashSet<DownStateConfiguration<STATE>> downStateConfigurations;
 
 	/**
 	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
@@ -58,6 +63,8 @@ public class SpoilerVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	 * make a move using an arbitrary transition whereas <i>Duplicator</i> now
 	 * is at q1 and later must respond to <i>Spoiler</i>s decision. The bit
 	 * encodes extra information if needed.
+	 * 
+	 * The double decker information first is blank after construction.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -68,8 +75,22 @@ public class SpoilerVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	 * @param q1
 	 *            The state duplicator is at
 	 */
-	public SpoilerVertex(final int priority, final boolean b, final STATE q0, final STATE q1) {
+	public SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1) {
 		super(priority, b, q0, q1);
+		downStateConfigurations = new HashSet<>();
+	}
+
+	/**
+	 * Adds a given down state configuration to the vertex if not already
+	 * present.
+	 * 
+	 * @param downStateConfig
+	 *            Configuration to add
+	 * @return If the given configuration was added to the vertex, i.e. if it
+	 *         was not already present.
+	 */
+	public boolean addDownStateConfiguration(final DownStateConfiguration<STATE> downStateConfig) {
+		return downStateConfigurations.add(downStateConfig);
 	}
 
 	/*
@@ -80,7 +101,43 @@ public class SpoilerVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	 */
 	@Override
 	public String getName() {
-		return getQ0() + "," + getQ1();
+		StringBuilder sb = new StringBuilder();
+		sb.append(getQ0() + "," + getQ1());
+		sb.append("{");
+		boolean isFirstConfig = true;
+		for (DownStateConfiguration<STATE> downStateConfig : downStateConfigurations) {
+			if (!isFirstConfig) {
+				sb.append(",");
+			}
+			sb.append(downStateConfig.toString());
+			isFirstConfig = false;
+		}
+		sb.append("}");
+		return sb.toString();
+	}
+
+	/**
+	 * Returns if the vertex has a given down state configuration.
+	 * 
+	 * @param downStateConfig
+	 *            Down state configuration in ask
+	 * @return If the vertex has the given down state configuration
+	 */
+	public boolean hasDownStateConfiguration(final DownStateConfiguration<STATE> downStateConfig) {
+		return downStateConfigurations.contains(downStateConfig);
+	}
+
+	/**
+	 * Returns if the vertex has a given down state configuration.
+	 * 
+	 * @param leftDownState
+	 *            Left state of the down state configuration
+	 * @param rightDownState
+	 *            Right state of the down state configuration
+	 * @return If the vertex has the given down state configuration
+	 */
+	public boolean hasDownStateConfiguration(final STATE leftDownState, final STATE rightDownState) {
+		return downStateConfigurations.contains(new DownStateConfiguration<STATE>(leftDownState, rightDownState));
 	}
 
 	/*
@@ -92,8 +149,20 @@ public class SpoilerVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
-		sb.append(getQ1()).append("),p:");
-		sb.append(getPriority()).append(",pm:").append(pm);
+		sb.append(getQ1());
+
+		sb.append("{");
+		boolean isFirstConfig = true;
+		for (DownStateConfiguration<STATE> downStateConfig : downStateConfigurations) {
+			if (!isFirstConfig) {
+				sb.append(",");
+			}
+			sb.append(downStateConfig.toString());
+			isFirstConfig = false;
+		}
+		sb.append("}");
+
+		sb.append("),p:").append(getPriority()).append(",pm:").append(pm);
 		sb.append(">");
 		return sb.toString();
 	}

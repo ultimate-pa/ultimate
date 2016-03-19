@@ -181,6 +181,238 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
+	 */
+	@Override
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
+			throws OperationCanceledException {
+		SimulationPerformance performance = getSimulationPerformance();
+		if (performance != null) {
+			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
+		}
+
+		boolean areThereMergeableStates = m_AreThereMergeableStates;
+		boolean areThereRemoveableTransitions = m_TransitionsToRemove != null && !m_TransitionsToRemove.isEmpty();
+		Map<STATE, STATE> input2result = null;
+
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(m_Services,
+				m_Buechi.getInternalAlphabet(), null, null, getStateFactory());
+
+		int resultAmountOfStates = 0;
+
+		// Merge states
+		if (areThereMergeableStates) {
+			// Calculate initial states
+			Set<STATE> representativesOfInitials = new HashSet<>();
+			for (STATE initialState : m_Buechi.getInitialStates()) {
+				representativesOfInitials.add(m_EquivalenceClasses.find(initialState));
+			}
+			// Calculate final states
+			Set<STATE> representativesOfFinals = new HashSet<>();
+			for (STATE finalState : m_Buechi.getFinalStates()) {
+				representativesOfFinals.add(m_EquivalenceClasses.find(finalState));
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
+				throw new OperationCanceledException(this.getClass());
+			}
+
+			// Add states
+
+			input2result = new HashMap<>(m_Buechi.size());
+			for (STATE representative : m_EquivalenceClasses.getAllRepresentatives()) {
+				boolean isInitial = representativesOfInitials.contains(representative);
+				boolean isFinal = representativesOfFinals.contains(representative);
+				Set<STATE> eqClass = m_EquivalenceClasses.getEquivalenceClassMembers(representative);
+				STATE mergedState = getStateFactory().minimize(eqClass);
+				result.addState(isInitial, isFinal, mergedState);
+				resultAmountOfStates++;
+				for (STATE eqClassMember : eqClass) {
+					input2result.put(eqClassMember, mergedState);
+				}
+			}
+		} else {
+			// If there is no merge-able state simply
+			// copy the inputed automaton
+			for (STATE state : m_Buechi.getStates()) {
+				boolean isInitial = m_Buechi.isInitial(state);
+				boolean isFinal = m_Buechi.isFinal(state);
+				result.addState(isInitial, isFinal, state);
+				resultAmountOfStates++;
+			}
+		}
+
+		int resultAmountOfTransitions = 0;
+
+		// Add transitions
+		// for (STATE inputSrc : uf.getAllRepresentatives()) {
+		for (STATE inputSrc : m_Buechi.getStates()) {
+			// TODO Is it correct to only add transitions of representatives?
+			STATE resultSrc;
+			if (areThereMergeableStates) {
+				// Only access field if it was initialized
+				resultSrc = input2result.get(inputSrc);
+			} else {
+				resultSrc = inputSrc;
+			}
+			for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Buechi.internalSuccessors(inputSrc)) {
+				LETTER a = outTrans.getLetter();
+				STATE inputDest = outTrans.getSucc();
+				STATE resultDest;
+				if (areThereMergeableStates) {
+					// Only access field if it was initialized
+					resultDest = input2result.get(inputDest);
+				} else {
+					resultDest = inputDest;
+				}
+
+				if (areThereRemoveableTransitions) {
+					// Skip edges that should get removed
+					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
+					if (!m_TransitionsToRemove.contains(transAsTriple)) {
+						result.addInternalTransition(resultSrc, a, resultDest);
+						resultAmountOfTransitions++;
+					}
+				} else {
+					// If there is no removable transition simply copy the
+					// inputed automaton
+					result.addInternalTransition(resultSrc, a, resultDest);
+					resultAmountOfTransitions++;
+				}
+
+			}
+		}
+
+		// If operation was canceled, for example from the
+		// Ultimate framework
+		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+			getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/states and transitions added");
+			throw new OperationCanceledException(this.getClass());
+		}
+
+		// Log performance
+		if (performance != null) {
+			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
+			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH_TIME, m_GraphBuildTime);
+			performance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
+					m_BuechiAmountOfStates - resultAmountOfStates);
+			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
+					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, m_BuechiAmountOfTransitions);
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
+			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, m_GraphAmountOfEdges);
+		}
+
+		// Remove unreachable states which can occur due to transition removal
+		if (areThereRemoveableTransitions) {
+			NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates = new RemoveUnreachable<LETTER, STATE>(
+					m_Services, result).getResult();
+			return nwaReachableStates;
+		} else {
+			return result;
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
+	 */
+	@Override
+	public void generateGameGraphFromBuechi() throws OperationCanceledException {
+		long graphBuildTimeStart = System.currentTimeMillis();
+
+		INestedWordAutomatonOldApi<LETTER, STATE> buechi = m_Buechi;
+
+		// Generate states
+		for (STATE leftState : buechi.getStates()) {
+			m_BuechiAmountOfStates++;
+
+			for (STATE rightState : buechi.getStates()) {
+				// Generate Spoiler vertices (leftState, rightState)
+				int priority = calculatePriority(leftState, rightState);
+				if (priority == 1) {
+					increaseGlobalInfinity();
+				}
+				SpoilerVertex<LETTER, STATE> spoilerVertex = new SpoilerVertex<>(priority, false, leftState,
+						rightState);
+				addSpoilerVertex(spoilerVertex);
+
+				// Generate Duplicator vertices (leftState, rightState, letter)
+				for (LETTER letter : buechi.lettersInternalIncoming(leftState)) {
+					DuplicatorVertex<LETTER, STATE> duplicatorVertex = new DuplicatorVertex<>(2, false, leftState,
+							rightState, letter);
+					addDuplicatorVertex(duplicatorVertex);
+				}
+
+				// If operation was canceled, for example from the
+				// Ultimate framework
+				if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+					getLogger().debug("Stopped in generateGameGraphFromBuechi/generating states");
+					throw new OperationCanceledException(this.getClass());
+				}
+			}
+
+			// Generate an equivalence class for every state from
+			// the buechi automaton
+			m_EquivalenceClasses.makeEquivalenceClass(leftState);
+		}
+
+		increaseGlobalInfinity();
+
+		// Generate edges
+		for (STATE edgeDest : buechi.getStates()) {
+			// TODO Can we generate edges at the same time
+			// we generate states?
+			for (IncomingInternalTransition<LETTER, STATE> trans : buechi.internalPredecessors(edgeDest)) {
+				m_BuechiAmountOfTransitions++;
+
+				for (STATE fixState : buechi.getStates()) {
+					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
+					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(),
+							false);
+					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false);
+					if (src != null && dest != null) {
+						addEdge(src, dest);
+						m_GraphAmountOfEdges++;
+					}
+
+					// Spoiler edges q1 -a-> q2 : (q1, x) -> (q2, x, a)
+					src = getSpoilerVertex(trans.getPred(), fixState, false);
+					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false);
+					if (src != null && dest != null) {
+						addEdge(src, dest);
+						m_GraphAmountOfEdges++;
+					}
+					// TODO Can it link trivial edges like duplicator -> spoiler
+					// where origin has no predecessors? If optimizing this be
+					// careful with adding buechi transitions, this vertex than
+					// may be generated and the left edge must also be
+					// generated.
+
+					// If operation was canceled, for example from the
+					// Ultimate framework
+					if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+						getLogger().debug("Stopped in generateGameGraphFromBuechi/generating edges");
+						throw new OperationCanceledException(this.getClass());
+					}
+				}
+
+				m_BuechiTransitions.add(new Triple<>(trans.getPred(), trans.getLetter(), edgeDest));
+			}
+		}
+
+		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#undoChanges(de.uni_freiburg.informatik.ultimate
 	 * .automata.nwalibrary.operations.buchiReduction.GameGraphChanges)
 	 */
@@ -439,7 +671,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		return equivalenceClass != null && equivalenceClass.contains(secondState);
 	}
-
 	/**
 	 * Calculates the priority of a given {@link SpoilerVertex} by its
 	 * representation <i>(state spoiler is at, state duplicator is at)</i>.<br/>
@@ -462,7 +693,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			return 2;
 		}
 	}
-
+	
 	/**
 	 * Equalizes two given states to each other by adding transitions so that
 	 * both have the same out- and in-going transitions.
@@ -507,237 +738,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		} else {
 			return null;
 		}
-	}
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
-	 */
-	@Override
-	protected INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
-			throws OperationCanceledException {
-		SimulationPerformance performance = getSimulationPerformance();
-		if (performance != null) {
-			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
-		}
-
-		boolean areThereMergeableStates = m_AreThereMergeableStates;
-		boolean areThereRemoveableTransitions = m_TransitionsToRemove != null && !m_TransitionsToRemove.isEmpty();
-		Map<STATE, STATE> input2result = null;
-
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(m_Services,
-				m_Buechi.getInternalAlphabet(), null, null, getStateFactory());
-
-		int resultAmountOfStates = 0;
-
-		// Merge states
-		if (areThereMergeableStates) {
-			// Calculate initial states
-			Set<STATE> representativesOfInitials = new HashSet<>();
-			for (STATE initialState : m_Buechi.getInitialStates()) {
-				representativesOfInitials.add(m_EquivalenceClasses.find(initialState));
-			}
-			// Calculate final states
-			Set<STATE> representativesOfFinals = new HashSet<>();
-			for (STATE finalState : m_Buechi.getFinalStates()) {
-				representativesOfFinals.add(m_EquivalenceClasses.find(finalState));
-			}
-
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
-				throw new OperationCanceledException(this.getClass());
-			}
-
-			// Add states
-
-			input2result = new HashMap<>(m_Buechi.size());
-			for (STATE representative : m_EquivalenceClasses.getAllRepresentatives()) {
-				boolean isInitial = representativesOfInitials.contains(representative);
-				boolean isFinal = representativesOfFinals.contains(representative);
-				Set<STATE> eqClass = m_EquivalenceClasses.getEquivalenceClassMembers(representative);
-				STATE mergedState = getStateFactory().minimize(eqClass);
-				result.addState(isInitial, isFinal, mergedState);
-				resultAmountOfStates++;
-				for (STATE eqClassMember : eqClass) {
-					input2result.put(eqClassMember, mergedState);
-				}
-			}
-		} else {
-			// If there is no merge-able state simply
-			// copy the inputed automaton
-			for (STATE state : m_Buechi.getStates()) {
-				boolean isInitial = m_Buechi.isInitial(state);
-				boolean isFinal = m_Buechi.isFinal(state);
-				result.addState(isInitial, isFinal, state);
-				resultAmountOfStates++;
-			}
-		}
-
-		int resultAmountOfTransitions = 0;
-
-		// Add transitions
-		// for (STATE inputSrc : uf.getAllRepresentatives()) {
-		for (STATE inputSrc : m_Buechi.getStates()) {
-			// TODO Is it correct to only add transitions of representatives?
-			STATE resultSrc;
-			if (areThereMergeableStates) {
-				// Only access field if it was initialized
-				resultSrc = input2result.get(inputSrc);
-			} else {
-				resultSrc = inputSrc;
-			}
-			for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Buechi.internalSuccessors(inputSrc)) {
-				LETTER a = outTrans.getLetter();
-				STATE inputDest = outTrans.getSucc();
-				STATE resultDest;
-				if (areThereMergeableStates) {
-					// Only access field if it was initialized
-					resultDest = input2result.get(inputDest);
-				} else {
-					resultDest = inputDest;
-				}
-
-				if (areThereRemoveableTransitions) {
-					// Skip edges that should get removed
-					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
-					if (!m_TransitionsToRemove.contains(transAsTriple)) {
-						result.addInternalTransition(resultSrc, a, resultDest);
-						resultAmountOfTransitions++;
-					}
-				} else {
-					// If there is no removable transition simply copy the
-					// inputed automaton
-					result.addInternalTransition(resultSrc, a, resultDest);
-					resultAmountOfTransitions++;
-				}
-
-			}
-		}
-
-		// If operation was canceled, for example from the
-		// Ultimate framework
-		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-			getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/states and transitions added");
-			throw new OperationCanceledException(this.getClass());
-		}
-
-		// Log performance
-		if (performance != null) {
-			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
-			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH_TIME, m_GraphBuildTime);
-			performance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
-					m_BuechiAmountOfStates - resultAmountOfStates);
-			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
-					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
-			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, m_BuechiAmountOfTransitions);
-			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
-			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, m_GraphAmountOfEdges);
-		}
-
-		// Remove unreachable states which can occur due to transition removal
-		if (areThereRemoveableTransitions) {
-			NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates = new RemoveUnreachable<LETTER, STATE>(
-					m_Services, result).getResult();
-			return nwaReachableStates;
-		} else {
-			return result;
-		}
-	}
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
-	 */
-	@Override
-	public void generateGameGraphFromBuechi() throws OperationCanceledException {
-		long graphBuildTimeStart = System.currentTimeMillis();
-
-		INestedWordAutomatonOldApi<LETTER, STATE> buechi = m_Buechi;
-
-		// Generate states
-		for (STATE leftState : buechi.getStates()) {
-			m_BuechiAmountOfStates++;
-
-			for (STATE rightState : buechi.getStates()) {
-				// Generate Spoiler vertices (leftState, rightState)
-				int priority = calculatePriority(leftState, rightState);
-				if (priority == 1) {
-					increaseGlobalInfinity();
-				}
-				SpoilerVertex<LETTER, STATE> spoilerVertex = new SpoilerVertex<>(priority, false, leftState,
-						rightState);
-				addSpoilerVertex(spoilerVertex);
-
-				// Generate Duplicator vertices (leftState, rightState, letter)
-				for (LETTER letter : buechi.lettersInternalIncoming(leftState)) {
-					DuplicatorVertex<LETTER, STATE> duplicatorVertex = new DuplicatorVertex<>(2, false, leftState,
-							rightState, letter);
-					addDuplicatorVertex(duplicatorVertex);
-				}
-
-				// If operation was canceled, for example from the
-				// Ultimate framework
-				if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-					getLogger().debug("Stopped in generateGameGraphFromBuechi/generating states");
-					throw new OperationCanceledException(this.getClass());
-				}
-			}
-
-			// Generate an equivalence class for every state from
-			// the buechi automaton
-			m_EquivalenceClasses.makeEquivalenceClass(leftState);
-		}
-
-		increaseGlobalInfinity();
-
-		// Generate edges
-		for (STATE edgeDest : buechi.getStates()) {
-			// TODO Can we generate edges at the same time
-			// we generate states?
-			for (IncomingInternalTransition<LETTER, STATE> trans : buechi.internalPredecessors(edgeDest)) {
-				m_BuechiAmountOfTransitions++;
-
-				for (STATE fixState : buechi.getStates()) {
-					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
-					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(),
-							false);
-					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false);
-					if (src != null && dest != null) {
-						addEdge(src, dest);
-						m_GraphAmountOfEdges++;
-					}
-
-					// Spoiler edges q1 -a-> q2 : (q1, x) -> (q2, x, a)
-					src = getSpoilerVertex(trans.getPred(), fixState, false);
-					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false);
-					if (src != null && dest != null) {
-						addEdge(src, dest);
-						m_GraphAmountOfEdges++;
-					}
-					// TODO Can it link trivial edges like duplicator -> spoiler
-					// where origin has no predecessors? If optimizing this be
-					// careful with adding buechi transitions, this vertex than
-					// may be generated and the left edge must also be
-					// generated.
-
-					// If operation was canceled, for example from the
-					// Ultimate framework
-					if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-						getLogger().debug("Stopped in generateGameGraphFromBuechi/generating edges");
-						throw new OperationCanceledException(this.getClass());
-					}
-				}
-
-				m_BuechiTransitions.add(new Triple<>(trans.getPred(), trans.getLetter(), edgeDest));
-			}
-		}
-
-		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
 	}
 	/**
 	 * Gets the internal field of all transitions the used buechi has.

@@ -178,6 +178,15 @@ public class Vertex<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets a human readable name of the object. For example: "q0, q1" or "q0, q1, a".
+	 * 
+	 * @return A human readable name of the object
+	 */
+	public String getName() {
+		return toString();
+	}
+
+	/**
 	 * Gets the progress measure of this vertex as needed for the
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation
 	 * ASimulation}.
@@ -327,7 +336,7 @@ public class Vertex<LETTER, STATE> {
 	public void setInWL(final boolean inWL) {
 		this.inWL = inWL;
 	}
-
+	
 	/**
 	 * Sets the progress measure of this vertex as needed for the
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation
@@ -339,5 +348,4 @@ public class Vertex<LETTER, STATE> {
 	public void setPM(final int pm) {
 		this.pm = pm;
 	}
-
 }

@@ -5,9 +5,9 @@
 
 assert(!isEmpty(nwa));
 // Before operation
-//print(nwa);
+print(nwa);
 // After operation
-print(reduceNwaFairSimulation(nwa, false));
+//print(reduceNwaFairSimulation(nwa, false));
 // Check correctness of operation
 //print(reduceNwaFairSimulation(nwa, true, true));
 
@@ -17,7 +17,7 @@ print(reduceNwaFairSimulation(nwa, false));
 // Some example automaton
 
 // Small circle example from mind
-
+/*
 NestedWordAutomaton nwa = (
   callAlphabet = { },
   internalAlphabet = {a b},
@@ -33,4 +33,43 @@ NestedWordAutomaton nwa = (
 	  (q4 b q1)
   }, 
   returnTransitions = {}
+);
+*/
+// Generated corresponding game graph
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {a},
+	returnAlphabet = { },
+	states = {"q3,q1" "q1,q2" "q3,q3" "q1,q3" "q3,q4" "q1,q1" "q3,q2" "q1,q3,b" "q2,q3,a" "q1,q4" "q3,q1,b" "q4,q1,a" "q1,q1,b" "q2,q1,a" "q3,q3,b" "q4,q3,a" "q2,q1" "q4,q1" "q2,q2" "q4,q4" "q2,q3" "q4,q2" "q4,q3" "q1,q2,b" "q2,q2,a" "q3,q4,b" "q4,q4,a" "q2,q4" "q1,q4,b" "q2,q4,a" "q3,q2,b" "q4,q2,a"},
+	initialStates = {"q3,q1" "q1,q2" "q3,q3" "q1,q3" "q3,q4" "q1,q1" "q3,q2" "q1,q3,b" "q2,q3,a" "q1,q4" "q3,q1,b" "q4,q1,a" "q1,q1,b" "q2,q1,a" "q3,q3,b" "q4,q3,a" "q2,q1" "q4,q1" "q2,q2" "q4,q4" "q2,q3" "q4,q2" "q4,q3" "q1,q2,b" "q2,q2,a" "q3,q4,b" "q4,q4,a" "q2,q4" "q1,q4,b" "q2,q4,a" "q3,q2,b" "q4,q2,a"},
+	finalStates = { },
+	callTransitions = { },
+	internalTransitions = {
+		("q3,q1" "a" "q4,q1,a")
+		("q1,q2" "a" "q2,q2,a")
+		("q3,q3" "a" "q4,q3,a")
+		("q1,q3" "a" "q2,q3,a")
+		("q3,q4" "a" "q4,q4,a")
+		("q1,q1" "a" "q2,q1,a")
+		("q3,q2" "a" "q4,q2,a")
+		("q2,q3,a" "a" "q2,q4")
+		("q1,q4" "a" "q2,q4,a")
+		("q4,q1,a" "a" "q4,q2")
+		("q2,q1,a" "a" "q2,q2")
+		("q4,q3,a" "a" "q4,q4")
+		("q2,q1" "a" "q3,q1,b")
+		("q4,q1" "a" "q1,q1,b")
+		("q2,q2" "a" "q3,q2,b")
+		("q4,q4" "a" "q1,q4,b")
+		("q2,q3" "a" "q3,q3,b")
+		("q4,q2" "a" "q1,q2,b")
+		("q4,q3" "a" "q1,q3,b")
+		("q1,q2,b" "a" "q1,q3")
+		("q3,q4,b" "a" "q3,q1")
+		("q2,q4" "a" "q3,q4,b")
+		("q1,q4,b" "a" "q1,q1")
+		("q3,q2,b" "a" "q3,q3")
+	},
+	returnTransitions = {}
 );

@@ -181,7 +181,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		int f = 10;
 		int totalityInPerc = 5;
 		int debugPrintEvery = 10;
-		int amount = 1000;
+		int amount = 100;
 
 		System.out.println("Start comparing test 'SCC vs. nonSCC' with " + amount + " random automata (n=" + n + ", k="
 				+ k + ", f=" + f + ", totPerc=" + totalityInPerc + ")...");

@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -33,8 +32,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorDoubleDeckerVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
@@ -58,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
  * @param <STATE>
  *            State class of nwa automaton
  */
-public class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER, STATE> {
+public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER, STATE> {
 
 	/**
 	 * The underlying nwa automaton from which the game graph gets generated.
@@ -95,14 +94,14 @@ public class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER, STATE
 				if (priority == 1) {
 					increaseGlobalInfinity();
 				}
-				SpoilerVertex<LETTER, STATE> spoilerVertex = new SpoilerVertex<>(priority, false, leftState,
-						rightState);
+				SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerVertex = new SpoilerDoubleDeckerVertex<>(priority,
+						false, leftState, rightState);
 				addSpoilerVertex(spoilerVertex);
 
 				// Generate Duplicator vertices (leftState, rightState, letter)
 				for (LETTER letter : nwa.lettersInternalIncoming(leftState)) {
-					DuplicatorVertex<LETTER, STATE> duplicatorVertex = new DuplicatorVertex<>(2, false, leftState,
-							rightState, letter);
+					DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(2,
+							false, leftState, rightState, letter);
 					addDuplicatorVertex(duplicatorVertex);
 				}
 
@@ -120,7 +119,7 @@ public class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER, STATE
 		}
 
 		increaseGlobalInfinity();
-		
+
 		// TODO Generate down states n stuff ...
 
 		// Generate edges
