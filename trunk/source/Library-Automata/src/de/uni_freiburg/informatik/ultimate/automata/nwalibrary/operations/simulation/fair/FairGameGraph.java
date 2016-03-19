@@ -158,10 +158,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(progressTimer, logger, stateFactory);
-		if (!buechi.getCallAlphabet().isEmpty() || !buechi.getReturnAlphabet().isEmpty()) {
-			throw new IllegalArgumentException(
-					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
-		}
+		verifyAutomatonValidity(buechi);
+		
 		m_Services = services;
 		m_Buechi = buechi;
 		m_ChangedBuechiTransitionsInverse = new NestedMap3<>();
@@ -328,7 +326,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		INestedWordAutomatonOldApi<LETTER, STATE> buechi = m_Buechi;
 
-		// Generate states
+		// Generate vertices
 		for (STATE leftState : buechi.getStates()) {
 			m_BuechiAmountOfStates++;
 
@@ -352,7 +350,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-					getLogger().debug("Stopped in generateGameGraphFromBuechi/generating states");
+					getLogger().debug("Stopped in generateGameGraphFromBuechi/generating vertices");
 					throw new OperationCanceledException(this.getClass());
 				}
 			}

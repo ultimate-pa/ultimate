@@ -112,10 +112,8 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(services, progressTimer, logger, buechi, stateFactory);
-		if (!buechi.getCallAlphabet().isEmpty() || !buechi.getReturnAlphabet().isEmpty()) {
-			throw new IllegalArgumentException(
-					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
-		}
+		verifyAutomatonValidity(buechi);
+		
 		m_IsCurrentlyDirectGameGraph = false;
 		m_DirectSimulations = new HashSet<>();
 		m_EdgesToBeChangedForTransformation = new HashSet<>();

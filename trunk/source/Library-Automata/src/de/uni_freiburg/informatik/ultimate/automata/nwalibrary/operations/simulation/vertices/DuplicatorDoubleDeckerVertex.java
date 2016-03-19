@@ -41,8 +41,9 @@ import java.util.HashSet;
  * a-transition. The bit encodes extra information if needed.
  * 
  * This object extends regular DuplicatorVertices by giving it a set of down
- * states. Both, the left and right, states can have multiple down states. Thus
- * a vertex represents a combination of double decker states.
+ * states. Both, the left and right, states are interpreted as up states and can
+ * have multiple down states. Thus a vertex represents a combination of double
+ * decker states.
  * 
  * @author Daniel Tischner
  * 
@@ -56,7 +57,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	/**
 	 * Internal set of all down state configurations of the vertex.
 	 */
-	private final HashSet<DownStateConfiguration<STATE>> downStateConfigurations;
+	private final HashSet<VertexDownState<STATE>> vertexDownStates;
 
 	/**
 	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
@@ -72,29 +73,28 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 * @param b
 	 *            The extra bit of the vertex
 	 * @param q0
-	 *            The state spoiler is at
+	 *            The state spoiler is at, interpreted as up state
 	 * @param q1
-	 *            The state duplicator is at
+	 *            The state duplicator is at, interpreted as up state
 	 * @param a
 	 *            The letter spoiler used before
 	 */
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final LETTER a) {
 		super(priority, b, q0, q1, a);
-		downStateConfigurations = new HashSet<>();
+		vertexDownStates = new HashSet<>();
 	}
 
 	/**
-	 * Adds a given down state configuration to the vertex if not already
-	 * present.
+	 * Adds a given vertex down state to the vertex if not already present.
 	 * 
-	 * @param downStateConfig
+	 * @param vertexDownState
 	 *            Configuration to add
 	 * @return If the given configuration was added to the vertex, i.e. if it
 	 *         was not already present.
 	 */
-	public boolean addDownStateConfiguration(final DownStateConfiguration<STATE> downStateConfig) {
-		return downStateConfigurations.add(downStateConfig);
+	public boolean addVertexDownState(final VertexDownState<STATE> vertexDownState) {
+		return vertexDownStates.add(vertexDownState);
 	}
 
 	/*
@@ -108,31 +108,20 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 		StringBuilder sb = new StringBuilder();
 		sb.append(getQ0() + "," + getQ1() + "," + getLetter());
 		sb.append("{");
-		boolean isFirstConfig = true;
-		for (DownStateConfiguration<STATE> downStateConfig : downStateConfigurations) {
-			if (!isFirstConfig) {
+		boolean isFirstVertexDownState = true;
+		for (VertexDownState<STATE> vertexDownState : vertexDownStates) {
+			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
-			sb.append(downStateConfig.toString());
-			isFirstConfig = false;
+			sb.append(vertexDownState.toString());
+			isFirstVertexDownState = false;
 		}
 		sb.append("}");
 		return sb.toString();
 	}
 
 	/**
-	 * Returns if the vertex has a given down state configuration.
-	 * 
-	 * @param downStateConfig
-	 *            Down state configuration in ask
-	 * @return If the vertex has the given down state configuration
-	 */
-	public boolean hasDownStateConfiguration(final DownStateConfiguration<STATE> downStateConfig) {
-		return downStateConfigurations.contains(downStateConfig);
-	}
-
-	/**
-	 * Returns if the vertex has a given down state configuration.
+	 * Returns if the vertex has a given vertex down state.
 	 * 
 	 * @param leftDownState
 	 *            Left state of the down state configuration
@@ -140,8 +129,19 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 *            Right state of the down state configuration
 	 * @return If the vertex has the given down state configuration
 	 */
-	public boolean hasDownStateConfiguration(final STATE leftDownState, final STATE rightDownState) {
-		return downStateConfigurations.contains(new DownStateConfiguration<STATE>(leftDownState, rightDownState));
+	public boolean hasVertexDownState(final STATE leftDownState, final STATE rightDownState) {
+		return vertexDownStates.contains(new VertexDownState<STATE>(leftDownState, rightDownState));
+	}
+
+	/**
+	 * Returns if the vertex has a given vertex down state.
+	 * 
+	 * @param vertexDownState
+	 *            Down state configuration in ask
+	 * @return If the vertex has the given down state configuration
+	 */
+	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
+		return vertexDownStates.contains(vertexDownState);
 	}
 
 	/*
@@ -156,13 +156,13 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 		sb.append(getQ1()).append(",").append(getLetter());
 
 		sb.append("{");
-		boolean isFirstConfig = true;
-		for (DownStateConfiguration<STATE> downStateConfig : downStateConfigurations) {
-			if (!isFirstConfig) {
+		boolean isFirstVertexDownState = true;
+		for (VertexDownState<STATE> vertexDownState : vertexDownStates) {
+			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
-			sb.append(downStateConfig.toString());
-			isFirstConfig = false;
+			sb.append(vertexDownState.toString());
+			isFirstVertexDownState = false;
 		}
 		sb.append("}");
 

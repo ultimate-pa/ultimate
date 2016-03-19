@@ -26,12 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair;
 
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.VertexDownState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.DuplicatorDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.Vertex;
@@ -63,13 +70,17 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * The underlying nwa automaton from which the game graph gets generated.
 	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
+	/**
+	 * Service provider of Ultimate framework.
+	 */
+	private final AutomataLibraryServices m_Services;
 
 	public FairNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> nwa,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
-		// TODO Super needs to accept the nwa as buechi.
 		m_Nwa = nwa;
+		m_Services = services;
 	}
 
 	/*
@@ -82,9 +93,14 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	public void generateGameGraphFromBuechi() throws OperationCanceledException {
 		long graphBuildTimeStart = System.currentTimeMillis();
 
-		INestedWordAutomatonOldApi<LETTER, STATE> nwa = m_Nwa;
+		// TODO Do we have a better conversion method? One that can not alter
+		// the automaton itself because this might influence simulation metrics.
 
-		// Generate states
+		// To derive down states of automaton ensure it
+		// is a double decker automaton
+		IDoubleDeckerAutomaton<LETTER, STATE> nwa = new RemoveUnreachable<LETTER, STATE>(m_Services, m_Nwa).getResult();
+
+		// Generate vertices
 		for (STATE leftState : nwa.getStates()) {
 			increaseBuechiAmountOfStates();
 
@@ -96,19 +112,25 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 				}
 				SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerVertex = new SpoilerDoubleDeckerVertex<>(priority,
 						false, leftState, rightState);
+				applyVertexDownStatesToVertex(spoilerVertex, nwa);
 				addSpoilerVertex(spoilerVertex);
 
 				// Generate Duplicator vertices (leftState, rightState, letter)
 				for (LETTER letter : nwa.lettersInternalIncoming(leftState)) {
+					// TODO We need to also account for call and return
+					// transitions.
+					// TODO Further, how do we add those to duplicatorVertices
+					// since they only accept LETTER.
 					DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(2,
 							false, leftState, rightState, letter);
+					applyVertexDownStatesToVertex(duplicatorVertex, nwa);
 					addDuplicatorVertex(duplicatorVertex);
 				}
 
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-					getLogger().debug("Stopped in generateGameGraphFromBuechi/generating states");
+					getLogger().debug("Stopped in generateGameGraphFromBuechi/generating vertices");
 					throw new OperationCanceledException(this.getClass());
 				}
 			}
@@ -120,8 +142,9 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 		increaseGlobalInfinity();
 
-		// TODO Generate down states n stuff ...
-
+		// TODO Overhaul this for the use with NWA,
+		// also generate summarize-edges
+		
 		// Generate edges
 		for (STATE edgeDest : nwa.getStates()) {
 			for (IncomingInternalTransition<LETTER, STATE> trans : nwa.internalPredecessors(edgeDest)) {
@@ -144,11 +167,6 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 						addEdge(src, dest);
 						increaseGraphAmountOfEdges();
 					}
-					// TODO Can it link trivial edges like duplicator -> spoiler
-					// where origin has no predecessors? If optimizing this be
-					// careful with adding nwa transitions, this vertex than
-					// may be generated and the left edge must also be
-					// generated.
 
 					// If operation was canceled, for example from the
 					// Ultimate framework
@@ -163,5 +181,82 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		}
 
 		setGraphBuildTime(System.currentTimeMillis() - graphBuildTimeStart);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.AGameGraph#verifyAutomatonValidity(de.uni_freiburg.informatik.
+	 * ultimate.automata.nwalibrary.INestedWordAutomatonOldApi)
+	 */
+	@Override
+	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
+		// Accept nwa automata
+	}
+
+	/**
+	 * Applies all possible down state configurations to a given vertex that
+	 * specifies the up states.
+	 * 
+	 * @param vertex
+	 *            Vertex to add configurations to
+	 * @param doubleDeckerAutomaton
+	 *            DoubleDecker automaton that holds the down state information
+	 *            of the used up states
+	 */
+	private void applyVertexDownStatesToVertex(final DuplicatorDoubleDeckerVertex<LETTER, STATE> vertex,
+			final IDoubleDeckerAutomaton<LETTER, STATE> doubleDeckerAutomaton) {
+		Iterator<VertexDownState<STATE>> vertexDownStatesIter = constructAllVertexDownStates(vertex.getQ0(),
+				vertex.getQ1(), doubleDeckerAutomaton);
+		while (vertexDownStatesIter.hasNext()) {
+			vertex.addVertexDownState(vertexDownStatesIter.next());
+		}
+	}
+
+	/**
+	 * Applies all possible down state configurations to a given vertex that
+	 * specifies the up states.
+	 * 
+	 * @param vertex
+	 *            Vertex to add configurations to
+	 * @param doubleDeckerAutomaton
+	 *            DoubleDecker automaton that holds the down state information
+	 *            of the used up states
+	 */
+	private void applyVertexDownStatesToVertex(final SpoilerDoubleDeckerVertex<LETTER, STATE> vertex,
+			final IDoubleDeckerAutomaton<LETTER, STATE> doubleDeckerAutomaton) {
+		Iterator<VertexDownState<STATE>> vertexDownStatesIter = constructAllVertexDownStates(vertex.getQ0(),
+				vertex.getQ1(), doubleDeckerAutomaton);
+		while (vertexDownStatesIter.hasNext()) {
+			vertex.addVertexDownState(vertexDownStatesIter.next());
+		}
+	}
+
+	/**
+	 * Creates an iterator over all possible vertex down states for two given up
+	 * states.
+	 * 
+	 * @param leftUpState
+	 *            The left up state to combine its down states
+	 * @param rightUpState
+	 *            The right up state to combine its down states
+	 * @param doubleDeckerAutomaton
+	 *            DoubleDecker automaton that holds the down state information
+	 *            of the used up states
+	 * @return Iterator over all possible vertex down states for two given up
+	 *         states
+	 */
+	private Iterator<VertexDownState<STATE>> constructAllVertexDownStates(final STATE leftUpState,
+			final STATE rightUpState, final IDoubleDeckerAutomaton<LETTER, STATE> doubleDeckerAutomaton) {
+		Set<STATE> leftDownStates = doubleDeckerAutomaton.getDownStates(leftUpState);
+		Set<STATE> rightDownStates = doubleDeckerAutomaton.getDownStates(leftUpState);
+		Set<VertexDownState<STATE>> vertexDownStates = new LinkedHashSet<>();
+		for (STATE leftDownState : leftDownStates) {
+			for (STATE rightDownState : rightDownStates) {
+				vertexDownStates.add(new VertexDownState<>(leftDownState, rightDownState));
+			}
+		}
+		return vertexDownStates.iterator();
 	}
 }

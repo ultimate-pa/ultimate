@@ -27,33 +27,35 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices;
 
 /**
- * Container that holds a left and a right down state.
+ * Container that holds a left and a right down state. Game graph vertices have
+ * a left and right up state, this container is used to represent its down
+ * states.
  * 
  * @author Daniel Tischner
  *
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class DownStateConfiguration<STATE> {
+public final class VertexDownState<STATE> {
 
 	/**
-	 * Left down state of the configuration.
+	 * Left down state of the vertex.
 	 */
 	private final STATE m_LeftDownState;
 	/**
-	 * Right down state of the configuration.
+	 * Right down state of the vertex.
 	 */
 	private final STATE m_RightDownState;
 
 	/**
-	 * Creates a new down state configuration with two given down states.
+	 * Creates a new vertex down state with two given down states.
 	 * 
 	 * @param leftDownState
-	 *            Left down state of the configuration
+	 *            Left down state of the vertex
 	 * @param rightDownState
-	 *            Right down state of the configuration
+	 *            Right down state of the vertex
 	 */
-	public DownStateConfiguration(final STATE leftDownState, final STATE rightDownState) {
+	public VertexDownState(final STATE leftDownState, final STATE rightDownState) {
 		m_LeftDownState = leftDownState;
 		m_RightDownState = rightDownState;
 	}
@@ -71,10 +73,10 @@ public final class DownStateConfiguration<STATE> {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof DownStateConfiguration)) {
+		if (!(obj instanceof VertexDownState)) {
 			return false;
 		}
-		DownStateConfiguration<?> other = (DownStateConfiguration<?>) obj;
+		VertexDownState<?> other = (VertexDownState<?>) obj;
 		if (m_LeftDownState == null) {
 			if (other.m_LeftDownState != null) {
 				return false;
@@ -93,7 +95,7 @@ public final class DownStateConfiguration<STATE> {
 	}
 
 	/**
-	 * Gets the left down state of the configuration.
+	 * Gets the left down state of the vertex.
 	 * 
 	 * @return The left down state
 	 */
@@ -102,7 +104,7 @@ public final class DownStateConfiguration<STATE> {
 	}
 
 	/**
-	 * Gets the right down state of the configuration.
+	 * Gets the right down state of the vertex.
 	 * 
 	 * @return The right down state
 	 */

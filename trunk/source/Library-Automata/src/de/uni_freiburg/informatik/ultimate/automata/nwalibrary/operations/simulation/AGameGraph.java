@@ -550,6 +550,22 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
+	 * Verifies the validity of a given automaton. If the automaton is not valid
+	 * it throws an {@link IllegalArgumentException}.
+	 * 
+	 * @param automaton
+	 *            Automaton to verify validity
+	 * @throws IllegalArgumentException
+	 *             If the given automaton is not valid
+	 */
+	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
+		if (!automaton.getCallAlphabet().isEmpty() || !automaton.getReturnAlphabet().isEmpty()) {
+			throw new IllegalArgumentException(
+					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
+		}
+	}
+
+	/**
 	 * Adds a given {@link DuplicatorVertex} object to the game graph.
 	 * 
 	 * @param vertex

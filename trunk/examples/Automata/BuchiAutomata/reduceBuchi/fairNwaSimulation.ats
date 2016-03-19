@@ -16,6 +16,26 @@ print(nwa);
 
 // Some example automaton
 
+// Small nwa example from whiteboard
+/*
+NestedWordAutomaton nwa = (
+  callAlphabet = {c},
+  internalAlphabet = {a},
+  returnAlphabet = {r},
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q1},
+  callTransitions = {
+	  (q0 c q0)
+  },
+  internalTransitions = {
+      (q0 a q1)
+  }, 
+  returnTransitions = {
+	  (q1 q0 r q1)
+  }
+);
+*/
 // Small circle example from mind
 /*
 NestedWordAutomaton nwa = (
@@ -41,35 +61,14 @@ NestedWordAutomaton nwa = (
 	callAlphabet = { },
 	internalAlphabet = {a},
 	returnAlphabet = { },
-	states = {"q3,q1" "q1,q2" "q3,q3" "q1,q3" "q3,q4" "q1,q1" "q3,q2" "q1,q3,b" "q2,q3,a" "q1,q4" "q3,q1,b" "q4,q1,a" "q1,q1,b" "q2,q1,a" "q3,q3,b" "q4,q3,a" "q2,q1" "q4,q1" "q2,q2" "q4,q4" "q2,q3" "q4,q2" "q4,q3" "q1,q2,b" "q2,q2,a" "q3,q4,b" "q4,q4,a" "q2,q4" "q1,q4,b" "q2,q4,a" "q3,q2,b" "q4,q2,a"},
-	initialStates = {"q3,q1" "q1,q2" "q3,q3" "q1,q3" "q3,q4" "q1,q1" "q3,q2" "q1,q3,b" "q2,q3,a" "q1,q4" "q3,q1,b" "q4,q1,a" "q1,q1,b" "q2,q1,a" "q3,q3,b" "q4,q3,a" "q2,q1" "q4,q1" "q2,q2" "q4,q4" "q2,q3" "q4,q2" "q4,q3" "q1,q2,b" "q2,q2,a" "q3,q4,b" "q4,q4,a" "q2,q4" "q1,q4,b" "q2,q4,a" "q3,q2,b" "q4,q2,a"},
+	states = {"q1,q1,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1{[€,q0],[q0,q0],[€,€],[q0,€]}"},
+	initialStates = {"q1,q1,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1{[€,q0],[q0,q0],[€,€],[q0,€]}"},
 	finalStates = { },
 	callTransitions = { },
 	internalTransitions = {
-		("q3,q1" "a" "q4,q1,a")
-		("q1,q2" "a" "q2,q2,a")
-		("q3,q3" "a" "q4,q3,a")
-		("q1,q3" "a" "q2,q3,a")
-		("q3,q4" "a" "q4,q4,a")
-		("q1,q1" "a" "q2,q1,a")
-		("q3,q2" "a" "q4,q2,a")
-		("q2,q3,a" "a" "q2,q4")
-		("q1,q4" "a" "q2,q4,a")
-		("q4,q1,a" "a" "q4,q2")
-		("q2,q1,a" "a" "q2,q2")
-		("q4,q3,a" "a" "q4,q4")
-		("q2,q1" "a" "q3,q1,b")
-		("q4,q1" "a" "q1,q1,b")
-		("q2,q2" "a" "q3,q2,b")
-		("q4,q4" "a" "q1,q4,b")
-		("q2,q3" "a" "q3,q3,b")
-		("q4,q2" "a" "q1,q2,b")
-		("q4,q3" "a" "q1,q3,b")
-		("q1,q2,b" "a" "q1,q3")
-		("q3,q4,b" "a" "q3,q1")
-		("q2,q4" "a" "q3,q4,b")
-		("q1,q4,b" "a" "q1,q1")
-		("q3,q2,b" "a" "q3,q3")
+		("q1,q0,a{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "q1,q1{[€,q0],[q0,q0],[€,€],[q0,€]}")
+		("q0,q0{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "q1,q0,a{[€,q0],[q0,q0],[€,€],[q0,€]}")
+		("q0,q1{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "q1,q1,a{[€,q0],[q0,q0],[€,€],[q0,€]}")
 	},
 	returnTransitions = {}
 );

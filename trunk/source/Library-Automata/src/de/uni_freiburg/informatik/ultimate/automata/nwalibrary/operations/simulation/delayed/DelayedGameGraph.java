@@ -124,10 +124,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(progressTimer, logger, stateFactory);
-		if (!buechi.getCallAlphabet().isEmpty() || !buechi.getReturnAlphabet().isEmpty()) {
-			throw new IllegalArgumentException(
-					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
-		}
+		verifyAutomatonValidity(buechi);
+		
 		m_Services = services;
 		m_Buechi = buechi;
 		m_BuechiAmountOfStates = 0;
