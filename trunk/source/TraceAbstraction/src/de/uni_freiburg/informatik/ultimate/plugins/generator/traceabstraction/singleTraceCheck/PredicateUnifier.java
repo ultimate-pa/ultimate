@@ -860,13 +860,13 @@ public class PredicateUnifier {
 
 		@Override
 		public Set<IPredicate> getCoveringPredicates(IPredicate pred) {
-			return Collections.unmodifiableSet(m_ImpliedPredicates.getImage(pred));
+			return m_ImpliedPredicates.getImage(pred);
 		}
 		
 
 		@Override
 		public Set<IPredicate> getCoveredPredicates(IPredicate pred) {
-			return Collections.unmodifiableSet(m_ExpliedPredicates.getImage(pred));
+			return m_ExpliedPredicates.getImage(pred);
 		}
 		
 		public CoverageRelationStatistics getCoverageRelationStatistics() {
