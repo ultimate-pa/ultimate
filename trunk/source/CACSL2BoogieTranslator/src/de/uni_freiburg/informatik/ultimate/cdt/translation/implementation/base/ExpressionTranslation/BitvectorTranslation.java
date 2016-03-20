@@ -550,7 +550,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
-			funcname = "fp.rem"; //TODO: <rohlandm> check if this is correkt when the SMTtheory is reachable again
+			funcname = "fp.rem";
 			isRounded = false;
 			break;
 		case IASTBinaryExpression.op_plusAssign:
