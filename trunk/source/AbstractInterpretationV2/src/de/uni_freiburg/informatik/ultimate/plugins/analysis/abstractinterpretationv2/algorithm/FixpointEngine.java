@@ -95,8 +95,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
-		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
-		// mMaxParallelStates = 1;
+//		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
+		mMaxParallelStates = 1;
 	}
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
@@ -269,7 +269,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final LOCATION currentLoopHead = mTransitionProvider.getSource(currentItem.getAction());
 		final int loopCounterValue = currentItem.enterLoop(currentLoopHead, currentItem.getPreState());
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageEnterLoop(loopCounterValue, currentLoopHead));
+			mLogger.debug(getLogMessageEnterLoop(loopCounterValue, currentLoopHead, currentItem.getPreState()));
 		}
 	}
 
@@ -473,16 +473,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			mLogger.debug("CurrentAction [" + currentAction.hashCode() + "] " + currentAction);
 			mLogger.debug("Stack");
 			stackAtCallLocation.stream().sequential().map(a -> a.getFirst())
-					.map(a -> a == null ? "[G]" : "[" + a.hashCode() + "] " + a.toString()).forEach(mLogger::debug);
+					.map(a -> a == null ? "[G]" : getTransitionString(a)).forEach(mLogger::debug);
 			mLogger.debug("Relevant stack");
 			relevantStackItems.stream().sequential().forEach(a -> {
-				mLogger.debug(
-						a.getFirst() == null ? "[G]" : "[" + a.getFirst().hashCode() + "] " + a.getFirst().toString());
+				mLogger.debug(a.getFirst() == null ? "[G]" : getTransitionString(a.getFirst()));
 				mLogger.debug("  " + a.getSecond().toString());
 			});
-			mLogger.debug("Ordered states [" + currentAction.hashCode() + "] " + currentAction);
+			mLogger.debug("Ordered states " + getTransitionString(currentAction));
 			orderedStates.stream().sequential().forEach(a -> {
-				mLogger.debug("[" + a.hashCode() + "] " + a.toLogString());
+				mLogger.debug(getStateString(a));
 			});
 			mLogger.debug("Selected " + lastState.hashCode());
 		}
@@ -603,9 +602,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}
 
-	private StringBuilder getLogMessageEnterLoop(final int loopCounterValue, final LOCATION loopHead) {
+	private StringBuilder getLogMessageEnterLoop(final int loopCounterValue, final LOCATION loopHead,
+			final STATE state) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering loop ").append(loopHead)
-				.append(" (").append(loopCounterValue).append(")");
+				.append(" (").append(loopCounterValue).append("), saving ").append(getStateString(state));
 	}
 
 	private StringBuilder getLogMessageLeaveLoop(final int loopCounterValue, final LOCATION loopHead) {
@@ -631,12 +631,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final STATE preState = currentItem.getPreState();
 		final ACTION current = currentItem.getAction();
 		final int depth = currentItem.getCallStackDepth();
-		final String preStateString = preState == null ? "NULL"
-				: addHashCodeString(new StringBuilder(), preState).append(" ").append(preState.toLogString())
-						.toString();
-		return addHashCodeString(new StringBuilder(), current).append(" ")
-				.append(mTransitionProvider.toLogString(current)).append(" processing for pre state ")
-				.append(preStateString).append(" (depth=").append(depth).append(")");
+		final String preStateString = preState == null ? "NULL" : getStateString(preState).toString();
+		return getTransitionString(current).append(" processing for pre state ").append(preStateString)
+				.append(" (depth=").append(depth).append(")");
 	}
 
 	private StringBuilder getLogMessageAddTransition(
@@ -646,10 +643,19 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.append(newTransition.getAction().hashCode()).append("]->");
 	}
 
+	private StringBuilder getStateString(final STATE current) {
+		return addHashCodeString(new StringBuilder(), current).append(' ').append(current.toLogString());
+	}
+
+	private StringBuilder getTransitionString(final ACTION current) {
+		return addHashCodeString(new StringBuilder(), current).append(' ')
+				.append(mTransitionProvider.toLogString(current));
+	}
+
 	private StringBuilder addHashCodeString(final StringBuilder builder, final Object current) {
 		if (current == null) {
 			return builder.append("[?]");
 		}
-		return builder.append("[").append(current.hashCode()).append("]");
+		return builder.append('[').append(current.hashCode()).append(']');
 	}
 }

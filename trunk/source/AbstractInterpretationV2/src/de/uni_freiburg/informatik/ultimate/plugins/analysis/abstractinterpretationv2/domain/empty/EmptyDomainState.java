@@ -136,21 +136,17 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public boolean isEqualTo(EmptyDomainState<ACTION, VARDECL> other) {
+	public boolean isEqualTo(final EmptyDomainState<ACTION, VARDECL> other) {
 		if (other == null) {
 			return false;
 		}
-		if (!getClass().isInstance(other)) {
+
+		if (other.mVarDecls.size() != mVarDecls.size()) {
 			return false;
 		}
 
-		final EmptyDomainState<ACTION, VARDECL> comparableOther = (EmptyDomainState<ACTION, VARDECL>) other;
-		if (comparableOther.mVarDecls.size() != mVarDecls.size()) {
-			return false;
-		}
-
-		for (Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
-			final VARDECL otherValue = comparableOther.mVarDecls.get(entry.getKey());
+		for (final Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
+			final VARDECL otherValue = other.mVarDecls.get(entry.getKey());
 			if (!entry.getValue().equals(otherValue)) {
 				return false;
 			}
