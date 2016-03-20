@@ -121,6 +121,22 @@ public class BooleanValue {
 		return mValue == other.mValue;
 	}
 
+	public boolean isContainedIn(BooleanValue other) {
+		if (other == null) {
+			return false;
+		}
+		if (other.mValue == Value.TOP) {
+			return true;
+		}
+		if (mValue == other.mValue) {
+			return true;
+		}
+		if(mValue == Value.BOTTOM){
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * @return <code>true</code> if and only if the value of <code>this</code> is &bot;, <code>false</code> otherwise.
 	 */

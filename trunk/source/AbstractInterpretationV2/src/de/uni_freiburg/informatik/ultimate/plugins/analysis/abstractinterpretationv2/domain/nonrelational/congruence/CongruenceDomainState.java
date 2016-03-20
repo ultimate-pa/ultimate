@@ -92,8 +92,8 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	}
 
 	protected CongruenceDomainState(Logger logger, Map<String, IBoogieVar> variablesMap,
-	        Map<String, CongruenceDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
-	        boolean isFixpoint) {
+			Map<String, CongruenceDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
+			boolean isFixpoint) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, CongruenceDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
@@ -135,7 +135,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	protected BooleanValue getBooleanValue(String booleanVariableName) {
 		if (!mBooleanValuesMap.containsKey(booleanVariableName)) {
 			throw new UnsupportedOperationException(
-			        "There is no boolean variable with name " + booleanVariableName + ".");
+					"There is no boolean variable with name " + booleanVariableName + ".");
 		}
 
 		return new BooleanValue(mBooleanValuesMap.get(booleanVariableName));
@@ -153,7 +153,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		assert vars.length == values.length;
 
 		return setMixedValues(vars, values, new String[0], new BooleanValue.Value[0], new String[0],
-		        new CongruenceDomainValue[0]);
+				new CongruenceDomainValue[0]);
 	}
 
 	protected CongruenceDomainState setBooleanValue(String name, BooleanValue.Value value) {
@@ -182,7 +182,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		assert vars.length == values.length;
 
 		return setMixedValues(new String[0], new CongruenceDomainValue[0], vars, values, new String[0],
-		        new CongruenceDomainValue[0]);
+				new CongruenceDomainValue[0]);
 	}
 
 	/**
@@ -211,7 +211,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		assert arrays.length == values.length;
 
 		return setMixedValues(new String[0], new CongruenceDomainValue[0], new String[0], new BooleanValue.Value[0],
-		        arrays, values);
+				arrays, values);
 	}
 
 	/**
@@ -230,7 +230,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 * @return A new {@link CongruenceDomainState} which is the copy of <code>this</code> but with the updated values.
 	 */
 	protected CongruenceDomainState setMixedValues(String[] vars, CongruenceDomainValue[] values, String[] booleanVars,
-	        BooleanValue.Value[] booleanValues, String[] arrays, CongruenceDomainValue[] arrayValues) {
+			BooleanValue.Value[] booleanValues, String[] arrays, CongruenceDomainValue[] arrayValues) {
 		assert vars != null;
 		assert values != null;
 		assert booleanVars != null;
@@ -296,7 +296,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 
 		// TODO: Implement proper handling of arrays.
 		throw new UnsupportedOperationException(
-		        "The variable " + var + " exists but was not found in the variable sets.");
+				"The variable " + var + " exists but was not found in the variable sets.");
 	}
 
 	/**
@@ -316,7 +316,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 
 		if (old != null) {
 			throw new UnsupportedOperationException(
-			        "Variable names must be disjoint. Variable " + name + " is already present.");
+					"Variable names must be disjoint. Variable " + name + " is already present.");
 		}
 
 		if (variable.getIType() instanceof PrimitiveType) {
@@ -333,7 +333,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			state.mValuesMap.put(name, new CongruenceDomainValue());
 		} else {
 			state.mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString() + " of variable "
-			        + name + " is not implemented. Assuming top.");
+					+ name + " is not implemented. Assuming top.");
 			state.mValuesMap.put(name, new CongruenceDomainValue());
 		}
 	}
@@ -371,7 +371,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			final IBoogieVar old = newVarMap.put(id, var);
 			if (old != null) {
 				throw new UnsupportedOperationException(
-				        "Variable names must be disjoint. The variable " + id + " is already present.");
+						"Variable names must be disjoint. The variable " + id + " is already present.");
 			}
 			if (var.getIType() instanceof PrimitiveType) {
 				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
@@ -388,7 +388,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 				newValMap.put(id, new CongruenceDomainValue());
 			} else {
 				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString() + " of variable " + id
-				        + " is not implemented. Assuming top.");
+						+ " is not implemented. Assuming top.");
 				newValMap.put(id, new CongruenceDomainValue());
 			}
 		}
@@ -559,12 +559,12 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 
 		for (Entry<String, CongruenceDomainValue> entry : mValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
-			        entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
+					entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
 		}
 
 		for (Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
-			        new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
+					new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
 		}
 
 		return returnState;
@@ -726,8 +726,8 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	}
 
 	/**
-	 * Merges <code>this</code> with another {@link CongruenceDomainState}. All variables that occur in <code>this</code>
-	 * must also occur in the other state.
+	 * Merges <code>this</code> with another {@link CongruenceDomainState}. All variables that occur in
+	 * <code>this</code> must also occur in the other state.
 	 * 
 	 * @param other
 	 *            The other state to merge with.
@@ -739,7 +739,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 
 		if (!hasSameVariables(other)) {
 			throw new UnsupportedOperationException(
-			        "Cannot merge the two states as their sets of variables in the states are disjoint.");
+					"Cannot merge the two states as their sets of variables in the states are disjoint.");
 		}
 
 		final CongruenceDomainState returnState = copy();
@@ -752,7 +752,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 					setValueInternally(returnState, var,
-					        mBooleanValuesMap.get(var).merge(other.mBooleanValuesMap.get(var)));
+							mBooleanValuesMap.get(var).merge(other.mBooleanValuesMap.get(var)));
 				} else {
 					setValueInternally(returnState, var, mValuesMap.get(var).merge(other.mValuesMap.get(var)));
 				}
@@ -765,5 +765,11 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			}
 		}
 		return returnState;
+	}
+
+	@Override
+	public SubsetResult isSubsetOf(final CongruenceDomainState other) {
+		assert hasSameVariables(other);
+		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
 	}
 }

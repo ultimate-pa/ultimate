@@ -125,7 +125,6 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		return false;
 	}
 
-
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
@@ -215,5 +214,11 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		}
 
 		return new EmptyDomainState<ACTION, VARDECL>(newVarDecls);
+	}
+
+	@Override
+	public SubsetResult isSubsetOf(EmptyDomainState<ACTION, VARDECL> other) {
+		assert hasSameVariables(other);
+		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
 	}
 }

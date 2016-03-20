@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class CompoundDomainState implements IAbstractState<CompoundDomainState, CodeBlock, IBoogieVar> {
 
 	private static int sId;
-	
+
 	private final Logger mLogger;
 	private final List<IAbstractState<?, CodeBlock, IBoogieVar>> mAbstractStates;
 	private final List<IAbstractDomain> mDomainList;
@@ -153,18 +153,20 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	@Override
 	public boolean isEqualTo(CompoundDomainState other) {
 		assert mAbstractStates.size() == other.mAbstractStates.size();
-
 		for (int i = 0; i < mAbstractStates.size(); i++) {
 			if (!isEqualToInternally(mAbstractStates.get(i), other.mAbstractStates.get(i))) {
 				return false;
 			}
 		}
-
 		return true;
 	}
 
-	private static <T extends IAbstractState> boolean isEqualToInternally(T current, T other) {
+	private static <T extends IAbstractState> boolean isEqualToInternally(final T current, final T other) {
 		return current.isEqualTo(other);
+	}
+
+	private static <T extends IAbstractState> SubsetResult isSubsetOfInternally(final T current, final T other) {
+		return current.isSubsetOf(other);
 	}
 
 	@Override
@@ -185,7 +187,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	private String getShortName(Class<?> clazz) {
-		String s = clazz.getSimpleName();
+		final String s = clazz.getSimpleName();
 		if (s.length() < 4) {
 			return s;
 		}
@@ -210,4 +212,45 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public int hashCode() {
 		return mId;
 	}
+
+	@Override
+	public SubsetResult isSubsetOf(final CompoundDomainState other) {
+		SubsetResult rtr = SubsetResult.EQUAL;
+		for (int i = 0; i < mAbstractStates.size(); i++) {
+			rtr = isStrictSubsetOf(rtr, mAbstractStates.get(i), other.mAbstractStates.get(i));
+			if (rtr == SubsetResult.NONE) {
+				return rtr;
+			}
+		}
+		return rtr;
+	}
+
+	private SubsetResult isStrictSubsetOf(final SubsetResult current,
+			final IAbstractState<?, CodeBlock, IBoogieVar> aState,
+			final IAbstractState<?, CodeBlock, IBoogieVar> bState) {
+		final SubsetResult result = isSubsetOfInternally(aState, bState);
+		switch (current) {
+		case EQUAL:
+			if (result == SubsetResult.EQUAL) {
+				return SubsetResult.EQUAL;
+			}
+			break;
+		case STRICT:
+			if (result == SubsetResult.STRICT || result == SubsetResult.EQUAL) {
+				return SubsetResult.STRICT;
+			}
+			break;
+		case NON_STRICT:
+			if (result != SubsetResult.NONE) {
+				return SubsetResult.NON_STRICT;
+			}
+			break;
+		case NONE:
+			return SubsetResult.NONE;
+		default:
+			throw new UnsupportedOperationException("Unhandled case " + current);
+		}
+		return result;
+	}
+
 }

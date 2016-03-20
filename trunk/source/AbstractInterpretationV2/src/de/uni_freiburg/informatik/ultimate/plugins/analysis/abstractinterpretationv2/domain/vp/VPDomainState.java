@@ -83,9 +83,8 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		mId = sId;
 	}
 
-	protected VPDomainState(Map<String, IBoogieVar> variablesMap,
-			Map<String, Set<Expression>> varExprMap, Set<Expression> exprSet,
-			Map<String, Set<Expression>> ptrReadintMap, boolean isFixpoint) {
+	protected VPDomainState(Map<String, IBoogieVar> variablesMap, Map<String, Set<Expression>> varExprMap,
+			Set<Expression> exprSet, Map<String, Set<Expression>> ptrReadintMap, boolean isFixpoint) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mVarExprMap = new HashMap<String, Set<Expression>>(varExprMap);
 		mExprSet = new HashSet<Expression>(exprSet);
@@ -94,11 +93,11 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		sId++;
 		mId = sId;
 	}
-	
+
 	public Map<String, Set<Expression>> getPtrReadintMap() {
 		return mPtrReadintMap;
 	}
-	
+
 	public Set<Expression> getExprSet() {
 		return mExprSet;
 	}
@@ -116,18 +115,16 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		assert name != null;
 		assert variable != null;
 
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(
-				mVariablesMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
 		final IBoogieVar old = newVarMap.put(name, variable);
 		if (old != null) {
-			throw new UnsupportedOperationException(
-					"Variable names must be disjoint.");
+			throw new UnsupportedOperationException("Variable names must be disjoint.");
 		}
 
-//		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-//				mVarExprMap);
-//
-//		newExprMap.put(name, new HashSet<Expression>());
+		// final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
+		// mVarExprMap);
+		//
+		// newExprMap.put(name, new HashSet<Expression>());
 
 		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
@@ -137,13 +134,12 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		assert name != null;
 		assert variable != null;
 
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(
-				mVariablesMap);
-//		newVarMap.remove(name);
-//		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-//				mVarExprMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
+		// newVarMap.remove(name);
+		// final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
+		// mVarExprMap);
 
-//		newExprMap.remove(name);
+		// newExprMap.remove(name);
 
 		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
@@ -153,19 +149,16 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(
-				mVariablesMap);
-//		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-//				mVarExprMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
+		// final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
+		// mVarExprMap);
 
 		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
-			final IBoogieVar old = newVarMap.put(entry.getKey(),
-					entry.getValue());
+			final IBoogieVar old = newVarMap.put(entry.getKey(), entry.getValue());
 			if (old != null) {
-				throw new UnsupportedOperationException(
-						"Variable names must be disjoint.");
+				throw new UnsupportedOperationException("Variable names must be disjoint.");
 			}
-//			newExprMap.put(entry.getKey(), new HashSet<Expression>());
+			// newExprMap.put(entry.getKey(), new HashSet<Expression>());
 		}
 
 		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
@@ -176,15 +169,14 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(
-				mVariablesMap);
-//		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-//				mVarExprMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
+		// final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
+		// mVarExprMap);
 
-//		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
-//			newVarMap.remove(entry.getKey());
-//			newExprMap.remove(entry.getKey());
-//		}
+		// for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
+		// newVarMap.remove(entry.getKey());
+		// newExprMap.remove(entry.getKey());
+		// }
 
 		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
@@ -201,11 +193,11 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 
 	@Override
 	public boolean isBottom() {
-//		for (final Entry<String, VPDomainValue> entry : mValuesMap.entrySet()) {
-//			if (entry.getValue().getResult() == Values.BOTTOM) {
-//				return true;
-//			}
-//		}
+		// for (final Entry<String, VPDomainValue> entry : mValuesMap.entrySet()) {
+		// if (entry.getValue().getResult() == Values.BOTTOM) {
+		// return true;
+		// }
+		// }
 		return false;
 	}
 
@@ -218,8 +210,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	/**
-	 * Build a string of the form
-	 * "var1 : type1 = value1; var2 : type2 = value2; ...".
+	 * Build a string of the form "var1 : type1 = value1; var2 : type2 = value2; ...".
 	 * 
 	 * @return A string of all variables with their values.
 	 */
@@ -227,11 +218,9 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	public String toLogString() {
 		final StringBuilder stringBuffer = new StringBuilder();
 		for (final Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
-				stringBuffer.append(entry.getKey()).append(':')
-				.append(entry.getValue()).append(" = ")
-				.append(mVarExprMap.get(entry.getKey()).toString())
-				.append("; ");
-			
+			stringBuffer.append(entry.getKey()).append(':').append(entry.getValue()).append(" = ")
+					.append(mVarExprMap.get(entry.getKey()).toString()).append("; ");
+
 		}
 		return stringBuffer.toString();
 	}
@@ -268,10 +257,8 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		if (!hasSameVariables(other)) {
 			return false;
 		}
-		for (final Entry<String, Set<Expression>> entry : mVarExprMap
-				.entrySet()) {
-			final Set<Expression> otherValue = other.getExpressionMap().get(entry
-					.getKey());
+		for (final Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
+			final Set<Expression> otherValue = other.getExpressionMap().get(entry.getKey());
 			if (!mVarExprMap.get(entry.getKey()).equals(otherValue)) {
 				return false;
 			}
@@ -307,25 +294,21 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	public VPDomainState copy() {
-		
+
 		Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>();
 		for (final Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
 			final String key = entry.getKey();
 			newExprMap.put(key, new HashSet<Expression>(mVarExprMap.get(key)));
 		}
-		
+
 		Map<String, Set<Expression>> newPtrReadinMap = new HashMap<String, Set<Expression>>();
 		for (final Entry<String, Set<Expression>> entry : mPtrReadintMap.entrySet()) {
 			final String key = entry.getKey();
 			newPtrReadinMap.put(key, new HashSet<Expression>(mPtrReadintMap.get(key)));
 		}
-		
-		return new VPDomainState(
-				new HashMap<String, IBoogieVar>(mVariablesMap),
-				newExprMap, 
-				new HashSet<Expression>(mExprSet),
-				newPtrReadinMap,
-				mIsFixpoint);
+
+		return new VPDomainState(new HashMap<String, IBoogieVar>(mVariablesMap), newExprMap,
+				new HashSet<Expression>(mExprSet), newPtrReadinMap, mIsFixpoint);
 	}
 
 	@Override
@@ -349,14 +332,14 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 			mVarExprMap.put(entry.getKey(), entry.getValue());
 		}
 	}
-	
+
 	protected void setExpressionSet(Set<Expression> exprSet) {
 
 		assert exprSet != null;
 		mExprSet.clear();
 		mExprSet.addAll(exprSet);
 	}
-	
+
 	protected void setPtrReadinMap(Map<String, Set<Expression>> ptrReadinMap) {
 
 		assert ptrReadinMap != null;
@@ -369,30 +352,26 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 			mPtrReadintMap.put(entry.getKey(), entry.getValue());
 		}
 	}
-	
+
 	public void printExprMap() {
 		System.out.println(" Variables Expression Map: ");
 		for (Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
 			if (entry.getValue() instanceof IntegerLiteral) {
-				System.out.println(entry.getKey() + ": "
-						+ ((IntegerLiteral) entry.getValue()).getValue());
+				System.out.println(entry.getKey() + ": " + ((IntegerLiteral) entry.getValue()).getValue());
 			} else {
-				System.out.println(entry.getKey() + ": "
-						+  entry.getValue().toString());
+				System.out.println(entry.getKey() + ": " + entry.getValue().toString());
 			}
 
 		}
 	}
-	
+
 	public void printPtrReadintMap() {
 		System.out.println(" Pointer Read-int Map: ");
 		for (Entry<String, Set<Expression>> entry : mPtrReadintMap.entrySet()) {
 			if (entry.getValue() instanceof IntegerLiteral) {
-				System.out.println(entry.getKey() + ": "
-						+ ((IntegerLiteral) entry.getValue()).getValue());
+				System.out.println(entry.getKey() + ": " + ((IntegerLiteral) entry.getValue()).getValue());
 			} else {
-				System.out.println(entry.getKey() + ": "
-						+  entry.getValue().toString());
+				System.out.println(entry.getKey() + ": " + entry.getValue().toString());
 			}
 
 		}
@@ -405,54 +384,52 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	 *            The other state to intersect with.
 	 * @return A new state which corresponds to the intersection.
 	 */
-//	protected VPDomainState intersect(VPDomainState other) {
-//		assert hasSameVariables(other);
-//
-//		final VPDomainState newState = (VPDomainState) this.copy();
-//
-//		for (final Entry<String, IBoogieVar> variable : mVariablesMap.entrySet()) {
-//			final String key = variable.getKey();
-//			newState.setValue(key, mValuesMap.get(key).intersect(other.mValuesMap.get(key)));
-//		}
-//
-//		return newState;
-//	}
+	// protected VPDomainState intersect(VPDomainState other) {
+	// assert hasSameVariables(other);
+	//
+	// final VPDomainState newState = (VPDomainState) this.copy();
+	//
+	// for (final Entry<String, IBoogieVar> variable : mVariablesMap.entrySet()) {
+	// final String key = variable.getKey();
+	// newState.setValue(key, mValuesMap.get(key).intersect(other.mValuesMap.get(key)));
+	// }
+	//
+	// return newState;
+	// }
 
-//	public void setToBottom() {
-//		for (final Entry<String, VPDomainValue> entry : mValuesMap.entrySet()) {
-//			entry.setValue(new VPDomainValue(Values.BOTTOM));
-//		}
-//	}
+	// public void setToBottom() {
+	// for (final Entry<String, VPDomainValue> entry : mValuesMap.entrySet()) {
+	// entry.setValue(new VPDomainValue(Values.BOTTOM));
+	// }
+	// }
 
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
 		return script.term("true");
 	}
 
-//	@Override
-//	public IBoogieVar getVariableType(String name) {
-//		assert name != null;
-//		assert mVariablesMap.containsKey(name);
-//
-//		return mVariablesMap.get(name);
-//	}
+	// @Override
+	// public IBoogieVar getVariableType(String name) {
+	// assert name != null;
+	// assert mVariablesMap.containsKey(name);
+	//
+	// return mVariablesMap.get(name);
+	// }
 
 	@Override
 	public VPDomainState patch(final VPDomainState dominator) {
-//		throw new UnsupportedOperationException("not yet implemented");
+		// throw new UnsupportedOperationException("not yet implemented");
 		// TODO
 		return dominator;
 	}
-	
+
 	/**
-	 * Generate the variables grouping information from the partition. Return
-	 * map key: variable name. value: group.
+	 * Generate the variables grouping information from the partition. Return map key: variable name. value: group.
 	 * 
 	 * @param partition
 	 * @return the variables grouping information
 	 */
-	public static Map<String, String> generateVarGroupInfo(
-			Map<String, Set<String>> partition) {
+	public static Map<String, String> generateVarGroupInfo(Map<String, Set<String>> partition) {
 
 		Iterator<String> partitionIter = partition.keySet().iterator();
 		String groupNumber;
@@ -488,15 +465,13 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	// }
 
 	/**
-	 * Re-index the partition group, in case there's a whole group that had been
-	 * remove, and that index will be skip.
+	 * Re-index the partition group, in case there's a whole group that had been remove, and that index will be skip.
 	 * 
 	 * @param partition
 	 *            to be sorted out.
 	 * @return a new partition map that no index is skipped.
 	 */
-	public static Map<String, Set<String>> reIndexGroups(
-			Map<String, Set<String>> partition) {
+	public static Map<String, Set<String>> reIndexGroups(Map<String, Set<String>> partition) {
 
 		Map<String, Set<String>> result = new HashMap<String, Set<String>>();
 
@@ -549,125 +524,10 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-//	public static Map<String, Set<Expression>> calculateGlobleExprMap(List<VPDomainState> states) {
-//		
-//		Map<String, Set<Expression>> resultExprMap = new HashMap<String, Set<Expression>>();
-//		
-//		for (VPDomainState state : states) {
-//			
-//		}
-//		
-//		return ;
-//	}
 
-	// public static Map<String, Set<String>> join(VPDomainState domain1,
-	// VPDomainState domain2) {
-	//
-	// Set<String> vars1 = domain1.getVariablesSet();
-	// Set<String> vars2 = domain2.getVariablesSet();
-	// Map<String, Set<String>> partition1 = domain1.getPartition();
-	// Map<String, Set<String>> partition2 = domain2.getPartition();
-	//
-	// Iterator<String> varIterator1 = vars1.iterator();
-	//
-	// Map<String, String> partitionInfo1 =
-	// VPDomainState.generateVarGroupInfo(partition1);
-	// Map<String, String> partitionInfo2 =
-	// VPDomainState.generateVarGroupInfo(partition2);
-	//
-	// String x;
-	// String y;
-	//
-	// List<String> pairList = new ArrayList<String>();
-	//
-	// while (varIterator1.hasNext()) {
-	// x = varIterator1.next();
-	// Iterator<String> varIterator2 = vars2.iterator();
-	// while (varIterator2.hasNext()) {
-	// y = varIterator2.next();
-	//
-	// if (!x.equals(y)) {
-	// // if x and y are in the same partition, no matter it's from
-	// // partition 1 or 2, then put them into same group.
-	// if ((!partitionInfo1.get(x).equals(partitionInfo1.get(y)))
-	// && (partitionInfo2.get(x).equals(partitionInfo2
-	// .get(y)))) {
-	// pairList.add(new String(x + "," + y));
-	// }
-	// }
-	// }
-	// }
-	//
-	// String g;
-	// String v;
-	// for (String p : pairList) {
-	//
-	// String[] pair = p.split(",");
-	//
-	// String xGroup = partitionInfo1.get(pair[0]);
-	// String yGroup = partitionInfo2.get(pair[1]);
-	//
-	// if (partition1.containsKey(xGroup)) {
-	// partition1.get(xGroup).addAll(partition2.get(yGroup));
-	//
-	// Iterator<String> p2SetIter = partition2.get(yGroup).iterator();
-	// while (p2SetIter.hasNext()) {
-	// v = p2SetIter.next();
-	// g = partitionInfo1.get(v);
-	// if (g == null) {
-	// continue;
-	// }
-	// if (!g.equals(xGroup)) {
-	// if (partition1.containsKey(g)) {
-	// partition1.get(xGroup).addAll(partition1.get(g));
-	// partition1.remove(g);
-	// }
-	//
-	// }
-	// }
-	// }
-	// }
-	//
-	// /*
-	// * If there's a whole group in partition2, that the elements in it are
-	// * not in partition1, then add the group into partition1. The following
-	// * are dealt with this situation.
-	// */
-	//
-	// // because the process above may remove a whole group from partition1,
-	// // so call sortOutPartition to sort the partition out.
-	// partition1 = reIndexGroups(partition1);
-	// Map<String, String> newPartition1Info =
-	// VPDomainState.generateVarGroupInfo(partition1);
-	//
-	// Set<String> par2KeySet = partition2.keySet();
-	// Iterator<String> par2KeySetIter = par2KeySet.iterator();
-	// String par2KeySetIterGroup;
-	//
-	// Set<String> par2VarSet;
-	// Iterator<String> par2VarSetIter;
-	// String par2VarSetIterElement;
-	//
-	// while (par2KeySetIter.hasNext()) {
-	// par2KeySetIterGroup = par2KeySetIter.next();
-	//
-	// par2VarSet = partition2.get(par2KeySetIterGroup);
-	// par2VarSetIter = par2VarSet.iterator();
-	//
-	// boolean isNotInPar1 = true;
-	//
-	// while (par2VarSetIter.hasNext()) {
-	// par2VarSetIterElement = par2VarSetIter.next();
-	// isNotInPar1 = (!newPartition1Info
-	// .containsKey(par2VarSetIterElement)) && isNotInPar1;
-	// }
-	//
-	// if (isNotInPar1) {
-	// int size = partition1.size();
-	// partition1.put(new Integer(size + 1).toString(), par2VarSet);
-	// }
-	// }
-	// return partition1;
-	// }
+	@Override
+	public SubsetResult isSubsetOf(final VPDomainState other) {
+		assert hasSameVariables(other);
+		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
+	}
 }

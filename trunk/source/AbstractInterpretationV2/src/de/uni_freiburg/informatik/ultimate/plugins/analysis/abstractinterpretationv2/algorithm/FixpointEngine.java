@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -95,8 +96,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
-//		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
-		mMaxParallelStates = 1;
+		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
+		// mMaxParallelStates = 1;
 	}
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
@@ -140,7 +141,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			}
 
 			for (final STATE pendingNewPostState : postStates) {
-				final STATE postState = preprocessPostState(currentItem, wideningOp, pendingNewPostState);
+				final STATE postState = preprocessPostState(currentItem, pendingNewPostState);
 				if (null == postState) {
 					continue;
 				}
@@ -173,7 +174,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			postStates = postOp.apply(preStateWithFreshVariables, currentAction);
 		} else {
 			// a context switch happened
-			// TODO: save the preState for evaluation of old variables
 			postStates = postOp.apply(preState, preStateWithFreshVariables, currentAction);
 		}
 
@@ -200,7 +200,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	}
 
 	private STATE preprocessPostState(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
-			final IAbstractStateBinaryOperator<STATE> wideningOp, final STATE pendingPostState) {
+			final STATE pendingPostState) {
 		if (pendingPostState.isBottom()) {
 			// if the new abstract state is bottom, we do not enter loops and we do not add
 			// new actions to the worklist
@@ -214,11 +214,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.getCurrentStorage();
 		final ACTION currentAction = currentItem.getAction();
 
-		// check if the pending post state is a fixpoint
-		if (checkFixpoint(currentStateStorage, currentAction, pendingPostState)) {
-			// it is a fixpoint, we can skip all successors safely
+		// check if the pending post state is already subsumed by a pre-existing state
+		if (checkSubset(currentStateStorage, currentAction, pendingPostState)) {
+			// it is subsumed, we can skip all successors safely
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessagePostIsFixpoint(pendingPostState));
+				mLogger.debug(getLogMessagePostIsSubsumed(pendingPostState));
 			}
 			return null;
 		}
@@ -499,10 +499,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		return false;
 	}
 
-	private boolean checkFixpoint(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStorage,
-			ACTION currentAction, STATE newPostState) {
+	private boolean checkSubset(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStorage,
+			final ACTION currentAction, final STATE newPostState) {
 		final Collection<STATE> oldPostStates = currentStorage.getAbstractPostStates(currentAction);
-		return oldPostStates.stream().anyMatch(old -> checkFixpoint(old, newPostState));
+		return oldPostStates.stream().anyMatch(old -> newPostState.isSubsetOf(old) != SubsetResult.NONE);
 	}
 
 	private void checkTimeout() {
@@ -553,10 +553,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.append("] is bottom");
 	}
 
-	private StringBuilder getLogMessagePostIsFixpoint(final STATE pendingNewPostState) {
+	private StringBuilder getLogMessagePostIsSubsumed(final STATE pendingNewPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" Skipping all successors because post state [").append(pendingNewPostState.hashCode())
-				.append("] ").append(pendingNewPostState.toLogString()).append(" is fixpoint");
+				.append("] ").append(pendingNewPostState.toLogString()).append(" is subsumed by pre-existing state");
 	}
 
 	private StringBuilder getLogMessageLeaveScope(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> successorItem) {
