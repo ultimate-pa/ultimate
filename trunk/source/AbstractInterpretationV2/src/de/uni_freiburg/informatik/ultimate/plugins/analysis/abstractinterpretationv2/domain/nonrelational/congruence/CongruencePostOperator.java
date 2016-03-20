@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -137,7 +138,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 			Map<String, IBoogieVar> paramVariables = new HashMap<>();
 			for (int i = 0; i < args.length; i++) {
 				final String name = paramNames.get(i);
-				final IBoogieVar boogieVar = createTemporaryIBoogieVar(name, args[i].getType());
+				final IBoogieVar boogieVar = BoogieUtil.createTemporaryIBoogieVar(name, args[i].getType());
 				paramVariables.put(name, boogieVar);
 
 				final ILocation loc = callStatement.getLocation();
@@ -275,35 +276,6 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 		}
 
 		return returnMap;
-	}
-
-	/**
-	 * Creates a dummy {@link IBoogieVar} from a given type. This method is used to give generated temporary variables a
-	 * boogie type.
-	 * 
-	 * @param identifier
-	 *            The identifier of the variable.
-	 * @param type
-	 *            The type of the variable.
-	 * @return An {@link IBoogieVar} according to the given identifier and {@link IType}.
-	 */
-	private IBoogieVar createTemporaryIBoogieVar(final String identifier, final IType type) {
-		return new IBoogieVar() {
-			@Override
-			public String getIdentifier() {
-				return identifier;
-			}
-
-			@Override
-			public IType getIType() {
-				return type;
-			}
-
-			@Override
-			public ApplicationTerm getDefaultConstant() {
-				throw new UnsupportedOperationException("Temporary IBoogieVars dont have default constants.");
-			}
-		};
 	}
 
 	private Procedure getProcedure(final String procedureName) {
