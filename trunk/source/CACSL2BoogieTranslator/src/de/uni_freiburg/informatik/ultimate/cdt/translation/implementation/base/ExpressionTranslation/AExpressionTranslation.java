@@ -148,8 +148,7 @@ public abstract class AExpressionTranslation {
 	public final Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		//TODO: Check that types coincide
 		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-			String prefixedFunctionName = declareBinaryFloatComparisonOperation(loc, type1);
-			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
+			return constructBinaryComparisonFloatingPointExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 		} else {
 			return constructBinaryComparisonIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 		}
@@ -164,8 +163,7 @@ public abstract class AExpressionTranslation {
 	}
 	public final Expression constructUnaryExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type) {
 		if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-			String prefixedFunctionName = declareUnaryFloatOperation(loc, type);
-			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp});
+			return constructUnaryFloatingPointExpression(loc, nodeOperator, exp, type);
 		} else {
 			return constructUnaryIntegerExpression(loc, nodeOperator, exp, type);
 		}
@@ -173,8 +171,7 @@ public abstract class AExpressionTranslation {
 	public final Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		//TODO: Check that types coincide
 		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-			String prefixedFunctionName = declareBinaryArithmeticFloatOperation(loc, type1);
-			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
+			return constructArithmeticFloatingPointExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 		} else {
 			return constructArithmeticIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 		}
@@ -192,8 +189,7 @@ public abstract class AExpressionTranslation {
 	
 	public Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
 		if (type1.isRealFloatingType() || type2.isRealFloatingType()) {
-			String prefixedFunctionName = declareBinaryFloatComparisonOperation(loc, (CPrimitive) type1);
-			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
+			return constructBinaryComparisonFloatingPointExpression(loc, nodeOperator, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
 		}
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
 			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
