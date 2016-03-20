@@ -216,15 +216,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		// check if the pending post state is a fixpoint
 		if (checkFixpoint(currentStateStorage, currentAction, pendingPostState)) {
-			// we can skip all successors safely, except if one of our successors is a summary successor
-			final ACTION currentScope = currentItem.getCurrentScope();
-			if (!mTransitionProvider.getSuccessors(currentAction, currentScope).stream()
-					.anyMatch(a -> mTransitionProvider.isSummaryForCall(a, currentScope))) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(getLogMessagePostIsFixpoint(pendingPostState));
-				}
-				return null;
+			// it is a fixpoint, we can skip all successors safely
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(getLogMessagePostIsFixpoint(pendingPostState));
 			}
+			return null;
 		}
 
 		// check if we are entering a loop
@@ -472,7 +468,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		// select the last state
 		assert orderedStates.size() >= mMaxUnwindings;
 		final STATE lastState = orderedStates.get(orderedStates.size() - 2);
-		
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("CurrentAction [" + currentAction.hashCode() + "] " + currentAction);
 			mLogger.debug("Stack");
