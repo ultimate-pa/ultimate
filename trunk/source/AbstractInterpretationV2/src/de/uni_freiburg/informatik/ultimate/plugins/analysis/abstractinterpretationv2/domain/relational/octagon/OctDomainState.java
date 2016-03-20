@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
@@ -413,7 +414,6 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	@Override
 	public OctDomainState patch(OctDomainState dominator) {
-		
 		assertNotBottomBeforeAssign();
 
 		OctDomainState patchedState = shallowCopy();
@@ -421,28 +421,28 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		SortedMap<Integer, String> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
 
 		for (Map.Entry<String, IBoogieVar> entry : dominator.mMapVarToBoogieVar.entrySet()) {
-			String var = entry.getKey();
+			String newVar = entry.getKey();
 			IBoogieVar newBoogieVar = entry.getValue();
 			unrefOtherMapVarToBoogieVar(patchedState);
-			IBoogieVar oldBoogieVar = patchedState.mMapVarToBoogieVar.put(var, newBoogieVar);
-			assert oldBoogieVar == null || mMapVarToBoogieVar.get(var) == newBoogieVar
-					: "Patch caused name-collision: " + var;
+			IBoogieVar oldBoogieVar = patchedState.mMapVarToBoogieVar.put(newVar, newBoogieVar);
+			assert oldBoogieVar == null || mMapVarToBoogieVar.get(newVar) == newBoogieVar
+					: "Patch caused name-collision: " + newVar;
 			IType type = newBoogieVar.getIType();
 			if (TypeUtil.isNumeric(type)) {
-				int sourceVar = dominator.mMapNumericVarToIndex.get(var);
+				int sourceVar = dominator.mMapNumericVarToIndex.get(newVar);
 				if (oldBoogieVar == null) {
-					mapDominatorIndicesOfNewNumericVars.put(sourceVar, var);
+					mapDominatorIndicesOfNewNumericVars.put(sourceVar, newVar);
 					if (TypeUtil.isNumericNonInt(type)) {
 						unrefOtherNumericNonIntVars(patchedState);
-						patchedState.mNumericNonIntVars.add(var);
+						patchedState.mNumericNonIntVars.add(newVar);
 					}
 				} else {
-					int targetVar = patchedState.mMapNumericVarToIndex.get(var);
+					int targetVar = patchedState.mMapNumericVarToIndex.get(newVar);
 					mapTargetVarToSourceVar.put(targetVar, sourceVar);
 				}
 			} else if (TypeUtil.isBoolean(type)){
 				unrefOtherBooleanAbstraction(patchedState);
-				patchedState.mBooleanAbstraction.put(var, dominator.mBooleanAbstraction.get(var));
+				patchedState.mBooleanAbstraction.put(newVar, dominator.mBooleanAbstraction.get(newVar));
 			}
 			// else: variable has unsupported type and is assumed to be \top
 		}
@@ -467,7 +467,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		List<Pair<String, String>> mapBooleanTargetToSource = new ArrayList<>(mapTargetToSource.size());
 
 		// shared (=global) numeric variables (copy to keep relations between globals and in/out-parameters)
-		for (String var : sharedVars(source)) {
+		for (String var : sharedGlobalVars(source)) {
 			Integer targetIndex = mMapNumericVarToIndex.get(var);
 			if (targetIndex != null) {
 				Integer sourceIndex = source.mMapNumericVarToIndex.get(var);
@@ -535,11 +535,11 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 //		}
 //	}
 
-	public Set<String> sharedVars(OctDomainState other) {
+	public Set<String> sharedGlobalVars(OctDomainState other) {
 		Set<String> sharedVars = new HashSet<>();
 		Set<Map.Entry<String, IBoogieVar>> otherEntrySet = other.mMapVarToBoogieVar.entrySet();
 		for (Map.Entry<String, IBoogieVar> entry : mMapVarToBoogieVar.entrySet()) {
-			if (otherEntrySet.contains(entry)) {
+			if (BoogieUtil.isGlobal(entry.getValue()) && otherEntrySet.contains(entry)) {
 				sharedVars.add(entry.getKey());
 			}
 		}
