@@ -70,8 +70,6 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_RUN_AS_PRE_ANALYSIS = "Run as pre-analysis";
 	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS = "Do not report any results, suppress all exceptions except OOM, use 20% of available time";
 
-	public static final String LABEL_PERSIST_ABS_STATES = "Save abstract states as RCFG annotation";
-
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 3;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
 	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = false;
@@ -89,8 +87,6 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
 		        TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
-		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_PERSIST_ABS_STATES, DEF_PERSIST_ABS_STATES,
-		        PreferenceType.Boolean));
 
 		// Abstract Domains Container
 		final UltimatePreferenceItemContainer abstractDomainContainer = new UltimatePreferenceItemContainer(

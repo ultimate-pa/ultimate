@@ -275,7 +275,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createInitialWorklistItem(final ACTION elem) {
 		final STATE preState = mVarProvider.defineVariablesBefore(elem, mDomain.createFreshState());
-		mStateStorage.addAbstractPreState(elem, preState);
 		return new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(preState, elem, mStateStorage);
 	}
 

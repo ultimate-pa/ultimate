@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Interface that describes how abstract states can be stored and retrieved relative to actions of a (program) model.
@@ -47,11 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
-	List<STATE> getAbstractPreStates(CodeBlock transition);
-
 	List<STATE> getAbstractPostStates(ACTION transition);
-
-	void addAbstractPreState(ACTION transition, STATE state);
 
 	void addAbstractPostState(ACTION transition, STATE state);
 

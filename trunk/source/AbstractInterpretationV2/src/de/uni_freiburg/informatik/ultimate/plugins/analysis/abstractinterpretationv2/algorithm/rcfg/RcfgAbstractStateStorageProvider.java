@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
 		extends BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> {
 
-	private final Map<LOCATION, Deque<STATE>> mStorage;
+	private final Map<CodeBlock, Deque<STATE>> mStorage;
 
 	public RcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<STATE> mergeOperator,
 			IUltimateServiceProvider services, ITransitionProvider<CodeBlock, LOCATION> transprovider) {
@@ -54,7 +54,7 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		mStorage = new HashMap<>();
 	}
 
-	protected Deque<STATE> getStates(LOCATION node) {
+	protected Deque<STATE> getPostStates(CodeBlock node) {
 		assert node != null;
 		Deque<STATE> rtr = mStorage.get(node);
 		if (rtr == null) {

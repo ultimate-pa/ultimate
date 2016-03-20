@@ -33,6 +33,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -57,8 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.nwa.NWAPathProgramTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.AnnotatingRcfgAbstractStateStorageProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.BaseRcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.PointerExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.RCFGArrayIndexCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -170,8 +171,8 @@ public final class AbstractInterpreter {
 		final Script script = rootAnnot.getScript();
 		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
 
-		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root, () -> new RCFGLiteralCollector(root),
-				symbolTable, services, rootAnnot);
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root,
+				() -> new RCFGLiteralCollector(root), symbolTable, services, rootAnnot);
 
 		return runSilentlyOnNWA(initial, timer, services, symbolTable, bpl2smt, script, boogieVarTable, domain,
 				transProvider, transProvider, rootAnnot);
@@ -241,9 +242,9 @@ public final class AbstractInterpreter {
 		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(),
 				transitionProvider);
 
-		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root, () -> new RCFGLiteralCollector(root),
-				symbolTable, services, rootAnnot);
-		
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root,
+				() -> new RCFGLiteralCollector(root), symbolTable, services, rootAnnot);
+
 		return runOnRCFG(initials, timer, services, symbolTable, bpl2smt, script, boogieVarTable, loopDetector, domain,
 				transitionProvider, rootAnnot, isSilent);
 	}
@@ -255,10 +256,7 @@ public final class AbstractInterpreter {
 			final ILoopDetector<CodeBlock> loopDetector, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
 			final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider, final RootAnnot rootAnnot,
 			final boolean isSilent) {
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
-		final boolean persist = ups.getBoolean(AbsIntPrefInitializer.LABEL_PERSIST_ABS_STATES);
 
 		if (filteredInitialElements.isEmpty()) {
 			getReporter(services, false, false).reportSafe(null, "The program is empty");
@@ -276,7 +274,8 @@ public final class AbstractInterpreter {
 
 			final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint> params = new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint>()
 					.addDomain(domain).addLoopDetector(loopDetector)
-					.addStorage(createStorage(services, domain, transitionProvider, persist))
+					.addStorage(new RcfgAbstractStateStorageProvider<STATE, ProgramPoint>(domain.getMergeOperator(),
+							services, transitionProvider))
 					.addTransitionProvider(transitionProvider)
 					.addVariableProvider(
 							new RcfgVariableProvider<STATE, ProgramPoint>(symbolTable, boogieVarTable, services))
@@ -300,20 +299,6 @@ public final class AbstractInterpreter {
 		}
 		logger.info(result.getBenchmark());
 		return result;
-	}
-
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC> BaseRcfgAbstractStateStorageProvider<STATE, LOC> createStorage(
-			final IUltimateServiceProvider services, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
-			final ITransitionProvider<CodeBlock, LOC> transprovider, final boolean persist) {
-		final BaseRcfgAbstractStateStorageProvider<STATE, LOC> storage;
-		if (persist) {
-			storage = new AnnotatingRcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(), services,
-					transprovider);
-		} else {
-			storage = new RcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(), services,
-					transprovider);
-		}
-		return storage;
 	}
 
 	private static BoogieSymbolTable getSymbolTable(final RootNode root) {
@@ -342,27 +327,12 @@ public final class AbstractInterpreter {
 		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new OctagonDomain(logger, symbolTable, literalCollector);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
-			RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(root);
-			
-			for (BoogieVar bv : arrayIndexCollector.getPointerMap().keySet()) {
-				System.out.println("PointerMap Key: " + bv);
-				Iterator pointerMapValueSetIter = arrayIndexCollector.getPointerMap().get(bv).iterator();
-				while (pointerMapValueSetIter.hasNext()) {
-					System.out.println("PointerMap Value: " + pointerMapValueSetIter.next().toString());
-				}
-				System.out.println();
+			final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(root);
+			if (logger.isDebugEnabled()) {
+				printVPDomainDebug(logger, arrayIndexCollector);
 			}
-			System.out.println("============");
-			for (BoogieVar bv : arrayIndexCollector.getIndexToArraysMap().keySet()) {
-				System.out.println("IndexToArraysMap Key: " + bv);
-				Iterator indexToArraysSetIter = arrayIndexCollector.getIndexToArraysMap().get(bv).iterator();
-				while (indexToArraysSetIter.hasNext()) {
-					System.out.println("IndexToArraysMap Value: " + indexToArraysSetIter.next());
-				}
-				System.out.println();
-			}
-			
-			return new VPDomain(services, arrayIndexCollector.getPointerMap(), arrayIndexCollector.getIndexToArraysMap());
+			return new VPDomain(services, arrayIndexCollector.getPointerMap(),
+					arrayIndexCollector.getIndexToArraysMap());
 		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new CongruenceDomain(logger, symbolTable);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
@@ -388,6 +358,22 @@ public final class AbstractInterpreter {
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 				+ AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
+	}
+
+	private static void printVPDomainDebug(final Logger logger, final RCFGArrayIndexCollector arrayIndexCollector) {
+		for (final Entry<BoogieVar, Set<PointerExpression>> bv : arrayIndexCollector.getPointerMap().entrySet()) {
+			logger.debug("PointerMap Key: " + bv.getKey());
+			for (final PointerExpression val : bv.getValue()) {
+				logger.debug("PointerMap Value: " + val.toString());
+			}
+		}
+		logger.debug("============");
+		for (final Entry<BoogieVar, Set<BoogieVar>> bv : arrayIndexCollector.getIndexToArraysMap().entrySet()) {
+			logger.debug("IndexToArraysMap Key: " + bv.getKey());
+			for (final BoogieVar val : bv.getValue()) {
+				logger.debug("IndexToArraysMap Value: " + val);
+			}
+		}
 	}
 
 	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL> IResultReporter<STATE, CodeBlock, VARDECL, ProgramPoint> getReporter(
