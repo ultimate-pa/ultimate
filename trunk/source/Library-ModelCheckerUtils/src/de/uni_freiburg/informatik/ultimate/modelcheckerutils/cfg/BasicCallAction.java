@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 
 /**
- * Default implementation of {@link IInternalAction}. 
+ * Default implementation of {@link ICallAction}. 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
