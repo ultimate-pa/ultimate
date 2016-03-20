@@ -81,12 +81,12 @@ public class AbstractInterpretationRunner {
 				mLogger.info("Skipping current iteration for AI because we have already analyzed this path program");
 				return;
 			}
-			if(!containsLoop(pathProgramSet)){
+			if (!containsLoop(pathProgramSet)) {
 				mSkipIteration = true;
 				mLogger.info("Skipping current iteration for AI because the path program does not contain any loops");
 				return;
 			}
-			
+
 			mSkipIteration = false;
 			mCegarLoopBenchmark.announceNextAbsIntIteration();
 
@@ -146,7 +146,7 @@ public class AbstractInterpretationRunner {
 	public boolean refine(final PredicateUnifier predUnifier,
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
 			final IRun<CodeBlock, IPredicate> currentCex, final RefineFunction refineFun)
-					throws AutomataLibraryException {
+			throws AutomataLibraryException {
 		if (mSkipIteration) {
 			return false;
 		}
@@ -171,8 +171,8 @@ public class AbstractInterpretationRunner {
 	private Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate> currentCex) {
 		final Set<CodeBlock> transitions = new HashSet<CodeBlock>();
 		// words count their states, so 0 is first state, length is last state
-		final int length = currentCex.getLength();
-		for (int i = 0; i < length - 1; ++i) {
+		final int length = currentCex.getLength() - 1;
+		for (int i = 0; i < length; ++i) {
 			transitions.add(currentCex.getSymbol(i));
 		}
 		return transitions;
@@ -180,7 +180,7 @@ public class AbstractInterpretationRunner {
 
 	private boolean hasAiProgress(final boolean result,
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
-			final IRun<CodeBlock, IPredicate> m_Counterexample) {
+			final IRun<CodeBlock, IPredicate> cex) {
 		if (result) {
 			return result;
 		}
@@ -192,7 +192,7 @@ public class AbstractInterpretationRunner {
 		}
 		mLogger.fatal(
 				"No progress during refinement with abstract interpretation although AI did not reach the error state. The following run is still accepted.");
-		mLogger.fatal(m_Counterexample);
+		mLogger.fatal(cex);
 		mLogger.fatal("Used the following AI result: " + mAbsIntResult.toSimplifiedString(this::simplify));
 		mLogger.fatal("Automaton had the following predicates: " + aiInterpolAutomaton.getStates());
 		return false;

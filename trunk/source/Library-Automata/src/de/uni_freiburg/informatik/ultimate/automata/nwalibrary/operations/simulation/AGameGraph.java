@@ -612,6 +612,26 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the internal used field for duplicator vertices. <b>Use with
+	 * caution!</b> By modifying this field the game graph may get messed up.
+	 * 
+	 * @return The internal used field for duplicator vertices.
+	 */
+	protected HashSet<DuplicatorVertex<LETTER, STATE>> getInternalDuplicatorVerticesField() {
+		return m_DuplicatorVertices;
+	}
+
+	/**
+	 * Gets the internal used field for spoiler vertices. <b>Use with
+	 * caution!</b> By modifying this field the game graph may get messed up.
+	 * 
+	 * @return The internal used field for spoiler vertices.
+	 */
+	protected HashSet<SpoilerVertex<LETTER, STATE>> getInternalSpoilerVerticesField() {
+		return m_SpoilerVertices;
+	}
+
+	/**
 	 * Gets the logger used by the Ultimate framework.
 	 * 
 	 * @return The logger used by the Ultimate framework.
