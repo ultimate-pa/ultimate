@@ -2,29 +2,29 @@
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
- * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
  * 
- * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  * 
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
  * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,27 +46,26 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockHolderWithVoluntaryLockRelease  {
 	
-	protected enum TransType { CALL, INTERNAL, RETURN };
 	protected final ManagedScript m_ManagedScript;
 	private Boogie2SMT m_Boogie2Smt;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	
-	private TransType m_TransType;
 	private IPredicate m_AssertedPrecond;
 	private IPredicate m_AssertedHier;
-	private CodeBlock m_AssertedCodeBlock;
-	private TransFormula m_TransFormula;
+	private IAction m_AssertedAction;
+//	private TransFormula m_TransFormula;
 	private IPredicate m_AssertedPostcond;
 	private ScopedHashMap<BoogieVar, Term> m_HierConstants;
 	public final boolean m_UseNamedTerms = true;
@@ -102,8 +101,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	@Override
-	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate post) {
-		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(cb);
+	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate post) {
+		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(act);
 		if (quickCheck_Trans == LBool.UNSAT) {
 			return Validity.VALID;
 		}
@@ -117,14 +116,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
 		assert m_AssertedPrecond == pre && m_AssertedHier == null && 
-				m_AssertedCodeBlock == cb && m_AssertedPostcond == post;
+				m_AssertedAction == act && m_AssertedPostcond == post;
 		return checkValidity();
 	}
 	
 	
 	@Override
-	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate post) {
-		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(cb);
+	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate post) {
+		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(act);
 		if (quickCheck_Trans == LBool.UNSAT) {
 			return Validity.VALID;
 		}
@@ -138,15 +137,15 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
 		assert m_AssertedPrecond == pre && m_AssertedHier == null && 
-				m_AssertedCodeBlock == cb && m_AssertedPostcond == post;
+				m_AssertedAction == act && m_AssertedPostcond == post;
 		return checkValidity();
 	}
 
 	
 	@Override
 	public Validity checkReturn(IPredicate linPre, IPredicate hierPre,
-			CodeBlock cb, IPredicate postcond) {
-		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(cb);
+			IReturnAction act, IPredicate postcond) {
+		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(act);
 		if (quickCheck_Trans == LBool.UNSAT) {
 			return Validity.VALID;
 		}
@@ -164,14 +163,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
 		assert m_AssertedPrecond == linPre && m_AssertedHier == hierPre && 
-				m_AssertedCodeBlock == cb && m_AssertedPostcond == postcond;
+				m_AssertedAction == act && m_AssertedPostcond == postcond;
 		return checkValidity();
 	}
 	
 	
-	protected LBool prepareAssertionStackAndAddTransition(CodeBlock cb) {
-		if (m_AssertedCodeBlock != cb) {
-			if (m_AssertedCodeBlock != null) {
+	protected LBool prepareAssertionStackAndAddTransition(IAction act) {
+		if (m_AssertedAction != act) {
+			if (m_AssertedAction != null) {
 				if (m_AssertedPrecond != null) {
 					if (m_AssertedPostcond != null) {
 						unAssertPostcondition();
@@ -183,7 +182,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 				}
 				unAssertCodeBlock();
 			}
-			final LBool quickCheck = assertCodeBlock(cb);
+			final LBool quickCheck = assertCodeBlock(act);
 			return quickCheck;
 		}
 		return null;
@@ -236,14 +235,13 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 
 	protected LBool assertPostcond(IPredicate postcond) {
-		switch (m_TransType) {
-		case CALL:
-			return assertPostcond_Call(postcond);
-		case INTERNAL:
+		if (m_AssertedAction instanceof IInternalAction) {
 			return assertPostcond_Internal(postcond);
-		case RETURN:
+		} else if (m_AssertedAction instanceof ICallAction) {
+			return assertPostcond_Call(postcond);
+		} else if (m_AssertedAction instanceof IReturnAction) {
 			return assertPostcond_Return(postcond);
-		default:
+		} else {
 			throw new AssertionError("unknown trans type");
 		}
 	}
@@ -259,7 +257,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		if (m_AssertedHier != null) {
 			this.unAssertHierPred();
 		}
-		if (m_AssertedCodeBlock != null) {
+		if (m_AssertedAction != null) {
 			this.unAssertCodeBlock();
 		}
 	}
@@ -273,13 +271,12 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	private LBool assertPrecondition(IPredicate p) {
 		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedCodeBlock != null : "Assert CodeBlock first";
-		assert m_TransType != null : "TransType not set";
+		assert m_AssertedAction != null : "Assert CodeBlock first";
 		assert m_AssertedPrecond == null : "precond already asserted";
 		m_AssertedPrecond = p;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_ManagedScript.push(this, 1);
-		if (m_TransType == TransType.RETURN) {
+		if (m_AssertedAction instanceof IReturnAction) {
 			m_HierConstants.beginScope();
 		}
 		Term predcondition = p.getClosedFormula();
@@ -288,7 +285,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			predcondition = m_ManagedScript.annotate(this, predcondition, annot);
 		}
 		LBool quickCheck = m_ManagedScript.assertTerm(this, predcondition);
-		String predProc = m_AssertedCodeBlock.getPreceedingProcedure();
+		String predProc = m_AssertedAction.getPreceedingProcedure();
 		Set<BoogieVar> oldVarsOfModifiable = m_ModifiableGlobalVariableManager.
 				getOldVarsAssignment(predProc).getAssignedVars();
 		Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), oldVarsOfModifiable);
@@ -334,49 +331,48 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private void unAssertPrecondition() {
 		assert m_ManagedScript.isLockOwner(this);
 		assert m_AssertedPrecond != null : "No PrePred asserted";
-		assert m_TransType != null : "TransType not set";
 		m_AssertedPrecond = null;
 		m_ManagedScript.pop(this, 1);
-		if (m_TransType == TransType.RETURN) {
+		if (m_AssertedAction instanceof IReturnAction) {
 			m_HierConstants.endScope();
 		}
-		if (m_AssertedCodeBlock == null) {
+		if (m_AssertedAction == null) {
 			throw new AssertionError("CodeBlock is assigned first");
 		}
 	}
 	
 	
-	protected LBool assertCodeBlock(CodeBlock cb) {
+	protected LBool assertCodeBlock(IAction act) {
 		if (m_ManagedScript.isLocked()) {
 			m_ManagedScript.requestLockRelease();
 		}
 		m_ManagedScript.lock(this);
 		m_ManagedScript.echo(this, new QuotedObject(s_StartEdgeCheck));
-		assert m_AssertedCodeBlock == null : "CodeBlock already asserted";
-		assert m_TransType == null : "TransType already asserted";
-		m_AssertedCodeBlock = cb;
-		if (m_AssertedCodeBlock instanceof Return) {
-			m_TransType = TransType.RETURN;
-		} else if (m_AssertedCodeBlock instanceof Call) {
-			m_TransType = TransType.CALL;
-		} else {
-			m_TransType = TransType.INTERNAL;
-		}
+		assert m_AssertedAction == null : "CodeBlock already asserted";
+		m_AssertedAction = act;
+
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_ManagedScript.push(this, 1);
-		m_TransFormula = cb.getTransitionFormula();
-		Term cbFormula = m_TransFormula.getClosedFormula();
 		
+		Term cbFormula;
+		if (act instanceof IInternalAction) {
+			cbFormula = ((IInternalAction) act).getTransformula().getClosedFormula();
+		} else if (act instanceof ICallAction) {
+			cbFormula = ((ICallAction) act).getLocalVarsAssignment().getClosedFormula();
+		} else if (act instanceof IReturnAction) {
+			cbFormula = ((IReturnAction) act).getAssignmentOfReturn().getClosedFormula();
+		} else {
+			throw new AssertionError("unknown action");
+		}
 		if (m_UseNamedTerms) {
 			Annotation annot = new Annotation(":named", s_IdTransitionFormula);
 			cbFormula = m_ManagedScript.annotate(this, cbFormula, annot);
 		}
 		LBool quickCheck = m_ManagedScript.assertTerm(this, cbFormula);
-		if (cb instanceof Return) {
+		if (act instanceof IReturnAction) {
 			m_HierConstants = new ScopedHashMap<BoogieVar,Term>();
-			Return ret = (Return) cb;
-			Call call = ret.getCorrespondingCall();
-			String proc = call.getCallStatement().getMethodName();
+			IReturnAction ret = (IReturnAction) act;
+			String proc = ret.getPreceedingProcedure();
 			TransFormula ovaTF = m_ModifiableGlobalVariableManager.
 					getOldVarsAssignment(proc);
 			Term ovaFormula = ovaTF.getFormula();
@@ -396,7 +392,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			quickCheck = m_ManagedScript.assertTerm(this, ovaFormula);
 			
 			Set<BoogieVar> modifiableGlobals = ovaTF.getInVars().keySet();
-			TransFormula callTf = call.getTransitionFormula();
+			TransFormula callTf = ret.getLocalVarsAssignmentOfCall();
 			Term locVarAssign = callTf.getFormula();
 			//TODO: rename non-modifiable globals to DefaultConstants
 			locVarAssign = renameNonModifiableGlobalsToDefaultConstants(
@@ -425,10 +421,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	protected void unAssertCodeBlock() {
 		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedCodeBlock != null : "No CodeBlock asserted";
-		assert m_TransType != null : "No TransType determined";
-		m_AssertedCodeBlock = null;
-		m_TransType = null;
+		assert m_AssertedAction != null : "No CodeBlock asserted";
+		m_AssertedAction = null;
 		m_HierConstants = null;
 		m_ManagedScript.pop(this, 1);
 		if (m_AssertedPrecond == null) {
@@ -442,9 +436,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	protected LBool assertHierPred(IPredicate p) {
 		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedCodeBlock != null : "assert Return first";
-		assert m_AssertedCodeBlock instanceof Return : "assert Return first";
-		assert m_TransType != null : "determine TransType first";
+		assert m_AssertedAction != null : "assert Return first";
+		assert m_AssertedAction instanceof IReturnAction : "assert Return first";
 		assert m_AssertedPrecond != null : "assert precond fist";
 		assert m_AssertedHier == null : "HierPred already asserted";
 		m_AssertedHier = p;
@@ -454,7 +447,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		Term hierFormula = p.getFormula();
 		
 		// rename globals that are not modifiable by callee to default constants
-		String callee = m_AssertedCodeBlock.getPreceedingProcedure();
+		String callee = m_AssertedAction.getPreceedingProcedure();
 		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		hierFormula = renameNonModifiableNonOldGlobalsToDefaultConstants(
@@ -462,7 +455,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		
 		// rename oldvars of globals that are not modifiable by caller to 
 		// default constants of nonOldVar
-		String caller = m_AssertedCodeBlock.getSucceedingProcedure();
+		String caller = m_AssertedAction.getSucceedingProcedure();
 		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobalVariableManager.
 				getModifiedBoogieVars(caller);
 		hierFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
@@ -531,7 +524,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private void unAssertHierPred() {
 		assert m_ManagedScript.isLockOwner(this);
 		assert m_AssertedHier != null : "No HierPred asserted";
-		assert m_TransType == TransType.RETURN : "Wrong TransType";
+		assert (m_AssertedAction instanceof IReturnAction) : "Wrong kind of action";
 		m_AssertedHier = null;
 		m_ManagedScript.pop(this, 1);
 		m_HierConstants.endScope();
@@ -541,8 +534,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private LBool assertPostcond_Internal(IPredicate p) {
 		assert m_ManagedScript.isLockOwner(this);
 		assert m_AssertedPrecond != null;
-		assert m_AssertedCodeBlock != null;
-		assert m_TransType == TransType.INTERNAL;
+		assert m_AssertedAction != null;
+		assert (m_AssertedAction instanceof IInternalAction) : "Wrong kind of action";
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_ManagedScript.push(this, 1);
 		m_AssertedPostcond = p;
@@ -551,9 +544,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		//All variables get index 0 
 		//assigned vars (locals and globals) get index 1
 		//other vars get index 0
-		Set<BoogieVar> assignedVars = m_TransFormula.getAssignedVars();
+		Set<BoogieVar> assignedVars = ((IInternalAction) m_AssertedAction).getTransformula().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
-		String succProc = m_AssertedCodeBlock.getSucceedingProcedure();
+		String succProc = m_AssertedAction.getSucceedingProcedure();
 		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobalVariableManager.getModifiedBoogieVars(succProc);
 		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(p.getVars(), modifiableGlobals, renamedFormula);
 		renamedFormula = renameVarsToDefaultConstants(p.getVars(), renamedFormula);
@@ -575,8 +568,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private LBool assertPostcond_Call(IPredicate p) {
 		assert m_ManagedScript.isLockOwner(this);
 		assert m_AssertedPrecond != null;
-		assert m_AssertedCodeBlock != null;
-		assert m_TransType == TransType.CALL;
+		assert m_AssertedAction != null;
+		assert (m_AssertedAction instanceof ICallAction) : "Wrong kind of action";
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_ManagedScript.push(this, 1);
 		m_AssertedPostcond = p;
@@ -608,7 +601,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private LBool assertPostcond_Return(IPredicate p) {
 		assert m_ManagedScript.isLockOwner(this);
 		assert m_AssertedPrecond != null;
-		assert m_TransType == TransType.RETURN;
+		assert (m_AssertedAction instanceof IReturnAction) : "Wrong kind of action";
 		assert m_AssertedHier != null;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_ManagedScript.push(this, 1);
@@ -616,10 +609,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		m_AssertedPostcond = p;
 		
 		//rename assignedVars to primed vars
-		Set<BoogieVar> assignedVars = m_TransFormula.getAssignedVars();
+		Set<BoogieVar> assignedVars = ((IReturnAction) m_AssertedAction).getAssignmentOfReturn().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
 		
-		String callee = m_AssertedCodeBlock.getPreceedingProcedure();
+		String callee = m_AssertedAction.getPreceedingProcedure();
 		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		
@@ -632,7 +625,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		
 		// rename oldvars of globals that are not modifiable by caller to 
 		// default constants of nonOldVar
-		String caller = m_AssertedCodeBlock.getSucceedingProcedure();
+		String caller = m_AssertedAction.getSucceedingProcedure();
 		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobalVariableManager.
 				getModifiedBoogieVars(caller);
 		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
@@ -662,12 +655,12 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	private void unAssertPostcondition() {
 		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedCodeBlock != null : "Assert CodeBlock first!";
+		assert m_AssertedAction != null : "Assert CodeBlock first!";
 		assert m_AssertedPrecond != null : "Assert precond first!";
 		assert m_AssertedPostcond != null : "Assert postcond first!";
 		m_AssertedPostcond = null;
 		m_ManagedScript.pop(this, 1);
-		if (m_TransType == TransType.RETURN) {
+		if (m_AssertedAction instanceof IReturnAction) {
 			assert m_HierConstants != null : "Assert hierPred first!";
 			assert m_AssertedHier != null : "Assert hierPred first!";
 			m_HierConstants.endScope();
@@ -679,7 +672,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	protected Validity checkValidity() {
 		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedCodeBlock != null : "Assert CodeBlock first!";
+		assert m_AssertedAction != null : "Assert CodeBlock first!";
 		assert m_AssertedPrecond != null : "Assert precond first! ";
 		assert m_AssertedPostcond != null : "Assert postcond first! ";
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
@@ -910,7 +903,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	public boolean isAssertionStackEmpty() {
-		if (m_AssertedCodeBlock == null) {
+		if (m_AssertedAction == null) {
 			assert m_AssertedPrecond == null;
 			assert m_AssertedHier == null;
 			return true;

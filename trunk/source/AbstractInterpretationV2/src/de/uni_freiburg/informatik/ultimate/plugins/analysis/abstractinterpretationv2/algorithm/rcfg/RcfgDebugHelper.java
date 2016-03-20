@@ -12,6 +12,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -24,9 +30,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IncrementalHoareTripleChecker;
 
 /**
  * 
@@ -65,13 +68,13 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoo
 
 		if (transition instanceof Call) {
 			precondHier = null;
-			result = mHTC.checkCall(precond, transition, postcond);
+			result = mHTC.checkCall(precond, (ICallAction) transition, postcond);
 		} else if (transition instanceof Return) {
 			precondHier = createPredicateFromState(Collections.singletonList(stateAfterLeaving));
-			result = mHTC.checkReturn(precond, precondHier, transition, postcond);
+			result = mHTC.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
 		} else {
 			precondHier = null;
-			result = mHTC.checkInternal(precond, transition, postcond);
+			result = mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
 		}
 		mHTC.releaseLock();
 

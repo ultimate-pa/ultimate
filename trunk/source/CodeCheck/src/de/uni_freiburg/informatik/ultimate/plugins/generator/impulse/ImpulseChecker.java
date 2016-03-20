@@ -37,6 +37,11 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
@@ -51,8 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -143,7 +146,7 @@ public class ImpulseChecker extends CodeChecker {
 //						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT)	
 				if (!GlobalSettings._instance.checkSatisfiability || 
 						_edgeChecker.checkReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(), 
-								edge.getStatement(), edge.getTarget().getPredicate())
+								(IReturnAction) edge.getStatement(), edge.getTarget().getPredicate())
 						  != Validity.VALID);
 					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), target);
 			} else {
@@ -153,13 +156,13 @@ public class ImpulseChecker extends CodeChecker {
 					if (edge.getStatement() instanceof Call)
 //						result = m_smtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
 //								m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
-						result = _edgeChecker.checkCall(edge.getSource().getPredicate(), edge.getStatement(), 
+						result = _edgeChecker.checkCall(edge.getSource().getPredicate(), (ICallAction) edge.getStatement(), 
 								edge.getTarget().getPredicate())
 								 != Validity.VALID;
 					else
 //						result = m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
 //							m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
-						result = _edgeChecker.checkInternal(edge.getSource().getPredicate(), edge.getStatement(), 
+						result = _edgeChecker.checkInternal(edge.getSource().getPredicate(), (IInternalAction) edge.getStatement(), 
 								edge.getTarget().getPredicate())
 								!= Validity.VALID;
 				}
@@ -306,9 +309,9 @@ public class ImpulseChecker extends CodeChecker {
 
 		boolean result = true;
 		if (edgeLabel instanceof Call)
-			result = _edgeChecker.checkCall(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
+			result = _edgeChecker.checkCall(sourceNode.getPredicate(), (ICallAction) edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
 		else
-			result = _edgeChecker.checkInternal(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
+			result = _edgeChecker.checkInternal(sourceNode.getPredicate(), (IInternalAction) edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
 	
 
 		if (GlobalSettings._instance._memoizeNormalEdgeChecks)
@@ -336,7 +339,7 @@ public class ImpulseChecker extends CodeChecker {
 		}
 
 		boolean result = _edgeChecker.checkReturn(sourceNode.getPredicate(), callNode.getPredicate(), 
-				edgeLabel, destinationNode.getPredicate())
+				(IReturnAction) edgeLabel, destinationNode.getPredicate())
 				 == Validity.VALID;
 
 		if (GlobalSettings._instance._memoizeReturnEdgeChecks)

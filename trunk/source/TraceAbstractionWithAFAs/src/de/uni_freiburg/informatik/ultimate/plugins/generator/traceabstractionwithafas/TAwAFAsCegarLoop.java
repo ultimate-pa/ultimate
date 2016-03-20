@@ -67,6 +67,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -79,9 +83,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
@@ -430,7 +431,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				);
 				assert mhtc.checkInternal(
 						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
-						currentDag.getNodeLabel().getBlock(),
+						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
 			else{
@@ -441,7 +442,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				);
 				assert mhtc.checkInternal(
 						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
-						currentDag.getNodeLabel().getBlock(),
+						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
 		}
@@ -455,7 +456,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				for(IPredicate targetState : alternatingAutomaton.getStates()){
 					if (onlySelfLoops && !targetState.equals(sourceState))
 						continue;
-					if (htc.checkInternal(sourceState, letter, targetState) == Validity.VALID) {
+					if (htc.checkInternal(sourceState, (IInternalAction) letter, targetState) == Validity.VALID) {
 						alternatingAutomaton.addTransition(
 							letter,
 							targetState,
@@ -576,7 +577,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				if(entry.getValue()[i] != null){
 					IPredicate pre = bexToPredicate(entry.getValue()[i], afa.getStates());
 					IPredicate succ = afa.getStates().get(i);
-					boolean check = htc.checkInternal(pre, entry.getKey(), succ) == Validity.VALID;
+					boolean check = htc.checkInternal(pre, (IInternalAction) entry.getKey(), succ) == Validity.VALID;
 					result &= check;
 					if (!check)
 						mLogger.warn("the following non-inductive transition occurs in the current AFA:\n"

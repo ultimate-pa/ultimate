@@ -63,6 +63,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
@@ -82,14 +85,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
 
 public class SmtManager {
 
@@ -1477,7 +1478,7 @@ public class SmtManager {
 	private void testMyInternalDataflowCheck(IPredicate ps1, CodeBlock ta, IPredicate ps2, LBool result) {
 		if (ps2.getFormula() == m_Script.term("false")) {
 			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
-			Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
+			Validity testRes = sdhtch.sdecInternalToFalse(ps1, (IInternalAction) ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) || testRes == IHoareTripleChecker.lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
 				// if (testRes != result) {
@@ -1488,7 +1489,7 @@ public class SmtManager {
 		}
 		if (ps1 == ps2) {
 			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
-			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
+			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, (IInternalAction) ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
 				// if (testRes != result) {
@@ -1500,7 +1501,7 @@ public class SmtManager {
 			return;
 		}
 		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
-		Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
+		Validity testRes = sdhtch.sdecInteral(ps1, (IInternalAction) ta, ps2);
 		if (testRes != null) {
 			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
 			// if (testRes != result) {

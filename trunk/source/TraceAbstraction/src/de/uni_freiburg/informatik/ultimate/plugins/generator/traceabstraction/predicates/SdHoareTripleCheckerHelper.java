@@ -37,13 +37,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.HoareTripleCheckerStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
 
 public class SdHoareTripleCheckerHelper {
@@ -110,10 +110,10 @@ public class SdHoareTripleCheckerHelper {
 	 *
 	 * FIXME: Check for precondition false, not for precondition true.
 	 */
-	public Validity sdecInternalToFalse(IPredicate pre, CodeBlock cb) {
-		Infeasibility infeasiblity = cb.getTransitionFormula().isInfeasible();
+	public Validity sdecInternalToFalse(IPredicate pre, IInternalAction act) {
+		Infeasibility infeasiblity = act.getTransformula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
-			if (varsDisjoinedFormInVars(pre, cb)) {
+			if (varsDisjoinedFormInVars(pre, act.getTransformula())) {
 				m_EdgeCheckerBenchmark.getSDtfsCounter().incIn();
 				return Validity.INVALID;
 			} else  {
@@ -138,9 +138,9 @@ public class SdHoareTripleCheckerHelper {
 	 * @param symbol
 	 * @return
 	 */
-	private boolean varsDisjoinedFormInVars(IPredicate state, CodeBlock letter) {
+	private boolean varsDisjoinedFormInVars(IPredicate state, TransFormula tf) {
 		for (BoogieVar bv : state.getVars()) {
-			if (letter.getTransitionFormula().getInVars().containsKey(bv)) {
+			if (tf.getInVars().containsKey(bv)) {
 				return false;
 			}
 		}
@@ -161,23 +161,23 @@ public class SdHoareTripleCheckerHelper {
 	 * code block, from the invars of the code block and from the vars of the
 	 * predecessor,
 	 * </ul>
-	 * then a transition (pre, cb, post) is not inductive. 
+	 * then a transition (pre, act, post) is not inductive. 
 	 *
 	 * FIXME: Check for preconditions, postcondition? Check at least for
 	 * infeasibility flag of TransFormula.
 	 */
-	public Validity sdecInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
+	public Validity sdecInteral(IPredicate pre, IInternalAction act, IPredicate post) {
 		if (m_PredicateCoverageChecker != null) {
 			Validity sat = m_PredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
-				if (Collections.disjoint(pre.getVars(), cb.getTransitionFormula().getAssignedVars())) {
+				if (Collections.disjoint(pre.getVars(), act.getTransformula().getAssignedVars())) {
 					m_EdgeCheckerBenchmark.getSDsluCounter().incIn();
 					return Validity.VALID;
 				}
 			}
 		}
 		for (BoogieVar bv : pre.getVars()) {
-			if (cb.getTransitionFormula().getInVars().containsKey(bv)) {
+			if (act.getTransformula().getInVars().containsKey(bv)) {
 				return null;
 			}
 		}
@@ -185,9 +185,9 @@ public class SdHoareTripleCheckerHelper {
 //			if (pre.getVars().contains(bv)) {
 //				return null;
 //			} else 
-			if (cb.getTransitionFormula().getInVars().containsKey(bv)) {
+			if (act.getTransformula().getInVars().containsKey(bv)) {
 				return null;
-			} else if (cb.getTransitionFormula().getOutVars().containsKey(bv)) {
+			} else if (act.getTransformula().getOutVars().containsKey(bv)) {
 				return null;
 			}
 		}
@@ -203,8 +203,8 @@ public class SdHoareTripleCheckerHelper {
 			} else if (sat == Validity.NOT_CHECKED) {
 				return null;
 			} else if (sat == Validity.INVALID) {
-				String proc = cb.getPreceedingProcedure();
-				assert proc.equals(cb.getSucceedingProcedure()) : "internal statement must not change procedure";
+				String proc = act.getPreceedingProcedure();
+				assert proc.equals(act.getSucceedingProcedure()) : "internal statement must not change procedure";
 				if (m_ModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, proc) || 
 						m_ModifiableGlobalVariableManager.containsNonModifiableOldVars(post, proc)) {
 					return null;
@@ -231,16 +231,16 @@ public class SdHoareTripleCheckerHelper {
 //	}
 	
 	
-	public Validity sdLazyEcInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
+	public Validity sdLazyEcInteral(IPredicate pre, IInternalAction act, IPredicate post) {
 		if (isOrIteFormula(post)) {
-			return sdecInteral(pre, cb, post);
+			return sdecInteral(pre, act, post);
 		}
 		for (BoogieVar bv : post.getVars()) {
 			if (pre.getVars().contains(bv)) {
 				continue;
-			} else if (cb.getTransitionFormula().getInVars().containsKey(bv)) {
+			} else if (act.getTransformula().getInVars().containsKey(bv)) {
 				continue;
-			} else if (cb.getTransitionFormula().getOutVars().containsKey(bv)) {
+			} else if (act.getTransformula().getOutVars().containsKey(bv)) {
 				continue;
 			}
 			// occurs neither in pre not in codeBlock, probably unsat
@@ -250,11 +250,11 @@ public class SdHoareTripleCheckerHelper {
 		return null;
 	}
 	
-	public Validity sdecCallToFalse(IPredicate pre, CodeBlock cb) {
+	public Validity sdecCallToFalse(IPredicate pre, ICallAction act) {
 		// TODO:
 		// there could be a contradiction if the Call is not a simple call
 		// but interprocedural sequential composition 			
-		if (cb instanceof Call) {
+		if (act instanceof ICallAction) {
 			m_EdgeCheckerBenchmark.getSDtfsCounter().incCa();
 			return Validity.INVALID;
 		} else {
@@ -262,7 +262,7 @@ public class SdHoareTripleCheckerHelper {
 		}
 	}
 	
-	public Validity sdecCall(IPredicate pre, CodeBlock cb, IPredicate post) {
+	public Validity sdecCall(IPredicate pre, ICallAction act, IPredicate post) {
 		for (BoogieVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
 				//if oldVar occurs this edge might be inductive since 
@@ -276,11 +276,11 @@ public class SdHoareTripleCheckerHelper {
 			}
 		}
 		//workaround see preHierIndependent()
-		TransFormula locVarAssignTf = cb.getTransitionFormula();
+		TransFormula locVarAssignTf = act.getLocalVarsAssignment();
 		if (!varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
 			return null;
 		}
-		if (preHierIndependent(post, pre, (Call) cb)) {
+		if (preHierIndependent(post, pre, act.getLocalVarsAssignment(), act.getSucceedingProcedure())) {
 			m_EdgeCheckerBenchmark.getSDsCounter().incCa();
 			return Validity.INVALID;
 		}
@@ -311,11 +311,9 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 	
-	public Validity sdecReturn(IPredicate pre, IPredicate hier, CodeBlock cb, IPredicate post) {
-		Return ret = (Return) cb;
-		Call call = ret.getCorrespondingCall();
+	public Validity sdecReturn(IPredicate pre, IPredicate hier, IReturnAction ret, IPredicate post) {
 		if (hierPostIndependent(hier, ret, post) 
-				&& preHierIndependent(pre, hier, call)
+				&& preHierIndependent(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPreceedingProcedure())
 				&& prePostIndependent(pre, ret, post)) {
 			m_EdgeCheckerBenchmark.getSDsCounter().incRe();
 			return Validity.INVALID;
@@ -325,12 +323,11 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 	
-	public Validity sdLazyEcReturn(IPredicate pre, IPredicate hier, Return cb, IPredicate post) {
+	public Validity sdLazyEcReturn(IPredicate pre, IPredicate hier, IReturnAction ret, IPredicate post) {
 		if (isOrIteFormula(post)) {
-			return sdecReturn(pre, hier, cb, post);
+			return sdecReturn(pre, hier, ret, post);
 		}
-		Call call = cb.getCorrespondingCall();
-		Set<BoogieVar> assignedVars = cb.getTransitionFormula().getAssignedVars();
+		Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		
 		/*
 		 * Old Version. Does not work if param set to constant.
@@ -349,16 +346,16 @@ public class SdHoareTripleCheckerHelper {
 		}
 		 * 
 		 */
-		Set<BoogieVar> parameters = call.getTransitionFormula().getAssignedVars();
+		Set<BoogieVar> parameters = ret.getLocalVarsAssignmentOfCall().getAssignedVars();
 		if (!varSetDisjoint(parameters, pre.getVars())) {
 			return null;
 		}
 
-		String proc = call.getCallStatement().getMethodName();
+		String proc = ret.getPreceedingProcedure();
 		Set<BoogieVar> modifiableGlobals = 
 				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		boolean assignedVarsRestrictedByPre = 
-				!varSetDisjoint(cb.getTransitionFormula().getInVars().keySet(), pre.getVars());
+				!varSetDisjoint(ret.getAssignmentOfReturn().getInVars().keySet(), pre.getVars());
 		for (BoogieVar bv : post.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
@@ -405,8 +402,8 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 
-	private boolean preHierIndependent(IPredicate pre, IPredicate hier, Call call) {
-		TransFormula locVarAssignTf = call.getTransitionFormula();
+	private boolean preHierIndependent(IPredicate pre, IPredicate hier, 
+			TransFormula localVarsAssignment, String calledProcedure) {
 		//TODO: Matthias 7.10.2012 I hoped following would be sufficient.
 		// But this is not sufficient when constant assigned to invar
 		// e.g. pre is x!=0 and call is x_Out=1. Might be solved with
@@ -418,15 +415,14 @@ public class SdHoareTripleCheckerHelper {
 //			return false;
 //		}
 		//workaround for preceding problem
-		if (!varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
+		if (!varSetDisjoint(localVarsAssignment.getAssignedVars(), pre.getVars())) {
 			return false;
 		}
 		
 		// cases where pre and hier share non-modifiable var g, or
 		// g occurs in hier, and old(g) occurs in pre.
-		String proc = call.getCallStatement().getMethodName();
 		Set<BoogieVar> modifiableGlobals = 
-				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
+				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
 
 		
 		for (BoogieVar bv : pre.getVars()) {
@@ -447,14 +443,13 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 	
-	private boolean prePostIndependent(IPredicate pre, Return ret, IPredicate post) {
-		TransFormula returnAssignTf = ret.getTransitionFormula();
+	private boolean prePostIndependent(IPredicate pre, IReturnAction ret, IPredicate post) {
+		TransFormula returnAssignTf = ret.getAssignmentOfReturn();
 		if (!varSetDisjoint(pre.getVars(), returnAssignTf.getInVars().keySet())
 				&& !varSetDisjoint(returnAssignTf.getAssignedVars(), post.getVars())) {
 			return false;
 		}
-		Call call = ret.getCorrespondingCall();
-		TransFormula locVarAssignTf = call.getTransitionFormula();
+		TransFormula locVarAssignTf = ret.getLocalVarsAssignmentOfCall();
 		if (!varSetDisjoint(post.getVars(), locVarAssignTf.getInVars().keySet())
 				&& !varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
 			return false;
@@ -470,11 +465,10 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 	
-	private boolean hierPostIndependent(IPredicate hier, Return ret, IPredicate post) {
-		Call call = ret.getCorrespondingCall();
-		Set<BoogieVar> assignedVars = ret.getTransitionFormula().getAssignedVars();
+	private boolean hierPostIndependent(IPredicate hier, IReturnAction ret, IPredicate post) {
+		Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		
-		String proc = call.getCallStatement().getMethodName();
+		String proc = ret.getPreceedingProcedure();
 		Set<BoogieVar> modifiableGlobals = 
 				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		
@@ -503,8 +497,8 @@ public class SdHoareTripleCheckerHelper {
 	 * Returns HTTV.VALID if selfloop is inductive. Returns null if we are
 	 * not able to determinie inductivity selfloop. 
 	 */
-	public Validity sdecInternalSelfloop(IPredicate p, CodeBlock cb) {
-		Set<BoogieVar> assignedVars = cb.getTransitionFormula().getAssignedVars();
+	public Validity sdecInternalSelfloop(IPredicate p, IInternalAction act) {
+		Set<BoogieVar> assignedVars = act.getTransformula().getAssignedVars();
 		Set<BoogieVar> occVars = p.getVars();
 		for (BoogieVar occVar : occVars) {
 			if (assignedVars.contains(occVar)) {
@@ -519,7 +513,7 @@ public class SdHoareTripleCheckerHelper {
 	/**
 	 * Returns UNSAT if p contains only non-old globals.
 	 */
-	public Validity sdecCallSelfloop(IPredicate p, CodeBlock cb) {
+	public Validity sdecCallSelfloop(IPredicate p, ICallAction call) {
 		for (BoogieVar bv : p.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
@@ -535,8 +529,8 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	
-	public Validity sdecReturnSelfloopPre(IPredicate p, Return ret) {
-		Set<BoogieVar> assignedVars = ret.getTransitionFormula().getAssignedVars();
+	public Validity sdecReturnSelfloopPre(IPredicate p, IReturnAction ret) {
+		Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		for (BoogieVar bv : p.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
@@ -555,9 +549,9 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 	
-	public Validity sdecReturnSelfloopHier(IPredicate p, Return ret) {
-		Set<BoogieVar> assignedVars = ret.getTransitionFormula().getAssignedVars();
-		String proc = ret.getCorrespondingCall().getCallStatement().getMethodName();
+	public Validity sdecReturnSelfloopHier(IPredicate p, IReturnAction ret) {
+		Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
+		String proc = ret.getPreceedingProcedure();
 		Set<BoogieVar> modifiableGlobals = 
 				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 

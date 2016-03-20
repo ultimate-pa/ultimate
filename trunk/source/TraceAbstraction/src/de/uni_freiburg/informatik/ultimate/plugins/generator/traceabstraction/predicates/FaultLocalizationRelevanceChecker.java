@@ -30,11 +30,14 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 
 /**
  * Checks the relevance of a <code>CodeBlock</code> with respect to a pre- and a
@@ -71,16 +74,16 @@ public class FaultLocalizationRelevanceChecker {
 		}
 		
 		@Override
-		public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate post) {
-			prepareAssertionStackAndAddTransition(cb);
+		public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate post) {
+			prepareAssertionStackAndAddTransition(act);
 			prepareAssertionStackAndAddPrecondition(pre);
 			prepareAssertionStackAndAddPostcond(post);
 			return checkValidity();
 		}
 		
 		@Override
-		public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate post) {
-			prepareAssertionStackAndAddTransition(cb);
+		public Validity checkCall(IPredicate pre, ICallAction act, IPredicate post) {
+			prepareAssertionStackAndAddTransition(act);
 			prepareAssertionStackAndAddPrecondition(pre);
 			prepareAssertionStackAndAddPostcond(post);
 			return checkValidity();
@@ -88,8 +91,8 @@ public class FaultLocalizationRelevanceChecker {
 		
 		@Override
 		public Validity checkReturn(IPredicate linPre, IPredicate hierPre,
-				CodeBlock cb, IPredicate postcond) {
-			prepareAssertionStackAndAddTransition(cb);
+				IReturnAction act, IPredicate postcond) {
+			prepareAssertionStackAndAddTransition(act);
 			prepareAssertionStackAndAddPrecondition(linPre);
 			prepareAssertionStackAndAddHierpred(hierPre);
 			prepareAssertionStackAndAddPostcond(postcond);
@@ -119,16 +122,16 @@ public class FaultLocalizationRelevanceChecker {
 	}
 	
 	public ERelevanceStatus relevanceInternal(final IPredicate pre,
-			final CodeBlock cb, final IPredicate post) {
-		final Validity val = mHoareTripleChecker.checkInternal(pre, cb, post);
+			final IInternalAction act, final IPredicate post) {
+		final Validity val = mHoareTripleChecker.checkInternal(pre, act, post);
 		ERelevanceStatus result = getResult(val, mHoareTripleChecker);
 		mHoareTripleChecker.clearAssertionStack();
 		return result;
 	}
 	
 	public ERelevanceStatus relevanceCall(final IPredicate pre,
-			final CodeBlock cb, final IPredicate post) {
-		final Validity val = mHoareTripleChecker.checkCall(pre, cb, post);
+			final ICallAction call, final IPredicate post) {
+		final Validity val = mHoareTripleChecker.checkCall(pre, call, post);
 		ERelevanceStatus result = getResult(val, mHoareTripleChecker);
 		mHoareTripleChecker.clearAssertionStack();
 		return result;
@@ -136,9 +139,9 @@ public class FaultLocalizationRelevanceChecker {
 	
 	public ERelevanceStatus relevanceReturn(final IPredicate returnPre,
 			final IPredicate callPre,
-			final CodeBlock cb, final IPredicate post) {
+			final IReturnAction ret, final IPredicate post) {
 		final Validity val = mHoareTripleChecker.checkReturn(returnPre, 
-				callPre, cb, post);
+				callPre, ret, post);
 		ERelevanceStatus result = getResult(val, mHoareTripleChecker);
 		mHoareTripleChecker.clearAssertionStack();
 		return result;

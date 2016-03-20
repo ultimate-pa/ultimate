@@ -54,10 +54,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Trans
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -228,27 +231,27 @@ public class TotalInterpolationAutomatonBuilder {
 			IPredicate succItp) {
 		if (transition instanceof OutgoingInternalTransition) {
 			OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans = (OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
-			Validity validity = m_Htc.checkInternal(predItp, transition.getLetter(), succItp);
+			Validity validity = m_Htc.checkInternal(predItp, (IInternalAction) transition.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				m_IA.addInternalTransition(predItp, internalTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingCallTransition) {
 			OutgoingCallTransition<CodeBlock, IPredicate> callTrans = (OutgoingCallTransition<CodeBlock, IPredicate>) transition;
-			Validity validity = m_Htc.checkCall(predItp, callTrans.getLetter(), succItp);
+			Validity validity = m_Htc.checkCall(predItp, (ICallAction) callTrans.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				m_IA.addCallTransition(predItp, callTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingReturnTransition) {
 			OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = (OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
 			IPredicate hierPredItp = m_Epimorphism.getMapping(returnTrans.getHierPred());
-			Validity validity = m_Htc.checkReturn(predItp, hierPredItp, returnTrans.getLetter(), succItp);
+			Validity validity = m_Htc.checkReturn(predItp, hierPredItp, (IReturnAction) returnTrans.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				m_IA.addReturnTransition(predItp, hierPredItp, returnTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof SummaryReturnTransition) {
 			SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = (SummaryReturnTransition<CodeBlock, IPredicate>) transition;
 			IPredicate linPredItp = m_Epimorphism.getMapping(summaryTrans.getLinPred());
-			Validity validity = m_Htc.checkReturn(linPredItp, predItp, summaryTrans.getLetter(), succItp);
+			Validity validity = m_Htc.checkReturn(linPredItp, predItp, (IReturnAction) summaryTrans.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				m_IA.addReturnTransition(linPredItp, predItp, summaryTrans.getLetter(), succItp);
 			}

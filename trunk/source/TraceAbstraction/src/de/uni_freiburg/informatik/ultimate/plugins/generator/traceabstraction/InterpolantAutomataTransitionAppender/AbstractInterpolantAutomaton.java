@@ -45,12 +45,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
@@ -386,7 +389,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate inputSucc) {
 			assert resHier == null;
-			return m_IHoareTripleChecker.checkInternal(resPred, letter, inputSucc);
+			return m_IHoareTripleChecker.checkInternal(resPred, (IInternalAction) letter, inputSucc);
 		}
 
 		@Override
@@ -432,7 +435,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate inputSucc) {
 			assert resHier == null;
-			return m_IHoareTripleChecker.checkCall(resPred, letter, inputSucc);
+			return m_IHoareTripleChecker.checkCall(resPred, (ICallAction) letter, inputSucc);
 		}
 
 		@Override
@@ -475,7 +478,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		@Override
 		public Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate inputSucc) {
-			return m_IHoareTripleChecker.checkReturn(resPred, resHier, letter, inputSucc);
+			return m_IHoareTripleChecker.checkReturn(resPred, resHier, (IReturnAction) letter, inputSucc);
 		}
 
 		@Override
