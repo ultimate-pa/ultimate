@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A vertex representing that its <i>Duplicator</i>s turn in the game defined by
@@ -71,7 +73,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	/**
 	 * Internal set of all down state configurations of the vertex.
 	 */
-	private final HashSet<VertexDownState<STATE>> vertexDownStates;
+	private final HashSet<VertexDownState<STATE>> m_VertexDownStates;
 
 	/**
 	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
@@ -135,7 +137,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final LETTER a, final TransitionType transitionType, final STATE hierPred) {
 		super(priority, b, q0, q1, a);
-		vertexDownStates = new HashSet<>();
+		m_VertexDownStates = new HashSet<>();
 		m_TransitionType = transitionType;
 		m_HierPred = hierPred;
 	}
@@ -149,7 +151,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 *         was not already present.
 	 */
 	public boolean addVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return vertexDownStates.add(vertexDownState);
+		return m_VertexDownStates.add(vertexDownState);
 	}
 
 	/*
@@ -211,7 +213,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 		}
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : vertexDownStates) {
+		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
@@ -229,6 +231,16 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 */
 	public TransitionType getTransitionType() {
 		return m_TransitionType;
+	}
+
+	/**
+	 * Gets an unmodifiable set of all vertex down states of this vertex.
+	 * 
+	 * @return Returns an unmodifiable set of all vertex down states of this
+	 *         vertex.
+	 */
+	public Set<VertexDownState<STATE>> getVertexDownStates() {
+		return Collections.unmodifiableSet(m_VertexDownStates);
 	}
 
 	/*
@@ -255,7 +267,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 * @return If the vertex has the given down state configuration
 	 */
 	public boolean hasVertexDownState(final STATE leftDownState, final STATE rightDownState) {
-		return vertexDownStates.contains(new VertexDownState<STATE>(leftDownState, rightDownState));
+		return m_VertexDownStates.contains(new VertexDownState<STATE>(leftDownState, rightDownState));
 	}
 
 	/**
@@ -266,7 +278,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 * @return If the vertex has the given down state configuration
 	 */
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return vertexDownStates.contains(vertexDownState);
+		return m_VertexDownStates.contains(vertexDownState);
 	}
 
 	/*
@@ -284,7 +296,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 		}
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : vertexDownStates) {
+		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}

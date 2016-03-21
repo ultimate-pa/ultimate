@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A vertex representing that its <i>Spoiler</i>s turn in the game defined by a
@@ -56,7 +58,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	/**
 	 * Internal set of all down state configurations of the vertex.
 	 */
-	private final HashSet<VertexDownState<STATE>> vertexDownStates;
+	private final HashSet<VertexDownState<STATE>> m_VertexDownStates;
 
 	/**
 	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
@@ -78,7 +80,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	public SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1) {
 		super(priority, b, q0, q1);
-		vertexDownStates = new HashSet<>();
+		m_VertexDownStates = new HashSet<>();
 	}
 
 	/**
@@ -90,7 +92,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 *         was not already present.
 	 */
 	public boolean addVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return vertexDownStates.add(vertexDownState);
+		return m_VertexDownStates.add(vertexDownState);
 	}
 
 	/*
@@ -105,7 +107,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		sb.append(getQ0() + "," + getQ1());
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : vertexDownStates) {
+		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
@@ -114,6 +116,16 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		}
 		sb.append("}");
 		return sb.toString();
+	}
+
+	/**
+	 * Gets an unmodifiable set of all vertex down states of this vertex.
+	 * 
+	 * @return Returns an unmodifiable set of all vertex down states of this
+	 *         vertex.
+	 */
+	public Set<VertexDownState<STATE>> getVertexDownStates() {
+		return Collections.unmodifiableSet(m_VertexDownStates);
 	}
 
 	/**
@@ -126,7 +138,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 * @return If the vertex has the given down state configuration
 	 */
 	public boolean hasVertexDownState(final STATE leftDownState, final STATE rightDownState) {
-		return vertexDownStates.contains(new VertexDownState<STATE>(leftDownState, rightDownState));
+		return m_VertexDownStates.contains(new VertexDownState<STATE>(leftDownState, rightDownState));
 	}
 
 	/**
@@ -137,7 +149,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 * @return If the vertex has the given down state configuration
 	 */
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return vertexDownStates.contains(vertexDownState);
+		return m_VertexDownStates.contains(vertexDownState);
 	}
 
 	/*
@@ -153,7 +165,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : vertexDownStates) {
+		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
