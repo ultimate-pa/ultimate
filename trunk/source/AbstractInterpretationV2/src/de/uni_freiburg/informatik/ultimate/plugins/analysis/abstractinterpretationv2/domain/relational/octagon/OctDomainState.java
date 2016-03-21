@@ -294,6 +294,23 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 
 	@Override
+	public SubsetResult isSubsetOf(final OctDomainState other) {
+		assert mMapVarToBoogieVar.equals(other.mMapVarToBoogieVar);
+		for (Map.Entry<String, BoolValue> thisEntry : mBooleanAbstraction.entrySet()) {
+			BoolValue thisVal = thisEntry.getValue();
+			BoolValue otherVal = other.mBooleanAbstraction.get(thisEntry.getKey());
+			if (!thisVal.isSubsetEqual(otherVal)) {
+				return SubsetResult.NONE;
+			}
+		}
+		if (!cachedSelectiveClosure().elementwiseRelation(other.cachedSelectiveClosure(),
+				(thisVal, otherVal) -> thisVal.compareTo(otherVal) <= 0)) {
+			return SubsetResult.NONE;
+		}
+		return SubsetResult.NON_STRICT;
+	}
+
+	@Override
 	public int hashCode() {
 		return mId;
 	}
@@ -814,8 +831,4 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 				.append("}, ").append("bools: ").append(mBooleanAbstraction).append("}").toString();
 	}
 
-	@Override
-	public SubsetResult isSubsetOf(final OctDomainState other) {
-		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
-	}
 }

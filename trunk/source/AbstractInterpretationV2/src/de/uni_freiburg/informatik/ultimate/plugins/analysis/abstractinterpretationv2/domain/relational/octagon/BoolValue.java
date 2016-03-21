@@ -23,7 +23,11 @@ public enum BoolValue {
 	public BoolValue intersect(BoolValue other) {
 		return values()[this.ordinal() & other.ordinal()];
 	}
-	
+
+	public boolean isSubsetEqual(BoolValue other) {
+		return this == BOT || other == TOP || this == other;
+	}
+
 	public BoolValue and(BoolValue other) {
 		if (this == BOT || other == BOT) {
 			return BOT;
@@ -75,4 +79,5 @@ public enum BoolValue {
 			return script.term("true");
 		}
 	}
+
 }
