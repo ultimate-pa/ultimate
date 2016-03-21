@@ -566,7 +566,22 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
 		return result;
 	}
-	
-	
-	
+
+	@Override
+	public Expression constructBinaryEqualityExpression_Floating(ILocation loc, int nodeOperator, Expression exp1,
+			CType type1, Expression exp2, CType type2) {
+		return constructBinaryComparisonFloatingPointExpression(loc, nodeOperator, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
+	}
+
+	@Override
+	public Expression constructBinaryEqualityExpression_Integer(ILocation loc, int nodeOperator, Expression exp1,
+			CType type1, Expression exp2, CType type2) {
+		if (nodeOperator == IASTBinaryExpression.op_equals) {
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
+			} else 	if (nodeOperator == IASTBinaryExpression.op_notequals) {
+				return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
+			} else {
+				throw new IllegalArgumentException("operator is neither equals nor not equals");
+			}
+	}
 }

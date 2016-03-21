@@ -187,18 +187,15 @@ public abstract class AExpressionTranslation {
 	public abstract Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
 	
-	public Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
+	public final Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
 		if (type1.isRealFloatingType() || type2.isRealFloatingType()) {
-			return constructBinaryComparisonFloatingPointExpression(loc, nodeOperator, exp1, (CPrimitive) type1, exp2, (CPrimitive) type2);
+			return constructBinaryEqualityExpression_Floating(loc, nodeOperator, exp1, type1, exp2, type2);
 		}
-		if (nodeOperator == IASTBinaryExpression.op_equals) {
-			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
-		} else 	if (nodeOperator == IASTBinaryExpression.op_notequals) {
-			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
-		} else {
-			throw new IllegalArgumentException("operator is neither equals nor not equals");
-		}
+		return constructBinaryEqualityExpression_Integer(loc, nodeOperator, exp1, type1, exp2, type2);
 	}
+	
+	public abstract Expression constructBinaryEqualityExpression_Floating(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2);	
+	public abstract Expression constructBinaryEqualityExpression_Integer(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2);
 	
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 	
@@ -447,7 +444,7 @@ public abstract class AExpressionTranslation {
 		return prefixedFunctionName;
 	}
 	
-	private String declareBinaryFloatComparisonOperation(ILocation loc, CPrimitive type) {
+	protected String declareBinaryFloatComparisonOperation(ILocation loc, CPrimitive type) {
 		String functionName = "someBinary" + type.toString() +"ComparisonOperation";
 		String prefixedFunctionName = "~" + functionName;
 		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {

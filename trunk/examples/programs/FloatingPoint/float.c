@@ -3,7 +3,7 @@
 int main() {
   float x;
   float y;
-  if (x + y == x)
+  if (x == y)
   {
     return 1;
   } else {

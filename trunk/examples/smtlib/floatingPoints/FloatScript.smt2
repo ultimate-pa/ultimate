@@ -1,4 +1,4 @@
-(set-logic QF_FP)
+(set-logic QF_FPBV)
 
 (declare-fun x () (_ FloatingPoint  5  11))
 (declare-fun y () (_ FloatingPoint  5  11))
@@ -17,6 +17,6 @@
 ;(pop)
 (declare-fun a ((_ FloatingPoint  5  11)) (_ FloatingPoint  5  11))
 (assert (fp.eq (a x)(fp.add  RTP x x)))
-;(check-sat)
+(check-sat)
 ;(push)
 ;(exit)
