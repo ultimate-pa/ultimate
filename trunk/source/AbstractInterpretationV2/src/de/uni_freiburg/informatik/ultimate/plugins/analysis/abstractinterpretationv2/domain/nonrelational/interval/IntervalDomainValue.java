@@ -665,7 +665,7 @@ public class IntervalDomainValue {
 	}
 
 	/**
-	 * Computes the modulo operation of two {@link IntervalDomainValue}s.
+	 * Computes the euclidean modulo operation of two {@link IntervalDomainValue}s.
 	 * 
 	 * @param divisor
 	 *            The other value to compute the modulus for.
@@ -676,35 +676,35 @@ public class IntervalDomainValue {
 	public IntervalDomainValue modulo(final IntervalDomainValue divisor, final boolean integerDivision) {
 
 		assert divisor != null;
-		IntervalDomainValue workingDivisor = divisor;
 
-		if (isBottom() || workingDivisor.isBottom()) {
+		if (isBottom() || divisor.isBottom()) {
 			return new IntervalDomainValue(true);
 		}
 
-		if (workingDivisor.containsZero()) {
+		if (divisor.containsZero()) {
 			// modulo is a total function in SMT, but (a % 0) is not specified
 			// => result is an unknown but fixed value => return TOP
 			return new IntervalDomainValue();
 		}
 
 		// If we are dealing with point intervals, the modulo computation is easy.
-		if (isPointInterval() && workingDivisor.isPointInterval()) {
-			final BigDecimal remainder = NumUtil.euclideanModulo(mLower.getValue(), workingDivisor.mLower.getValue());
+		if (isPointInterval() && divisor.isPointInterval()) {
+			final BigDecimal remainder = NumUtil.euclideanModulo(mLower.getValue(), divisor.mLower.getValue());
 			return new IntervalDomainValue(new IntervalValue(remainder), new IntervalValue(remainder));
 		}
 
-		workingDivisor = workingDivisor.abs(); // The sign of the divisor does not matter for euclidean modulo.
-
+		// The sign of the divisor does not matter for the euclidean modulo.
+		final IntervalDomainValue absDivisor = divisor.abs(); 
+		
 		// [a; b] % [c; d] = [a; b] if (0 <= a) and (b < c)
-		if (!mLower.isInfinity() && !workingDivisor.mLower.isInfinity() && new IntervalValue(0).compareTo(mLower) <= 0
-				&& mUpper.compareTo(workingDivisor.mLower) < 0) {
+		if (!mLower.isInfinity() && !absDivisor.mLower.isInfinity() && new IntervalValue(0).compareTo(mLower) <= 0
+				&& mUpper.compareTo(absDivisor.mLower) < 0) {
 			return new IntervalDomainValue(mLower, mUpper);
 		}
 
 		// euclidean division (x / y) has the remainder (r) with (0 <= r < |y|).
 		final IntervalValue min = new IntervalValue(0);
-		final IntervalValue max = workingDivisor.mUpper;
+		final IntervalValue max = absDivisor.mUpper;
 		if (integerDivision && !max.isInfinity()) {
 			max.setValue(max.getValue().subtract(BigDecimal.ONE));
 		}
