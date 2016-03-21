@@ -316,20 +316,24 @@ public class AffineExpression {
 	 * @param integerDivison Calculate the euclidean integer division.
 	 * @return {@code this / divisor}
 	 *
-	 * @throws ArithmeticException Division by zero or the quotient has no finite decimal expansion.
+	 * @throws ArithmeticException The quotient could not be transformed into an affine expression.
 	 */
 	private AffineExpression divideByConstant(final BigDecimal divisor, final boolean integerDivison) {
-		if (integerDivison) {
-			if (isConstant()) {
-				return new AffineExpression(NumUtil.euclideanDivision(mConstant, divisor));
+		if (isConstant()) {
+			final BigDecimal quotient;
+			if (integerDivison) {
+				quotient = NumUtil.euclideanDivision(mConstant, divisor);
 			} else {
-				return null;
+				quotient = mConstant.divide(divisor);
 			}
+			return new AffineExpression(quotient);
 		} else {
+			final BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
+					integerDivison ? NumUtil::exactDivison : BigDecimal::divide;
 			final AffineExpression quotient = new AffineExpression();
-			quotient.mConstant = mConstant.divide(divisor);
+			quotient.mConstant = divOp.apply(mConstant, divisor);
 			for (final Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
-				final BigDecimal newCoefficent = entry.getValue().divide(divisor);
+				final BigDecimal newCoefficent = divOp.apply(entry.getValue(), divisor);
 				quotient.mCoefficients.put(entry.getKey(), newCoefficent);
 			}
 			return quotient;
