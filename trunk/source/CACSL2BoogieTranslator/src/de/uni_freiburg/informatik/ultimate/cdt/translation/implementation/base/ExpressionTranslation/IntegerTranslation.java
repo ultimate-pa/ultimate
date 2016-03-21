@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
@@ -701,19 +703,44 @@ public class IntegerTranslation extends AExpressionTranslation {
 	@Override
 	public Expression constructBinaryComparisonFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2) {
-		throw new UnsupportedOperationException("floats need bitvectors");
+		String functionName = "someBinary" + type1.toString() +"ComparisonOperation";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType paramAstType = m_TypeHandler.ctype2asttype(loc, type1);
+			ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType, paramAstType);
+		}
+		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
 	}
 
 	@Override
 	public Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp,
 			CPrimitive type) {
-		throw new UnsupportedOperationException("floats need bitvectors");
+		String functionName = "someUnary" + type.toString() +"operation";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType astType = m_TypeHandler.ctype2asttype(loc, type);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
+		}
+		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp});
 	}
 
 	@Override
 	public Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2) {
-		throw new UnsupportedOperationException("floats need bitvectors");
+		String functionName = "someBinaryArithmetic" + type1.toString() +"operation";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType astType = m_TypeHandler.ctype2asttype(loc, type1);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
+		}
+		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
 	}
 
 	@Override
