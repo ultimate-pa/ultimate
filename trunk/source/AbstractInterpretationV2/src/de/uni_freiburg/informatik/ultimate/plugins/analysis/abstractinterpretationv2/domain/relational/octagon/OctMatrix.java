@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -500,20 +498,22 @@ public class OctMatrix {
 	}
 	
 	protected void shortestPathClosurePrimitiveSparse() {
-		int[] ck = null; // indices of finite elements in columns k and k^1
 		int[] rk = null; // indices of finite elements in rows k and k^1
+		int[] ck = null; // indices of finite elements in columns k and k^1
+		int indexLength = 0;
 		for (int k = 0; k < mSize; ++k) {
 			int kk = k ^ 1;
 			if (k < kk) { // k is even => entered new 2x2 block
-				ck = primitiveIndexFiniteElementsInBlockColumn(k);
-				rk = primitiveIndexFiniteElementsInBlockRow(k);
+				rk = new int[mSize];
+				ck = new int[mSize];
+				indexLength = primitiveIndexFiniteElementsInBlockRowAndColumn(k, rk, ck);
 			}
-			for (int _i = 1; _i <= ck[0]; ++_i) {
+			for (int _i = 0; _i < indexLength; ++_i) {
 				int i = ck[_i];
 				OctValue ik = get(i, k);
 				OctValue ikk = get(i, kk);
 				int maxCol = i | 1;
-				for (int _j = 1; _j <= rk[0]; ++_j) {
+				for (int _j = 0; _j < indexLength; ++_j) {
 					int j = rk[_j];
 					if (j > maxCol) {
 						break;
@@ -529,32 +529,19 @@ public class OctMatrix {
 		}
 	}
 	
-	private int[] primitiveIndexFiniteElementsInBlockColumn(int k) {
-		int[] index = new int[mSize + 1];
-		int c = 0;
+	// note: rowIndex is not sorted. Block elements are swapped.
+	private int primitiveIndexFiniteElementsInBlockRowAndColumn(int k, int[] rowIndex, int[] colIndex) {
+		int indexLength = 0;
 		int kk = k ^ 1;
 		for (int i = 0; i < mSize; ++i) {
 			if (!get(i, k).isInfinity() || !get(i, kk).isInfinity()) {
-				index[++c] = i;
+				colIndex[indexLength] = i;
+				rowIndex[indexLength] = i^1;
+				++indexLength;
 			}
 		}
-		index[0] = c;
-		return index;
+		return indexLength;
 	}
-	
-	private int[] primitiveIndexFiniteElementsInBlockRow(int k) {
-		int[] index = new int[mSize + 1];
-		int c = 0;
-		int kk = k ^ 1;
-		for (int j = 0; j < mSize; ++j) {
-			if (!get(k, j).isInfinity() || !get(kk, j).isInfinity()) {
-				index[++c] = j;
-			}
-		}
-		index[0] = c;
-		return index;
-	}
-	
 
 	protected void shortestPathClosureApron() {
 		for (int k = 0; k < mSize; ++k) {
