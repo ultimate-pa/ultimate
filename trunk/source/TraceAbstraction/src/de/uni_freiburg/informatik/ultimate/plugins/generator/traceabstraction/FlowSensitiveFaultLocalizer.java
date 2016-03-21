@@ -429,7 +429,7 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	public List<IRelevanceInformation> getRelevanceInformation() {
 		//TODO implement this
-		return null;
+		throw new AssertionError("not yet implemented");
 	}
 	
 }
