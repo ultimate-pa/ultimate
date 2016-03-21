@@ -211,36 +211,40 @@ public class BoogiePreprocessorBacktranslator
 				atomicTrace.add(null);
 				continue;
 			}
+			
+			AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
 
 			if (elem instanceof WhileStatement) {
-				AssumeStatement assumeStmt = (AssumeStatement) programExecution.getTraceElement(i).getTraceElement();
+				AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				WhileStatement stmt = (WhileStatement) elem;
 				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
+						info, stringProvider, ate.getmRelevanceInformation()));
 
 			} else if (elem instanceof IfStatement) {
-				AssumeStatement assumeStmt = (AssumeStatement) programExecution.getTraceElement(i).getTraceElement();
+				AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				IfStatement stmt = (IfStatement) elem;
 				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
+						info, stringProvider, ate.getmRelevanceInformation()));
 
 			} else if (elem instanceof CallStatement) {
 				// for call statements, we simply rely on the stepinfo of our
 				// input: if its none, its a function call (so there will be no
 				// return), else its a procedure call with corresponding return
 
-				if (programExecution.getTraceElement(i).hasStepInfo(StepInfo.NONE)) {
-					atomicTrace
-							.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL, stringProvider));
+				if (ate.hasStepInfo(StepInfo.NONE)) {
+					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL, 
+							stringProvider, ate.getmRelevanceInformation()));
 				} else {
 					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem,
-							programExecution.getTraceElement(i).getStepInfo(), stringProvider));
+							ate.getStepInfo(), stringProvider, ate.getmRelevanceInformation()));
 				}
 
 			} else {
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, stringProvider));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, stringProvider, ate.getmRelevanceInformation()));
 			}
 		}
 

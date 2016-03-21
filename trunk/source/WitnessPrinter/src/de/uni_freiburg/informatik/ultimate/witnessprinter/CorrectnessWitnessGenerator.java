@@ -169,9 +169,9 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 					final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(outgoing);
 					if (coan != null) {
 						edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, label,
-								coan.isNegated() ? StepInfo.CONDITION_EVAL_FALSE : StepInfo.CONDITION_EVAL_TRUE));
+								coan.isNegated() ? StepInfo.CONDITION_EVAL_FALSE : StepInfo.CONDITION_EVAL_TRUE, null));
 					} else {
-						edge = fac.createWitnessEdge(new AtomicTraceElement<>(label));
+						edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, null));
 					}
 				}
 				final GeneratedWitnessNode targetWNode = getWitnessNode(outgoing.getTarget(), mStringProvider, fac,

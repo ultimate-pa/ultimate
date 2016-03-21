@@ -128,24 +128,24 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		if (cb instanceof Call) {
 			Statement st = ((Call) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL, stringProvider));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL, stringProvider, null));
 		} else if (cb instanceof Return) {
 			Statement st = ((Return) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN, stringProvider));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN, stringProvider, null));
 		} else if (cb instanceof Summary) {
 			Statement st = ((Summary) cb).getCallStatement();
 			// FIXME: Is summary call, return or something new?
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE, stringProvider));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE, stringProvider, null));
 		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
 			for (Statement statement : ss.getStatements()) {
 				if (mCodeBlock2Statement.containsKey(statement)) {
 					BoogieASTNode[] sources = mCodeBlock2Statement.get(statement);
 					for (BoogieASTNode source : sources) {
-						trace.add(new AtomicTraceElement<BoogieASTNode>(source, stringProvider));
+						trace.add(new AtomicTraceElement<BoogieASTNode>(source, stringProvider, null));
 					}
 				} else {
-					trace.add(new AtomicTraceElement<BoogieASTNode>(statement, stringProvider));
+					trace.add(new AtomicTraceElement<BoogieASTNode>(statement, stringProvider, null));
 				}
 			}
 		} else if (cb instanceof SequentialComposition) {

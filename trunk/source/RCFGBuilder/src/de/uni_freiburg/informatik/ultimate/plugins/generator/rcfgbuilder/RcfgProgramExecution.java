@@ -80,11 +80,11 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 		final List<AtomicTraceElement<RCFGEdge>> atomictrace = new ArrayList<>();
 		for (final RCFGEdge te : trace) {
 			if (te instanceof Call) {
-				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_CALL));
+				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_CALL, null));
 			} else if (te instanceof Return) {
-				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_RETURN));
+				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_RETURN, null));
 			} else {
-				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te));
+				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, null));
 			}
 		}
 

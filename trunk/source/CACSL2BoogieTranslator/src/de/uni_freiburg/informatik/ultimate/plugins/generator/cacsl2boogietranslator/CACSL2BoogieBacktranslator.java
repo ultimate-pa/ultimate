@@ -134,7 +134,7 @@ public class CACSL2BoogieBacktranslator
 		// dirty but quick: convert trace to program execution
 		// TODO: set the correct step info (but how?)
 		final List<AtomicTraceElement<BoogieASTNode>> ateTrace = trace.stream()
-				.map(a -> new AtomicTraceElement<>(a, BoogiePrettyPrinter.getBoogieToStringprovider()))
+				.map(a -> new AtomicTraceElement<>(a, BoogiePrettyPrinter.getBoogieToStringprovider(), null))
 				.collect(Collectors.toList());
 		final IProgramExecution<BoogieASTNode, Expression> tracePE = new BoogieProgramExecution(Collections.emptyMap(),
 				ateTrace);
@@ -203,7 +203,7 @@ public class CACSL2BoogieBacktranslator
 					// if cnode is an if, we point to the condition
 					CASTIfStatement ifstmt = (CASTIfStatement) cnode;
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc,
-							LocationFactory.createCLocation(ifstmt.getConditionExpression()), ate.getStepInfo()));
+							LocationFactory.createCLocation(ifstmt.getConditionExpression()), ate.getStepInfo(), ate.getmRelevanceInformation()));
 				} else if (cnode instanceof CASTWhileStatement) {
 					// if cnode is a while, we know that it is not ignored and that
 					// it comes from the if(!cond)break; construct in Boogie.
@@ -215,7 +215,7 @@ public class CACSL2BoogieBacktranslator
 					}
 					CASTWhileStatement whileStmt = (CASTWhileStatement) cnode;
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc,
-							LocationFactory.createCLocation(whileStmt.getCondition()), newSi));
+							LocationFactory.createCLocation(whileStmt.getCondition()), newSi, ate.getmRelevanceInformation()));
 				} else if (cnode instanceof CASTDoStatement) {
 					// same as while
 					CASTDoStatement doStmt = (CASTDoStatement) cnode;
@@ -224,7 +224,7 @@ public class CACSL2BoogieBacktranslator
 						continue;
 					}
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc,
-							LocationFactory.createCLocation(doStmt.getCondition()), newSi));
+							LocationFactory.createCLocation(doStmt.getCondition()), newSi, ate.getmRelevanceInformation()));
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
 					CASTForStatement forStmt = (CASTForStatement) cnode;
@@ -233,7 +233,7 @@ public class CACSL2BoogieBacktranslator
 						continue;
 					}
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc,
-							LocationFactory.createCLocation(forStmt.getConditionExpression()), newSi));
+							LocationFactory.createCLocation(forStmt.getConditionExpression()), newSi, ate.getmRelevanceInformation()));
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					// more complex, handled separately
 					i = handleCASTFunctionCallExpression(oldPE, i, (CASTFunctionCallExpression) cnode, cloc,
@@ -255,13 +255,13 @@ public class CACSL2BoogieBacktranslator
 							continue;
 						}
 					}
-					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc));
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, ate.getmRelevanceInformation()));
 				}
 				translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 
 			} else if (loc instanceof ACSLLocation) {
 				// for now, just use ACSL as-it
-				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>((ACSLLocation) loc));
+				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>((ACSLLocation) loc, ate.getmRelevanceInformation()));
 				translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 
 			} else {
@@ -325,7 +325,7 @@ public class CACSL2BoogieBacktranslator
 			// this is some special case, e.g. an assert false or an havoc
 			if (origFuncCall.getTraceElement() instanceof AssertStatement) {
 				translatedAtomicTraceElements
-						.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo()));
+						.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(), origFuncCall.getmRelevanceInformation()));
 				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 			} else if (origFuncCall.getTraceElement() instanceof HavocStatement) {
 				HavocStatement havoc = (HavocStatement) origFuncCall.getTraceElement();
@@ -333,7 +333,7 @@ public class CACSL2BoogieBacktranslator
 				check.processStatement(havoc);
 				if (!check.areAllTemp()) {
 					translatedAtomicTraceElements
-							.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo()));
+							.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(), origFuncCall.getmRelevanceInformation()));
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 				}
 			}
@@ -346,7 +346,7 @@ public class CACSL2BoogieBacktranslator
 		}
 
 		translatedAtomicTraceElements
-				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo()));
+				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(), origFuncCall.getmRelevanceInformation()));
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 
 		if (origFuncCall.hasStepInfo(StepInfo.PROC_RETURN)) {
@@ -1011,7 +1011,8 @@ public class CACSL2BoogieBacktranslator
 					} else {
 						set.add(newSi);
 					}
-					return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(), set);
+					return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(), 
+							set, current.getmRelevanceInformation());
 				}
 			}
 			return ate;

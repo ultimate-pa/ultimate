@@ -84,7 +84,8 @@ public abstract class AExpressionTranslation {
 		this.m_TypeSizes = typeSizes;
 		this.m_FunctionDeclarations = new FunctionDeclarations(typeHandler, m_TypeSizes);
 		this.m_TypeHandler = typeHandler;
-		this.m_PointerIntegerConversion = new OverapproximationUF(this, m_FunctionDeclarations, m_TypeHandler);
+//		this.m_PointerIntegerConversion = new OverapproximationUF(this, m_FunctionDeclarations, m_TypeHandler);
+		this.m_PointerIntegerConversion = new Projection(this, m_TypeHandler);
 	}
 
 	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
