@@ -38,8 +38,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -50,9 +49,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -68,12 +69,16 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final IntervalDomainStatementProcessor mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
+	private final int mParallelStates;
 
 	public IntervalPostOperator(final Logger logger, final BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = new IntervalDomainStatementProcessor(mLogger, symbolTable);
 		mSymbolTable = symbolTable;
+
+		mParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		        .getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
 	}
 
 	@Override
@@ -109,7 +114,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			currentStates = afterProcessStates;
 		}
 
-		return currentStates;
+		return IntervalUtils.mergeStatesIfNecessary(currentStates, mParallelStates);
 	}
 
 	@Override
@@ -201,7 +206,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 				returnList.add(returnState);
 			}
 
-			return returnList;
+			return IntervalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
 		} else if (transition instanceof Return) {
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
@@ -225,7 +230,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			        vals.toArray(new IntervalDomainValue[vals.size()]));
 
 			returnList.add(returnState);
-			return returnList;
+			return IntervalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
 		} else {
 			throw new UnsupportedOperationException(
 			        "IntervalDomain does not support context switches other than Call and Return (yet)");
