@@ -99,9 +99,9 @@ public class AffineExpressionTest {
 
 		String a1 = "2x + -6y + 3";
 		String a2 = "4x + -12y + 6";
-		assertDivInt(a1, a2, null); // real result = 0.5
-		assertDivInt(a2, a1, "2");
-		assertDivInt(a2, "2", a1);
+		assertDivInt(a1, a2, null);
+		assertDivInt(a2, a1, null);
+		assertDivInt(a2, "2", null);
 	}
 
 	@Test

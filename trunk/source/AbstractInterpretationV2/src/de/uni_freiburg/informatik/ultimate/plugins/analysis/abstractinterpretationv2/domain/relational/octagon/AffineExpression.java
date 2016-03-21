@@ -292,20 +292,19 @@ public class AffineExpression {
 
 	/**
 	 * Creates a new affine expression that is the quotient of this and another affine expression,
- if the quotient is affine.
+	 * if the quotient is affine.
 	 *
 	 * @param divisor Affine expression dividing this affine expression.
 	 * @param integerDivison Calculate the euclidean integer division.
 	 * @return {@code this / divisor} or {@code null}
 	 */
 	public AffineExpression divide(final AffineExpression divisor, final boolean integerDivison) {
-		try {
-			if (divisor.isConstant()) {
+		if (divisor.isConstant()) {
+			try {
 				return divideByConstant(divisor.mConstant, integerDivison);
-			} else {
-				return divideByNonConstant(divisor, integerDivison);
+			} catch (final ArithmeticException e) {
+				// return null (see below)
 			}
-		} catch (final ArithmeticException e) {
 		}
 		return null;
 	}
@@ -317,7 +316,7 @@ public class AffineExpression {
 	 * @param integerDivison Calculate the euclidean integer division.
 	 * @return {@code this / divisor}
 	 *
-	 * @throws ArithmeticException Divided by zero or the quotient has no finite decimal expansion.
+	 * @throws ArithmeticException Division by zero or the quotient has no finite decimal expansion.
 	 */
 	private AffineExpression divideByConstant(final BigDecimal divisor, final boolean integerDivison) {
 		if (integerDivison) {
@@ -335,48 +334,6 @@ public class AffineExpression {
 			}
 			return quotient;
 		}
-	}
-
-	/**
-	 * Creates a new affine expression that is the quotient of this and another affine expression,
-	 * if the quotient is affine.
-	 * <p>
-	 * This method also allows to divide by constants, but returns {@code null} more often than
-	 * {@link #divideByConstant(BigDecimal, boolean)}.
-	 * <p>
-	 * This method supports only divisions of the form {@code c*AE / AE = c}.
-	 * The result will always be a constant.
-	 *
-	 * @param divisor Affine expression dividing this affine expression.
-	 * @param integerDivison Calculate the euclidean integer division.
-	 * @return {@code this / divisor} or {@code null}
-	 *
-	 * @throws ArithmeticException Divided by zero or the quotient has no finite decimal expansion.
-	 */
-	private AffineExpression divideByNonConstant(final AffineExpression divisor, final boolean integerDivison) {
-		final Set<String> vars = mCoefficients.keySet();
-		if (!vars.equals(divisor.mCoefficients.keySet())) {
-			return null;
-		}
-		final BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
-				integerDivison ? NumUtil::exactDivison : BigDecimal::divide;
-		BigDecimal qFixed = null;
-		if (divisor.mConstant.signum() != 0) {
-			qFixed = divOp.apply(mConstant, divisor.mConstant);
-		} else if (mConstant.signum() != 0) {
-			return null; // (x + c) / (x + 0) is not affine
-		}
-		for (final String v : vars) {
-			final BigDecimal c = mCoefficients.get(v);
-			final BigDecimal d = divisor.mCoefficients.get(v);
-			final BigDecimal q = divOp.apply(c, d);
-			if (qFixed == null) {
-				qFixed = q;
-			} else if (q.compareTo(qFixed) != 0) {
-				return null;
-			}
-		}
-		return new AffineExpression(qFixed);
 	}
 
 	/**
