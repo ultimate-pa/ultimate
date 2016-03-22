@@ -29,11 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -49,8 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 @SuppressWarnings("rawtypes")
 public class CompoundDomain implements IAbstractDomain<CompoundDomainState, CodeBlock, IBoogieVar> {
 
-	private final Logger mLogger;
-	private final IUltimateServiceProvider mServiceProvider;
+	private final IUltimateServiceProvider mServices;
 	private final List<IAbstractDomain> mDomainList;
 	private final RootAnnot mRootAnnotation;
 
@@ -58,23 +54,22 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
 	private IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> mPostOperator;
 
-	public CompoundDomain(final IUltimateServiceProvider serviceProvider,
-	        final List<IAbstractDomain> domainList, final RootAnnot rootAnnotation) {
-		mLogger = serviceProvider.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mServiceProvider = serviceProvider;
+	public CompoundDomain(final IUltimateServiceProvider serviceProvider, final List<IAbstractDomain> domainList,
+			final RootAnnot rootAnnotation) {
+		mServices = serviceProvider;
 		mDomainList = domainList;
 		mRootAnnotation = rootAnnotation;
 	}
 
 	@Override
 	public CompoundDomainState createFreshState() {
-		return new CompoundDomainState(mLogger, mDomainList);
+		return new CompoundDomainState(mServices, mDomainList);
 	}
 
 	@Override
 	public IAbstractStateBinaryOperator<CompoundDomainState> getWideningOperator() {
 		if (mWideningOperator == null) {
-			mWideningOperator = new CompoundDomainWideningOperator(mLogger);
+			mWideningOperator = new CompoundDomainWideningOperator(mServices);
 		}
 		return mWideningOperator;
 	}
@@ -82,7 +77,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 	@Override
 	public IAbstractStateBinaryOperator<CompoundDomainState> getMergeOperator() {
 		if (mMergeOperator == null) {
-			mMergeOperator = new CompoundDomainMergeOperator(mLogger);
+			mMergeOperator = new CompoundDomainMergeOperator(mServices);
 		}
 		return mMergeOperator;
 	}
@@ -90,7 +85,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 	@Override
 	public IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
-			mPostOperator = new CompoundDomainPostOperator(mServiceProvider, mRootAnnotation);
+			mPostOperator = new CompoundDomainPostOperator(mServices, mRootAnnotation);
 		}
 		return mPostOperator;
 	}

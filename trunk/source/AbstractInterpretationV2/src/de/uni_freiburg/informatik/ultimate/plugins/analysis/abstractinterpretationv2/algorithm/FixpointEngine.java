@@ -302,10 +302,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		// prepare successor filters
-		Predicate<Pair<STATE, ACTION>> summaryFilter = p -> !mTransitionProvider
-				.isSummaryWithImplementation(p.getSecond());
-		Predicate<Pair<STATE, ACTION>> filter = p -> !worklist.stream()
-				.anyMatch(w -> w.getAction() == p.getSecond() && w.getPreState() == p.getFirst());
+		// do not add successors if 
+		// successor is summary for existing call 
+		// successor is already in worklist 
+		Predicate<Pair<STATE, ACTION>> filter = p -> !mTransitionProvider.isSummaryWithImplementation(p.getSecond())
+				&& !worklist.stream().anyMatch(w -> w.getAction() == p.getSecond() && w.getPreState() == p.getFirst());
+
 		// check if we should widen at this location before adding new successors
 		// we should widen if the current item is a transition to a loop head
 		// or it is a transition that enters a scope
@@ -325,7 +327,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 						.and(p -> !fixpoints.contains(p.getFirst()) || !mLoopDetector.isEnteringLoop(p.getSecond()));
 			}
 		} else if (mTransitionProvider.isEnteringScope(current)) {
-			final STATE oldScopeState = getLastStateAtScopeEntry(currentItem);
+			final STATE oldScopeState = getWidenStateAtScopeEntry(currentItem);
 			if (oldScopeState != null) {
 				// we should widen all current states with the last state at this scope entry
 				removeWorklistItems(worklist, availablePostStates, successors);
@@ -338,8 +340,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				}
 			}
 		}
-
-		filter = summaryFilter.and(filter);
 
 		// construct a list of pairs <state,action> for successors, and filter out the following:
 		// do not add already existing items
@@ -438,7 +438,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 	}
 
-	private STATE getLastStateAtScopeEntry(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
+	private STATE getWidenStateAtScopeEntry(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
 		final ACTION currentAction = currentItem.getAction();
 
 		final Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> stackAtCallLocation = currentItem

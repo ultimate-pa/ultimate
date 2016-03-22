@@ -772,34 +772,43 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		final String delimiter = "; ";
 
 		// Interval bounds --------------------------------------------------------------
-		StringBuilder intsLog = new StringBuilder("ints: {");
-		StringBuilder realsLog = new StringBuilder("reals: {");
-
+		final StringBuilder intsLog = new StringBuilder("ints: {");
+		final StringBuilder realsLog = new StringBuilder("reals: {");
+		int reals = 0;
+		int ints = 0;
 		String curDelimiter = "";
-		for (Map.Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
-			String varName = entry.getKey();
-			OctInterval interval = OctInterval.fromMatrix(mNumericAbstraction, entry.getValue());
+		for (final Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
+			final String varName = entry.getKey();
+			final OctInterval interval = OctInterval.fromMatrix(mNumericAbstraction, entry.getValue());
 
-			StringBuilder curLog = mNumericNonIntVars.contains(varName) ? realsLog : intsLog;
+			final StringBuilder curLog;
+			if (mNumericNonIntVars.contains(varName)) {
+				curLog = realsLog;
+				reals++;
+			} else {
+				curLog = intsLog;
+				ints++;
+			}
 			curLog.append(curDelimiter);
 			curDelimiter = delimiter;
 			curLog.append(varName).append(in).append(interval);
 		}
 
 		// Constraints between two different variables ----------------------------------
-		StringBuilder relLog = new StringBuilder("relations: {");
-
+		final StringBuilder relLog = new StringBuilder("relations: {");
+		int rels = 0;
 		curDelimiter = "";
 		if (mNumericAbstraction.hasNegativeSelfLoop()) {
 			relLog.append("\\bot");
 			curDelimiter = delimiter;
+			rels++;
 		}
-		for (Map.Entry<String, Integer> rowEntry : mMapNumericVarToIndex.entrySet()) {
-			for (Map.Entry<String, Integer> colEntry : mMapNumericVarToIndex.entrySet()) {
-				String rowName = rowEntry.getKey();
-				String colName = colEntry.getKey();
-				int row2 = rowEntry.getValue() * 2;
-				int col2 = colEntry.getValue() * 2;
+		for (final Entry<String, Integer> rowEntry : mMapNumericVarToIndex.entrySet()) {
+			for (final Entry<String, Integer> colEntry : mMapNumericVarToIndex.entrySet()) {
+				final String rowName = rowEntry.getKey();
+				final String colName = colEntry.getKey();
+				final int row2 = rowEntry.getValue() * 2;
+				final int col2 = colEntry.getValue() * 2;
 
 				if (row2 <= col2) {
 					// skip block upper triangular part (is coherent/redundant)
@@ -807,9 +816,10 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 					continue;
 				}
 
-				OctInterval sumInterval = new OctInterval(mNumericAbstraction.get(row2, col2 + 1).negateIfNotInfinity(),
+				final OctInterval sumInterval = new OctInterval(
+						mNumericAbstraction.get(row2, col2 + 1).negateIfNotInfinity(),
 						mNumericAbstraction.get(row2 + 1, col2));
-				OctInterval colMinusRowInterval = new OctInterval(
+				final OctInterval colMinusRowInterval = new OctInterval(
 						mNumericAbstraction.get(row2 + 1, col2 + 1).negateIfNotInfinity(),
 						mNumericAbstraction.get(row2, col2));
 
@@ -817,18 +827,34 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 					relLog.append(curDelimiter);
 					curDelimiter = delimiter;
 					relLog.append(colName).append(plus).append(rowName).append(in).append(sumInterval);
+					rels++;
 				}
 
 				if (!colMinusRowInterval.isTop()) {
 					relLog.append(curDelimiter);
 					curDelimiter = delimiter;
 					relLog.append(colName).append(minus).append(rowName).append(in).append(colMinusRowInterval);
+					rels++;
 				}
 			}
 		}
 
-		return new StringBuilder("{").append(intsLog).append("}, ").append(realsLog).append("}, ").append(relLog)
-				.append("}, ").append("bools: ").append(mBooleanAbstraction).append("}").toString();
+		final StringBuilder rtr = new StringBuilder("{");
+		if (ints > 0) {
+			rtr.append(intsLog).append("}, ");
+		}
+		if (reals > 0) {
+			rtr.append(realsLog).append("}, ");
+		}
+		if (rels > 0) {
+			rtr.append(relLog).append("}, ");
+		}
+		if (!mBooleanAbstraction.isEmpty()) {
+			rtr.append("bools: ").append(mBooleanAbstraction);
+		}
+		rtr.append("}");
+
+		return rtr.toString();
 	}
 
 }

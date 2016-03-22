@@ -35,8 +35,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -59,15 +58,16 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	private static int sId;
 
-	private final Logger mLogger;
+	private final IUltimateServiceProvider mServices;
+
 	private final List<IAbstractState<?, CodeBlock, IBoogieVar>> mAbstractStates;
 	private final List<IAbstractDomain> mDomainList;
 	private final int mId;
 
-	public CompoundDomainState(final Logger logger, final List<IAbstractDomain> domainList) {
+	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList) {
 		sId++;
 		mId = sId;
-		mLogger = logger;
+		mServices = services;
 		mDomainList = domainList;
 		mAbstractStates = new ArrayList<>();
 		for (final IAbstractDomain domain : mDomainList) {
@@ -75,7 +75,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		}
 	}
 
-	public CompoundDomainState(final Logger logger, final List<IAbstractDomain> domainList,
+	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList,
 			final List<IAbstractState<?, CodeBlock, IBoogieVar>> abstractStateList) {
 		sId++;
 		mId = sId;
@@ -83,8 +83,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 			throw new UnsupportedOperationException(
 					"The domain list size and the abstract state list size must be identical.");
 		}
-
-		mLogger = logger;
+		mServices = services;
 		mDomainList = domainList;
 		mAbstractStates = abstractStateList;
 	}
@@ -128,12 +127,12 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public CompoundDomainState patch(CompoundDomainState dominator) {
 		assert mAbstractStates.size() == dominator.mAbstractStates.size();
 
-		List<IAbstractState<?, CodeBlock, IBoogieVar>> returnList = new ArrayList<>();
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> returnList = new ArrayList<>();
 		for (int i = 0; i < mAbstractStates.size(); i++) {
 			returnList.add(patchInternally(mAbstractStates.get(i), dominator.mAbstractStates.get(i)));
 		}
 
-		return new CompoundDomainState(mLogger, mDomainList, returnList);
+		return new CompoundDomainState(mServices, mDomainList, returnList);
 	}
 
 	private static <T extends IAbstractState> T patchInternally(T current, T dominator) {
@@ -170,7 +169,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	@Override
-	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
 		return Util.and(script,
 				mAbstractStates.stream().map(state -> state.getTerm(script, bpl2smt)).toArray(i -> new Term[i]));
 	}
@@ -196,7 +195,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	private CompoundDomainState performStateOperation(
 			Function<IAbstractState<?, CodeBlock, IBoogieVar>, IAbstractState<?, CodeBlock, IBoogieVar>> state) {
-		return new CompoundDomainState(mLogger, mDomainList,
+		return new CompoundDomainState(mServices, mDomainList,
 				mAbstractStates.stream().map(state).collect(Collectors.toList()));
 	}
 

@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
 		extends BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> {
 
-	private final Map<CodeBlock, Deque<STATE>> mStorage;
+	private final Map<LOCATION, Deque<STATE>> mStorage;
 
 	public RcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<STATE> mergeOperator,
 			IUltimateServiceProvider services, ITransitionProvider<CodeBlock, LOCATION> transprovider) {
@@ -54,8 +55,9 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		mStorage = new HashMap<>();
 	}
 
-	protected Deque<STATE> getPostStates(CodeBlock node) {
-		assert node != null;
+	protected Deque<STATE> getPostStates(CodeBlock action) {
+		assert action != null;
+		final LOCATION node = getTransitionProvider().getTarget(action);
 		Deque<STATE> rtr = mStorage.get(node);
 		if (rtr == null) {
 			rtr = new ArrayDeque<STATE>();
@@ -75,6 +77,20 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		if (mStorage == null) {
 			return "NULL";
 		}
-		return mStorage.toString();
+		if (mStorage.isEmpty()) {
+			return "{}";
+		}
+		final StringBuilder sb = new StringBuilder('{');
+		for (final Entry<?, Deque<STATE>> entry : mStorage.entrySet()) {
+			sb.append(entry.getKey().toString()).append("=[");
+			if (!entry.getValue().isEmpty()) {
+				for (final STATE state : entry.getValue()) {
+					sb.append(state.toLogString()).append(',');
+				}
+			}
+			sb.append(']');
+		}
+		sb.append('}');
+		return sb.toString();
 	}
 }

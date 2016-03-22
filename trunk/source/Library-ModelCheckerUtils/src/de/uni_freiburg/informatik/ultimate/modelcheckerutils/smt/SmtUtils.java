@@ -69,11 +69,15 @@ public class SmtUtils {
 	}
 
 	public static Term simplify(Script script, Term formula, IUltimateServiceProvider services) {
-		Logger logger = services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
-		logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
-		Term simplified = (new SimplifyDDAWithTimeout(script, services)).getSimplifiedTerm(formula);
-		logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
-				new DagSizePrinter(formula), new DagSizePrinter(simplified)));
+		final Logger logger = services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
+		if (logger.isDebugEnabled()) {
+			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
+		}
+		final Term simplified = (new SimplifyDDAWithTimeout(script, services)).getSimplifiedTerm(formula);
+		if (logger.isDebugEnabled()) {
+			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
+					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
+		}
 		return simplified;
 	}
 

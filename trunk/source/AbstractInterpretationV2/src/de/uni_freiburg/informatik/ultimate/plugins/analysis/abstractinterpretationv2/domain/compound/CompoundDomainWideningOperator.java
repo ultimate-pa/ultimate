@@ -31,8 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -48,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class CompoundDomainWideningOperator implements IAbstractStateBinaryOperator<CompoundDomainState> {
 
-	private final Logger mLogger;
+	private final IUltimateServiceProvider mServices;
 
-	public CompoundDomainWideningOperator(Logger logger) {
-		mLogger = logger;
+	public CompoundDomainWideningOperator(IUltimateServiceProvider services) {
+		mServices = services;
 	}
 
 	@Override
@@ -68,14 +67,14 @@ public class CompoundDomainWideningOperator implements IAbstractStateBinaryOpera
 
 		for (int i = 0; i < firstStates.size(); i++) {
 			widenedList.add(
-			        widenInternally(firstStates.get(i), secondStates.get(i), domains.get(i).getWideningOperator()));
+					widenInternally(firstStates.get(i), secondStates.get(i), domains.get(i).getWideningOperator()));
 		}
 
-		return new CompoundDomainState(mLogger, domains, widenedList);
+		return new CompoundDomainState(mServices, domains, widenedList);
 	}
 
 	private static <T extends IAbstractState> T widenInternally(T firstState, T secondState,
-	        IAbstractStateBinaryOperator<T> wideningOperator) {
+			IAbstractStateBinaryOperator<T> wideningOperator) {
 		return wideningOperator.apply(firstState, secondState);
 	}
 

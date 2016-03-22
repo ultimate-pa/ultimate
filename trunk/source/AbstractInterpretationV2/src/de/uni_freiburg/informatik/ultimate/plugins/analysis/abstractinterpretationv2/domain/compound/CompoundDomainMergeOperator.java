@@ -31,8 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -48,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class CompoundDomainMergeOperator implements IAbstractStateBinaryOperator<CompoundDomainState> {
 
-	private final Logger mLogger;
+	private final IUltimateServiceProvider mServices;
 
-	public CompoundDomainMergeOperator(Logger logger) {
-		mLogger = logger;
+	public CompoundDomainMergeOperator(final IUltimateServiceProvider services) {
+		mServices = services;
 	}
 
 	@Override
@@ -68,14 +67,14 @@ public class CompoundDomainMergeOperator implements IAbstractStateBinaryOperator
 
 		for (int i = 0; i < firstStates.size(); i++) {
 			returnStates
-			        .add(applyInternally(firstStates.get(i), secondStates.get(i), domains.get(i).getMergeOperator()));
+					.add(applyInternally(firstStates.get(i), secondStates.get(i), domains.get(i).getMergeOperator()));
 		}
 
-		return new CompoundDomainState(mLogger, domains, returnStates);
+		return new CompoundDomainState(mServices, domains, returnStates);
 	}
 
 	private static <T extends IAbstractState> T applyInternally(T first, T second,
-	        IAbstractStateBinaryOperator<T> mergeOperator) {
+			IAbstractStateBinaryOperator<T> mergeOperator) {
 		return mergeOperator.apply(first, second);
 	}
 

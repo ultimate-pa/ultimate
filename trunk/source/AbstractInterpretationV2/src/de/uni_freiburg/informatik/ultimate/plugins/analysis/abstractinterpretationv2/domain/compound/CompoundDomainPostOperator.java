@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -117,16 +118,14 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		final List<IAbstractState<?, CodeBlock, IBoogieVar>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domains.size(); i++) {
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Running " + domains.get(i).getClass().getSimpleName() + " post with code block "
-				        + transitionList.get(i));
-			}
-
 			final List<IAbstractState> result = applyInternally(states.get(i), domains.get(i).getPostOperator(),
-			        transitionList.get(i));
+					transitionList.get(i));
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Result for domain " + domains.get(i).getClass().getSimpleName() + ": \n" + result);
+				final StringBuilder sb = new StringBuilder(AbsIntPrefInitializer.INDENT)
+						.append(AbsIntPrefInitializer.INDENT).append(domains.get(i).getClass().getSimpleName())
+						.append(": ");
+				result.stream().map(a -> a.toLogString()).forEach(a -> mLogger.debug(new StringBuilder(sb).append(a)));
 			}
 
 			if (result.size() == 0) {
@@ -146,7 +145,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		}
 
 		assert resultingStates.size() == domains.size();
-		returnStates.add(new CompoundDomainState(mLogger, domains, resultingStates));
+		returnStates.add(new CompoundDomainState(mServices, domains, resultingStates));
 
 		if (mUseSmtSolverChecks) {
 			return returnStates.stream().filter(state -> checkSat(state)).collect(Collectors.toList());
@@ -167,7 +166,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(new StringBuilder().append("Checking state term for satisfiability: ").append(stateTerm)
-			        .toString());
+					.toString());
 		}
 		final LBool result = SmtUtils.checkSatTerm(mScript, stateTerm);
 		if (mLogger.isDebugEnabled()) {
@@ -190,7 +189,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @return
 	 */
 	private List<CodeBlock> createTransitionList(final CodeBlock transition,
-	        final List<IAbstractState<?, CodeBlock, IBoogieVar>> states) {
+			final List<IAbstractState<?, CodeBlock, IBoogieVar>> states) {
 
 		final List<CodeBlock> returnList = new ArrayList<>();
 
@@ -211,7 +210,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 
 		if (mCreateStateAssumptions && mLogger.isDebugEnabled()) {
 			mLogger.debug(new StringBuilder().append("Constructed transition list for each state: ").append(returnList)
-			        .toString());
+					.toString());
 		}
 
 		return returnList;
@@ -227,7 +226,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @return
 	 */
 	private CodeBlock createBlockWithoutState(final List<IAbstractState<?, CodeBlock, IBoogieVar>> states,
-	        final int index, final CodeBlock transition) {
+			final int index, final CodeBlock transition) {
 
 		assert states.size() > 0;
 
@@ -253,14 +252,14 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		secondStatements.add(assume);
 		secondStatements.addAll(mStatementExtractor.process(transition));
 		final CodeBlock returnCodeBlock = mCodeBlockFactory.constructStatementSequence(null, null, secondStatements,
-		        Origin.IMPLEMENTATION);
+				Origin.IMPLEMENTATION);
 		mTransformulaBuilder.addTransitionFormulas(returnCodeBlock, transition.getPreceedingProcedure());
 		return returnCodeBlock;
 	}
 
 	@Override
 	public List<CompoundDomainState> apply(CompoundDomainState stateBeforeLeaving,
-	        CompoundDomainState stateAfterLeaving, CodeBlock transition) {
+			CompoundDomainState stateAfterLeaving, CodeBlock transition) {
 		final List<CompoundDomainState> returnStates = new ArrayList<>();
 
 		final List<IAbstractState<?, CodeBlock, IBoogieVar>> beforeStates = stateBeforeLeaving.getAbstractStatesList();
@@ -276,7 +275,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 
 		for (int i = 0; i < domainsBefore.size(); i++) {
 			final List<IAbstractState> result = applyInternally(beforeStates.get(i), afterStates.get(i),
-			        domainsBefore.get(i).getPostOperator(), transition);
+					domainsBefore.get(i).getPostOperator(), transition);
 
 			if (result.size() == 0) {
 				return new ArrayList<>();
@@ -294,24 +293,24 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		}
 
 		assert resultingStates.size() == domainsBefore.size();
-		returnStates.add(new CompoundDomainState(mLogger, domainsBefore, resultingStates));
+		returnStates.add(new CompoundDomainState(mServices, domainsBefore, resultingStates));
 
 		return returnStates;
 	}
 
 	private static List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock, IBoogieVar> currentState,
-	        final IAbstractPostOperator postOperator, final CodeBlock transition) {
+			final IAbstractPostOperator postOperator, final CodeBlock transition) {
 		return postOperator.apply(currentState, transition);
 	}
 
 	private List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock, IBoogieVar> first,
-	        final IAbstractState<?, CodeBlock, IBoogieVar> second, final IAbstractPostOperator postOperator,
-	        final CodeBlock transition) {
+			final IAbstractState<?, CodeBlock, IBoogieVar> second, final IAbstractPostOperator postOperator,
+			final CodeBlock transition) {
 		return postOperator.apply(first, second, transition);
 	}
 
 	private static <T extends IAbstractState, M extends IAbstractStateBinaryOperator<T>> T applyMergeInternally(T first,
-	        T second, M mergeOperator) {
+			T second, M mergeOperator) {
 		return mergeOperator.apply(first, second);
 	}
 
