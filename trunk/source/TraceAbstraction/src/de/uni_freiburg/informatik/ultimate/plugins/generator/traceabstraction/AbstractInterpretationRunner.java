@@ -96,7 +96,7 @@ public class AbstractInterpretationRunner {
 					+ " with the following transitions: ");
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
 					.map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter.runSilently(
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter.runOnPathProgram(
 					(NestedRun<CodeBlock, IPredicate>) currentCex, currentAbstraction, mRoot, timer, mServices);
 			mAbsIntResult = result;
 		} finally {

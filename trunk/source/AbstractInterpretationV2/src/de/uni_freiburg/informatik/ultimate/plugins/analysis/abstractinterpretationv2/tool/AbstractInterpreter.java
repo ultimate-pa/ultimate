@@ -107,7 +107,7 @@ public final class AbstractInterpreter {
 			final IUltimateServiceProvider services) {
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
-			return runOnRCFG(root, initials, timer, services, true);
+			return run(root, initials, timer, services, true);
 		} catch (OutOfMemoryError oom) {
 			throw oom;
 		} catch (IllegalArgumentException iae) {
@@ -125,7 +125,7 @@ public final class AbstractInterpreter {
 	 * Run abstract interpretation on a path program constructed from a counterexample.
 	 * 
 	 */
-	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runSilently(
+	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runOnPathProgram(
 			final NestedRun<CodeBlock, ?> counterexample,
 			final INestedWordAutomatonOldApi<CodeBlock, ?> currentAutomata, final RootNode root,
 			final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
@@ -140,26 +140,50 @@ public final class AbstractInterpreter {
 			final NWAPathProgramTransitionProvider transProvider = new NWAPathProgramTransitionProvider(counterexample,
 					services, root.getRootAnnot());
 			return runSilentlyOnNWA(transProvider, counterexample.getSymbol(0), root, timer, services);
-		} catch (OutOfMemoryError oom) {
-			throw oom;
-		} catch (IllegalArgumentException iae) {
-			throw iae;
-		} catch (AssertionError aerr) {
-			throw aerr;
 		} catch (ToolchainCanceledException tce) {
 			// suppress timeout results / timeouts
-			return null;
-		} catch (Throwable t) {
-			logger.fatal("Suppressed exception in AIv2: " + t.getClass().getSimpleName() + " with message "
-					+ t.getMessage());
-			t.printStackTrace();
+			logger.warn("Abstract interpretation run out of time");
 			return null;
 		}
+	}
+	
+	/**
+	 * Run abstract interpretation on the whole RCFG.
+	 * 
+	 */
+	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> run(final RootNode root,
+			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+			final IUltimateServiceProvider services, final boolean isSilent) throws Throwable {
+		if (initials == null) {
+			throw new IllegalArgumentException("No initial edges provided");
+		}
+		if (timer == null) {
+			throw new IllegalArgumentException("timer is null");
+		}
+
+		final BoogieSymbolTable symbolTable = getSymbolTable(root);
+		if (symbolTable == null) {
+			throw new IllegalArgumentException("Could not get BoogieSymbolTable");
+		}
+
+		final RootAnnot rootAnnot = root.getRootAnnot();
+		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
+		final Script script = rootAnnot.getScript();
+		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
+		final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider = new RcfgTransitionProvider();
+		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(),
+				transitionProvider);
+
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root,
+				() -> new RCFGLiteralCollector(root), symbolTable, services, rootAnnot);
+
+		return run(initials, timer, services, symbolTable, bpl2smt, script, boogieVarTable, loopDetector, domain,
+				transitionProvider, rootAnnot, isSilent);
 	}
 
 	private static AbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runSilentlyOnNWA(
 			final NWAPathProgramTransitionProvider transProvider, final CodeBlock initial, final RootNode root,
-			final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
+			final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 
 		final BoogieSymbolTable symbolTable = getSymbolTable(root);
 		if (symbolTable == null) {
@@ -215,41 +239,7 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	/**
-	 * Run abstract interpretation on the whole RCFG.
-	 * 
-	 */
-	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> runOnRCFG(final RootNode root,
-			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services, final boolean isSilent) throws Throwable {
-		if (initials == null) {
-			throw new IllegalArgumentException("No initial edges provided");
-		}
-		if (timer == null) {
-			throw new IllegalArgumentException("timer is null");
-		}
-
-		final BoogieSymbolTable symbolTable = getSymbolTable(root);
-		if (symbolTable == null) {
-			throw new IllegalArgumentException("Could not get BoogieSymbolTable");
-		}
-
-		final RootAnnot rootAnnot = root.getRootAnnot();
-		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
-		final Script script = rootAnnot.getScript();
-		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
-		final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider = new RcfgTransitionProvider();
-		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(),
-				transitionProvider);
-
-		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root,
-				() -> new RCFGLiteralCollector(root), symbolTable, services, rootAnnot);
-
-		return runOnRCFG(initials, timer, services, symbolTable, bpl2smt, script, boogieVarTable, loopDetector, domain,
-				transitionProvider, rootAnnot, isSilent);
-	}
-
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint> runOnRCFG(
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint> run(
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 			final IUltimateServiceProvider services, final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt,
 			final Script script, final Boogie2SmtSymbolTable boogieVarTable,
