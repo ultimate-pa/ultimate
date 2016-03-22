@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -65,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
 
@@ -477,15 +479,16 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
-		final Expression result;
+		Expression result;
+		boolean isNegated = false;
 		final String funcname;
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
 			funcname = "fp.eq";
 			break;
 		case IASTBinaryExpression.op_notequals:
-			//TODO: map notequals to SMT-LIB !fp.eq
 			funcname = "fp.eq";
+			isNegated = true;
 			break;			
 		case IASTBinaryExpression.op_greaterEqual:
 			funcname = "fp.geq";
@@ -502,9 +505,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		default:
 			throw new AssertionError("unknown operation " + nodeOperator);
 		}
+		
 		declareFloatingPointFunction(loc, funcname, funcname, true, false, new CPrimitive(PRIMITIVE.BOOL), null, (CPrimitive) type1, (CPrimitive) type2);
 		//TODO: evaluate possiblities for boogiefunctionnames
 		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
+		
+		if (isNegated) {
+			result = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
+		}
 		return result;
 	}
 
