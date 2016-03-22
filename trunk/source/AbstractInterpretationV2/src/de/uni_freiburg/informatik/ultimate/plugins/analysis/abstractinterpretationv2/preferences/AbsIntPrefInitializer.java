@@ -63,7 +63,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	        VPDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(), CompoundDomain.class.getSimpleName() };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
-	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
+	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
 	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN = "Settings for the abstract domain to use. Select the Abstract domain to use here.\n\nChange the settings for each abstract domain in the corresponding sub-page.";
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract domain";
 
@@ -82,7 +82,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		final ArrayList<AbstractUltimatePreferenceItem> rtr = new ArrayList<>();
 		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS_UNTIL_WIDENING, DEF_ITERATIONS_UNTIL_WIDENING,
 		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
-		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_STATES_UNTIL_MERGE, DEF_STATES_UNTIL_MERGE,
+		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_MAX_PARALLEL_STATES, DEF_STATES_UNTIL_MERGE,
 		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
 		        TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));

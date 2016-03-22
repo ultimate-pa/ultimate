@@ -78,7 +78,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 		mSymbolTable = symbolTable;
 
 		mParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
-		        .getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
+		        .getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 	}
 
 	@Override

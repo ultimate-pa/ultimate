@@ -10,7 +10,7 @@ procedure ULTIMATE.start(){
             break;
         }
 		call foo(i <= 1000000);
-		i := i +1;
+		i := i + 1;
     }
 	assert false;
 }
