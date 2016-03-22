@@ -525,7 +525,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			throw new AssertionError("Could not find last state in call stack");
 		}
 		// select the last state
-		assert orderedStates.size() >= mMaxUnwindings;
+		int idx = orderedStates.size() - 2;
+		if (idx < 0) {
+			// not enough states to widen
+			return null;
+		}
 		final STATE lastState = orderedStates.get(orderedStates.size() - 2);
 
 		if (mLogger.isDebugEnabled()) {
