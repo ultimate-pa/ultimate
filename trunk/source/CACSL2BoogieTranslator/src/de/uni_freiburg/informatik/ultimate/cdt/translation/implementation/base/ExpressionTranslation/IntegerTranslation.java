@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 
 public class IntegerTranslation extends AExpressionTranslation {
@@ -78,8 +79,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 	 */
 	private final boolean m_AssumeThatSignedValuesAreInRange;
 
-	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment, boolean assumeSignedInRange) {
-		super(m_TypeSizeConstants, typeHandler);
+	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment, boolean assumeSignedInRange, 
+			POINTER_INTEGER_CONVERSION pointerIntegerConversion) {
+		super(m_TypeSizeConstants, typeHandler, pointerIntegerConversion);
 		m_UnsignedTreatment = unsignedTreatment;
 		m_AssumeThatSignedValuesAreInRange = assumeSignedInRange;
 	}

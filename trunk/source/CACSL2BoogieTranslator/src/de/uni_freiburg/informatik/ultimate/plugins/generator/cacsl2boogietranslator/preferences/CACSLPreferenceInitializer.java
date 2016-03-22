@@ -74,6 +74,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						LABEL_MEMORY_MODEL,
 						MEMORY_MODEL.HoenickeLindenmann_Original,
 						PreferenceType.Combo, MEMORY_MODEL.values()),
+				new UltimatePreferenceItem<POINTER_INTEGER_CONVERSION>(
+						LABEL_POINTER_INTEGER_CONVERSION,
+						POINTER_INTEGER_CONVERSION.NonBijectiveMapping,
+						PreferenceType.Combo, POINTER_INTEGER_CONVERSION.values()),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_REPORT_UNSOUNDNESS_WARNING, false,
 						PreferenceType.Boolean),
@@ -167,6 +171,13 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		HoenickeLindenmann_4ByteResolution,
 		HoenickeLindenmann_8ByteResolution,
 	}
+	
+	public enum POINTER_INTEGER_CONVERSION {
+		Overapproximate,
+		NonBijectiveMapping,
+		NutzBijection,
+		IdentityAxiom,
+	}
 
 	public static final String LABEL_MODE = "Translation Mode:";
 	public static final String LABEL_MAINPROC = "Checked method. Library mode if empty.";
@@ -176,6 +187,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
 	public static final String LABEL_CHECK_MemoryLeakInMain = "Check for the main procedure if all allocated memory was freed";
 	public static final String LABEL_MEMORY_MODEL = "Memory model";
+	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
 	public static final String LABEL_CHECK_ARRAYACCESSOFFHEAP = "Check array bounds for arrays that are off heap";
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
 	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY = "If two pointers are subtracted or compared they have the same base address";

@@ -66,11 +66,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
 
 public class BitvectorTranslation extends AExpressionTranslation {
 
-	public BitvectorTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler) {
-		super(m_TypeSizeConstants, typeHandler);
+	public BitvectorTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, 
+			POINTER_INTEGER_CONVERSION pointerIntegerConversion) {
+		super(m_TypeSizeConstants, typeHandler, pointerIntegerConversion);
 	}
 
 	@Override

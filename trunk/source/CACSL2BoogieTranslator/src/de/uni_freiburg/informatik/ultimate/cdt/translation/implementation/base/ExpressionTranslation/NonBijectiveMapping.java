@@ -39,12 +39,18 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
-public class Projection implements IPointerIntegerConversion {
+/**
+ * Defines the following conversion between pointers and integers.
+ * An integer n is converted to the pointer with base address 0 and offset n.
+ * A pointer p is converted to the sum of the base address and the offset. 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ */
+public class NonBijectiveMapping implements IPointerIntegerConversion {
 	
 	protected final  AExpressionTranslation m_ExpressionTranslation;
 	private final ITypeHandler m_TypeHandler;
 	
-	public Projection(AExpressionTranslation expressionTranslation,
+	public NonBijectiveMapping(AExpressionTranslation expressionTranslation,
 			ITypeHandler typeHandler) {
 		m_ExpressionTranslation = expressionTranslation;
 		m_TypeHandler = typeHandler;

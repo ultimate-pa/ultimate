@@ -104,7 +104,6 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
-import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
@@ -210,6 +209,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
@@ -370,11 +370,13 @@ public class CHandler implements ICHandler {
 		
 		this.mGlobAcslExtractors = new ArrayList<>();
 		
+		POINTER_INTEGER_CONVERSION pointerIntegerConversion = main.mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION, 
+				CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION.class);
 		if (bitvectorTranslation) {
-			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler);
+			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler, pointerIntegerConversion);
 		} else {
 			boolean inRange = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
-			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment, inRange);
+			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment, inRange, pointerIntegerConversion);
 		}
 		this.mPostProcessor = new PostProcessor(main, mLogger, m_ExpressionTranslation);
 		this.mTypeSizeComputer = new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, m_ExpressionTranslation, main.getTypeSizes());

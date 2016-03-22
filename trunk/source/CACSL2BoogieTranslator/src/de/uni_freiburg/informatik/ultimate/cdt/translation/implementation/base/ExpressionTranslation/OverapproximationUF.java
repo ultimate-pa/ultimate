@@ -51,6 +51,14 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	private final ITypeHandler m_TypeHandler;
 	
 
+	/**
+	 * Defines the following conversion between pointers and integers.
+	 * An integer n is converted to the pointer with base address 0 and offset n.
+	 * If a pointer is converted to an integer type, we use an uninterpreted
+	 * function and we add the overapproximation flag to the resulting expression. 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
+
 	public OverapproximationUF(AExpressionTranslation expressionTranslation, FunctionDeclarations functionDeclarations,
 			ITypeHandler typeHandler) {
 		super();

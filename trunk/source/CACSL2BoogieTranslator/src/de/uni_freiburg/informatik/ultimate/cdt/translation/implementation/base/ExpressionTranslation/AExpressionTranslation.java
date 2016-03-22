@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
 
 public abstract class AExpressionTranslation {
 	
@@ -79,13 +80,27 @@ public abstract class AExpressionTranslation {
 	protected final IPointerIntegerConversion m_PointerIntegerConversion;
 
 
-	public AExpressionTranslation(TypeSizes typeSizes, ITypeHandler typeHandler) {
+	public AExpressionTranslation(TypeSizes typeSizes, ITypeHandler typeHandler, 
+			POINTER_INTEGER_CONVERSION pointerIntegerConversion) {
 		super();
 		this.m_TypeSizes = typeSizes;
 		this.m_FunctionDeclarations = new FunctionDeclarations(typeHandler, m_TypeSizes);
 		this.m_TypeHandler = typeHandler;
-//		this.m_PointerIntegerConversion = new OverapproximationUF(this, m_FunctionDeclarations, m_TypeHandler);
-		this.m_PointerIntegerConversion = new Projection(this, m_TypeHandler);
+		switch (pointerIntegerConversion) {
+		case IdentityAxiom:
+			throw new UnsupportedOperationException("not yet implemented " + POINTER_INTEGER_CONVERSION.IdentityAxiom);
+		case NonBijectiveMapping:
+			this.m_PointerIntegerConversion = new NonBijectiveMapping(this, m_TypeHandler);
+			break;
+		case NutzBijection:
+			throw new UnsupportedOperationException("not yet implemented " + POINTER_INTEGER_CONVERSION.NutzBijection);
+		case Overapproximate:
+			this.m_PointerIntegerConversion = new OverapproximationUF(this, m_FunctionDeclarations, m_TypeHandler);
+			break;
+		default:
+			throw new UnsupportedOperationException("unknown value " + pointerIntegerConversion);
+		
+		}
 	}
 
 	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
