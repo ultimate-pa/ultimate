@@ -520,8 +520,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			result = new HashMap<>();
 		}
 
-		// TODO Is the processing necessary or can we get a better data
-		// structure in the constructor?
 		for (Set<STATE> possibleEquivalentClass : possibleEquivalentClasses) {
 			for (STATE state : possibleEquivalentClass) {
 				result.put(state, possibleEquivalentClass);
@@ -1078,8 +1076,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	@Override
 	protected void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
-		// TODO Find out what vertices are really needed for the working list
-
 		// Small note for debugging: If simulation calculates a wrong result
 		// this, in most cases, is because there are important vertices missing
 		// in the working list. Cross check by adding 'true' to the if-clause

@@ -54,7 +54,7 @@ import java.util.Set;
  * @param <STATE>
  *            State class of nwa automaton
  */
-public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> {
+public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> {
 
 	/**
 	 * The state <tt>hier</tt> such that the vertex represents a move with the
@@ -65,11 +65,15 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	private final STATE m_HierPred;
 
 	/**
+	 * The summarize edge this vertex belongs to if it is generated as a shadow
+	 * vertex, <tt>null</tt> if not set.
+	 */
+	private final SummarizeEdge<LETTER, STATE> m_SummarizeEdge;
+	/**
 	 * The type of the transition, i.e. if it stands for an internal, call or
 	 * return transition.
 	 */
 	private final TransitionType m_TransitionType;
-
 	/**
 	 * Internal set of all down state configurations of the vertex.
 	 */
@@ -100,7 +104,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 */
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final LETTER a, final TransitionType transitionType) {
-		this(priority, b, q0, q1, a, transitionType, null);
+		this(priority, b, q0, q1, a, transitionType, null, null);
 	}
 
 	/**
@@ -136,10 +140,88 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	 */
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final LETTER a, final TransitionType transitionType, final STATE hierPred) {
+		this(priority, b, q0, q1, a, transitionType, hierPred, null);
+	}
+
+	/**
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
+	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
+	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
+	 * q1 and must try to also use an a-transition. The bit encodes extra
+	 * information if needed.
+	 * 
+	 * The double decker information first is blank after construction. If the
+	 * used transition is of type {@link TransitionType#SUMMARIZE_ENTRY} or
+	 * {@link TransitionType#SUMMARIZE_EXIT} one can set <tt>summarizeEdge</tt>
+	 * to distinguish between similar summarize edges.
+	 * 
+	 * @param priority
+	 *            The priority of the vertex
+	 * @param b
+	 *            The extra bit of the vertex
+	 * @param q0
+	 *            The state spoiler is at, interpreted as up state
+	 * @param q1
+	 *            The state duplicator is at, interpreted as up state
+	 * @param a
+	 *            The letter spoiler used before
+	 * @param transitionType
+	 *            The type of the transition, i.e. if it stands for an internal,
+	 *            call or return transition
+	 * @param summarizeEdge
+	 *            The summarize edge this vertex belongs to if it is generated
+	 *            as a shadow vertex.
+	 */
+	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
+			final LETTER a, final TransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
+		this(priority, b, q0, q1, a, transitionType, null, summarizeEdge);
+	}
+
+	/**
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
+	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
+	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
+	 * q1 and must try to also use an a-transition. The bit encodes extra
+	 * information if needed.
+	 * 
+	 * The double decker information first is blank after construction. If the
+	 * used transition is of type {@link TransitionType#RETURN} one can set
+	 * <tt>hierPred</tt> to distinguish between similar return transitions. If
+	 * the used transition is of type {@link TransitionType#SUMMARIZE_ENTRY} or
+	 * {@link TransitionType#SUMMARIZE_EXIT} one can set <tt>summarizeEdge</tt>
+	 * to distinguish between similar summarize edges.
+	 * 
+	 * @param priority
+	 *            The priority of the vertex
+	 * @param b
+	 *            The extra bit of the vertex
+	 * @param q0
+	 *            The state spoiler is at, interpreted as up state
+	 * @param q1
+	 *            The state duplicator is at, interpreted as up state
+	 * @param a
+	 *            The letter spoiler used before
+	 * @param transitionType
+	 *            The type of the transition, i.e. if it stands for an internal,
+	 *            call or return transition
+	 * @param hierPred
+	 *            The state <tt>hier</tt> such that the vertex represents a move
+	 *            with the transition <tt>(pred(q), hier, a, q0)</tt> or
+	 *            <tt>null</tt> if not set. This field should only be used if
+	 *            the type of the used transition is
+	 *            {@link TransitionType#RETURN}.
+	 * @param summarizeEdge
+	 *            The summarize edge this vertex belongs to if it is generated
+	 *            as a shadow vertex.
+	 */
+	private DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
+			final LETTER a, final TransitionType transitionType, final STATE hierPred,
+			final SummarizeEdge<LETTER, STATE> summarizeEdge) {
 		super(priority, b, q0, q1, a);
 		m_VertexDownStates = new HashSet<>();
 		m_TransitionType = transitionType;
 		m_HierPred = hierPred;
+		m_SummarizeEdge = summarizeEdge;
 	}
 
 	/**
@@ -178,6 +260,13 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 		} else if (!m_HierPred.equals(other.m_HierPred)) {
 			return false;
 		}
+		if (m_SummarizeEdge == null) {
+			if (other.m_SummarizeEdge != null) {
+				return false;
+			}
+		} else if (!m_SummarizeEdge.equals(other.m_SummarizeEdge)) {
+			return false;
+		}
 		if (m_TransitionType != other.m_TransitionType) {
 			return false;
 		}
@@ -207,7 +296,14 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	@Override
 	public String getName() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(getQ0() + "," + getQ1() + "," + getLetter());
+		sb.append(getQ0() + "," + getQ1() + ",");
+		if (m_TransitionType.equals(TransitionType.SUMMARIZE_ENTRY)) {
+			sb.append("SEntry");
+		} else if (m_TransitionType.equals(TransitionType.SUMMARIZE_EXIT)) {
+			sb.append("SExit");
+		} else {
+			sb.append(getLetter());
+		}
 		if (m_TransitionType.equals(TransitionType.RETURN) && m_HierPred != null) {
 			sb.append("/" + m_HierPred);
 		}
@@ -222,6 +318,19 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 		}
 		sb.append("}");
 		return sb.toString();
+	}
+
+	/**
+	 * Gets the summarize edge this vertex belongs to or <tt>null</tt> if not
+	 * set. This field should only be used if the type of the used transition is
+	 * {@link TransitionType#SUMMARIZE_ENTRY} or
+	 * {@link TransitionType#SUMMARIZE_EXIT}.
+	 * 
+	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
+	 *         set.
+	 */
+	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
+		return m_SummarizeEdge;
 	}
 
 	/**
@@ -253,6 +362,7 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + ((m_HierPred == null) ? 0 : m_HierPred.hashCode());
+		result = prime * result + ((m_SummarizeEdge == null) ? 0 : m_SummarizeEdge.hashCode());
 		result = prime * result + ((m_TransitionType == null) ? 0 : m_TransitionType.hashCode());
 		return result;
 	}
@@ -290,7 +400,14 @@ public class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVerte
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
-		sb.append(getQ1()).append(",").append(getLetter());
+		sb.append(getQ1()).append(",");
+		if (m_TransitionType.equals(TransitionType.SUMMARIZE_ENTRY)) {
+			sb.append("SEntry");
+		} else if (m_TransitionType.equals(TransitionType.SUMMARIZE_EXIT)) {
+			sb.append("SExit");
+		} else {
+			sb.append(getLetter());
+		}
 		if (m_TransitionType.equals(TransitionType.RETURN) && m_HierPred != null) {
 			sb.append("/" + m_HierPred);
 		}

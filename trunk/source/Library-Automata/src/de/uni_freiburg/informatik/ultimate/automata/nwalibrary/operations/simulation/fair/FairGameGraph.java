@@ -246,9 +246,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		int resultAmountOfTransitions = 0;
 
 		// Add transitions
-		// for (STATE inputSrc : uf.getAllRepresentatives()) {
 		for (STATE inputSrc : m_Buechi.getStates()) {
-			// TODO Is it correct to only add transitions of representatives?
 			STATE resultSrc;
 			if (areThereMergeableStates) {
 				// Only access field if it was initialized
@@ -364,8 +362,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Generate edges
 		for (STATE edgeDest : buechi.getStates()) {
-			// TODO Can we generate edges at the same time
-			// we generate states?
 			for (IncomingInternalTransition<LETTER, STATE> trans : buechi.internalPredecessors(edgeDest)) {
 				m_BuechiAmountOfTransitions++;
 
@@ -386,11 +382,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 						addEdge(src, dest);
 						m_GraphAmountOfEdges++;
 					}
-					// TODO Can it link trivial edges like duplicator -> spoiler
-					// where origin has no predecessors? If optimizing this be
-					// careful with adding buechi transitions, this vertex than
-					// may be generated and the left edge must also be
-					// generated.
 
 					// If operation was canceled, for example from the
 					// Ultimate framework

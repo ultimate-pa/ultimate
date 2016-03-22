@@ -44,5 +44,15 @@ public enum TransitionType {
 	/**
 	 * Type for return transitions.
 	 */
-	RETURN
+	RETURN,
+	/**
+	 * Type for auxiliary transitions that represent the entry of a summarize
+	 * edge.
+	 */
+	SUMMARIZE_ENTRY,
+	/**
+	 * Type for auxiliary transitions that represent the exit of a summarize
+	 * edge.
+	 */
+	SUMMARIZE_EXIT
 }
