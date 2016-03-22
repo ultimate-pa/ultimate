@@ -63,6 +63,7 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Nolbe+AI_OCT.epf"),
 			
 			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Mathsat.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/CraigInterpolation-Z3.epf"),
 	};
 
 
