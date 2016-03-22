@@ -309,7 +309,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		// check if we should widen at this location before adding new successors
 		// we should widen if the current item is a transition to a loop head
-		// or it is a transition that enters a scope
+		// or if a successor transition enters a scope
 		final LOCATION target = mTransitionProvider.getTarget(current);
 		final Pair<Integer, STATE> loopPair = currentItem.getLoopPair(target);
 		if (loopPair != null && loopPair.getFirst() > mMaxUnwindings) {
@@ -369,7 +369,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 						final Collection<ACTION> summarySuccessorSuccessors = mTransitionProvider
 								.getSuccessors(summarySuccessor.getSecond(), currentItem.getCurrentScope());
 						for (final ACTION sss : summarySuccessorSuccessors) {
-							addSuccessor(worklist, currentItem, summarySuccessor.getFirst(), sss);
+							if (!worklist.stream().anyMatch(
+									w -> w.getAction() == sss && w.getPreState() == summarySuccessor.getFirst())) {
+								addSuccessor(worklist, currentItem, summarySuccessor.getFirst(), sss);
+							}
 						}
 					}
 				} else {

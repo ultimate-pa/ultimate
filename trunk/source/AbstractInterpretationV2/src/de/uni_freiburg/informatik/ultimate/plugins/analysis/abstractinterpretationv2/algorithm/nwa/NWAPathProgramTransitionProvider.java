@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  * 
@@ -70,8 +71,8 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider
 
 	@Override
 	public Collection<CodeBlock> getSuccessorActions(ProgramPoint loc) {
-		return loc.getOutgoingEdges().stream().filter(a -> mLetter2Index.containsKey(a)).map(a -> (CodeBlock) a)
-				.collect(Collectors.toList());
+		return loc.getOutgoingEdges().stream().filter(a -> mLetter2Index.containsKey(a) || a instanceof Summary)
+				.map(a -> (CodeBlock) a).collect(Collectors.toList());
 	}
 
 	@Override
