@@ -494,6 +494,16 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> stackAtCallLocation = currentItem
 				.getStack();
 
+		// count all stack items that are there more than once and the current item
+		Optional<Long> count = stackAtCallLocation.stream().map(a -> a.getFirst()).filter(a -> a != null)
+				.collect(Collectors.groupingBy(a -> a, Collectors.counting())).entrySet().stream()
+				.filter(e -> e.getValue() > 1 || e.getKey() == currentAction).map(e -> e.getValue())
+				.reduce((a, b) -> a + b);
+		if (!count.isPresent() || count.get() <= mMaxUnwindings) {
+			// if the stack is too small, we do not need to widen
+			return null;
+		}
+
 		// get all stack items in the correct order that contain only calls to the current scope
 		final List<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> relevantStackItems = stackAtCallLocation
 				.stream().sequential().filter(a -> a.getFirst() == currentAction || a.getFirst() == null)
@@ -503,10 +513,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			return null;
 		}
 
-		// if the stack is too small, we do not need to widen
-		if (relevantStackItems.size() <= mMaxUnwindings) {
-			return null;
-		}
+		// // if the stack is too small, we do not need to widen
+		// if (relevantStackItems.size() <= mMaxUnwindings) {
+		// return null;
+		// }
 
 		final List<STATE> orderedStates = relevantStackItems.stream().sequential()
 				.map(a -> a.getSecond().getAbstractPostStates(currentAction)).flatMap(a -> a.stream().sequential())
