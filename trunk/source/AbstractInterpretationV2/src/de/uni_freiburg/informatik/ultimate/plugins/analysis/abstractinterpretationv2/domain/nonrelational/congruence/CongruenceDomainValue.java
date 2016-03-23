@@ -222,8 +222,8 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return script.term("=", script.term("mod", var, script.numeral(mValue)), script.numeral(BigInteger.ZERO));
 	}
 	
-	/*
-	 * Check if two values are equal
+	/**
+	 * Returns <code>true</code> if and only if <code>this</code> is equal to <code>other</code>.
 	 */
 	protected boolean isEqualTo(CongruenceDomainValue other) {
 		if (other == null) {
@@ -235,7 +235,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return mValue.equals(other.mValue) && mIsConstant == other.mIsConstant;
 	}
 	
-	/*
+	/**
 	 * Return a copy of the value
 	 */
 	protected CongruenceDomainValue copy() {
@@ -245,7 +245,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return new CongruenceDomainValue(mValue, mIsConstant);
 	}
 
-	/*
+	/**
 	 * Return the the new value for x for a "x % this == rest" - expression (soft-merge)
 	 */
 	protected CongruenceDomainValue modEquals(CongruenceDomainValue rest) {
@@ -265,8 +265,23 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 				return new CongruenceDomainValue(mValue);
 			}			
 		}
-		// Otherwise return the non-constant value of the merge
-		CongruenceDomainValue val = merge(rest);
-		return new CongruenceDomainValue(val.mValue);
+		// Otherwise return the GCD (=non-constant merge)
+		return new CongruenceDomainValue(mValue.gcd(rest.mValue));
+	}
+	
+	/**
+	 * Returns <code>true</code> if and only if <code>this</code> is a strict subset of <code>other</code>.
+	 */
+	public boolean isSubsetOf(CongruenceDomainValue other) {
+		if (other.mIsBottom) {
+			return false;
+		}
+		if (mIsBottom) {
+			return true;
+		}
+		if (other.mIsConstant) {
+			return false;
+		}
+		return mValue.mod(other.mValue).signum() == 0;
 	}
 }

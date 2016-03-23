@@ -770,6 +770,53 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	@Override
 	public SubsetResult isSubsetOf(final CongruenceDomainState other) {
 		assert hasSameVariables(other);
-		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
+		
+		if (mValuesMap.isEmpty() && mBooleanValuesMap.isEmpty()) {
+			return SubsetResult.EQUAL;
+		}
+		
+		SubsetResult res = SubsetResult.NONE;
+		
+		for (final Entry<String, CongruenceDomainValue> entry : mValuesMap.entrySet()) {
+			final CongruenceDomainValue thisValue = entry.getValue();
+			final CongruenceDomainValue otherValue = other.mValuesMap.get(entry.getKey());
+			if (thisValue.isEqualTo(otherValue)) {
+				if (res == SubsetResult.NONE) {
+					res = SubsetResult.EQUAL;
+				} else if (res == SubsetResult.STRICT) {
+					res = SubsetResult.NON_STRICT;
+				}
+			} else if (thisValue.isSubsetOf(otherValue)) {
+				if (res == SubsetResult.NONE) {
+					res = SubsetResult.STRICT;
+				} else if (res == SubsetResult.EQUAL) {
+					res = SubsetResult.NON_STRICT;
+				}
+			} else {
+				return SubsetResult.NONE;
+			}
+		}
+
+		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
+			final BooleanValue thisValue = entry.getValue();
+			final BooleanValue otherValue = other.mBooleanValuesMap.get(entry.getKey());
+			if (thisValue.isEqualTo(otherValue)) {
+				if (res == SubsetResult.NONE) {
+					res = SubsetResult.EQUAL;
+				} else if (res == SubsetResult.STRICT) {
+					res = SubsetResult.NON_STRICT;
+				}
+			} else if (thisValue.isSubsetOf(otherValue)) {
+				if (res == SubsetResult.NONE) {
+					res = SubsetResult.STRICT;
+				} else if (res == SubsetResult.EQUAL) {
+					res = SubsetResult.NON_STRICT;
+				}
+			} else {
+				return SubsetResult.NONE;
+			}
+		}
+
+		return res;
 	}
 }
