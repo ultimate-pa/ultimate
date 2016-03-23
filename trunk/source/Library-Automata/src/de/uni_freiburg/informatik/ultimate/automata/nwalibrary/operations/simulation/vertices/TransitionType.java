@@ -46,6 +46,11 @@ public enum TransitionType {
 	 */
 	RETURN,
 	/**
+	 * Type for auxiliary transitions that represent the a sink that is winning
+	 * for duplicator.
+	 */
+	SINK,
+	/**
 	 * Type for auxiliary transitions that represent the entry of a summarize
 	 * edge.
 	 */

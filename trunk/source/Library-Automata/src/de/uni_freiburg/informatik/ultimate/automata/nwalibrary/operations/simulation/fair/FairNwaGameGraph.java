@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.VertexDownState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.DuplicatorDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.DuplicatorVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.DuplicatorWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.SummarizeEdge;
@@ -52,8 +53,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap7;
+import de.uni_freiburg.informatik.ultimate.util.relation.Hep;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.relation.Quin;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
 /**
@@ -83,30 +85,37 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * Data structure that allows a fast access to {@link DuplicatorVertex}
 	 * objects by using their representation:<br/>
 	 * <b>(State of spoiler or q0, Letter spoiler used before, State of
-	 * duplicator or q1, bit, type of transition, hierPred)</b>.
+	 * duplicator or q1, bit, type of transition, summarize edge, sink)</b>.
 	 */
-	private final NestedMap7<STATE, STATE, LETTER, Boolean, TransitionType, STATE, SummarizeEdge<LETTER, STATE>, DuplicatorVertex<LETTER, STATE>> m_BuechiStatesToGraphDuplicatorVertex;
+	private final HashMap<Hep<STATE, STATE, LETTER, Boolean, TransitionType, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, DuplicatorVertex<LETTER, STATE>> m_BuechiStatesToGraphDuplicatorVertex;
 	/**
 	 * Data structure that allows a fast access to {@link SpoilerVertex} objects
 	 * by using their representation:<br/>
 	 * <b>(State of spoiler or q0, State of duplicator or q1, bit)</b>.
 	 */
-	private final NestedMap4<STATE, STATE, Boolean, SummarizeEdge<LETTER, STATE>, SpoilerVertex<LETTER, STATE>> m_BuechiStatesToGraphSpoilerVertex;
+	private final HashMap<Quin<STATE, STATE, Boolean, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, SpoilerVertex<LETTER, STATE>> m_BuechiStatesToGraphSpoilerVertex;
 	/**
 	 * Data structure of all duplicator vertices that use an outgoing return
 	 * transition. They are used for summarize edge generation.
 	 */
 	private final HashSet<DuplicatorDoubleDeckerVertex<LETTER, STATE>> m_DuplicatorReturningVertices;
 	/**
+	 * Map of all duplicator winning sinks of the graph. Provides a fast access
+	 * via the sink entry.
+	 */
+	private final HashMap<SpoilerDoubleDeckerVertex<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>> m_EntryToSink;
+	/**
 	 * The underlying nwa automaton, as double decker automaton, from which the
 	 * game graph gets generated.
 	 */
 	private final IDoubleDeckerAutomaton<LETTER, STATE> m_Nwa;
 	/**
-	 * List of all summarize edges of the graph.
+	 * Map of all summarize edges of the graph. Provides a fast access via
+	 * source and destination of the edge.
 	 */
-	private final LinkedList<SummarizeEdge<LETTER, STATE>> m_SummarizeEdges;
+	private final HashMap<Pair<SpoilerDoubleDeckerVertex<LETTER, STATE>, SpoilerDoubleDeckerVertex<LETTER, STATE>>, SummarizeEdge<LETTER, STATE>> m_SrcDestToSummarizeEdges;
 
+	@SuppressWarnings("unchecked")
 	public FairNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> nwa,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
@@ -116,11 +125,16 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
-		m_Nwa = new RemoveUnreachable<LETTER, STATE>(services, nwa).getResult();
-		m_BuechiStatesToGraphDuplicatorVertex = new NestedMap7<>();
-		m_BuechiStatesToGraphSpoilerVertex = new NestedMap4<>();
+		if (nwa instanceof IDoubleDeckerAutomaton<?, ?>) {
+			m_Nwa = (IDoubleDeckerAutomaton<LETTER, STATE>) nwa;
+		} else {
+			m_Nwa = new RemoveUnreachable<LETTER, STATE>(services, nwa).getResult();
+		}
+		m_BuechiStatesToGraphDuplicatorVertex = new HashMap<>();
+		m_BuechiStatesToGraphSpoilerVertex = new HashMap<>();
 		m_DuplicatorReturningVertices = new HashSet<>();
-		m_SummarizeEdges = new LinkedList<>();
+		m_SrcDestToSummarizeEdges = new HashMap<>();
+		m_EntryToSink = new HashMap<>();
 		m_Bottom = m_Nwa.getEmptyStackState();
 	}
 
@@ -143,6 +157,10 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		generateSummarizeEdges();
 		// TODO Calculate priorities of summarize edges
 
+		m_DuplicatorReturningVertices.clear();
+		m_EntryToSink.clear();
+		m_SrcDestToSummarizeEdges.clear();
+
 		setGraphBuildTime(System.currentTimeMillis() - graphBuildTimeStart);
 	}
 
@@ -159,6 +177,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			final boolean bit) {
 		throw new UnsupportedOperationException(
 				"Use getDuplicatorVertex(q0, q1, a, bit, transType, hierPred) instead.");
+		// TODO Can later use getDuplicatorVertex(...., null, null) but for now
+		// it should throw an Exception for problem detection.
 	}
 
 	/**
@@ -175,21 +195,22 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 *            Extra bit of the vertex
 	 * @param transType
 	 *            Type of the transition
-	 * @param hierPred
-	 *            hierPred if the transition is of type
-	 *            {@link TransitionType#RETURN} or <tt>null</tt> instead.
 	 * @param summarizeEdge
 	 *            Summarize edge the vertex belongs to if the transition is of
 	 *            type {@link TransitionType#SUMMARIZE_ENTRY} or
 	 *            {@link TransitionType#SUMMARIZE_EXIT}. Use <tt>null</tt> if
 	 *            that is not the case.
+	 * @param sink
+	 *            Sink the vertex belongs to if the transition is of type
+	 *            {@link TransitionType#SINK}. Use <tt>null</tt> if that is not
+	 *            the case.
 	 * @return The duplicator vertex associated to the given signature. See
 	 *         {@link #getDuplicatorVertex(Object, Object, Object, boolean)}.
 	 */
 	public DuplicatorVertex<LETTER, STATE> getDuplicatorVertex(final STATE q0, final STATE q1, final LETTER a,
-			final boolean bit, final TransitionType transType, final STATE hierPred,
-			final SummarizeEdge<LETTER, STATE> summarizeEdge) {
-		return m_BuechiStatesToGraphDuplicatorVertex.get(q0, q1, a, bit, transType, hierPred, summarizeEdge);
+			final boolean bit, final TransitionType transType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
+			final DuplicatorWinningSink<LETTER, STATE> sink) {
+		return m_BuechiStatesToGraphDuplicatorVertex.get(new Hep<>(q0, q1, a, bit, transType, summarizeEdge, sink));
 	}
 
 	/**
@@ -202,6 +223,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {
 		throw new UnsupportedOperationException("Use getSpoilerVertex(q0, q1, a, bit, summarizeEdge) instead.");
+		// TODO Can later use getSpoilerVertex(...., null, null) but for now
+		// it should throw an Exception for problem detection.
 	}
 
 	/**
@@ -219,12 +242,15 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * @param summarizeEdge
 	 *            Summarize edge the vertex belongs to. Use <tt>null</tt> if the
 	 *            vertex does not belong to one.
+	 * @param sink
+	 *            Sink the vertex belongs to. Use <tt>null</tt> if the vertex
+	 *            does not belong to one.
 	 * @return The spoiler vertex associated to the given signature. See
 	 *         {@link #getSpoilerVertex(Object, Object, boolean)}.
 	 */
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit,
-			final SummarizeEdge<LETTER, STATE> summarizeEdge) {
-		return m_BuechiStatesToGraphSpoilerVertex.get(q0, q1, bit, summarizeEdge);
+			final SummarizeEdge<LETTER, STATE> summarizeEdge, final DuplicatorWinningSink<LETTER, STATE> sink) {
+		return m_BuechiStatesToGraphSpoilerVertex.get(new Quin<>(q0, q1, bit, summarizeEdge, sink));
 	}
 
 	/*
@@ -237,6 +263,38 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	@Override
 	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
 		// Do noting to accept nwa automata
+	}
+
+	/**
+	 * Creates and adds a duplicator winning sink to the given sink entry. To
+	 * form a valid edge it creates a pair of two states after the entry. In
+	 * detail this will be: <b>sinkEntry -> DuplicatorSink -> SpoilerSink ->
+	 * DuplicatorSink -> ...</b>. <br/>
+	 * <br/>
+	 * The SpoilerSink will have a priority of 0 to form a winning vertex for
+	 * Duplicator.
+	 * 
+	 * @param sinkEntry
+	 *            Entry vertex of the sink
+	 */
+	private void addDuplicatorWinningSink(final SpoilerDoubleDeckerVertex<LETTER, STATE> sinkEntry) {
+		// Only add if not already existent
+		if (m_EntryToSink.get(sinkEntry) == null) {
+			DuplicatorWinningSink<LETTER, STATE> sink = new DuplicatorWinningSink<>(sinkEntry);
+			m_EntryToSink.put(sinkEntry, sink);
+
+			DuplicatorVertex<LETTER, STATE> duplicatorSink = sink.getDuplicatorSink();
+			SpoilerVertex<LETTER, STATE> spoilerSink = sink.getSpoilerSink();
+
+			// Add shadow vertices
+			addDuplicatorVertex(duplicatorSink);
+			addSpoilerVertex(spoilerSink);
+
+			// Add edges connecting the sink
+			addEdge(sinkEntry, duplicatorSink);
+			addEdge(duplicatorSink, spoilerSink);
+			addEdge(spoilerSink, duplicatorSink);
+		}
 	}
 
 	/**
@@ -253,23 +311,28 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * @param dest
 	 *            Destination of the summarize edge
 	 */
-	private void addSummarizeEdge(final SummarizeEdge<LETTER, STATE> summarizeEdge) {
-		m_SummarizeEdges.add(summarizeEdge);
+	private void addSummarizeEdge(final SpoilerDoubleDeckerVertex<LETTER, STATE> src,
+			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest) {
+		// Only add if not already existent
+		if (m_SrcDestToSummarizeEdges.get(new Pair<>(src, dest)) == null) {
+			SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, dest);
+			m_SrcDestToSummarizeEdges.put(new Pair<>(src, dest), summarizeEdge);
 
-		DuplicatorVertex<LETTER, STATE> entryShadowVertex = summarizeEdge.getEntryShadowVertex();
-		SpoilerVertex<LETTER, STATE> middleShadowVertex = summarizeEdge.getMiddleShadowVertex();
-		DuplicatorVertex<LETTER, STATE> exitShadowVertex = summarizeEdge.getExitShadowVertex();
+			DuplicatorVertex<LETTER, STATE> entryShadowVertex = summarizeEdge.getEntryShadowVertex();
+			SpoilerVertex<LETTER, STATE> middleShadowVertex = summarizeEdge.getMiddleShadowVertex();
+			DuplicatorVertex<LETTER, STATE> exitShadowVertex = summarizeEdge.getExitShadowVertex();
 
-		// Add shadow vertices
-		addDuplicatorVertex(entryShadowVertex);
-		addSpoilerVertex(middleShadowVertex);
-		addDuplicatorVertex(exitShadowVertex);
+			// Add shadow vertices
+			addDuplicatorVertex(entryShadowVertex);
+			addSpoilerVertex(middleShadowVertex);
+			addDuplicatorVertex(exitShadowVertex);
 
-		// Add edges connecting source and destination with shadow vertices
-		addEdge(summarizeEdge.getSource(), entryShadowVertex);
-		addEdge(entryShadowVertex, middleShadowVertex);
-		addEdge(middleShadowVertex, exitShadowVertex);
-		addEdge(exitShadowVertex, summarizeEdge.getDestination());
+			// Add edges connecting source and destination with shadow vertices
+			addEdge(summarizeEdge.getSource(), entryShadowVertex);
+			addEdge(entryShadowVertex, middleShadowVertex);
+			addEdge(middleShadowVertex, exitShadowVertex);
+			addEdge(exitShadowVertex, summarizeEdge.getDestination());
+		}
 	}
 
 	/**
@@ -343,14 +406,14 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
 					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), false,
 							TransitionType.INTERNAL, null, null);
-					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false, null);
+					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
 						increaseGraphAmountOfEdges();
 					}
 
 					// Spoiler edges q1 -a-> q2 : (q1, x) -> (q2, x, a)
-					src = getSpoilerVertex(trans.getPred(), fixState, false, null);
+					src = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
 					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false, TransitionType.INTERNAL,
 							null, null);
 					if (src != null && dest != null) {
@@ -378,14 +441,14 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 					// Duplicator edges q1 -c-> q2 : (x, q1, c) -> (x, q2)
 					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), false,
 							TransitionType.CALL, null, null);
-					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false, null);
+					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
 						increaseGraphAmountOfEdges();
 					}
 
 					// Spoiler edges q1 -c-> q2 : (q1, x) -> (q2, x, c)
-					src = getSpoilerVertex(trans.getPred(), fixState, false, null);
+					src = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
 					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false, TransitionType.CALL, null,
 							null);
 					if (src != null && dest != null) {
@@ -414,8 +477,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 				for (STATE fixState : m_Nwa.getStates()) {
 					// Duplicator edges q1 -r/q0-> q2 : (x, q1, r/q0) -> (x, q2)
 					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getLinPred(), trans.getLetter(),
-							false, TransitionType.RETURN, trans.getHierPred(), null);
-					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false, null);
+							false, TransitionType.RETURN, null, null);
+					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					// Ensure that the edge represents a possible move.
 					// This is when the hierPred state is a down state of q1
 					boolean isEdgePossible = hasDownState(trans.getLinPred(), trans.getHierPred());
@@ -431,9 +494,9 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 					}
 
 					// Spoiler edges q1 -r/q0-> q2 : (q1, x) -> (q2, x, r/q0)
-					src = getSpoilerVertex(trans.getLinPred(), fixState, false, null);
+					src = getSpoilerVertex(trans.getLinPred(), fixState, false, null, null);
 					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false, TransitionType.RETURN,
-							trans.getHierPred(), null);
+							null, null);
 					// Ensure that the edge represents a possible move.
 					// This is when the hierPred state is a down state of q1
 					isEdgePossible = hasDownState(trans.getLinPred(), trans.getHierPred());
@@ -466,27 +529,35 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 *             framework.
 	 */
 	private void generateSummarizeEdges() throws OperationCanceledException {
+		// Return edges (q', q1 [q5, q6]) -> (q0, q1, r/q2) -> (q0, q3) lead
+		// to creation of summarize edge (q5, q6) -> (q0, q3)
 		for (DuplicatorDoubleDeckerVertex<LETTER, STATE> returnInvoker : m_DuplicatorReturningVertices) {
-			// Edge (q0, q1, r/q2) -> (q0, q3 [q5, q6]) leads to creation of
-			// summarize edge (q5, q6) -> (q0, q3 [q5, q6])
 			for (Vertex<LETTER, STATE> summarizeDest : getSuccessors(returnInvoker)) {
-				if (summarizeDest instanceof SpoilerDoubleDeckerVertex<?, ?>) {
-					SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeDestAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeDest;
-					for (VertexDownState<STATE> vertexDownState : summarizeDestAsDD.getVertexDownStates()) {
-						// If vertex down state [q, q'] does not contain bottom
-						// then use the corresponding vertex as source of the
-						// summarize edge
+				if (!(summarizeDest instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
+					continue;
+				}
+				SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeDestAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeDest;
+				for (Vertex<LETTER, STATE> preInvoker : getPredecessors(returnInvoker)) {
+					if (!(preInvoker instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
+						continue;
+					}
+					SpoilerDoubleDeckerVertex<LETTER, STATE> preInvokerAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) preInvoker;
+					for (VertexDownState<STATE> vertexDownState : preInvokerAsDD.getVertexDownStates()) {
+						// If vertex down state [q, q'] does not contain
+						// bottom then use the corresponding vertex as source
+						// of the summarize edge
 						STATE leftDownState = vertexDownState.getLeftDownState();
 						STATE rightDownState = vertexDownState.getRightDownState();
-						if (!leftDownState.equals(m_Bottom) && !rightDownState.equals(m_Bottom)) {
-							SpoilerVertex<LETTER, STATE> summarizeSrc = getSpoilerVertex(leftDownState, leftDownState,
-									false, null);
-							if (summarizeSrc != null && summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>) {
-								SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
-								addSummarizeEdge(new SummarizeEdge<LETTER, STATE>(summarizeSrcAsDD, summarizeDestAsDD,
-										m_Bottom));
-							}
+						if (leftDownState.equals(m_Bottom) || rightDownState.equals(m_Bottom)) {
+							continue;
 						}
+						SpoilerVertex<LETTER, STATE> summarizeSrc = getSpoilerVertex(leftDownState, rightDownState,
+								false, null, null);
+						if (summarizeSrc == null || !(summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
+							continue;
+						}
+						SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
+						addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD);
 					}
 				}
 
@@ -499,8 +570,25 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			}
 		}
 
-		// TODO Delete corresponding return edges and take care of lonely
-		// spoiler vertices
+		// Delete all incoming and outgoing edges of the invoker since they are
+		// covered by summarize edges
+		for (DuplicatorDoubleDeckerVertex<LETTER, STATE> returnInvoker : m_DuplicatorReturningVertices) {
+			for (Vertex<LETTER, STATE> succ : getSuccessors(returnInvoker)) {
+				removeEdge(returnInvoker, succ);
+			}
+			for (Vertex<LETTER, STATE> pre : getPredecessors(returnInvoker)) {
+				removeEdge(pre, returnInvoker);
+				// Care for dead end spoiler vertices because they are not
+				// allowed in a legal game graph.
+				// They need to form a legal instant win for Duplicator.
+				if (!hasSuccessors(pre) && pre instanceof SpoilerDoubleDeckerVertex<?, ?>) {
+					SpoilerDoubleDeckerVertex<LETTER, STATE> preAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pre;
+					addDuplicatorWinningSink(preAsDD);
+				}
+			}
+			// Remove not reachable vertex
+			removeDuplicatorVertex(returnInvoker);
+		}
 	}
 
 	/**
@@ -547,11 +635,14 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 					// That is when in (q0, q1) -> (q2, q1, r/q3),
 					// q0 has q3 as down state
 					if (hasDownState(transition.getLinPred(), transition.getHierPred())) {
-						DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(
-								2, false, leftState, rightState, transition.getLetter(), TransitionType.RETURN,
-								transition.getHierPred());
-						applyVertexDownStatesToVertex(duplicatorVertex);
-						addDuplicatorVertex(duplicatorVertex);
+						// Only add if not already existent
+						if (getDuplicatorVertex(leftState, rightState, transition.getLetter(), false,
+								TransitionType.RETURN, null, null) == null) {
+							DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(
+									2, false, leftState, rightState, transition.getLetter(), TransitionType.RETURN);
+							applyVertexDownStatesToVertex(duplicatorVertex);
+							addDuplicatorVertex(duplicatorVertex);
+						}
 					}
 				}
 
@@ -597,9 +688,10 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		if (vertex instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
 			DuplicatorDoubleDeckerVertex<LETTER, STATE> vertexAsDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) vertex;
 			getInternalDuplicatorVerticesField().add(vertexAsDD);
-			m_BuechiStatesToGraphDuplicatorVertex.put(vertexAsDD.getQ0(), vertexAsDD.getQ1(), vertexAsDD.getLetter(),
-					vertexAsDD.isB(), vertexAsDD.getTransitionType(), vertexAsDD.getHierPred(),
-					vertexAsDD.getSummarizeEdge(), vertexAsDD);
+			m_BuechiStatesToGraphDuplicatorVertex.put(
+					new Hep<>(vertexAsDD.getQ0(), vertexAsDD.getQ1(), vertexAsDD.getLetter(), vertexAsDD.isB(),
+							vertexAsDD.getTransitionType(), vertexAsDD.getSummarizeEdge(), vertexAsDD.getSink()),
+					vertexAsDD);
 		} else {
 			super.addDuplicatorVertex(vertex);
 		}
@@ -618,8 +710,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		if (vertex instanceof SpoilerDoubleDeckerVertex<?, ?>) {
 			SpoilerDoubleDeckerVertex<LETTER, STATE> vertexAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) vertex;
 			getInternalSpoilerVerticesField().add(vertexAsDD);
-			m_BuechiStatesToGraphSpoilerVertex.put(vertexAsDD.getQ0(), vertexAsDD.getQ1(), vertexAsDD.isB(),
-					vertexAsDD.getSummarizeEdge(), vertexAsDD);
+			m_BuechiStatesToGraphSpoilerVertex.put(new Quin<>(vertexAsDD.getQ0(), vertexAsDD.getQ1(), vertexAsDD.isB(),
+					vertexAsDD.getSummarizeEdge(), vertexAsDD.getSink()), vertexAsDD);
 		} else {
 			super.addSpoilerVertex(vertex);
 		}
@@ -638,9 +730,9 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		if (vertex instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
 			DuplicatorDoubleDeckerVertex<LETTER, STATE> vertexAsDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) vertex;
 			getInternalDuplicatorVerticesField().remove(vertexAsDD);
-			m_BuechiStatesToGraphDuplicatorVertex.put(vertexAsDD.getQ0(), vertexAsDD.getQ1(), vertexAsDD.getLetter(),
-					vertexAsDD.isB(), vertexAsDD.getTransitionType(), vertexAsDD.getHierPred(),
-					vertexAsDD.getSummarizeEdge(), null);
+			m_BuechiStatesToGraphDuplicatorVertex
+					.put(new Hep<>(vertexAsDD.getQ0(), vertexAsDD.getQ1(), vertexAsDD.getLetter(), vertexAsDD.isB(),
+							vertexAsDD.getTransitionType(), vertexAsDD.getSummarizeEdge(), vertexAsDD.getSink()), null);
 		} else {
 			super.removeDuplicatorVertex(vertex);
 		}
@@ -659,8 +751,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		if (vertex instanceof SpoilerDoubleDeckerVertex<?, ?>) {
 			SpoilerDoubleDeckerVertex<LETTER, STATE> vertexAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) vertex;
 			getInternalSpoilerVerticesField().remove(vertexAsDD);
-			m_BuechiStatesToGraphSpoilerVertex.put(vertexAsDD.getQ0(), vertexAsDD.getQ1(), vertexAsDD.isB(),
-					vertexAsDD.getSummarizeEdge(), null);
+			m_BuechiStatesToGraphSpoilerVertex.put(new Quin<>(vertexAsDD.getQ0(), vertexAsDD.getQ1(), vertexAsDD.isB(),
+					vertexAsDD.getSummarizeEdge(), vertexAsDD.getSink()), null);
 		} else {
 			super.removeSpoilerVertex(vertex);
 		}

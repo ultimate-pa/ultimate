@@ -34,9 +34,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  * Spoiler vertices. To ensure a a legal game graph it creates shadow vertices
  * between the source and destination. In detail this is <bb>src ->
  * DuplicatorShadowVertex1 -> SpoilerShadowVertex -> DuplicatorShadowVertex2 ->
- * dest</bb>. The SpoilerShadowVertex can be used to assign the edge a priority.
- * By default the priority is not valid and needs to be assigned after creation,
- * else the graph is in an illegal state.
+ * dest</bb>. The <tt>SpoilerShadowVertex</tt> can be used to assign the edge a
+ * priority. By default the priority is not valid and needs to be assigned after
+ * creation, else the graph is in an illegal state.
  * 
  * @author Daniel Tischner
  *
@@ -77,23 +77,16 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 *            Source of the edge
 	 * @param dest
 	 *            Destination of the edge
-	 * @param bottomSymbol
-	 *            The symbol that represents a bottom stack. It gets used for
-	 *            shadow vertex creation.
 	 */
 	public SummarizeEdge(final SpoilerDoubleDeckerVertex<LETTER, STATE> src,
-			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest, final STATE bottomSymbol) {
+			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest) {
 		m_Src = src;
 		m_Dest = dest;
-		// TODO Should we use a fake letter instead of null or not?
-		// TODO Ensure that bottom is a not used symbol in all cases, it must be
-		// unique for auxiliary vertices. Eventually null is an alternative
-		m_DuplicatorEntryShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, bottomSymbol, bottomSymbol,
-				null, TransitionType.SUMMARIZE_ENTRY, this);
-		m_SpoilerShadow = new SpoilerDoubleDeckerVertex<LETTER, STATE>(NO_PRIORITY, false, bottomSymbol, bottomSymbol,
-				this);
-		m_DuplicatorExitShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, bottomSymbol, bottomSymbol,
-				null, TransitionType.SUMMARIZE_EXIT, this);
+		m_DuplicatorEntryShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
+				TransitionType.SUMMARIZE_ENTRY, this);
+		m_SpoilerShadow = new SpoilerDoubleDeckerVertex<LETTER, STATE>(NO_PRIORITY, false, null, null, this);
+		m_DuplicatorExitShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
+				TransitionType.SUMMARIZE_EXIT, this);
 	}
 
 	/**

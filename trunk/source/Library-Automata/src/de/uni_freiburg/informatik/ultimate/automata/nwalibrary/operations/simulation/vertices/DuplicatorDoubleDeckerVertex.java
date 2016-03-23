@@ -57,16 +57,13 @@ import java.util.Set;
 public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> {
 
 	/**
-	 * The state <tt>hier</tt> such that the vertex represents a move with the
-	 * transition <tt>(pred(q), hier, a, q0)</tt> or <tt>null</tt> if not set.
-	 * This field should only be used if the type of the used transition is
-	 * {@link TransitionType#RETURN}.
+	 * The sink this vertex belongs to if it is generated as a shadow vertex for
+	 * such, <tt>null</tt> if not set.
 	 */
-	private final STATE m_HierPred;
-
+	private final DuplicatorWinningSink<LETTER, STATE> m_Sink;
 	/**
 	 * The summarize edge this vertex belongs to if it is generated as a shadow
-	 * vertex, <tt>null</tt> if not set.
+	 * vertex for such, <tt>null</tt> if not set.
 	 */
 	private final SummarizeEdge<LETTER, STATE> m_SummarizeEdge;
 	/**
@@ -115,8 +112,8 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * information if needed.
 	 * 
 	 * The double decker information first is blank after construction. If the
-	 * used transition is of type {@link TransitionType#RETURN} one can set
-	 * <tt>hierPred</tt> to distinguish between similar return transitions.
+	 * used transition is of type {@link TransitionType#SINK} one can set
+	 * <tt>sink</tt> to distinguish between similar sinks.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -131,16 +128,13 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * @param transitionType
 	 *            The type of the transition, i.e. if it stands for an internal,
 	 *            call or return transition
-	 * @param hierPred
-	 *            The state <tt>hier</tt> such that the vertex represents a move
-	 *            with the transition <tt>(pred(q), hier, a, q0)</tt> or
-	 *            <tt>null</tt> if not set. This field should only be used if
-	 *            the type of the used transition is
-	 *            {@link TransitionType#RETURN}.
+	 * @param sink
+	 *            The sink this vertex belongs to if it is generated as a shadow
+	 *            vertex for such.
 	 */
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final TransitionType transitionType, final STATE hierPred) {
-		this(priority, b, q0, q1, a, transitionType, hierPred, null);
+			final LETTER a, final TransitionType transitionType, final DuplicatorWinningSink<LETTER, STATE> sink) {
+		this(priority, b, q0, q1, a, transitionType, null, sink);
 	}
 
 	/**
@@ -174,7 +168,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final LETTER a, final TransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
-		this(priority, b, q0, q1, a, transitionType, null, summarizeEdge);
+		this(priority, b, q0, q1, a, transitionType, summarizeEdge, null);
 	}
 
 	/**
@@ -185,11 +179,11 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * information if needed.
 	 * 
 	 * The double decker information first is blank after construction. If the
-	 * used transition is of type {@link TransitionType#RETURN} one can set
-	 * <tt>hierPred</tt> to distinguish between similar return transitions. If
-	 * the used transition is of type {@link TransitionType#SUMMARIZE_ENTRY} or
+	 * used transition is of type {@link TransitionType#SUMMARIZE_ENTRY} or
 	 * {@link TransitionType#SUMMARIZE_EXIT} one can set <tt>summarizeEdge</tt>
-	 * to distinguish between similar summarize edges.
+	 * to distinguish between similar summarize edges. If the used transition is
+	 * of type {@link TransitionType#SINK} one can set <tt>sink</tt> to
+	 * distinguish between similar sinks.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -204,24 +198,21 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * @param transitionType
 	 *            The type of the transition, i.e. if it stands for an internal,
 	 *            call or return transition
-	 * @param hierPred
-	 *            The state <tt>hier</tt> such that the vertex represents a move
-	 *            with the transition <tt>(pred(q), hier, a, q0)</tt> or
-	 *            <tt>null</tt> if not set. This field should only be used if
-	 *            the type of the used transition is
-	 *            {@link TransitionType#RETURN}.
 	 * @param summarizeEdge
 	 *            The summarize edge this vertex belongs to if it is generated
-	 *            as a shadow vertex.
+	 *            as a shadow vertex for such.
+	 * @param sink
+	 *            The sink this vertex belongs to if it is generated as a shadow
+	 *            vertex for such.
 	 */
 	private DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final TransitionType transitionType, final STATE hierPred,
-			final SummarizeEdge<LETTER, STATE> summarizeEdge) {
+			final LETTER a, final TransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
+			final DuplicatorWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1, a);
 		m_VertexDownStates = new HashSet<>();
 		m_TransitionType = transitionType;
-		m_HierPred = hierPred;
 		m_SummarizeEdge = summarizeEdge;
+		m_Sink = sink;
 	}
 
 	/**
@@ -253,11 +244,11 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 			return false;
 		}
 		DuplicatorDoubleDeckerVertex<?, ?> other = (DuplicatorDoubleDeckerVertex<?, ?>) obj;
-		if (m_HierPred == null) {
-			if (other.m_HierPred != null) {
+		if (m_Sink == null) {
+			if (other.m_Sink != null) {
 				return false;
 			}
-		} else if (!m_HierPred.equals(other.m_HierPred)) {
+		} else if (!m_Sink.equals(other.m_Sink)) {
 			return false;
 		}
 		if (m_SummarizeEdge == null) {
@@ -273,20 +264,6 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		return true;
 	}
 
-	/**
-	 * Gets the state <tt>hier</tt> such that the vertex represents a move with
-	 * the transition <tt>(pred(q), hier, a, q0)</tt> or <tt>null</tt> if not
-	 * set. This field should only be used if the type of the used transition is
-	 * {@link TransitionType#RETURN}.
-	 * 
-	 * @return The state <tt>hier</tt> such that the vertex represents a move
-	 *         with the transition <tt>(pred(q), hier, a, q0)</tt> or
-	 *         <tt>null</tt> if not set.
-	 */
-	public STATE getHierPred() {
-		return m_HierPred;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -298,14 +275,13 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		StringBuilder sb = new StringBuilder();
 		sb.append(getQ0() + "," + getQ1() + ",");
 		if (m_TransitionType.equals(TransitionType.SUMMARIZE_ENTRY)) {
-			sb.append("SEntry");
+			sb.append("SEntry/").append(m_SummarizeEdge.hashCode());
 		} else if (m_TransitionType.equals(TransitionType.SUMMARIZE_EXIT)) {
-			sb.append("SExit");
+			sb.append("SExit/").append(m_SummarizeEdge.hashCode());
+		} else if (m_TransitionType.equals(TransitionType.SINK)) {
+			sb.append("Sink/").append(m_Sink.hashCode());
 		} else {
 			sb.append(getLetter());
-		}
-		if (m_TransitionType.equals(TransitionType.RETURN) && m_HierPred != null) {
-			sb.append("/" + m_HierPred);
 		}
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
@@ -318,6 +294,18 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		}
 		sb.append("}");
 		return sb.toString();
+	}
+
+	/**
+	 * Gets the sink this vertex belongs to or <tt>null</tt> if not set. This
+	 * field should only be used if the type of the used transition is
+	 * {@link TransitionType#SINK}.
+	 * 
+	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
+	 *         set.
+	 */
+	public DuplicatorWinningSink<LETTER, STATE> getSink() {
+		return m_Sink;
 	}
 
 	/**
@@ -361,7 +349,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((m_HierPred == null) ? 0 : m_HierPred.hashCode());
+		result = prime * result + ((m_Sink == null) ? 0 : m_Sink.hashCode());
 		result = prime * result + ((m_SummarizeEdge == null) ? 0 : m_SummarizeEdge.hashCode());
 		result = prime * result + ((m_TransitionType == null) ? 0 : m_TransitionType.hashCode());
 		return result;
@@ -402,14 +390,13 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1()).append(",");
 		if (m_TransitionType.equals(TransitionType.SUMMARIZE_ENTRY)) {
-			sb.append("SEntry");
+			sb.append("SEntry/").append(m_SummarizeEdge.hashCode());
 		} else if (m_TransitionType.equals(TransitionType.SUMMARIZE_EXIT)) {
-			sb.append("SExit");
+			sb.append("SExit/").append(m_SummarizeEdge.hashCode());
+		} else if (m_TransitionType.equals(TransitionType.SINK)) {
+			sb.append("Sink/").append(m_Sink.hashCode());
 		} else {
 			sb.append(getLetter());
-		}
-		if (m_TransitionType.equals(TransitionType.RETURN) && m_HierPred != null) {
-			sb.append("/" + m_HierPred);
 		}
 		sb.append("{");
 		boolean isFirstVertexDownState = true;

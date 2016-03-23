@@ -56,8 +56,13 @@ import java.util.Set;
 public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVertex<LETTER, STATE> {
 
 	/**
+	 * The sink this vertex belongs to if it is generated as a shadow vertex for
+	 * such, <tt>null</tt> if not set.
+	 */
+	private final DuplicatorWinningSink<LETTER, STATE> m_Sink;
+	/**
 	 * The summarize edge this vertex belongs to if it is generated as a shadow
-	 * vertex, <tt>null</tt> if not set.
+	 * vertex for such, <tt>null</tt> if not set.
 	 */
 	private final SummarizeEdge<LETTER, STATE> m_SummarizeEdge;
 	/**
@@ -84,7 +89,33 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 *            The state duplicator is at, interpreted as up state
 	 */
 	public SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1) {
-		this(priority, b, q0, q1, null);
+		this(priority, b, q0, q1, null, null);
+	}
+
+	/**
+	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
+	 * bit)</b> which means <i>Spoiler</i> is currently at state q0 and must
+	 * make a move using an arbitrary transition whereas <i>Duplicator</i> now
+	 * is at q1 and later must respond to <i>Spoiler</i>s decision. The bit
+	 * encodes extra information if needed.
+	 * 
+	 * The double decker information first is blank after construction.
+	 * 
+	 * @param priority
+	 *            The priority of the vertex
+	 * @param b
+	 *            The extra bit of the vertex
+	 * @param q0
+	 *            The state spoiler is at, interpreted as up state
+	 * @param q1
+	 *            The state duplicator is at, interpreted as up state
+	 * @param sink
+	 *            The sink this vertex belongs to if it is generated as a shadow
+	 *            vertex for such.
+	 */
+	public SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
+			final DuplicatorWinningSink<LETTER, STATE> sink) {
+		this(priority, b, q0, q1, null, sink);
 	}
 
 	/**
@@ -110,9 +141,39 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	public SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final SummarizeEdge<LETTER, STATE> summarizeEdge) {
+		this(priority, b, q0, q1, summarizeEdge, null);
+	}
+
+	/**
+	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
+	 * bit)</b> which means <i>Spoiler</i> is currently at state q0 and must
+	 * make a move using an arbitrary transition whereas <i>Duplicator</i> now
+	 * is at q1 and later must respond to <i>Spoiler</i>s decision. The bit
+	 * encodes extra information if needed.
+	 * 
+	 * The double decker information first is blank after construction.
+	 * 
+	 * @param priority
+	 *            The priority of the vertex
+	 * @param b
+	 *            The extra bit of the vertex
+	 * @param q0
+	 *            The state spoiler is at, interpreted as up state
+	 * @param q1
+	 *            The state duplicator is at, interpreted as up state
+	 * @param summarizeEdge
+	 *            The summarize edge this vertex belongs to if it is generated
+	 *            as a shadow vertex.
+	 * @param sink
+	 *            The sink this vertex belongs to if it is generated as a shadow
+	 *            vertex for such.
+	 */
+	private SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
+			final SummarizeEdge<LETTER, STATE> summarizeEdge, final DuplicatorWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1);
 		m_VertexDownStates = new HashSet<>();
 		m_SummarizeEdge = summarizeEdge;
+		m_Sink = sink;
 	}
 
 	/**
@@ -144,6 +205,13 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 			return false;
 		}
 		SpoilerDoubleDeckerVertex<?, ?> other = (SpoilerDoubleDeckerVertex<?, ?>) obj;
+		if (m_Sink == null) {
+			if (other.m_Sink != null) {
+				return false;
+			}
+		} else if (!m_Sink.equals(other.m_Sink)) {
+			return false;
+		}
 		if (m_SummarizeEdge == null) {
 			if (other.m_SummarizeEdge != null) {
 				return false;
@@ -164,6 +232,12 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	public String getName() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getQ0() + "," + getQ1());
+		if (m_SummarizeEdge != null) {
+			sb.append("[SMiddle/").append(m_SummarizeEdge.hashCode() + "]");
+		}
+		if (m_Sink != null) {
+			sb.append("[Sink/").append(m_Sink.hashCode() + "]");
+		}
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
 		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
@@ -175,6 +249,15 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		}
 		sb.append("}");
 		return sb.toString();
+	}
+
+	/**
+	 * Gets the sink this vertex belongs to or <tt>null</tt> if not set.
+	 * 
+	 * @return The sink this vertex belongs to or <tt>null</tt> if not set.
+	 */
+	public DuplicatorWinningSink<LETTER, STATE> getSink() {
+		return m_Sink;
 	}
 
 	/**
@@ -207,6 +290,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + ((m_Sink == null) ? 0 : m_Sink.hashCode());
 		result = prime * result + ((m_SummarizeEdge == null) ? 0 : m_SummarizeEdge.hashCode());
 		return result;
 	}
@@ -245,7 +329,12 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1());
-
+		if (m_SummarizeEdge != null) {
+			sb.append("[SMiddle/").append(m_SummarizeEdge.hashCode() + "]");
+		}
+		if (m_Sink != null) {
+			sb.append("[Sink/").append(m_Sink.hashCode() + "]");
+		}
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
 		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
