@@ -159,10 +159,10 @@ public class FlowSensitiveFaultLocalizer {
 		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
 		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		
-		int[] tuple = new int[2];
-		tuple[0]=4;
-		tuple[1]=6;
-		informationFromCFG.add(tuple);
+		//int[] tuple = new int[2];
+		//tuple[0]=4;
+		//tuple[1]=6;
+		//informationFromCFG.add(tuple);
 
 		IPredicate weakest_precondition_2 = null;
 		IPredicate pre_precondition_1 = null;
