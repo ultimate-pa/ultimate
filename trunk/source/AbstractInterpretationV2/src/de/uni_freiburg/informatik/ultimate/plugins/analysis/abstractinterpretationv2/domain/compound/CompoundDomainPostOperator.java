@@ -238,7 +238,8 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			if (assumeTerm == null) {
 				assumeTerm = states.get(i).getTerm(mScript, mBoogie2Smt);
 			} else {
-				assumeTerm = Util.and(mScript, assumeTerm, states.get(i).getTerm(mScript, mBoogie2Smt));
+//				assumeTerm = Util.and(mScript, assumeTerm, states.get(i).getTerm(mScript, mBoogie2Smt));
+				assumeTerm = mScript.term("and", assumeTerm, states.get(i).getTerm(mScript, mBoogie2Smt));
 			}
 		}
 

@@ -392,7 +392,8 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		Term n = getTermNumericAbstraction(script, bpl2smt);
 		Term b = getTermBooleanAbstraction(script, bpl2smt);
 		lastTerm = n;
-		return Util.and(script, n, b);
+//		return Util.and(script, n, b);
+		return script.term("and", n, b);
 	}
 
 	private Term getTermNumericAbstraction(Script script, Boogie2SMT bpl2smt) {
@@ -410,7 +411,8 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			Term termVar = getTermVar(entry.getKey());
 			Sort sort = termVar.getSort().getRealSort();
 			Term newTerm = entry.getValue().getTerm(script, sort, termVar);
-			acc = Util.and(script, acc, newTerm);
+//			acc = Util.and(script, acc, newTerm);
+			acc = script.term("and", acc, newTerm);
 		}
 		return acc;
 	}

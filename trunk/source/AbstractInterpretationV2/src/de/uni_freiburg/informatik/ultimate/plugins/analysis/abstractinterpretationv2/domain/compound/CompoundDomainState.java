@@ -170,7 +170,9 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	@Override
 	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
-		return Util.and(script,
+//		return Util.and(script,
+//				mAbstractStates.stream().map(state -> state.getTerm(script, bpl2smt)).toArray(i -> new Term[i]));
+		return script.term("and",
 				mAbstractStates.stream().map(state -> state.getTerm(script, bpl2smt)).toArray(i -> new Term[i]));
 	}
 

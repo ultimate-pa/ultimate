@@ -586,7 +586,8 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 				continue;
 			}
 			final Term newterm = entry.getValue().getTerm(script, sort, var);
-			acc = Util.and(script, acc, newterm);
+//			acc = Util.and(script, acc, newterm);
+			acc = script.term("and", acc, newterm);
 		}
 		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			final IBoogieVar boogievar = mVariablesMap.get(entry.getKey());
@@ -594,7 +595,8 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			assert var != null : "Error during TermVar creation";
 			final Sort sort = var.getSort().getRealSort();
 			final Term newterm = entry.getValue().getTerm(script, sort, var);
-			acc = Util.and(script, acc, newterm);
+//			acc = Util.and(script, acc, newterm);
+			acc = script.term("and", acc, newterm);
 		}
 		return acc;
 	}
