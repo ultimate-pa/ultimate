@@ -50,8 +50,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
@@ -85,7 +89,6 @@ public class FlowSensitiveFaultLocalizer {
 		m_Logger.warn("* * * ENTERED FLOW SENSITIVE FAULT LOCALIZER * * * *");
 		ArrayList<int[]> informationFromCFG = computeInformationFromCFG( (NestedRun<CodeBlock, IPredicate>) counterexample, cfg); //Get branch information. in the form of an array list
 		IPredicate errorPrecondition = computeErrorPrecondition((NestedWord<CodeBlock>) counterexample.getWord(), smtManager, predicateUnifier, modGlobVarManager, informationFromCFG);
-		//ArrayList<int[]> informationFromCFG = computeInformationFromCFG( (NestedRun<CodeBlock, IPredicate>) counterexample, cfg); //Get branch information. in the form of an array list
 		computeFlowSensitiveTraceFormula(errorPrecondition, counterexample, predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager,informationFromCFG);
 	}
 
@@ -149,6 +152,115 @@ public class FlowSensitiveFaultLocalizer {
 		return result;
 	}
 
+	private ArrayList<CodeBlock> RelevantStatementInBranch(int branch_start, int branch_end, NestedWord<CodeBlock> counterexampleWord, ArrayList<int[]> informationFromCFG, IPredicate weakest_precondition_1, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager)
+	{
+		m_Logger.warn("Entered RelevantStatementInBranch ");
+		ArrayList<CodeBlock> result = new ArrayList<>();
+		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
+		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
+		
+		int[] tuple = new int[2];
+		tuple[0]=4;
+		tuple[1]=6;
+		informationFromCFG.add(tuple);
+
+		IPredicate weakest_precondition_2 = null;
+		IPredicate pre_precondition_1 = null;
+		CodeBlock statement_1 = null;
+		ERelevanceStatus relevance = null;
+		
+		for(int backward_counter = branch_end; backward_counter>=branch_start; backward_counter--) // Move Backward in the branch.
+		{
+			int flag = 0;
+			int use_markhor =0;
+			int a = 0; // branch out
+			int b = 0; // branch in
+			for(int j = 0; j<informationFromCFG.size();j++)
+			{
+				if (backward_counter == informationFromCFG.get(j)[1]-1)
+				{
+					flag = 1; // Current Statement is a branch in statement.
+					a = informationFromCFG.get(j)[0];
+					b = informationFromCFG.get(j)[1]-1;
+				}
+			}
+			
+			if(flag==1) // Current Statement is a branch in statement.
+			{
+				m_Logger.warn("branch in statement");				
+				// Check if the branch is relevant.
+				IPredicate weakest_precondition_1_temp = weakest_precondition_1;
+				// Computing the markhor formula of the branch.
+				TransFormula combined_transition_formula = counterexampleWord.getSymbolAt(a).getTransitionFormula();
+				for(int i = a+1 ; i <= b;i++)
+				{
+					CodeBlock statement = counterexampleWord.getSymbolAt(i);
+					TransFormula transition_formula = statement.getTransitionFormula();
+					combined_transition_formula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(),
+							false, false, false, combined_transition_formula, transition_formula);
+				}
+				TransFormula markhor = TransFormula.computeMarkhorTransFormula(combined_transition_formula, smtManager.getBoogie2Smt(), 
+						m_Services, m_Logger);
+				
+				
+				// Check the relevance of the branch by the new method.
+				weakest_precondition_2 = weakest_precondition_1;
+				weakest_precondition_1 = pt.weakestPrecondition(weakest_precondition_1, markhor);
+				pre_precondition_1 = smtManager.newPredicate(smtManager.not(weakest_precondition_1));
+				statement_1 = counterexampleWord.getSymbol(backward_counter+1);
+				String preceeding = statement_1.getPreceedingProcedure(); // ????
+				String succeding = statement_1.getSucceedingProcedure(); // ????
+				BasicInternalAction basic = new BasicInternalAction(preceeding,succeding, markhor);
+	
+				relevance = rc.relevanceInternal(pre_precondition_1, basic, smtManager.newPredicate(smtManager.not(weakest_precondition_2)));
+				if(relevance == ERelevanceStatus.InUnsatCore) //Branch is RELEVANT
+				{
+					use_markhor=1;
+					m_Logger.warn("THE BRANCH IS RELEVANT");
+					// Check which statements in the branch are relevant.
+					ArrayList<CodeBlock> relevant_statements =  RelevantStatementInBranch(a, b, counterexampleWord ,informationFromCFG, weakest_precondition_1, smtManager, modGlobVarManager);
+					result.addAll(relevant_statements);
+					
+					weakest_precondition_1 = pt.weakestPrecondition(weakest_precondition_1, markhor);
+				}
+				else
+				{
+					weakest_precondition_1 = weakest_precondition_1_temp;
+				}
+							
+				
+				
+				backward_counter = a ; //Just before the branch.
+			}
+			else  // The statement under consideration is not a branch-in statement.
+			{
+				weakest_precondition_2 = weakest_precondition_1;
+				weakest_precondition_1 = pt.weakestPrecondition(weakest_precondition_1, counterexampleWord.getSymbolAt(backward_counter).getTransitionFormula());
+				pre_precondition_1 = smtManager.newPredicate(smtManager.not(weakest_precondition_1));
+				statement_1 = counterexampleWord.getSymbolAt(backward_counter);
+				BasicInternalAction basic = new BasicInternalAction(statement_1.getPreceedingProcedure(),statement_1.getSucceedingProcedure(), statement_1.getTransitionFormula());
+				
+				relevance = rc.relevanceInternal(pre_precondition_1, basic, smtManager.newPredicate(smtManager.not(weakest_precondition_2)));
+				if(relevance  == ERelevanceStatus.InUnsatCore)
+				{
+					m_Logger.warn("RELEVANT");
+					m_Logger.warn(statement_1);
+					result.add(statement_1);
+					
+				}
+			}
+			
+			
+
+		}
+		
+		
+		
+		return result;
+		
+	}
+	
+	
 	private void computeFlowSensitiveTraceFormula(IPredicate errorPrecondition, IRun<CodeBlock, IPredicate> counterexampleRun,
 		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager, ArrayList<int[]> informationFromCFG) 
 	
@@ -161,58 +273,170 @@ public class FlowSensitiveFaultLocalizer {
 		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		
 		
-		// INCREMENTAL ANALYSIS
+		
+		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 		m_Logger.warn("Doing Incremental Analysis . . .");
 
-		ArrayList<ERelevanceStatus> relevant = new ArrayList<>(); //Will store the terms relevant for the error.
-	    
+		ArrayList<CodeBlock> relevant = new ArrayList<>(); //Will store the terms relevant for the error.
+		ArrayList<IPredicate> weakest_precondition_list = new ArrayList<>();
+		ArrayList<IPredicate> pre_precondition_list = new ArrayList<>();
+		
 		int backward_counter = counterexampleWord.length();
-		for(int i = backward_counter-1 ; i >= 0; i--)
+
+		IPredicate weakest_precondition = smtManager.newFalsePredicate(); // FALSE for WP(False, error_trace)
+		for(int j = counterexampleWord.length() - 1; j>=0; j--)
 		{
-			// compute the weakest_precondition_list for each last statement .
-			ArrayList<IPredicate> weakest_precondition_list = new ArrayList<>();
-			ArrayList<IPredicate> pre_precondition_list = new ArrayList<>();
-			m_Logger.warn("Doing Analysis for "+ counterexampleWord.getSymbolAt(i));
-			IPredicate weakest_precondition = smtManager.newFalsePredicate(); // FALSE for WP(False, error_trace)
-			for(int j = i; j>=0; j--)
-			{
-				CodeBlock statement = counterexampleWord.getSymbolAt(j);
-				TransFormula transition_formula = statement.getTransitionFormula();
-				weakest_precondition = pt.weakestPrecondition(weakest_precondition, transition_formula);
-				weakest_precondition_list.add(weakest_precondition);
-				pre_precondition_list.add(weakest_precondition); // NEGATE WEAKEST PRE CONDITION AND THEN ADD !!!!!
+			CodeBlock statement = counterexampleWord.getSymbolAt(j);
+			TransFormula transition_formula = statement.getTransitionFormula();
+			weakest_precondition = pt.weakestPrecondition(weakest_precondition, transition_formula);
+			weakest_precondition_list.add(weakest_precondition);
+			pre_precondition_list.add(smtManager.newPredicate(smtManager.not(weakest_precondition)));
 				
-			}
+		}
+		int wp_counter = 0;
+		int pre_counter = wp_counter + 1;
+		for(int i = backward_counter-2 ; i >= 0; i--)
+		{
+
 			
-			m_Logger.warn("Computed WP list for "+ counterexampleWord.getSymbol(i) );
-			
-			int wp_counter = 0;
-			int pre_counter = wp_counter + 1;
-			
-			for(int j= i - 1; j>=0;j--)
-			{
-				CodeBlock statement = counterexampleWord.getSymbolAt(j);
+
+				CodeBlock statement = counterexampleWord.getSymbolAt(i);
+				TransFormula a = statement.getTransitionFormula();
+				
+
+				BasicInternalAction basic = new BasicInternalAction(statement.getPreceedingProcedure(),statement.getSucceedingProcedure(), statement.getTransitionFormula());
+				
+				
+				
 				IPredicate wp = weakest_precondition_list.get(wp_counter);
 				IPredicate pre = pre_precondition_list.get(pre_counter);
-			//	ERelevanceStatus relevance = rc.relevanceInternal(pre, statement, wp);
-			//	m_Logger.warn(relevance.toString()) ; 
-			//	if(relevance.toString() == "INUNSATCORE")
-			//	{
-			//		if(relevant.contains(relevance))
-			//		{
-						
-			//		}
-			//		else 
-			//	}
+				
+				ERelevanceStatus relevance = rc.relevanceInternal(pre, basic, smtManager.newPredicate(smtManager.not(wp)));
+				if(relevance.toString() == "InUnsatCore")
+				{
+					m_Logger.warn("RELEVANT");
+					m_Logger.warn(statement);
+					relevant.add(statement);
+					
+				}
 				wp_counter = wp_counter + 1;
 				pre_counter = pre_counter + 1;
-			}
+
 			
 			
 		}
-		///////////////////////////////////////////////////////////////////////- - - - DONE WITH INCREMENTAL ANALYSIS --- //////////////////////////////// 
+		///////////////////////////////////////////////////////////////////////- - - - DONE WITH NON-FLOW SENSITIVE INCREMENTAL ANALYSIS --- //////////////////////////////// 
+		
+		///////////////////////////////                          STARTING INCREMENTAL flow sensitive FAULT LOCALIZATION //////////////////
+		m_Logger.warn("Starting incremental flow sensitive fault localization. . . . ");
+		
+		ArrayList<CodeBlock> relevant_statements = new ArrayList<>();
+		IPredicate weakest_precondition_1 = smtManager.newFalsePredicate();
+		IPredicate weakest_precondition_2 = null;
+		IPredicate pre_precondition_1 = null;
+		CodeBlock statement_1 = null;
+		ERelevanceStatus relevance = null;
+		
+		ArrayList<TransFormula> trans_formula_arraylist = new ArrayList<>();
+		backward_counter = counterexampleWord.length()-1;
+		int flag = 0;
+		int use_markhor =0;
+		while(backward_counter != -1)
+		{
+			flag = 0;
+			use_markhor =0;
+			int a = 0; // branch out
+			int b = 0; // branch in
+			for(int i = 0; i<informationFromCFG.size();i++)
+			{
+				if (backward_counter == informationFromCFG.get(i)[1]-1)
+				{
+					flag = 1;
+					a = informationFromCFG.get(i)[0];
+					b = informationFromCFG.get(i)[1]-1;
+				}
+			}
+
+			if(flag == 1) // Compute the markhor formula of the branch and check the relevance of the branch.
+			{			
+				IPredicate weakest_precondition_1_temp = weakest_precondition_1;
+				
+				// Computing the markhor formula of the branch.
+				TransFormula combined_transition_formula = counterexampleWord.getSymbolAt(a).getTransitionFormula();
+				for(int i = a+1 ; i <= b;i++)
+				{
+					CodeBlock statement = counterexampleWord.getSymbolAt(i);
+					TransFormula transition_formula = statement.getTransitionFormula();
+					combined_transition_formula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(),
+							false, false, false, combined_transition_formula, transition_formula);
+				}
+				TransFormula markhor = TransFormula.computeMarkhorTransFormula(combined_transition_formula, smtManager.getBoogie2Smt(), 
+						m_Services, m_Logger);
+				
+				
+				// Check the relevance of the branch by the new method.
+				weakest_precondition_2 = weakest_precondition_1;
+				weakest_precondition_1 = pt.weakestPrecondition(weakest_precondition_1, markhor);
+				pre_precondition_1 = smtManager.newPredicate(smtManager.not(weakest_precondition_1));
+				statement_1 = counterexampleWord.getSymbol(backward_counter+1);
+				String preceeding = statement_1.getPreceedingProcedure(); // ????
+				String succeding = statement_1.getSucceedingProcedure(); // ????
+				BasicInternalAction basic = new BasicInternalAction(preceeding,succeding, markhor);
+				relevance = rc.relevanceInternal(pre_precondition_1, basic, smtManager.newPredicate(smtManager.not(weakest_precondition_2)));
+				if(relevance == ERelevanceStatus.InUnsatCore)
+				{
+					use_markhor=1;
+					m_Logger.warn("THE BRANCH IS RELEVANT");
+					// Check which statements in the branch are relevant.
+					relevant_statements.addAll(RelevantStatementInBranch(a, b, counterexampleWord ,informationFromCFG, weakest_precondition_1, smtManager, modGlobVarManager));
+					
+					
+					
+				}
+				else // If the branch is not relevant, use the previous weakest pre-condition.
+				{
+					weakest_precondition_1 = weakest_precondition_1_temp;
+				}
+							
+				
+				
+				backward_counter = a - 1 ; //Just before the branch.
+			}
+			else // The statement under consideration is not a branch-in statement.
+			{ 	
+				weakest_precondition_2 = weakest_precondition_1;
+				weakest_precondition_1 = pt.weakestPrecondition(weakest_precondition_1, counterexampleWord.getSymbolAt(backward_counter).getTransitionFormula());
+				pre_precondition_1 = smtManager.newPredicate(smtManager.not(weakest_precondition_1));
+				statement_1 = counterexampleWord.getSymbolAt(backward_counter);
+				BasicInternalAction basic = new BasicInternalAction(statement_1.getPreceedingProcedure(),statement_1.getSucceedingProcedure(), statement_1.getTransitionFormula());
+				
+				relevance = rc.relevanceInternal(pre_precondition_1, basic, smtManager.newPredicate(smtManager.not(weakest_precondition_2)));
+				if(relevance  == ERelevanceStatus.InUnsatCore)
+				{
+					m_Logger.warn("RELEVANT");
+					m_Logger.warn(statement_1);
+					relevant_statements.add(statement_1);
+					
+				}
+				
+				
+				backward_counter -= 1;
+			}
+		}
+		
+		// COMPUTE THE ERROR PRE-CONDITION FROM THE TRANSFORMULAS IN  "trans_formula_arraylist" on forward order.
 		
 		
+		// Step 2.5:
+		// see if it is relevant or not ??
+		
+		// step 3:
+		// if it is not relevant, just ignore the branch.
+		
+		// IF IT IS RELEVANT. 
+		// Go further into the branch.
+		
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		m_Logger.warn("Computing Flow Sensitive Formula . . . .");
 
 		m_Logger.warn(" ");
@@ -269,16 +493,16 @@ public class FlowSensitiveFaultLocalizer {
 		}
 		for(int k = 0; k <counterexampleWord.length()-1; k++)
 		{
-			boolean flag = false;
+			boolean flag1 = false;
 			for(int l=0;l<informationFromCFG.size();l++) // Check if the current formula is at a branch out position.
 			{
 				if(k == informationFromCFG.get(l)[0])
 				{
-					flag = true; //current formula is at a branch out position
+					flag1 = true; //current formula is at a branch out position
 					k = informationFromCFG.get(l)[1] - 1;
 				}
 			}
-			if(!flag)
+			if(!flag1)
 			{
 				prosensitive_formula_list.add(ssa.getFormulaFromNonCallPos(k));
 			}
@@ -429,6 +653,7 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	public List<IRelevanceInformation> getRelevanceInformation() {
 		//TODO implement this
+		
 		throw new AssertionError("not yet implemented");
 	}
 	
