@@ -52,24 +52,27 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation-Totalinterpolation.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Nolbe.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation-Totalinterpolation.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-CNF.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-CNF+AI_OCT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Nolbe.epf"),
 
-			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation+AI_OCT.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation-Totalinterpolation+AI_OCT.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack+AI_OCT.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Nolbe+AI_OCT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation+AI_OCT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TreeInterpolation-Totalinterpolation+AI_OCT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack+AI_OCT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Nolbe+AI_OCT.epf"),
 			
-			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Mathsat.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/TwoTrack-Mathsat.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/CraigInterpolation-Z3.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/CraigInterpolation-Z3+AI_OCT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "automizer/PricedTimedAutomata/PricedTimedAutomata_z3.epf"),
 	};
 
 
 
 	private static final String[] INPUT = new String[] {
-			"examples/programs/real-life/PricedTimedAutomata/",
+			"examples/programs/real-life/PricedTimedAutomataBSearch/",
 //			"examples/programs/real-life/PricedTimedAutomata/u2b06_batman_intermittent_no_power_SAFE.bpl",
 
 	};
@@ -78,7 +81,7 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 20 * 1000;
+		return 3600 * 1000;
 	}
 
 	@Override
