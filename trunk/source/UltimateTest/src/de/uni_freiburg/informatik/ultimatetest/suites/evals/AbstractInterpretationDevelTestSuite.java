@@ -79,13 +79,13 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			
 			//### C
 			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_SMTInterpol.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
-			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
@@ -100,7 +100,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
-			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
 			
 //			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
@@ -110,7 +110,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/regression/procedure-Loops.bpl",
 //			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c"
 //			"examples/svcomp/bitvector-loops/overflow_false-unreach-call1.i",
-//			"examples/svcomp/bitvector-loops/diamond_false-unreach-call2.i"
+//			"examples/svcomp/bitvector-loops/diamond_false-unreach-call2.i",
+//			"examples/svcomp/product-lines/email_spec11_productSimulator_false-unreach-call.cil.c",
+//			"examples/svcomp/product-lines/email_spec4_product32_false-unreach-call.cil.c",
+			"examples/svcomp/loop-invgen/down_true-unreach-call.i",
+			"examples/svcomp/loop-lit/css2003_true-unreach-call.c.i",
+			"examples/svcomp/loop-invgen/string_concat-noarr_true-unreach-call.i",
 	};
 
 	// @formatter:on

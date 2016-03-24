@@ -1061,7 +1061,8 @@ public class OctMatrix {
 					}
 				}
 				Term colVar = selectVar(script, col, vars);
-				acc = Util.and(script, acc, createBoundedDiffTerm(script, colVar, rowVar, entry));
+//				acc = Util.and(script, acc, createBoundedDiffTerm(script, colVar, rowVar, entry));
+				acc = script.term("and", acc, createBoundedDiffTerm(script, colVar, rowVar, entry));
 			}
 		}
 		return acc;
