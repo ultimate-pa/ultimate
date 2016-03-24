@@ -121,6 +121,14 @@ public class BooleanValue {
 		return mValue == other.mValue;
 	}
 
+	/**
+	 * Returns <code>true</code> if this is contained in other.
+	 * 
+	 * @param other
+	 *            The other state to check against.
+	 * @return <code>true</code> if and only if the value of this is contained in the value of other, <code>false</code>
+	 *         otherwise.
+	 */
 	public boolean isContainedIn(BooleanValue other) {
 		if (other == null) {
 			return false;
@@ -131,7 +139,7 @@ public class BooleanValue {
 		if (mValue == other.mValue) {
 			return true;
 		}
-		if(mValue == Value.BOTTOM){
+		if (mValue == Value.BOTTOM) {
 			return true;
 		}
 		return false;
