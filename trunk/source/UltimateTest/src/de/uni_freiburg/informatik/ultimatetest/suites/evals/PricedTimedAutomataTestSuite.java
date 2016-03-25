@@ -72,7 +72,7 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 
 
 	private static final String[] INPUT = new String[] {
-			"examples/programs/real-life/PricedTimedAutomataBSearch/",
+			"examples/programs/real-life/PricedTimedautomataBSearch/",
 //			"examples/programs/real-life/PricedTimedAutomata/u2b06_batman_intermittent_no_power_SAFE.bpl",
 
 	};
