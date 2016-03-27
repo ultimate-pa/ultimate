@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
-public class PredicateFactory extends StateFactory<IPredicate> {
+public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredicate> {
 
 	final protected TAPreferences m_Pref;
 	private final IPredicate m_emtpyStack;
 	protected final SmtManager m_SmtManager;
 
-	public PredicateFactory(SmtManager smtManager, TAPreferences taPrefs) {
+	public PredicateFactoryForInterpolantAutomata(SmtManager smtManager, TAPreferences taPrefs) {
 		m_Pref = taPrefs;
 		m_SmtManager = smtManager;
 		m_emtpyStack = m_SmtManager.newEmptyStackPredicate();

@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -94,7 +94,7 @@ public class RefineBuchi {
 
 	private final boolean m_DumpAutomata;
 	private final boolean m_Difference;
-	private final PredicateFactory m_StateFactoryInterpolAutom;
+	private final PredicateFactoryForInterpolantAutomata m_StateFactoryInterpolAutom;
 	private final PredicateFactoryRefinement m_StateFactoryForRefinement;
 	private final boolean m_UseDoubleDeckers;
 	private final String m_DumpPath;
@@ -109,7 +109,7 @@ public class RefineBuchi {
 	private final IUltimateServiceProvider m_Services;
 
 	public RefineBuchi(RootNode rootNode, SmtManager smtManager, boolean dumpAutomata, boolean difference,
-			PredicateFactory stateFactoryInterpolAutom, PredicateFactoryRefinement stateFactoryForRefinement,
+			PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom, PredicateFactoryRefinement stateFactoryForRefinement,
 			boolean useDoubleDeckers, String dumpPath, Format format, INTERPOLATION interpolation, IUltimateServiceProvider services,
 			Logger logger) {
 		super();

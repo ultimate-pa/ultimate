@@ -138,7 +138,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected HoareAnnotationFragments m_Haf;
 
 	protected final PredicateFactoryRefinement m_StateFactoryForRefinement;
-	protected final PredicateFactory m_PredicateFactoryInterpolantAutomata;
+	protected final PredicateFactoryForInterpolantAutomata m_PredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking m_PredicateFactoryResultChecking;
 
 	protected boolean m_FallbackToFpIfInterprocedural = true;
@@ -197,7 +197,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(m_RootNode.getRootAnnot().getProgramPoints(),
 				super.m_SmtManager, m_Pref, REMOVE_DEAD_ENDS && m_ComputeHoareAnnotation, m_Haf,
 				m_HoareAnnotationPositions);
-		m_PredicateFactoryInterpolantAutomata = new PredicateFactory(super.m_SmtManager, m_Pref);
+		m_PredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(super.m_SmtManager, m_Pref);
 
 		m_AssertCodeBlocksIncrementally = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
@@ -807,7 +807,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	 *            PredicateFactory used for auxiliary automata used for checking correctness of the result (if
 	 *            assertions are enabled).
 	 */
-	protected void minimizeAbstraction(PredicateFactory predicateFactoryRefinement,
+	protected void minimizeAbstraction(PredicateFactoryForInterpolantAutomata predicateFactoryRefinement,
 			PredicateFactoryResultChecking resultCheckPredFac, Minimization minimization)
 			throws OperationCanceledException, AutomataLibraryException, AssertionError {
 		if (m_Pref.dumpAutomata()) {

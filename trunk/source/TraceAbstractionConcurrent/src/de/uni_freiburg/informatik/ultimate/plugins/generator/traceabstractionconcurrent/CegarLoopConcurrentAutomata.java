@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
@@ -104,7 +104,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 	@Override
 	protected void getInitialAbstraction() {
-		StateFactory<IPredicate> predicateFactory = new PredicateFactory(super.m_SmtManager, m_Pref);
+		StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(super.m_SmtManager, m_Pref);
 		CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(m_RootNode, predicateFactory, m_SmtManager, m_Services);
 		m_Abstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) cFG2NestedWordAutomaton.getResult();
 
@@ -157,7 +157,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 
-		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
+		PredicateFactoryForInterpolantAutomata predicateFactory = (PredicateFactoryForInterpolantAutomata) m_Abstraction.getStateFactory();
 
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;

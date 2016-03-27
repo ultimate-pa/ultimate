@@ -96,7 +96,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
@@ -194,7 +194,7 @@ public class BuchiCegarLoop {
 	int m_RankWithoutSi = 0;
 	int m_RankWithSi = 0;
 
-	private final PredicateFactory m_DefaultStateFactory;
+	private final PredicateFactoryForInterpolantAutomata m_DefaultStateFactory;
 	private final PredicateFactoryResultChecking m_PredicateFactoryResultChecking;
 
 	private final HoareAnnotationFragments m_Haf;
@@ -262,7 +262,7 @@ public class BuchiCegarLoop {
 		// m_RootNode.getRootAnnot().getBoogie2SMT());
 
 		this.m_Pref = taPrefs;
-		m_DefaultStateFactory = new PredicateFactory(m_SmtManager, m_Pref);
+		m_DefaultStateFactory = new PredicateFactoryForInterpolantAutomata(m_SmtManager, m_Pref);
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(m_SmtManager);
 
 		m_Haf = new HoareAnnotationFragments(mLogger, null, null);

@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 
-public class PredicateFactoryRefinement extends PredicateFactory {
+public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAutomata {
 	
 	private static final boolean s_DebugComputeHistory = false;
 	

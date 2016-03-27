@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author musab@informatik.uni-freiburg.de
  *
  */
-public class PredicateFactoryForInterpolantConsolidation extends PredicateFactory {
+public class PredicateFactoryForInterpolantConsolidation extends PredicateFactoryForInterpolantAutomata {
 	
 	private Map<IPredicate, Set<IPredicate>> m_LocationsToSetOfPredicates;
 	private Map<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>> m_IntersectedPredicateToArgumentPredicates;
