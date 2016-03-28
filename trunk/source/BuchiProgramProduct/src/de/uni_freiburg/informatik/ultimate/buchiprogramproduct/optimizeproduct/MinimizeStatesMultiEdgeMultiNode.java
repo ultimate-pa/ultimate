@@ -87,7 +87,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		// we add a new edge (qi,sti;stj,qj)
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("    will try to remove " + target.getLocationName());
+			mLogger.debug("    will try to remove " + target.getPosition());
 		}
 
 		final List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
@@ -158,7 +158,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			// successors of the node we wanted to remove
 			rtr.addAll(target.getOutgoingNodes());
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("    could not remove " + target.getLocationName()
+				mLogger.debug("    could not remove " + target.getPosition()
 						+ ", because some incoming edges are left");
 			}
 		}

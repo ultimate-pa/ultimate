@@ -95,10 +95,7 @@ public class ProgramPoint extends RCFGNode {
 	public String getProcedure() {
 		return mProcedure;
 	}
-
-	/**
-	 * @return the location
-	 */
+	
 	public String getPosition() {
 		return mPosition;
 	}
@@ -111,9 +108,6 @@ public class ProgramPoint extends RCFGNode {
 		return mBoogieASTNode;
 	}
 
-	public String getLocationName() {
-		return getPosition();
-	}
 
 	public String BoogieASTNodeType() {
 		if (mBoogieASTNode instanceof AssertStatement) {

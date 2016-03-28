@@ -135,7 +135,7 @@ public class TraceAbstractionStarter {
 					witnessAutomaton);
 		} else {
 			for (ProgramPoint errorLoc : errNodesOfAllProc) {
-				String name = errorLoc.getLocationName();
+				String name = errorLoc.getPosition();
 				ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
 				errorLocs.add(errorLoc);
 				m_Services.getProgressMonitorService().setSubtask(errorLoc.toString());

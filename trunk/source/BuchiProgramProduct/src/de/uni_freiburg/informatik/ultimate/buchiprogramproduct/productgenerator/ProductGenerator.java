@@ -203,9 +203,9 @@ public class ProductGenerator {
 	}
 
 	private void updateProductStates(ProgramPoint newPP, String statename) {
-		final String locname = newPP.getLocationName();
+		final String locname = newPP.getPosition();
 		assert statename.equals(locname);
-		final ProgramPoint rtr = mProductLocations.put(newPP.getLocationName(), newPP);
+		final ProgramPoint rtr = mProductLocations.put(newPP.getPosition(), newPP);
 		if (rtr != null) {
 			throw new AssertionError("The original RCFG had two locations with the same location name");
 		}
@@ -588,7 +588,7 @@ public class ProductGenerator {
 
 		final RootAnnot rootAnnot = mProductRoot.getRootAnnot();
 		for (final ProgramPoint current : toRemove) {
-			final String name = current.getLocationName();
+			final String name = current.getPosition();
 			// update annotations
 
 			final Map<String, ProgramPoint> prog2programPoints = rootAnnot.getProgramPoints()

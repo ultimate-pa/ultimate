@@ -350,10 +350,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			// In addition we also have to fill the map which stores every
 			// ProgramPoint in relation to its name and the procedure name
 			if (mLocNodesForAnnot.containsKey(newNode.getProcedure())) {
-				mLocNodesForAnnot.get(newNode.getProcedure()).put(newNode.getLocationName(), newNode);
+				mLocNodesForAnnot.get(newNode.getProcedure()).put(newNode.getPosition(), newNode);
 			} else {
 				HashMap<String, ProgramPoint> newMap = new HashMap<String, ProgramPoint>();
-				newMap.put(newNode.getLocationName(), newNode);
+				newMap.put(newNode.getPosition(), newNode);
 				mLocNodesForAnnot.put(newNode.getProcedure(), newMap);
 			}
 			return newNode;
