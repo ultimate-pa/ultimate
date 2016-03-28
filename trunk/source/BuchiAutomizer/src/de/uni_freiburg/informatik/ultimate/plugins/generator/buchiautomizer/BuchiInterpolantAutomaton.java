@@ -472,7 +472,7 @@ public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<Cod
 		} else {
 			resultPred = m_InputPreds2ResultPreds.get(inputPreds);
 			if (resultPred == null) {
-				resultPred = m_SmtManager.newBuchiPredicate(inputPreds);
+				resultPred = m_SmtManager.getPredicateFactory().newBuchiPredicate(inputPreds);
 				m_InputPreds2ResultPreds.put(inputPreds, resultPred);
 			}
 			for (IPredicate pred : inputPreds) {

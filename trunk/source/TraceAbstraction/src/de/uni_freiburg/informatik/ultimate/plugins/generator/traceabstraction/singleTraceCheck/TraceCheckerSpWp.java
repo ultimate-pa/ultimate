@@ -410,10 +410,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
 			rtf = new RelevantTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
 					codeBlocksInUnsatCore, m_ModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
-					oldVarAssignmentAtCallInUnsatCore, m_SmtManager);
+					oldVarAssignmentAtCallInUnsatCore, m_SmtManager.getBoogie2Smt());
 		} else if (m_UnsatCores == UnsatCores.CONJUNCT_LEVEL) {
 			rtf = new RelevantTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
-					unsatCore, m_ModifiedGlobals, m_SmtManager, m_AAA, m_AnnotateAndAsserterConjuncts);
+					unsatCore, m_ModifiedGlobals, m_SmtManager.getBoogie2Smt(), m_AAA, m_AnnotateAndAsserterConjuncts);
 		} else {
 			throw new AssertionError("unknown case:" + m_UnsatCores);
 		}
@@ -570,7 +570,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				Set<TermVariable> nonLiveVars = computeIrrelevantVariables(relevantVars[i+1], sp);
 				m_NonLiveVariablesFp += nonLiveVars.size();
 				if (m_LiveVariables) {
-					projected = m_SmtManager.constructPredicate(sp.getFormula(), 
+					projected = m_SmtManager.getPredicateFactory().constructPredicate(sp.getFormula(), 
 							QuantifiedFormula.EXISTS, nonLiveVars);
 				} else {
 					projected = sp;
@@ -673,7 +673,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final IPredicate projected;
 			Set<TermVariable> nonLiveVars = computeIrrelevantVariables(relevantVars[i], wp);
 			if (m_LiveVariables) {
-				projected = m_SmtManager.constructPredicate(wp.getFormula(), 
+				projected = m_SmtManager.getPredicateFactory().constructPredicate(wp.getFormula(), 
 						QuantifiedFormula.FORALL, nonLiveVars);
 				m_NonLiveVariablesBp += nonLiveVars.size();
 			} else {

@@ -85,7 +85,7 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 		IPredicate predicate = predicateUnifier.getTruePredicate();
 		int setBitIndex = getNextSetBit(state, 0);
 		while(setBitIndex != -1){
-			predicate = predicateUnifier.getOrConstructPredicate(smtManager.and(predicate, alternatingAutomaton.getStates().get(setBitIndex)));
+			predicate = predicateUnifier.getOrConstructPredicate(smtManager.getPredicateFactory().and(predicate, alternatingAutomaton.getStates().get(setBitIndex)));
 			setBitIndex = getNextSetBit(state, setBitIndex + 1);
 		}
 		return predicate;

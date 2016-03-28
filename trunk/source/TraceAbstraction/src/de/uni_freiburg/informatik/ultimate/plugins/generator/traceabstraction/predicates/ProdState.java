@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import java.util.ArrayList;
 import java.util.List;

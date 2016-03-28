@@ -112,8 +112,10 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
 		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
-		m_PredicateUnifier = new PredicateUnifier(services, smtManager, smtManager.newTruePredicate(),
-				smtManager.newFalsePredicate());
+		TermVarsProc trueTvp = smtManager.getPredicateFactory().constructTrue();
+		TermVarsProc falseTvp = smtManager.getPredicateFactory().constructFalse();
+		m_PredicateUnifier = new PredicateUnifier(services, smtManager, smtManager.getPredicateFactory().newPredicate(trueTvp),
+				smtManager.getPredicateFactory().newPredicate(falseTvp));
 	}
 
 	@Override
@@ -430,7 +432,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomaton.generateCube(targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
-						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().and(targetStates.toArray(new IPredicate[targetStates.size()]))),
 						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
@@ -441,7 +443,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomaton.generateCube(new IPredicate[]{finalState}, new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
-						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().and(targetStates.toArray(new IPredicate[targetStates.size()]))),
 						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
@@ -600,15 +602,15 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		IPredicate pred = m_PredicateUnifier.getTruePredicate();
 		for(int i = 0; i < states.size(); i++){
 			if(bex.getAlpha().get(i)){
-				pred = m_SmtManager.newPredicate(
-						m_SmtManager.and(pred,
+				pred = m_SmtManager.getPredicateFactory().newPredicate(
+						m_SmtManager.getPredicateFactory().and(pred,
 								!bex.getBeta().get(i) ?
-									m_SmtManager.newPredicate(m_SmtManager.not(states.get(i))) :
+									m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().not(states.get(i))) :
 										states.get(i)));
 			}
 		}
 		if(bex.getNextConjunctExpression() != null){
-			pred = m_SmtManager.newPredicate(m_SmtManager.or(pred, 
+			pred = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().or(pred, 
 					bexToPredicate(bex.getNextConjunctExpression(), states)));
 		}
 		return pred;

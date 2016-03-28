@@ -86,8 +86,8 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 		
 		ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
 		
-		TermVarsProc tvp = super.m_SmtManager.and(p1, p2);
-		IPredicate result = super.m_SmtManager.newSPredicate(pp, tvp);
+		TermVarsProc tvp = super.m_SmtManager.getPredicateFactory().and(p1, p2);
+		IPredicate result = super.m_SmtManager.getPredicateFactory().newSPredicate(pp, tvp);
 		
 		if (m_IntersectedPredicateToArgumentPredicates.containsKey(result)) {
 			throw new AssertionError("States of difference automaton are not unique!");

@@ -232,7 +232,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		if (p == m_Postcondition) {
 			return true;
 		} else {
-			assert m_SmtManager.isDontCare(p) || p.getFormula() != m_SmtManager.getScript().term("false");
+			assert m_SmtManager.getPredicateFactory().isDontCare(p) || p.getFormula() != m_SmtManager.getScript().term("false");
 			return false;
 		}
 	}

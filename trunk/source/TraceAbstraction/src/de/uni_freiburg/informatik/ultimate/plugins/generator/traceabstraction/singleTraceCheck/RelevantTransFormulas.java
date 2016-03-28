@@ -39,13 +39,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAssertConjunctsOfCodeBlocks.SplitEqualityMapping;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
@@ -81,7 +81,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	private final Map<Integer, TransFormula> m_OldVarsAssignmentTransFormulasAtCall;
 	
 	
-	private final SmtManager m_SmtManager;
+	private final Boogie2SMT m_Boogie2Smt;
 	
 	private final static boolean s_ComputeSumSizeFormulasInUnsatCore = false;
 	
@@ -98,14 +98,14 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
 			boolean[] oldVarAssignmentAtCallInUnsatCore,
-			SmtManager smtManager) {
+			Boogie2SMT boogie2smt) {
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
 		m_GlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_OldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
-		m_SmtManager = smtManager;
+		m_Boogie2Smt = boogie2smt;
 		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, 
 				oldVarAssignmentAtCallInUnsatCore, modGlobalVarManager);
 		
@@ -116,7 +116,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 			SortedMap<Integer, IPredicate> pendingContexts,
 			Set<Term> unsat_core,
 			ModifiableGlobalVariableManager modGlobalVarManager,
-			SmtManager smtManager,
+			Boogie2SMT boogie2smt,
 			AnnotateAndAsserter aaa,
 			AnnotateAndAssertConjunctsOfCodeBlocks aac) {
 		super(nestedTrace, pendingContexts);
@@ -125,7 +125,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
 		m_GlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_OldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
-		m_SmtManager = smtManager;
+		m_Boogie2Smt = boogie2smt;
 		generateRelevantTransFormulas(unsat_core, modGlobalVarManager, aaa, aac);
 	}
 	
@@ -266,7 +266,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 			}
 		}
 		
-		return new TransFormula(m_SmtManager.newTruePredicate().getFormula(),
+		return new TransFormula(m_Boogie2Smt.getScript().term("true"),
 				new HashMap<BoogieVar, TermVariable>(),
 				outvars,
 				new HashSet<TermVariable>(), 
@@ -276,7 +276,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	}
 	
 	private TransFormula buildTransFormulaWithRelevantConjuncts(TransFormula tf, Term[] conjunctsInUnsatCore) {
-		Term formula = Util.and(m_SmtManager.getScript(), conjunctsInUnsatCore);
+		Term formula = Util.and(m_Boogie2Smt.getScript(), conjunctsInUnsatCore);
 		Set<TermVariable> freeVars = new HashSet<TermVariable>();
 		Collections.addAll(freeVars, formula.getFreeVars());
 		Map<BoogieVar, TermVariable> invars = new HashMap<BoogieVar, TermVariable>();
@@ -299,7 +299,7 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 				auxVars.add(tv);
 			}
 		}
-		Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, true, m_SmtManager.getBoogie2Smt());
+		Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, true, m_Boogie2Smt);
 		
 		return new TransFormula(formula,
 				invars,

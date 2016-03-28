@@ -27,22 +27,31 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableAST;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
@@ -50,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -74,8 +84,10 @@ public class HoareAnnotation extends SPredicate {
 	private final Logger mLogger;
 	private final IUltimateServiceProvider m_Services;
 
-	// private final Script m_Script;
-	private final SmtManager m_SmtManager;
+	private final Script m_Script;
+	private final Boogie2SMT m_Boogie2Smt;
+	private final PredicateFactory m_PredicateFactory;
+	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
 
 	private final Map<Term, Term> m_Precondition2Invariant = new HashMap<Term, Term>();
 	private boolean m_IsUnknown = false;
@@ -85,12 +97,18 @@ public class HoareAnnotation extends SPredicate {
 	private static final boolean s_AvoidImplications = true;
 	
 
-	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, SmtManager smtManager, IUltimateServiceProvider services) {
-		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, smtManager.getScript().term(
+	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, 
+			Boogie2SMT boogie2smt, PredicateFactory predicateFactory, 
+			ModifiableGlobalVariableManager modifiableGlobals, 
+			IUltimateServiceProvider services) {
+		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, boogie2smt.getScript().term(
 				"true"), new HashSet<BoogieVar>(), null);
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_Services = services;
-		m_SmtManager = smtManager;
+		m_Boogie2Smt = boogie2smt;
+		m_PredicateFactory = predicateFactory;
+		m_Script = boogie2smt.getScript();
+		m_ModifiableGlobals = modifiableGlobals;
 	}
 
 	/**
@@ -122,7 +140,7 @@ public class HoareAnnotation extends SPredicate {
 			throw new UnsupportedOperationException("Once Formula has been"
 					+ " computed it is not allowed to add new Formulas");
 		}
-		if (m_SmtManager.isDontCare(procPrecond) || m_SmtManager.isDontCare(locInvar)) {
+		if (m_PredicateFactory.isDontCare(procPrecond) || m_PredicateFactory.isDontCare(locInvar)) {
 			this.m_IsUnknown = true;
 			return;
 		}
@@ -136,7 +154,7 @@ public class HoareAnnotation extends SPredicate {
 		if (invarForPrecond == null) {
 			invarForPrecond = locInvarFormula;
 		} else {
-			invarForPrecond = Util.and(m_SmtManager.getScript(), invarForPrecond, locInvarFormula);
+			invarForPrecond = Util.and(m_Script, invarForPrecond, locInvarFormula);
 		}
 		// invarForPrecond = (new SimplifyDDA(m_Script,
 		// s_Logger)).getSimplifiedTerm(invarForPrecond);
@@ -166,25 +184,62 @@ public class HoareAnnotation extends SPredicate {
 	private void computeFormula() {
 		for (Term precond : getPrecondition2Invariant().keySet()) {
 			Term invariant = getPrecondition2Invariant().get(precond);
-			invariant = SmtUtils.simplify(m_SmtManager.getScript(), invariant, m_Services); 
-			Term precondTerm = Util.implies(m_SmtManager.getScript(), precond, invariant);
+			invariant = SmtUtils.simplify(m_Script, invariant, m_Services); 
+			Term precondTerm = Util.implies(m_Script, precond, invariant);
 			if (s_AvoidImplications) {
-				precondTerm = (new Nnf(m_SmtManager.getScript(), m_Services, m_SmtManager.getVariableManager())).transform(precondTerm);
+				precondTerm = (new Nnf(m_Script, m_Services, m_Boogie2Smt.getVariableManager())).transform(precondTerm);
 			}
 			mLogger.debug("In " + this + " holds " + invariant + " for precond " + precond);
-			m_Formula = Util.and(m_SmtManager.getScript(), m_Formula, precondTerm);
+			m_Formula = Util.and(m_Script, m_Formula, precondTerm);
 		}
-		m_Formula = m_SmtManager.substituteOldVarsOfNonModifiableGlobals(getProgramPoint().getProcedure(), m_Vars,
+		m_Formula = substituteOldVarsOfNonModifiableGlobals(getProgramPoint().getProcedure(), m_Vars,
 				m_Formula);
-		m_Formula = SmtUtils.simplify(m_SmtManager.getScript(), m_Formula, m_Services); 
+		m_Formula = SmtUtils.simplify(m_Script, m_Formula, m_Services); 
 		m_Formula = getPositiveNormalForm(m_Formula);
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(m_Formula, m_SmtManager.getBoogie2Smt());
-		m_ClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), m_SmtManager.getScript());
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(m_Formula, m_Boogie2Smt);
+		m_ClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), m_Script);
 	}
+	
+	
+	/**
+	 * For each oldVar in vars that is not modifiable by procedure proc:
+	 * substitute the oldVar by the corresponding globalVar in term and remove
+	 * the oldvar from vars.
+	 */
+	public Term substituteOldVarsOfNonModifiableGlobals(String proc, Set<BoogieVar> vars, Term term) {
+		final Set<BoogieVar> oldVarsOfmodifiableGlobals = m_ModifiableGlobals.getOldVarsAssignment(proc)
+				.getAssignedVars();
+		List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
+
+		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		ArrayList<Term> replacers = new ArrayList<Term>();
+
+		for (BoogieVar bv : vars) {
+			if (bv instanceof BoogieOldVar) {
+				if (!oldVarsOfmodifiableGlobals.contains(bv)) {
+					replacees.add(bv.getTermVariable());
+					replacers.add((((BoogieOldVar) bv).getNonOldVar()).getTermVariable());
+					replacedOldVars.add(bv);
+				}
+			}
+		}
+
+		TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
+		Term[] substValues = replacers.toArray(new Term[replacers.size()]);
+		Term result = m_Script.let(substVars, substValues, term);
+		result = (new FormulaUnLet()).unlet(result);
+
+		for (BoogieVar bv : replacedOldVars) {
+			vars.remove(bv);
+			vars.add(((BoogieOldVar) bv).getNonOldVar());
+		}
+		return result;
+	}
+	
 
 	private Term getPositiveNormalForm(Term term) {
-		Script script = m_SmtManager.getScript();
-		Term result = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(term);
+		Script script = m_Script;
+		Term result = (new AffineSubtermNormalizer(m_Script, mLogger)).transform(term);
 		assert (Util.checkSat(script, script.term("distinct", term, result)) != LBool.SAT);
 		return result;
 	}

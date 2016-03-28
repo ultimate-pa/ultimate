@@ -660,11 +660,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		for (Entry<ProgramPoint, HashSet<AnnotatedProgramPoint>> kvp : programPointToAnnotatedProgramPoints
 				.entrySet()) {
-			IPredicate annot = m_smtManager.newFalsePredicate();
+			IPredicate annot = m_smtManager.getPredicateFactory().newPredicate(
+					m_smtManager.getPredicateFactory().constructFalse()); 
 
 			for (AnnotatedProgramPoint app : kvp.getValue()) {
-				TermVarsProc tvp = m_smtManager.or(annot, app.getPredicate());
-				annot = m_smtManager.newSPredicate(kvp.getKey(), tvp);
+				TermVarsProc tvp = m_smtManager.getPredicateFactory().or(annot, app.getPredicate());
+				annot = m_smtManager.getPredicateFactory().newSPredicate(kvp.getKey(), tvp);
 			}
 			// programPointToHoareAnnotation.put(kvp.getKey(), annot.getClosedFormula());
 			programPointToHoareAnnotation.put(kvp.getKey(), annot.getFormula());

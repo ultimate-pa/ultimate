@@ -560,7 +560,7 @@ public class NestedInterpolantsBuilder {
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
 			} else {
-				result[resultPos] = m_SmtManagerPredicates.newDontCarePredicate(null);
+				result[resultPos] = m_SmtManagerPredicates.getPredicateFactory().newDontCarePredicate(null);
 			}
 		}
 		assert craigInterpolPos == m_CraigInterpolants.length;

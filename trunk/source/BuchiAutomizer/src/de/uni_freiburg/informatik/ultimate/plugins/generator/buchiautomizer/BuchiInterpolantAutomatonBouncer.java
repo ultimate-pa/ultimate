@@ -404,7 +404,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			HashRelation<IPredicate, IPredicate> resPred2InputPreds) {
 		IPredicate resSucc = inputPreds2ResultPreds.get(succs);
 		if (resSucc == null) {
-			TermVarsProc conjunction = m_SmtManager.and(succs.toArray(new IPredicate[0]));
+			TermVarsProc conjunction = m_SmtManager.getPredicateFactory().and(succs.toArray(new IPredicate[0]));
 			resSucc = predicateUnifier.getOrConstructPredicate(conjunction);
 			assert resSucc != m_IaFalseState : "false should have been handeled before";
 			inputPreds2ResultPreds.put(succs, resSucc);

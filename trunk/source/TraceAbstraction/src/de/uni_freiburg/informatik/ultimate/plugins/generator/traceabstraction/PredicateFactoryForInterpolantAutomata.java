@@ -53,7 +53,7 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 	public PredicateFactoryForInterpolantAutomata(SmtManager smtManager, TAPreferences taPrefs) {
 		m_Pref = taPrefs;
 		m_SmtManager = smtManager;
-		m_emtpyStack = m_SmtManager.newEmptyStackPredicate();
+		m_emtpyStack = m_SmtManager.getPredicateFactory().newEmptyStackPredicate();
 	}
 
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
@@ -69,23 +69,22 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 			List<IPredicate> upPredicates = new ArrayList<IPredicate>();
 			for (IPredicate caller : down2up.keySet()) {
 				for (IPredicate current : down2up.get(caller)) {
-					if (m_SmtManager.isDontCare(current)) {
-						return m_SmtManager.newDontCarePredicate(null);
+					if (m_SmtManager.getPredicateFactory().isDontCare(current)) {
+						return m_SmtManager.getPredicateFactory().newDontCarePredicate(null);
 					}
 					upPredicates.add(current);
 				}
 			}
-			TermVarsProc tvp = m_SmtManager.and(upPredicates.toArray(new IPredicate[0]));
-			IPredicate result = m_SmtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(),
-					tvp.getClosedFormula());
+			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(upPredicates.toArray(new IPredicate[0]));
+			IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 			return result;
 		} else {
-			return m_SmtManager.newDontCarePredicate(null);
+			return m_SmtManager.getPredicateFactory().newDontCarePredicate(null);
 		}
 	}
 
 	public IPredicate createSinkStateContent() {
-		return m_SmtManager.newTruePredicate();
+		return m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructTrue());
 	}
 
 	@Override
@@ -100,21 +99,20 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 
 	@Override
 	public IPredicate minimize(Collection<IPredicate> states) {
-		TermVarsProc tvp = m_SmtManager.or(states.toArray(new IPredicate[0]));
-		IPredicate result = m_SmtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(),
-				tvp.getClosedFormula());
+		TermVarsProc tvp = m_SmtManager.getPredicateFactory().or(states.toArray(new IPredicate[0]));
+		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 		return result;
 	}
 
 	@Override
 	public IPredicate senwa(IPredicate entry, IPredicate state) {
 		assert false : "still used?";
-		return m_SmtManager.newDontCarePredicate(((SPredicate) state).getProgramPoint());
+		return m_SmtManager.getPredicateFactory().newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
 
 	@Override
 	public IPredicate buchiComplementFKV(LevelRankingState<?, IPredicate> compl) {
-		return m_SmtManager.newDebugPredicate(compl.toString());
+		return m_SmtManager.getPredicateFactory().newDebugPredicate(compl.toString());
 	}
 
 	@Override
@@ -146,8 +144,8 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 		}
 		ProgramPoint c2PP = ((ISLPredicate) c2).getProgramPoint();
 		programPoints[programPoints.length - 1] = c2PP;
-		TermVarsProc tvp = m_SmtManager.and(c1, c2);
-		IMLPredicate result = m_SmtManager.newMLPredicate(programPoints, tvp);
+		TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(c1, c2);
+		IMLPredicate result = m_SmtManager.getPredicateFactory().newMLPredicate(programPoints, tvp);
 		return result;
 	}
 

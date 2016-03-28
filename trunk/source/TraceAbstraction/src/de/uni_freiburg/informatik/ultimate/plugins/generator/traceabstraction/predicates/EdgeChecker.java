@@ -82,7 +82,7 @@ public class EdgeChecker {
 	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
 	private static final String s_EndEdgeCheck = "finished to check validity of Hoare triples";
 	
-	public EdgeChecker(SmtManager smtManager, 
+	private EdgeChecker(SmtManager smtManager, 
 			ModifiableGlobalVariableManager modGlobVarManager, 
 			IPredicateCoverageChecker predicateCoverageChecker) {
 		m_SmtManager = smtManager;
@@ -92,7 +92,7 @@ public class EdgeChecker {
 		m_PredicateCoverageChecker = predicateCoverageChecker;
 	}
 	
-	public EdgeChecker(SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager) {
+	private EdgeChecker(SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager) {
 		this(smtManager, modGlobVarManager, null);
 	}
 	

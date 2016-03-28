@@ -28,7 +28,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
-import java.util.HashMap;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
@@ -42,9 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
@@ -114,7 +111,7 @@ public abstract class CodeChecker {
 	 *            : The second Predicate.
 	 */
 	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
-		TermVarsProc tvp = m_smtManager.and(a, b);
+		TermVarsProc tvp = m_smtManager.getPredicateFactory().and(a, b);
 		return m_predicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -125,7 +122,7 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicate(IPredicate a) {
-		TermVarsProc tvp = m_smtManager.not(a);
+		TermVarsProc tvp = m_smtManager.getPredicateFactory().not(a);
 		return m_predicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -137,8 +134,8 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicateNoPU(IPredicate a) {
-		TermVarsProc tvp = m_smtManager.not(a);
-		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+		TermVarsProc tvp = m_smtManager.getPredicateFactory().not(a);
+		return m_smtManager.getPredicateFactory().newPredicate(tvp);
 	}
 
 

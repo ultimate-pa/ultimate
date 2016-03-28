@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -117,12 +116,12 @@ public class PredicateUnifier {
 			}
 		}
 		if (truePredicate == null) {
-			m_TruePredicate = m_SmtManager.newTruePredicate();
+			m_TruePredicate = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructTrue());
 		} else {
 			m_TruePredicate = truePredicate;
 		}
 		if (falsePredicate == null) {
-			m_FalsePredicate = m_SmtManager.newFalsePredicate();
+			m_FalsePredicate = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructFalse());
 		} else {
 			m_FalsePredicate = falsePredicate;
 		}
@@ -220,7 +219,7 @@ public class PredicateUnifier {
 					}
 				}
 			}
-			TermVarsProc tvp = m_SmtManager.and(minimalSubset.toArray(new IPredicate[minimalSubset.size()]));
+			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(minimalSubset.toArray(new IPredicate[minimalSubset.size()]));
 			return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures(), 
 					impliedPredicates, expliedPredicates);
 //			return null;
@@ -365,7 +364,8 @@ public class PredicateUnifier {
 			simplifiedTerm = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(simplifiedTerm);
 		}
 		if (simplifiedTerm == term) {
-			result = m_SmtManager.newPredicate(term, procs, vars, pc.getClosedTerm());
+			TermVarsProc tvp = new TermVarsProc(term, vars, procs, pc.getClosedTerm());
+			result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 		} else {
 			Set<TermVariable> tvs = new HashSet<TermVariable>(
 					Arrays.asList(simplifiedTerm.getFreeVars()));
@@ -381,9 +381,9 @@ public class PredicateUnifier {
 			}
 			Term closedTerm = PredicateUtils.computeClosedFormula(
 					simplifiedTerm, vars, m_SmtManager.getScript());
-			result = m_SmtManager.newPredicate(simplifiedTerm, 
-					newProcs.toArray(new String[newProcs.size()]), 
-					newVars, closedTerm);
+			TermVarsProc tvp = new TermVarsProc(simplifiedTerm, newVars, 
+					newProcs.toArray(new String[newProcs.size()]), closedTerm);
+			result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 		}
 		if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
 			m_DeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
