@@ -224,7 +224,7 @@ public class MinModelConverter {
 		rootAnnot.getLoopLocations().clear();
 		for (ProgramPoint oldVal : keySet) {
 			if (progPointMap.containsKey(oldVal)) {
-				ProgramPoint newVal = progPointMap.get(oldVal);
+				ProgramPoint newVal = (ProgramPoint) progPointMap.get(oldVal);
 				if (newVal.getBoogieASTNode() != null) {
 					// Since hashCode(oldVal) == hashCode(newVal), this line
 					// overwrites the old entry, so that we do not remove it in

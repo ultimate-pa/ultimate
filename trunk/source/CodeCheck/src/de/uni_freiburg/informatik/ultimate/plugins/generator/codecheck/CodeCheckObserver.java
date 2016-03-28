@@ -802,7 +802,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
-		for (ProgramPoint errorLoc : errorLocs) {
+		for (ProgramPoint errorIpp : errorLocs) {
+			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "
 					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();

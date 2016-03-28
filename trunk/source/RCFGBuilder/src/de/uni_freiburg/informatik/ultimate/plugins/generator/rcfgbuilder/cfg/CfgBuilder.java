@@ -1110,10 +1110,6 @@ public class CfgBuilder {
 				newLocNode.addOutgoing(transEdge);
 			}
 			oldLocNode.clearOutgoing();
-			if (oldLocNode.getBoogieASTNode() != null && oldLocNode.getBoogieASTNode().getLocation().isLoop()) {
-				mLogger.debug("LocNode does not have to Location of the while loop"
-						+ oldLocNode.getBoogieASTNode().getLocation());
-			}
 
 			m_procLocNodes.remove(oldLocNode.getPosition());
 

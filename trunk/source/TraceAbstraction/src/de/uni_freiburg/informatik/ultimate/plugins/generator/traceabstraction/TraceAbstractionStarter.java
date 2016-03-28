@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
@@ -173,7 +174,6 @@ public class TraceAbstractionStarter {
 			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 
 			for (ProgramPoint locNode : locsForLoopLocations) {
-				assert (locNode.getBoogieASTNode() != null) : "locNode without BoogieASTNode";
 				final HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
 					final Term formula = hoare.getFormula();
@@ -240,7 +240,8 @@ public class TraceAbstractionStarter {
 	private void logNumberOfWitnessInvariants(Collection<ProgramPoint> errNodesOfAllProc) {
 		int numberOfCheckedInvariants = 0;
 		for (ProgramPoint err : errNodesOfAllProc) {
-			IAnnotations annot = err.getBoogieASTNode().getPayload().getAnnotations().get(Check.class.getName());
+			BoogieASTNode boogieASTNode = ((ProgramPoint) err).getBoogieASTNode();
+			IAnnotations annot = boogieASTNode.getPayload().getAnnotations().get(Check.class.getName());
 			if (annot != null) {
 				Check check = (Check) annot;
 				if (check.getSpec() == Spec.WITNESS_INVARIANT) {
@@ -367,7 +368,8 @@ public class TraceAbstractionStarter {
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs,
 			ToolchainCanceledException toolchainCanceledException) {
-		for (ProgramPoint errorLoc : errorLocs) {
+		for (ProgramPoint errorIpp : errorLocs) {
+			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that ";
 			timeOutMessage += ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();

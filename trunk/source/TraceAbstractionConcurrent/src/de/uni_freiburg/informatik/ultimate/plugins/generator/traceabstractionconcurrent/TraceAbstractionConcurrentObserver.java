@@ -243,7 +243,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
-		for (ProgramPoint errorLoc : errorLocs) {
+		for (ProgramPoint errorIpp : errorLocs) {
+			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Timeout! Unable to prove that "
 					+ origin.getCheck().getPositiveMessage();
@@ -303,17 +304,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	public boolean performedChanges() {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	/**
-	 * Return the checked specification that is checked at the error location.
-	 */
-	private static Check getCheckedSpecification(ProgramPoint errorLoc) {
-		if (errorLoc.getPayload().hasAnnotation()) {
-			IAnnotations check = errorLoc.getPayload().getAnnotations().get(Check.getIdentifier());
-			return (Check) check;
-		}
-		return errorLoc.getBoogieASTNode().getLocation().getOrigin().getCheck();
 	}
 
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
