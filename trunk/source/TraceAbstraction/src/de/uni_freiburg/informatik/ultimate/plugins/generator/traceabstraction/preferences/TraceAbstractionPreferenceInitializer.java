@@ -94,6 +94,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<Boolean>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_UNFOLDING2NET, DEF_UNFOLDING2NET, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS, DEF_ERROR_TRACE_RELEVANCE_ANALYSIS, PreferenceType.Boolean),
 
 		};
 	}
@@ -138,6 +139,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_LIVE_VARIABLES = "Use live variables";
 	public static final String LABEL_LANGUAGE_OPERATION = "LanguageOperation";
 	public static final String LABEL_USE_ABSTRACT_INTERPRETATION = "Use abstract interpretation";
+	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS = "Error trace relevance analysis";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
@@ -185,6 +187,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_simplifyCodeBlocks = false;
 	public static final boolean DEF_PreserveGotoEdges = false;
 	public static final boolean DEF_USE_ABSTRACT_INTERPRETATION = false;
+	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS = false;
 
 	public enum InterpolantAutomaton {
 		CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK, TOTALINTERPOLATION2

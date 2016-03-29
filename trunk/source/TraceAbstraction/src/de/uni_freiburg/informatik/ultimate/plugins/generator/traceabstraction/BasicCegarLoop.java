@@ -158,7 +158,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> m_WitnessAutomaton;
 
 	// private IHoareTripleChecker m_HoareTripleChecker;
-	private boolean m_DoFaultLocalization = false;
+	private final boolean m_DoFaultLocalization;
 	private HashSet<ProgramPoint> m_HoareAnnotationPositions;
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
@@ -211,6 +211,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		UltimatePreferenceStore m_Prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		m_UnsatCores = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		m_UseLiveVariables = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
+		m_DoFaultLocalization = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS);
 
 		if (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION)) {
@@ -371,15 +372,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					indentation = indentation.substring(0, indentation.length() - 4);
 				}
 			}
+			m_RcfgProgramExecution = interpolatingTraceChecker.getRcfgProgramExecution();
 			if (m_DoFaultLocalization && feasibility == LBool.SAT) {
 				FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(m_Counterexample,
 						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_Services, m_SmtManager,
 						m_ModGlobVarManager, predicateUnifier);
-				a.getRelevanceInformation();
+				m_RcfgProgramExecution = m_RcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 			// s_Logger.info("Trace with values");
 			// s_Logger.info(interpolatingTraceChecker.getRcfgProgramExecution());
-			m_RcfgProgramExecution = interpolatingTraceChecker.getRcfgProgramExecution();
 		}
 		m_CegarLoopBenchmark.addTraceCheckerData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		// m_TraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
