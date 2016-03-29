@@ -1,0 +1,250 @@
+/**
+ * JavaCC file
+ */
+
+
+options {
+  JDK_VERSION = "1.5";
+  STATIC = false;
+}
+PARSER_BEGIN(HedgeAutomatonParser)
+package de.uni_muenster.cs.sev.lethal.parser.hedgeautomaton;
+
+import java.io.ByteArrayInputStream;
+import java.util.*;
+import de.uni_muenster.cs.sev.lethal.hedgeautomaton.*;
+import de.uni_muenster.cs.sev.lethal.hedgeautomaton.expressions.*;
+import de.uni_muenster.cs.sev.lethal.states.*;
+import de.uni_muenster.cs.sev.lethal.factories.*;
+import de.uni_muenster.cs.sev.lethal.symbol.common.*;
+import de.uni_muenster.cs.sev.lethal.symbol.standard.*;
+
+/**
+ * Parser for hedge automata.
+ * @author Philipp
+ */
+public class HedgeAutomatonParser {
+	private static HedgeAutomatonParser parser = new HedgeAutomatonParser(new ByteArrayInputStream(new byte[]{}));
+	
+	public static EasyHedgeAutomaton parseString(String s) throws ParseException{
+		parser.ReInit(new ByteArrayInputStream(s.getBytes()));
+		return parser.hedgeautomaton();
+	}
+	
+	private static List<String> stringRange(String startName, String endName) throws ParseException{
+		List<String> names = new ArrayList<String>();
+		names.add(startName);
+		
+		if (endName != null){
+			if (startName.length() != endName.length()) throw new ParseException("Ranges only support equal length names");
+			StringBuffer currentName = new StringBuffer(startName);
+			while (!currentName.toString().equals(endName)){
+				for (int pos = 0; pos < startName.length(); pos++){
+					if (startName.charAt(pos) != endName.charAt(pos)){
+						if (currentName.charAt(pos) < endName.charAt(pos)){
+							currentName.setCharAt(pos, (char)(currentName.charAt(pos) + 1));
+							names.add(currentName.toString());
+							break;
+						} else {
+							currentName.setCharAt(pos, startName.charAt(pos));
+						}
+					}
+				}
+			}
+		}
+		return names;
+	}
+
+}
+PARSER_END(HedgeAutomatonParser)
+
+SKIP : { " " | "\t" }
+
+TOKEN :
+{
+    < NAME:		( ["a"-"z","A"-"Z","_", "'", "<", ">", "0"-"9"] )+ > |
+    < RSTART:   ( "{" ( ["0"-"9"] )* ) > |
+    < REND:     ( "," ( ["0"-"9"] )* "}" ) > |
+    < FIN_MARK:  ( ["\u00b0","%","!"] ) > |
+    < LINE_END_COMMENT: "//" (~["\n"])* > 
+
+}
+
+EasyHedgeAutomaton hedgeautomaton() :
+{
+	Set<State> states = new HashSet<State>();
+	Set<State> finalStates = new HashSet<State>();
+	List<HedgeRule<UnrankedSymbol,State>> lineRules;
+	Set<HedgeRule<UnrankedSymbol,State>> haRules = new HashSet<HedgeRule<UnrankedSymbol,State>>();
+}
+{
+	(
+	  	( lineRules = line(states, finalStates) {haRules.addAll(lineRules);} )? (<LINE_END_COMMENT>)?
+	  	( "\n" ( lineRules = line(states, finalStates) {haRules.addAll(lineRules);} )? (<LINE_END_COMMENT>)? )*  
+	) <EOF>
+	{return new EasyHedgeAutomaton(states,finalStates,haRules);}	
+}
+
+List<HedgeRule<UnrankedSymbol, State>> line(Set<State> states, Set<State> finalStates) :
+{
+	String symName;
+	List<UnrankedSymbol> symbolSet = new ArrayList<UnrankedSymbol>();
+	State destState;
+	RegularExpression exp = null;
+	List<HedgeRule<UnrankedSymbol,State>> rules = new ArrayList<HedgeRule<UnrankedSymbol,State>>();
+}
+{
+	(
+		(
+			symName=<NAME>.image {symbolSet.add(new StdNamedUnrankedSymbol<String>(symName));}
+				| "[" symbolSet =  symbolSet() "]"
+		)
+		( "(" ( exp=regexp(states, finalStates) )? ")" )?
+		"->" destState=state(states,finalStates)
+	)
+	{
+		if (exp == null){
+			exp = new EmptyExpression<UnrankedSymbol,State>();
+		}
+		for (UnrankedSymbol sym : symbolSet){
+			rules.add(new HedgeRule<UnrankedSymbol,State>(sym, exp, destState));
+		}
+		return rules;
+	}
+}
+
+List<UnrankedSymbol> symbolSet() :
+{
+	String startName;
+	String endName = null;
+	List<UnrankedSymbol> symbols = null;
+}
+{
+	(startName = <NAME>.image ( "-" endName = <NAME>.image )? ( "," symbols = symbolSet() )? )
+	{
+		if (symbols == null) symbols = new ArrayList<UnrankedSymbol>();
+		for (String stateName : stringRange(startName,endName)){
+			symbols.add(new StdNamedUnrankedSymbol<String>(stateName));
+		}
+		return symbols;
+	}
+}
+
+
+RegularExpression regexp(Set<State> states, Set<State> finalStates) :
+{
+	RegularExpression rightExp = null;
+	//List<State> leftStates = null;
+	RegularExpression leftExp = null;
+	boolean boundsGiven = false;
+	String smin;
+	String smax;
+	int min = 1;
+	int max = 1;
+	boolean disj = false;
+}
+{
+ 	( 
+ 		(
+ 			leftExp = states(states,finalStates) | "(" leftExp = regexp(states,finalStates) ")"
+ 		)
+ 		
+ 		(
+ 			( smin=<RSTART>.image smax=<REND>.image) {
+ 				min = (smin.length() > 1 ? Integer.valueOf(smin.substring(1,smin.length())) : 0);
+ 				max = (smax.length() > 2 ? Integer.valueOf(smax.substring(1,smax.length()-1)) : -1);
+ 				boundsGiven=true;
+ 			}
+ 			| ( "*" {min=0;max=-1;boundsGiven=true;} )
+ 			| ( "+" {min=1;max=-1;boundsGiven=true;} )
+ 			| ( "?" {min=0;max=1 ;boundsGiven=true;} )
+ 		)?
+ 		
+ 		(
+ 			"|" rightExp = regexp(states,finalStates) {disj = true;}
+ 			| (",")? rightExp = regexp(states,finalStates) {disj = false;} 
+ 		)?
+ 			
+ 	)
+ 	{
+ 		if (!boundsGiven){
+ 			min = max = 1;
+ 		}
+ 		
+ 		//if (leftStates != null){
+ 		//	leftExp = new Expression(min,max, new BasicExpression(leftStates));
+ 		//} else
+ 		if (min != 1 || max != 1) {
+ 			leftExp = JoeExpression.makeOptimizedJoe(min,max, leftExp);
+ 		}
+ 		 		
+ 		if (rightExp != null){ 
+	 		if (disj){
+	 			return OrExpression.makeOptimizedOr(1,1, leftExp, rightExp);
+	 		} else {
+	 			return ConcatExpression.makeOptimizedConcat(1,1, leftExp,rightExp);
+	 		}
+	 	} else {
+	 		return leftExp;
+	 	}
+ 	}
+}
+
+RegularExpression states(Set<State> allStates, Set<State> finalStates) :
+{
+	State state;
+	List<State> rstates = new ArrayList<State>();
+}
+{
+	(
+		( state = state(allStates,finalStates) {rstates.add(state);} ) 
+		| ( "[" rstates = stateSet() {allStates.addAll(rstates);} "]" (<FIN_MARK> {finalStates.addAll(rstates);} )? )
+	)
+	{
+		RegularExpression exp = null;
+		for (State rstate : rstates){
+			List<State> slist = new ArrayList<State>();
+			slist.add(rstate);
+			BasicExpression bexp = new BasicExpression(slist);
+			if (exp == null){
+				exp = new Expression(1,1, bexp);
+			} else {
+				exp = OrExpression.makeOptimizedOr(1,1, exp, new Expression(1,1, bexp));
+			}
+		}
+		return exp;
+	}
+}
+
+List<State> stateSet() :
+{
+	String startName;
+	String endName = null;
+	List<State> states = null;
+}
+{
+	(startName = <NAME>.image ( "-" endName = <NAME>.image )? ( "," states = stateSet() )? )
+	{
+		if (states == null) states = new ArrayList<State>();
+		for (String stateName : stringRange(startName,endName)){
+			states.add(StateFactory.getStateFactory().makeState(stateName));
+		}
+		return states;
+	}
+}
+
+State state(Set<State> states, Set<State> finalStates) :
+{
+	String name;
+	State state;
+	boolean isFinal = false;
+}
+{
+	name=<NAME>.image ( <FIN_MARK> {isFinal=true;} )?
+	{
+		state = StateFactory.getStateFactory().makeState(name);
+		states.add(state);
+		if (isFinal) finalStates.add(state);
+		return state;
+	}
+}

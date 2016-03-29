@@ -1,0 +1,113 @@
+/**
+ * JavaCC file
+ */
+ 
+options {
+  JDK_VERSION = "1.5";
+  STATIC = false;
+}
+PARSER_BEGIN(TreeParser)
+package de.uni_muenster.cs.sev.lethal.parser.tree;
+
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import de.uni_muenster.cs.sev.lethal.symbol.common.*;
+import de.uni_muenster.cs.sev.lethal.symbol.special.*;
+import de.uni_muenster.cs.sev.lethal.utils.*;
+import de.uni_muenster.cs.sev.lethal.tree.standard.*;
+import de.uni_muenster.cs.sev.lethal.tree.common.*;
+import de.uni_muenster.cs.sev.lethal.tree.special.*;
+import de.uni_muenster.cs.sev.lethal.hedgeautomaton.*;
+import de.uni_muenster.cs.sev.lethal.factories.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Tree/Hedge parser
+ * @author Philipp
+ */
+public class TreeParser<S extends Symbol> {
+	
+	public static Tree<RankedSymbol> parseString(String s) throws ParseException{
+		return parseString(s,RankedSymbol.class);
+	}
+	public static Tree<UnrankedSymbol> parseStringAsHedge(String s) throws ParseException{
+		return parseString(s,UnrankedSymbol.class);
+	}
+
+	public static <S extends Symbol> Tree<S> parseString(String s, Class<S> symClass) throws ParseException{
+        NamedSymbolTreeFactory<S> tc = TreeFactory.getTreeFactory(symClass);
+        TreeParser<S> parser = new TreeParser<S>(new ByteArrayInputStream(s.getBytes()));
+        return parser.inputTree(tc);
+	}
+	
+	public static Tree<RankedSymbol> makeTree(String nodeName, List<Tree<RankedSymbol>> subTrees) throws ParseException{
+		return makeTree(nodeName,subTrees, RankedSymbol.class);
+	}
+
+	public static Tree<UnrankedSymbol> makeHedge(String nodeName, List<Tree<UnrankedSymbol>> subTrees) throws ParseException{
+		return makeTree(nodeName,subTrees,UnrankedSymbol.class);
+	}
+	
+	private static <S extends Symbol> Tree<S> makeTree(String nodeName, List subTrees, Class<S> symClass) throws ParseException{
+		Pattern p = Pattern.compile("^\\s*([a-zA-Z_'><0-9]+)\\s*$");
+		Matcher m = p.matcher(nodeName);
+		if (!m.find()) throw new ParseException("Invalid node name");
+		nodeName = m.group(1);
+		NamedSymbolTreeFactory<S> tc = TreeFactory.getTreeFactory(symClass);
+		return tc.makeTreeFromName(nodeName, subTrees);
+	}
+	
+}
+PARSER_END(TreeParser)
+
+SKIP : { " " | "\t" }
+
+TOKEN :
+{
+    < NAME:    ( ["a"-"z", "A"-"Z", "_",".", "/", "'", "0"-"9", "<" , ">" , "#", "'", "\u2588" ] )+ > |
+    < CONTENT: "\"" ( ~ [ "\"" ]  )+ "\"" >
+}
+
+Tree<S> inputTree(NamedSymbolTreeFactory<S> tc) : 
+{
+	Tree<S> result;
+}
+{
+	result = tree(tc) <EOF>
+	{return result;}
+}
+
+
+Tree<S> tree(NamedSymbolTreeFactory<S> tc) : 
+{
+	Tree<S> subtree;
+	ArrayList<Tree<S>> subtrees = new ArrayList<Tree<S>>();
+	String symbolName = null;
+	//RankedSymbol specialSymbol = null;
+	String content = null; 
+}
+{
+	( 
+		content =<CONTENT>.image 
+	) { return new StringTree<S>(tc.getSymbolClass(), content.substring(1,content.length()-1)); }
+		
+	|
+	
+	( symbolName=<NAME>.image
+		(
+			"(" 
+			( subtree = tree(tc) {subtrees.add(subtree);} 
+				( "," subtree = tree(tc) {subtrees.add(subtree);} )* 
+			)? 
+			")" 
+		)?
+	
+	)
+	{
+		return tc.makeTreeFromName(symbolName, subtrees);
+	}
+	
+}
+
