@@ -38,4 +38,10 @@
   <artifactId>de.uni_freiburg.informatik.ultimate.automata</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>
+  <dependencies>
+  	<dependency>
+  		<groupId>Library-Lethal</groupId>
+  		<artifactId>Library-Lethal</artifactId>
+  	</dependency>
+  </dependencies>
 </project>

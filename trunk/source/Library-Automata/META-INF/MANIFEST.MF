@@ -6,7 +6,8 @@ Bundle-Version: 0.0.1
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-SMTLIB,
- Library-UltimateUtil
+ Library-UltimateUtil,
+ Library-Lethal;bundle-version="0.9.0"
 Export-Package: de.uni_freiburg.informatik.ultimate.automata;
   uses:="org.eclipse.jface.resource,
    de.uni_freiburg.informatik.ultimate.ep.interfaces,
