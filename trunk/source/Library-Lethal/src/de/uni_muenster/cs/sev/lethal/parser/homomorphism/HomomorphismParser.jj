@@ -1,0 +1,129 @@
+/**
+ * JavaCC file
+ */
+
+
+options {
+  JDK_VERSION = "1.5";
+  STATIC = false;
+}
+PARSER_BEGIN(HomomorphismParser)
+package de.uni_muenster.cs.sev.lethal.parser.homomorphism;
+
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import de.uni_muenster.cs.sev.lethal.symbol.common.*;
+import de.uni_muenster.cs.sev.lethal.symbol.standard.*;
+import de.uni_muenster.cs.sev.lethal.states.*;
+import de.uni_muenster.cs.sev.lethal.utils.*;
+import de.uni_muenster.cs.sev.lethal.tree.common.*;
+import de.uni_muenster.cs.sev.lethal.tree.standard.*;
+import de.uni_muenster.cs.sev.lethal.factories.*;
+import de.uni_muenster.cs.sev.lethal.hom.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+
+/**
+ * Tree homomorphism parser
+ * @author Philipp
+ */
+public class HomomorphismParser {
+	private static HomomorphismParser parser = new HomomorphismParser(new ByteArrayInputStream(new byte[]{}));
+	
+	public static EasyHom parseString(String s) throws ParseException{
+		parser.ReInit(new ByteArrayInputStream(s.getBytes()));
+		return new EasyHom(parser.homomorphism());
+	}
+
+}
+PARSER_END(HomomorphismParser)
+
+SKIP : { " " | "\t" }
+
+TOKEN :
+{
+    < NAME:    ( ["a"-"z","A"-"Z","_", "'", "<", ">", "0"-"9"] )+ > | 
+    <LINE_END_COMMENT: "//" (~["\n"])* >
+}
+
+HashMap<RankedSymbol,Tree<? extends BiSymbol<RankedSymbol,Variable>>> homomorphism() :
+{
+	Pair<RankedSymbol,Tree<BiSymbol<RankedSymbol,Variable>>> rule;
+	HashMap<RankedSymbol,Tree<? extends BiSymbol<RankedSymbol,Variable>>> rules = new HashMap<RankedSymbol,Tree<? extends BiSymbol<RankedSymbol,Variable>>>();
+}
+{
+	( 
+		( rule = homomorphismRule() {rules.put(rule.getFirst(), rule.getSecond());} )? (<LINE_END_COMMENT>)?
+		( "\n"
+			( 
+				rule = homomorphismRule()
+				{
+					if (rules.containsKey(rule.getFirst())) throw new ParseException("Multiple rule definitions for symbol " + rule.getFirst());
+					rules.put(rule.getFirst(), rule.getSecond());
+				}
+			)?
+			(<LINE_END_COMMENT>)?
+		)*
+	) <EOF> 
+	{ return rules; }
+}
+
+Pair<RankedSymbol,Tree<BiSymbol<RankedSymbol,Variable>>> homomorphismRule() :
+{
+	Pair<RankedSymbol, List<String>> func;
+	Tree<BiSymbol<RankedSymbol,Variable>> vtree;
+	Pair<RankedSymbol,Tree<BiSymbol<RankedSymbol,Variable>>> rule;
+}
+{
+	func = function() "->" vtree = tree(func.getSecond())
+	{return new Pair<RankedSymbol,Tree<BiSymbol<RankedSymbol,Variable>>>(func.getFirst(), vtree);}
+}
+
+Pair<RankedSymbol, List<String>> function() :
+{
+	String functionName;
+	String var;
+	List<String> variableNames = new ArrayList<String>();
+}
+{
+	functionName=<NAME>.image ( "(" ( var=<NAME>.image {variableNames.add(var);} ( "," var=<NAME>.image {variableNames.add(var);} )* )? ")" )?
+	
+	{
+		RankedSymbol function = new StdNamedRankedSymbol(functionName, variableNames.size());
+		return new Pair<RankedSymbol, List<String>>(function,variableNames);
+	}
+}
+
+
+Tree<BiSymbol<RankedSymbol,Variable>> tree(List<String> variableNames) : 
+{
+	Tree<BiSymbol<RankedSymbol,Variable>> subtree;
+	ArrayList<Tree<BiSymbol<RankedSymbol,Variable>>> subtrees = new ArrayList<Tree<BiSymbol<RankedSymbol,Variable>>>();
+	String symbolName; 
+}
+{
+	symbolName=<NAME>.image 
+	(
+		"("
+		(
+			subtree = tree(variableNames) {subtrees.add(subtree);} 
+			(
+				"," subtree = tree(variableNames) {subtrees.add(subtree);} 
+			)* 
+		)? 
+		")" 
+	)?
+	
+	{
+		int index = variableNames.indexOf(symbolName);
+		if (index != -1){
+			if (subtrees.size() != 0) throw new ParseException("Variable Symbols must be leaf nodes");
+			return TreeFactory.getTreeFactory().makeTreeFromSymbol((BiSymbol<RankedSymbol,Variable>)new LeafSymbol<RankedSymbol,Variable>((Variable)new NamedVariable(symbolName, index)));
+		} else {
+			return TreeFactory.getTreeFactory().makeTreeFromSymbol((BiSymbol<RankedSymbol,Variable>)new InnerSymbol<RankedSymbol,Variable>(new StdNamedRankedSymbol(symbolName, subtrees.size())), subtrees);
+		}
+	}
+}
