@@ -318,16 +318,4 @@ public class BooleanValue {
 			throw new UnsupportedOperationException("The boolean value type " + mValue + " is not implemented.");
 		}
 	}
-	/**
-	 * Returns <code>true</code> if and only if <code>this</code> is a strict subset of <code>other</code>.
-	 */
-	public boolean isSubsetOf(BooleanValue other) {
-		if (mValue == Value.TOP || other.mValue == Value.BOTTOM) {
-			return false;
-		}
-		if (mValue == Value.BOTTOM) {
-			return true;
-		}
-		return other.mValue == Value.TOP;
-	}
 }

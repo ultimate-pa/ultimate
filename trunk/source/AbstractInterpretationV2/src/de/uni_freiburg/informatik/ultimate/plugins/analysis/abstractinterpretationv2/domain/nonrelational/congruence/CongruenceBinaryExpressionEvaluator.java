@@ -93,7 +93,7 @@ public class CongruenceBinaryExpressionEvaluator
 
 		for (final IEvaluationResult<CongruenceDomainValue> res1 : firstResult) {
 			for (final IEvaluationResult<CongruenceDomainValue> res2 : secondResult) {
-				CongruenceDomainValue returnValue = new CongruenceDomainValue();
+				CongruenceDomainValue returnValue = CongruenceDomainValue.createTop();
 				BooleanValue returnBool = new BooleanValue();
 
 				CongruenceDomainValue v1 = res1.getValue();
@@ -188,7 +188,7 @@ public class CongruenceBinaryExpressionEvaluator
 					returnBool = new BooleanValue(false);
 					mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 					        + ". Returning current state.");
-					returnValue = new CongruenceDomainValue();
+					returnValue = CongruenceDomainValue.createTop();
 				}
 				returnList.add(new CongruenceDomainEvaluationResult(returnValue, returnBool));
 			}
@@ -382,6 +382,9 @@ public class CongruenceBinaryExpressionEvaluator
 				case ARITHMOD:
 				case ARITHMUL:
 				case ARITHPLUS:
+				case COMPNEQ:
+				case COMPLT:
+				case COMPGT:
 					final CongruenceDomainValue newArithValueLeft = computeNewValue(referenceValue, left.getValue(),
 					        right.getValue(), true);
 					final CongruenceDomainValue newArithValueRight = computeNewValue(referenceValue, right.getValue(),
@@ -457,11 +460,18 @@ public class CongruenceBinaryExpressionEvaluator
 		case COMPEQ:
 			newValue = oldValue.intersect(otherValue);
 			break;
-		case COMPLEQ:
-		case COMPLT:
-		case COMPGEQ:
-		case COMPGT:
+		// TODO: for <, >, <=, >= non-zero can also be assumed for some other values (needs suitable transformation)
 		case COMPNEQ:
+		case COMPLT:
+		case COMPGT:
+			if (otherValue.value().signum() == 0) {
+				newValue = oldValue.getNonZeroValue();
+			} else {
+				newValue = oldValue;
+			}
+			break;
+		case COMPLEQ:
+		case COMPGEQ:
 			newValue = referenceValue;
 			break;
 		default:

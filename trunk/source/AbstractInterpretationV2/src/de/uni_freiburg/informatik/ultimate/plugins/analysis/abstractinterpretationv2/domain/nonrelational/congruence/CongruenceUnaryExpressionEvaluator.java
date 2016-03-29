@@ -69,7 +69,7 @@ public class CongruenceUnaryExpressionEvaluator
 		final List<IEvaluationResult<CongruenceDomainValue>> returnEvaluationResults = new ArrayList<>();
 
 		for (final IEvaluationResult<CongruenceDomainValue> result : subEvaluatorResult) {
-			CongruenceDomainValue returnValue = new CongruenceDomainValue();
+			CongruenceDomainValue returnValue = CongruenceDomainValue.createTop();
 			BooleanValue returnBool;
 
 			switch (mOperator) {
@@ -79,7 +79,7 @@ public class CongruenceUnaryExpressionEvaluator
 				break;
 			case LOGICNEG:
 				returnBool = result.getBooleanValue().neg();
-				returnValue = new CongruenceDomainValue();
+				returnValue = CongruenceDomainValue.createTop();
 				break;
 			default:
 				mLogger.warn(
@@ -87,7 +87,7 @@ public class CongruenceUnaryExpressionEvaluator
 				returnBool = new BooleanValue();
 				mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 				        + ". Returning current state. Returned value is top.");
-				returnValue = new CongruenceDomainValue();
+				returnValue = CongruenceDomainValue.createTop();
 			}
 
 			returnEvaluationResults.add(new CongruenceDomainEvaluationResult(returnValue, returnBool));

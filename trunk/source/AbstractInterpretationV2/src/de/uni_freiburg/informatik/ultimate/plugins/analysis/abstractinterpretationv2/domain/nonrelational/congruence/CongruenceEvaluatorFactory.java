@@ -96,7 +96,7 @@ public class CongruenceEvaluatorFactory
 		assert value != null;
 		
 		return new CongruenceSingletonValueExpressionEvaluator(
-		        new CongruenceDomainValue(new BigInteger(value), true));
+				CongruenceDomainValue.createConstant(new BigInteger(value)));
 	}
 
 	@Override

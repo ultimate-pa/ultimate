@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -325,16 +324,16 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 				state.mBooleanValuesMap.put(name, new BooleanValue(true));
 			} else {
-				state.mValuesMap.put(name, new CongruenceDomainValue());
+				state.mValuesMap.put(name, CongruenceDomainValue.createTop());
 			}
 		} else if (variable.getIType() instanceof ArrayType) {
 			// TODO:
 			// We treat Arrays as normal variables for the time being.
-			state.mValuesMap.put(name, new CongruenceDomainValue());
+			state.mValuesMap.put(name, CongruenceDomainValue.createTop());
 		} else {
 			state.mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString() + " of variable "
 					+ name + " is not implemented. Assuming top.");
-			state.mValuesMap.put(name, new CongruenceDomainValue());
+			state.mValuesMap.put(name, CongruenceDomainValue.createTop());
 		}
 	}
 
@@ -379,17 +378,17 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 					newBooleanValMap.put(id, new BooleanValue());
 				} else {
-					newValMap.put(id, new CongruenceDomainValue());
+					newValMap.put(id, CongruenceDomainValue.createTop());
 				}
 
 			} else if (var.getIType() instanceof ArrayType) {
 				// TODO:
 				// We treat Arrays as normal variables for the time being.
-				newValMap.put(id, new CongruenceDomainValue());
+				newValMap.put(id, CongruenceDomainValue.createTop());
 			} else {
 				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString() + " of variable " + id
 						+ " is not implemented. Assuming top.");
-				newValMap.put(id, new CongruenceDomainValue());
+				newValMap.put(id, CongruenceDomainValue.createTop());
 			}
 		}
 
@@ -621,7 +620,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	protected CongruenceDomainState bottomState() {
 		CongruenceDomainState ret = copy();
 		for (final Entry<String, CongruenceDomainValue> entry : ret.mValuesMap.entrySet()) {
-			entry.setValue(new CongruenceDomainValue(true));
+			entry.setValue(CongruenceDomainValue.createBottom());
 		}
 
 		for (final Entry<String, BooleanValue> entry : ret.mBooleanValuesMap.entrySet()) {
@@ -647,14 +646,14 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		final CongruenceDomainState returnState = copy();
 
 		for (final String var : vars) {
-			setValueInternally(returnState, var, new CongruenceDomainValue());
+			setValueInternally(returnState, var, CongruenceDomainValue.createTop());
 		}
 		for (final String bool : bools) {
 			setValueInternally(returnState, bool, new BooleanValue());
 		}
 		for (final String array : arrays) {
 			// TODO: Implement proper handling of arrays.
-			setValueInternally(returnState, array, new CongruenceDomainValue());
+			setValueInternally(returnState, array, CongruenceDomainValue.createTop());
 		}
 
 		return returnState;
@@ -676,14 +675,14 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		final CongruenceDomainState returnState = copy();
 
 		for (final String var : vars) {
-			setValueInternally(returnState, var, new CongruenceDomainValue(true));
+			setValueInternally(returnState, var, CongruenceDomainValue.createBottom());
 		}
 		for (final String bool : bools) {
 			setValueInternally(returnState, bool, new BooleanValue(Value.BOTTOM));
 		}
 		for (final String array : arrays) {
 			// TODO: Implement proper handling of arrays.
-			setValueInternally(returnState, array, new CongruenceDomainValue(true));
+			setValueInternally(returnState, array, CongruenceDomainValue.createBottom());
 		}
 
 		return returnState;
@@ -772,28 +771,14 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	@Override
 	public SubsetResult isSubsetOf(final CongruenceDomainState other) {
 		assert hasSameVariables(other);
-		
-		if (mValuesMap.isEmpty() && mBooleanValuesMap.isEmpty()) {
-			return SubsetResult.EQUAL;
-		}
-		
-		SubsetResult res = SubsetResult.NONE;
-		
+		SubsetResult res = SubsetResult.EQUAL;		
 		for (final Entry<String, CongruenceDomainValue> entry : mValuesMap.entrySet()) {
 			final CongruenceDomainValue thisValue = entry.getValue();
 			final CongruenceDomainValue otherValue = other.mValuesMap.get(entry.getKey());
 			if (thisValue.isEqualTo(otherValue)) {
-				if (res == SubsetResult.NONE) {
-					res = SubsetResult.EQUAL;
-				} else if (res == SubsetResult.STRICT) {
-					res = SubsetResult.NON_STRICT;
-				}
-			} else if (thisValue.isSubsetOf(otherValue)) {
-				if (res == SubsetResult.NONE) {
-					res = SubsetResult.STRICT;
-				} else if (res == SubsetResult.EQUAL) {
-					res = SubsetResult.NON_STRICT;
-				}
+				continue;
+			} else if (thisValue.isContainedIn(otherValue)) {
+				res = SubsetResult.STRICT;
 			} else {
 				return SubsetResult.NONE;
 			}
@@ -803,17 +788,9 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			final BooleanValue thisValue = entry.getValue();
 			final BooleanValue otherValue = other.mBooleanValuesMap.get(entry.getKey());
 			if (thisValue.isEqualTo(otherValue)) {
-				if (res == SubsetResult.NONE) {
-					res = SubsetResult.EQUAL;
-				} else if (res == SubsetResult.STRICT) {
-					res = SubsetResult.NON_STRICT;
-				}
-			} else if (thisValue.isSubsetOf(otherValue)) {
-				if (res == SubsetResult.NONE) {
-					res = SubsetResult.STRICT;
-				} else if (res == SubsetResult.EQUAL) {
-					res = SubsetResult.NON_STRICT;
-				}
+				continue;
+			} else if (thisValue.isContainedIn(otherValue)) {
+				res = SubsetResult.STRICT;
 			} else {
 				return SubsetResult.NONE;
 			}

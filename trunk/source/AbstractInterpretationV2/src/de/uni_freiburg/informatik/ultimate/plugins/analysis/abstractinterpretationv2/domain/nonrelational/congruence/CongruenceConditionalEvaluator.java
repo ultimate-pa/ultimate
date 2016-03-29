@@ -123,7 +123,7 @@ public class CongruenceConditionalEvaluator
 		}
 
 		if (returnList.size() == 0) {
-			returnList.add(new CongruenceDomainEvaluationResult(new CongruenceDomainValue(),
+			returnList.add(new CongruenceDomainEvaluationResult(CongruenceDomainValue.createTop(),
 			        new BooleanValue(BooleanValue.Value.FALSE)));
 		}
 

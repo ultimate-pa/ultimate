@@ -77,7 +77,7 @@ public class CongruenceSingletonVariableExpressionEvaluator
 			final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-				val = new CongruenceDomainValue();
+				val = CongruenceDomainValue.createTop();
 				returnBool = currentState.getBooleanValue(mVariableName);
 				mContainsBoolean = true;
 			} else {
@@ -88,14 +88,14 @@ public class CongruenceSingletonVariableExpressionEvaluator
 			}
 		} else if (type.getIType() instanceof ArrayType) {
 			// TODO: Implement better handling of arrays.
-			val = new CongruenceDomainValue();
+			val = CongruenceDomainValue.createTop();
 		} else {
 			val = currentState.getValue(mVariableName);
 		}
 
 		if (val.isBottom() || returnBool.isBottom()) {
 			returnList.add(
-			        new CongruenceDomainEvaluationResult(new CongruenceDomainValue(true), new BooleanValue(Value.BOTTOM)));
+			        new CongruenceDomainEvaluationResult(CongruenceDomainValue.createBottom(), new BooleanValue(Value.BOTTOM)));
 		} else {
 			returnList.add(new CongruenceDomainEvaluationResult(val, returnBool));
 		}

@@ -38,8 +38,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;

@@ -15,36 +15,43 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 
-	private BigInteger mValue;
-	private boolean mIsBottom;
-	private boolean mIsConstant;
+	private BigInteger mValue = null;
+	private boolean mIsBottom = true;
+	private boolean mIsConstant = false;
+	private boolean mNonZero = false;
 	
-	protected CongruenceDomainValue() {
-		this(false);
+	private CongruenceDomainValue() {}
+	
+	protected static CongruenceDomainValue createTop() {
+		return createNonConstant(BigInteger.ONE);
 	}
-
-	protected CongruenceDomainValue(boolean isBottom) {
-		mIsConstant = false;
-		if (isBottom) {
-			mValue = null;
-			mIsBottom = true;
-		} else {
-			mValue = BigInteger.ONE;
-			mIsBottom = false;
+	
+	protected static CongruenceDomainValue createBottom() {
+		return new CongruenceDomainValue();
+	}
+	
+	protected static CongruenceDomainValue createNonConstant(BigInteger value, boolean nonZero) {
+		if (value.signum() == 0) {
+			return nonZero ? createBottom() : createConstant(BigInteger.ZERO);
 		}
+		CongruenceDomainValue res = new CongruenceDomainValue();
+		res.mValue = value.abs();
+		res.mNonZero = nonZero;
+		res.mIsBottom = false;
+		return res;
 	}
 	
-	protected CongruenceDomainValue(BigInteger value, boolean isConstant) {
-		mIsBottom = false;
-		mIsConstant = isConstant;
-		if (value.equals(BigInteger.ZERO)) {
-			mIsConstant = true;
-		}
-		mValue = mIsConstant ? value : value.abs();
+	protected static CongruenceDomainValue createNonConstant(BigInteger value) {
+		return createNonConstant(value, false);
 	}
 	
-	protected CongruenceDomainValue(BigInteger value) {
-		this(value, false);
+	protected static CongruenceDomainValue createConstant(BigInteger value) {
+		CongruenceDomainValue res = new CongruenceDomainValue();
+		res.mValue = value;
+		res.mNonZero = value.signum() != 0;
+		res.mIsBottom = false;
+		res.mIsConstant = true;
+		return res;
 	}
 	
 	protected boolean isBottom() {
@@ -67,7 +74,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	
 	protected CongruenceDomainValue merge(CongruenceDomainValue other) {
 		if (other == null) {
-			return new CongruenceDomainValue(true);
+			return createBottom();
 		}
 		if (mIsBottom) {
 			return other.copy();
@@ -77,97 +84,149 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		}
 		// If both are constant and have the same value, the result is also constant (otherwise not)
 		if (mValue.equals(other.mValue) && mIsConstant && other.mIsConstant) {
-			return new CongruenceDomainValue(mValue, true);
+			return copy();
 		}
-		return new CongruenceDomainValue(mValue.gcd(other.mValue));
+		return createNonConstant(mValue.gcd(other.mValue), mNonZero && other.mNonZero);
 	}
 	
 	protected CongruenceDomainValue intersect(CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
-			return new CongruenceDomainValue(true);
+			return createBottom();
 		}
 		// If both are constant, return the value if it's the same, bottom otherwise
 		if (mIsConstant && other.mIsConstant) {
 			if (mValue.equals(other.mValue)) {
-				return new CongruenceDomainValue(mValue, true);
+				return copy();
 			} else {
-				return new CongruenceDomainValue(true);
+				return createBottom();
 			}
 		}
 		// If one is constant, return the value if it's inside the other, bottom otherwise
 		if (mIsConstant) {
-			if (mValue.mod(other.mValue.abs()).equals(BigInteger.ZERO)) {
-				return new CongruenceDomainValue(mValue, true);
+			if (other.mNonZero && mValue.signum() == 0) {
+				return createBottom();
+			}
+			if (mValue.mod(other.mValue.abs()).signum() == 0) {
+				return copy();
 			} else {
-				return new CongruenceDomainValue(true);
+				return createBottom();
 			}
 		}
 		if (other.mIsConstant) {
-			if (other.mValue.mod(mValue.abs()).equals(BigInteger.ZERO)) {
-				return new CongruenceDomainValue(other.mValue, true);
+			if (mNonZero && other.mValue.signum() == 0) {
+				return createBottom();
+			}
+			if (other.mValue.mod(mValue.abs()).signum() == 0) {
+				return other.copy();
 			} else {
-				return new CongruenceDomainValue(true);
+				return createBottom();
 			}
 		}
 		// Return the LCM as new value
 		// LCM(a, b) = abs(a * b) / GCD(a, b)
-		return new CongruenceDomainValue(mValue.multiply(other.mValue).divide(mValue.gcd(other.mValue)));
+		return createNonConstant(mValue.multiply(other.mValue).divide(mValue.gcd(other.mValue)), mNonZero || other.mNonZero);
 	}
 
 	protected CongruenceDomainValue add(CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
-			return new CongruenceDomainValue(true);
+			return createBottom();
+		}
+		if (mValue.signum() == 0) {
+			return other.copy();
+		}
+		if (other.mValue.signum() == 0) {
+			return copy();
 		}
 		if (mIsConstant && other.mIsConstant) {
-			return new CongruenceDomainValue(mValue.add(other.mValue), true);
+			return createConstant(mValue.add(other.mValue));
 		}
-		return new CongruenceDomainValue(mValue.gcd(other.mValue));
+		boolean nonZero = false;
+		if (mIsConstant) {
+			nonZero = mValue.mod(other.mValue).signum() != 0;
+		}
+		if (other.mIsConstant) {
+			nonZero = other.mValue.mod(mValue).signum() != 0;
+		}
+		return createNonConstant(mValue.gcd(other.mValue), nonZero);
 	}
 	
 	protected CongruenceDomainValue subtract(CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
-			return new CongruenceDomainValue(true);
+			return createBottom();
+		}
+		if (mValue.signum() == 0) {
+			return other.negate();
+		}
+		if (other.mValue.signum() == 0) {
+			return copy();
 		}
 		if (mIsConstant && other.mIsConstant) {
-			return new CongruenceDomainValue(mValue.subtract(other.mValue), true);
+			return createConstant(mValue.subtract(other.mValue));
 		}
-		return new CongruenceDomainValue(mValue.gcd(other.mValue));
+		boolean nonZero = false;
+		if (mIsConstant) {
+			nonZero = mValue.mod(other.mValue).signum() != 0;
+		}
+		if (other.mIsConstant) {
+			nonZero = other.mValue.mod(mValue).signum() != 0;
+		}
+		return createNonConstant(mValue.gcd(other.mValue), nonZero);
 	}
 	
+
 	protected CongruenceDomainValue mod(CongruenceDomainValue other) {
-		if (other == null || mIsBottom || other.mIsBottom || other.mValue.equals(BigInteger.ZERO)) {
-			return new CongruenceDomainValue(true);
+		if (other == null || mIsBottom || other.mIsBottom) {
+			return createBottom();
+		}
+		if (!other.mNonZero) {
+			return createTop();
 		}
 		// If both are constant, simply calculate the result
 		if (mIsConstant && other.mIsConstant) {
-			return new CongruenceDomainValue(mValue.mod(other.mValue.abs()), true);
+			return createConstant(mValue.mod(other.mValue.abs()));
 		}
 		// a % bZ = a if a >= 0 and a < b
 		if (mIsConstant && mValue.signum() >= 0 && mValue.compareTo(other.mValue) < 0) {
-			return new CongruenceDomainValue(mValue, true);
+			return createConstant(mValue);
 		}
 		// aZ % b = 0 if a % b = 0
-		if (other.mIsConstant && mValue.mod(other.mValue.abs()).equals(BigInteger.ZERO)) {
-			return new CongruenceDomainValue(BigInteger.ZERO, true);
+		if (other.mIsConstant && mValue.mod(other.mValue.abs()).signum() == 0) {
+			return createConstant(BigInteger.ZERO);
 		}
-		return new CongruenceDomainValue(mValue.gcd(other.mValue));
+		boolean nonZero = false;
+		if (mIsConstant) {
+			nonZero = mValue.mod(other.mValue).signum() != 0;
+		}
+		if (other.mIsConstant) {
+			nonZero = other.mValue.mod(mValue).signum() != 0;
+		}
+		return createNonConstant(mValue.gcd(other.mValue), nonZero);
 	}
 	
 	protected CongruenceDomainValue multiply(CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
-			return new CongruenceDomainValue(true);
+			return createBottom();
 		}
-		return new CongruenceDomainValue(mValue.multiply(other.mValue), mIsConstant && other.mIsConstant);
+		if (mIsConstant && other.mIsConstant) {
+			return createConstant(mValue.multiply(other.mValue));
+		}
+		return createNonConstant(mValue.multiply(other.mValue), mNonZero && other.mNonZero);
 	}
 	
 	protected CongruenceDomainValue divide (CongruenceDomainValue other) {
-		if (other == null || mIsBottom || other.mIsBottom || other.mValue.equals(BigInteger.ZERO)) {
-			return new CongruenceDomainValue(true);
+		if (other == null || mIsBottom || other.mIsBottom) {
+			return createBottom();
+		}
+		if (!other.mNonZero) {
+			return createTop();
 		}
 		if (other.mIsConstant) {
 			// If "real" result of the division is an integer, just calculate the result
-			if (mValue.mod(other.mValue.abs()).equals(BigInteger.ZERO)) {
-				return new CongruenceDomainValue(mValue.divide(other.mValue), mIsConstant);
+			if (mValue.mod(other.mValue.abs()).signum() == 0) {
+				if (mIsConstant) {
+					return createConstant(mValue.divide(other.mValue));
+				}
+				return createNonConstant(mValue.divide(other.mValue), mNonZero);
 			}
 			if (mIsConstant) {
 				BigInteger val = mValue.divide(other.mValue);
@@ -179,21 +238,24 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 						val = val.add(BigInteger.ONE);
 					}
 				}
-				return new CongruenceDomainValue(val, true);
+				return createConstant(val);
 			}
 		}
 		// If 0 < a < b: a / bZ = 0 
 		if (mIsConstant && mValue.signum() > 0 && mValue.compareTo(other.mValue) < 0) {
-			return new CongruenceDomainValue(BigInteger.ZERO, true);
+			return createConstant(BigInteger.ZERO);
 		}
-		return new CongruenceDomainValue();
+		return createTop();
 	}
 	
 	protected CongruenceDomainValue negate() {
 		if (mIsBottom) {
-			return new CongruenceDomainValue(true);
+			return createBottom();
 		}
-		return new CongruenceDomainValue(mValue.negate(), mIsConstant);
+		if (mIsConstant) {
+			return createConstant(mValue.negate());
+		}
+		return copy();
 	}
 	
 	@Override
@@ -204,7 +266,12 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		if (mIsConstant) {
 			return mValue.toString();
 		}
-		return mValue.toString() + "Z";
+		if (mNonZero) {
+			return mValue.toString() + "Z \\ {0}";
+		} else {
+			return mValue.toString() + "Z";
+		}
+		
 	}
 
 	protected Term getTerm(final Script script, final Sort sort, final Term var) {
@@ -215,11 +282,19 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		if (mIsConstant) {
 			return script.term("=", var, script.numeral(mValue));
 		}
+		Term nonZeroTerm = script.term("not", script.term("=", var, script.numeral(BigInteger.ZERO)));
 		if (mValue.equals(BigInteger.ONE)) {
+			if (mNonZero) {
+				return nonZeroTerm;
+			}
 			return script.term("true");
 		}
-		// Return var mod value = 0
-		return script.term("=", script.term("mod", var, script.numeral(mValue)), script.numeral(BigInteger.ZERO));
+		Term modTerm = script.term("=", script.term("mod", var, script.numeral(mValue)), script.numeral(BigInteger.ZERO));
+		if (mNonZero) {
+			return script.term("and", modTerm, nonZeroTerm);
+		}
+		return modTerm;
+		
 	}
 	
 	/**
@@ -232,7 +307,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		if (mIsBottom && other.mIsBottom) {
 			return true;
 		}
-		return mValue.equals(other.mValue) && mIsConstant == other.mIsConstant;
+		return mValue.equals(other.mValue) && mIsConstant == other.mIsConstant && mNonZero == other.mNonZero;
 	}
 	
 	/**
@@ -240,9 +315,12 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	 */
 	protected CongruenceDomainValue copy() {
 		if (mIsBottom) {
-			return new CongruenceDomainValue(true);
+			return createBottom();
 		}
-		return new CongruenceDomainValue(mValue, mIsConstant);
+		if (mIsConstant) {
+			return createConstant(mValue);
+		}
+		return createNonConstant(mValue, mNonZero);
 	}
 
 	/**
@@ -250,38 +328,57 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	 */
 	protected CongruenceDomainValue modEquals(CongruenceDomainValue rest) {
 		if (mIsBottom ||  rest == null || rest.mIsBottom) {
-			return new CongruenceDomainValue(true);
+			return createBottom();
+		}
+		if (!mNonZero) {
+			return createTop();
 		}
 		// If the rest is < 0, return bottom
 		if (rest.mValue.signum() < 0) {
-			return new CongruenceDomainValue(true);
+			return createBottom();
 		}
 		// If the rest is >= |this|, return bottom if rest is constant, otherwise the non-constant value of this
 		// (because rest has to be 0 then, since all other values are too big)
 		if (mIsConstant && rest.mValue.compareTo(mValue.abs()) >= 0) {
 			if (rest.mIsConstant) {
-				return new CongruenceDomainValue(true);
+				return createBottom();
 			} else {
-				return new CongruenceDomainValue(mValue);
+				return createNonConstant(mValue);
 			}			
 		}
 		// Otherwise return the GCD (=non-constant merge)
-		return new CongruenceDomainValue(mValue.gcd(rest.mValue));
+		return createNonConstant(mValue.gcd(rest.mValue), rest.mNonZero);
 	}
 	
 	/**
-	 * Returns <code>true</code> if and only if <code>this</code> is a strict subset of <code>other</code>.
+	 * Returns <code>true</code> if this is contained in other.
+	 * 
+	 * @param other
+	 *            The other value to check against.
+	 * @return <code>true</code> if and only if the value of this is contained in the value of other, <code>false</code>
 	 */
-	public boolean isSubsetOf(CongruenceDomainValue other) {
-		if (other.mIsBottom) {
-			return false;
-		}
+	public boolean isContainedIn(CongruenceDomainValue other) {
 		if (mIsBottom) {
 			return true;
 		}
+		if (other.mIsBottom) {
+			return false;
+		}
 		if (other.mIsConstant) {
+			return mIsConstant && mValue.equals(other.mValue);
+		}
+		if (!mNonZero && other.mNonZero) {
 			return false;
 		}
 		return mValue.mod(other.mValue).signum() == 0;
+	}
+	
+	protected CongruenceDomainValue getNonZeroValue() {
+		if (mIsConstant) {
+			return mValue.signum() == 0 ? createBottom() : copy();
+		}
+		CongruenceDomainValue res = copy();
+		res.mNonZero = true;
+		return res;
 	}
 }

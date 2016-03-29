@@ -357,10 +357,6 @@ public class ExpressionTransformer {
 				} else if (sRight == 0 && right.mConstant.abs().equals(BigInteger.ONE)){
 					// x % +-1 = 0
 					break;
-				} else if (sLeft == 0 && left.mConstant.signum() == 0) {
-					// TODO: Might be removed (possible division by zero)
-					// 0 % x = 0
-					break;
 				} else {
 					mIsLinear = false;
 				}
@@ -385,10 +381,6 @@ public class ExpressionTransformer {
 					for (Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
 						mCoefficients.put(entry.getKey(), entry.getValue().negate());
 					}
-				} else if (sLeft == 0 && left.mConstant.signum() == 0) {
-					// TODO: Might be removed (possible division by zero)
-					// 0 / x = 0
-					break;
 				} else {
 					mIsLinear = false;
 				}

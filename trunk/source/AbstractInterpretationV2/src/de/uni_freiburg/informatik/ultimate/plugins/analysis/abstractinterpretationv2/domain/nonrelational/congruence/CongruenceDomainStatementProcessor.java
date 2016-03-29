@@ -135,10 +135,10 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected Expression processExpression(Expression expr) {	
 		if (expr instanceof ArrayStoreExpression) {
-			mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(new CongruenceDomainValue()));
+			mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop()));
 			return expr;
 		} else if (expr instanceof ArrayAccessExpression) {
-			mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(new CongruenceDomainValue()));
+			mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop()));
 			return expr;
 		}
 		final ExpressionTransformer t = new ExpressionTransformer();
@@ -238,7 +238,7 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(RealLiteral expr) {
 		assert mEvaluatorFactory != null;
 
-		mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(new CongruenceDomainValue()));
+		mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop()));
 	}
 
 	@Override
@@ -300,7 +300,7 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
 		// If we don't have a specification for the function, we return top.
 		if (decls == null || decls.isEmpty()) {
-			evaluator = new CongruenceSingletonValueExpressionEvaluator(new CongruenceDomainValue());
+			evaluator = new CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue.createTop());
 		} else {
 
 			assert decls.get(0) instanceof FunctionDeclaration;
@@ -336,14 +336,14 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 					currentNewState = currentNewState.setBooleanValue(var.getIdentifier(), new BooleanValue());
 				} else {
-					currentNewState = currentNewState.setValue(var.getIdentifier(), new CongruenceDomainValue());
+					currentNewState = currentNewState.setValue(var.getIdentifier(), CongruenceDomainValue.createTop());
 				}
 			} else if (type.getIType() instanceof ArrayType) {
 				// TODO:
 				// Implement better handling of arrays.
-				currentNewState = currentNewState.setValue(var.getIdentifier(), new CongruenceDomainValue());
+				currentNewState = currentNewState.setValue(var.getIdentifier(), CongruenceDomainValue.createTop());
 			} else {
-				currentNewState = currentNewState.setValue(var.getIdentifier(), new CongruenceDomainValue());
+				currentNewState = currentNewState.setValue(var.getIdentifier(), CongruenceDomainValue.createTop());
 			}
 		}
 
