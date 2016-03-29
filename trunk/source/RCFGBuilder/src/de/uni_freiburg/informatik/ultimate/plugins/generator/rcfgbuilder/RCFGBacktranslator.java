@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 
@@ -95,7 +96,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<AtomicTraceElement<BoogieASTNode>>();
 		for (RcfgElement elem : cbTrace) {
 			if (elem instanceof CodeBlock) {
-				addCodeBlock((CodeBlock) elem, atomicTeList, null);
+				addCodeBlock((CodeBlock) elem, atomicTeList, null, null);
 			} else if (elem instanceof ProgramPoint) {
 
 			} else {
@@ -124,46 +125,46 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 	 * </ul>
 	 */
 	private void addCodeBlock(RCFGEdge cb, List<AtomicTraceElement<BoogieASTNode>> trace,
-			Map<TermVariable, Boolean> branchEncoders) {
+			Map<TermVariable, Boolean> branchEncoders, IRelevanceInformation relevanceInformation) {
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		if (cb instanceof Call) {
 			Statement st = ((Call) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL, stringProvider, null));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation));
 		} else if (cb instanceof Return) {
 			Statement st = ((Return) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN, stringProvider, null));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN, stringProvider, relevanceInformation));
 		} else if (cb instanceof Summary) {
 			Statement st = ((Summary) cb).getCallStatement();
 			// FIXME: Is summary call, return or something new?
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE, stringProvider, null));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE, stringProvider, relevanceInformation));
 		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
 			for (Statement statement : ss.getStatements()) {
 				if (mCodeBlock2Statement.containsKey(statement)) {
 					BoogieASTNode[] sources = mCodeBlock2Statement.get(statement);
 					for (BoogieASTNode source : sources) {
-						trace.add(new AtomicTraceElement<BoogieASTNode>(source, stringProvider, null));
+						trace.add(new AtomicTraceElement<BoogieASTNode>(source, stringProvider, relevanceInformation));
 					}
 				} else {
-					trace.add(new AtomicTraceElement<BoogieASTNode>(statement, stringProvider, null));
+					trace.add(new AtomicTraceElement<BoogieASTNode>(statement, stringProvider, relevanceInformation));
 				}
 			}
 		} else if (cb instanceof SequentialComposition) {
 			SequentialComposition seqComp = (SequentialComposition) cb;
 			for (CodeBlock sccb : seqComp.getCodeBlocks()) {
-				addCodeBlock(sccb, trace, branchEncoders);
+				addCodeBlock(sccb, trace, branchEncoders, relevanceInformation);
 			}
 		} else if (cb instanceof ParallelComposition) {
 			ParallelComposition parComp = (ParallelComposition) cb;
 			Map<TermVariable, CodeBlock> bi2cb = parComp.getBranchIndicator2CodeBlock();
 			if (branchEncoders == null) {
 				CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
-				addCodeBlock(someBranch, trace, branchEncoders);
+				addCodeBlock(someBranch, trace, branchEncoders, relevanceInformation);
 			} else {
 				for (Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
 					boolean taken = branchEncoders.get(entry.getKey());
 					if (taken) {
-						addCodeBlock(entry.getValue(), trace, branchEncoders);
+						addCodeBlock(entry.getValue(), trace, branchEncoders, relevanceInformation);
 						return;
 					}
 				}
@@ -194,9 +195,9 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			AtomicTraceElement<RCFGEdge> codeBlock = rcfgProgramExecution.getTraceElement(i);
 			Map<TermVariable, Boolean>[] branchEncoders = rcfgProgramExecution.getBranchEncoders();
 			if (branchEncoders == null || i >= branchEncoders.length) {
-				addCodeBlock(codeBlock.getTraceElement(), trace, null);
+				addCodeBlock(codeBlock.getTraceElement(), trace, null, codeBlock.getmRelevanceInformation());
 			} else {
-				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i]);
+				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i], codeBlock.getmRelevanceInformation());
 			}
 			int posInNewTrace = trace.size() - 1;
 			ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
