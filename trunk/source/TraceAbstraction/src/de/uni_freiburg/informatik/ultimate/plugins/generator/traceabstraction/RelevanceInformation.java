@@ -35,6 +35,9 @@ public class RelevanceInformation implements IRelevanceInformation
 	@Override
 	public String getShortString() 
 	{
+		if (!criteria1 && !criteria2) {
+			return "-";
+		}
 		String criteria_string="";
 		if(criteria1){
 			criteria_string = criteria_string + "*";
