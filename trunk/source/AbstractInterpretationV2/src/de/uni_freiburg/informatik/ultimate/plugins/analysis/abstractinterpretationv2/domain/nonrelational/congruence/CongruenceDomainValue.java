@@ -198,7 +198,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 			nonZero = mValue.mod(other.mValue).signum() != 0;
 		}
 		if (other.mIsConstant) {
-			nonZero = other.mValue.mod(mValue).signum() != 0;
+			nonZero = other.mValue.mod(mValue).signum() != 0 && mNonZero;
 		}
 		return createNonConstant(mValue.gcd(other.mValue), nonZero);
 	}

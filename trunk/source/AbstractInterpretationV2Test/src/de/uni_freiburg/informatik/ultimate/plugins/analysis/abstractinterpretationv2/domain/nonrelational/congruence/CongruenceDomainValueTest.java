@@ -100,6 +100,7 @@ public class CongruenceDomainValueTest{
 		CongruenceDomainValue c1 = CongruenceDomainValue.createConstant(new BigInteger("-2"));
 		CongruenceDomainValue c2 = CongruenceDomainValue.createConstant(new BigInteger("-3"));
 		CongruenceDomainValue c3 = CongruenceDomainValue.createConstant(new BigInteger("3"));
+		CongruenceDomainValue c4 = CongruenceDomainValue.createConstant(new BigInteger("16"));
 		CongruenceDomainValue z4 = CongruenceDomainValue.createNonConstant(new BigInteger("4"), true);
 		CongruenceDomainValue z5 = CongruenceDomainValue.createNonConstant(new BigInteger("5"));
 		CongruenceDomainValue z2 = CongruenceDomainValue.createNonConstant(new BigInteger("2"), true);
@@ -109,6 +110,8 @@ public class CongruenceDomainValueTest{
 		assertTrue(c3.mod(z5).toString().equals("1Z"));
 		assertTrue(c3.mod(z2).toString().equals("1Z \\ {0}"));
 		assertTrue(c1.mod(z2).toString().equals("2Z"));
+		assertTrue(z2.mod(c3).toString().equals("1Z \\ {0}"));
+		assertTrue(z4.mod(c4).toString().equals("4Z"));
 		
 	}
 	
