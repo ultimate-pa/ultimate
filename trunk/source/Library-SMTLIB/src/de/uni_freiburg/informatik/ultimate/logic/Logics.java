@@ -63,6 +63,9 @@ public enum Logics {
 	AUFLIA    (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA), //NOCHECKSTYLE
 	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
 	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA), //NOCHECKSTYLE
+	
+	FP        (Features.QU + Features.UF + Features.FP),
+	QF_FP     (Features.UF + Features.FP),
 	; //NOCHECKSTYLE
 	
 	static class Features {
@@ -84,6 +87,8 @@ public enum Logics {
 		static final int IA = (1 << 7);
 		/** flag for real arithmetic. */
 		static final int RA = (1 << 8);
+		/** flag for floating point arithmetic. */
+		static final int FP = (1 << 9);
 	}
 	
 	private final int mFeatures;
@@ -178,5 +183,13 @@ public enum Logics {
 	 */
 	public boolean hasReals() {
 		return (mFeatures & Features.RA) != 0;
+	}
+	/**
+	 * Does this logic support floating point arithmetic?
+	 * @return <code>true</code> if and only if this logic supports floating 
+	 * point arithmetic.
+	 */
+	public boolean isFloatingPoint() {
+		return (mFeatures & Features.FP) != 0;
 	}
 }

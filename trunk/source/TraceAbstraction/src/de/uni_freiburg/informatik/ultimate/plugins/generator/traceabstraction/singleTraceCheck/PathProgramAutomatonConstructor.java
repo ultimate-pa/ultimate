@@ -39,19 +39,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 
 /**
@@ -91,7 +86,7 @@ public class PathProgramAutomatonConstructor {
 			}
 		}
 		
-		StateFactory<IPredicate> predicateFactory = new PredicateFactory(smtManager, taPrefs);
+		StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs);
 		// Create the automaton
 		NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, predicateFactory);
 		
@@ -107,7 +102,8 @@ public class PathProgramAutomatonConstructor {
 		tempProgramPoint = (ProgramPoint) path.getSymbol(0).getSource();
 		
 		// Add the initial state
-		SPredicate initialState = smtManager.newTrueSLPredicate(tempProgramPoint);
+		TermVarsProc trueTvp = smtManager.getPredicateFactory().constructTrue();
+		SPredicate initialState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTvp);
 		pathPA.addState(true, false, initialState);
 		programPointToState.put(tempProgramPoint, initialState);
 		m_PositionsToStates.add(0, initialState);
@@ -116,7 +112,7 @@ public class PathProgramAutomatonConstructor {
 		for (int i = 0; i < path.length(); i++) {
 			tempProgramPoint = (ProgramPoint) path.getSymbol(i).getTarget();
 			if (!programPointToState.containsKey(tempProgramPoint)) {
-				SPredicate newState = smtManager.newTrueSLPredicate(tempProgramPoint);
+				SPredicate newState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTvp);
 				programPointToState.put(tempProgramPoint, newState);
 				arrOfProgPoints[i] = (ProgramPoint) path.getSymbol(i).getTarget();
 				if (i + 1 == path.length()) {

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetHan
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -59,7 +59,7 @@ public class BuchiInterpolantAutomatonWithHandle extends
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			boolean scroogeNondeterminismStem,
 			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem,
-			boolean hondaBouncerLoop, PredicateFactory predicateFactory, Logger logger, IUltimateServiceProvider  services) {
+			boolean hondaBouncerLoop, PredicateFactoryForInterpolantAutomata predicateFactory, Logger logger, IUltimateServiceProvider  services) {
 		super(smtManager, edgeChecker, emptyStem, precondition, stemInterpolants,
 				hondaPredicate, loopInterpolants, hondaEntererStem,
 				hondaEntererLoop, abstraction, scroogeNondeterminismStem,

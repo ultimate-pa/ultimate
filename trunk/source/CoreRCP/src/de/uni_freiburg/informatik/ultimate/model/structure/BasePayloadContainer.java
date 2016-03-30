@@ -31,10 +31,10 @@ import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 
 /***
- * This class is the reference implementation for IElement. It uses the
- * reference implementation for IPayload named Payload.
+ * This class is the reference implementation for {@link IElement}. It uses the reference implementation for
+ * {@link IPayload} named {@link Payload}.
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @see IElement
  * @see Payload
  * 
@@ -42,25 +42,24 @@ import de.uni_freiburg.informatik.ultimate.model.Payload;
 public abstract class BasePayloadContainer implements IElement {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
-	protected IPayload mPayload;
+	private IPayload mPayload;
 
 	protected BasePayloadContainer() {
-
+		this(null);
 	}
 
-	protected BasePayloadContainer(IPayload payload) {
+	protected BasePayloadContainer(final IPayload payload) {
 		mPayload = payload;
 	}
 
 	@Override
 	public IPayload getPayload() {
-		if (!this.hasPayload()) {
+		if (!hasPayload()) {
 			mPayload = new Payload();
 		}
 		return mPayload;
@@ -70,5 +69,4 @@ public abstract class BasePayloadContainer implements IElement {
 	public boolean hasPayload() {
 		return mPayload != null;
 	}
-
 }

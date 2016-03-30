@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.UnknownState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
@@ -75,6 +78,10 @@ public class HoareAnnotationFragments {
 
 	private final HashRelation<ProgramPoint, IPredicate> m_ProgPoint2StatesWithEmptyContext = new HashRelation<ProgramPoint, IPredicate>();
 
+	private final HashSet<ProgramPoint> m_HoareAnnotationPositions;
+
+	private final HoareAnnotationPositions m_HoareAnnotationPos;
+
 	/**
 	 * What is the precondition for a context? Strongest postcondition or entry
 	 * given by automaton?
@@ -97,8 +104,11 @@ public class HoareAnnotationFragments {
 		return m_Context2Entry;
 	}
 
-	public HoareAnnotationFragments(Logger logger){
+	public HoareAnnotationFragments(Logger logger, HashSet<ProgramPoint> hoareAnnotationPositions, 
+			HoareAnnotationPositions hoareAnnotationPos){
 		mLogger = logger;
+		m_HoareAnnotationPositions = hoareAnnotationPositions;
+		m_HoareAnnotationPos = hoareAnnotationPos;
 	}
 	
 	/**
@@ -242,7 +252,12 @@ public class HoareAnnotationFragments {
 	}
 
 	void addDoubleDecker(IPredicate down, IPredicate up, IPredicate emtpy) {
-		ProgramPoint pp = ((SPredicate) up).getProgramPoint();
+		ProgramPoint pp = getProgramPoint(up);
+		if (m_HoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles && 
+				!m_HoareAnnotationPositions.contains(pp)) {
+			// do not compute Hoare annotation for this program point
+			return;
+		}
 		if (down == emtpy) {
 			m_ProgPoint2StatesWithEmptyContext.addPair(pp, up);
 		} else {
@@ -253,6 +268,18 @@ public class HoareAnnotationFragments {
 			}
 			pp2preds.addPair(pp, up);
 		}
+	}
+	
+	private ProgramPoint getProgramPoint(IPredicate pred) {
+		final ProgramPoint pp;
+		if (pred instanceof SPredicate) {
+			pp = ((SPredicate) pred).getProgramPoint();
+		} else if (pred instanceof UnknownState) {
+			pp = ((UnknownState) pred).getProgramPoint();
+		} else {
+			throw new AssertionError("predicate does not offer program point");
+		}
+		return pp;
 	}
 
 	void addContextEntryPair(IPredicate context, IPredicate entry) {

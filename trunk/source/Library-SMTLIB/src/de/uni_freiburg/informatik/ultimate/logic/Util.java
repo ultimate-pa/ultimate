@@ -51,8 +51,10 @@ public final class Util {
 			for (int i = 0; i < vars.length; i++)
 				values[i] = termVariable2constant(script, vars[i]);
 			term = script.let(vars, values, term);
-			script.assertTerm(term);
-			LBool result = script.checkSat();
+			LBool result = script.assertTerm(term);
+			if(result == LBool.UNKNOWN){
+				result = script.checkSat();	
+			}
 			script.pop(1);
 			return result;
 		} catch (Exception e) {

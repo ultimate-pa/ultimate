@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -210,7 +211,8 @@ public abstract class CFG2Automaton {
 		// add states
 		for (ProgramPoint locNode : allNodes) {
 			boolean isErrorLocation = locNode.isErrorLocation();
-			IPredicate automatonState = m_SmtManager.newTrueSLPredicate(locNode);
+			TermVarsProc trueTvp = m_SmtManager.getPredicateFactory().constructTrue();
+			IPredicate automatonState = m_SmtManager.getPredicateFactory().newSPredicate(locNode, trueTvp);
 			nwa.addState(false, isErrorLocation, automatonState);
 			nodes2States.put(locNode, automatonState);
 			if (locNode == initialNode) {
@@ -240,7 +242,8 @@ public abstract class CFG2Automaton {
 
 		mLogger.debug("Step: SharedVarsInit part");
 		ProgramPoint entryOfInitProc = (ProgramPoint) m_SharedVarsInit.getSource();
-		IPredicate initialContent = m_SmtManager.newTrueSLPredicate(entryOfInitProc);
+		TermVarsProc trueTvp = m_SmtManager.getPredicateFactory().constructTrue();
+		IPredicate initialContent = m_SmtManager.getPredicateFactory().newSPredicate(entryOfInitProc, trueTvp);
 		nwa.addState(true, false, initialContent);
 		IPredicate automatonSuccState;
 		automatonSuccState = procedureInitialState;

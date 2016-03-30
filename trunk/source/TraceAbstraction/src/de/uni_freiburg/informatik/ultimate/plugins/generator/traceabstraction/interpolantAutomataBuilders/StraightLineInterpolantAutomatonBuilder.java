@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
@@ -62,7 +62,7 @@ public class StraightLineInterpolantAutomatonBuilder {
 			IUltimateServiceProvider services, 
 			InCaReAlphabet<CodeBlock> alphabet,
 			IInterpolantGenerator interpolantGenerator,
-			PredicateFactory predicateFactory) {
+			PredicateFactoryForInterpolantAutomata predicateFactory) {
 		m_Services = services;
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(interpolantGenerator);
@@ -76,7 +76,7 @@ public class StraightLineInterpolantAutomatonBuilder {
 	}
 
 	private void addStatesAndTransitions(IInterpolantGenerator interpolantGenerator, 
-			PredicateFactory predicateFactory, InterpolantsPreconditionPostcondition ipp) { 
+			PredicateFactoryForInterpolantAutomata predicateFactory, InterpolantsPreconditionPostcondition ipp) { 
 
 		m_Result.addState(true, false, interpolantGenerator.getPrecondition());
 		m_Result.addState(false, true, interpolantGenerator.getPostcondition());

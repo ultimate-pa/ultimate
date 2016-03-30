@@ -37,8 +37,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 
 /**
- * Provides a static method to get a prettyprinted String representation of a
- * (Boogie) Statement.
+ * Provides a static method to get a prettyprinted String representation of a (Boogie) Statement.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * @author dietsch@informatik.uni-freiburg.de
@@ -48,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 public class BoogiePrettyPrinter {
 
 	private static final String sLinebreak = System.getProperty("line.separator");
+	private static final IToString<BoogieASTNode> sBoogieStringProvider = new BoogieStringProvider();;
 
 	/**
 	 * @return prettyprinted String representation the Statement st
@@ -114,25 +114,7 @@ public class BoogiePrettyPrinter {
 	}
 
 	public static IToString<BoogieASTNode> getBoogieToStringprovider() {
-		IToString<BoogieASTNode> stringProvider = new IToString<BoogieASTNode>() {
-			@Override
-			public String toString(BoogieASTNode elem) {
-				if (elem instanceof Expression) {
-					return BoogiePrettyPrinter.print((Expression) elem);
-				} else if (elem instanceof Statement) {
-					return BoogiePrettyPrinter.print((Statement) elem);
-				} else if (elem instanceof VarList) {
-					return BoogiePrettyPrinter.print((VarList) elem);
-				} else if (elem instanceof VariableDeclaration) {
-					return BoogiePrettyPrinter.print((VariableDeclaration) elem);
-				} else if (elem instanceof Specification) {
-					return BoogiePrettyPrinter.print((Specification) elem);
-				} else {
-					return elem.toString();
-				}
-			}
-		};
-		return stringProvider;
+		return sBoogieStringProvider;
 	}
 
 	private static void removeLastLinebreak(StringBuilder sb) {
@@ -147,4 +129,22 @@ public class BoogiePrettyPrinter {
 		}
 	}
 
+	private static final class BoogieStringProvider implements IToString<BoogieASTNode> {
+		@Override
+		public String toString(BoogieASTNode elem) {
+			if (elem instanceof Expression) {
+				return BoogiePrettyPrinter.print((Expression) elem);
+			} else if (elem instanceof Statement) {
+				return BoogiePrettyPrinter.print((Statement) elem);
+			} else if (elem instanceof VarList) {
+				return BoogiePrettyPrinter.print((VarList) elem);
+			} else if (elem instanceof VariableDeclaration) {
+				return BoogiePrettyPrinter.print((VariableDeclaration) elem);
+			} else if (elem instanceof Specification) {
+				return BoogiePrettyPrinter.print((Specification) elem);
+			} else {
+				return elem.toString();
+			}
+		}
+	}
 }

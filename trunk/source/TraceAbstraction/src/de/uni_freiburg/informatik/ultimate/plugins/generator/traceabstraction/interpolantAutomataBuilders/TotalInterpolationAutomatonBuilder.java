@@ -54,15 +54,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Trans
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
@@ -75,6 +75,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class TotalInterpolationAutomatonBuilder {
 
@@ -102,7 +105,7 @@ public class TotalInterpolationAutomatonBuilder {
 
 	public TotalInterpolationAutomatonBuilder(INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			ArrayList<IPredicate> stateSequence, IInterpolantGenerator interpolantGenerator, SmtManager smtManager,
-			PredicateFactory predicateFactory, ModifiableGlobalVariableManager modifiableGlobals,
+			PredicateFactoryForInterpolantAutomata predicateFactory, ModifiableGlobalVariableManager modifiableGlobals,
 			INTERPOLATION interpolation, IUltimateServiceProvider services, HoareTripleChecks hoareTripleChecks) throws OperationCanceledException {
 		super();
 		m_Services = services;
@@ -130,7 +133,7 @@ public class TotalInterpolationAutomatonBuilder {
 			m_Annotated.add(lastAutomatonState);
 			m_Worklist.add(lastAutomatonState);
 		}
-		m_Htc = BasicCegarLoop.getEfficientHoareTripleChecker(HoareTripleChecks.MONOLITHIC, 
+		m_Htc = BasicCegarLoop.getEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC, 
 				m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier);
 		for (IPredicate state : stateSequence) {
 			m_Worklist.add(state);
@@ -228,27 +231,27 @@ public class TotalInterpolationAutomatonBuilder {
 			IPredicate succItp) {
 		if (transition instanceof OutgoingInternalTransition) {
 			OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans = (OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
-			Validity validity = m_Htc.checkInternal(predItp, transition.getLetter(), succItp);
+			Validity validity = m_Htc.checkInternal(predItp, (IInternalAction) transition.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				m_IA.addInternalTransition(predItp, internalTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingCallTransition) {
 			OutgoingCallTransition<CodeBlock, IPredicate> callTrans = (OutgoingCallTransition<CodeBlock, IPredicate>) transition;
-			Validity validity = m_Htc.checkCall(predItp, callTrans.getLetter(), succItp);
+			Validity validity = m_Htc.checkCall(predItp, (ICallAction) callTrans.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				m_IA.addCallTransition(predItp, callTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingReturnTransition) {
 			OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = (OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
 			IPredicate hierPredItp = m_Epimorphism.getMapping(returnTrans.getHierPred());
-			Validity validity = m_Htc.checkReturn(predItp, hierPredItp, returnTrans.getLetter(), succItp);
+			Validity validity = m_Htc.checkReturn(predItp, hierPredItp, (IReturnAction) returnTrans.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				m_IA.addReturnTransition(predItp, hierPredItp, returnTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof SummaryReturnTransition) {
 			SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = (SummaryReturnTransition<CodeBlock, IPredicate>) transition;
 			IPredicate linPredItp = m_Epimorphism.getMapping(summaryTrans.getLinPred());
-			Validity validity = m_Htc.checkReturn(linPredItp, predItp, summaryTrans.getLetter(), succItp);
+			Validity validity = m_Htc.checkReturn(linPredItp, predItp, (IReturnAction) summaryTrans.getLetter(), succItp);
 			if (validity == Validity.VALID) {
 				m_IA.addReturnTransition(linPredItp, predItp, summaryTrans.getLetter(), succItp);
 			}
@@ -555,7 +558,7 @@ public class TotalInterpolationAutomatonBuilder {
 		return m_BenchmarkGenerator;
 	}
 
-	public static class TotalInterpolationBenchmarkType implements IBenchmarkType {
+	public static class TotalInterpolationBenchmarkType implements IStatisticsType {
 
 		private static TotalInterpolationBenchmarkType s_Instance = new TotalInterpolationBenchmarkType();
 		public final static String s_AdditionalInterpolants = "AdditionalInterpolants";
@@ -587,8 +590,8 @@ public class TotalInterpolationAutomatonBuilder {
 				return (int) value1 + (int) value2;
 			case s_TraceCheckerBenchmarks:
 			case s_EdgeCheckerBenchmarks:
-				BenchmarkData bmData1 = (BenchmarkData) value1;
-				BenchmarkData bmData2 = (BenchmarkData) value2;
+				StatisticsData bmData1 = (StatisticsData) value1;
+				StatisticsData bmData2 = (StatisticsData) value2;
 				bmData1.aggregateBenchmarkData(bmData2);
 				return bmData1;
 			default:
@@ -597,7 +600,7 @@ public class TotalInterpolationAutomatonBuilder {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 
 			for (String id : new String[] { s_AdditionalInterpolants, s_PathLenght1, s_RunSearches, s_UsefullRunGeq2,
@@ -611,28 +614,28 @@ public class TotalInterpolationAutomatonBuilder {
 
 			sb.append(s_TraceCheckerBenchmarks);
 			sb.append(": ");
-			BenchmarkData ecData = (BenchmarkData) benchmarkData.getValue(s_TraceCheckerBenchmarks);
+			StatisticsData ecData = (StatisticsData) benchmarkData.getValue(s_TraceCheckerBenchmarks);
 			sb.append(ecData);
 			sb.append("  ");
 
 			sb.append(s_EdgeCheckerBenchmarks);
 			sb.append(": ");
-			BenchmarkData tcData = (BenchmarkData) benchmarkData.getValue(s_EdgeCheckerBenchmarks);
+			StatisticsData tcData = (StatisticsData) benchmarkData.getValue(s_EdgeCheckerBenchmarks);
 			sb.append(tcData);
 			return sb.toString();
 		}
 
 	}
 
-	public static class TotalInterpolationBenchmarkGenerator implements IBenchmarkDataProvider {
+	public static class TotalInterpolationBenchmarkGenerator implements IStatisticsDataProvider {
 
 		private int m_AdditionalInterpolants = 0;
 		private int m_PathLenght1 = 0;
 		private int m_RunSearches = 0;
 		private int m_UsefullRunGeq2 = 0;
 		private int m_UselessRunGeq2 = 0;
-		private final BenchmarkData m_EcData = new BenchmarkData();
-		private final BenchmarkData m_TcData = new BenchmarkData();
+		private final StatisticsData m_EcData = new StatisticsData();
+		private final StatisticsData m_TcData = new StatisticsData();
 
 		public TotalInterpolationBenchmarkGenerator() {
 		}
@@ -662,11 +665,11 @@ public class TotalInterpolationAutomatonBuilder {
 			m_UselessRunGeq2++;
 		}
 
-		public void addEdgeCheckerData(IBenchmarkDataProvider ecbd) {
+		public void addEdgeCheckerData(IStatisticsDataProvider ecbd) {
 			m_EcData.aggregateBenchmarkData(ecbd);
 		}
 
-		public void addTraceCheckerData(IBenchmarkDataProvider tcbd) {
+		public void addTraceCheckerData(IStatisticsDataProvider tcbd) {
 			m_TcData.aggregateBenchmarkData(tcbd);
 		}
 
@@ -692,7 +695,7 @@ public class TotalInterpolationAutomatonBuilder {
 		}
 
 		@Override
-		public IBenchmarkType getBenchmarkType() {
+		public IStatisticsType getBenchmarkType() {
 			return TotalInterpolationBenchmarkType.getInstance();
 		}
 

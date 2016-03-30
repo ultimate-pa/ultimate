@@ -11,27 +11,28 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class OctAssumeProcessor {
-	
+
 	private final OctPostOperator mPostOp;
 
 	public OctAssumeProcessor(OctPostOperator postOperator) {
 		mPostOp = postOperator;
 	}
-	
+
 	public List<OctDomainState> assume(Expression assumption, List<OctDomainState> oldStates) {
 		return processBooleanOperations(assumption, false, oldStates);
 	}
-	
+
 	private List<OctDomainState> processBooleanOperations(Expression e, boolean isNegated,
 			List<OctDomainState> oldStates) {
 
-		assert TypeUtil.isBoolean(e.getType());
+		assert TypeUtil.isBoolean(e.getType()) : "Expression " + BoogiePrettyPrinter.print(e) + " is not boolean";
 
 		if (e instanceof BooleanLiteral) {
 			if (((BooleanLiteral) e).getValue() ^ isNegated) {
@@ -112,7 +113,7 @@ public class OctAssumeProcessor {
 
 		}
 	}
-	
+
 	private List<OctDomainState> assumeAnd(Expression left, boolean negLeft, Expression right, boolean negRight,
 			List<OctDomainState> oldStates) {
 		oldStates = processBooleanOperations(left, negLeft, oldStates);
@@ -122,16 +123,14 @@ public class OctAssumeProcessor {
 
 	private List<OctDomainState> assumeOr(Expression left, boolean negLeft, Expression right, boolean negRight,
 			List<OctDomainState> oldStates) {
-		return mPostOp.splitF(oldStates,
-				statesBeforeOr -> processBooleanOperations(left, negLeft, statesBeforeOr),
+		return mPostOp.splitF(oldStates, statesBeforeOr -> processBooleanOperations(left, negLeft, statesBeforeOr),
 				statesBeforeOr -> processBooleanOperations(right, negRight, statesBeforeOr));
 	}
 
 	private List<OctDomainState> assumeIff(Expression left, Expression right, boolean negIff,
 			List<OctDomainState> oldStates) {
 
-		return mPostOp.splitF(oldStates,
-				statesBeforeIff -> assumeAnd(left, negIff, right, false, statesBeforeIff),
+		return mPostOp.splitF(oldStates, statesBeforeIff -> assumeAnd(left, negIff, right, false, statesBeforeIff),
 				statesBeforeIff -> assumeAnd(left, !negIff, right, true, statesBeforeIff));
 	}
 
@@ -149,7 +148,7 @@ public class OctAssumeProcessor {
 			throw new IllegalArgumentException("Not a relation on bools: " + be);
 		}
 	}
-	
+
 	private List<OctDomainState> processNumericRelation(BinaryExpression be, boolean isNegated,
 			List<OctDomainState> oldStates) {
 
@@ -174,7 +173,7 @@ public class OctAssumeProcessor {
 
 		Expression left = be.getLeft();
 		Expression right = be.getRight();
-		
+
 		AffineExpression aeLeft = mPostOp.getExprTransformer().affineExprCached(left);
 		AffineExpression aeRight = mPostOp.getExprTransformer().affineExprCached(right);
 		if (aeLeft == null || aeRight == null) {
@@ -201,11 +200,10 @@ public class OctAssumeProcessor {
 			throw new IllegalArgumentException("Not a relation on numbers: " + op);
 		}
 	}
-	
-	
+
 	private List<OctDomainState> processAffineNeZero(AffineExpression ae, boolean intRelation,
 			List<OctDomainState> oldStates) {
-		
+
 		if (ae.isConstant()) {
 			if (ae.getConstant().signum() == 0) {
 				// (assume 0 != 0) is equivalent to (assume false)
@@ -238,8 +236,7 @@ public class OctAssumeProcessor {
 				geOc = new OctValue(geC);
 				leOc = new OctValue(leC);
 			}
-			return mPostOp.splitC(oldStates,
-					s -> s.assumeNumericVarInterval(ovf.var, geOc, OctValue.INFINITY),  // v > c
+			return mPostOp.splitC(oldStates, s -> s.assumeNumericVarInterval(ovf.var, geOc, OctValue.INFINITY), // v > c
 					s -> s.assumeNumericVarInterval(ovf.var, OctValue.INFINITY, leOc)); // v < c
 
 		} else if ((tvf = ae.getTwoVarForm()) != null) {
@@ -248,7 +245,7 @@ public class OctAssumeProcessor {
 			return mPostOp.splitC(oldStates,
 					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, leOc),
 					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, leOc2));
-			
+
 		} else {
 			return oldStates; // safe over-approximation
 
@@ -257,16 +254,16 @@ public class OctAssumeProcessor {
 
 	private List<OctDomainState> processAffineEqZero(AffineExpression ae, boolean intRelation,
 			List<OctDomainState> oldStates) {
-		
+
 		if (ae.isConstant()) {
 			if (ae.getConstant().signum() != 0) {
-				// (assume 0 == ±7) is equivalent  to (assume false)
+				// (assume 0 == ±7) is equivalent to (assume false)
 				return new ArrayList<>();
 			} else {
 				// (assume 0 == 0) is equivalent to (assume true)
 				return oldStates;
 			}
-			
+
 		}
 
 		// from now on handle (ae - c == 0) as (ae == c) ----------------
@@ -283,10 +280,10 @@ public class OctAssumeProcessor {
 		} else if ((tvf = ae.getTwoVarForm()) != null) {
 			OctValue oc = new OctValue(c);
 			OctValue ocNeg = new OctValue(c.negate());
-			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(
-					tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, oc));
-			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(
-					tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, ocNeg));
+			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
+					tvf.negVar2, oc));
+			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2,
+					!tvf.negVar2, ocNeg));
 			return oldStates;
 
 		} else {
@@ -297,7 +294,7 @@ public class OctAssumeProcessor {
 
 	private List<OctDomainState> processAffineLtZero(AffineExpression ae, boolean strictRelInt,
 			List<OctDomainState> oldStates) {
-		
+
 		// from now on handle (ae - c <= 0) as (ae <= c) ----------------
 		BigDecimal c = ae.getConstant().negate();
 		if (strictRelInt) {
@@ -311,7 +308,7 @@ public class OctAssumeProcessor {
 		AffineExpression.TwoVarForm tvf;
 		if (ae.isConstant()) {
 			if (c.signum() < 0) {
-				// (assume 0 <= -7) is equivalent  to (assume false)
+				// (assume 0 <= -7) is equivalent to (assume false)
 				return new ArrayList<>();
 			} else {
 				// (assume 0 <= 7) is equivalent to (assume true)
@@ -330,13 +327,13 @@ public class OctAssumeProcessor {
 			}
 			oldStates.forEach(state -> state.assumeNumericVarInterval(ovf.var, min, max));
 			return oldStates;
-		
+
 		} else if ((tvf = ae.getTwoVarForm()) != null) {
 			OctValue co = new OctValue(c);
-			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(
-					tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, co));
+			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
+					tvf.negVar2, co));
 			return oldStates;
-		
+
 		} else {
 			return oldStates; // safe over-approximation
 

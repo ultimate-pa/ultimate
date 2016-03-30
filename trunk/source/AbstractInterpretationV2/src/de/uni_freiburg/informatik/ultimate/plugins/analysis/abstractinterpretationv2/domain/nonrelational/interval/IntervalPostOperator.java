@@ -38,8 +38,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -50,8 +49,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -67,12 +69,16 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final IntervalDomainStatementProcessor mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
+	private final int mParallelStates;
 
 	public IntervalPostOperator(final Logger logger, final BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = new IntervalDomainStatementProcessor(mLogger, symbolTable);
 		mSymbolTable = symbolTable;
+
+		mParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		        .getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 	}
 
 	@Override
@@ -95,9 +101,9 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 						postProcessed.add(s);
 					}
 				}
-				if (postProcessed.size() == 0) {
+				if (postProcessed.isEmpty()) {
 					currentStates.clear();
-					if (oldstate.getVariables().size() != 0) {
+					if (!oldstate.getVariables().isEmpty()) {
 						currentStates.add(oldstate.bottomState());
 					}
 					return currentStates;
@@ -108,7 +114,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			currentStates = afterProcessStates;
 		}
 
-		return currentStates;
+		return IntervalUtils.mergeStatesIfNecessary(currentStates, mParallelStates);
 	}
 
 	@Override
@@ -120,7 +126,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
-			CallStatement callStatement = (CallStatement) call.getCallStatement();
+			final CallStatement callStatement = (CallStatement) call.getCallStatement();
 			final Expression[] args = callStatement.getArguments();
 
 			// If there are no arguments, we don't need to rewrite states.
@@ -129,14 +135,14 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 				return returnList;
 			}
 
-			Map<Integer, String> paramNames = getArgumentTemporaries(args.length, stateBeforeLeaving);
+			final Map<Integer, String> paramNames = getArgumentTemporaries(args.length, stateBeforeLeaving);
 
 			final List<LeftHandSide> idents = new ArrayList<>();
 
-			Map<String, IBoogieVar> paramVariables = new HashMap<>();
+			final Map<String, IBoogieVar> paramVariables = new HashMap<>();
 			for (int i = 0; i < args.length; i++) {
 				final String name = paramNames.get(i);
-				final IBoogieVar boogieVar = createTemporaryIBoogieVar(name, args[i].getType());
+				final IBoogieVar boogieVar = BoogieUtil.createTemporaryIBoogieVar(name, args[i].getType());
 				paramVariables.put(name, boogieVar);
 
 				final ILocation loc = callStatement.getLocation();
@@ -149,7 +155,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			final IntervalDomainState interimState = stateBeforeLeaving.addVariables(paramVariables);
 
 			final List<IntervalDomainState> result = mStatementProcessor.process(interimState, assign);
-			if (result.size() == 0) {
+			if (result.isEmpty()) {
 				throw new UnsupportedOperationException("The assingment operation resulted in 0 states.");
 			}
 
@@ -160,7 +166,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			final List<String> paramIdentifiers = new ArrayList<>();
 
 			for (final VarList varlist : inParams) {
-				for (String var : varlist.getIdentifiers()) {
+				for (final String var : varlist.getIdentifiers()) {
 					paramIdentifiers.add(var);
 				}
 			}
@@ -200,7 +206,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 				returnList.add(returnState);
 			}
 
-			return returnList;
+			return IntervalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
 		} else if (transition instanceof Return) {
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
@@ -224,7 +230,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			        vals.toArray(new IntervalDomainValue[vals.size()]));
 
 			returnList.add(returnState);
-			return returnList;
+			return IntervalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
 		} else {
 			throw new UnsupportedOperationException(
 			        "IntervalDomain does not support context switches other than Call and Return (yet)");
@@ -243,7 +249,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 	 * @return A map containing for each index of the call statement's argument
 	 */
 	private Map<Integer, String> getArgumentTemporaries(final int argNum, final IntervalDomainState state) {
-		Map<Integer, String> returnMap = new HashMap<>();
+		final Map<Integer, String> returnMap = new HashMap<>();
 
 		String paramPrefix = "param_";
 
@@ -252,13 +258,11 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 		while (!uniqueFound) {
 			for (int i = 0; i < argNum; i++) {
 				final StringBuilder sb = new StringBuilder();
-				sb.append(paramPrefix);
-				sb.append(i);
+				sb.append(paramPrefix).append(i);
 				final String currentParamName = sb.toString();
 				if (state.containsVariable(currentParamName)) {
 					final StringBuilder paramBuilder = new StringBuilder();
-					paramBuilder.append(paramPrefix);
-					paramBuilder.append("_");
+					paramBuilder.append(paramPrefix).append('_');
 					paramPrefix = paramBuilder.toString();
 					break;
 				}
@@ -268,41 +272,11 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 
 		for (int i = 0; i < argNum; i++) {
 			final StringBuilder sb = new StringBuilder();
-			sb.append(paramPrefix);
-			sb.append(i);
+			sb.append(paramPrefix).append(i);
 			returnMap.put(i, sb.toString());
 		}
 
 		return returnMap;
-	}
-
-	/**
-	 * Creates a dummy {@link IBoogieVar} from a given type. This method is used to give generated temporary variables a
-	 * boogie type.
-	 * 
-	 * @param identifier
-	 *            The identifier of the variable.
-	 * @param type
-	 *            The type of the variable.
-	 * @return An {@link IBoogieVar} according to the given identifier and {@link IType}.
-	 */
-	private IBoogieVar createTemporaryIBoogieVar(final String identifier, final IType type) {
-		return new IBoogieVar() {
-			@Override
-			public String getIdentifier() {
-				return identifier;
-			}
-
-			@Override
-			public IType getIType() {
-				return type;
-			}
-
-			@Override
-			public ApplicationTerm getDefaultConstant() {
-				throw new UnsupportedOperationException("Temporary IBoogieVars dont have default constants.");
-			}
-		};
 	}
 
 	private Procedure getProcedure(final String procedureName) {

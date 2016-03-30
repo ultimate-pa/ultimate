@@ -209,6 +209,17 @@ public class CPrimitive extends CType {
 			throw new AssertionError("case missing");
     	}
 	}
+	
+	private boolean isComplex(PRIMITIVE type) {
+		switch(type) {
+		case COMPLEX_FLOAT:
+		case COMPLEX_DOUBLE:
+		case COMPLEX_LONGDOUBLE:
+			return true;
+		default: 
+			return false;
+		}
+	}
 
     /**
      * Constructor.

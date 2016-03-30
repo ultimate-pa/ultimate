@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
@@ -62,18 +63,18 @@ public class InliningTest_Svcomp_Memsafety extends AbstractTraceAbstractionTestS
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (sAutomizerWithInlining) {
-			addTestCases("AutomizerCInline.xml", 
+			addTestCase("AutomizerCInline.xml", 
 					"automizer/ForwardPredicates_SvcompMemsafety.epf", 
 					s_SVCOMP_Examples);
-			addTestCases("AutomizerCInlineWithBlockEncoding.xml", 
+			addTestCase("AutomizerCInlineWithBlockEncoding.xml", 
 					"automizer/ForwardPredicates_SvcompMemsafetySeqbe.epf", 
 					s_SVCOMP_Examples);
 		}
 		if (sAutomizerWithoutInlining) {
-			addTestCases("AutomizerC.xml", 
+			addTestCase("AutomizerC.xml", 
 					"automizer/ForwardPredicates_SvcompMemsafety.epf", 
 					s_SVCOMP_Examples);
-			addTestCases("AutomizerCWithBlockEncoding.xml", 
+			addTestCase("AutomizerCWithBlockEncoding.xml", 
 					"automizer/ForwardPredicates_SvcompMemsafetySeqbe.epf", 
 					s_SVCOMP_Examples);
 		}

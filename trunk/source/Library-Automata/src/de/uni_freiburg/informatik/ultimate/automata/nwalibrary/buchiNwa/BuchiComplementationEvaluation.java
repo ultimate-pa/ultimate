@@ -136,7 +136,7 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 		addToResults(results, name + "_nonLiveRemoved", nl);
 		INestedWordAutomaton<LETTER, STATE> bc = (new BuchiClosure<>(m_Services, nl)).getResult();
 		NestedWordAutomatonReachableStates<LETTER, STATE> bcru = (new RemoveUnreachable<LETTER, STATE>(m_Services, bc)).getResult();
-		INestedWordAutomatonOldApi<LETTER, STATE> minmized = (new MinimizeSevpa<LETTER, STATE>(m_Services, bcru)).getResult();
+		INestedWordAutomaton<LETTER, STATE> minmized = new MinimizeSevpa<LETTER, STATE>(m_Services, bcru).getResult();
 		addToResults(results, name + "_MsSizeReduction", minmized);
 	}
 	

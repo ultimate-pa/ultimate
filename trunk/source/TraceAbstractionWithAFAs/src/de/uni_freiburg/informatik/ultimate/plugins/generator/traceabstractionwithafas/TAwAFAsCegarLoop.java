@@ -67,8 +67,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -82,9 +87,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -110,8 +112,10 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
 		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
-		m_PredicateUnifier = new PredicateUnifier(services, smtManager, smtManager.newTruePredicate(),
-				smtManager.newFalsePredicate());
+		TermVarsProc trueTvp = smtManager.getPredicateFactory().constructTrue();
+		TermVarsProc falseTvp = smtManager.getPredicateFactory().constructFalse();
+		m_PredicateUnifier = new PredicateUnifier(services, smtManager, smtManager.getPredicateFactory().newPredicate(trueTvp),
+				smtManager.getPredicateFactory().newPredicate(falseTvp));
 	}
 
 	@Override
@@ -428,8 +432,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomaton.generateCube(targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
-						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
-						currentDag.getNodeLabel().getBlock(),
+						m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
 			else{
@@ -439,8 +443,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomaton.generateCube(new IPredicate[]{finalState}, new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
-						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
-						currentDag.getNodeLabel().getBlock(),
+						m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
 		}
@@ -454,7 +458,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				for(IPredicate targetState : alternatingAutomaton.getStates()){
 					if (onlySelfLoops && !targetState.equals(sourceState))
 						continue;
-					if (htc.checkInternal(sourceState, letter, targetState) == Validity.VALID) {
+					if (htc.checkInternal(sourceState, (IInternalAction) letter, targetState) == Validity.VALID) {
 						alternatingAutomaton.addTransition(
 							letter,
 							targetState,
@@ -499,7 +503,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		assert !m_SmtManager.isLocked();
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+				new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt())).getResult());
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
@@ -551,7 +555,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			solverHtc = new MonolithicHoareTripleChecker(m_SmtManager);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager);
+			solverHtc = new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt());
 			break;
 		default:
 			throw new AssertionError("unknown value");
@@ -575,7 +579,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				if(entry.getValue()[i] != null){
 					IPredicate pre = bexToPredicate(entry.getValue()[i], afa.getStates());
 					IPredicate succ = afa.getStates().get(i);
-					boolean check = htc.checkInternal(pre, entry.getKey(), succ) == Validity.VALID;
+					boolean check = htc.checkInternal(pre, (IInternalAction) entry.getKey(), succ) == Validity.VALID;
 					result &= check;
 					if (!check)
 						mLogger.warn("the following non-inductive transition occurs in the current AFA:\n"
@@ -598,15 +602,15 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		IPredicate pred = m_PredicateUnifier.getTruePredicate();
 		for(int i = 0; i < states.size(); i++){
 			if(bex.getAlpha().get(i)){
-				pred = m_SmtManager.newPredicate(
-						m_SmtManager.and(pred,
+				pred = m_SmtManager.getPredicateFactory().newPredicate(
+						m_SmtManager.getPredicateFactory().and(pred,
 								!bex.getBeta().get(i) ?
-									m_SmtManager.newPredicate(m_SmtManager.not(states.get(i))) :
+									m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().not(states.get(i))) :
 										states.get(i)));
 			}
 		}
 		if(bex.getNextConjunctExpression() != null){
-			pred = m_SmtManager.newPredicate(m_SmtManager.or(pred, 
+			pred = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().or(pred, 
 					bexToPredicate(bex.getNextConjunctExpression(), states)));
 		}
 		return pred;

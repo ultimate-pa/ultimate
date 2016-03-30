@@ -54,9 +54,9 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 	private final List<IIncrementalLog> mLogs;
 	private final Logger mLogger;
 
-	public UltimateTestCase(String name, ITestResultDecider decider, UltimateStarter starter,
-			UltimateRunDefinition ultimateRunDefinition, List<ITestSummary> summaries,
-			List<IIncrementalLog> incrementalLogs) {
+	public UltimateTestCase(final String name, final ITestResultDecider decider, final UltimateStarter starter,
+			final UltimateRunDefinition ultimateRunDefinition, final List<ITestSummary> summaries,
+			final List<IIncrementalLog> incrementalLogs) {
 		mLogger = Logger.getLogger(UltimateStarter.class);
 		if (ultimateRunDefinition == null) {
 			throw new IllegalArgumentException("ultimateRunDefinition");

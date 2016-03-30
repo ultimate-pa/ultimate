@@ -61,7 +61,7 @@ public class IntervalConditionalEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(final IntervalDomainState currentState) {
 		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
 		final List<IEvaluationResult<IntervalDomainValue>> conditionResult = mConditionEvaluator.evaluate(currentState);
@@ -120,7 +120,7 @@ public class IntervalConditionalEvaluator
 			}
 		}
 
-		if (returnList.size() == 0) {
+		if (returnList.isEmpty()) {
 			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(),
 			        new BooleanValue(BooleanValue.Value.FALSE)));
 		}
@@ -129,7 +129,8 @@ public class IntervalConditionalEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		if (mNegatedConditionEvaluator == null) {
 			mNegatedConditionEvaluator = evaluator;
 		} else if (mConditionEvaluator == null) {
@@ -161,24 +162,17 @@ public class IntervalConditionalEvaluator
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder(50);
 
-		sb.append("if ");
-		sb.append(mConditionEvaluator);
-		sb.append(" [[ ");
-		sb.append(mNegatedConditionEvaluator);
-		sb.append(" ]]");
-		sb.append(" then ");
-		sb.append(mIfEvaluator);
-		sb.append(" else ");
-		sb.append(mElseEvaluator);
+		sb.append("if ").append(mConditionEvaluator).append(" [[ ").append(mNegatedConditionEvaluator).append(" ]]")
+		        .append(" then ").append(mIfEvaluator).append(" else ").append(mElseEvaluator);
 
 		return sb.toString();
 	}
 
 	@Override
-	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
-	        IntervalDomainState currentState) {
+	public List<IntervalDomainState> inverseEvaluate(final IEvaluationResult<IntervalDomainValue> computedValue,
+	        final IntervalDomainState currentState) {
 
 		final List<IntervalDomainState> returnList = new ArrayList<>();
 

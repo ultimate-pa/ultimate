@@ -52,17 +52,17 @@ public class IntervalDomainValueTest {
 
 	@Test
 	public void testBoundedIntervalValue() {
-		IntervalValue intv = new IntervalValue(new BigDecimal(0));
+		IntervalValue intv = new IntervalValue(BigDecimal.ZERO);
 
-		assertTrue(intv.getValue().equals(new BigDecimal(0)));
+		assertTrue(intv.getValue().equals(BigDecimal.ZERO));
 		assertFalse(intv.isInfinity());
 
 		IntervalValue intvNeg = new IntervalValue(new BigDecimal(-1));
 		assertTrue(intvNeg.getValue().equals(new BigDecimal(-1)));
 		assertFalse(intvNeg.isInfinity());
 
-		IntervalValue intvPos = new IntervalValue(new BigDecimal(1));
-		assertTrue(intvPos.getValue().equals(new BigDecimal(1)));
+		IntervalValue intvPos = new IntervalValue(BigDecimal.ONE);
+		assertTrue(intvPos.getValue().equals(BigDecimal.ONE));
 		assertFalse(intvPos.isInfinity());
 	}
 
@@ -78,7 +78,7 @@ public class IntervalDomainValueTest {
 
 	@Test
 	public void testBoundedInterval() {
-		IntervalDomainValue intvUpperOpen = new IntervalDomainValue(new IntervalValue(new BigDecimal(0)),
+		IntervalDomainValue intvUpperOpen = new IntervalDomainValue(new IntervalValue(BigDecimal.ZERO),
 		        new IntervalValue());
 
 		assertFalse(intvUpperOpen.getLower().isInfinity());
@@ -97,5 +97,87 @@ public class IntervalDomainValueTest {
 		assertTrue(bottomInterval.isBottom());
 		assertTrue(bottomInterval.getLower() == null);
 		assertTrue(bottomInterval.getUpper() == null);
+	}
+
+	@Test
+	public void testAbs() {
+		
+		// bottom
+		assertAbs("1", "-1", "1", "-1");
+
+		// intervals containing zero
+		assertAbs("inf", "inf", "0", "inf");
+		assertAbs("-1", "inf", "0", "inf");
+		assertAbs("inf", "1", "0", "inf");
+		assertAbs("-2", "3", "0", "3");
+		assertAbs("-3", "2", "0", "3");
+
+		// negative intervals
+		assertAbs("inf", "-1", "1", "inf");
+		assertAbs("-2", "-1", "1", "2");
+
+		// positive intervals
+		assertAbs("1", "inf", "1", "inf");
+		assertAbs("1", "2", "1", "2");
+	}
+
+	private void assertAbs(String a, String b, String c, String d) {
+		IntervalDomainValue ab, cd, result;
+		ab = parseInterval(a, b);
+		cd = parseInterval(c, d);
+		result = ab.abs();
+		assertTrue("expected " + cd + ", was " + result, result.isEqualTo(cd));
+	}
+	
+	@Test
+	public void testModulo() {
+		// TODO Test is incomplete. Test all cases!
+
+		assertMod( "7",  "3", true, "1");
+		assertMod( "7", "-3", true, "1");
+		assertMod("-7",  "3", true, "2");
+		assertMod("-7", "-3", true, "2");
+
+		assertMod("4", "23", "25", "25", false, "4", "23");
+		assertMod("4", "23", "-25", "-25", true, "4", "23");
+		assertMod("-99", "23", "-25", "-25", false, "0", "25");
+		assertMod("-99", "23", "25", "25", true, "0", "24");
+
+		assertMod("4", "20", "-25", "-22", false, "4", "20");
+		assertMod("4", "20", "-25", "-22", true, "4", "20");
+		assertMod("-99", "20", "-25", "-22", false, "0", "25");
+		assertMod("-99", "20", "-25", "-22", true, "0", "24");
+
+		assertMod("1", "1", "0", "0", false, "inf", "inf");
+		assertMod("1", "1", "-4", "5", false, "inf", "inf");
+	}
+
+	private void assertMod(String ab, String cd, boolean intDiv, String ef) {
+		IntervalDomainValue iab, icd, ief, result;
+		iab = parseInterval(ab, ab);
+		icd = parseInterval(cd, cd);
+		ief = parseInterval(ef, ef);
+		result = iab.modulo(icd, intDiv);
+		assertTrue("expected " + ief + ", was " + result, result.isEqualTo(ief));
+	}
+	
+	private void assertMod(String a, String b, String c, String d, boolean intDiv, String e, String f) {
+		IntervalDomainValue ab, cd, ef, result;
+		ab = parseInterval(a, b);
+		cd = parseInterval(c, d);
+		ef = parseInterval(e, f);
+		result = ab.modulo(cd, intDiv);
+		assertTrue("expected " + ef + ", was " + result, result.isEqualTo(ef));
+	}
+	
+	private IntervalDomainValue parseInterval(String min, String max) {
+		return new IntervalDomainValue(parseIntervalValue(min), parseIntervalValue(max));
+	}
+	
+	private IntervalValue parseIntervalValue(String v) {
+		if ("inf".equals(v)) {
+			return new IntervalValue();
+		}
+		return new IntervalValue(v);
 	}
 }

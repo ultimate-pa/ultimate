@@ -136,7 +136,7 @@ public class RCFG2AnnotatedRCFG {
 			Term aiTerm = m_initialPredicates.get(pp);
 			IPredicate aiPredicate;
 			if (aiTerm != null) {
-				aiPredicate = m_smtManager.constructPredicate(aiTerm, 0, Collections.<TermVariable>emptySet());
+				aiPredicate = m_smtManager.getPredicateFactory().constructPredicate(aiTerm, 0, Collections.<TermVariable>emptySet());
 			} else {
 				aiPredicate = m_truePredicate;
 			}

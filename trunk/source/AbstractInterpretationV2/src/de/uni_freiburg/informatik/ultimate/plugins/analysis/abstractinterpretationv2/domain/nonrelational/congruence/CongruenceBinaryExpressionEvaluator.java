@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
@@ -65,15 +66,12 @@ public class CongruenceBinaryExpressionEvaluator
 	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
 
 	private Operator mOperator;
-	
-	// For a equals expression store the evaluated value of both sides (for evaluation of x % c == k)
-	private CongruenceDomainValue mRest = null;
 
 	protected CongruenceBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 		mMaxParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
-		        .getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
+		        .getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 	}
 
 	@Override
@@ -95,9 +93,9 @@ public class CongruenceBinaryExpressionEvaluator
 
 		for (final IEvaluationResult<CongruenceDomainValue> res1 : firstResult) {
 			for (final IEvaluationResult<CongruenceDomainValue> res2 : secondResult) {
-				CongruenceDomainValue returnValue = new CongruenceDomainValue();
+				CongruenceDomainValue returnValue = CongruenceDomainValue.createTop();
 				BooleanValue returnBool = new BooleanValue();
-				
+
 				CongruenceDomainValue v1 = res1.getValue();
 				CongruenceDomainValue v2 = res2.getValue();
 
@@ -136,6 +134,9 @@ public class CongruenceBinaryExpressionEvaluator
 				case COMPEQ:
 					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
 						returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
+						if (returnBool.getValue() != Value.BOTTOM) {
+							returnBool = new BooleanValue(true);
+						}
 					}
 
 					returnValue = v1.intersect(v2);
@@ -187,7 +188,7 @@ public class CongruenceBinaryExpressionEvaluator
 					returnBool = new BooleanValue(false);
 					mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 					        + ". Returning current state.");
-					returnValue = new CongruenceDomainValue();
+					returnValue = CongruenceDomainValue.createTop();
 				}
 				returnList.add(new CongruenceDomainEvaluationResult(returnValue, returnBool));
 			}
@@ -204,7 +205,8 @@ public class CongruenceBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -349,25 +351,21 @@ public class CongruenceBinaryExpressionEvaluator
 					throw new UnsupportedOperationException(
 					        "If and only if expressions should have been resolved earlier.");
 				case COMPEQ:
+					final BooleanValue intersectBool = left.getBooleanValue().intersect(right.getBooleanValue());
+					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
+					        && (intersectBool.getValue() == Value.TOP)) {
+						returnStates.add(currentState);
+						break;
+					}
 					final CongruenceDomainValue newLeft = computeNewValue(referenceValue, left.getValue(),
 					        right.getValue(), true);
 					final CongruenceDomainValue newRight = computeNewValue(referenceValue, right.getValue(),
 					        left.getValue(), false);
 
-					final CongruenceDomainEvaluationResult leftEvalresult = new CongruenceDomainEvaluationResult(newLeft,
-					        referenceBool);
-					final CongruenceDomainEvaluationResult rightEvalresult = new CongruenceDomainEvaluationResult(newRight,
-					        referenceBool);
-					
-					// Store the values of the other side of the equality (needed for mod-evaluations)
-					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
-						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
-						c.mRest = rightEvalresult.getValue();
-					}
-					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
-						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
-						c.mRest = leftEvalresult.getValue();
-					}
+					final CongruenceDomainEvaluationResult leftEvalresult = new CongruenceDomainEvaluationResult(
+					        newLeft, right.getBooleanValue());
+					final CongruenceDomainEvaluationResult rightEvalresult = new CongruenceDomainEvaluationResult(
+					        newRight, left.getBooleanValue());
 
 					final List<CongruenceDomainState> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult,
 					        currentState);
@@ -384,6 +382,9 @@ public class CongruenceBinaryExpressionEvaluator
 				case ARITHMOD:
 				case ARITHMUL:
 				case ARITHPLUS:
+				case COMPNEQ:
+				case COMPLT:
+				case COMPGT:
 					final CongruenceDomainValue newArithValueLeft = computeNewValue(referenceValue, left.getValue(),
 					        right.getValue(), true);
 					final CongruenceDomainValue newArithValueRight = computeNewValue(referenceValue, right.getValue(),
@@ -398,7 +399,7 @@ public class CongruenceBinaryExpressionEvaluator
 					        .inverseEvaluate(inverseResultArithLeft, currentState);
 					final List<CongruenceDomainState> rightInverseArith = mRightSubEvaluator
 					        .inverseEvaluate(inverseResultArithRight, currentState);
-					
+
 					for (final CongruenceDomainState le : leftInverseArith) {
 						for (final CongruenceDomainState ri : rightInverseArith) {
 							returnStates.add(le.intersect(ri));
@@ -445,18 +446,13 @@ public class CongruenceBinaryExpressionEvaluator
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHDIV:
-			if (left) {
-				newValue = referenceValue.multiply(otherValue);
-			} else {
-				newValue = otherValue.divide(referenceValue);
-			}
-			newValue = newValue.intersect(oldValue);
+			newValue = oldValue;
 			break;
 		case ARITHMOD:
 			// If mod is at one side of an equality, the left side of the mod expression
 			// changes according to the other side of the equality
-			if (left && mRest != null) {
-				newValue = otherValue.modEquals(mRest);
+			if (left) {
+				newValue = oldValue.intersect(otherValue.modEquals(referenceValue));
 			} else {
 				newValue = oldValue;
 			}
@@ -464,11 +460,18 @@ public class CongruenceBinaryExpressionEvaluator
 		case COMPEQ:
 			newValue = oldValue.intersect(otherValue);
 			break;
-		case COMPLEQ:
-		case COMPLT:
-		case COMPGEQ:
-		case COMPGT:
+		// TODO: for <, >, <=, >= non-zero can also be assumed for some other values (needs suitable transformation)
 		case COMPNEQ:
+		case COMPLT:
+		case COMPGT:
+			if (otherValue.value().signum() == 0) {
+				newValue = oldValue.getNonZeroValue();
+			} else {
+				newValue = oldValue;
+			}
+			break;
+		case COMPLEQ:
+		case COMPGEQ:
 			newValue = referenceValue;
 			break;
 		default:

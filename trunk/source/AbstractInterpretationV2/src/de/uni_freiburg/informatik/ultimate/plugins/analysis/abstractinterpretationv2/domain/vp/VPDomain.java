@@ -28,26 +28,46 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * This abstract domain keeps track of the sign of each variable during abstract interpretation. Variables can either be
- * negative, equal to 0, or positive.
+ * This abstract domain keeps track of the variable separation during abstract
+ * interpretation.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * 
+ * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoogieVar> {
 
+	private Map<BoogieVar, Set<PointerExpression>> pointerMap;
+	private Map<BoogieVar, Set<BoogieVar>> indexToArraysMap;
+	
 	private final IUltimateServiceProvider mServices;
+	private final Logger mLogger;
 
 	public VPDomain(IUltimateServiceProvider services) {
 		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
+
+	public VPDomain(IUltimateServiceProvider services, Map<BoogieVar, Set<PointerExpression>> pointerMap,
+			Map<BoogieVar, Set<BoogieVar>> indexToArraysMap) {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		this.pointerMap = pointerMap;
+		this.indexToArraysMap = indexToArraysMap;
 	}
 
 	@Override
@@ -68,5 +88,27 @@ public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoog
 	@Override
 	public IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		return new VPPostOperator(mServices);
+	}
+
+	@Override
+	public int getDomainPrecision() {
+		// TODO Fill with sense.
+		return 0;
+	}
+
+	public Map<BoogieVar, Set<PointerExpression>> getPointerMap() {
+		return pointerMap;
+	}
+
+	public void setPointerMap(Map<BoogieVar, Set<PointerExpression>> pointerMap) {
+		this.pointerMap = pointerMap;
+	}
+
+	public Map<BoogieVar, Set<BoogieVar>> getIndexToArraysMap() {
+		return indexToArraysMap;
+	}
+
+	public void setIndexToArraysMap(Map<BoogieVar, Set<BoogieVar>> indexToArraysMap) {
+		this.indexToArraysMap = indexToArraysMap;
 	}
 }

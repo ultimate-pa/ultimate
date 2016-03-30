@@ -76,7 +76,7 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 
 	@Override
 	protected Boolean instantiate(String value) {
-		Boolean bool = new Boolean(value);
+		Boolean bool = Boolean.valueOf(value);
 
 		return bool;
 	}

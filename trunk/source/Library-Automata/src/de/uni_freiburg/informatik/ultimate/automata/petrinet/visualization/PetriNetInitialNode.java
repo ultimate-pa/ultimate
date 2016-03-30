@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
@@ -49,7 +49,7 @@ public class PetriNetInitialNode extends PetriNetVisualizationNode {
 		DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("accepting markings of this petri net",
 				acceptingMarkings);
-		HashMap<String,IAnnotations> annotations = payload.getAnnotations();
+		Map<String,IAnnotations> annotations = payload.getAnnotations();
 		annotations.put(LibraryIdentifiers.s_LibraryID, thisPluginsAnnotations);
 	}
 	

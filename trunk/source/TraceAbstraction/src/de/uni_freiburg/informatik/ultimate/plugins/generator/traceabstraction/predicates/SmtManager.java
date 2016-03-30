@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,18 +55,19 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -83,10 +83,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
-import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class SmtManager {
 
@@ -97,10 +95,10 @@ public class SmtManager {
 	private final boolean m_ExtendedDebugOutputInScript = false;
 
 //	private Status m_Status = Status.IDLE;
-	private Object m_LockOwner = null;
 
 	private final Boogie2SMT m_Boogie2Smt;
 	private final Script m_Script;
+	private final ManagedScript m_ManagedScript;
 	// private final Map<String,ASTType> m_GlobalVars;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
 	private int m_satProbNumber;
@@ -129,11 +127,7 @@ public class SmtManager {
 
 	private int m_FreshVariableCouter = 0;
 
-	protected int m_SerialNumber;
-
 //	private long m_TraceCheckStartTime = Long.MIN_VALUE;
-
-	private Set<BoogieVar> m_EmptyVars = Collections.emptySet();
 
 	private final IUltimateServiceProvider mServices;
 
@@ -156,22 +150,21 @@ public class SmtManager {
 	 */
 	private final static boolean m_TestDataflow = false;
 
-	protected Term m_DontCareTerm;
-	protected Term m_EmptyStackTerm;
-	protected String[] m_NoProcedure;
+	private final PredicateFactory m_PredicateFactory;
 
 	public SmtManager(Script script, Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
-			IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded) {
+			IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded, ManagedScript managedScript) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_InterpolationModeSwitchNeeded = interpolationModeSwitchNeeded;
-		m_NoProcedure = new String[0];
-		m_DontCareTerm = new AuxilliaryTerm("don't care");
-		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Boogie2Smt = boogie2smt;
 		m_Script = script;
+		m_ManagedScript = managedScript;
 		m_ModifiableGlobals = modifiableGlobals;
+		m_PredicateFactory = new PredicateFactory(services, boogie2smt);
 	}
+	
+	
 
 //	public boolean isIdle() {
 //		return getStatus() == Status.IDLE;
@@ -180,6 +173,12 @@ public class SmtManager {
 	// public Smt2Boogie getSmt2Boogie() {
 	// return m_Smt2Boogie;
 	// }
+
+	public PredicateFactory getPredicateFactory() {
+		return m_PredicateFactory;
+	}
+
+
 
 	public Boogie2SMT getBoogie2Smt() {
 		return m_Boogie2Smt;
@@ -195,10 +194,6 @@ public class SmtManager {
 
 	private Term True() {
 		return m_Script.term("true");
-	}
-
-	public Term getDontCareTerm() {
-		return m_DontCareTerm;
 	}
 
 	@Deprecated
@@ -323,40 +318,7 @@ public class SmtManager {
 
 	}
 
-	/**
-	 * For each oldVar in vars that is not modifiable by procedure proc:
-	 * substitute the oldVar by the corresponding globalVar in term and remove
-	 * the oldvar from vars.
-	 */
-	public Term substituteOldVarsOfNonModifiableGlobals(String proc, Set<BoogieVar> vars, Term term) {
-		final Set<BoogieVar> oldVarsOfmodifiableGlobals = m_ModifiableGlobals.getOldVarsAssignment(proc)
-				.getAssignedVars();
-		List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
 
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-
-		for (BoogieVar bv : vars) {
-			if (bv instanceof BoogieOldVar) {
-				if (!oldVarsOfmodifiableGlobals.contains(bv)) {
-					replacees.add(bv.getTermVariable());
-					replacers.add((((BoogieOldVar) bv).getNonOldVar()).getTermVariable());
-					replacedOldVars.add(bv);
-				}
-			}
-		}
-
-		TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] substValues = replacers.toArray(new Term[replacers.size()]);
-		Term result = m_Script.let(substVars, substValues, term);
-		result = (new FormulaUnLet()).unlet(result);
-
-		for (BoogieVar bv : replacedOldVars) {
-			vars.remove(bv);
-			vars.add(((BoogieOldVar) bv).getNonOldVar());
-		}
-		return result;
-	}
 
 	// private boolean varSetIsMinimal(Set<BoogieVar> boogieVars,
 	// Term formula, Term closedFormula) {
@@ -501,75 +463,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public TermVarsProc and(IPredicate... preds) {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
-		Set<String> procs = new HashSet<String>();
-		Term term = m_Script.term("true");
-		for (IPredicate p : preds) {
-			if (isDontCare(p)) {
-				return new TermVarsProc(m_DontCareTerm, m_EmptyVars, m_NoProcedure, m_DontCareTerm);
-			}
-			vars.addAll(p.getVars());
-			procs.addAll(Arrays.asList(p.getProcedures()));
-			term = Util.and(m_Script, term, p.getFormula());
-		}
-		// Term isImplied = Util.and(m_Script,sf1.getFormula(),
-		// Util.not(m_Script,sf2.getFormula()));
-		// if (Util.checkSat(m_Script, isImplied) == LBool.UNSAT) {
-		// resultFormula = sf1.getFormula();
-		// return new Predicate(m_Script,
-		// sf1.getProgramPoint(),resultFormula,vars);
-		// }
-		// Term implies = Util.and(m_Script,Util.not(m_Script,sf1.getFormula()),
-		// sf2.getFormula());
-		// if (Util.checkSat(m_Script, implies) == LBool.UNSAT) {
-		// resultFormula = sf2.getFormula();
-		// return new Predicate(m_Script,
-		// sf1.getProgramPoint(),resultFormula,vars);
-		// }
-		// resultFormula = Util.and(m_Script,sf1.getFormula(),
-		// sf2.getFormula());
-		// formula = new SimplifyDDA(m_Script,
-		// s_Logger).getSimplifiedTerm(formula);
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
-		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
-	}
-	
-	public TermVarsProc or(IPredicate... preds) {
-		return or(false, preds);
-	}
-	
-	public TermVarsProc orWithSimplifyDDA(IPredicate... preds) {
-		return or(true, preds);
-	}
 
-	public TermVarsProc or(boolean withSimplifyDDA, IPredicate... preds) {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
-		Set<String> procs = new HashSet<String>();
-		Term term = m_Script.term("false");
-		for (IPredicate p : preds) {
-			if (isDontCare(p)) {
-				return new TermVarsProc(m_DontCareTerm, m_EmptyVars, m_NoProcedure, m_DontCareTerm);
-			}
-			vars.addAll(p.getVars());
-			procs.addAll(Arrays.asList(p.getProcedures()));
-			term = Util.or(m_Script, term, p.getFormula());
-		}
-		if (withSimplifyDDA) {
-			term = SmtUtils.simplify(m_Script, term, mServices);
-		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
-		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
-	}
-
-	public TermVarsProc not(IPredicate p) {
-		if (isDontCare(p)) {
-			return new TermVarsProc(m_DontCareTerm, m_EmptyVars, m_NoProcedure, m_DontCareTerm);
-		}
-		Term term = Util.not(m_Script, p.getFormula());
-		Term closedTerm = Util.not(m_Script, p.getClosedFormula());
-		return new TermVarsProc(term, p.getVars(), p.getProcedures(), closedTerm);
-	}
 
 	// public Predicate simplify(Predicate ps) {
 	// return m_PredicateFactory.newPredicate(ps.getProgramPoint(),
@@ -590,7 +484,7 @@ public class SmtManager {
 	public LBool isCovered(IPredicate ps1, IPredicate ps2) {
 		long startTime = System.nanoTime();
 
-		if (isDontCare(ps1) || isDontCare(ps2)) {
+		if (getPredicateFactory().isDontCare(ps1) || getPredicateFactory().isDontCare(ps2)) {
 			m_TrivialCoverQueries++;
 			return Script.LBool.UNKNOWN;
 		}
@@ -642,7 +536,7 @@ public class SmtManager {
 	}
 
 	public Validity isCovered(Object caller, Term formula1, Term formula2) {
-		assert (m_LockOwner == caller) : "only lock owner may call";
+		assert (m_ManagedScript.isLockOwner(caller)) : "only lock owner may call";
 		long startTime = System.nanoTime();
 
 		final Validity result;
@@ -655,7 +549,7 @@ public class SmtManager {
 			assertTerm(formula1);
 			Term negFormula2 = m_Script.term("not", formula2);
 			assertTerm(negFormula2);
-			result = lbool2validity(m_Script.checkSat());
+			result = IHoareTripleChecker.lbool2validity(m_Script.checkSat());
 			m_NontrivialCoverQueries++;
 			m_Script.pop(1);
 		}
@@ -689,7 +583,7 @@ public class SmtManager {
 		assert !isLocked() : "SmtManager is busy";
 		long startTime = System.nanoTime();
 
-		if (isDontCare(ps1) || isDontCare(ps2)) {
+		if (getPredicateFactory().isDontCare(ps1) || getPredicateFactory().isDontCare(ps2)) {
 			m_TrivialSatQueries++;
 			return Script.LBool.UNKNOWN;
 		}
@@ -858,7 +752,7 @@ public class SmtManager {
 		assert !isLocked() : "SmtManager is busy";
 		long startTime = System.nanoTime();
 
-		if (isDontCare(ps1) || isDontCare(ps2)) {
+		if (getPredicateFactory().isDontCare(ps1) || getPredicateFactory().isDontCare(ps2)) {
 			m_TrivialSatQueries++;
 			return Script.LBool.UNKNOWN;
 		}
@@ -917,7 +811,7 @@ public class SmtManager {
 		assert !isLocked() : "SmtManager is busy";
 		long startTime = System.nanoTime();
 
-		if (isDontCare(ps1) || isDontCare(ps2) || isDontCare(psk)) {
+		if (getPredicateFactory().isDontCare(ps1) || getPredicateFactory().isDontCare(ps2) || getPredicateFactory().isDontCare(psk)) {
 			m_TrivialSatQueries++;
 			return Script.LBool.UNKNOWN;
 		}
@@ -1265,7 +1159,7 @@ public class SmtManager {
 	 * all globalVars are renamed to oldGlobalVars.
 	 */
 	public IPredicate renameGlobalsToOldGlobals(IPredicate ps) {
-		if (isDontCare(ps)) {
+		if (getPredicateFactory().isDontCare(ps)) {
 			throw new UnsupportedOperationException("don't cat not expected");
 		}
 
@@ -1290,98 +1184,10 @@ public class SmtManager {
 		Term renamedFormula = (new Substitution(substitutionMapping, m_Script)).transform(ps.getFormula());
 		renamedFormula = SmtUtils.simplify(m_Script, renamedFormula, mServices);
 		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(renamedFormula, m_Boogie2Smt);
-		IPredicate result = this.newPredicate(renamedFormula, tvp.getProcedures(), tvp.getVars(),
-				tvp.getClosedFormula());
+		IPredicate result = this.getPredicateFactory().newPredicate(tvp);
 		return result;
 	}
 
-	/**
-	 * Returns true iff each free variables corresponds to a BoogieVar or will
-	 * be quantified. Throws an Exception otherwise.
-	 */
-	private boolean checkIfValidPredicate(Term term, Set<TermVariable> quantifiedVariables) {
-		for (TermVariable tv : term.getFreeVars()) {
-			BoogieVar bv = getBoogie2Smt().getBoogie2SmtSymbolTable().getBoogieVar(tv);
-			if (bv == null) {
-				if (!quantifiedVariables.contains(tv)) {
-					throw new AssertionError("Variable " + tv + " does not corresponds to a BoogieVar, and is"
-							+ " not quantified, hence this formula cannot" + " define a predicate: " + term);
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Constructs a predicate from the given term. If the given term is
-	 * quantifier-free, a BasicPredicate will be constructed, otherwise it
-	 * constructs a BasicPredicateExplicitQuantifier.
-	 * 
-	 * @param term
-	 *            - resulting predicate is constructed using this term
-	 * @param quantifier
-	 *            - describes how the given variables in the set
-	 *            "quantifiedVariables" are quantified (only two possibilities
-	 *            here: 0 or 1)
-	 * @param quantifiedVariables
-	 *            - the variables in the given term, which should be quantified.
-	 *            If this set is empty, nothing is quantified, and the result is
-	 *            a BasicPredicate, otherwise it constructs a
-	 *            BasicPredicateExplicitQuantifier.
-	 */
-	public IPredicate constructPredicate(Term term, int quantifier, Set<TermVariable> quantifiedVariables) {
-		assert checkIfValidPredicate(term, quantifiedVariables);
-		if (quantifiedVariables == null || quantifiedVariables.isEmpty()) {
-			// Compute the set of BoogieVars, the procedures and the term
-			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_Boogie2Smt);
-			// Compute a closed formula version of term.
-			Term closed_formula = PredicateUtils.computeClosedFormula(term, tvp.getVars(), m_Script);
-			return newPredicate(term, tvp.getProcedures(), tvp.getVars(), closed_formula);
-		} else {
-			Term result = PartialQuantifierElimination.quantifier(mServices, mLogger, m_Script, getVariableManager(), quantifier,
-					quantifiedVariables, term, (Term[][]) null);
-			// Compute the set of BoogieVars, the procedures and the term
-			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(result, m_Boogie2Smt);
-			// Compute a closed formula version of term.
-			Term closed_formula = PredicateUtils.computeClosedFormula(result, tvp.getVars(), m_Script);
-			// Check whether the result has still quantifiers
-			if (result instanceof QuantifiedFormula) {
-				quantifiedVariables = new HashSet<TermVariable>(Arrays.asList(((QuantifiedFormula) result)
-						.getVariables()));
-				return new BasicPredicateExplicitQuantifier(m_SerialNumber++, tvp.getProcedures(), result,
-						tvp.getVars(), closed_formula, quantifier, quantifiedVariables);
-			} else {
-				return newPredicate(result, tvp.getProcedures(), tvp.getVars(), closed_formula);
-			}
-
-		}
-	}
-
-	/**
-	 * Substitutes each variable that doesn't occur in the given procedure by a
-	 * fresh variable.
-	 */
-	public IPredicate renameVarsOfOtherProcsToFreshVars(IPredicate p, String thisProc) {
-		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
-		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
-		// Substitute the vars if necessary
-		for (BoogieVar bv : p.getVars()) {
-			// if the current var bv is not a global and if it does belong to
-			// another
-			// procedure, than replace it by a a fresh var
-			if (bv.getProcedure() != null && !bv.getProcedure().equals(thisProc)) {
-				TermVariable freshVar = m_Boogie2Smt.getVariableManager().constructFreshTermVariable(bv);
-				substitution.put(bv.getTermVariable(), freshVar);
-				varsToQuantify.add(freshVar);
-			}
-		}
-		Term predicateRenamed = new Substitution(substitution, m_Script).transform(p.getFormula());
-		// Term predicateRenamedQuantified =
-		// PartialQuantifierElimination.quantifier(m_Script, Script.EXISTS,
-		// varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-		// predicateRenamed, (Term[][])null);
-		return constructPredicate(predicateRenamed, Script.EXISTS, varsToQuantify);
-	}
 
 	// FIXME: does not work im SmtInterpol2
 
@@ -1448,7 +1254,7 @@ public class SmtManager {
 		Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		if (testRes != null) {
 			// assert testRes == result : "my return dataflow check failed";
-			if (testRes != lbool2validity(result)) {
+			if (testRes != IHoareTripleChecker.lbool2validity(result)) {
 				sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			}
 		}
@@ -1462,7 +1268,7 @@ public class SmtManager {
 		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 		Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
-			assert testRes == lbool2validity(result) : "my call dataflow check failed";
+			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my call dataflow check failed";
 			// if (testRes != result) {
 			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }
@@ -1473,9 +1279,9 @@ public class SmtManager {
 	private void testMyInternalDataflowCheck(IPredicate ps1, CodeBlock ta, IPredicate ps2, LBool result) {
 		if (ps2.getFormula() == m_Script.term("false")) {
 			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
-			Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
+			Validity testRes = sdhtch.sdecInternalToFalse(ps1, (IInternalAction) ta);
 			if (testRes != null) {
-				assert testRes == lbool2validity(result) || testRes == lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
+				assert testRes == IHoareTripleChecker.lbool2validity(result) || testRes == IHoareTripleChecker.lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
 				// if (testRes != result) {
 				// sdhtch.sdecInternalToFalse(ps1, ta);
 				// }
@@ -1484,9 +1290,9 @@ public class SmtManager {
 		}
 		if (ps1 == ps2) {
 			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
-			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
+			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, (IInternalAction) ta);
 			if (testRes != null) {
-				assert testRes == lbool2validity(result) : "my internal dataflow check failed";
+				assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
 				// if (testRes != result) {
 				// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 				// }
@@ -1496,9 +1302,9 @@ public class SmtManager {
 			return;
 		}
 		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
-		Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
+		Validity testRes = sdhtch.sdecInteral(ps1, (IInternalAction) ta, ps2);
 		if (testRes != null) {
-			assert testRes == lbool2validity(result) : "my internal dataflow check failed";
+			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
 			// if (testRes != result) {
 			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }
@@ -1537,17 +1343,6 @@ public class SmtManager {
 	// return predicate;
 	// }
 
-	public PredicateWithHistory newPredicateWithHistory(ProgramPoint pp, Term term, String[] procedures,
-			Set<BoogieVar> vars, Term closedFormula, Map<Integer, Term> history) {
-		PredicateWithHistory pred = new PredicateWithHistory(pp, m_SerialNumber++, procedures, term, vars,
-				closedFormula, history);
-		return pred;
-	}
-
-	public boolean isDontCare(IPredicate pred) {
-		return pred.getFormula() == m_DontCareTerm;
-	}
-
 	// public SPredicate newTrueSPredicateWithHistory(ProgramPoint pp) {
 	// SPredicate predicate = new PredicateWithHistory(pp, m_SerialNumber++,
 	// m_NoProcedure, m_Script.term("true"),
@@ -1556,18 +1351,6 @@ public class SmtManager {
 	// return predicate;
 	// }
 
-	public DetermninisticNwaPredicate newDetermninisticNwaPredicate(Script script, Term term, String[] procedures,
-			Set<BoogieVar> vars) {
-		DetermninisticNwaPredicate dnp = new DetermninisticNwaPredicate(script, m_SerialNumber++, term, procedures,
-				vars);
-		return dnp;
-	}
-
-	public SPredicate newSPredicate(ProgramPoint pp, TermVarsProc termVarsProc) {
-		SPredicate pred = new SPredicate(pp, m_SerialNumber++, termVarsProc.getProcedures(), termVarsProc.getFormula(),
-				termVarsProc.getVars(), termVarsProc.getClosedFormula());
-		return pred;
-	}
 
 	// public SPredicate newSPredicate(ProgramPoint pp, String[] procedures,
 	// Term term,
@@ -1578,85 +1361,12 @@ public class SmtManager {
 	// return predicate;
 	// }
 
-	public BasicPredicate newPredicate(Term term, String[] procedures, Set<BoogieVar> vars, Term closedTerm) {
-		BasicPredicate predicate = new BasicPredicate(m_SerialNumber++, procedures, term, vars, closedTerm);
-		return predicate;
-	}
+//	public HoareAnnotation getNewHoareAnnotation(ProgramPoint pp) {
+//		return new HoareAnnotation(pp, m_SerialNumber++, this, mServices);
+//	}
 
-	public BasicPredicate newPredicate(TermVarsProc termVarsProc) {
-		BasicPredicate predicate = new BasicPredicate(m_SerialNumber++, termVarsProc.getProcedures(),
-				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
-		return predicate;
-	}
-
-	public MLPredicate newMLPredicate(ProgramPoint[] programPoints, TermVarsProc termVarsProc) {
-		MLPredicate predicate = new MLPredicate(programPoints, m_SerialNumber++, termVarsProc.getProcedures(),
-				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
-		return predicate;
-	}
-
-	public IPredicate newTruePredicate() {
-		IPredicate pred = new BasicPredicate(m_SerialNumber++, m_NoProcedure, m_Script.term("true"), m_EmptyVars,
-				m_Script.term("true"));
-		return pred;
-	}
-
-	public IPredicate newFalsePredicate() {
-		IPredicate pred = new BasicPredicate(m_SerialNumber++, m_NoProcedure, m_Script.term("false"), m_EmptyVars,
-				m_Script.term("false"));
-		return pred;
-	}
-
-	public UnknownState newDontCarePredicate(ProgramPoint pp) {
-		UnknownState pred = new UnknownState(pp, m_SerialNumber++, m_DontCareTerm);
-		return pred;
-	}
-
-	public MLPredicate newMLDontCarePredicate(ProgramPoint[] pps) {
-		Set<BoogieVar> empty = Collections.emptySet();
-		MLPredicate pred = new MLPredicate(pps, m_SerialNumber++, new String[0], getDontCareTerm(), empty,
-				getDontCareTerm());
-		return pred;
-	}
-
-	public DebugPredicate newDebugPredicate(String debugMessage) {
-		DebugPredicate pred = new DebugPredicate(debugMessage, m_SerialNumber++, m_DontCareTerm);
-		return pred;
-	}
-
-	public ISLPredicate newEmptyStackPredicate() {
-		ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, null);
-		return newSPredicate(pp, new TermVarsProc(m_EmptyStackTerm, m_EmptyVars, m_NoProcedure, m_EmptyStackTerm));
-
-	}
-
-	public SPredicate newTrueSLPredicate(ProgramPoint pp) {
-		SPredicate pred = new SPredicate(pp, m_SerialNumber++, m_NoProcedure, m_Script.term("true"), m_EmptyVars,
-				m_Script.term("true"));
-		return pred;
-	}
-	
-	public SPredicate newTrueSLPredicateWithWitnessNode(ProgramPoint pp, WitnessNode witnessNode, Integer stutteringSteps) {
-		SPredicate pred = new SPredicateWithWitnessNode(pp, m_SerialNumber++, m_NoProcedure, m_Script.term("true"), m_EmptyVars,
-				m_Script.term("true"), witnessNode, stutteringSteps);
-		return pred;
-	}
-
-	public SPredicate newTrueSLPredicateWithHistory(ProgramPoint pp) {
-		SPredicate pred = new PredicateWithHistory(pp, m_SerialNumber++, m_NoProcedure, m_Script.term("true"),
-				m_EmptyVars, m_Script.term("true"), new HashMap<Integer, Term>());
-		return pred;
-	}
-
-	public HoareAnnotation getNewHoareAnnotation(ProgramPoint pp) {
-		return new HoareAnnotation(pp, m_SerialNumber++, this, mServices);
-	}
-
-	public IPredicate newBuchiPredicate(Set<IPredicate> inputPreds) {
-		TermVarsProc tvp = and(inputPreds.toArray(new IPredicate[0]));
-		BuchiPredicate buchi = new BuchiPredicate(m_SerialNumber++, tvp.getProcedures(), tvp.getFormula(),
-				tvp.getVars(), tvp.getClosedFormula(), inputPreds);
-		return buchi;
+	public ManagedScript getManagedScript() {
+		return m_ManagedScript;
 	}
 
 //	Status getStatus() {
@@ -1668,57 +1378,25 @@ public class SmtManager {
 //	}
 	
 	public void lock(Object lockOwner) {
-		if (lockOwner == null) {
-			throw new NullPointerException("cannot be locked by null");
-		} else {
-			if (m_LockOwner == null) {
-				m_LockOwner = lockOwner;
-				mLogger.debug("SmtManager locked by " + lockOwner.toString());
-			} else {
-				throw new IllegalStateException("SmtManager already locked by " + m_LockOwner.toString());
-			}
-		}
+		m_ManagedScript.lock(lockOwner);
 	}
 	
 	public void unlock(Object lockOwner) {
-		if (m_LockOwner == null) {
-			throw new IllegalStateException("SmtManager not locked");
-		} else {
-			if (m_LockOwner == lockOwner) {
-				m_LockOwner = null;
-				mLogger.debug("SmtManager unlocked by " + lockOwner.toString());
-			} else {
-				throw new IllegalStateException("SmtManager locked by " + m_LockOwner.toString());
-			}
-		}
+		m_ManagedScript.unlock(lockOwner);
 	}
 	
 	public boolean isLocked() {
-		return m_LockOwner != null;
+		return m_ManagedScript.isLocked();
 	}
 	
 	public boolean requestLockRelease() {
-		if (m_LockOwner == null) {
-			throw new IllegalStateException("SmtManager not locked");
-		} else {
-			if (m_LockOwner instanceof ILockHolderWithVoluntaryLockRelease) {
-				mLogger.debug("Asking " + m_LockOwner + " to release lock");
-				((ILockHolderWithVoluntaryLockRelease) m_LockOwner).releaseLock();
-				return true;
-			} else {
-				return false;
-			}
-		}
+		return m_ManagedScript.requestLockRelease();
 	}
 	
 	boolean isLockOwner(Object allegedLockOwner) {
-		return allegedLockOwner == m_LockOwner;
+		return m_ManagedScript.isLockOwner(allegedLockOwner);
 	}
 	
-	public interface ILockHolderWithVoluntaryLockRelease {
-		public void releaseLock();
-	}
-
 	private class AuxilliaryTerm extends Term {
 
 		String m_Name;
@@ -1763,19 +1441,6 @@ public class SmtManager {
 			throw new UnsupportedOperationException("Auxiliary term must not be contained in any collection");
 		}
 	}
-	
-	
-	public static Validity lbool2validity(LBool lbool) {
-		switch (lbool) {
-		case SAT:
-			return Validity.INVALID;
-		case UNKNOWN:
-			return Validity.UNKNOWN;
-		case UNSAT:
-			return Validity.VALID;
-		default:
-			throw new AssertionError();
-		}
-	}
+
 
 }

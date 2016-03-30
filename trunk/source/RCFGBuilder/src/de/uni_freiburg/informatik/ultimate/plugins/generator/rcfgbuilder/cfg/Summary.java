@@ -32,6 +32,8 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 
 /**
  * Edge in a recursive control flow graph that represents the call of a
@@ -41,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrint
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class Summary extends CodeBlock {
+public class Summary extends CodeBlock implements IInternalAction {
 
 	/**
 	 * 
@@ -83,12 +85,6 @@ public class Summary extends CodeBlock {
 		m_CallStatement = st;
 		m_CalledProcedureHasImplementation = calledProcedureHasImplementation;
 		m_PrettyPrintedStatements = BoogiePrettyPrinter.print(st);
-		updatePayloadName();
-	}
-
-	@Override
-	public void updatePayloadName() {
-		super.getPayload().setName("summary");
 	}
 
 	public boolean calledProcedureHasImplementation() {
@@ -106,6 +102,11 @@ public class Summary extends CodeBlock {
 	@Override
 	public String toString() {
 		return "SUMMARY";
+	}
+
+	@Override
+	public TransFormula getTransformula() {
+		return getTransitionFormula();
 	}
 
 }

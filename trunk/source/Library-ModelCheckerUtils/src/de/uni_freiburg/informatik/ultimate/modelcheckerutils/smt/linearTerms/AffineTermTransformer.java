@@ -135,33 +135,33 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Convert tem of the form "to_real(param)" to affine term. At the moment we
-	 * support only the case where param in an integer literal
-	 * 
-	 * @param term
-	 * @return
+	 * Convert input term of the form "to_real(param)" to affine term.
+	 * If the input term is an integer literal we convert it to a real literal,
+	 * otherwise we consider the "to_real" term as a variable of an affine term.
 	 */
 	private AffineTerm convertToReal(ApplicationTerm term) {
 		if (!term.getFunction().getName().equals("to_real")) {
 			throw new IllegalArgumentException("no to_real term");
 		}
-		Term[] params = ((ApplicationTerm) term).getParameters();
+		final Term[] params = ((ApplicationTerm) term).getParameters();
 		if (params.length > 1) {
 			throw new UnsupportedOperationException();
 		}
-		Term param = params[0];
+		final AffineTerm result;
+		final Term param = params[0];
 		if (param instanceof ConstantTerm) {
-			ConstantTerm constant = (ConstantTerm) param;
+			final ConstantTerm constant = (ConstantTerm) param;
 			if (!constant.getSort().getName().equals("Int")) {
 				throw new UnsupportedOperationException();
 			} else {
-				AffineTerm intTerm = convertConstantNumericTerm(constant);
-				AffineTerm realTerm = new AffineTerm(term.getSort(), intTerm.getConstant());
-				return realTerm;
+				final AffineTerm intTerm = convertConstantNumericTerm(constant);
+				final AffineTerm realTerm = new AffineTerm(term.getSort(), intTerm.getConstant());
+				result = realTerm;
 			}
 		} else {
-			throw new UnsupportedOperationException();
+			result = new AffineTerm(term);
 		}
+		return result;
 	}
 
 	private boolean isAffineSymbol(String funName) {

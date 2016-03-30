@@ -68,13 +68,12 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, V
 	 * 
 	 * @param current
 	 *            The action that will be executed on <code>state</code>.
-	 * @param state
+	 * @param localPreState
 	 *            The current {@link IAbstractState}.
-	 * @param storage
-	 *            the abstract state storage of the current scope
+	 * @param hierachicalPreState
+	 *            The {@link IAbstractState} that was the prestate before entering the current scope.
 	 * @return An {@link IAbstractState} that contains all variables that are necessary to represent the effects of
 	 *         <code>current</code> and that are visible in the scope after execution of <code>current</code>.
 	 */
-	STATE defineVariablesAfter(ACTION current, STATE state,
-			IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage);
+	STATE defineVariablesAfter(final ACTION current, final STATE localPreState, final STATE hierachicalPreState);
 }

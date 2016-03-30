@@ -75,7 +75,7 @@ public class SignDomainState implements IAbstractState<SignDomainState, CodeBloc
 	}
 
 	protected SignDomainState(Map<String, IBoogieVar> variablesMap, Map<String, SignDomainValue> valuesMap,
-	        boolean isFixpoint) {
+			boolean isFixpoint) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, SignDomainValue>(valuesMap);
 		mIsFixpoint = isFixpoint;
@@ -184,7 +184,7 @@ public class SignDomainState implements IAbstractState<SignDomainState, CodeBloc
 		final StringBuilder stringBuffer = new StringBuilder();
 		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
 			stringBuffer.append(entry.getKey()).append(':').append(entry.getValue()).append(" = ")
-			        .append(mValuesMap.get(entry.getKey()).getValue().toString()).append("; ");
+					.append(mValuesMap.get(entry.getKey()).getValue().toString()).append("; ");
 		}
 		return stringBuffer.toString();
 	}
@@ -259,7 +259,7 @@ public class SignDomainState implements IAbstractState<SignDomainState, CodeBloc
 
 	public SignDomainState copy() {
 		return new SignDomainState(new HashMap<String, IBoogieVar>(mVariablesMap),
-		        new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
+				new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
 	}
 
 	@Override
@@ -322,5 +322,11 @@ public class SignDomainState implements IAbstractState<SignDomainState, CodeBloc
 	@Override
 	public SignDomainState patch(final SignDomainState dominator) {
 		throw new UnsupportedOperationException("not yet implemented");
+	}
+
+	@Override
+	public SubsetResult isSubsetOf(final SignDomainState other) {
+		assert hasSameVariables(other);
+		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
 	}
 }

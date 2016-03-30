@@ -175,7 +175,7 @@ public class HelperFunctions {
 	}
 
 	protected static boolean checkInclusion(IntervalDomainValue interval1, IntervalDomainValue interval2) {
-		return interval1.isContainedIn(interval2);
+		return interval1.isContainedInBoth(interval2);
 	}
 
 	protected static boolean computeDivisionResultReal(IntervalDomainValue interval1, IntervalDomainValue interval2,

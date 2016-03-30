@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 
 public class TraceAbstractionTestSummary extends NewTestSummary {
@@ -144,10 +145,10 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 		HashMap<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> resultsByCategory = new HashMap<>();
 		for (Entry<UltimateRunDefinition, ExtendedResult> entry : results) {
 			Collection<Entry<UltimateRunDefinition, ExtendedResult>> coll = resultsByCategory
-					.get(entry.getValue().Category);
+					.get(entry.getValue().getCategory());
 			if (coll == null) {
 				coll = new ArrayList<>();
-				resultsByCategory.put(entry.getValue().Category, coll);
+				resultsByCategory.put(entry.getValue().getCategory(), coll);
 			}
 			coll.add(entry);
 		}
@@ -160,7 +161,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 			for (Entry<UltimateRunDefinition, ExtendedResult> currentResult : entry.getValue()) {
 				sb.append("\t\t").append(currentResult.getKey()).append(CoreUtil.getPlatformLineSeparator());
 				// Add Result Message
-				sb.append(indent).append(currentResult.getValue().Message).append(CoreUtil.getPlatformLineSeparator());
+				sb.append(indent).append(currentResult.getValue().getMessage()).append(CoreUtil.getPlatformLineSeparator());
 				if (mShowBenchmarkResults) {
 					// Add TraceAbstraction benchmarks
 					Collection<ICsvProvider<?>> benchmarkProviders = m_TraceAbstractionBenchmarks.get(currentResult

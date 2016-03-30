@@ -61,14 +61,14 @@ public class Svcomp_Memsafety extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (m_AutomizerWithForwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates_SvcompMemsafety.epf",
 				    m_Directories,
 				    new String[] {".i"});
 		}
 		if (m_AutomizerWithForwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates_SvcompMemsafetyConservative.epf",
 				    m_Directories,
@@ -91,14 +91,14 @@ public class Svcomp_Memsafety extends
 //				    m_Timeout);
 //		}
 		if (m_AutomizerWithForwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerCWithBlockEncoding.xml",
 					"automizer/ForwardPredicates_SvcompMemsafetySeqbe.epf",
 				    m_Directories,
 				    new String[] {".i"});
 		}
 		if (m_AutomizerWithForwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerCWithBlockEncoding.xml",
 					"automizer/ForwardPredicates_SvcompMemsafetySeqbeConservative.epf",
 				    m_Directories,
@@ -113,7 +113,7 @@ public class Svcomp_Memsafety extends
 //				    m_Timeout);
 //		}
 		if (m_AutomizerWithBackwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates_SvcompMemsafety.epf",
 				    m_Directories,

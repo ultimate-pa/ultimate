@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * commands, for which the output format is not fully specified, e.g. (get-model), may not return useful return values.
  * 
  * @author Oday Jubran
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class Scriptor extends NoopScript {
 
@@ -112,7 +113,7 @@ public class Scriptor extends NoopScript {
 		sb.append("(set-info ");
 		sb.append(info);
 		sb.append(' ');
-		sb.append(value);
+		sb.append(PrintTerm.quoteObjectIfString(value));
 		sb.append(")");
 		sb.append(System.lineSeparator());
 		mExecutor.input(sb.toString());
@@ -210,7 +211,6 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		// super.assertTerm(term);
 		mExecutor.input("(assert " + term.toStringDirect() + ")");
 		mExecutor.parseSuccess();
 		return LBool.UNKNOWN;
@@ -315,4 +315,5 @@ public class Scriptor extends NoopScript {
 	public LBool getStatus() {
 		return mStatus;
 	}
+
 }

@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
@@ -89,7 +90,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -179,7 +179,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
 
 		m_smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(),
-				rootAnnot.getModGlobVarManager(), m_services, false);
+				rootAnnot.getModGlobVarManager(), m_services, false, rootAnnot.getManagedScript());
 
 		_predicateUnifier = new PredicateUnifier(m_services, m_smtManager);
 
@@ -437,7 +437,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								"TraceCheck_Iteration" + iterationsCount);
 
 						smtManagerTracechecks = new SmtManager(tcSolver, m_originalRoot.getRootAnnot().getBoogie2SMT(),
-								m_originalRoot.getRootAnnot().getModGlobVarManager(), m_services, false);
+								m_originalRoot.getRootAnnot().getModGlobVarManager(), m_services, false, m_originalRoot.getRootAnnot().getManagedScript());
 						TermTransferrer tt = new TermTransferrer(tcSolver);
 						for (Term axiom : m_originalRoot.getRootAnnot().getBoogie2SMT().getAxioms()) {
 							tcSolver.assertTerm(tt.transform(axiom));
@@ -660,11 +660,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		for (Entry<ProgramPoint, HashSet<AnnotatedProgramPoint>> kvp : programPointToAnnotatedProgramPoints
 				.entrySet()) {
-			IPredicate annot = m_smtManager.newFalsePredicate();
+			IPredicate annot = m_smtManager.getPredicateFactory().newPredicate(
+					m_smtManager.getPredicateFactory().constructFalse()); 
 
 			for (AnnotatedProgramPoint app : kvp.getValue()) {
-				TermVarsProc tvp = m_smtManager.or(annot, app.getPredicate());
-				annot = m_smtManager.newSPredicate(kvp.getKey(), tvp);
+				TermVarsProc tvp = m_smtManager.getPredicateFactory().or(annot, app.getPredicate());
+				annot = m_smtManager.getPredicateFactory().newSPredicate(kvp.getKey(), tvp);
 			}
 			// programPointToHoareAnnotation.put(kvp.getKey(), annot.getClosedFormula());
 			programPointToHoareAnnotation.put(kvp.getKey(), annot.getFormula());
@@ -801,7 +802,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
-		for (ProgramPoint errorLoc : errorLocs) {
+		for (ProgramPoint errorIpp : errorLocs) {
+			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "
 					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();

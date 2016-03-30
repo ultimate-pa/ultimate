@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
  * Edge in a recursive control flow graph that represents a sequence of
  * CodeBlocks which are executed one after the other if this edge is executed.
  */
-public class SequentialComposition extends CodeBlock {
+public class SequentialComposition extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = 9192152338120598669L;
 	private final List<CodeBlock> m_CodeBlocks;
@@ -126,7 +127,6 @@ public class SequentialComposition extends CodeBlock {
 				extPqe, s_TransformToCNF, true, mLogger, services, codeBlocks);
 
 		m_PrettyPrinted = prettyPrinted.toString();
-		updatePayloadName();
 	}
 
 	protected void checkNumberOfCallsAndReturns(int numberCalls, int numberReturns) {
@@ -265,6 +265,11 @@ public class SequentialComposition extends CodeBlock {
 			sb.append(cb.toString());
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public TransFormula getTransformula() {
+		return getTransitionFormula();
 	}
 
 }

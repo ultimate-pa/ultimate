@@ -32,20 +32,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
 /**
- * A value in the signed domain. Such a value can be one of the following:<br />
- * <ul>
- * <li>(+)</li>
- * <li>(-)</li>
- * <li>(0)</li>
- * <li>T</li>
- * <li>&bot;</li>
- * </ul>
- * 
- * <p>
- * The default value is always T.
- * </p>
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  *
  */
 public class VPDomainValue implements IEvaluationResult<VPDomainValue.Values>, Comparable<VPDomainValue> {
@@ -75,7 +64,8 @@ public class VPDomainValue implements IEvaluationResult<VPDomainValue.Values>, C
 	 * Constructor that sets the value of the created {@link VPDomainValue}.
 	 * 
 	 * @param value
-	 *            The value the VPDomainValue should be set to. Must be one of {@link Values}.
+	 *            The value the VPDomainValue should be set to. Must be one of
+	 *            {@link Values}.
 	 */
 	protected VPDomainValue(Values value) {
 		mValue = value;
@@ -89,7 +79,8 @@ public class VPDomainValue implements IEvaluationResult<VPDomainValue.Values>, C
 	}
 
 	/**
-	 * Intersects {@link this} with a given other value according to the following scheme:
+	 * Intersects {@link this} with a given other value according to the
+	 * following scheme:
 	 * 
 	 * <ul>
 	 * <li>(+) &cap; (+) = (+)</li>
@@ -104,7 +95,8 @@ public class VPDomainValue implements IEvaluationResult<VPDomainValue.Values>, C
 	 * 
 	 * @param other
 	 *            The other value to intersect the current value with.
-	 * @return A new value after the intersection of the current value with the other value.
+	 * @return A new value after the intersection of the current value with the
+	 *         other value.
 	 */
 	protected VPDomainValue intersect(VPDomainValue other) {
 
@@ -146,26 +138,16 @@ public class VPDomainValue implements IEvaluationResult<VPDomainValue.Values>, C
 
 	@Override
 	/**
-	 * Implements the following relations and their inverse according to the lattice of the sign domain:
+	 * Implements the following relations and their inverse according to the
+	 * lattice of the sign domain:
 	 * 
 	 * <p>
-	 * &bot; == &bot;
-	 * (-) == (-)
-	 * (+) == (+)
-	 * T == T
-	 * &bot; < ..., where ... is not &bot;
-	 * (-) < 0
-	 * (-) < (+)
-	 * (0) < (+)
-	 * ... < T, where ... is not T
+	 * &bot; == &bot; (-) == (-) (+) == (+) T == T &bot; < ..., where ... is not
+	 * &bot; (-) < 0 (-) < (+) (0) < (+) ... < T, where ... is not T
 	 * </p>
 	 * 
 	 * <p>
-	 *        T
-	 *    /   |   \
-	 * (-) - (0) - (+)
-	 *    \   |   /
-	 *      &bot;
+	 * T / | \ (-) - (0) - (+) \ | / &bot;
 	 * </p>
 	 */
 	public int compareTo(VPDomainValue other) {
@@ -214,7 +196,7 @@ public class VPDomainValue implements IEvaluationResult<VPDomainValue.Values>, C
 
 		final StringBuilder stringBuilder = new StringBuilder(BUILDER_SIZE);
 		stringBuilder.append("The case for this = ").append(getResult()).append(" and other = ")
-		        .append(other.getResult()).append(" is not implemented.");
+				.append(other.getResult()).append(" is not implemented.");
 		throw new UnsupportedOperationException(stringBuilder.toString());
 	}
 

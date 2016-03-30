@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
@@ -198,36 +200,47 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
-
-		ColumnDefinition[] columnDef = new ColumnDefinition[]{
-			new ColumnDefinition(
-					"Runtime (ns)", "Avg. runtime",
-					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
-			new ColumnDefinition(
-					"Allocated memory end (bytes)", "Memory",
-					ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
-			new ColumnDefinition(
-					"Overall iterations", "Iter{-}ations",
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"NumberOfCodeBlocks", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"SizeOfPredicatesFP", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
-			new ColumnDefinition(
-					"SizeOfPredicatesBP", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
-			new ColumnDefinition(
-					"Conjuncts in SSA", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
-			new ColumnDefinition(
-					"Conjuncts in UnsatCore", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"ICC %", "ICC",
-					ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),					
-		};
+		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
+		benchmarks.add(SizeBenchmark.class);
+		
+		ColumnDefinition[] columnDef =  new ColumnDefinition[]{
+				new ColumnDefinition(
+						"Runtime (ns)", "Avg. runtime",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+				new ColumnDefinition(
+						"Allocated memory end (bytes)", "Memory",
+						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
+				new ColumnDefinition(
+						"Overall iterations", "Iter{-}ations",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"Abstract Interpretation iterations", "AI Iter{-}ations",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"Abstract Interpretation Time", "AI Avg. Time",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+				new ColumnDefinition(
+						"Overall time", "Trace Abstraction Time",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+				new ColumnDefinition(
+						"NumberOfCodeBlocks", null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"SizeOfPredicatesFP", null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+				new ColumnDefinition(
+						"SizeOfPredicatesBP", null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+				new ColumnDefinition(
+						"Conjuncts in SSA", null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+				new ColumnDefinition(
+						"Conjuncts in UnsatCore", null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"ICC %", "ICC",
+						ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),					
+			};
 	
 		return new ITestSummary[] { 
 				new SVCOMPTestSummary(getClass()), 

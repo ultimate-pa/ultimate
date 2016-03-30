@@ -45,17 +45,17 @@ public class LinearConstraintTest {
 	public void TestLinearConstraint() {
 		final LinearConstraint<BigDecimal> xconstr = new LinearConstraint<>("x-constraint");
 
-		xconstr.addCoefficient("x", new BigDecimal(1));
-		xconstr.addCoefficient("y", new BigDecimal(0));
-		xconstr.setLower(new BigDecimal(0));
+		xconstr.addCoefficient("x", BigDecimal.ONE);
+		xconstr.addCoefficient("y", BigDecimal.ZERO);
+		xconstr.setLower(BigDecimal.ZERO);
 		xconstr.setUpper(new BigDecimal(10));
 
 		assertTrue(xconstr.getName() == "x-constraint");
 		assertTrue(xconstr.getVariableCount() == 2);
-		assertTrue(xconstr.getCoefficient("x").equals(new BigDecimal(1)));
-		assertTrue(xconstr.getCoefficient("y").equals(new BigDecimal(0)));
-		assertTrue(xconstr.getLower().equals(new BigDecimal(0)));
-		assertTrue(xconstr.getUpper().equals(new BigDecimal(10)));
+		assertTrue(xconstr.getCoefficient("x").equals(BigDecimal.ONE));
+		assertTrue(xconstr.getCoefficient("y").equals(BigDecimal.ZERO));
+		assertTrue(xconstr.getLower().equals(BigDecimal.ZERO));
+		assertTrue(xconstr.getUpper().equals(BigDecimal.TEN));
 
 		System.out.println(xconstr.toLogString());
 	}

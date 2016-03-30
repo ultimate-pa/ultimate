@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
@@ -65,11 +66,11 @@ public class IntervalBinaryExpressionEvaluator
 		mVariableSet = new HashSet<>();
 		mEvaluatorType = type;
 		mMaxParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
-		        .getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
+		        .getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(final IntervalDomainState currentState) {
 
 		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
@@ -78,10 +79,10 @@ public class IntervalBinaryExpressionEvaluator
 		final List<IEvaluationResult<IntervalDomainValue>> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<IntervalDomainValue>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 
@@ -118,7 +119,17 @@ public class IntervalBinaryExpressionEvaluator
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMOD:
-					mLogger.warn("Cannot handle modulo operation precisely. Returning top.");
+					switch (mEvaluatorType) {
+					case INTEGER:
+						returnValue = res1.getValue().modulo(res2.getValue(), true);
+						break;
+					case REAL:
+						returnValue = res1.getValue().modulo(res2.getValue(), false);
+						break;
+					default:
+						throw new UnsupportedOperationException(
+						        "Modulo operation on types other than integers and reals is undefined.");
+					}
 					returnBool = new BooleanValue(false);
 					break;
 				case LOGICAND:
@@ -135,6 +146,9 @@ public class IntervalBinaryExpressionEvaluator
 				case COMPEQ:
 					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
 						returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
+						if (returnBool.getValue() != Value.BOTTOM) {
+							returnBool = new BooleanValue(true);
+						}
 					}
 
 					returnValue = res1.getValue().intersect(res2.getValue());
@@ -202,7 +216,7 @@ public class IntervalBinaryExpressionEvaluator
 			}
 		}
 
-		assert returnList.size() != 0;
+		assert !returnList.isEmpty();
 		return IntervalUtils.mergeIfNecessary(returnList, mMaxParallelStates);
 
 	}
@@ -213,7 +227,8 @@ public class IntervalBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -239,7 +254,7 @@ public class IntervalBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void setOperator(Object operator) {
+	public void setOperator(final Object operator) {
 		assert operator != null;
 		assert operator instanceof Operator;
 
@@ -326,7 +341,7 @@ public class IntervalBinaryExpressionEvaluator
 
 		for (final IEvaluationResult<IntervalDomainValue> left : leftValue) {
 			for (final IEvaluationResult<IntervalDomainValue> right : rightValue) {
-				List<IntervalDomainState> returnStates = new ArrayList<>();
+				final List<IntervalDomainState> returnStates = new ArrayList<>();
 
 				switch (mOperator) {
 				case LOGICAND:
@@ -358,15 +373,22 @@ public class IntervalBinaryExpressionEvaluator
 					throw new UnsupportedOperationException(
 					        "If and only if expressions should have been resolved earlier.");
 				case COMPEQ:
+					final BooleanValue intersectBool = left.getBooleanValue().intersect(right.getBooleanValue());
+					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
+					        && (intersectBool.getValue() == Value.TOP)) {
+						returnStates.add(currentState);
+						break;
+					}
+
 					final IntervalDomainValue newLeft = computeNewValue(referenceValue, left.getValue(),
 					        right.getValue(), true);
 					final IntervalDomainValue newRight = computeNewValue(referenceValue, right.getValue(),
 					        left.getValue(), false);
 
 					final IntervalDomainEvaluationResult leftEvalresult = new IntervalDomainEvaluationResult(newLeft,
-					        referenceBool);
+					        right.getBooleanValue());
 					final IntervalDomainEvaluationResult rightEvalresult = new IntervalDomainEvaluationResult(newRight,
-					        referenceBool);
+					        left.getBooleanValue());
 
 					final List<IntervalDomainState> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult,
 					        currentState);
@@ -467,7 +489,7 @@ public class IntervalBinaryExpressionEvaluator
 					        .inverseEvaluate(inverseResultArithLeft, currentState);
 					final List<IntervalDomainState> rightInverseArith = mRightSubEvaluator
 					        .inverseEvaluate(inverseResultArithRight, currentState);
-					
+
 					for (final IntervalDomainState le : leftInverseArith) {
 						for (final IntervalDomainState ri : rightInverseArith) {
 							returnStates.add(le.intersect(ri));
@@ -480,7 +502,7 @@ public class IntervalBinaryExpressionEvaluator
 
 				}
 
-				if (returnStates.size() == 0) {
+				if (returnStates.isEmpty()) {
 					returnStates.add(currentState);
 				}
 
@@ -488,12 +510,12 @@ public class IntervalBinaryExpressionEvaluator
 			}
 		}
 
-		assert returnList.size() != 0;
+		assert !returnList.isEmpty();
 		return returnList;
 	}
 
 	private IntervalDomainValue computeNewValue(final IntervalDomainValue referenceValue,
-	        final IntervalDomainValue oldValue, final IntervalDomainValue otherValue, boolean left) {
+	        final IntervalDomainValue oldValue, final IntervalDomainValue otherValue, final boolean left) {
 		IntervalDomainValue newValue;
 
 		switch (mOperator) {
@@ -536,7 +558,7 @@ public class IntervalBinaryExpressionEvaluator
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHMOD:
-			mLogger.warn("Cannot handle inverse of the modulo operation precisely. Returning old value.");
+			mLogger.debug("Cannot handle inverse of the modulo operation precisely. Returning old value.");
 			newValue = oldValue;
 			break;
 		case COMPEQ:

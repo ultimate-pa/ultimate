@@ -50,12 +50,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BuchiPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BuchiPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -107,7 +107,7 @@ public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<Cod
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, boolean scroogeNondeterminismStem,
 			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem, boolean hondaBouncerLoop,
-			PredicateFactory predicateFactory, Logger logger, IUltimateServiceProvider services) {
+			PredicateFactoryForInterpolantAutomata predicateFactory, Logger logger, IUltimateServiceProvider services) {
 		super();
 		mLogger = logger;
 		m_Services = services;
@@ -472,7 +472,7 @@ public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<Cod
 		} else {
 			resultPred = m_InputPreds2ResultPreds.get(inputPreds);
 			if (resultPred == null) {
-				resultPred = m_SmtManager.newBuchiPredicate(inputPreds);
+				resultPred = m_SmtManager.getPredicateFactory().newBuchiPredicate(inputPreds);
 				m_InputPreds2ResultPreds.put(inputPreds, resultPred);
 			}
 			for (IPredicate pred : inputPreds) {

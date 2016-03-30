@@ -6,6 +6,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.reporting.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
@@ -83,19 +84,19 @@ public class InterpolantConsolidationMemsafetyTest extends AbstractTraceAbstract
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_SVCOMP_Examples);
+				addTestCase(toolchain, setting, m_SVCOMP_Examples);
 			}
 		}
 		
 		for (String setting : m_Settings) {
 			for (String toolchain : m_BoogieToolchains) {
-				addTestCases(toolchain, setting, m_UltimateRepository, 
+				addTestCase(toolchain, setting, m_UltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}
 		for (String setting : m_Settings) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_UltimateRepository, 
+				addTestCase(toolchain, setting, m_UltimateRepository, 
 						new String[] {".c", ".i"});
 			}
 		}

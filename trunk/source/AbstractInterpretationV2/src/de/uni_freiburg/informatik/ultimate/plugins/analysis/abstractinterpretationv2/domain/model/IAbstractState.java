@@ -61,8 +61,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 *            The name of the variable that should be added.
 	 * @param variable
 	 *            An object that describes the type of the variable.
-	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added
-	 *         variable.
+	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added variable.
 	 */
 	STATE addVariable(final String name, final VARDECL variable);
 
@@ -79,8 +78,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @param variable
 	 *            An object that describes the type of the variable. This should be equal to the object that was added
 	 *            previously.
-	 * @return A new abstract state that is a copy of this instance except that the removed variable is
-	 *         missing.
+	 * @return A new abstract state that is a copy of this instance except that the removed variable is missing.
 	 */
 	STATE removeVariable(final String name, final VARDECL variable);
 
@@ -89,8 +87,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * 
 	 * @param variables
 	 *            A {@link Map} describing all the variables that have to be added.
-	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added
-	 *         variables.
+	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added variables.
 	 */
 	STATE addVariables(final Map<String, VARDECL> variables);
 
@@ -170,6 +167,16 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	boolean isEqualTo(final STATE other);
 
 	/**
+	 * Check whether this instance is a strict subset, a subset, equal, or none of this compared to another instance.
+	 * Only states with the same set of variables can be compared.
+	 * 
+	 * @param other
+	 *            The other instance.
+	 * @return A {@link SubsetResult}.
+	 */
+	SubsetResult isSubsetOf(final STATE other);
+
+	/**
 	 * Create an SMT constraint that represents this abstract state. If you do not want to implement this right away,
 	 * just return <code>script.term("true")</code>.
 	 * 
@@ -187,4 +194,32 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return A {@link String} representing this abstract state.
 	 */
 	String toLogString();
+
+	/**
+	 * The result of {@link IAbstractState#isSubsetOf(IAbstractState)}.
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum SubsetResult {
+		/**
+		 * The set of program states represented by this abstract state is a strict subset of the set of program states
+		 * represented by the other abstract state.
+		 */
+		STRICT,
+		/**
+		 * The set of program states represented by this abstract state is equal to the set of program states
+		 * represented by the other abstract state.
+		 */
+		EQUAL,
+		/**
+		 * The set of program states represented by this abstract state is either a strict subset of or equal to the set
+		 * of program states represented by the other abstract state.
+		 */
+		NON_STRICT,
+		/**
+		 * If none of the other results apply.
+		 */
+		NONE,
+	}
 }

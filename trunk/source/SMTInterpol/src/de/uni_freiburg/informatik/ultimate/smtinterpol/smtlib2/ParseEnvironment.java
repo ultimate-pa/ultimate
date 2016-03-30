@@ -96,7 +96,7 @@ public class ParseEnvironment {
 	
 	public void parseScript(String filename) throws SMTLIBException {
 		File oldcwd = mCwd;
-		Reader reader;
+		Reader reader = null;
 		try {
 			if (filename.equals("<stdin>")) {
 				reader = new InputStreamReader(System.in);
@@ -114,6 +114,13 @@ public class ParseEnvironment {
 			parseStream(reader, filename);
 		} finally {
 			mCwd = oldcwd;
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException ex) {
+					
+				}
+			}
 		}
 	}
 	

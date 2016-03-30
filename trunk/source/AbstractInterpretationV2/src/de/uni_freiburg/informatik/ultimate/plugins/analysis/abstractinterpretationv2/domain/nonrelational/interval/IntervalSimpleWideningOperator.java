@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOperator<IntervalDomainState> {
 
 	@Override
-	public IntervalDomainState apply(IntervalDomainState first, IntervalDomainState second) {
+	public IntervalDomainState apply(final IntervalDomainState first, final IntervalDomainState second) {
 		assert first.hasSameVariables(second);
 		assert !first.isBottom() && !second.isBottom();
 
@@ -55,7 +55,7 @@ public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOpera
 		final List<String> varsToTop = new ArrayList<>();
 		final List<String> arraysToTop = new ArrayList<>();
 
-		for (Entry<String, IBoogieVar> entry : first.getVariables().entrySet()) {
+		for (final Entry<String, IBoogieVar> entry : first.getVariables().entrySet()) {
 			final String var = entry.getKey();
 			final IBoogieVar type = entry.getValue();
 

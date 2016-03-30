@@ -628,7 +628,8 @@ var_spec::=
 
 constant::=
  CONSTANT:value
- {: RESULT = new RealLiteral(value);setLineNumber(value$,value$,RESULT);:}  
+ // 2016-03-09 the following line was changed from IntegerLiteral to RealLiteral by Matthias
+ {: RESULT = new IntegerLiteral(value);setLineNumber(value$,value$,RESULT);:}  
 | CONSTANT10:value 
  {: RESULT = new IntegerLiteral(value); setLineNumber(value$,value$,RESULT);:}
 ;

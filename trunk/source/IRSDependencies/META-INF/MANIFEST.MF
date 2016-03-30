@@ -13,4 +13,6 @@ Require-Bundle: UltimateCore,
  de.uni_freiburg.informatik.ultimate.automata
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
-Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker

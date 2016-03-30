@@ -49,14 +49,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -64,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 /**
  * Use unsat core, predicate transformer and live variable analsysis to
@@ -410,10 +410,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
 			rtf = new RelevantTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
 					codeBlocksInUnsatCore, m_ModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
-					oldVarAssignmentAtCallInUnsatCore, m_SmtManager);
+					oldVarAssignmentAtCallInUnsatCore, m_SmtManager.getBoogie2Smt());
 		} else if (m_UnsatCores == UnsatCores.CONJUNCT_LEVEL) {
 			rtf = new RelevantTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
-					unsatCore, m_ModifiedGlobals, m_SmtManager, m_AAA, m_AnnotateAndAsserterConjuncts);
+					unsatCore, m_ModifiedGlobals, m_SmtManager.getBoogie2Smt(), m_AAA, m_AnnotateAndAsserterConjuncts);
 		} else {
 			throw new AssertionError("unknown case:" + m_UnsatCores);
 		}
@@ -570,7 +570,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				Set<TermVariable> nonLiveVars = computeIrrelevantVariables(relevantVars[i+1], sp);
 				m_NonLiveVariablesFp += nonLiveVars.size();
 				if (m_LiveVariables) {
-					projected = m_SmtManager.constructPredicate(sp.getFormula(), 
+					projected = m_SmtManager.getPredicateFactory().constructPredicate(sp.getFormula(), 
 							QuantifiedFormula.EXISTS, nonLiveVars);
 				} else {
 					projected = sp;
@@ -673,7 +673,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final IPredicate projected;
 			Set<TermVariable> nonLiveVars = computeIrrelevantVariables(relevantVars[i], wp);
 			if (m_LiveVariables) {
-				projected = m_SmtManager.constructPredicate(wp.getFormula(), 
+				projected = m_SmtManager.getPredicateFactory().constructPredicate(wp.getFormula(), 
 						QuantifiedFormula.FORALL, nonLiveVars);
 				m_NonLiveVariablesBp += nonLiveVars.size();
 			} else {
@@ -834,7 +834,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	}
 
 
-	public static class TraceCheckerSpWpBenchmarkType extends TraceCheckerBenchmarkType implements IBenchmarkType {
+	public static class TraceCheckerSpWpBenchmarkType extends TraceCheckerBenchmarkType implements IStatisticsType {
 
 		private static TraceCheckerSpWpBenchmarkType s_Instance = new TraceCheckerSpWpBenchmarkType();
 
@@ -885,7 +885,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(super.prettyprintBenchmarkData(benchmarkData));
 			sb.append("\t");
@@ -914,7 +914,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * size of predicates obtained via interpolation.
 	 */
 	public class TraceCheckerBenchmarkSpWpGenerator extends TraceCheckerBenchmarkGenerator implements
-	IBenchmarkDataProvider {
+	IStatisticsDataProvider {
 		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of
 		// predicates computed via FP
 		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of

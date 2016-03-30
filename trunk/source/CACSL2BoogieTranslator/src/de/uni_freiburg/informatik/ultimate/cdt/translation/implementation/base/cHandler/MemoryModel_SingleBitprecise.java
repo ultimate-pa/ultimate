@@ -103,6 +103,10 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 		return m_TypeSizes.getSizeOfPointer();
 	}
 
+	public int getResolution() {
+		return m_Resolution;
+	}
+
 
 	
 

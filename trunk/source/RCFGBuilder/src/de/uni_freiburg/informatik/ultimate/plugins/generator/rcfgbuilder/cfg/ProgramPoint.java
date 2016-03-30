@@ -51,77 +51,70 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 public class ProgramPoint extends RCFGNode {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private final BoogieASTNode m_BoogieASTNode;
+	private final BoogieASTNode mBoogieASTNode;
 
 	@Visualizable
-	final private String m_Procedure;
+	private final String mProcedure;
 	@Visualizable
-	final private String m_Position;
+	private final String mPosition;
 	@Visualizable
-	final private boolean m_IsErrorLocation;
+	private final boolean mIsErrorLocation;
 
-	public ProgramPoint(String position, String procedure, boolean isErrorLoc,
-			BoogieASTNode boogieASTNode) {
-		super();
-		this.m_Procedure = procedure;
-		this.m_Position = position;
-		this.m_IsErrorLocation = isErrorLoc;
-		this.m_BoogieASTNode = boogieASTNode;
+	public ProgramPoint(String position, String procedure, boolean isErrorLoc, BoogieASTNode boogieASTNode) {
+		super(new Payload(getLocationFromASTNode(boogieASTNode)));
+		mProcedure = procedure;
+		mPosition = position;
+		mIsErrorLocation = isErrorLoc;
+		mBoogieASTNode = boogieASTNode;
+	}
 
-		ILocation loc = null;
-		if (boogieASTNode instanceof Statement) {
-			Statement st = (Statement) boogieASTNode;
+	private static ILocation getLocationFromASTNode(final BoogieASTNode node) {
+		final ILocation loc;
+		if (node instanceof Statement) {
+			final Statement st = (Statement) node;
 			loc = st.getLocation();
-		} else if (boogieASTNode instanceof Specification) {
-			Specification spec = (Specification) boogieASTNode;
+		} else if (node instanceof Specification) {
+			final Specification spec = (Specification) node;
 			loc = spec.getLocation();
-		} else if (boogieASTNode instanceof Procedure) {
-			loc = boogieASTNode.getLocation();
+		} else if (node instanceof Procedure) {
+			loc = node.getLocation();
+		} else {
+			loc = null;
 		}
-		mPayload = new Payload(loc, position);
-		String name = "Procedure: " + m_Procedure + " Position: " + m_Position;
-		mPayload.setName(name);
-
+		return loc;
 	}
 
 	/**
 	 * @return the procedure
 	 */
 	public String getProcedure() {
-		return m_Procedure;
+		return mProcedure;
 	}
-
-	/**
-	 * @return the location
-	 */
+	
 	public String getPosition() {
-		return m_Position;
+		return mPosition;
 	}
 
 	public boolean isErrorLocation() {
-		return m_IsErrorLocation;
+		return mIsErrorLocation;
 	}
 
 	public BoogieASTNode getBoogieASTNode() {
-		return m_BoogieASTNode;
+		return mBoogieASTNode;
 	}
 
-	public String getLocationName() {
-		return getPosition();
-	}
 
 	public String BoogieASTNodeType() {
-		if (m_BoogieASTNode instanceof AssertStatement) {
+		if (mBoogieASTNode instanceof AssertStatement) {
 			return "AssertStatement";
-		} else if (m_BoogieASTNode instanceof CallStatement) {
+		} else if (mBoogieASTNode instanceof CallStatement) {
 			return "RequiresSpecification";
-		} else if (m_BoogieASTNode instanceof EnsuresSpecification) {
+		} else if (mBoogieASTNode instanceof EnsuresSpecification) {
 			return "EnsuresSpecification";
 		} else {
 			throw new UnsupportedOperationException();
@@ -133,8 +126,7 @@ public class ProgramPoint extends RCFGNode {
 		if (incoming instanceof CodeBlock || incoming instanceof RootEdge) {
 			return super.addIncoming(incoming);
 		} else {
-			throw new IllegalArgumentException(
-					"predecessor has to be CodeBlock or RootEdge");
+			throw new IllegalArgumentException("predecessor has to be CodeBlock or RootEdge");
 		}
 	}
 
@@ -151,8 +143,7 @@ public class ProgramPoint extends RCFGNode {
 	public boolean equals(Object obj) {
 		if (obj instanceof ProgramPoint) {
 			ProgramPoint pp2 = (ProgramPoint) obj;
-			return this.m_Procedure.equals(pp2.getProcedure())
-					&& this.m_Position.equals(pp2.getPosition());
+			return this.mProcedure.equals(pp2.getProcedure()) && this.mPosition.equals(pp2.getPosition());
 		} else {
 			return false;
 		}
@@ -160,12 +151,11 @@ public class ProgramPoint extends RCFGNode {
 
 	@Override
 	public int hashCode() {
-		return 3 * this.m_Position.hashCode() + 5 * this.m_Procedure.hashCode();
+		return 3 * this.mPosition.hashCode() + 5 * this.mProcedure.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return m_Position;
+		return mPosition;
 	}
-
 }

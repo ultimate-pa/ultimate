@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
@@ -167,10 +168,10 @@ public class BoogiePreprocessorBacktranslator
 				Expression formula = spec.getFormula();
 				if (formula instanceof BooleanLiteral) {
 					if (((BooleanLiteral) formula).getValue()) {
-						// we come to this place because this
+						// this
 						// EnuresSpecification was inserted by RCFG Builder and
 						// does not provide any additional information. We
-						// safely exclude it from the error path.
+						// exclude it from the error path.
 						return null;
 					}
 				}
@@ -210,36 +211,40 @@ public class BoogiePreprocessorBacktranslator
 				atomicTrace.add(null);
 				continue;
 			}
+			
+			AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
 
 			if (elem instanceof WhileStatement) {
-				AssumeStatement assumeStmt = (AssumeStatement) programExecution.getTraceElement(i).getTraceElement();
+				AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				WhileStatement stmt = (WhileStatement) elem;
 				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
+						info, stringProvider, ate.getmRelevanceInformation()));
 
 			} else if (elem instanceof IfStatement) {
-				AssumeStatement assumeStmt = (AssumeStatement) programExecution.getTraceElement(i).getTraceElement();
+				AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				IfStatement stmt = (IfStatement) elem;
 				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
+						info, stringProvider, ate.getmRelevanceInformation()));
 
 			} else if (elem instanceof CallStatement) {
 				// for call statements, we simply rely on the stepinfo of our
 				// input: if its none, its a function call (so there will be no
 				// return), else its a procedure call with corresponding return
 
-				if (programExecution.getTraceElement(i).hasStepInfo(StepInfo.NONE)) {
-					atomicTrace
-							.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL, stringProvider));
+				if (ate.hasStepInfo(StepInfo.NONE)) {
+					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL, 
+							stringProvider, ate.getmRelevanceInformation()));
 				} else {
 					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem,
-							programExecution.getTraceElement(i).getStepInfo(), stringProvider));
+							ate.getStepInfo(), stringProvider, ate.getmRelevanceInformation()));
 				}
 
 			} else {
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, stringProvider));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, stringProvider, ate.getmRelevanceInformation()));
 			}
 		}
 
@@ -327,22 +332,25 @@ public class BoogiePreprocessorBacktranslator
 
 	@Override
 	public IBacktranslatedCFG<?, BoogieASTNode> translateCFG(final IBacktranslatedCFG<?, BoogieASTNode> cfg) {
-		return translateCFG(cfg, (a, b,c) -> translateEdge(a, b,c));
+		return translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, b, c));
 	}
 
-	private <VL> Multigraph<VL, BoogieASTNode> translateEdge(
+	private <VL> Multigraph<VL, BoogieASTNode> translateCFGEdge(
 			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode>, Multigraph<VL, BoogieASTNode>> cache,
-			final IMultigraphEdge<?, ?, VL, BoogieASTNode> oldEdge,
-			final Multigraph<VL, BoogieASTNode> newSourceNode) {
-		
+			final IMultigraphEdge<?, ?, VL, BoogieASTNode> oldEdge, final Multigraph<VL, BoogieASTNode> newSourceNode) {
 		final BoogieASTNode newLabel = backtranslateTraceElement(oldEdge.getLabel());
 		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode> oldTarget = oldEdge.getTarget();
 		Multigraph<VL, BoogieASTNode> newTarget = cache.get(oldTarget);
-		if(newTarget == null){
+		if (newTarget == null) {
 			newTarget = createWitnessNode(oldTarget);
 			cache.put(oldTarget, newTarget);
 		}
-		new MultigraphEdge<VL, BoogieASTNode>(newSourceNode, newLabel, newTarget);
+		final MultigraphEdge<VL, BoogieASTNode> newEdge = new MultigraphEdge<VL, BoogieASTNode>(newSourceNode, newLabel,
+				newTarget);
+		final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(oldEdge.getLabel());
+		if (coan != null) {
+			coan.annotate(newEdge);
+		}
 		return newTarget;
 	}
 

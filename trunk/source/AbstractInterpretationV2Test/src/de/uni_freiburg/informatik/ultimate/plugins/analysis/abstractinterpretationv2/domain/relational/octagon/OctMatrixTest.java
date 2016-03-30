@@ -128,9 +128,9 @@ public class OctMatrixTest {
 		Assert.assertTrue(m.cachedTightClosure().hasNegativeSelfLoop());
 	}
 
-//	@Test
+	@Test
 	public void testClosureByComparingRandom() {
-		for (int i = 0; i < 2000; ++i) {
+		for (int i = 0; i < 1000; ++i) {
 			int variables = (int) (Math.random() * 10) + 1;
 			OctMatrix m = OctMatrix.random(variables);
 			OctMatrix cNaiv = m.strongClosure(OctMatrix::shortestPathClosureNaiv);

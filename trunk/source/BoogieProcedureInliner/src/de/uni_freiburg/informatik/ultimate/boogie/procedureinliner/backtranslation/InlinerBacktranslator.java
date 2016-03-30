@@ -121,9 +121,9 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 					reportUnfinishedBacktranslation("Cannot reconstruct StepInfo (either call or return): " + call);
 				}
 				knownCalls.add(call);
-				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(call, call, StepInfo.PROC_CALL, stringProvider);
+				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(call, call, StepInfo.PROC_CALL, stringProvider, null);
 			} else {
-				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(traceElem, stringProvider);
+				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(traceElem, stringProvider, null);
 			}
 			BackTransValue traceElemMapping = mBackTransMap.get(traceElem);
 			List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = callReinserter
@@ -168,7 +168,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 						translatedStep = stepMapping.getOriginalNode();
 					}
 					translatedTrace.add(new AtomicTraceElement<BoogieASTNode>(translatedTraceElem, translatedStep,
-							traceElem.getStepInfo(), stringProvider));
+							traceElem.getStepInfo(), stringProvider, traceElem.getmRelevanceInformation()));
 				} else {
 					continue; // discards the associated ProgramState (State
 								// makes no sense, without Statement)

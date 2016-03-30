@@ -31,17 +31,16 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
- * Edge in a recursive control flow graph. A CodeBlock has a source and a target
- * which are both ProgramPoints and define how the program counter is modified
- * while executing this CodeBlock. Furthermore the subclasses of a CodeBlock
- * define how variables of the program are manipulated while executing this
- * CodeBlock. A CodeBlock is either
+ * Edge in a recursive control flow graph. A CodeBlock has a source and a target which are both ProgramPoints and define
+ * how the program counter is modified while executing this CodeBlock. Furthermore the subclasses of a CodeBlock define
+ * how variables of the program are manipulated while executing this CodeBlock. A CodeBlock is either
  * <ul>
- * <li>a sequence of Statements where each Statement is either an
- * AssumeStatement, an AssignmentStatement, or a Havoc statement.
+ * <li>a sequence of Statements where each Statement is either an AssumeStatement, an AssignmentStatement, or a Havoc
+ * statement.
  * <li>a sequential composition of CodeBlocks
  * <li>a parallel composition of CodeClocks.
  * </ul>
@@ -51,29 +50,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
  * <li>a Return
  * <li>a Summary
  * </ul>
- * Furthermore a CodeBlock can be a GotoEdge, but all GotoEdges are removed when
- * the construction of the control flow graph is complete.
+ * Furthermore a CodeBlock can be a GotoEdge, but all GotoEdges are removed when the construction of the control flow
+ * graph is complete.
  * 
- * In an ULTIMATE graph a CodeBlock is an edge as well as an annotation of this
- * edge.
+ * In an ULTIMATE graph a CodeBlock is an edge as well as an annotation of this edge.
  * 
- * m_TransitionFormula stores a TransitionFormula that describes the effect of
- * this InternalEdge. (TODO: Add this information later, as additional
- * annotation)
+ * m_TransitionFormula stores a TransitionFormula that describes the effect of this InternalEdge. (TODO: Add this
+ * information later, as additional annotation)
  * 
- * m_OccurenceInCounterexamples is used to store in a CEGAR based verification
- * process how often this CodeBlock occurred in a counterexample. (TODO: Store
- * this information somewhere in the model checker)
+ * m_OccurenceInCounterexamples is used to store in a CEGAR based verification process how often this CodeBlock occurred
+ * in a counterexample. (TODO: Store this information somewhere in the model checker)
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public abstract class CodeBlock extends RCFGEdge {
+public abstract class CodeBlock extends RCFGEdge implements IAction {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -88,15 +83,8 @@ public abstract class CodeBlock extends RCFGEdge {
 
 	int m_OccurenceInCounterexamples = 0;
 
-	/**
-	 * Defines the maximum length of this edges name.
-	 */
-	private static final int MAX_NAME_LENGTH = 20;
-
 	CodeBlock(int serialNumber, ProgramPoint source, ProgramPoint target, Logger logger) {
-		super(source, target, 
-				(source == null ? new Payload() : new Payload(source.getPayload().getLocation(), 
-				"Matthias does not know what he should use here as a name")));
+		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		m_Serialnumber = serialNumber;
 		mLogger = logger;
 		m_Annotation = new RCFGEdgeAnnotation(this) {
@@ -117,18 +105,14 @@ public abstract class CodeBlock extends RCFGEdge {
 		connectSource(source);
 		connectTarget(target);
 	}
-	
+
 	/**
-	 * This constructor is for subclasses that are not constructed by 
-	 * the CodeBlockFactory.
-	 * All these CodeBlocks will have serial number "-1" and hence they will
-	 * have the same hash code. 
+	 * This constructor is for subclasses that are not constructed by the CodeBlockFactory. All these CodeBlocks will
+	 * have serial number "-1" and hence they will have the same hash code.
 	 */
 	@Deprecated
 	public CodeBlock(ProgramPoint source, ProgramPoint target, Logger logger) {
-		super(source, target, 
-				(source == null ? new Payload() : new Payload(source.getPayload().getLocation(), 
-				"Matthias does not know what he should use here as a name")));
+		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		m_Serialnumber = -1;
 		mLogger = logger;
 		m_Annotation = new RCFGEdgeAnnotation(this) {
@@ -150,25 +134,6 @@ public abstract class CodeBlock extends RCFGEdge {
 		connectTarget(target);
 	}
 
-	/**
-	 * Maybe this will be moved to subclasses.
-	 */
-	public void updatePayloadName() {
-		String name;
-		if (getPayload().hasName()) {
-			name = getPayload().getName();
-		} else {
-			name = "";
-		}
-		if (name.length() < MAX_NAME_LENGTH) {
-			name = getPrettyPrintedStatements();
-			if (name.length() > MAX_NAME_LENGTH) {
-				name = name.substring(0, MAX_NAME_LENGTH) + "...";
-			}
-			getPayload().setName(name);
-		}
-	}
-
 	protected Object getFieldValue(String field) {
 		if (field == "TransitionFormula") {
 			return m_TransitionFormula;
@@ -184,8 +149,7 @@ public abstract class CodeBlock extends RCFGEdge {
 	public abstract String getPrettyPrintedStatements();
 
 	/**
-	 * @return an SMT-LIB based representation of this CodeBlock's transition
-	 * relation
+	 * @return an SMT-LIB based representation of this CodeBlock's transition relation
 	 */
 	public TransFormula getTransitionFormula() {
 		return m_TransitionFormula;
@@ -236,10 +200,8 @@ public abstract class CodeBlock extends RCFGEdge {
 	}
 
 	/**
-	 * Returns the procedure in that the system was before executing this
-	 * CodeBlock. E.g., if CodeBlock is a call, the result is the name of the
-	 * caller, if CodeBlock is a return the result is the callee (from which we
-	 * return).
+	 * Returns the procedure in that the system was before executing this CodeBlock. E.g., if CodeBlock is a call, the
+	 * result is the name of the caller, if CodeBlock is a return the result is the callee (from which we return).
 	 */
 	public String getPreceedingProcedure() {
 		ProgramPoint pp = (ProgramPoint) getSource();
@@ -247,10 +209,8 @@ public abstract class CodeBlock extends RCFGEdge {
 	}
 
 	/**
-	 * Returns the procedure in that the system will be after executing the
-	 * CodeBlock. E.g., if CodeBlock is a call, the result is the name of the
-	 * callee, if CodeBlock is a return the result is the caller (to which we
-	 * return).
+	 * Returns the procedure in that the system will be after executing the CodeBlock. E.g., if CodeBlock is a call, the
+	 * result is the name of the callee, if CodeBlock is a return the result is the caller (to which we return).
 	 */
 	public String getSucceedingProcedure() {
 		ProgramPoint pp = (ProgramPoint) getTarget();

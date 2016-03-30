@@ -27,15 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class BuchiAutomizerTimingBenchmark implements ICsvProviderProvider<Object>{
-	private BenchmarkData m_BenchmarkData;
+	private StatisticsData m_BenchmarkData;
 	
 	public BuchiAutomizerTimingBenchmark(BuchiCegarLoopBenchmarkGenerator benchGen) {
-		m_BenchmarkData = new BenchmarkData();
+		m_BenchmarkData = new StatisticsData();
 		m_BenchmarkData.aggregateBenchmarkData(benchGen);
 	}
 

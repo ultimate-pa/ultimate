@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -58,7 +59,7 @@ public class IfExpressionTree {
 		Expression thenCondition, elseCondition;
 		thenCondition = e.getCondition();
 		if (thenCondition instanceof WildcardExpression) {
-			thenCondition = elseCondition = new BooleanLiteral(thenCondition.getLocation(), true);
+			thenCondition = elseCondition = new BooleanLiteral(thenCondition.getLocation(), BoogieType.boolType, true);
 		} else {
 			// note: condition may contain further IfThenElseExpressions, which will not be removed.
 			elseCondition = exprTransformer.logicNegCached(thenCondition);

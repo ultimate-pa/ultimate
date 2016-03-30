@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 
 /**
  * 
@@ -51,46 +52,31 @@ public class LatexOverviewSummary extends LatexSummary {
 	private final int mLatexTableHeaderCount;
 
 	/**
-	 * Create a summary that prints a file containing LaTex table for each
-	 * toolchain. The table groups test runs by folder name and compares them
-	 * against different setting files.
+	 * Create a summary that prints a file containing LaTex table for each toolchain. The table groups test runs by
+	 * folder name and compares them against different setting files.
 	 * 
-	 * The values result from benchmark providers collected during the Ultimate
-	 * runs.
+	 * The values result from benchmark providers collected during the Ultimate runs.
 	 * 
 	 * @param ultimateTestSuite
 	 *            To which testsuite belongs this summary?
 	 * @param benchmarks
-	 *            A list of benchmark types that should be included in the
-	 *            table.
+	 *            A list of benchmark types that should be included in the table.
 	 * @param columnDefinitions
-	 *            An array of column definitions that specify how the benchmark
-	 *            results should be processed (values as well as strings)
+	 *            An array of column definitions that specify how the benchmark results should be processed (values as
+	 *            well as strings)
 	 */
 	public LatexOverviewSummary(Class<? extends UltimateTestSuite> ultimateTestSuite,
 			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
 			ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
-
-		mLatexTableHeaderCount = CoreUtil.reduce(mColumnDefinitions,
-				new CoreUtil.IMapReduce<Integer, ColumnDefinition>() {
-					@Override
-					public Integer reduce(Integer lastValue, ColumnDefinition entry) {
-						if (lastValue == null) {
-							lastValue = 0;
-						}
-						return entry.getLatexTableTitle() != null ? lastValue + 1 : lastValue;
-					}
-				});
+		mLatexTableHeaderCount = (int) mColumnDefinitions.stream().filter(a -> a.getLatexTableTitle() != null).count();
 	}
 
 	@Override
 	public String getSummaryLog() {
-		StringBuilder sb = new StringBuilder();
-		PartitionedResults results = partitionResults(mResults.entrySet());
-
+		final StringBuilder sb = new StringBuilder();
+		final PartitionedResults results = partitionResults(mResults.entrySet());
 		makeTables(sb, results);
-
 		return sb.toString();
 	}
 
@@ -100,15 +86,9 @@ public class LatexOverviewSummary extends LatexSummary {
 	}
 
 	private void makeTables(StringBuilder sb, PartitionedResults results) {
-
-		Set<String> tools = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
-			@Override
-			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getKey().getToolchain().getName();
-			}
-		});
-
-		String br = CoreUtil.getPlatformLineSeparator();
+		final Set<String> tools = results.All.stream().map(a -> a.getKey().getToolchain().getName())
+				.collect(Collectors.toSet());
+		final String br = CoreUtil.getPlatformLineSeparator();
 
 		appendPreamble(sb, br);
 
@@ -147,13 +127,9 @@ public class LatexOverviewSummary extends LatexSummary {
 			sb.append("}").append(br);
 
 			// make table body
-			PartitionedResults resultsPerTool = partitionResults(CoreUtil.where(results.All,
-					new ITestSummaryResultPredicate() {
-						@Override
-						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getToolchain().getName().equals(tool);
-						}
-					}));
+
+			final PartitionedResults resultsPerTool = partitionResults(results.All.stream()
+					.filter(a -> a.getKey().getToolchain().getName().equals(tool)).collect(Collectors.toList()));
 			makeTableBody(sb, resultsPerTool, tool);
 
 			// end table
@@ -194,33 +170,23 @@ public class LatexOverviewSummary extends LatexSummary {
 
 	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname) {
 		// make header
-
-		Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
+		final Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
 
 		int i = 0;
 		for (final String suffix : distinctSuffixes) {
-			PartitionedResults resultsPerFolder = partitionResults(CoreUtil.where(results.All,
-					new ITestSummaryResultPredicate() {
-						@Override
-						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getInput().getParent().endsWith(suffix);
-						}
-					}));
+			final PartitionedResults resultsPerFolder = partitionResults(results.All.stream().filter(
+					entry -> Arrays.stream(entry.getKey().getInput()).anyMatch(a -> a.getParent().endsWith(suffix)))
+					.collect(Collectors.toList()));
 			i++;
 			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size());
 		}
 	}
 
 	private void makeFolderRow(StringBuilder sb, PartitionedResults results, String folder, boolean last) {
-		String br = CoreUtil.getPlatformLineSeparator();
+		final String br = CoreUtil.getPlatformLineSeparator();
 		final int resultRows = 4;
-
-		List<String> variants = new ArrayList<>(CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
-			@Override
-			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getKey().getSettings().getName();
-			}
-		}));
+		final List<String> variants = results.All.stream().map(a -> a.getKey().getSettings().getName()).distinct()
+				.collect(Collectors.toList());
 
 		// folder name
 		sb.append("\\multirow{");
@@ -308,13 +274,8 @@ public class LatexOverviewSummary extends LatexSummary {
 	private void makeVariantEntry(StringBuilder sb, Collection<Entry<UltimateRunDefinition, ExtendedResult>> current,
 			final String variant, boolean isFirst) {
 
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = CoreUtil.where(current,
-				new ITestSummaryResultPredicate() {
-					@Override
-					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getKey().getSettings().getName().equals(variant);
-					}
-				});
+		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = current.stream()
+				.filter(a -> a.getKey().getSettings().getName().equals(variant)).collect(Collectors.toList());
 
 		String br = CoreUtil.getPlatformLineSeparator();
 		String sep = " & ";
@@ -330,20 +291,11 @@ public class LatexOverviewSummary extends LatexSummary {
 		ICsvProvider<String> csv = makePrintCsvProviderFromResults(results, mColumnDefinitions);
 
 		csv = CsvUtils.projectColumn(csv,
-				CoreUtil.select(mColumnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
-					@Override
-					public String reduce(ColumnDefinition entry) {
-						return entry.getColumnToKeep();
-					}
-				}));
+				mColumnDefinitions.stream().map(a -> a.getColumnToKeep()).collect(Collectors.toList()));
 
 		csv = ColumnDefinitionUtil.reduceProvider(csv,
-				CoreUtil.select(mColumnDefinitions, new CoreUtil.IReduce<Aggregate, ColumnDefinition>() {
-					@Override
-					public Aggregate reduce(ColumnDefinition entry) {
-						return entry.getManyRunsToOneRow();
-					}
-				}), mColumnDefinitions);
+				mColumnDefinitions.stream().map(a -> a.getManyRunsToOneRow()).collect(Collectors.toList()),
+				mColumnDefinitions);
 
 		csv = ColumnDefinitionUtil.makeHumanReadable(csv, mColumnDefinitions);
 		csv = CsvUtils.addColumn(csv, "Count", 0, Arrays.asList(new String[] { Integer.toString(results.size()) }));

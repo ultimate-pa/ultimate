@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.summaries;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -36,6 +35,7 @@ import java.util.TreeMap;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 
 /**
@@ -106,17 +106,17 @@ public class StandingsSummary extends NewTestSummary {
 			String resultCategory, StringBuilder sb) {
 		sb.append("======= Standings for ").append(resultCategory).append(" =======").append(System.lineSeparator());
 		
-		HashRelation<TCS, File> tcse2input = new HashRelation<>();
+		HashRelation<TCS, String> tcse2input = new HashRelation<>();
 		for (Entry<UltimateRunDefinition, ExtendedResult> result : allOfResultCategory) {
 			UltimateRunDefinition urd = result.getKey();
 			TCS tcs = new TCS(urd.getToolchain(), urd.getSettings());
-			tcse2input.addPair(tcs, urd.getInput());
+			tcse2input.addPair(tcs, urd.getInputFileNames());
 		}
 		
 		// sort by TCS strings
 		TreeMap<String, Integer> tcs2amount = new TreeMap<>();
 		for (TCS tcs : tcse2input.getDomain()) {
-			Set<File> inputFiles = tcse2input.getImage(tcs);
+			Set<String> inputFiles = tcse2input.getImage(tcs);
 			String tcsString = String.valueOf(tcs);
 			tcs2amount.put(tcsString, inputFiles.size());
 		}

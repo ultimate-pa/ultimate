@@ -56,10 +56,10 @@ public abstract class UltimateTestSuite {
 
 	public UltimateTestSuite() {
 		if (sSummaries == null) {
-			ITestSummary[] summaries = constructTestSummaries();
+			final ITestSummary[] summaries = constructTestSummaries();
 
 			if (summaries != null) {
-				for (ITestSummary sum : summaries) {
+				for (final ITestSummary sum : summaries) {
 					assert sum != null;
 				}
 				sSummaries = Arrays.asList(summaries);
@@ -69,9 +69,9 @@ public abstract class UltimateTestSuite {
 
 		}
 		if (sLogFiles == null) {
-			IIncrementalLog[] logs = constructIncrementalLog();
+			final IIncrementalLog[] logs = constructIncrementalLog();
 			if (logs != null) {
-				for (IIncrementalLog log : logs) {
+				for (final IIncrementalLog log : logs) {
 					assert log != null;
 				}
 				sLogFiles = Arrays.asList(logs);
@@ -115,14 +115,13 @@ public abstract class UltimateTestSuite {
 			return;
 		}
 
-		for (ITestSummary summary : sSummaries) {
+		for (final ITestSummary summary : sSummaries) {
 			try {
 				TestUtil.writeSummary(summary);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
 		}
-
 		sSummaries = null;
 	}
 }

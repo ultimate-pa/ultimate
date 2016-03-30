@@ -50,10 +50,9 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 /**
  * Evaluate the overall result of a safety checker.
  * 
- * First, we iterate through all IResults returned by Ultimate and put them into
- * categories (which IResult is a witness for which overall result). Afterwards
- * we iterate through all categories in the order of their significance. The
- * first non-empty category is our overall result.
+ * First, we iterate through all IResults returned by Ultimate and put them into categories (which IResult is a witness
+ * for which overall result). Afterwards we iterate through all categories in the order of their significance. The first
+ * non-empty category is our overall result.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
@@ -81,6 +80,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 				SafetyCheckerOverallResult.UNSAFE_MEMTRACK,
 				SafetyCheckerOverallResult.UNSAFE_FREE, 
 				SafetyCheckerOverallResult.UNSAFE_DEREF,
+				SafetyCheckerOverallResult.UNSAFE_OVERAPPROXIMATED,
 				SafetyCheckerOverallResult.UNSUPPORTED_SYNTAX, 
 				SafetyCheckerOverallResult.SYNTAX_ERROR,
 				SafetyCheckerOverallResult.EXCEPTION_OR_ERROR,  
@@ -167,6 +167,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		case UNSAFE_DEREF:
 		case UNSAFE_FREE:
 		case UNSAFE_MEMTRACK:
+		case UNSAFE_OVERAPPROXIMATED:
 			return concatenateShortDescriptions(getMostSignificantResults());
 		case UNSUPPORTED_SYNTAX:
 			return getMostSignificantResults().toString();
@@ -180,14 +181,13 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		return mMostSignificantResults;
 	}
 
-	
 	private String concatenateShortDescriptions(Set<IResult> iresults) {
 		StringBuilder sb = new StringBuilder();
 		for (IResult iResult : iresults) {
 			sb.append(iResult.getShortDescription());
 			sb.append(" ");
 			if (iResult instanceof UnprovableResult) {
-				sb.append(((UnprovableResult) iResult).getReasons());
+				sb.append(((UnprovableResult<?, ?, ?>) iResult).getReasons());
 				sb.append(" ");
 			}
 		}

@@ -30,30 +30,24 @@
 package de.uni_freiburg.informatik.ultimate.gui.misc;
 
 /**
- * @author  dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public abstract class TreeViewEntry {
-	private String name;
-	private TreeViewEntry parent;
-	
-	public TreeViewEntry(String entryName, TreeViewEntry parent){
-		this.name = entryName;
-		this.parent = parent;
+	private final String mName;
+	private final TreeViewEntry mParent;
+
+	public TreeViewEntry(final String entryName, final TreeViewEntry parent) {
+		mName = entryName;
+		mParent = parent;
 	}
-	
-	/**
-	 * @return  the parent
-	 * @uml.property  name="parent"
-	 */
-	public Object getParent(){
-		return parent;
+
+	public abstract boolean isEmpty();
+
+	public Object getParent() {
+		return mParent;
 	}
-	
-	/**
-	 * @return  the name
-	 * @uml.property  name="name"
-	 */
-	public String getName(){
-		return this.name;
+
+	public String getName() {
+		return mName;
 	}
 }

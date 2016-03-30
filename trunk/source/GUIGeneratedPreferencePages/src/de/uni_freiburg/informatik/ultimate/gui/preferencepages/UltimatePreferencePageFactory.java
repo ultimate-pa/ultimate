@@ -24,9 +24,11 @@
  * licensors of the ULTIMATE GUIGeneratedPreferencePages plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -34,18 +36,20 @@ import org.eclipse.jface.preference.IPreferenceNode;
 import org.eclipse.jface.preference.PreferenceManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+
+import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 
 /**
  * 
- * Creates the automatically generated preference pages for Ultimate. Call
- * {@link #createPreferencePages()} e.g. after WorbenchWindow creation (in
- * {@link WorkbenchWindowAdvisor}.
+ * Creates the automatically generated preference pages for Ultimate. Call {@link #createPreferencePages()} e.g. after
+ * WorbenchWindow creation (in {@link WorkbenchWindowAdvisor}.
  * 
  * @author dietsch
  * 
@@ -62,7 +66,7 @@ public class UltimatePreferencePageFactory {
 		IUltimatePlugin[] plugins = mCore.getRegisteredUltimatePlugins();
 		for (IUltimatePlugin plugin : plugins) {
 			if (plugin.getPreferences() != null) {
-				UltimatePreferenceItem<?>[] preferenceItems = plugin.getPreferences().getDefaultPreferences();
+				AbstractUltimatePreferenceItem[] preferenceItems = plugin.getPreferences().getDefaultPreferences();
 				if (preferenceItems != null) {
 					String parentNodeID = "GeneratedUltimatePreferences";
 
@@ -80,33 +84,51 @@ public class UltimatePreferencePageFactory {
 					}
 
 					createPreferencePage(plugin.getPluginID(), plugin.getPreferences().getPreferencePageTitle(),
-							filterPreferences(preferenceItems), parentNodeID);
+					        filterPreferences(preferenceItems), parentNodeID);
 				}
 			}
 		}
 	}
 
-	private UltimatePreferenceItem<?>[] filterPreferences(UltimatePreferenceItem<?>[] items) {
-		ArrayList<UltimatePreferenceItem<?>> list = new ArrayList<UltimatePreferenceItem<?>>();
-		for (UltimatePreferenceItem<?> item : items) {
+	private AbstractUltimatePreferenceItem[] filterPreferences(AbstractUltimatePreferenceItem[] items) {
+		ArrayList<AbstractUltimatePreferenceItem> list = new ArrayList<>();
+		for (AbstractUltimatePreferenceItem item : items) {
 			if (!item.getUseCustomPreferencePage()) {
 				list.add(item);
 			}
 		}
-		return list.toArray(new UltimatePreferenceItem[list.size()]);
+		return list.toArray(new AbstractUltimatePreferenceItem[list.size()]);
 	}
 
-	private void createPreferencePage(String pluginID, String title, UltimatePreferenceItem<?>[] preferenceItems,
-			String parentNodeID) {
-		UltimateGeneratedPreferencePage page = new UltimateGeneratedPreferencePage(pluginID, title, preferenceItems);
+	private void createPreferencePage(String pluginID, String title, AbstractUltimatePreferenceItem[] preferenceItems,
+	        String parentNodeID) {
+		AbstractUltimatePreferenceItem[] pageItems = Arrays.stream(preferenceItems)
+		        .filter(p -> p.getType() != PreferenceType.SubItemContainer)
+		        .toArray(i -> new AbstractUltimatePreferenceItem[i]);
 
-		UltimatePreferenceNode node = new UltimatePreferenceNode(pluginID, page);
+		UltimatePreferenceItemContainer[] subContainerItems = Arrays.stream(preferenceItems)
+		        .filter(p -> p.getType() == PreferenceType.SubItemContainer)
+		        .map(p -> (UltimatePreferenceItemContainer) p).toArray(i -> new UltimatePreferenceItemContainer[i]);
+
+		UltimateGeneratedPreferencePage page = new UltimateGeneratedPreferencePage(pluginID, title, pageItems);
+
+		final String nodeName = pluginID + "." + parentNodeID + "." + title;
+
+		UltimatePreferenceNode node = new UltimatePreferenceNode(nodeName, page);
 		PreferenceManager pm = PlatformUI.getWorkbench().getPreferenceManager();
 
 		IPreferenceNode root = findRootNode(pm, parentNodeID);
 		if (root != null) {
 			root.remove(pluginID);
 			root.add(node);
+			for (UltimatePreferenceItemContainer container : subContainerItems) {
+
+				final AbstractUltimatePreferenceItem[] containerItems = container.getContainerItems()
+				        .toArray(new AbstractUltimatePreferenceItem[container.getContainerItems().size()]);
+
+				createPreferencePage(pluginID, container.getContainerName(), filterPreferences(containerItems),
+				        node.getId());
+			}
 			page.init(PlatformUI.getWorkbench());
 		}
 	}

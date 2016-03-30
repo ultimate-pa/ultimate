@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 
 /**
  * Edge in a recursive control flow graph that represents a sequence of
@@ -52,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrint
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class StatementSequence extends CodeBlock {
+public class StatementSequence extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = -1780068525981157749L;
 
@@ -80,14 +82,12 @@ public class StatementSequence extends CodeBlock {
 		super(serialNumber, source, target, logger);
 		m_Origin = Origin.IMPLEMENTATION;
 		this.addStatement(st);
-		updatePayloadName();
 	}
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Origin origin, Logger logger) {
 		super(serialNumber, source, target, logger);
 		m_Origin = origin;
 		this.addStatement(st);
-		updatePayloadName();
 	}
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
@@ -99,7 +99,6 @@ public class StatementSequence extends CodeBlock {
 		for (Statement st : stmts) {
 			m_PrettyPrintedStatements += BoogiePrettyPrinter.print(st);
 		}
-		updatePayloadName();
 	}
 	
 	@Override
@@ -151,6 +150,11 @@ public class StatementSequence extends CodeBlock {
 			sb.append(BoogiePrettyPrinter.print(st));
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public TransFormula getTransformula() {
+		return getTransitionFormula();
 	}
 
 }

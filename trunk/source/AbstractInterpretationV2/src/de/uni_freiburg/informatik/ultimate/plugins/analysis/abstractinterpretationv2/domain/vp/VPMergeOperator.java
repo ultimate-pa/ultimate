@@ -40,44 +40,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * The implementation of a simple merge operator on the VP domain. This operator
  * can also be used as widening operator.
  * 
- * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- *
- * @param <ACTION>
- *            Any action.
- * @param <IBoogieVar>
- *            Any variable declaration.
+ * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class VPMergeOperator implements
 		IAbstractStateBinaryOperator<VPDomainState> {
-
-	private static final int BUFFER_SIZE = 100;
 
 	protected VPMergeOperator() {
 	}
 
 	/**
 	 * Merges two abstract states, first and second, into one new abstract
-	 * state. All variables that occur in first must also occur in second.<br />
-	 * 
-	 * <p>
-	 * Assume, there is a variable with name "v". The value of "v" in first is
-	 * v1 and the value of "v" in second is v2. <br />
-	 * </p>
-	 * 
-	 * <p>
-	 * It is distinguished between four cases for the resulting merged value of
-	 * "v":<br />
-	 * <ol>
-	 * <li>v1 is equal to v2:<br />
-	 * The resulting value will be v1.</li>
-	 * <li>v1 is positive (negative) and v2 is negative (positive):<br />
-	 * The resulting value will be \top.</li>
-	 * <li>v1 is not 0 (is 0) and v2 is 0 (is not 0):<br />
-	 * The resulting value will be \top.</li>
-	 * <li>v1 is \bot or v2 is \bot:<br />
-	 * The resulting value will be \bot.</li>
-	 * </ol>
-	 * </p>
+	 * state. <br />
 	 * 
 	 * @param first
 	 *            The first state to merge.
@@ -86,21 +59,13 @@ public class VPMergeOperator implements
 	 */
 	@Override
 	public VPDomainState apply(VPDomainState first, VPDomainState second) {
-//		assert first != null;
-//		assert second != null;
 
-		// TODO 
 		if (first == null) {
 			return second;
 		}
 		
 		if (second == null) {
 			return first;
-		}
-		
-		if (!first.hasSameVariables(second)) {
-//			throw new UnsupportedOperationException(
-//					"Cannot merge two states with a disjoint set of variables.");
 		}
 
 		final VPDomainState newState = (VPDomainState) first.copy();
@@ -109,6 +74,8 @@ public class VPMergeOperator implements
 				first.getExpressionMap());
 		Set<Expression> mergeExprSet = new HashSet<Expression>(
 				first.getExprSet());
+		Map<String, Set<Expression>> mergePtrReadinMap = new HashMap<String, Set<Expression>>(
+				first.getPtrReadintMap());
 
 		for (String key : second.getExpressionMap().keySet()) {
 			if (!mergeExprMap.containsKey(key)) {
@@ -121,51 +88,21 @@ public class VPMergeOperator implements
 
 		mergeExprSet.addAll(second.getExprSet());
 		
+		for (String key : second.getPtrReadintMap().keySet()) {
+			if (!mergePtrReadinMap.containsKey(key)) {
+				mergePtrReadinMap.put(key, second.getPtrReadintMap().get(key));
+			} else {
+				mergePtrReadinMap.get(key).addAll(
+						second.getPtrReadintMap().get(key));
+			}
+		}
+		
 		newState.setExpressionMap(mergeExprMap);
 		newState.setExpressionSet(mergeExprSet);
+		newState.setPtrReadinMap(mergePtrReadinMap);
 
 		return newState;
 	}
 
-	/**
-	 * Computes the merging of two {@link VPDomainValue}s. {@link VPDomainValue}
-	 * s.
-	 * 
-	 * @param value1
-	 *            The first value.
-	 * @param value2
-	 *            The second value.
-	 * @return Returns a new {@link VPDomainValue}.
-	 */
-	// private VPDomainValue computeMergedExprMap(VPDomainValue value1,
-	// VPDomainValue value2) {
-	// if (value1.getResult() == value2.getResult()) {
-	// return new VPDomainValue(value1.getResult());
-	// }
-	//
-	// if (value1.getResult() == Values.BOTTOM || value2.getResult() ==
-	// Values.BOTTOM) {
-	// return new VPDomainValue(Values.BOTTOM);
-	// }
-	//
-	// if ((value1.getResult() == Values.POSITIVE && value2.getResult() ==
-	// Values.NEGATIVE)
-	// || (value1.getResult() == Values.NEGATIVE && value2.getResult() ==
-	// Values.POSITIVE)) {
-	// return new VPDomainValue(Values.TOP);
-	// }
-	//
-	// if (value1.getResult() == Values.ZERO || value2.getResult() ==
-	// Values.ZERO) {
-	// return new VPDomainValue(Values.TOP);
-	// }
-	//
-	// final StringBuilder stringBuilder = new StringBuilder(BUFFER_SIZE);
-	//
-	// stringBuilder.append("Unable to handle value1 = ").append(value1.getResult()).append(" and value2 = ")
-	// .append(value2.getResult()).append('.');
-	//
-	// throw new UnsupportedOperationException(stringBuilder.toString());
-	// }
 
 }

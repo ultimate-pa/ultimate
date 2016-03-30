@@ -36,11 +36,28 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  */
 public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	STATE createFreshState();
+	/**
+	 * @return A new state of the current abstract domain.
+	 */
+	public STATE createFreshState();
 
-	IAbstractStateBinaryOperator<STATE> getWideningOperator();
+	/**
+	 * @return The widening operator appropriate for the current abstract domain.
+	 */
+	public IAbstractStateBinaryOperator<STATE> getWideningOperator();
 
-	IAbstractStateBinaryOperator<STATE> getMergeOperator();
+	/**
+	 * @return The merge operator appropriate for the current abstract domain.
+	 */
+	public IAbstractStateBinaryOperator<STATE> getMergeOperator();
 
-	IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator();
+	/**
+	 * @return The post operator for the current abstract domain.
+	 */
+	public IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator();
+
+	/**
+	 * @return The perceived precision of the domain.
+	 */
+	public int getDomainPrecision();
 }

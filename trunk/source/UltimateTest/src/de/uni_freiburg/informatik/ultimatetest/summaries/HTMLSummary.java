@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
@@ -82,17 +83,13 @@ public class HTMLSummary extends BaseCsvProviderSummary {
 			}
 			sb.append("<h2>").append(entry.getKey()).append("</h2>").append(linebreak);
 
-			//sort by variant
+			// sort by variant
 			List<Entry<UltimateRunDefinition, ExtendedResult>> currentPartition = new ArrayList<>(entry.getValue());
 			Collections.sort(currentPartition, new Comparator<Entry<UltimateRunDefinition, ExtendedResult>>() {
 				@Override
 				public int compare(Entry<UltimateRunDefinition, ExtendedResult> o1,
 						Entry<UltimateRunDefinition, ExtendedResult> o2) {
-					int nameCompare = o1.getKey().getInput().compareTo(o2.getKey().getInput());
-					if (nameCompare == 0) {
-						return o1.getKey().getSettings().getName().compareTo(o2.getKey().getSettings().getName());
-					}
-					return nameCompare;
+					return o1.getKey().compareTo(o2.getKey());
 				}
 			});
 

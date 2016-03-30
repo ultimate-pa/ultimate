@@ -70,7 +70,7 @@ public class HoareAnnotationWriter {
 	}
 
 	public void addHoareAnnotationToCFG() {
-		IPredicate precondForContext = m_SmtManager.newTruePredicate();
+		IPredicate precondForContext = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructTrue());
 		addHoareAnnotationForContext(m_SmtManager, precondForContext,
 				m_HoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
 
@@ -110,9 +110,8 @@ public class HoareAnnotationWriter {
 			HashRelation<ProgramPoint, IPredicate> pp2preds) {
 		for (ProgramPoint pp : pp2preds.getDomain()) {
 			IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);
-			TermVarsProc tvp = smtManager.or(preds);
-			IPredicate formulaForPP = m_SmtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(),
-					tvp.getClosedFormula());
+			TermVarsProc tvp = smtManager.getPredicateFactory().or(preds);
+			IPredicate formulaForPP = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 			addFormulasToLocNodes(pp, precondForContext, formulaForPP);
 		}
 	}
@@ -125,7 +124,7 @@ public class HoareAnnotationWriter {
 		
 		HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
 		if (taAnnot == null) {
-			hoareAnnot = m_SmtManager.getNewHoareAnnotation(pp);
+			hoareAnnot = m_SmtManager.getPredicateFactory().getNewHoareAnnotation(pp, m_rootAnnot.getModGlobVarManager());
 			hoareAnnot.annotate(locNode);
 		} else {
 			hoareAnnot = (HoareAnnotation) taAnnot;

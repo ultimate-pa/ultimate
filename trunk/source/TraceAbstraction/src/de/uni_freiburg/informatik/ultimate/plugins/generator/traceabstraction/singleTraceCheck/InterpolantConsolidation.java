@@ -40,7 +40,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
@@ -59,24 +58,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkGeneratorWithStopwatches;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareTripleCheckerBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker.AllIntegers;
+import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
 /**
  * Interpolant Consolidation brings predicates which have the same location together and connects them through disjunction.
@@ -129,7 +129,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		m_TaPrefs = taPrefs;
 		m_InterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
 		
-		IHoareTripleChecker ehtc = BasicCegarLoop.getEfficientHoareTripleChecker(TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, 
+		IHoareTripleChecker ehtc = BasicCegarLoop.getEfficientHoareTripleChecker(services, TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, 
 				m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier);
 		m_HoareTripleChecker = new CachingHoareTripleChecker(ehtc, m_PredicateUnifier);
 
@@ -162,7 +162,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(m_SmtManager, m_TaPrefs);
 
-		PredicateFactory predicateFactoryInterpolantAutomata = new PredicateFactory(m_SmtManager, m_TaPrefs);
+		PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(m_SmtManager, m_TaPrefs);
 
 		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				interpolantAutomatonDeterminized, true, predicateFactoryInterpolantAutomata);
@@ -377,7 +377,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					// Update benchmarks
 					disjunctionsGreaterOneCounter++;
 
-					TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.or(predicatesForThisLocationAsArray);
+					TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.getPredicateFactory().or(predicatesForThisLocationAsArray);
 					// Store the consolidated (the disjunction of the predicates for the current location)
 					m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated);
 
@@ -474,7 +474,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 
 
-		StateFactory<IPredicate> predicateFactory = new PredicateFactory(smtManager, taPrefs);
+		StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs);
 
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa  = new NestedWordAutomaton<CodeBlock, IPredicate>(   new AutomataLibraryServices(services), 
 				internalAlphabet,
@@ -589,7 +589,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	}
 
 	// Benchmarks Section
-	public static class InterpolantConsolidationBenchmarkType implements IBenchmarkType {
+	public static class InterpolantConsolidationBenchmarkType implements IStatisticsType {
 		private static InterpolantConsolidationBenchmarkType s_Instance = new InterpolantConsolidationBenchmarkType();
 
 
@@ -658,7 +658,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		@Override
 		public String prettyprintBenchmarkData(
-				IBenchmarkDataProvider benchmarkData) {
+				IStatisticsDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 
 			sb.append("\t").append(s_DifferenceAutomatonEmptyCounter).append(": ");
@@ -687,7 +687,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	}
 
-	public class InterpolantConsolidationBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches implements 	IBenchmarkDataProvider {
+	public class InterpolantConsolidationBenchmarkGenerator extends StatisticsGeneratorWithStopwatches implements 	IStatisticsDataProvider {
 		private int m_DisjunctionsGreaterOneCounter = 0;
 		private int m_DifferenceBeforeAfter = 0;
 		private int m_NewlyCreatedInterpolants = 0;
@@ -701,7 +701,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		public void setInterpolantConsolidationData(int disjunctionsGreaterOneCounter, int newlyCreatedInterpolants, int interpolantsDropped,
 				int differenceOfNumOfInterpolantsBeforeAfter,
-				HoareTripleCheckerBenchmarkGenerator htcbg) {
+				HoareTripleCheckerStatisticsGenerator htcbg) {
 			m_DisjunctionsGreaterOneCounter  = disjunctionsGreaterOneCounter;
 			m_DifferenceBeforeAfter = differenceOfNumOfInterpolantsBeforeAfter;
 			m_NumOfHoareTripleChecks = htcbg.getSolverCounterSat();
@@ -747,7 +747,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		}
 
 		@Override
-		public IBenchmarkType getBenchmarkType() {
+		public IStatisticsType getBenchmarkType() {
 			return InterpolantConsolidationBenchmarkType.getInstance();
 		}
 

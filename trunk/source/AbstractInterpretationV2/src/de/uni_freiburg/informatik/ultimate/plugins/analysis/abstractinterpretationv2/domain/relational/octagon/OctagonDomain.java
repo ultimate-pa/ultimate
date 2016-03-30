@@ -91,7 +91,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	private Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> makePostOperatorFactory(
 			UltimatePreferenceStore ups) {
 
-		int maxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
+		int maxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 		boolean fallbackAssignIntervalProjection = ups.getBoolean(OctPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION);
 		return () -> new OctPostOperator(mLogger, mSymbolTable, maxParallelStates, fallbackAssignIntervalProjection);
 	}
@@ -124,6 +124,11 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	@Override
 	public IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		return mPostOperatorFactory.get();
+	}
+
+	@Override
+	public int getDomainPrecision() {
+		return 2000;
 	}
 	
 }

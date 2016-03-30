@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
  */
 public class NoTimeoutTestResultDecider extends TestResultDecider {
 
-	private final String mInputFile;
+	private final String mInputFileNames;
 
 	/**
 	 * 
@@ -61,7 +61,7 @@ public class NoTimeoutTestResultDecider extends TestResultDecider {
 	 * 
 	 */
 	public NoTimeoutTestResultDecider(UltimateRunDefinition urd) {
-		mInputFile = urd.getInput().getAbsolutePath();
+		mInputFileNames = urd.getInputFileNames();
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class NoTimeoutTestResultDecider extends TestResultDecider {
 			setResultMessage("");
 		}
 
-		TestUtil.logResults(log, mInputFile, fail, customMessages, resultService);
+		TestUtil.logResults(log, mInputFileNames, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
@@ -106,7 +106,7 @@ public class NoTimeoutTestResultDecider extends TestResultDecider {
 	public TestResult getTestResult(IResultService resultService, Throwable e) {
 		setResultCategory("Unexpected exception");
 		setResultMessage("Unexpected exception: " + e.getMessage());
-		TestUtil.logResults(Logger.getLogger(NoTimeoutTestResultDecider.class), mInputFile, true,
+		TestUtil.logResults(Logger.getLogger(NoTimeoutTestResultDecider.class), mInputFileNames, true,
 				new ArrayList<String>(), resultService);
 		return TestResult.FAIL;
 	}

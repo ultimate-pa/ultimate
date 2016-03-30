@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
@@ -74,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
@@ -543,6 +545,56 @@ public class PostProcessor {
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , astType));
 			}
 		}
+		return decls;
+	}
+
+	/**
+	 * Generate FloatingPoint types
+	 * @param loc
+	 * @param typesizes
+	 * @param typeHandler
+	 * @return
+	 */
+	public static ArrayList<Declaration> declareFloatDataTypes(ILocation loc,
+			TypeSizes typesizes, TypeHandler typeHandler) {
+		ArrayList<Declaration> decls = new ArrayList<Declaration>();
+		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
+			
+			CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
+			
+			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE
+					&& !cPrimitive0.isComplexType()) {
+				Attribute[] attributes = new Attribute[2];
+				attributes[0] = new NamedAttribute(loc, "builtin", new Expression[]{new StringLiteral(loc, "FloatingPoint")});
+				int bytesize = typesizes.getSize(cPrimitive);
+				int[] indices = new int[2];
+				switch (bytesize) {
+					case 4:
+						indices[0] = 8;
+						indices[1] = 24;
+						break;
+					case 8:
+						indices[0] = 11;
+						indices[1] = 53;
+						break;
+					case 16:
+						indices[0] = 15;
+						indices[1] = 113;
+						break;
+					default:
+						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
+				}
+				attributes[1] = new NamedAttribute(loc, "indices",
+						new Expression[]{	new IntegerLiteral(loc, String.valueOf(indices[0])),
+											new IntegerLiteral(loc, String.valueOf(indices[1]))});
+				String identifier = "C_" + cPrimitive.name();
+				String[] typeParams = new String[0];
+				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams ));
+				
+			}
+		}	
+			
+			
 		return decls;
 	}
 			

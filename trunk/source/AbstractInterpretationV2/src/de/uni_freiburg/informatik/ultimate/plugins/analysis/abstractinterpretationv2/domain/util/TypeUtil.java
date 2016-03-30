@@ -23,7 +23,7 @@ public class TypeUtil {
 
 	public static boolean isNumeric(IType type) {
 		Integer t = primitiveType(type);
-		return INT.equals(t) || INT.equals(t);
+		return INT.equals(t) || REAL.equals(t);
 	}
 
 	public static boolean isNumericNonInt(IType type) {
@@ -38,32 +38,37 @@ public class TypeUtil {
 		if (type instanceof PrimitiveType) {
 			return ((PrimitiveType) type).getTypeCode();
 		} else if (type instanceof ConstructedType) {
-			return primitiveType(((ConstructedType) type).getUnderlyingType());
+			final ConstructedType ctype = (ConstructedType) type;
+			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+				return null;
+			}
+			return primitiveType(ctype.getUnderlyingType());
 		}
 		return null;
 	}
 
 	/**
-	 * Checks if two Boogie types are of the same type category.
-	 * There are three type categories:
+	 * Checks if two Boogie types are of the same type category. There are three type categories:
 	 * <ul>
-	 * 		<li>numeric (int, real)</li>
-	 * 		<li>boolean (bool)</li>
-	 * 		<li>unsupported (bit-vectors, arrays, ...)</li>
+	 * <li>numeric (int, real)</li>
+	 * <li>boolean (bool)</li>
+	 * <li>unsupported (bit-vectors, arrays, ...)</li>
 	 * </ul>
 	 *
-	 * @param a first type
-	 * @param b second type
+	 * @param a
+	 *            first type
+	 * @param b
+	 *            second type
 	 * @return a and b are of the same type category
 	 */
 	public static boolean categoryEquals(IType a, IType b) {
 		return (isBoolean(a) == isBoolean(b)) && (isNumeric(a) == isNumeric(b));
 	}
-	
+
 	public static boolean isIntTerm(Term t) {
 		return "Int".equals(t.getSort().getRealSort().getName());
 	}
-	
+
 	public static boolean isRealTerm(Term t) {
 		return "Real".equals(t.getSort().getRealSort().getName());
 	}

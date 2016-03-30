@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -112,6 +113,8 @@ public class ExpressionTransformer {
 				if (unexp.getOperator() == UnaryExpression.Operator.LOGICNEG) {
 					return transform(unexp.getExpr());
 				}
+			} else {
+				return expr;
 			}
 		}
 		return atomicTransform(expr);
@@ -150,6 +153,23 @@ public class ExpressionTransformer {
 			Expression negLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getLeft());
 			Expression negRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getRight());
 			newRight = right.transform(new BinaryExpression(loc, Operator.LOGICAND, negLeft, negRight));
+			break;
+		case COMPEQ:
+		case COMPNEQ:
+			if (e.getLeft().getType() instanceof PrimitiveType) {
+				PrimitiveType p = (PrimitiveType) e.getLeft().getType();
+				if (p.getTypeCode() == PrimitiveType.BOOL) {
+					newLeft = left.transform(e.getLeft());
+					newRight = right.transform(e.getRight());
+				} else if (p.getTypeCode() == PrimitiveType.INT) {
+					return atomicTransform(e);
+				} else {
+					return e;
+				}
+				
+			} else {
+				return e;
+			}
 			break;
 		default:
 			return atomicTransform(e);
@@ -334,6 +354,9 @@ public class ExpressionTransformer {
 			case ARITHMOD:
 				if (sLeft == 0 && sRight == 0 && right.mConstant.signum() != 0) {
 					mConstant = left.mConstant.mod(right.mConstant.abs());
+				} else if (sRight == 0 && right.mConstant.abs().equals(BigInteger.ONE)){
+					// x % +-1 = 0
+					break;
 				} else {
 					mIsLinear = false;
 				}
@@ -347,6 +370,16 @@ public class ExpressionTransformer {
 						} else {
 							mConstant = mConstant.add(BigInteger.ONE);
 						}
+					}
+				} else if (sRight == 0 && right.mConstant.equals(BigInteger.ONE)){
+					// x / 1 = x
+					mConstant = left.mConstant;
+					mCoefficients = left.mCoefficients;
+				} else if (sRight == 0 && right.mConstant.negate().equals(BigInteger.ONE)){
+					// x / -1 = -x
+					mConstant = left.mConstant.negate();
+					for (Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
+						mCoefficients.put(entry.getKey(), entry.getValue().negate());
 					}
 				} else {
 					mIsLinear = false;

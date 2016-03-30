@@ -27,85 +27,45 @@
 package de.uni_freiburg.informatik.ultimate.model;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
- * A concrete implementation of the {@link IPayload} interface. The payload
- * contains all informations carried by a node.
+ * A concrete implementation of the {@link IPayload} interface. The payload contains all information carried by a node.
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class Payload implements IPayload {
+public final class Payload implements IPayload {
 
 	private static final long serialVersionUID = 9150283961581614549L;
-	protected ILocation mLocation;
-	protected String mName;
-	protected UltimateUID mID;
-	protected HashMap<String, IAnnotations> mAnnotations;
-	protected boolean mIsValue;
+	private ILocation mLocation;
+	private Map<String, IAnnotations> mAnnotations;
 
 	public Payload() {
-		mIsValue = false;
+		this(null);
 	}
 
-	public Payload(ILocation loc, String name) {
-		this();
+	public Payload(final ILocation loc) {
 		mLocation = loc;
-		mName = name;
 	}
 
-	public Payload(ILocation loc, String name, boolean isValue) {
-		this();
-		mLocation = loc;
-		mName = name;
-		mIsValue = isValue;
-	}
-
-	public HashMap<String, IAnnotations> getAnnotations() {
+	@Override
+	public Map<String, IAnnotations> getAnnotations() {
 		if (mAnnotations == null) {
 			mAnnotations = new HashMap<String, IAnnotations>();
 		}
 		return mAnnotations;
 	}
 
-	public UltimateUID getID() {
-		if (mID == null) {
-			mID = new UltimateUID();
-		}
-		return mID;
-	}
-
+	@Override
 	public ILocation getLocation() {
 		return mLocation;
 	}
 
-	public String getName() {
-		if (mName == null) {
-			return "";
-		}
-		return mName;
-	}
-
-	public void setAnnotations(HashMap<String, IAnnotations> annotations) {
-		mAnnotations = annotations;
-
-	}
-
-	public void setLocation(ILocation loc) {
-		mLocation = loc;
-	}
-
-	public void setName(String name) {
-		mName = name;
-	}
-
-	public String toString() {
-		return getName();
-	}
-
+	@Override
 	public boolean hasAnnotation() {
 		if (mAnnotations == null) {
 			return false;
@@ -113,20 +73,20 @@ public class Payload implements IPayload {
 		return !mAnnotations.isEmpty();
 	}
 
+	@Override
 	public boolean hasLocation() {
 		return (mLocation != null);
 	}
 
-	public boolean hasID() {
-		return (mID != null);
+	public String toString() {
+		if (hasLocation()) {
+			return getLocation().toString();
+		}
+		return super.toString();
 	}
 
-	public boolean hasName() {
-		return (mName != null);
+	@Override
+	public void setLocation(ILocation loc) {
+		mLocation = loc;
 	}
-
-	public boolean isValue() {
-		return mIsValue;
-	}
-
 }

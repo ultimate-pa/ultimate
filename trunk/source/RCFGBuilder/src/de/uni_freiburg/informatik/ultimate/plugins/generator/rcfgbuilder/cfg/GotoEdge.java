@@ -28,6 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+
 /**
  * Represents an edge without any effect to the programs variables. While
  * constructing the CFG of a Boogie program these edges are used temporarily
@@ -36,18 +39,13 @@ import org.apache.log4j.Logger;
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class GotoEdge extends CodeBlock {
+public class GotoEdge extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = -2923506946454722306L;
 
 	GotoEdge(int serialNumber, ProgramPoint source, ProgramPoint target, Logger logger) {
 		super(serialNumber, source, target, logger);
 		assert (target != null);
-	}
-
-	@Override
-	public void updatePayloadName() {
-		getPayload().setName("goto");
 	}
 
 	@Override
@@ -67,6 +65,11 @@ public class GotoEdge extends CodeBlock {
 	@Override
 	public String toString() {
 		return "goto;";
+	}
+
+	@Override
+	public TransFormula getTransformula() {
+		return getTransitionFormula();
 	}
 
 }

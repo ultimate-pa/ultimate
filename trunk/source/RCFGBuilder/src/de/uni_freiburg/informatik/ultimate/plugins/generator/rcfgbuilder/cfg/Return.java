@@ -29,7 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 
 /**
  * Edge in a recursive control flow graph that represents the return from a
@@ -42,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrint
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class Return extends CodeBlock {
+public class Return extends CodeBlock implements IReturnAction {
 
 	private static final long serialVersionUID = 3561826943033450950L;
 
@@ -51,12 +52,6 @@ public class Return extends CodeBlock {
 	Return(int serialNumber, ProgramPoint source, ProgramPoint target, Call correspondingCall, Logger logger) {
 		super(serialNumber, source, target, logger);
 		m_CorrespondingCall = correspondingCall;
-		updatePayloadName();
-	}
-
-	@Override
-	public void updatePayloadName() {
-		super.getPayload().setName("return " + BoogiePrettyPrinter.print(getCallStatement()));
 	}
 
 	public Call getCorrespondingCall() {
@@ -101,6 +96,16 @@ public class Return extends CodeBlock {
 	@Override
 	public String toString() {
 		return "return;";
+	}
+
+	@Override
+	public TransFormula getAssignmentOfReturn() {
+		return getTransitionFormula();
+	}
+
+	@Override
+	public TransFormula getLocalVarsAssignmentOfCall() {
+		return getCorrespondingCall().getLocalVarsAssignment();
 	}
 
 }

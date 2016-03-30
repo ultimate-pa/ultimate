@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimatetest.decider.overallresult;
 
 /**
- * The possible overall results of a software model checker that analyzes safety
- * (e.g., TraceAbstraction toolchain, Kojak toolchain) are these enum's elements.
+ * The possible overall results of a software model checker that analyzes safety (e.g., TraceAbstraction toolchain,
+ * Kojak toolchain) are these enum's elements.
  * 
  * We may extends this enum in the future.
  * 
@@ -36,16 +36,27 @@ package de.uni_freiburg.informatik.ultimatetest.decider.overallresult;
  *
  */
 public enum SafetyCheckerOverallResult {
-	SAFE, 
-	UNSAFE,
-	UNSAFE_MEMTRACK,
-	UNSAFE_DEREF,
-	UNSAFE_FREE,
-	UNKNOWN, 
-	SYNTAX_ERROR, 
-	TIMEOUT, 
-	UNSUPPORTED_SYNTAX, 
-	EXCEPTION_OR_ERROR, 
-	NO_RESULT;
-}
+	SAFE,
 
+	UNSAFE,
+
+	UNSAFE_MEMTRACK, 
+	
+	UNSAFE_DEREF, 
+	
+	UNSAFE_FREE, 
+	
+	UNSAFE_OVERAPPROXIMATED,
+	
+	UNKNOWN, 
+	
+	SYNTAX_ERROR, 
+	
+	TIMEOUT, 
+	
+	UNSUPPORTED_SYNTAX, 
+	
+	EXCEPTION_OR_ERROR, 
+	
+	NO_RESULT
+}

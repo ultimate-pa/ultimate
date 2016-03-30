@@ -27,6 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -35,20 +40,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	
 	private final SmtManager m_SmtManager;
-	private HoareTripleCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
+	private HoareTripleCheckerStatisticsGenerator m_EdgeCheckerBenchmark;
 	
 	
 
 	public MonolithicHoareTripleChecker(SmtManager smtManager) {
 		super();
 		m_SmtManager = smtManager;
-		m_EdgeCheckerBenchmark = new HoareTripleCheckerBenchmarkGenerator();
+		m_EdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
 	}
 
 	@Override
-	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
+	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		Validity result = SmtManager.lbool2validity(m_SmtManager.isInductive(pre, cb, succ));
+		Validity result = IHoareTripleChecker.lbool2validity(m_SmtManager.isInductive(pre, (CodeBlock) act, succ));
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -67,9 +72,9 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate succ) {
+	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		Validity result =  SmtManager.lbool2validity(m_SmtManager.isInductiveCall(pre, (Call) cb, succ));
+		Validity result =  IHoareTripleChecker.lbool2validity(m_SmtManager.isInductiveCall(pre, (Call) act, succ));
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -89,9 +94,9 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
-			CodeBlock cb, IPredicate succ) {
+			IReturnAction act, IPredicate succ) {
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		Validity result =  SmtManager.lbool2validity(m_SmtManager.isInductiveReturn(preLin, preHier, (Return) cb, succ));
+		Validity result =  IHoareTripleChecker.lbool2validity(m_SmtManager.isInductiveReturn(preLin, preHier, (Return) act, succ));
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -109,7 +114,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	public HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
 		return m_EdgeCheckerBenchmark;
 	}
 

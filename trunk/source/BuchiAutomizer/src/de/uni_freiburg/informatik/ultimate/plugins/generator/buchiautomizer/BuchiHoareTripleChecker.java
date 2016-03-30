@@ -29,10 +29,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareTripleCheckerBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 
 /**
  * HoareTripleChecker that is aware of the special rankDecrease predicates 
@@ -74,27 +76,27 @@ public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 	
 	
 	@Override
-	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
+	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
 		pre = replaceIfRankDecreasePredicate(pre);
-		return m_IHoareTripleChecker.checkInternal(pre, cb, succ);
+		return m_IHoareTripleChecker.checkInternal(pre, act, succ);
 	}
 
 	@Override
-	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate succ) {
+	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
 		pre = replaceIfRankDecreasePredicate(pre);
-		return m_IHoareTripleChecker.checkCall(pre, cb, succ);
+		return m_IHoareTripleChecker.checkCall(pre, act, succ);
 	}
 
 	@Override
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
-			CodeBlock cb, IPredicate succ) {
+			IReturnAction act, IPredicate succ) {
 		preLin = replaceIfRankDecreasePredicate(preLin);
 		preHier = replaceIfRankDecreasePredicate(preHier);
-		return m_IHoareTripleChecker.checkReturn(preLin, preHier, cb, succ);
+		return m_IHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 	}
 
 
-	public HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
 		return m_IHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 

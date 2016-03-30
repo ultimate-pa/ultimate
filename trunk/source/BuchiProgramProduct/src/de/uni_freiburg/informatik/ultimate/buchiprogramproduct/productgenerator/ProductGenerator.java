@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -71,14 +72,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 
 /**
- * This class is implementing the Buchi program product, i.e. interleaving a
- * BuchiAutomaton with the CFG.
+ * This class is implementing the Buchi program product, i.e. interleaving a BuchiAutomaton with the CFG.
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * @author Langenfeld
  * 
- * @see Masterarbeit Langenfeld, "Fairness Modulo Theory: A New Approach to LTL
- *      Software Model Checking" *
+ * @see Masterarbeit Langenfeld, "Fairness Modulo Theory: A New Approach to LTL Software Model Checking" *
  */
 public class ProductGenerator {
 
@@ -180,8 +179,7 @@ public class ProductGenerator {
 	}
 
 	/**
-	 * Multiply states and make them available in the dictionary with their new
-	 * name.
+	 * Multiply states and make them available in the dictionary with their new name.
 	 */
 	private void createProductStates() {
 		for (final ProgramPoint origpp : mRCFGLocations) {
@@ -192,8 +190,8 @@ public class ProductGenerator {
 			}
 
 			for (final String nwaState : mNWA.getStates()) {
-				final ProgramPoint newPP = createProductProgramPoint(
-						mNameGenerator.generateStateName(origpp, nwaState), origpp);
+				final ProgramPoint newPP = createProductProgramPoint(mNameGenerator.generateStateName(origpp, nwaState),
+						origpp);
 				updateProductStates(newPP, mNameGenerator.generateStateName(origpp, nwaState));
 
 				// accepting states are marked with AcceptingNodeAnnotation
@@ -205,17 +203,17 @@ public class ProductGenerator {
 	}
 
 	private void updateProductStates(ProgramPoint newPP, String statename) {
-		final String locname = newPP.getLocationName();
+		final String locname = newPP.getPosition();
 		assert statename.equals(locname);
-		final ProgramPoint rtr = mProductLocations.put(newPP.getLocationName(), newPP);
+		final ProgramPoint rtr = mProductLocations.put(newPP.getPosition(), newPP);
 		if (rtr != null) {
 			throw new AssertionError("The original RCFG had two locations with the same location name");
 		}
 	}
 
 	/**
-	 * Sinks are always product nodes. Nodes belonging to certain procedures may
-	 * not be product nodes, because we want to ignore static initialization.
+	 * Sinks are always product nodes. Nodes belonging to certain procedures may not be product nodes, because we want
+	 * to ignore static initialization.
 	 */
 	private boolean isNonProductNode(ProgramPoint loc) {
 		final String procname = loc.getProcedure();
@@ -223,8 +221,8 @@ public class ProductGenerator {
 	}
 
 	/**
-	 * Creates the edges of the Büchi program product in a two-stage algorithm
-	 * (first, all edges except returns, second all returns).
+	 * Creates the edges of the Büchi program product in a two-stage algorithm (first, all edges except returns, second
+	 * all returns).
 	 */
 	private void createEdges() {
 		// first, do everything except return edges
@@ -298,8 +296,8 @@ public class ProductGenerator {
 
 	private void createReturnEdgesOther(ProgramPoint origRcfgSourceLoc, Return returnEdge) {
 		for (final String nwaLoc : mNWA.getStates()) {
-			final ProgramPoint productSourceLoc = mProductLocations.get(mNameGenerator.generateStateName(
-					origRcfgSourceLoc, nwaLoc));
+			final ProgramPoint productSourceLoc = mProductLocations
+					.get(mNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
 			assert productSourceLoc != null;
 			handleEdgeReturn(productSourceLoc, nwaLoc, returnEdge);
 		}
@@ -317,8 +315,8 @@ public class ProductGenerator {
 		assert correspondingCalls.size() == 1;
 
 		for (final String nwaLoc : mNWA.getStates()) {
-			final ProgramPoint productTargetLoc = mProductLocations.get(mNameGenerator.generateStateName(
-					origRcfgTargetLoc, nwaLoc));
+			final ProgramPoint productTargetLoc = mProductLocations
+					.get(mNameGenerator.generateStateName(origRcfgTargetLoc, nwaLoc));
 			createNewReturnEdge(productSourceLoc, returnEdge, productTargetLoc,
 					mOrigRcfgCallLocs2CallEdges.get(returnEdge.getCallerProgramPoint()).get(0));
 		}
@@ -348,8 +346,8 @@ public class ProductGenerator {
 		// target is also a product state
 		// this is the normal case
 		for (final String nwaLoc : mNWA.getStates()) {
-			final ProgramPoint productSourceLoc = mProductLocations.get(mNameGenerator.generateStateName(
-					origRcfgSourceLoc, nwaLoc));
+			final ProgramPoint productSourceLoc = mProductLocations
+					.get(mNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
 			addRootEdgeIfNecessary(origRcfgSourceLoc, nwaLoc, productSourceLoc);
 
 			if (rcfgEdge instanceof StatementSequence) {
@@ -379,10 +377,10 @@ public class ProductGenerator {
 		// allowed
 
 		for (final String nwaLoc : mNWA.getStates()) {
-			final ProgramPoint productSourceLoc = mProductLocations.get(mNameGenerator.generateStateName(
-					origRcfgSourceLoc, nwaLoc));
-			final ProgramPoint productTargetLoc = mProductLocations.get(mNameGenerator
-					.generateStateName(origRcfgTargetLoc));
+			final ProgramPoint productSourceLoc = mProductLocations
+					.get(mNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
+			final ProgramPoint productTargetLoc = mProductLocations
+					.get(mNameGenerator.generateStateName(origRcfgTargetLoc));
 
 			addRootEdgeIfNecessary(origRcfgSourceLoc, nwaLoc, productSourceLoc);
 
@@ -424,8 +422,8 @@ public class ProductGenerator {
 		}
 	}
 
-	private void createEdgesNonProduct(ProgramPoint origRcfgSourceLoc, RCFGEdge rcfgEdge, ProgramPoint origRcfgTargetLoc)
-			throws AssertionError {
+	private void createEdgesNonProduct(ProgramPoint origRcfgSourceLoc, RCFGEdge rcfgEdge,
+			ProgramPoint origRcfgTargetLoc) throws AssertionError {
 		// if the current node and its target belong to ignored
 		// procedures, just replicate the RCFG
 
@@ -500,7 +498,7 @@ public class ProductGenerator {
 
 			// we add a self loop that will be used later
 			final StatementSequence seq = mCodeblockFactory.constructStatementSequence(helper, helper,
-					generateNeverClaimAssumeStatement(new BooleanLiteral(null, true)));
+					generateNeverClaimAssumeStatement(new BooleanLiteral(null, BoogieType.boolType, true)));
 			mapNewEdge2OldEdge(seq, null);
 
 			// determine what kind of loop has to be added to this state based
@@ -590,11 +588,11 @@ public class ProductGenerator {
 
 		final RootAnnot rootAnnot = mProductRoot.getRootAnnot();
 		for (final ProgramPoint current : toRemove) {
-			final String name = current.getLocationName();
+			final String name = current.getPosition();
 			// update annotations
 
-			final Map<String, ProgramPoint> prog2programPoints = rootAnnot.getProgramPoints().get(
-					current.getProcedure());
+			final Map<String, ProgramPoint> prog2programPoints = rootAnnot.getProgramPoints()
+					.get(current.getProcedure());
 			if (prog2programPoints != null) {
 				prog2programPoints.remove(name);
 			}
@@ -639,8 +637,8 @@ public class ProductGenerator {
 	private void handleEdgeStatementSequence(ProgramPoint productLoc, String nwaLoc, StatementSequence rcfgEdge) {
 		ProgramPoint targetpp;
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
-			targetpp = mProductLocations.get(mNameGenerator.generateStateName((ProgramPoint) rcfgEdge.getTarget(),
-					autTrans.getSucc()));
+			targetpp = mProductLocations
+					.get(mNameGenerator.generateStateName((ProgramPoint) rcfgEdge.getTarget(), autTrans.getSucc()));
 			// append statements of rcfg and ltl
 			createNewStatementSequence(productLoc, rcfgEdge, targetpp, autTrans.getLetter());
 		}
@@ -685,8 +683,8 @@ public class ProductGenerator {
 		// edge is calculated
 		// like any other edge in the graph.
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
-			ProgramPoint targetpp = mProductLocations.get(mNameGenerator.generateStateName(origRcfgTargetLoc,
-					autTrans.getSucc()));
+			ProgramPoint targetpp = mProductLocations
+					.get(mNameGenerator.generateStateName(origRcfgTargetLoc, autTrans.getSucc()));
 			if (targetpp == null) {
 				// returns may connect with multiple edges to a single state
 				// that is part of the non-product states
@@ -706,8 +704,8 @@ public class ProductGenerator {
 
 		ProgramPoint targetpp;
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
-			targetpp = mProductLocations.get(mNameGenerator.generateStateName((ProgramPoint) summary.getTarget(),
-					autTrans.getSucc()));
+			targetpp = mProductLocations
+					.get(mNameGenerator.generateStateName((ProgramPoint) summary.getTarget(), autTrans.getSucc()));
 			final List<CodeBlock> sumAndSs = new ArrayList<>();
 			final StatementSequence seq = mCodeblockFactory.constructStatementSequence(productSourceLoc, targetpp,
 					checkLetter(autTrans.getLetter()), Origin.IMPLEMENTATION);
@@ -724,8 +722,8 @@ public class ProductGenerator {
 	private void handleEdgeSummaryFromNonProduct(ProgramPoint productSourceLoc, Summary rcfgEdge) {
 		final ProgramPoint origRcfgTargetLoc = (ProgramPoint) rcfgEdge.getTarget();
 		for (final String initialNWAState : mNWA.getInitialStates()) {
-			final ProgramPoint productTargetLoc = mProductLocations.get(mNameGenerator.generateStateName(
-					origRcfgTargetLoc, initialNWAState));
+			final ProgramPoint productTargetLoc = mProductLocations
+					.get(mNameGenerator.generateStateName(origRcfgTargetLoc, initialNWAState));
 			createNewSummaryEdge(productSourceLoc, rcfgEdge, productTargetLoc);
 		}
 
@@ -746,8 +744,8 @@ public class ProductGenerator {
 		// edge is calculated
 		// like any other edge in the graph.
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaSourceState)) {
-			final ProgramPoint targetpp = mProductLocations.get(mNameGenerator.generateStateName(origRcfgTargetLoc,
-					autTrans.getSucc()));
+			final ProgramPoint targetpp = mProductLocations
+					.get(mNameGenerator.generateStateName(origRcfgTargetLoc, autTrans.getSucc()));
 			createNewStatementSequence(helper, null, targetpp, autTrans.getLetter());
 		}
 	}
@@ -756,8 +754,8 @@ public class ProductGenerator {
 			ProgramPoint origRcfgSourceLoc) {
 		final ProgramPoint origRcfgTargetLoc = (ProgramPoint) origRcfgEdge.getTarget();
 		for (final String initialNWAState : mNWA.getInitialStates()) {
-			final ProgramPoint productTargetLoc = mProductLocations.get(mNameGenerator.generateStateName(
-					origRcfgTargetLoc, initialNWAState));
+			final ProgramPoint productTargetLoc = mProductLocations
+					.get(mNameGenerator.generateStateName(origRcfgTargetLoc, initialNWAState));
 			createNewCallEdge(origRcfgSourceLoc, productSourceLoc, origRcfgEdge, productTargetLoc);
 		}
 	}
@@ -884,8 +882,8 @@ public class ProductGenerator {
 				final StatementSequence autTransStmts = (StatementSequence) letter;
 				return autTransStmts.getStatements();
 			} else {
-				throw new UnsupportedOperationException("Letter has to be a statement sequence, but is "
-						+ letter.getClass().getSimpleName());
+				throw new UnsupportedOperationException(
+						"Letter has to be a statement sequence, but is " + letter.getClass().getSimpleName());
 			}
 		}
 		return new ArrayList<>();

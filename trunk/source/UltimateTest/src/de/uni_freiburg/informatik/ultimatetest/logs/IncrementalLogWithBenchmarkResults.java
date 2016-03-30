@@ -53,7 +53,7 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 
 	@Override
 	public void addEntryPreStart(UltimateRunDefinition runDef) {
-		writeToFile(runDef.getInput().getAbsolutePath() + de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+		writeToFile(runDef.getInputFileNames() + de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 	}
 
 	@Override

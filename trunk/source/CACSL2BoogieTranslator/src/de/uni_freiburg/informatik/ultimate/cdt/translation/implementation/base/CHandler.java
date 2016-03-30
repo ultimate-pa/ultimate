@@ -66,6 +66,7 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
+import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -82,6 +83,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
@@ -101,6 +103,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
@@ -206,6 +209,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
@@ -366,11 +370,13 @@ public class CHandler implements ICHandler {
 		
 		this.mGlobAcslExtractors = new ArrayList<>();
 		
+		POINTER_INTEGER_CONVERSION pointerIntegerConversion = main.mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION, 
+				CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION.class);
 		if (bitvectorTranslation) {
-			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler);
+			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler, pointerIntegerConversion);
 		} else {
 			boolean inRange = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
-			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment, inRange);
+			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment, inRange, pointerIntegerConversion);
 		}
 		this.mPostProcessor = new PostProcessor(main, mLogger, m_ExpressionTranslation);
 		this.mTypeSizeComputer = new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, m_ExpressionTranslation, main.getTypeSizes());
@@ -425,28 +431,42 @@ public class CHandler implements ICHandler {
 		
 		if (!((TypeHandler) mTypeHandler).useIntForAllIntegerTypes()) {
 			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(), (TypeHandler) mTypeHandler));
+			
+			if (((TypeHandler) mTypeHandler).areFloatingTypesNeeded()) {
+				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), (TypeHandler) mTypeHandler));
+			}
+			
 		}
 
 		// TODO(thrax): Check if decl should be passed as null or not.
 		checkForACSL(main, null, decl, node, null);
-
+		
+		// delayed processing of IASTFunctionDefinitions and structs
+		// This is a workaround. Invariants my use global variables that
+		// are not yet declared.
+		// Better solution: obtain function signature in a first pass
+		// process function body in a second pass
+		final List<IASTNode> complexNodes = new ArrayList<>();
 		for (IASTNode child : node.getChildren()) {
-			checkForACSL(main, null, decl, child, null);
-			Result childRes = main.dispatch(child);
-
-			if (childRes instanceof DeclarationResult) {
-				// we have to add a global variable
-				DeclarationResult rd = (DeclarationResult) childRes;
-				for (CDeclaration cd : rd.getDeclarations()) {
-					mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfCDecl(cd), cd);
+			String raw = child.getRawSignature();
+			if (child instanceof IASTSimpleDeclaration) {
+				IASTSimpleDeclaration simpleDecl = (IASTSimpleDeclaration) child;
+				if (simpleDecl.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier
+						|| simpleDecl.getDeclSpecifier() instanceof ICASTCompositeTypeSpecifier
+						|| (simpleDecl.getDeclarators().length > 0 && simpleDecl.getDeclarators()[0] instanceof CASTFunctionDeclarator)
+						|| simpleDecl.getDeclSpecifier() instanceof IASTNamedTypeSpecifier) {
+					complexNodes.add(child);
+				} else {
+					processTUchild(main, decl, child);
 				}
+			} else if (child instanceof IASTFunctionDefinition) {
+				complexNodes.add((IASTFunctionDefinition) child);
 			} else {
-				if (childRes instanceof SkipResult)
-					continue;
-				assert childRes.getClass() == Result.class;
-				assert childRes.node != null;
-				decl.add((Declaration) childRes.node);
+				processTUchild(main, decl, child);
 			}
+		}
+		for (IASTNode funcDef : complexNodes) {
+			processTUchild(main, decl, funcDef);
 		}
 
 		//(alex:) new function pointers
@@ -521,6 +541,25 @@ public class CHandler implements ICHandler {
 		return new Result(boogieUnit);
 	}
 
+	private void processTUchild(Dispatcher main, ArrayList<Declaration> decl, IASTNode child) {
+		checkForACSL(main, null, decl, child, null);
+		Result childRes = main.dispatch(child);
+
+		if (childRes instanceof DeclarationResult) {
+			// we have to add a global variable
+			DeclarationResult rd = (DeclarationResult) childRes;
+			for (CDeclaration cd : rd.getDeclarations()) {
+				mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfCDecl(cd), cd);
+			}
+		} else {
+			if (childRes instanceof SkipResult)
+				return;
+			assert childRes.getClass() == Result.class;
+			assert childRes.node != null;
+			decl.add((Declaration) childRes.node);
+		}
+	}
+
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionDefinition node) {
 		LinkedHashSet<IASTDeclaration> reachableDecs = ((Dispatcher) main).getReachableDeclarationsOrDeclarators();
@@ -551,6 +590,7 @@ public class CHandler implements ICHandler {
 		}
 
 		for (IASTNode child : node.getChildren()) {
+			String raw = child.getRawSignature();
 			checkForACSL(main, stmt, decl, child, null);
 			Result r = main.dispatch(child);
 			if (r instanceof ExpressionResult) {

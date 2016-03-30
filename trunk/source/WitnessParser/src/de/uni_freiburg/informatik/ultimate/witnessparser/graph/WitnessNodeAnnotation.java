@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 
@@ -85,23 +83,7 @@ public class WitnessNodeAnnotation extends ModernAnnotations {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
-	public static WitnessNodeAnnotation getAnnotation(IElement node) {
-		if (node instanceof WitnessNode) {
-			return getAnnotation((WitnessNode) node);
-		}
-		return null;
-	}
-
-	public static WitnessNodeAnnotation getAnnotation(WitnessNode node) {
-		if (node.hasPayload()) {
-			final IPayload payload = node.getPayload();
-			if (payload.hasAnnotation()) {
-				final IAnnotations annot = payload.getAnnotations().get(KEY);
-				if (annot != null) {
-					return (WitnessNodeAnnotation) annot;
-				}
-			}
-		}
-		return null;
+	public static WitnessNodeAnnotation getAnnotation(final IElement node) {
+		return ModernAnnotations.getAnnotation(node, KEY, a -> (WitnessNodeAnnotation) a);
 	}
 }

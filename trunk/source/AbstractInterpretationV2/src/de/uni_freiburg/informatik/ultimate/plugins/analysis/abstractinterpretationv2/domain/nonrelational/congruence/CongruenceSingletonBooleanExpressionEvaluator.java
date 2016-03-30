@@ -66,7 +66,7 @@ public class CongruenceSingletonBooleanExpressionEvaluator
 	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(CongruenceDomainState currentState) {
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
-		returnList.add(new CongruenceDomainEvaluationResult(new CongruenceDomainValue(), mBooleanValue));
+		returnList.add(new CongruenceDomainEvaluationResult(CongruenceDomainValue.createTop(), mBooleanValue));
 
 		return returnList;
 	}

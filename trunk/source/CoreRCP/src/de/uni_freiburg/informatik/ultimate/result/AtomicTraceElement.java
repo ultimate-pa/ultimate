@@ -75,17 +75,18 @@ public class AtomicTraceElement<TE> {
 	private final TE mStep;
 	private final IToString<TE> mToStringFunc;
 	private EnumSet<AtomicTraceElement.StepInfo> mStepInfo;
+	private final IRelevanceInformation mRelevanceInformation;
 
 	/**
 	 * Creates an instance where the trace element is evaluated atomically (i.e.
 	 * {@link #getTraceElement()} == {@link #getStep()}).
 	 */
-	public AtomicTraceElement(TE element) {
-		this(element, element, StepInfo.NONE);
+	public AtomicTraceElement(TE element, IRelevanceInformation relInfo) {
+		this(element, element, StepInfo.NONE, relInfo);
 	}
 
-	public AtomicTraceElement(TE element, IToString<TE> toStringProvider) {
-		this(element, element, StepInfo.NONE, toStringProvider);
+	public AtomicTraceElement(TE element, IToString<TE> toStringProvider, IRelevanceInformation relInfo) {
+		this(element, element, StepInfo.NONE, toStringProvider, relInfo);
 	}
 
 	/**
@@ -100,25 +101,20 @@ public class AtomicTraceElement<TE> {
 	 *            condition that evaluated to true or false, if it is a call or
 	 *            a return, etc.
 	 */
-	public AtomicTraceElement(TE element, TE step, AtomicTraceElement.StepInfo info) {
-		this(element, step, EnumSet.of(info));
+	public AtomicTraceElement(TE element, TE step, AtomicTraceElement.StepInfo info, IRelevanceInformation relInfo) {
+		this(element, step, EnumSet.of(info), relInfo);
 	}
 
-	public AtomicTraceElement(TE element, TE step, AtomicTraceElement.StepInfo info, IToString<TE> toStringProvider) {
-		this(element, step, EnumSet.of(info), toStringProvider);
+	public AtomicTraceElement(TE element, TE step, AtomicTraceElement.StepInfo info, IToString<TE> toStringProvider, IRelevanceInformation relInfo) {
+		this(element, step, EnumSet.of(info), toStringProvider, relInfo);
 	}
 
-	public AtomicTraceElement(TE element, TE step, EnumSet<AtomicTraceElement.StepInfo> info) {
-		this(element, step, info, new IToString<TE>() {
-			@Override
-			public String toString(TE elem) {
-				return elem.toString();
-			}
-		});
+	public AtomicTraceElement(TE element, TE step, EnumSet<AtomicTraceElement.StepInfo> info, IRelevanceInformation relInfo) {
+		this(element, step, info, a -> a.toString(), relInfo);
 	}
 
 	public AtomicTraceElement(TE element, TE step, EnumSet<AtomicTraceElement.StepInfo> info,
-			IToString<TE> toStringProvider) {
+			IToString<TE> toStringProvider, IRelevanceInformation relInfo) {
 		assert element != null;
 		assert step != null;
 		mElement = element;
@@ -131,6 +127,7 @@ public class AtomicTraceElement<TE> {
 			throw new IllegalArgumentException("toStringProvider may not be null");
 		}
 		mToStringFunc = toStringProvider;
+		mRelevanceInformation = relInfo;
 	}
 
 	/**
@@ -159,6 +156,10 @@ public class AtomicTraceElement<TE> {
 
 	public EnumSet<AtomicTraceElement.StepInfo> getStepInfo() {
 		return EnumSet.copyOf(mStepInfo);
+	}
+	
+	public IRelevanceInformation getmRelevanceInformation() {
+		return mRelevanceInformation;
 	}
 
 	@Override

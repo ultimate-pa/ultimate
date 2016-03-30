@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class AutomataScriptTestSummary implements ITestSummary {
 	
-	
 	private Class<? extends UltimateTestSuite> m_UltimateTestSuite;
 	private List<SummaryEntry> m_Results;
 
@@ -95,7 +94,7 @@ public class AutomataScriptTestSummary implements ITestSummary {
 		} else {
 			Benchmark benchmark = benchmarkSingleton.iterator().next();
 			double time = benchmark.getElapsedTime(de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator.s_PLUGIN_NAME, TimeUnit.SECONDS);
-			m_Results.add(new SummaryEntry(threeValuedResult, message, time, ultimateRunDefinition.getInput()));
+			m_Results.add(new SummaryEntry(threeValuedResult, message, time, ultimateRunDefinition.getInput()[0]));
 		}
 		
 
@@ -126,11 +125,5 @@ public class AutomataScriptTestSummary implements ITestSummary {
 		public File getAtsFile() {
 			return m_AtsFile;
 		}
-		
-		
-		
 	}
-
-
-
 }

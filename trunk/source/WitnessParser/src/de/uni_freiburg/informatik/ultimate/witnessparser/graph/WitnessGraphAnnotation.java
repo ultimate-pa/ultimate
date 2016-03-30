@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 
@@ -45,7 +43,7 @@ public class WitnessGraphAnnotation extends ModernAnnotations {
 	}
 
 	private static final long serialVersionUID = 1L;
-	private static final String sKey = Activator.PLUGIN_ID + "_Graph";
+	private static final String KEY = Activator.PLUGIN_ID + "_Graph";
 
 	@Visualizable
 	private final String mSourceCodeLanguage;
@@ -65,27 +63,11 @@ public class WitnessGraphAnnotation extends ModernAnnotations {
 	}
 
 	public void annotate(WitnessNode node) {
-		node.getPayload().getAnnotations().put(sKey, this);
+		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
-	public static WitnessGraphAnnotation getAnnotation(IElement node) {
-		if (node instanceof WitnessNode) {
-			return getAnnotation((WitnessNode) node);
-		}
-		return null;
-	}
-
-	public static WitnessGraphAnnotation getAnnotation(WitnessNode node) {
-		if (node.hasPayload()) {
-			final IPayload payload = node.getPayload();
-			if (payload.hasAnnotation()) {
-				final IAnnotations annot = payload.getAnnotations().get(sKey);
-				if (annot != null) {
-					return (WitnessGraphAnnotation) annot;
-				}
-			}
-		}
-		return null;
+	public static WitnessGraphAnnotation getAnnotation(final IElement node) {
+		return ModernAnnotations.getAnnotation(node, KEY, a -> (WitnessGraphAnnotation) a);
 	}
 
 	public String getSourceCodeLanguage() {

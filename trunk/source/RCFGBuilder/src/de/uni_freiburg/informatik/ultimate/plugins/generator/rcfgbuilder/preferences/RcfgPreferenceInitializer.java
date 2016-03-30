@@ -27,9 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
@@ -90,7 +90,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	 * new preferences that belong to the RCFG Builder 
 	 */
 	public static final String LABEL_ASSUME_FOR_ASSERT = "Add additional assume for each assert";
-	public static final boolean DEF_ASSUME_FOR_ASSERT = false;
+	public static final boolean DEF_ASSUME_FOR_ASSERT = !false;
 	public static final String LABEL_Solver = "SMT solver";
 	public static final SolverMode DEF_Solver = SolverMode.External_DefaultMode;
 //	public static final Solver DEF_Solver = Solver.Internal_SMTInterpol;

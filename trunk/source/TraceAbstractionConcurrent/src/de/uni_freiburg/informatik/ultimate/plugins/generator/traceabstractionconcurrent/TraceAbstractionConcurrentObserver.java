@@ -99,8 +99,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		mLogger.warn(taPrefs.dumpPath());
 
-		SmtManager smtManager = new ConcurrentSmtManager(rootNode.getRootAnnot().getBoogie2SMT(), rootNode
-				.getRootAnnot().getModGlobVarManager(), m_Services, false);
+		SmtManager smtManager = new SmtManager(rootNode.getRootAnnot().getBoogie2SMT().getScript(), rootNode.getRootAnnot().getBoogie2SMT(), rootNode
+				.getRootAnnot().getModGlobVarManager(), m_Services, false, rootNode.getRootAnnot().getManagedScript());
 		TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -243,7 +243,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
-		for (ProgramPoint errorLoc : errorLocs) {
+		for (ProgramPoint errorIpp : errorLocs) {
+			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Timeout! Unable to prove that "
 					+ origin.getCheck().getPositiveMessage();
@@ -303,17 +304,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	public boolean performedChanges() {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	/**
-	 * Return the checked specification that is checked at the error location.
-	 */
-	private static Check getCheckedSpecification(ProgramPoint errorLoc) {
-		if (errorLoc.getPayload().hasAnnotation()) {
-			IAnnotations check = errorLoc.getPayload().getAnnotations().get(Check.getIdentifier());
-			return (Check) check;
-		}
-		return errorLoc.getBoogieASTNode().getLocation().getOrigin().getCheck();
 	}
 
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {

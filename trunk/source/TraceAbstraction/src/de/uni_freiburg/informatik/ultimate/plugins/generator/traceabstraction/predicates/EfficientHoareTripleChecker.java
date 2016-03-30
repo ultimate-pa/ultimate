@@ -27,8 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 public class EfficientHoareTripleChecker implements IHoareTripleChecker {
@@ -54,34 +58,34 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
-		final Validity sdResult = m_SdHoareTripleChecker.checkInternal(pre, cb, succ);
+	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
+		final Validity sdResult = m_SdHoareTripleChecker.checkInternal(pre, act, succ);
 		if (sdResult != Validity.UNKNOWN) {
 			if (m_ReviewSdResultsIfAssertionsEnabled) {
-				assert reviewInductiveInternal(pre, cb, succ, sdResult);
+				assert reviewInductiveInternal(pre, act, succ, sdResult);
 			}
 			return sdResult;
 		} else {
-			Validity result = m_SmtBasedHoareTripleChecker.checkInternal(pre, cb, succ);
+			Validity result = m_SmtBasedHoareTripleChecker.checkInternal(pre, act, succ);
 			if (m_ReviewSmtResultsIfAssertionsEnabled) {
-				assert reviewInductiveInternal(pre, cb, succ, result);
+				assert reviewInductiveInternal(pre, act, succ, result);
 			}
 			return result;
 		}
 	}
 
 	@Override
-	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate succ) {
-		final Validity sdResult = m_SdHoareTripleChecker.checkCall(pre, cb, succ);
+	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
+		final Validity sdResult = m_SdHoareTripleChecker.checkCall(pre, act, succ);
 		if (sdResult != Validity.UNKNOWN) {
 			if (m_ReviewSdResultsIfAssertionsEnabled) {
-				assert reviewInductiveCall(pre, cb, succ, sdResult);
+				assert reviewInductiveCall(pre, act, succ, sdResult);
 			}
 			return sdResult;
 		} else {
-			Validity result = m_SmtBasedHoareTripleChecker.checkCall(pre, cb, succ);
+			Validity result = m_SmtBasedHoareTripleChecker.checkCall(pre, act, succ);
 			if (m_ReviewSmtResultsIfAssertionsEnabled) {
-				assert reviewInductiveCall(pre, cb, succ, result);
+				assert reviewInductiveCall(pre, act, succ, result);
 			}
 			return result;
 		}
@@ -89,31 +93,31 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
-			CodeBlock cb, IPredicate succ) {
-		final Validity sdResult = m_SdHoareTripleChecker.checkReturn(preLin, preHier, cb, succ);
+			IReturnAction act, IPredicate succ) {
+		final Validity sdResult = m_SdHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 		if (sdResult != Validity.UNKNOWN) {
 			if (m_ReviewSdResultsIfAssertionsEnabled) {
-				assert reviewInductiveReturn(preLin, preHier, cb, succ, sdResult);
+				assert reviewInductiveReturn(preLin, preHier, act, succ, sdResult);
 			}
 			return sdResult;
 		} else {
-			Validity result = m_SmtBasedHoareTripleChecker.checkReturn(preLin, preHier, cb, succ);
+			Validity result = m_SmtBasedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 			if (m_ReviewSmtResultsIfAssertionsEnabled) {
-				assert reviewInductiveReturn(preLin, preHier, cb, succ, result);
+				assert reviewInductiveReturn(preLin, preHier, act, succ, result);
 			}
 			return result;
 		}
 	}
 
 	@Override
-	public HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
 		return m_SmtBasedHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 	
 	
-	private boolean reviewInductiveInternal(IPredicate state, CodeBlock cb, IPredicate succ, Validity result) {
+	private boolean reviewInductiveInternal(IPredicate state, IInternalAction act, IPredicate succ, Validity result) {
 		releaseLock();
-		Validity reviewResult = m_hoareTripleCheckerForReview.checkInternal(state, cb, succ);
+		Validity reviewResult = m_hoareTripleCheckerForReview.checkInternal(state, act, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
 		} else {
@@ -122,9 +126,9 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 		}
 	}
 	
-	private boolean reviewInductiveCall(IPredicate state, CodeBlock cb, IPredicate succ, Validity result) {
+	private boolean reviewInductiveCall(IPredicate state, ICallAction act, IPredicate succ, Validity result) {
 		releaseLock();
-		Validity reviewResult = m_hoareTripleCheckerForReview.checkCall(state, cb, succ);
+		Validity reviewResult = m_hoareTripleCheckerForReview.checkCall(state, act, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
 		} else {
@@ -134,9 +138,9 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 
 	}
 	
-	private boolean reviewInductiveReturn(IPredicate state, IPredicate hier, CodeBlock cb, IPredicate succ, Validity result) {
+	private boolean reviewInductiveReturn(IPredicate state, IPredicate hier, IReturnAction act, IPredicate succ, Validity result) {
 		releaseLock();
-		Validity reviewResult = m_hoareTripleCheckerForReview.checkReturn(state, hier, cb, succ);
+		Validity reviewResult = m_hoareTripleCheckerForReview.checkReturn(state, hier, act, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
 		} else {

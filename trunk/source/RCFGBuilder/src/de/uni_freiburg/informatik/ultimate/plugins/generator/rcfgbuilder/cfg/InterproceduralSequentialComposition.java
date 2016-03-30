@@ -33,8 +33,9 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 
-public class InterproceduralSequentialComposition extends SequentialComposition {
+public class InterproceduralSequentialComposition extends SequentialComposition implements IInternalAction {
 
 	private static final long serialVersionUID = -1637790156358220366L;
 

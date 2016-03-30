@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 
@@ -65,26 +66,41 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 	@SuppressWarnings("unchecked")
 	public RcfgProgramExecution(final List<? extends RCFGEdge> trace,
 			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
-		this(trace, partialProgramStateMapping, new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]));
+		this(trace, partialProgramStateMapping, new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]), null);
+	}
+	
+	public RcfgProgramExecution(final List<? extends RCFGEdge> trace,
+			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+			final Map<TermVariable, Boolean>[] branchEncoders) {
+		this(trace, partialProgramStateMapping, branchEncoders, null);
 	}
 
 	public RcfgProgramExecution(final List<? extends RCFGEdge> trace,
 			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
-			final Map<TermVariable, Boolean>[] branchEncoders) {
+			final Map<TermVariable, Boolean>[] branchEncoders, 
+			final List<IRelevanceInformation> relevanceInformation) {
 		assert trace != null;
 		assert partialProgramStateMapping != null;
 		assert branchEncoders != null;
+		assert relevanceInformation == null || trace.size() == relevanceInformation.size() : "incompatible sizes";
 
 		// a list of boogieastnodes is a trace that consists of atomic
 		// statements.
-		ArrayList<AtomicTraceElement<RCFGEdge>> atomictrace = new ArrayList<>();
-		for (RCFGEdge te : trace) {
-			if (te instanceof Call) {
-				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_CALL));
-			} else if (te instanceof Return) {
-				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_RETURN));
+		final List<AtomicTraceElement<RCFGEdge>> atomictrace = new ArrayList<>();
+		for (int i = 0; i<trace.size(); i++) {
+			final RCFGEdge te = trace.get(i);
+			final IRelevanceInformation ri;
+			if (relevanceInformation == null) {
+				ri = null;
 			} else {
-				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te));
+				ri = relevanceInformation.get(i);
+			}
+			if (te instanceof Call) {
+				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_CALL, ri));
+			} else if (te instanceof Return) {
+				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_RETURN, ri));
+			} else {
+				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, ri));
 			}
 		}
 
@@ -133,7 +149,7 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 		Map<String, ILocation> result = new HashMap<>();
 		for (RCFGEdge cb : trace) {
 			if (cb.getPayload().hasAnnotation()) {
-				HashMap<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
+				Map<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
 				if (annotations.containsKey(Overapprox.getIdentifier())) {
 					Overapprox overapprox = (Overapprox) annotations.get(Overapprox.getIdentifier());
 					@SuppressWarnings("unchecked")
@@ -233,5 +249,15 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 		}
 		return unproabilityReasons;
 	}
+
+	public RcfgProgramExecution addRelevanceInformation(List<IRelevanceInformation> relevanceInformation) {
+		List<RCFGEdge> edgeSequence = new ArrayList<>();
+		for (AtomicTraceElement<RCFGEdge> ate : mTrace) {
+			edgeSequence.add(ate.getTraceElement());
+		}
+		return new RcfgProgramExecution(edgeSequence, 
+				mPartialProgramStateMapping, mBranchEncoders, relevanceInformation);
+	}
+	
 
 }

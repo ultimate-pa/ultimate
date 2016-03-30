@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SmtParser
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.source.smtparser;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.source.smtparser.Activator
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ Library-SMTLIB,
+ SMTSolverBridge,
+ SMTInterpol
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+

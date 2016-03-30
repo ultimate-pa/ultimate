@@ -52,7 +52,7 @@ public class IntervalUtils {
 	 * @return A new list that contains the result of merging all {@link IntervalDomainValue}s in the given list.
 	 */
 	protected static List<IEvaluationResult<IntervalDomainValue>> mergeIfNecessary(
-	        final List<IEvaluationResult<IntervalDomainValue>> results, int maxParallelStates) {
+	        final List<IEvaluationResult<IntervalDomainValue>> results, final int maxParallelStates) {
 		if (results.size() > maxParallelStates) {
 			return Collections.singletonList(results.stream().reduce(IntervalUtils::merge).get());
 		}
@@ -70,7 +70,7 @@ public class IntervalUtils {
 	 * @return A new list that contains the result of merging all {@link IntervalDomainState}s in the given list.
 	 */
 	protected static List<IntervalDomainState> mergeStatesIfNecessary(final List<IntervalDomainState> results,
-	        int maxParallelStates) {
+	        final int maxParallelStates) {
 		if (results.size() > maxParallelStates) {
 			return Collections.singletonList(results.stream().reduce(IntervalUtils::merge).get());
 		}

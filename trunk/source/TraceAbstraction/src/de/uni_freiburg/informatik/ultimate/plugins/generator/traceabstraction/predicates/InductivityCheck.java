@@ -35,9 +35,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 
 /**
  * Check if each edge of automaton is inductive (resp. if inductivity can be
@@ -100,13 +105,13 @@ public class InductivityCheck {
 		for (IPredicate state : nwa.getStates()) {
 			for (CodeBlock cb : nwa.lettersInternal(state)) {
 				for (OutgoingInternalTransition<CodeBlock, IPredicate> outTrans : nwa.internalSuccessors(state, cb)) {
-					Validity inductivity = m_HoareTripleChecker.checkInternal(state, cb, outTrans.getSucc());
+					Validity inductivity = m_HoareTripleChecker.checkInternal(state, (IInternalAction) cb, outTrans.getSucc());
 					evaluateResult(inductivity, state, outTrans);
 				}
 			}
 			for (CodeBlock cb : nwa.lettersCall(state)) {
 				for (OutgoingCallTransition<CodeBlock, IPredicate> outTrans : nwa.callSuccessors(state, cb)) {
-					Validity inductivity = m_HoareTripleChecker.checkCall(state, cb, outTrans.getSucc());
+					Validity inductivity = m_HoareTripleChecker.checkCall(state, (ICallAction) cb, outTrans.getSucc());
 					evaluateResult(inductivity, state, outTrans);
 				}
 			}
@@ -114,7 +119,7 @@ public class InductivityCheck {
 				for (IPredicate hier : nwa.hierPred(state, cb)) {
 					for (OutgoingReturnTransition<CodeBlock, IPredicate> outTrans : nwa.returnSucccessors(state, hier,
 							cb)) {
-						Validity inductivity = m_HoareTripleChecker.checkReturn(state, hier, cb, outTrans.getSucc());
+						Validity inductivity = m_HoareTripleChecker.checkReturn(state, hier, (IReturnAction) cb, outTrans.getSucc());
 						evaluateResult(inductivity, state, outTrans);
 					}
 				}

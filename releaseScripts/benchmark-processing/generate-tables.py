@@ -154,7 +154,12 @@ def getSuffix(prefix, input):
 
 def parseCsvFile(fname):
     csvfile = open(fname, 'rb')
-    dialect = csv.Sniffer().sniff(csvfile.read(1024))
+    try:
+        dialect = csv.Sniffer().sniff(csvfile.read(2048),delimiters=',')
+    except csv.Error:
+        print "Could not guess .csv dialect, assuming Ultimate defaults"
+        csv.register_dialect('ultimate',delimiter=',')
+        dialect = 'ultimate'
     csvfile.seek(0)
     return csv.DictReader(csvfile, dialect=dialect)
 

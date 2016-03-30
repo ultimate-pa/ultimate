@@ -54,14 +54,14 @@ public class IntervalFunctionEvaluator
 
 	private final List<IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar>> mInputParamEvaluators;
 
-	protected IntervalFunctionEvaluator(String name, int numInParams) {
+	protected IntervalFunctionEvaluator(final String name, final int numInParams) {
 		mName = name;
 		mInParamCount = numInParams;
 		mInputParamEvaluators = new ArrayList<>();
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(final IntervalDomainState currentState) {
 		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
 		final IntervalDomainEvaluationResult res = new IntervalDomainEvaluationResult(new IntervalDomainValue(),
@@ -72,7 +72,8 @@ public class IntervalFunctionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		if (mInputParamEvaluators.size() < mInParamCount) {
 			mInputParamEvaluators.add(evaluator);
 		} else {
@@ -104,22 +105,21 @@ public class IntervalFunctionEvaluator
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append(mName);
-		sb.append("(");
+		sb.append(mName).append('(');
 		for (int i = 0; i < mInputParamEvaluators.size(); i++) {
 			if (i > 0) {
 				sb.append(", ");
 			}
 			sb.append(mInputParamEvaluators.get(i));
 		}
-		sb.append(")");
+		sb.append(')');
 
 		return sb.toString();
 	}
 
 	@Override
-	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
-	        IntervalDomainState currentState) {
+	public List<IntervalDomainState> inverseEvaluate(final IEvaluationResult<IntervalDomainValue> computedValue,
+	        final IntervalDomainState currentState) {
 		final List<IntervalDomainState> returnList = new ArrayList<>();
 		returnList.add(currentState);
 		return returnList;

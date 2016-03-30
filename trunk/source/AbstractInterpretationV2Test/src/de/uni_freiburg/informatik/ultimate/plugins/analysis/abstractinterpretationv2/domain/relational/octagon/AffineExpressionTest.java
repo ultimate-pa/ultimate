@@ -64,17 +64,17 @@ public class AffineExpressionTest {
 		assertDivReal("-1", "-2", "+0.5");
 		assertDivReal("1", "3", null);
 
-		assertDivReal("x", "x", "1");
+		assertDivReal("x", "x", null);
 		assertDivReal("x", "y", null);
 		assertDivReal("x + 1", "x", null);
 		assertDivReal("x", "x + 1", null);
 		
-		assertDivReal("2x + -4.4y + 3.00z + -100", "-4.40y + 3z + 2.000x + -1e2", "1");
+		assertDivReal("2x + -4.4y + 3.00z + -100", "-4.40y + 3z + 2.000x + -1e2", null);
 
 		String a1 = "2x + -6y + 3.4";
 		String a2 = "4x + -12y + 6.8";
-		assertDivReal(a1, a2, "0.5");
-		assertDivReal(a2, a1, "2");
+		assertDivReal(a1, a2, null);
+		assertDivReal(a2, a1, null);
 		assertDivReal(a1, "0.5", a2);
 		assertDivReal(a2, "2", a1);
 	}
@@ -90,17 +90,17 @@ public class AffineExpressionTest {
 		assertDivInt("-1", "-2", "+1");
 		assertDivInt("1", "3", "0");
 		
-		assertDivInt("x", "x", "1");
+		assertDivInt("x", "x", null);
 		assertDivInt("x", "y", null);
 		assertDivInt("x + 1", "x", null);
 		assertDivInt("x", "x + 1", null);
 
-		assertDivInt("2x + -4y + 3z + -100", "-4y + 2x + 3z + -1e2", "1");
+		assertDivInt("2x + -4y + 3z + -100", "-4y + 2x + 3z + -1e2", null);
 
 		String a1 = "2x + -6y + 3";
 		String a2 = "4x + -12y + 6";
-		assertDivInt(a1, a2, null); // real result = 0.5
-		assertDivInt(a2, a1, "2");
+		assertDivInt(a1, a2, null);
+		assertDivInt(a2, a1, null);
 		assertDivInt(a2, "2", a1);
 	}
 

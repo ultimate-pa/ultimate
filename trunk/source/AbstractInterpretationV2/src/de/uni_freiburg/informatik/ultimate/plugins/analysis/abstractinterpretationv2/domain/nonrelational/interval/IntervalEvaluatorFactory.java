@@ -56,7 +56,7 @@ public class IntervalEvaluatorFactory
 	private final Logger mLogger;
 	private final String mSettingsEvaluatorType;
 
-	public IntervalEvaluatorFactory(Logger logger) {
+	public IntervalEvaluatorFactory(final Logger logger) {
 		mLogger = logger;
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mSettingsEvaluatorType = ups.getString(IntervalDomainPreferences.LABEL_EVALUATOR_TYPE);
@@ -64,7 +64,7 @@ public class IntervalEvaluatorFactory
 
 	@Override
 	public INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(
-	        int arity, EvaluatorType type) {
+	        final int arity, final EvaluatorType type) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -89,7 +89,7 @@ public class IntervalEvaluatorFactory
 
 	@Override
 	public IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-	        String value, Class<?> valueType) {
+	        final String value, final Class<?> valueType) {
 		assert value != null;
 		return new IntervalSingletonValueExpressionEvaluator(
 		        new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
@@ -97,20 +97,20 @@ public class IntervalEvaluatorFactory
 
 	@Override
 	public IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-	        String variableName) {
+	        final String variableName) {
 		assert variableName != null;
 		return new IntervalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-	        BooleanValue value) {
+	        final BooleanValue value) {
 		return new IntervalSingletonBooleanExpressionEvaluator(value);
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(
-	        String functionName, int inputParamCount) {
+	        final String functionName, final int inputParamCount) {
 		return new IntervalFunctionEvaluator(functionName, inputParamCount);
 	}
 

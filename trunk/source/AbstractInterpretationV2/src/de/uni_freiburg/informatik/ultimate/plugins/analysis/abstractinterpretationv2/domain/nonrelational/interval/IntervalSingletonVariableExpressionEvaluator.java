@@ -52,19 +52,18 @@ public class IntervalSingletonVariableExpressionEvaluator
         implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Set<String> mVariableSet;
+	private final String mVariableName;
 
 	private boolean mContainsBoolean = false;
 
-	private String mVariableName;
-
-	public IntervalSingletonVariableExpressionEvaluator(String variableName) {
+	public IntervalSingletonVariableExpressionEvaluator(final String variableName) {
 		mVariableName = variableName;
 		mVariableSet = new HashSet<>();
 		mVariableSet.add(variableName);
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(final IntervalDomainState currentState) {
 
 		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
@@ -109,7 +108,8 @@ public class IntervalSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton variable expression evaluator.");
 	}
@@ -130,9 +130,9 @@ public class IntervalSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
-	        IntervalDomainState currentState) {
-		List<IntervalDomainState> returnList = new ArrayList<>();
+	public List<IntervalDomainState> inverseEvaluate(final IEvaluationResult<IntervalDomainValue> computedValue,
+	        final IntervalDomainState currentState) {
+		final List<IntervalDomainState> returnList = new ArrayList<>();
 
 		if (mContainsBoolean) {
 			returnList.add(currentState.setBooleanValue(mVariableName, computedValue.getBooleanValue()));

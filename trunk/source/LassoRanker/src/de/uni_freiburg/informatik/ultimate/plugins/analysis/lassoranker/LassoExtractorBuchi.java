@@ -184,7 +184,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 		private List<IPredicate> constructListOfDontCarePredicates(int length) {
 			ArrayList<IPredicate> result = new ArrayList<IPredicate>(length);
 			for (int i=0; i<length; i++) {
-				result.add(m_SmtManager.newDontCarePredicate(null));
+				result.add(m_SmtManager.getPredicateFactory().newDontCarePredicate(null));
 			}
 			return result;
 		}

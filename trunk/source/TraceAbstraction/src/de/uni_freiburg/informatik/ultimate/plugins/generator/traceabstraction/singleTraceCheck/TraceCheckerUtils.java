@@ -36,6 +36,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -48,8 +53,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -221,7 +224,7 @@ public class TraceCheckerUtils {
 		final Validity result;
 		if (trace.isCallPosition(i)) {
 			assert (cb instanceof Call) : "not Call at call position";
-			result = htc.checkCall(predecessor, cb, successor);
+			result = htc.checkCall(predecessor, (ICallAction) cb, successor);
 			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result));
 		} else if (trace.isReturnPosition(i)) {
@@ -233,13 +236,13 @@ public class TraceCheckerUtils {
 				int callPosition = trace.getCallPosition(i);
 				hierarchicalPredecessor = ipp.getInterpolant(callPosition);
 			}
-			result = htc.checkReturn(predecessor, hierarchicalPredecessor, cb, successor);
+			result = htc.checkReturn(predecessor, hierarchicalPredecessor, (IReturnAction) cb, successor);
 			logger.info(new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result, hierarchicalPredecessor));
 		} else if (trace.isInternalPosition(i)) {
 			assert (cb instanceof SequentialComposition) || (cb instanceof ParallelComposition)
 			|| (cb instanceof StatementSequence) || (cb instanceof Summary) || (cb instanceof GotoEdge);
-			result = htc.checkInternal(predecessor, cb, successor);
+			result = htc.checkInternal(predecessor, (IInternalAction) cb, successor);
 			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result));
 		} else {

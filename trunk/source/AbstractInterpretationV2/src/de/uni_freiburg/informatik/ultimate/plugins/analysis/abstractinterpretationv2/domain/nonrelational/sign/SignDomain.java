@@ -69,4 +69,9 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 	public IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		return new SignPostOperator(mServices);
 	}
+
+	@Override
+	public int getDomainPrecision() {
+		return 50;
+	}
 }

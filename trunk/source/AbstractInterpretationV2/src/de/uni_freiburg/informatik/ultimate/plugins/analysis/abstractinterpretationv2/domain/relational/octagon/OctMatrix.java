@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -16,7 +14,6 @@ import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
@@ -294,6 +291,8 @@ public class OctMatrix {
 	
 	public static OctMatrix max(OctMatrix a, OctMatrix b) {
 		return a.elementwiseOperation(b, OctValue::max);
+		// TODO set cached closure of result:
+		// a and b are closed ==> max(a,b) are closed
 	}
 
 	// TODO document: Different matrices may represent the same octagon.
@@ -366,6 +365,14 @@ public class OctMatrix {
 		return tightClosure(sDefaultShortestPathClosure);
 	}
 	
+	public boolean hasCachedStrongClosure() {
+		return mStrongClosure != null;
+	}
+	
+	public boolean hasCachedTightClosure() {
+		return mTightClosure != null;
+	}
+
 	public OctMatrix tightClosurePrimitiveSparse() {
 		return tightClosure(OctMatrix::shortestPathClosurePrimitiveSparse);
 	}
@@ -490,20 +497,22 @@ public class OctMatrix {
 	}
 	
 	protected void shortestPathClosurePrimitiveSparse() {
-		int[] ck = null; // indices of finite elements in columns k and k^1
 		int[] rk = null; // indices of finite elements in rows k and k^1
+		int[] ck = null; // indices of finite elements in columns k and k^1
+		int indexLength = 0;
 		for (int k = 0; k < mSize; ++k) {
 			int kk = k ^ 1;
 			if (k < kk) { // k is even => entered new 2x2 block
-				ck = primitiveIndexFiniteElementsInBlockColumn(k);
-				rk = primitiveIndexFiniteElementsInBlockRow(k);
+				rk = new int[mSize];
+				ck = new int[mSize];
+				indexLength = primitiveIndexFiniteElementsInBlockRowAndColumn(k, rk, ck);
 			}
-			for (int _i = 1; _i <= ck[0]; ++_i) {
+			for (int _i = 0; _i < indexLength; ++_i) {
 				int i = ck[_i];
 				OctValue ik = get(i, k);
 				OctValue ikk = get(i, kk);
 				int maxCol = i | 1;
-				for (int _j = 1; _j <= rk[0]; ++_j) {
+				for (int _j = 0; _j < indexLength; ++_j) {
 					int j = rk[_j];
 					if (j > maxCol) {
 						break;
@@ -519,32 +528,19 @@ public class OctMatrix {
 		}
 	}
 	
-	private int[] primitiveIndexFiniteElementsInBlockColumn(int k) {
-		int[] index = new int[mSize + 1];
-		int c = 0;
+	// note: rowIndex is not sorted. Block elements are swapped.
+	private int primitiveIndexFiniteElementsInBlockRowAndColumn(int k, int[] rowIndex, int[] colIndex) {
+		int indexLength = 0;
 		int kk = k ^ 1;
 		for (int i = 0; i < mSize; ++i) {
 			if (!get(i, k).isInfinity() || !get(i, kk).isInfinity()) {
-				index[++c] = i;
+				colIndex[indexLength] = i;
+				rowIndex[indexLength] = i^1;
+				++indexLength;
 			}
 		}
-		index[0] = c;
-		return index;
+		return indexLength;
 	}
-	
-	private int[] primitiveIndexFiniteElementsInBlockRow(int k) {
-		int[] index = new int[mSize + 1];
-		int c = 0;
-		int kk = k ^ 1;
-		for (int j = 0; j < mSize; ++j) {
-			if (!get(k, j).isInfinity() || !get(kk, j).isInfinity()) {
-				index[++c] = j;
-			}
-		}
-		index[0] = c;
-		return index;
-	}
-	
 
 	protected void shortestPathClosureApron() {
 		for (int k = 0; k < mSize; ++k) {
@@ -1051,52 +1047,54 @@ public class OctMatrix {
 
 	public Term getTerm(Script script, Term[] vars) {
 		Term acc = script.term("true");
-		for (int rowBlock = 0; rowBlock < variables(); ++rowBlock) {
-			Term rowVar = vars[rowBlock];
-			for (int colBlock = 0; colBlock <= rowBlock; ++colBlock) {
-				Term colVar = vars[colBlock];
-				Term blockTerm = getBlockTerm(script, rowBlock, colBlock, rowVar, colVar);
-				acc = Util.and(script, acc, blockTerm);
+		for (int row = 0; row < 2*variables(); ++row) {
+			Term rowVar = selectVar(script, row, vars);
+			// iterate only block lower triangular matrix (skip coherent upper part)
+			for (int col = 0; col < (row/2 + 1) * 2; ++col) {
+				OctValue entry = get(row, col);
+				if (col == row) {
+					if (entry.signum() < 0) {
+						return script.term("false"); // constraint of the form (0 <= -1)
+					} else {
+						continue; // constraint of the form (0 <= 1)
+					}
+				}
+				Term colVar = selectVar(script, col, vars);
+//				acc = Util.and(script, acc, createBoundedDiffTerm(script, colVar, rowVar, entry));
+				acc = script.term("and", acc, createBoundedDiffTerm(script, colVar, rowVar, entry));
 			}
 		}
 		return acc;
 	}
 
-	private Term getBlockTerm(Script script, int rowBlock, int colBlock, Term rowVar, Term colVar) {
-		Term acc = script.term("true");
-		boolean rowIsInt = TypeUtil.isIntTerm(rowVar);
-		boolean colIsInt = TypeUtil.isIntTerm(colVar);
-		boolean relationIsInt = rowIsInt && colIsInt;
-		if (rowIsInt != colIsInt) {
-			// one var is a real => typecast non-reals to real
-			if (rowIsInt) {
-				rowVar = script.term("to_real", rowVar);
-			} else /* if (colIsInt) */ {
-				colVar = script.term("to_real", colVar);
+	// returns variable in positive or negative form, depending on row or column
+	private Term selectVar(Script script, int rowCol, Term[] vars) {
+		Term posNegVar = vars[rowCol / 2];
+		if (rowCol % 2 == 1) {
+			return script.term("-", posNegVar);
+		}
+		return posNegVar;
+	}
+
+	// returns minuend - subtrahend <= bound
+	private Term createBoundedDiffTerm(Script script, Term minuend, Term subtrahend, OctValue bound) {
+		if (bound.isInfinity()) {
+			return script.term("true");
+		}
+		Term tBound;
+		boolean minuendIsInt = TypeUtil.isIntTerm(minuend);
+		boolean subtrahendIsInt = TypeUtil.isIntTerm(subtrahend);
+		if (minuendIsInt && subtrahendIsInt) {
+			tBound = script.numeral(bound.getValue().round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact());
+		} else {
+			tBound = script.decimal(bound.getValue());
+			if (minuendIsInt) {
+				minuend = script.term("to_real", minuend);
+			} else if (subtrahendIsInt) {
+				subtrahend = script.term("to_real", subtrahend);
 			}
 		}
-		// 0 = plus, 1 = minus
-		for (int i = 0; i < 2; ++i) { // row offset
-			for (int j = 0; j < 2; ++j) { // col offset
-				OctValue value = get(rowBlock + i, colBlock + j);
-				if (!value.isInfinity()) {
-					BigDecimal max = value.getValue();
-					Term vj = j == 0 ? colVar : script.term("-", colVar);
-					Term vi = i == 0 ? rowVar : script.term("-", rowVar);
-					Term maxTerm;
-					if (relationIsInt) {
-						// (intX - intY <= 7.3) is equivalent to (intX - intY <= 7)
-						// (intX - intY <= -7.3) is equivalent to (intX - intY <= -8)
-						BigInteger maxInt = max.round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact();
-						maxTerm = script.numeral(maxInt);
-					} else {
-						maxTerm = script.decimal(max);
-					}
-					acc = Util.and(script, acc, script.term("<=", script.term("-", vj, vi), maxTerm));
-				}
-			}
-		}
-		return acc;
+		return script.term("<=", script.term("-", minuend, subtrahend), tBound);
 	}
 
 	@Override

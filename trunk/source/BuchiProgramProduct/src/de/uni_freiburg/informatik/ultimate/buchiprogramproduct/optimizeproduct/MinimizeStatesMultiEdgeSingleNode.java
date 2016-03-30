@@ -93,7 +93,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 		// (q1,st1;st2,q3)
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("    will remove " + target.getLocationName());
+			mLogger.debug("    will remove " + target.getPosition());
 		}
 
 		List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());

@@ -37,13 +37,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ProdState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
-public class TaConcurContentFactory extends PredicateFactory {
+public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutomata {
 
 	public TaConcurContentFactory(Map<String, Map<String, ProgramPoint>> locNodes,
 			AbstractCegarLoop abstractCegarLoop, SmtManager theory,
@@ -60,7 +61,7 @@ public class TaConcurContentFactory extends PredicateFactory {
 			IPredicate c2) {
 		
 		List<IPredicate> programPoints = new ArrayList<IPredicate>();
-		ProdState result = ((ConcurrentSmtManager) m_SmtManager).getNewProdState(programPoints);
+		ProdState result = m_SmtManager.getPredicateFactory().getNewProdState(programPoints);
 		if (c1 instanceof ProdState) {
 			ProdState ps1 = (ProdState) c1;
 			programPoints.addAll(ps1.getPredicates());
@@ -85,7 +86,7 @@ public class TaConcurContentFactory extends PredicateFactory {
 		for (Place<?, IPredicate> place : marking) {
 			programPoints.add(place.getContent());
 		}
-		return ((ConcurrentSmtManager) m_SmtManager).getNewProdState(programPoints);
+		return m_SmtManager.getPredicateFactory().getNewProdState(programPoints);
 	}
 	
 
@@ -94,7 +95,7 @@ public class TaConcurContentFactory extends PredicateFactory {
 	@Override
 	public IPredicate finitePrefix2net(Condition<?, IPredicate> c) {
 		ProgramPoint pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
-		return super.m_SmtManager.newDontCarePredicate(pp);
+		return super.m_SmtManager.getPredicateFactory().newDontCarePredicate(pp);
 	}
 	
 

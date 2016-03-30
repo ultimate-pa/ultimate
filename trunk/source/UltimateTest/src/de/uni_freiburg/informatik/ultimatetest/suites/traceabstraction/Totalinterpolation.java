@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
@@ -130,20 +131,20 @@ public class Totalinterpolation extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings) {
-			addTestCases("AutomizerC.xml", 
+			addTestCase("AutomizerC.xml", 
 					setting, 
 					m_SVCOMP_Examples);
 		}
 		
 		for (String setting : m_Settings) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					setting,
 					m_UltimateRepository,
 				    new String[] {".bpl"});
 		}
 		for (String setting : m_Settings) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					setting,
 					m_UltimateRepository,

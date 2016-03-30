@@ -7,5 +7,5 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Act
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-UltimateUtil
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

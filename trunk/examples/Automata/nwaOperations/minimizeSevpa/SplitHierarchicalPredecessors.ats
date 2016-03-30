@@ -1,0 +1,43 @@
+// interesting example for NWA minimization
+// 
+// Originally, this test case was for rigorously testing the minimization algorithms.
+// The challenge is that all hierarchical predecessors h1-h4 must be separated.
+// There is some interesting solution found by ShrinkNwa() where it merges {h2,q9} and also {q6,q7,q8} which I had not seen.
+// 
+// Author: schillic@informatik.uni-freiburg.de
+// Date: 2016-03-05
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
+assert(minimizeSevpaSize == 11);
+int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
+assert(shrinkNwaSize == 8);
+// print(shrinkNwa(removeDeadEnds(nwa)));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c},
+	internalAlphabet = {a b},
+	returnAlphabet = {r1 r2},
+	states = {q0 h1 h2 h3 h4 q5 q6 q7 q8 q9 q10 qF},
+	initialStates = {q0},
+	finalStates = {qF},
+	callTransitions = {
+		(h1 c h2)
+		(h2 c q5)
+		(h3 c h4)
+		(h4 c q6)
+	},
+	internalTransitions = {
+		(q0 a h1)
+		(q0 b h3)
+		(h2 a q7)
+		(h4 a q8)
+		(q9 a q8)
+		(q10 a qF)
+	},
+	returnTransitions = {
+		(q5 h2 r1 q8)
+		(q6 h4 r2 q9)
+		(q7 h1 r1 qF)
+		(q8 h3 r2 q10)
+	}
+);

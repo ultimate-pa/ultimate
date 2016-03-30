@@ -70,7 +70,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * @param val
 	 *            The value to set.
 	 */
-	public IntervalValue(BigDecimal val) {
+	public IntervalValue(final BigDecimal val) {
 		mValue = val;
 		mIsInfty = false;
 		sId++;
@@ -83,7 +83,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * @param val
 	 *            The value to set.
 	 */
-	public IntervalValue(IntervalValue val) {
+	public IntervalValue(final IntervalValue val) {
 		mValue = val.mValue;
 		mIsInfty = val.mIsInfty;
 		sId++;
@@ -96,7 +96,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * @param val
 	 *            The value to set.
 	 */
-	public IntervalValue(int val) {
+	public IntervalValue(final int val) {
 		this(new BigDecimal(val));
 	}
 
@@ -106,7 +106,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * @param val
 	 *            The value to set.
 	 */
-	public IntervalValue(double val) {
+	public IntervalValue(final double val) {
 		this(new BigDecimal(val));
 	}
 
@@ -117,7 +117,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * @param val
 	 *            The value to set.
 	 */
-	public IntervalValue(String val) {
+	public IntervalValue(final String val) {
 		this(new BigDecimal(val));
 	}
 
@@ -127,7 +127,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * @param val
 	 *            The value to set.
 	 */
-	protected void setValue(BigDecimal val) {
+	protected void setValue(final BigDecimal val) {
 		mValue = val;
 		mIsInfty = false;
 	}
@@ -163,12 +163,12 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	}
 
 	@Override
-	public boolean equals(Object other) {
+	public boolean equals(final Object other) {
 		if (other == null) {
 			return false;
 		}
 
-		if (this.getClass() != other.getClass()) {
+		if (!(other instanceof IntervalValue)) {
 			return false;
 		}
 
@@ -195,7 +195,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	}
 
 	@Override
-	public int compareTo(IntervalValue other) {
+	public int compareTo(final IntervalValue other) {
 
 		if (other == null) {
 			throw new UnsupportedOperationException("Empty comparator is not allowed.");

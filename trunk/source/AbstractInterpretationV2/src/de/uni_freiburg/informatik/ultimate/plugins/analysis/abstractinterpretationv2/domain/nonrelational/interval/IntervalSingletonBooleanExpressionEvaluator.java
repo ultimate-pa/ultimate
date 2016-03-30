@@ -57,12 +57,12 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	 * @param value
 	 *            The value to set.
 	 */
-	protected IntervalSingletonBooleanExpressionEvaluator(BooleanValue value) {
+	protected IntervalSingletonBooleanExpressionEvaluator(final BooleanValue value) {
 		mBooleanValue = value;
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(final IntervalDomainState currentState) {
 		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
 		returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(), mBooleanValue));
@@ -71,7 +71,8 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException("Adding a subevaluator to this kind of evaluator is not permitted.");
 	}
 
@@ -96,8 +97,8 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
-	        IntervalDomainState currentState) {
+	public List<IntervalDomainState> inverseEvaluate(final IEvaluationResult<IntervalDomainValue> computedValue,
+	        final IntervalDomainState currentState) {
 		final List<IntervalDomainState> returnList = new ArrayList<>();
 		returnList.add(currentState);
 		return returnList;

@@ -40,19 +40,26 @@ public interface ITransitionProvider<ACTION, LOCATION> {
 
 	Collection<ACTION> filterInitialElements(Collection<ACTION> actions);
 
-	Collection<ACTION> getSuccessors(ACTION current, ACTION scope);
+	Collection<ACTION> getSuccessors(ACTION action, ACTION scope);
 
-	boolean isPostErrorLocation(ACTION current, ACTION scope);
+	boolean isPostErrorLocation(ACTION action, ACTION scope);
 
-	String toLogString(ACTION elem);
+	String toLogString(ACTION action);
 
-	boolean isEnteringScope(ACTION current);
+	boolean isEnteringScope(ACTION action);
 
-	boolean isLeavingScope(ACTION current, ACTION scope);
+	boolean isLeavingScope(ACTION action, ACTION scope);
+	
+	/**
+	 * @return true iff <code>action</code> is a summary for <code>call</code>
+	 */
+	boolean isSummaryForCall(ACTION action, ACTION call);
+	
+	boolean isSummaryWithImplementation(ACTION action);
 
-	LOCATION getSource(ACTION current);
+	LOCATION getSource(ACTION action);
 
-	LOCATION getTarget(ACTION current);
+	LOCATION getTarget(ACTION action);
 
 	Collection<ACTION> getSuccessorActions(LOCATION loc);
 }

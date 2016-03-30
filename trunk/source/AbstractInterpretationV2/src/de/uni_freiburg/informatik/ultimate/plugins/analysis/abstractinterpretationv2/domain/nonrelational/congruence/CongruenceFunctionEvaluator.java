@@ -65,7 +65,7 @@ public class CongruenceFunctionEvaluator
 	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(CongruenceDomainState currentState) {
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
-		final CongruenceDomainEvaluationResult res = new CongruenceDomainEvaluationResult(new CongruenceDomainValue(),
+		final CongruenceDomainEvaluationResult res = new CongruenceDomainEvaluationResult(CongruenceDomainValue.createTop(),
 		        new BooleanValue());
 
 		returnList.add(res);

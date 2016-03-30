@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 
 import org.apache.log4j.Logger;
@@ -84,7 +84,7 @@ public class DebugObserver extends BaseObserver {
 		if (node.hasPayload()) {
 			IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {
-				HashMap<String, IAnnotations> annot = payload.getAnnotations();
+				Map<String, IAnnotations> annot = payload.getAnnotations();
 				Collection<IAnnotations> annots = CoreUtil.flattenMapValuesToCollection(annot);
 				checkAnnotations(node, annots);
 			}

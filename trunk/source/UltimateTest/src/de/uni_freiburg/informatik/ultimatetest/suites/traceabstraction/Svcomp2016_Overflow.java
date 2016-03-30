@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
@@ -79,8 +80,8 @@ public class Svcomp2016_Overflow extends AbstractTraceAbstractionTestSuite {
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs);
-				addTestCases(toolchain, setting, m_CurrentBugs, new String[] {".c", ".i"});
+				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs);
+				addTestCase(toolchain, setting, m_CurrentBugs, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.model;
 
 import java.io.Serializable;
-import java.util.HashSet;
+
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 
 /**
@@ -89,48 +89,6 @@ public class ModelContainer implements Serializable {
 
 	private int countNodes(IElement root) {
 		return 0;
-		/*
-		 * int acc=1; for(INode n : root.getOutgoing()){ acc=acc+countNodes(n);
-		 * } return acc;
-		 */
-	}
-
-	protected IElement findNode(String outerAnnotationKey,
-			String innerAnnotationKey, Object innerAnnotationValue) {
-		return findNode(outerAnnotationKey, innerAnnotationKey,
-				innerAnnotationValue, mGraphRoot);
-	}
-
-	protected IPayload findNode(UltimateUID id) {
-		return findNode(id.toString(), this.mGraphRoot);
-	}
-
-	protected IPayload findNode(String id) {
-		return findNode(id, this.mGraphRoot);
-	}
-
-	protected static IPayload findNode(String id, IElement root) {
-		return findNode(id, root, new HashSet<IElement>());
-	}
-
-	protected static IPayload findNode(String id, IElement currentRoot,
-			HashSet<IElement> visited) {
-		if (visited.contains(currentRoot))
-			return null;
-		visited.add(currentRoot);
-		if (currentRoot.getPayload().getID().equals(id)) {
-			return currentRoot.getPayload();
-		} else {
-			if (currentRoot instanceof IWalkable) {
-				for (IWalkable n : ((IWalkable) currentRoot).getSuccessors()) {
-					IPayload rtr_Value = findNode(id, n, visited);
-					if (rtr_Value != null) {
-						return rtr_Value;
-					}
-				}
-			}
-			return null;
-		}
 	}
 
 	/**

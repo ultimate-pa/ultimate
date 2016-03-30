@@ -36,38 +36,38 @@ public class ColumnDefinition {
 		Sum, Max, Average, Ignore
 	}
 
-	private final String ColumnToKeep;
-	private final String LatexTableTitle;
-	private final ConversionContext ConversionContext;
-	private final Aggregate SingleRunToOneRow;
-	private final Aggregate ManyRunsToOneRow;
+	private final String mColumnToKeep;
+	private final String mLatexTableTitle;
+	private final ConversionContext mConversionContext;
+	private final Aggregate mSingleRunToOneRow;
+	private final Aggregate mManyRunsToOneRow;
 
 	public ColumnDefinition(String csvColumnName, String latexTableTitle, ConversionContext humanReadable,
 			Aggregate howToAggregateFromSingleRun, Aggregate howToAggregateForLatexTableRow) {
-		ColumnToKeep = csvColumnName;
-		LatexTableTitle = latexTableTitle;
-		ConversionContext = humanReadable;
-		SingleRunToOneRow = howToAggregateFromSingleRun;
-		ManyRunsToOneRow = howToAggregateForLatexTableRow;
+		mColumnToKeep = csvColumnName;
+		mLatexTableTitle = latexTableTitle;
+		mConversionContext = humanReadable;
+		mSingleRunToOneRow = howToAggregateFromSingleRun;
+		mManyRunsToOneRow = howToAggregateForLatexTableRow;
 	}
 
 	public String getColumnToKeep() {
-		return ColumnToKeep;
+		return mColumnToKeep;
 	}
 
 	public String getLatexTableTitle() {
-		return LatexTableTitle;
+		return mLatexTableTitle;
 	}
 
 	public ConversionContext getConversionContext() {
-		return ConversionContext;
+		return mConversionContext;
 	}
 
 	public Aggregate getSingleRunToOneRow() {
-		return SingleRunToOneRow;
+		return mSingleRunToOneRow;
 	}
 
 	public Aggregate getManyRunsToOneRow() {
-		return ManyRunsToOneRow;
+		return mManyRunsToOneRow;
 	}
 }

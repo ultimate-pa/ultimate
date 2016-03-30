@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
@@ -71,7 +72,7 @@ public class Boogie2SmtSymbolTable {
 	 * </ul>
 	 * 
 	 */
-	private static final String s_BUILTINIDENTIFIER = "builtin";
+	static final String s_BUILTINIDENTIFIER = "builtin";
 	
 	private static final String s_INDICESIDENTIFIER = "indices";
 	
@@ -241,6 +242,26 @@ public class Boogie2SmtSymbolTable {
 		Sort[] paramTypes = new Sort[0];
 		IType iType = varlist.getType().getBoogieType();
 		Sort sort = m_TypeSortTranslator.getSort(iType, varlist);
+
+		Map<String, Expression[]> attributes = extractAttributes(constdecl);
+		if (attributes != null) {
+			String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(
+					attributes, s_BUILTINIDENTIFIER);
+			if (attributeDefinedIdentifier != null) {
+				final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
+				if (varlist.getIdentifiers().length > 1) {
+					throw new IllegalArgumentException("if builtin identifier is "
+							+ "used we support only one constant per const declaration");
+				}
+				String constId = varlist.getIdentifiers()[0];
+				ApplicationTerm constant = (ApplicationTerm) m_Script.term(attributeDefinedIdentifier, indices, null);
+				BoogieConst boogieConst = new BoogieConst(constId, iType, constant);
+				BoogieConst previousValue = m_Constants.put(constId, boogieConst);
+				assert previousValue == null : "constant already contained";
+				m_SmtConst2BoogieConst.put(constant, boogieConst);
+				return;
+			} 
+		}
 		for (String constId : varlist.getIdentifiers()) {
 			m_Script.declareFun(constId, paramTypes, sort);
 			ApplicationTerm constant = (ApplicationTerm) m_Script.term(constId);
@@ -350,9 +371,9 @@ public class Boogie2SmtSymbolTable {
 		}
 	}
 	
-	private Map<String, Expression[]> extractAttributes(FunctionDeclaration funcdecl) {
+	public static Map<String, Expression[]> extractAttributes(Declaration decl) {
 		Map<String, Expression[]> result = new HashMap<String, Expression[]>();
-		for (Attribute attr : funcdecl.getAttributes()) {
+		for (Attribute attr : decl.getAttributes()) {
 			if (attr instanceof NamedAttribute) {
 				NamedAttribute nattr = (NamedAttribute) attr;
 				result.put(nattr.getName(), ((NamedAttribute) attr).getValues());

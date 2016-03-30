@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCF
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
@@ -65,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 
@@ -94,7 +96,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<AtomicTraceElement<BoogieASTNode>>();
 		for (RcfgElement elem : cbTrace) {
 			if (elem instanceof CodeBlock) {
-				addCodeBlock((CodeBlock) elem, atomicTeList, null);
+				addCodeBlock((CodeBlock) elem, atomicTeList, null, null);
 			} else if (elem instanceof ProgramPoint) {
 
 			} else {
@@ -123,46 +125,46 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 	 * </ul>
 	 */
 	private void addCodeBlock(RCFGEdge cb, List<AtomicTraceElement<BoogieASTNode>> trace,
-			Map<TermVariable, Boolean> branchEncoders) {
+			Map<TermVariable, Boolean> branchEncoders, IRelevanceInformation relevanceInformation) {
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		if (cb instanceof Call) {
 			Statement st = ((Call) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL, stringProvider));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation));
 		} else if (cb instanceof Return) {
 			Statement st = ((Return) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN, stringProvider));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN, stringProvider, relevanceInformation));
 		} else if (cb instanceof Summary) {
 			Statement st = ((Summary) cb).getCallStatement();
 			// FIXME: Is summary call, return or something new?
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE, stringProvider));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE, stringProvider, relevanceInformation));
 		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
 			for (Statement statement : ss.getStatements()) {
 				if (mCodeBlock2Statement.containsKey(statement)) {
 					BoogieASTNode[] sources = mCodeBlock2Statement.get(statement);
 					for (BoogieASTNode source : sources) {
-						trace.add(new AtomicTraceElement<BoogieASTNode>(source, stringProvider));
+						trace.add(new AtomicTraceElement<BoogieASTNode>(source, stringProvider, relevanceInformation));
 					}
 				} else {
-					trace.add(new AtomicTraceElement<BoogieASTNode>(statement, stringProvider));
+					trace.add(new AtomicTraceElement<BoogieASTNode>(statement, stringProvider, relevanceInformation));
 				}
 			}
 		} else if (cb instanceof SequentialComposition) {
 			SequentialComposition seqComp = (SequentialComposition) cb;
 			for (CodeBlock sccb : seqComp.getCodeBlocks()) {
-				addCodeBlock(sccb, trace, branchEncoders);
+				addCodeBlock(sccb, trace, branchEncoders, relevanceInformation);
 			}
 		} else if (cb instanceof ParallelComposition) {
 			ParallelComposition parComp = (ParallelComposition) cb;
 			Map<TermVariable, CodeBlock> bi2cb = parComp.getBranchIndicator2CodeBlock();
 			if (branchEncoders == null) {
 				CodeBlock someBranch = bi2cb.entrySet().iterator().next().getValue();
-				addCodeBlock(someBranch, trace, branchEncoders);
+				addCodeBlock(someBranch, trace, branchEncoders, relevanceInformation);
 			} else {
 				for (Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
 					boolean taken = branchEncoders.get(entry.getKey());
 					if (taken) {
-						addCodeBlock(entry.getValue(), trace, branchEncoders);
+						addCodeBlock(entry.getValue(), trace, branchEncoders, relevanceInformation);
 						return;
 					}
 				}
@@ -193,9 +195,9 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			AtomicTraceElement<RCFGEdge> codeBlock = rcfgProgramExecution.getTraceElement(i);
 			Map<TermVariable, Boolean>[] branchEncoders = rcfgProgramExecution.getBranchEncoders();
 			if (branchEncoders == null || i >= branchEncoders.length) {
-				addCodeBlock(codeBlock.getTraceElement(), trace, null);
+				addCodeBlock(codeBlock.getTraceElement(), trace, null, codeBlock.getmRelevanceInformation());
 			} else {
-				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i]);
+				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i], codeBlock.getmRelevanceInformation());
 			}
 			int posInNewTrace = trace.size() - 1;
 			ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
@@ -210,7 +212,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			throw new UnsupportedOperationException("Cannot translate cfg that is not an RCFG");
 		}
 		final IBacktranslatedCFG<String, BoogieASTNode> translatedCfg = translateCFG(cfg,
-				(a, b, c) -> translateEdge(a, (RCFGEdge) b, c));
+				(a, b, c) -> translateCFGEdge(a, (RCFGEdge) b, c));
 //		 mLogger.info(getClass().getSimpleName());
 //		 printHondas(cfg, mLogger::info);
 //		 printCFG(cfg, mLogger::info);
@@ -225,7 +227,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 	 * @param cache
 	 */
 	@SuppressWarnings("unchecked")
-	private <TVL> Multigraph<String, BoogieASTNode> translateEdge(
+	private <TVL> Multigraph<String, BoogieASTNode> translateCFGEdge(
 			final Map<IExplicitEdgesMultigraph<?, ?, TVL, RCFGEdge>, Multigraph<String, BoogieASTNode>> cache,
 			final RCFGEdge oldEdge, final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final RCFGNode oldTarget = oldEdge.getTarget();
@@ -258,7 +260,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			final SequentialComposition seqComp = (SequentialComposition) oldEdge;
 			Multigraph<String, BoogieASTNode> current = newSourceNode;
 			for (final CodeBlock sccb : seqComp.getCodeBlocks()) {
-				current = translateEdge(cache, sccb, current);
+				current = translateCFGEdge(cache, sccb, current);
 			}
 			createNewEdge(current, newTarget, null);
 		} else if (oldEdge instanceof ParallelComposition) {
@@ -267,7 +269,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			final Iterator<Entry<TermVariable, CodeBlock>> iter = bi2cb.entrySet().iterator();
 			while (iter.hasNext()) {
 				final CodeBlock someBranch = iter.next().getValue();
-				final Multigraph<String, BoogieASTNode> intermediate = translateEdge(cache, someBranch, newSourceNode);
+				final Multigraph<String, BoogieASTNode> intermediate = translateCFGEdge(cache, someBranch, newSourceNode);
 				createNewEdge(intermediate, newTarget, null);
 			}
 		} else if (oldEdge instanceof GotoEdge) {
@@ -312,6 +314,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		// mLogger.info(" label loc " + label.getPayload().getLocation().getStartLine() + "-"
 		// + label.getPayload().getLocation().getEndLine());
 		// }
+		ConditionAnnotation coan = ConditionAnnotation.getAnnotation(label);
 		new MultigraphEdge<>(source, label, target);
 	}
 

@@ -3,10 +3,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -33,7 +35,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		mCounterexamples = new ArrayList<>();
 		mBenchmark = new AbstractInterpretationBenchmark<>();
 		mLoc2Term = new HashMap<LOCATION, Term>();
-		mTerms = new HashSet<>();
+		mTerms = new LinkedHashSet<>();
 	}
 
 	protected void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
@@ -56,10 +58,6 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		Collections.reverse(abstractExecution);
 		mCounterexamples
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
-	}
-
-	protected void addTerms(final Map<LOCATION, Term> terms) {
-
 	}
 
 	protected void saveTerms(IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage, ACTION start,
@@ -89,4 +87,22 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		return mTerms;
 	}
 
+	@Override
+	public String toString() {
+		return toSimplifiedString(a -> a.toStringDirect());
+	}
+
+	public String toSimplifiedString(Function<Term, String> funSimplify) {
+		final StringBuilder sb = new StringBuilder();
+		if (hasReachedError()) {
+			sb.append("AI reached error location.");
+		} else {
+			sb.append("AI did not reach error location.");
+		}
+		if (getTerms() != null) {
+			sb.append(" Found terms ");
+			sb.append(String.join(", ", getTerms().stream().map(a -> funSimplify.apply(a)).collect(Collectors.toList())));
+		}
+		return sb.toString();
+	}
 }

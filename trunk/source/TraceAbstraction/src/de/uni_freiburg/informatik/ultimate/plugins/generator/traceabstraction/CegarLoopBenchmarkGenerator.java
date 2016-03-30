@@ -30,21 +30,22 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType.SizeIterationPair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkGeneratorWithStopwatches;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
-public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches implements IBenchmarkDataProvider {
+public class CegarLoopBenchmarkGenerator extends StatisticsGeneratorWithStopwatches implements IStatisticsDataProvider {
 
 	private Object m_Result;
-	private final BenchmarkData m_EcData = new BenchmarkData();
-	private final BenchmarkData m_PuData = new BenchmarkData();
-	private final BenchmarkData m_TcData = new BenchmarkData();
-	private final BenchmarkData m_TiData = new BenchmarkData();
-	private final BenchmarkData m_InterpolantConsolidationBenchmarks = new BenchmarkData();
+	private final StatisticsData m_EcData = new StatisticsData();
+	private final StatisticsData m_PuData = new StatisticsData();
+	private final StatisticsData m_TcData = new StatisticsData();
+	private final StatisticsData m_TiData = new StatisticsData();
+	private final StatisticsData m_InterpolantConsolidationBenchmarks = new StatisticsData();
 	private int m_StatesRemovedByMinimization = 0;
 	private int m_Iterations = 0;
+	private int m_AbsIntIterations = 0;
 	private SizeIterationPair m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation m_BCI = new BackwardCoveringInformation(0, 0);
 
@@ -57,23 +58,23 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 		m_Result = result;
 	}
 
-	public void addEdgeCheckerData(IBenchmarkDataProvider ecbd) {
+	public void addEdgeCheckerData(IStatisticsDataProvider ecbd) {
 		m_EcData.aggregateBenchmarkData(ecbd);
 	}
 
-	public void addPredicateUnifierData(IBenchmarkDataProvider pubd) {
+	public void addPredicateUnifierData(IStatisticsDataProvider pubd) {
 		m_PuData.aggregateBenchmarkData(pubd);
 	}
 
-	public void addTraceCheckerData(IBenchmarkDataProvider tcbd) {
+	public void addTraceCheckerData(IStatisticsDataProvider tcbd) {
 		m_TcData.aggregateBenchmarkData(tcbd);
 	}
 
-	public void addInterpolationConsolidationData(IBenchmarkDataProvider tcbd) {
+	public void addInterpolationConsolidationData(IStatisticsDataProvider tcbd) {
 		m_InterpolantConsolidationBenchmarks.aggregateBenchmarkData(tcbd);
 	}
 
-	public void addTotalInterpolationData(IBenchmarkDataProvider tibd) {
+	public void addTotalInterpolationData(IStatisticsDataProvider tibd) {
 		m_TiData.aggregateBenchmarkData(tibd);
 	}
 
@@ -87,6 +88,10 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 
 	public void announceNextIteration() {
 		m_Iterations++;
+	}
+	
+	public void announceNextAbsIntIteration() {
+		m_AbsIntIterations++;
 	}
 
 	public void reportAbstractionSize(int size, int iteration) {
@@ -126,6 +131,8 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 			return m_StatesRemovedByMinimization;
 		case CegarLoopBenchmarkType.s_OverallIterations:
 			return m_Iterations;
+		case CegarLoopBenchmarkType.s_AbsIntIterations:
+			return m_AbsIntIterations;
 		case CegarLoopBenchmarkType.s_BiggestAbstraction:
 			return m_BiggestAbstraction;
 		case CegarLoopBenchmarkType.s_InterpolantCoveringCapability:
@@ -136,7 +143,7 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	}
 
 	@Override
-	public IBenchmarkType getBenchmarkType() {
+	public IStatisticsType getBenchmarkType() {
 		return CegarLoopBenchmarkType.getInstance();
 	}
 

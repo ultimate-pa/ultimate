@@ -66,6 +66,14 @@ public class ProgramExecutionFormatter<TE, E> {
 			// because of IVAL+2
 			stepInfoColumLength = 6;
 		}
+		
+		final List<String> relevanceInfoColum = getRelevanceInformationColumn(execution);
+		final int relevanceInfoColumnLength;
+		if (relevanceInfoColum == null) {
+			relevanceInfoColumnLength = 0;
+		} else {
+			relevanceInfoColumnLength = getMaxLength(relevanceInfoColum) + 2;
+		}
 
 		if (valuation != null) {
 			sb.append(fillWithChar(fillChar, lineNumberColumnLength));
@@ -80,6 +88,9 @@ public class ProgramExecutionFormatter<TE, E> {
 
 			addFixedLength(sb, lineNumber, lineNumberColumnLength, fillChar);
 			addFixedLength(sb, stepInfo, stepInfoColumLength, fillChar);
+			if (relevanceInfoColum != null) {
+				addFixedLength(sb, relevanceInfoColum.get(i), relevanceInfoColumnLength, fillChar);
+			}
 			AtomicTraceElement<TE> currentATE = execution.getTraceElement(i);
 			appendStepAsString(sb, currentATE, false);
 
@@ -87,7 +98,7 @@ public class ProgramExecutionFormatter<TE, E> {
 			valuation = getValuesAsString(execution.getProgramState(i));
 			if (valuation != null) {
 				sb.append(fillWithChar(fillChar, lineNumberColumnLength));
-				addFixedLength(sb, "VAL", stepInfoColumLength, fillChar);
+				addFixedLength(sb, "VAL", stepInfoColumLength + relevanceInfoColumnLength, fillChar);
 				sb.append(valuation);
 				sb.append(lineSeparator);
 			}
@@ -224,6 +235,25 @@ public class ProgramExecutionFormatter<TE, E> {
 			rtr.add(sb.toString());
 		}
 		return rtr;
+	}
+	
+	private List<String> getRelevanceInformationColumn(IProgramExecution<TE, E> execution) {
+		List<String> rtr = new ArrayList<>();
+		int numberOfRelevanceInformations = 0;
+		for (int i = 0; i < execution.getLength(); ++i) {
+			IRelevanceInformation ri = execution.getTraceElement(i).getmRelevanceInformation();
+			if (ri == null) {
+				rtr.add("?");
+			} else {
+				rtr.add(ri.getShortString());
+				numberOfRelevanceInformations++;
+			}
+		}
+		if (numberOfRelevanceInformations == 0) {
+			return null;
+		} else {
+			return rtr;
+		}
 	}
 
 }

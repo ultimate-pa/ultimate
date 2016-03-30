@@ -2,9 +2,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 
 /**
@@ -14,6 +16,16 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
  */
 public class BoogieUtil {
 
+	/**
+	 * Creates a dummy {@link IBoogieVar} from a given type. This method is used to give generated temporary variables
+	 * a boogie type.
+	 * 
+	 * @param identifier the identifier of the variable
+	 * @param type the type of the variable
+	 * @return {@link IBoogieVar} according to the given identifier and {@link IType}
+	 *
+	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+	 */
 	public static IBoogieVar createTemporaryIBoogieVar(String identifier, IType type) {
 		return new IBoogieVar() {
 			@Override
@@ -32,14 +44,14 @@ public class BoogieUtil {
 			}
 		};
 	}
-	
+
 	/**
-     * Determines if a {@link IdentifierExpression} references a variable.
+     * Determines if a {@link IdentifierExpression} references a variable or constant.
      * {@link IdentifierExpression} can also reference functions or procedures.
      * In that case, this method will return {@code false}.
      * 
      * @param ie {@link IdentifierExpression}
-     * @return expression references a variable
+     * @return expression references a variable or constant
      */
 	public static boolean isVariable(IdentifierExpression ie) {
 		DeclarationInformation di = ie.getDeclarationInformation();
@@ -60,6 +72,16 @@ public class BoogieUtil {
 		}
 	}
 	
+	public static boolean isGlobal(IBoogieVar ibv) {
+		if (ibv instanceof BoogieVar) {
+			return ((BoogieVar) ibv).isGlobal();
+		} else if (ibv instanceof BoogieConst) {
+			return true;
+		} else {
+			throw new AssertionError("Unknown IBoogieVar type: " + ibv.getClass().getName());
+		}
+	}
+
 	public static Operator negateRelOp(Operator relOp) {
 		switch (relOp) {
 		case COMPEQ:

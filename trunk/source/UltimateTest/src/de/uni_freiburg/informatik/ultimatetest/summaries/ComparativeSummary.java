@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
@@ -54,7 +55,7 @@ public class ComparativeSummary extends NewTestSummary {
 		for (Entry<UltimateRunDefinition, ExtendedResult> entry : partitionedResults.All) {
 			String tool = entry.getKey().getToolchain().getAbsolutePath() + "+"
 					+ entry.getKey().getSettings().getAbsolutePath();
-			String filename = entry.getKey().getInput().getAbsolutePath();
+			String filename = entry.getKey().getInputFileNames();
 			HashSet<Entry<UltimateRunDefinition, ExtendedResult>> entries = tool2entry.get(tool);
 			if (entries == null) {
 				entries = new HashSet<>();
@@ -81,7 +82,7 @@ public class ComparativeSummary extends NewTestSummary {
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						HashSet<String> tools = file2tool.get(entry.getKey().getInput().getAbsolutePath());
+						HashSet<String> tools = file2tool.get(entry.getKey().getInputFileNames());
 						for (String tool : tools) {
 							if (!tool2entry.containsKey(tool)) {
 								return false;
@@ -101,8 +102,8 @@ public class ComparativeSummary extends NewTestSummary {
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		String indent = "    ";
 		for (Entry<UltimateRunDefinition, ExtendedResult> mismatch : mismatches) {
-			String filename = mismatch.getKey().getInput().getAbsolutePath();
-			sb.append(TestUtil.removeTrunkExamplesPrefix(filename));
+			String filename = mismatch.getKey().getInputFileNames();
+			sb.append(filename);
 			sb.append(CoreUtil.getPlatformLineSeparator());
 			for (Entry<UltimateRunDefinition, ExtendedResult> differentEntry : file2entries.get(filename)) {
 				String tool = TestUtil.removeTrunkToolchainPrefix(differentEntry.getKey().getToolchain().getAbsolutePath())
@@ -111,7 +112,7 @@ public class ComparativeSummary extends NewTestSummary {
 				sb.append(tool);
 				sb.append(CoreUtil.getPlatformLineSeparator());
 				sb.append(indent).append(indent);
-				sb.append(differentEntry.getValue().Message);
+				sb.append(differentEntry.getValue().getMessage());
 				sb.append(CoreUtil.getPlatformLineSeparator());
 			}
 			sb.append(CoreUtil.getPlatformLineSeparator());

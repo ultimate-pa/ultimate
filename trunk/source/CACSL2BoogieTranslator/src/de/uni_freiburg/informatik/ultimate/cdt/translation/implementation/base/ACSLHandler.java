@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
@@ -155,8 +156,17 @@ public class ACSLHandler implements IACSLHandler {
      * Holds the spec type, which we need later in the code.
      */
     private ACSLHandler.SPEC_TYPE specType = ACSLHandler.SPEC_TYPE.NOT;
+    /**
+     * in the witness invariant mode we write a different annotation at the
+     * assert
+     */
+	private final  boolean m_WitnessInvariantMode;
     
     
+
+	public ACSLHandler(boolean witnessInvariantMode) {
+		m_WitnessInvariantMode = witnessInvariantMode;
+	}
 
 	/**
      * @deprecated is not supported in this handler! Do not use!
@@ -169,9 +179,19 @@ public class ACSLHandler implements IACSLHandler {
 
     @Override
     public Result visit(Dispatcher main, ACSLNode node) {
-        String msg = "ACSLHandler: Not yet implemented: " + node.toString();
-        ILocation loc = LocationFactory.createACSLLocation(node);
-        throw new UnsupportedSyntaxException(loc, msg);
+    	ILocation loc = LocationFactory.createACSLLocation(node);
+    	if (node instanceof OldValueExpression) {
+    		OldValueExpression ove = (OldValueExpression) node;
+    		ExpressionResult inner = (ExpressionResult) main.dispatch(ove.getFormula());
+    		inner.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
+    		inner.lrVal = new RValue(
+    				ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, inner.lrVal.getValue()), 
+    				inner.lrVal.getCType());
+    		return inner;
+    	} else {
+    		String msg = "ACSLHandler: Not yet implemented: " + node.toString();
+    		throw new UnsupportedSyntaxException(loc, msg);
+    	}
     }
 
     @Override
@@ -187,7 +207,12 @@ public class ACSLHandler implements IACSLHandler {
             check.addToNodeAnnot(assertStmt);
             return new Result(assertStmt);
             */
-            Check check = new Check(Check.Spec.ASSERT);
+            final Check check; 
+            if (m_WitnessInvariantMode) {
+            	check = new Check(Check.Spec.WITNESS_INVARIANT);
+            } else {
+            	check = new Check(Check.Spec.ASSERT);
+            }
             ILocation loc = LocationFactory.createACSLLocation(node, check);
             ArrayList<Declaration> decl = new ArrayList<Declaration>();
             ArrayList<Statement> stmt = new ArrayList<Statement>();

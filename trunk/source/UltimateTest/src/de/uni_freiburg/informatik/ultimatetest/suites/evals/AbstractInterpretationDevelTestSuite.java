@@ -30,9 +30,11 @@ package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.OverapproximatingSafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
@@ -55,66 +57,123 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL 
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),			
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+////			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+////			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
+////			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_WO_CON_Debug.epf"),
+			
+			//### BPL Inline			
+//			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 			
 			//### C
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_SMTInterpol.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
+			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),			
+//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+
+			//### C Inline			
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 	};
 
 
 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
-//			"examples/programs/abstractInterpretation/",
 //			"examples/programs/abstractInterpretation/regression",
-//			"examples/programs/abstractInterpretation/regression/LoopGoto.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
 			
-
-			// ################################# Bugs #########################
-			// ########### Here are representatives of current bugs ########### 
-
-			//Unknown Term
-			"examples/svcomp/eca-rers2012/Problem17_label25_false-unreach-call.c",
-			"examples/svcomp/product-lines/elevator_spec1_product29_true-unreach-call.cil.c"
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
+//			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
+//			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
+//			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
+//			"examples/programs/abstractInterpretation/regression/procedure-Loops.bpl",
+//			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c"
+//			"examples/svcomp/bitvector-loops/overflow_false-unreach-call1.i",
+//			"examples/svcomp/bitvector-loops/diamond_false-unreach-call2.i",
+//			"examples/svcomp/product-lines/email_spec11_productSimulator_false-unreach-call.cil.c",
+//			"examples/svcomp/product-lines/email_spec4_product32_false-unreach-call.cil.c",
+			"examples/svcomp/loop-invgen/down_true-unreach-call.i",
+//			"examples/svcomp/loop-lit/css2003_true-unreach-call.c.i",
+//			"examples/svcomp/loop-invgen/string_concat-noarr_true-unreach-call.i",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 180 * 1000 ;
+//		return 30 * 1000 * 1000;
+		 return 30 * 1000 ;
+//		return 60 * 1000 * 10;
 	}
 
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
 		// @formatter:off
-		return new ColumnDefinition[] {
-				new ColumnDefinition("Runtime (ns)", "Total time", ConversionContext.Divide(1000000000, 2, " s"),
-						Aggregate.Sum, Aggregate.Average),
-				new ColumnDefinition("Allocated memory end (bytes)", "Alloc. Memory",
-						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
-				new ColumnDefinition("Peak memory consumption (bytes)", "Peak Memory",
-						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average), };
+		return new ColumnDefinition[]{
+			new ColumnDefinition(
+					"Runtime (ns)", "Avg. runtime",
+					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+			new ColumnDefinition(
+					"Allocated memory end (bytes)", "Memory",
+					ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
+			new ColumnDefinition(
+					"Overall iterations", "Iter{-}ations",
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"Abstract Interpretation iterations", "AI Iter{-}ations",
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"Abstract Interpretation Time", "AI Avg. Time",
+					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+			new ColumnDefinition(
+					"Overall time", "Trace Abstraction Time",
+					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+			new ColumnDefinition(
+					"NumberOfCodeBlocks", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"SizeOfPredicatesFP", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+			new ColumnDefinition(
+					"SizeOfPredicatesBP", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+			new ColumnDefinition(
+					"Conjuncts in SSA", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+			new ColumnDefinition(
+					"Conjuncts in UnsatCore", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"ICC %", "ICC",
+					ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),					
+		};
 		// @formatter:on
 	}
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, false);
+		return new OverapproximatingSafetyCheckTestResultDecider(urd, false);
 	}
 
 	@Override
@@ -124,7 +183,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			for (int i = 0; i < INPUT.length; ++i) {
 				pairs[i] = new DirectoryFileEndingsPair(INPUT[i], triple.getSecond(), DEFAULT_LIMIT);
 			}
-			addTestCases(triple.getFirst(), triple.getThird(), pairs);
+			addTestCase(triple.getFirst(), triple.getThird(), pairs);
 		}
 		return super.createTestCases();
 	}

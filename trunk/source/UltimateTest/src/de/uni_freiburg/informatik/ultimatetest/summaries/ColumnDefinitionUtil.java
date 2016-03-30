@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils.IExplicitConverter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * 
@@ -59,8 +59,8 @@ public class ColumnDefinitionUtil {
 
 		ICsvProvider<String> newProvider = new SimpleCsvProvider<>(csv.getColumnTitles());
 
-		List<ConversionContext> conversionInfo = new ArrayList<>(CoreUtil.select(columnDefinitions,
-				new CoreUtil.IReduce<ConversionContext, ColumnDefinition>() {
+		List<ConversionContext> conversionInfo = new ArrayList<>(
+				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<ConversionContext, ColumnDefinition>() {
 					@Override
 					public ConversionContext reduce(ColumnDefinition entry) {
 						return entry.getConversionContext();
@@ -96,8 +96,8 @@ public class ColumnDefinitionUtil {
 		final HashSet<String> max = new HashSet<>();
 		final HashSet<String> avg = new HashSet<>();
 
-		List<String> columnsToKeep = new ArrayList<>(CoreUtil.select(columnDefinitions,
-				new CoreUtil.IReduce<String, ColumnDefinition>() {
+		List<String> columnsToKeep = new ArrayList<>(
+				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
 					@Override
 					public String reduce(ColumnDefinition entry) {
 						return entry.getColumnToKeep();
@@ -190,8 +190,21 @@ public class ColumnDefinitionUtil {
 		return newProvider;
 	}
 
-	public static ICsvProvider<String> preparePrintProvider(ICsvProvider<?> provider, UltimateRunDefinition urd,
-			String message, List<ColumnDefinition> columnDefinitions) {
+	/**
+	 * Prepare a {@link ICsvProvider} for integration into one large provider that reflects a complete testsuite by
+	 * doing the following.
+	 * <ul>
+	 * <li>Remove all columns that are not selected by the user.
+	 * <li>Transform a provider with multiple rows into one with a single row by using the
+	 * {@link ColumnDefinition#getSingleRunToOneRow()} method.
+	 * <li>Add new columns containing information from {@link UltimateRunDefinition} and {@link ExtendedResult}.
+	 * </ul>
+	 * 
+	 * @return A new {@link ICsvProvider} that contains one row per test case, only the user-selected columns, and
+	 *         additional columns for run definition and test results.
+	 */
+	public static ICsvProvider<String> preparePrintProvider(ICsvProvider<?> provider, final UltimateRunDefinition urd,
+			final ExtendedResult extendedResult, final List<ColumnDefinition> columnDefinitions) {
 
 		// remove all columns that are marked for removal by column definitions
 		provider = CsvUtils.projectColumn(provider,
@@ -212,56 +225,66 @@ public class ColumnDefinitionUtil {
 					}
 				}), columnDefinitions);
 
-		newProvider = prefixCsvProvider(urd, message, newProvider);
+		// add the ultimate run definition in the beginning
+		newProvider = prefixCsvProvider(urd, extendedResult, newProvider);
 		return newProvider;
 	}
 
 	/**
-	 * Create a new ICsvProvider by prefixing every row with the contents of the
-	 * UltimateRunDefinition and an arbitrary message.
+	 * Create a new ICsvProvider by prefixing every row with the contents of the {@link UltimateRunDefinition} and the
+	 * result of the test (taken from {@link ExtendedResult}).
 	 * 
-	 * This method expects that the ICsvProvider belongs to a certain Ultimate
-	 * run.
+	 * This method expects that the ICsvProvider belongs to a certain Ultimate run.
 	 * 
-	 * @param ultimateRunDefinition
-	 * @param message
-	 * @param provider
-	 * @return
 	 */
-	public static ICsvProvider<String> prefixCsvProvider(UltimateRunDefinition urd, String message,
-			ICsvProvider<String> provider) {
-		List<String> resultColumns = new ArrayList<>();
+	public static ICsvProvider<String> prefixCsvProvider(final UltimateRunDefinition urd,
+			final ExtendedResult extendedResult, final ICsvProvider<String> provider) {
+		// Note: Also change {@link #getColumnDefinitionForPrefix()} if you add a column here.
+		final List<String> resultColumns = new ArrayList<>();
 		resultColumns.add("Folder");
 		resultColumns.add("File");
 		resultColumns.add("Settings");
 		resultColumns.add("Toolchain");
+		resultColumns.add("Result");
+		resultColumns.add("Category");
 		resultColumns.add("Message");
 		resultColumns.addAll(provider.getColumnTitles());
 
-		ICsvProvider<String> result = new SimpleCsvProvider<>(resultColumns);
-		int rows = provider.getRowHeaders().size();
+		final ICsvProvider<String> result = new SimpleCsvProvider<>(resultColumns);
+		final int rows = provider.getRowHeaders().size();
 		for (int i = 0; i < rows; i++) {
-			List<String> resultRow = new ArrayList<>();
-			resultRow.add(TestUtil.removeTrunkExamplesPrefix(urd.getInput().getParent()));
-			resultRow.add(urd.getInput().getName());
+			final List<String> resultRow = new ArrayList<>();
+			resultRow.add(urd.getInputFileFolders());
+			resultRow.add(urd.getInputFileNames());
 			resultRow.add(urd.getSettings().getName());
 			resultRow.add(urd.getToolchain().getName());
-			resultRow.add(message);
+			resultRow.add(extendedResult.getResult().toString());
+			resultRow.add(extendedResult.getCategory());
+			resultRow.add(extendedResult.getMessage());
 			resultRow.addAll(provider.getRow(i));
 			result.addRow(resultRow);
 		}
 		return result;
 	}
 
+	/**
+	 * Provide the column definitions for the additional columns introduced by
+	 * {@link #prefixCsvProvider(UltimateRunDefinition, ExtendedResult, ICsvProvider)}.
+	 */
 	public static List<ColumnDefinition> getColumnDefinitionForPrefix() {
-		List<ColumnDefinition> rtr = new ArrayList<>();
+		final List<ColumnDefinition> rtr = new ArrayList<>();
 		rtr.add(new ColumnDefinition("Folder", "Folder", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore));
 		rtr.add(new ColumnDefinition("File", "File", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore));
 		rtr.add(new ColumnDefinition("Settings", "Settings", ConversionContext.Keep(), Aggregate.Ignore,
 				Aggregate.Ignore));
 		rtr.add(new ColumnDefinition("Toolchain", "Toolchain", ConversionContext.Keep(), Aggregate.Ignore,
 				Aggregate.Ignore));
-		rtr.add(new ColumnDefinition("Message", "Message", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore));
+		rtr.add(new ColumnDefinition("Result", "Result", ConversionContext.Keep(), Aggregate.Ignore,
+				Aggregate.Ignore));
+		rtr.add(new ColumnDefinition("Category", "Category", ConversionContext.Keep(), Aggregate.Ignore,
+				Aggregate.Ignore));
+		rtr.add(new ColumnDefinition("Message", "Message", ConversionContext.Keep(), Aggregate.Ignore,
+				Aggregate.Ignore));
 		return rtr;
 	}
 

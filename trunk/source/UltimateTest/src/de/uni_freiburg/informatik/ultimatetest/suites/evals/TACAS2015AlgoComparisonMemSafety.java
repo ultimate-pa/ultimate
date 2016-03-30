@@ -33,25 +33,25 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		addTestCases("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_Interpolation-mem.epf",
+		addTestCase("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_Interpolation-mem.epf",
 				getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml",
+		addTestCase("AutomizerCWithBlockEncoding.xml",
 				"TACASInterpolation2015/Automizer/Princess_Interpolation-mem.epf", getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml",
+		addTestCase("AutomizerCWithBlockEncoding.xml",
 				"TACASInterpolation2015/Automizer/SMTInterpol_Interpolation-mem.epf", getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml",
+		addTestCase("AutomizerCWithBlockEncoding.xml",
 				"TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-LV-mem.epf", getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-LV-mem.epf",
+		addTestCase("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-LV-mem.epf",
 				getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC-LV-mem.epf",
+		addTestCase("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC-LV-mem.epf",
 				getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-mem.epf",
+		addTestCase("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-mem.epf",
 				getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-mem.epf", getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC-mem.epf",
+		addTestCase("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-mem.epf", getPairs());
+		addTestCase("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC-mem.epf",
 				getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-LV-mem.epf", getPairs());
-		addTestCases("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-mem.epf", getPairs());
+		addTestCase("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-LV-mem.epf", getPairs());
+		addTestCase("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-mem.epf", getPairs());
 
 		// addTestCases("CodeCheckNoBE-C.xml",
 		// "TACASInterpolation2015/Kojak-SP-mem.epf", getPairs());

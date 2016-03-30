@@ -61,22 +61,22 @@ public class LpSolverTest {
 		final List<LinearConstraint<BigDecimal>> constraintList = new ArrayList<>();
 
 		final LinearConstraint<BigDecimal> constrX = new LinearConstraint<>("x-constraint");
-		constrX.addCoefficient("x", new BigDecimal(1));
-		constrX.addCoefficient("y", new BigDecimal(0));
-		constrX.setLower(new BigDecimal(0));
+		constrX.addCoefficient("x", BigDecimal.ONE);
+		constrX.addCoefficient("y", BigDecimal.ZERO);
+		constrX.setLower(BigDecimal.ZERO);
 		constrX.setUpper(new BigDecimal(4));
 		constraintList.add(constrX);
 
 		final LinearConstraint<BigDecimal> constrY = new LinearConstraint<>("y-constraint");
-		constrY.addCoefficient("x", new BigDecimal(0));
-		constrY.addCoefficient("y", new BigDecimal(1));
-		constrY.setLower(new BigDecimal(0));
+		constrY.addCoefficient("x", BigDecimal.ZERO);
+		constrY.addCoefficient("y", BigDecimal.ONE);
+		constrY.setLower(BigDecimal.ZERO);
 		constrY.setUpper(new BigDecimal(4));
 		constraintList.add(constrY);
 
 		final LinearConstraint<BigDecimal> slope = new LinearConstraint<>("slope");
 		slope.addCoefficient("x", new BigDecimal(0.75));
-		slope.addCoefficient("y", new BigDecimal(1));
+		slope.addCoefficient("y", BigDecimal.ONE);
 		slope.setUpper(new BigDecimal(3));
 		constraintList.add(slope);
 
@@ -95,9 +95,9 @@ public class LpSolverTest {
 		solver.deleteLpInstance();
 
 		assertTrue(maxX.compareTo(new BigDecimal(4)) == 0);
-		assertTrue(minX.compareTo(new BigDecimal(0)) == 0);
+		assertTrue(minX.compareTo(BigDecimal.ZERO) == 0);
 		assertTrue(maxY.compareTo(new BigDecimal(3)) == 0);
-		assertTrue(minY.compareTo(new BigDecimal(0)) == 0);
+		assertTrue(minY.compareTo(BigDecimal.ZERO) == 0);
 	}
 	
 	@Test
@@ -111,22 +111,22 @@ public class LpSolverTest {
 		final List<LinearConstraint<BigDecimal>> constraintList = new ArrayList<>();
 
 		final LinearConstraint<BigDecimal> constrX = new LinearConstraint<>("x-constraint");
-		constrX.addCoefficient("x", new BigDecimal(1));
-		constrX.addCoefficient("y", new BigDecimal(0));
+		constrX.addCoefficient("x", BigDecimal.ONE);
+		constrX.addCoefficient("y", BigDecimal.ZERO);
 		constrX.setLower(new BigDecimal(-3));
 		constrX.setUpper(new BigDecimal(-1));
 		constraintList.add(constrX);
 
 		final LinearConstraint<BigDecimal> constrY = new LinearConstraint<>("y-constraint");
-		constrY.addCoefficient("x", new BigDecimal(0));
-		constrY.addCoefficient("y", new BigDecimal(1));
-		constrY.setLower(new BigDecimal(1));
+		constrY.addCoefficient("x", BigDecimal.ZERO);
+		constrY.addCoefficient("y", BigDecimal.ONE);
+		constrY.setLower(BigDecimal.ONE);
 		constrY.setUpper(new BigDecimal(4));
 		constraintList.add(constrY);
 
 		final LinearConstraint<BigDecimal> slope = new LinearConstraint<>("slope");
 		slope.addCoefficient("x", new BigDecimal(-1));
-		slope.addCoefficient("y", new BigDecimal(1));
+		slope.addCoefficient("y", BigDecimal.ONE);
 		slope.setUpper(new BigDecimal(3));
 		constraintList.add(slope);
 
@@ -147,7 +147,7 @@ public class LpSolverTest {
 		assertTrue(maxX.compareTo(new BigDecimal(-1)) == 0);
 		assertTrue(minX.compareTo(new BigDecimal(-2)) == 0);
 		assertTrue(maxY.compareTo(new BigDecimal(2)) == 0);
-		assertTrue(minY.compareTo(new BigDecimal(1)) == 0);
+		assertTrue(minY.compareTo(BigDecimal.ONE) == 0);
 	}
 	
 	@Test
@@ -161,20 +161,20 @@ public class LpSolverTest {
 		final List<LinearConstraint<BigDecimal>> constraintList = new ArrayList<>();
 
 		final LinearConstraint<BigDecimal> constrX = new LinearConstraint<>("x-constraint");
-		constrX.addCoefficient("x", new BigDecimal(1));
-		constrX.addCoefficient("y", new BigDecimal(0));
-		constrX.setLower(new BigDecimal(1));
+		constrX.addCoefficient("x", BigDecimal.ONE);
+		constrX.addCoefficient("y", BigDecimal.ZERO);
+		constrX.setLower(BigDecimal.ONE);
 		constraintList.add(constrX);
 
 		final LinearConstraint<BigDecimal> constrY = new LinearConstraint<>("y-constraint");
-		constrY.addCoefficient("x", new BigDecimal(0));
-		constrY.addCoefficient("y", new BigDecimal(1));
-		constrY.setLower(new BigDecimal(1));
+		constrY.addCoefficient("x", BigDecimal.ZERO);
+		constrY.addCoefficient("y", BigDecimal.ONE);
+		constrY.setLower(BigDecimal.ONE);
 		constraintList.add(constrY);
 
 		final LinearConstraint<BigDecimal> slope = new LinearConstraint<>("slope");
-		slope.addCoefficient("x", new BigDecimal(1));
-		slope.addCoefficient("y", new BigDecimal(1));
+		slope.addCoefficient("x", BigDecimal.ONE);
+		slope.addCoefficient("y", BigDecimal.ONE);
 		slope.setUpper(new BigDecimal(3));
 		constraintList.add(slope);
 
@@ -193,9 +193,9 @@ public class LpSolverTest {
 		solver.deleteLpInstance();
 
 		assertTrue(maxX.compareTo(new BigDecimal(2)) == 0);
-		assertTrue(minX.compareTo(new BigDecimal(1)) == 0);
+		assertTrue(minX.compareTo(BigDecimal.ONE) == 0);
 		assertTrue(maxY.compareTo(new BigDecimal(2)) == 0);
-		assertTrue(minY.compareTo(new BigDecimal(1)) == 0);
+		assertTrue(minY.compareTo(BigDecimal.ONE) == 0);
 	}
 	
 	@Test
@@ -209,20 +209,20 @@ public class LpSolverTest {
 		final List<LinearConstraint<BigDecimal>> constraintList = new ArrayList<>();
 
 		final LinearConstraint<BigDecimal> constrX = new LinearConstraint<>("x-constraint");
-		constrX.addCoefficient("x", new BigDecimal(1));
-		constrX.addCoefficient("y", new BigDecimal(0));
-		constrX.setLower(new BigDecimal(0));
+		constrX.addCoefficient("x", BigDecimal.ONE);
+		constrX.addCoefficient("y", BigDecimal.ZERO);
+		constrX.setLower(BigDecimal.ZERO);
 		constraintList.add(constrX);
 
 		final LinearConstraint<BigDecimal> constrY = new LinearConstraint<>("y-constraint");
-		constrY.addCoefficient("x", new BigDecimal(0));
-		constrY.addCoefficient("y", new BigDecimal(1));
-		constrY.setLower(new BigDecimal(0));
+		constrY.addCoefficient("x", BigDecimal.ZERO);
+		constrY.addCoefficient("y", BigDecimal.ONE);
+		constrY.setLower(BigDecimal.ZERO);
 		constraintList.add(constrY);
 
 		final LinearConstraint<BigDecimal> slope = new LinearConstraint<>("slope");
-		slope.addCoefficient("x", new BigDecimal(1));
-		slope.addCoefficient("y", new BigDecimal(1));
+		slope.addCoefficient("x", BigDecimal.ONE);
+		slope.addCoefficient("y", BigDecimal.ONE);
 		slope.setLower(new BigDecimal(2));
 		constraintList.add(slope);
 
@@ -241,8 +241,8 @@ public class LpSolverTest {
 		solver.deleteLpInstance();
 
 		assertTrue(maxX == null);
-		assertTrue(minX.compareTo(new BigDecimal(0)) == 0);
+		assertTrue(minX.compareTo(BigDecimal.ZERO) == 0);
 		assertTrue(maxY == null);
-		assertTrue(minY.compareTo(new BigDecimal(0)) == 0);
+		assertTrue(minY.compareTo(BigDecimal.ZERO) == 0);
 	}
 }

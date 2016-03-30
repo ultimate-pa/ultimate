@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class IntervalDomainEvaluationResult implements IEvaluationResult<IntervalDomainValue> {
 
-	private IntervalDomainValue mValue;
-	private BooleanValue mBooleanValue;
+	private final IntervalDomainValue mValue;
+	private final BooleanValue mBooleanValue;
 
 	/**
 	 * Default constructor for an {@link IntervalDomainEvaluationResult}.
@@ -50,7 +50,7 @@ public class IntervalDomainEvaluationResult implements IEvaluationResult<Interva
 	 * @param booleanValue
 	 *            The {@link BooleanValue} to set in the result.
 	 */
-	protected IntervalDomainEvaluationResult(IntervalDomainValue value, BooleanValue booleanValue) {
+	protected IntervalDomainEvaluationResult(final IntervalDomainValue value, final BooleanValue booleanValue) {
 		mValue = value;
 		mBooleanValue = booleanValue;
 	}
@@ -68,10 +68,7 @@ public class IntervalDomainEvaluationResult implements IEvaluationResult<Interva
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Value: ");
-		sb.append(mValue);
-		sb.append(" -- Boolean Value: ");
-		sb.append(mBooleanValue);
+		sb.append("Value: ").append(mValue).append(" -- Boolean Value: ").append(mBooleanValue);
 		return sb.toString();
 	}
 }

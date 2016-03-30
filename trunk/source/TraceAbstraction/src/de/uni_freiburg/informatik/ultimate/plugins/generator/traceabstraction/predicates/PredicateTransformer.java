@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -55,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableMana
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -67,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
  * 
  */
 public class PredicateTransformer {
-	private final SmtManager m_SmtManager;
+	private final PredicateFactory m_SmtManager;
 	private final Script m_Script;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	private final VariableManager m_VariableManager;
@@ -78,7 +76,7 @@ public class PredicateTransformer {
 			IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_SmtManager = smtManager;
+		m_SmtManager = smtManager.getPredicateFactory();
 		m_Script = smtManager.getScript();
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		m_VariableManager = smtManager.getVariableManager();
@@ -332,7 +330,7 @@ public class PredicateTransformer {
 				restrictMap(globalVarAssignments.getOutVars(), GlobalType.NONOLDVAR), globalVarsInvarsRenamed,
 				varsToRenameInPredNonPendingCall, varsToQuantifyNonPendingCall);
 		substitution.clear();
-		if (globalVarAssignments.getFormula() == m_SmtManager.newTruePredicate().getFormula()) {
+		if (SmtUtils.isTrue(globalVarAssignments.getFormula())) {
 			for (BoogieVar bv : oldVarAssignments.getInVars().keySet()) {
 				substitution.put(oldVarAssignments.getInVars().get(bv), bv.getTermVariable());
 				TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
@@ -607,12 +605,12 @@ public class PredicateTransformer {
 				.transform(callerPred.getFormula());
 
 		// 1. CalleePredRenamed and loc vars quantified
-		Term calleePredRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger, m_Script, m_SmtManager.getVariableManager(),
+		Term calleePredRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger, m_Script, m_VariableManager,
 				Script.EXISTS, varsToQuantifyInCalleePred,
 				calleePredVarsRenamedOldVarsToFreshVars, (Term[][]) null);
 		// 2. CallTF and callerPred
 		Term calleRPredANDCallTFRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger,
-				m_Script, m_SmtManager.getVariableManager(), Script.EXISTS, varsToQuantifyInCallerPredAndCallTF, 
+				m_Script, m_VariableManager, Script.EXISTS, varsToQuantifyInCallerPredAndCallTF, 
 				Util.and(m_Script,
 						callerPredVarsRenamedToFreshVars, callTermRenamed), (Term[][]) null);
 		// 3. Result

@@ -95,7 +95,8 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			m_ResultState = constructNewResultState(cfgAutomatonState, witnessAutomatonState, stutteringSteps);
 		}
 		private ISLPredicate constructNewResultState(IPredicate cfgAutomatonState, WitnessNode witnessNode, Integer stutteringSteps) {
-			return m_SmtManager.newTrueSLPredicateWithWitnessNode(((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode, stutteringSteps); 
+			return m_SmtManager.getPredicateFactory().newTrueSLPredicateWithWitnessNode(
+					((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode, stutteringSteps); 
 		}
 		
 		public IPredicate getCfgAutomatonState() {

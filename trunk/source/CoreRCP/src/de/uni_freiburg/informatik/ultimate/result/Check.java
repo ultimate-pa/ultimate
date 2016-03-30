@@ -111,7 +111,11 @@ public class Check extends AbstractAnnotations {
 		/**
 		 * An LTL property
 		 */
-		LTL
+		LTL,
+		/**
+		 * Invariant of a correctness witness
+		 */
+		WITNESS_INVARIANT,
 		// add missing failure types...
 
 	}
@@ -160,6 +164,8 @@ public class Check extends AbstractAnnotations {
 			return "pointer arithmetic is always legal";
 		case ERROR_Function:
 			return "call of __VERIFIER_error() unreachable";
+		case WITNESS_INVARIANT:
+			return "invariant of correctness witness holds";
 		case UNKNOWN:
 			return "unknown kind of specification holds";
 		default:
@@ -195,6 +201,8 @@ public class Check extends AbstractAnnotations {
 			return "comparison of incompatible pointers";
 		case ERROR_Function:
 			return "a call of __VERIFIER_error() is reachable";
+		case WITNESS_INVARIANT:
+			return "invariant of correctness witness can be violated";
 		case UNKNOWN:
 			return "unknown kind of specification may be violated";
 		default:

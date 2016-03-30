@@ -49,6 +49,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -62,12 +63,12 @@ import de.uni_freiburg.informatik.ultimate.gui.customeditors.MultiLineTextFieldE
 public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
 	private final String mPluginID;
-	private final UltimatePreferenceItem<?>[] mDefaultPreferences;
+	private final AbstractUltimatePreferenceItem[] mDefaultPreferences;
 	private final String mTitle;
 	private final ScopedPreferenceStore mPreferenceStore;
 	private final Map<FieldEditor, UltimatePreferenceItem<?>> mCheckedFields;
 
-	public UltimateGeneratedPreferencePage(String pluginID, String title, UltimatePreferenceItem<?>[] preferences) {
+	public UltimateGeneratedPreferencePage(String pluginID, String title, AbstractUltimatePreferenceItem[] preferences) {
 		super(GRID);
 		mPluginID = pluginID;
 		mDefaultPreferences = preferences;
@@ -85,54 +86,57 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 
 	@Override
 	protected void createFieldEditors() {
-		for (final UltimatePreferenceItem<?> item : mDefaultPreferences) {
-			final FieldEditor editor;
-			switch (item.getType()) {
-			case Label:
-				editor = createLabel(item.getLabel());
-				break;
-			case Integer:
-				editor = createIntegerFieldEditor(item.getLabel());
-				break;
-			case Boolean:
-				editor = createBooleanFieldEditor(item.getLabel());
-				break;
-			case Directory:
-				editor = createDirectoryEditor(item.getLabel());
-				break;
-			case String:
-				editor = createStringEditor(item.getLabel());
-				break;
-			case Combo:
-				editor = createComboEditor(item);
-				break;
-			case Radio:
-				editor = createRadioGroupFieldEditor(item);
-				break;
-			case Path:
-				editor = createPathFieldEditor(item);
-				break;
-			case File:
-				editor = createFileFieldEditor(item);
-				break;
-			case MultilineString:
-				editor = createMultilineFieldEditor(item.getLabel());
-				break;
-			case Color:
-				editor = createColorEditor(item.getLabel());
-				break;
-			default:
-				throw new UnsupportedOperationException(
-						"You need to implement the new enum type \"" + item.getType() + "\" here");
-			}
+		for (final AbstractUltimatePreferenceItem prefItem : mDefaultPreferences) {
+			if (prefItem instanceof UltimatePreferenceItem) {
+				UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
+				final FieldEditor editor;
+				switch (item.getType()) {
+				case Label:
+					editor = createLabel(item.getLabel());
+					break;
+				case Integer:
+					editor = createIntegerFieldEditor(item.getLabel());
+					break;
+				case Boolean:
+					editor = createBooleanFieldEditor(item.getLabel());
+					break;
+				case Directory:
+					editor = createDirectoryEditor(item.getLabel());
+					break;
+				case String:
+					editor = createStringEditor(item.getLabel());
+					break;
+				case Combo:
+					editor = createComboEditor(item);
+					break;
+				case Radio:
+					editor = createRadioGroupFieldEditor(item);
+					break;
+				case Path:
+					editor = createPathFieldEditor(item);
+					break;
+				case File:
+					editor = createFileFieldEditor(item);
+					break;
+				case MultilineString:
+					editor = createMultilineFieldEditor(item.getLabel());
+					break;
+				case Color:
+					editor = createColorEditor(item.getLabel());
+					break;
+				default:
+					throw new UnsupportedOperationException(
+					        "You need to implement the new enum type \"" + item.getType() + "\" here");
+				}
 
-			final String tooltip = item.getToolTip();
-			if (tooltip != null) {
-				setTooltip(editor, getFieldEditorParent(), tooltip);
-			}
-			addField(editor);
-			if (item.getPreferenceValidator() != null) {
-				mCheckedFields.put(editor, item);
+				final String tooltip = item.getToolTip();
+				if (tooltip != null) {
+					setTooltip(editor, getFieldEditorParent(), tooltip);
+				}
+				addField(editor);
+				if (item.getPreferenceValidator() != null) {
+					mCheckedFields.put(editor, item);
+				}
 			}
 		}
 	}

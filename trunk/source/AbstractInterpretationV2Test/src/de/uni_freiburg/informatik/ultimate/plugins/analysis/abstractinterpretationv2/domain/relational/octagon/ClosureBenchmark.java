@@ -21,16 +21,16 @@ import java.util.stream.Collectors;
 public class ClosureBenchmark {
 
 	public static void main(String[] args) {
-		ClosureBenchmark cb = new ClosureBenchmark("/tmp/closureBenchmarkSvcompSmall");
+		ClosureBenchmark cb = new ClosureBenchmark("/tmp/empty");
 		cb.addCandidate("naiv", OctMatrix::shortestPathClosureNaiv);
 		cb.addCandidate("apron", OctMatrix::shortestPathClosureApron);
 		cb.addCandidate("fsparse", OctMatrix::shortestPathClosureFullSparse);
 		cb.addCandidate("sparse", OctMatrix::shortestPathClosureSparse);
 		cb.addCandidate("psparse", OctMatrix::shortestPathClosurePrimitiveSparse);
-		cb.run(0);
-		cb.printResults(false);
-		cb.printResults(true);
-		cb.printStatistics();
+		cb.run(3);
+		cb.printFullStatistics();
+		cb.printShortStatistics(8);
+		cb.printResults();
 	}
 	
 	////////////////////////////////////////////////////////////////
@@ -87,11 +87,11 @@ public class ClosureBenchmark {
 		mCandidates.forEach(c -> c.measuredNanoSeconds = 0);
 		mMatrixStatistics.clear();
 		
-		logInfo("Searching files ...");
+		logInfo("Searching files in \'" + mBenchmarkDirectory + "\' ...");
 		List<Path> files = filesInBenchmark();
 		logInfo("Found " + files.size() + " files.");
 
-		logInfo("Starting benchmark.");
+		logInfo("Starting benchmark (" + cyclesPerFile + " cycles per file).");
 
 		long tStart, tLastProgressInfo;
 		tStart = tLastProgressInfo = System.nanoTime();
@@ -199,31 +199,43 @@ public class ClosureBenchmark {
 	}
 	
 
-	public void printResults(boolean sort) {
+	public void printResults() {
 		System.out.println();
-		System.out.println("Benchmark results");
+		System.out.println("Benchmark Results");
 		System.out.println("-----------------");
 		System.out.println();
 
 		List<Candidate> sortedResults = mCandidates;
-		if (sort) {
-			sortedResults = new ArrayList<>(mCandidates);
-			Collections.sort(sortedResults, new Comparator<Candidate>() {
-				@Override
-				public int compare(Candidate ca, Candidate cb) {
-					return Long.compare(ca.measuredNanoSeconds, cb.measuredNanoSeconds);
-				}
-			});
-		}
+		sortedResults = new ArrayList<>(mCandidates);
+		Collections.sort(sortedResults, new Comparator<Candidate>() {
+			@Override
+			public int compare(Candidate ca, Candidate cb) {
+				return Long.compare(ca.measuredNanoSeconds, cb.measuredNanoSeconds);
+			}
+		});
 		int nameWidth = longestCandidateName();
 		String format = "%" + nameWidth + "s %8.2f seconds%n";
 		sortedResults.forEach(c -> System.out.format(format, c.name, c.measuredNanoSeconds * 1e-9));
 	}
 	
-	public void printStatistics() {
+	public void printFullStatistics() {
 		System.out.println();
-		System.out.println("Statistics");
-		System.out.println("----------");
+		System.out.println("Full Statistics");
+		System.out.println("---------------");
+		System.out.println();
+		
+		System.out.println("#variables\t" + "infPercentage\t" + "isBottom\t" + "isBottomInt");
+		for (MatrixStatistic ms : mMatrixStatistics) {
+			System.out.format("%d\t%f\t%b\t%b%n",
+					ms.variables, ms.infinityPercentageInBlockLowerHalf, ms.isBottom, ms.isBottomInt);
+		}
+		System.out.println();
+	}
+
+	public void printShortStatistics(int bins) {
+		System.out.println();
+		System.out.println("Short Statistics");
+		System.out.println("----------------");
 		System.out.println();
 
 		long bottoms = mMatrixStatistics.stream().filter(ms -> ms.isBottom).count();
@@ -233,7 +245,6 @@ public class ClosureBenchmark {
 		System.out.format("integer bottom matrices  %8d%n", bottomInts);
 		System.out.println();
 		
-		int bins = 16;
 		System.out.println("Histogram: infinity percentage in block lower matrices (" + bins + " bins)");
 		System.out.println(">=percentage #matrices");
 		int[] histInfPercentage = histInfPercentagePerMatrix(bins);
