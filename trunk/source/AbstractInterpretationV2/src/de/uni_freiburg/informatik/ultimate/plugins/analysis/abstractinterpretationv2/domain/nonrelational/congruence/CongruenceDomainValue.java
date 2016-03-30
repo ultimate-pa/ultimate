@@ -193,14 +193,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		if (other.mIsConstant && mValue.mod(other.mValue.abs()).signum() == 0) {
 			return createConstant(BigInteger.ZERO);
 		}
-		boolean nonZero = false;
-		if (mIsConstant) {
-			nonZero = mValue.mod(other.mValue).signum() != 0;
-		}
-		if (other.mIsConstant) {
-			nonZero = other.mValue.mod(mValue).signum() != 0 && mNonZero;
-		}
-		return createNonConstant(mValue.gcd(other.mValue), nonZero);
+		return createNonConstant(mValue.gcd(other.mValue), mIsConstant && mValue.mod(other.mValue).signum() != 0);
 	}
 	
 	protected CongruenceDomainValue multiply(CongruenceDomainValue other) {
@@ -244,6 +237,10 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		// If 0 < a < b: a / bZ = 0 
 		if (mIsConstant && mValue.signum() > 0 && mValue.compareTo(other.mValue) < 0) {
 			return createConstant(BigInteger.ZERO);
+		}
+		// aZ \ {0} / b = 1Z \ {0} if a >= |b| (division can't be zero then)
+		if (other.mIsConstant && mNonZero && mValue.compareTo(other.mValue.abs()) >= 0) {
+			return createNonConstant(BigInteger.ONE, true);
 		}
 		return createTop();
 	}
