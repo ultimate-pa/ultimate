@@ -182,6 +182,7 @@ public class CongruenceDomainValueTest{
 		assertTrue(z4.modEquals(minusTwo).toString().equals("{}"));
 		assertTrue(one.modEquals(two).toString().equals("{}"));
 		assertTrue(minusTwo.modEquals(z3).toString().equals("2Z"));
+		assertTrue(two.modEquals(z4).toString().equals("{}"));
 	}
 	
 	@Test

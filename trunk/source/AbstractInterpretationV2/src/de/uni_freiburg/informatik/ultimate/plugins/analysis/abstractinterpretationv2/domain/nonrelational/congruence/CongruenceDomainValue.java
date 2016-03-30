@@ -337,7 +337,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		// If the rest is >= |this|, return bottom if rest is constant, otherwise the non-constant value of this
 		// (because rest has to be 0 then, since all other values are too big)
 		if (mIsConstant && rest.mValue.compareTo(mValue.abs()) >= 0) {
-			if (rest.mIsConstant) {
+			if (rest.mNonZero) {
 				return createBottom();
 			} else {
 				return createNonConstant(mValue);

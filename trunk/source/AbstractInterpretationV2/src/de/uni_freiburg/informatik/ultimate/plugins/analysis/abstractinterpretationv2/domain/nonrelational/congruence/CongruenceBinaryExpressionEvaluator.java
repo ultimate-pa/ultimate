@@ -460,7 +460,6 @@ public class CongruenceBinaryExpressionEvaluator
 		case COMPEQ:
 			newValue = oldValue.intersect(otherValue);
 			break;
-		// TODO: for <, >, <=, >= non-zero can also be assumed for some other values (needs suitable transformation)
 		case COMPNEQ:
 		case COMPLT:
 		case COMPGT:

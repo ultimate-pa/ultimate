@@ -223,6 +223,13 @@ public class ExpressionTransformer {
 		}
 		if (e instanceof BinaryExpression) {
 			Operator op = ((BinaryExpression) e).getOperator();
+			// Transform suitable <, >, <=, >= Expressions to ... != 0 (better to handle)
+			if (newExpr instanceof BinaryExpression) {
+				if ((op == Operator.COMPGT || op == Operator.COMPGEQ) && mConstant.signum() < 0 ||
+						(op == Operator.COMPLT || op == Operator.COMPLEQ) && mConstant.signum() > 0) {
+					return new BinaryExpression(loc, Operator.COMPNEQ, ((BinaryExpression) newExpr).getLeft(), new IntegerLiteral(loc, "0"));
+				}
+			}
 			switch (op) {
 				case COMPLT:
 				case COMPGT:
