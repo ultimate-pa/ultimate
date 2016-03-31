@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Trans
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
@@ -345,12 +346,12 @@ public class TotalInterpolationAutomatonBuilder {
 
 	private void addTransitions(ArrayList<IPredicate> stateSequence, InterpolatingTraceChecker tc) {
 		InterpolantsPreconditionPostcondition ipp = new InterpolantsPreconditionPostcondition(tc);
-		NestedWord<CodeBlock> nw = NestedWord.nestedWord(tc.getTrace());
+		NestedWord<? extends IAction> nw = NestedWord.nestedWord(tc.getTrace());
 		for (int i = 0; i < nw.length(); i++) {
 			if (nw.isInternalPosition(i)) {
-				m_IA.addInternalTransition(ipp.getInterpolant(i), nw.getSymbol(i), ipp.getInterpolant(i + 1));
+				m_IA.addInternalTransition(ipp.getInterpolant(i), (CodeBlock) nw.getSymbol(i), ipp.getInterpolant(i + 1));
 			} else if (nw.isCallPosition(i)) {
-				m_IA.addCallTransition(ipp.getInterpolant(i), nw.getSymbol(i), ipp.getInterpolant(i + 1));
+				m_IA.addCallTransition(ipp.getInterpolant(i), (CodeBlock) nw.getSymbol(i), ipp.getInterpolant(i + 1));
 			} else if (nw.isReturnPosition(i)) {
 				IPredicate hierPred;
 				if (nw.isPendingReturn(i)) {
@@ -359,7 +360,7 @@ public class TotalInterpolationAutomatonBuilder {
 					int callPredPos = nw.getCallPosition(i);
 					hierPred = ipp.getInterpolant(callPredPos);
 				}
-				m_IA.addReturnTransition(ipp.getInterpolant(i), hierPred, nw.getSymbol(i), ipp.getInterpolant(i + 1));
+				m_IA.addReturnTransition(ipp.getInterpolant(i), hierPred, (CodeBlock) nw.getSymbol(i), ipp.getInterpolant(i + 1));
 			} else {
 				throw new AssertionError();
 			}

@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -120,7 +121,7 @@ public class SelfloopDeterminizer
 		if (powersetSucc.isSubsetOf(detState)) {
 			IPredicate detStateContent = getState(detState);
 			LBool isInductive = m_SmtManager.isInductive(detStateContent,
-													   symbol, detStateContent);
+													   (IInternalAction) symbol, detStateContent);
 			if (isInductive == Script.LBool.UNSAT) {
 				m_InternalSelfloop++;
 				return detState;

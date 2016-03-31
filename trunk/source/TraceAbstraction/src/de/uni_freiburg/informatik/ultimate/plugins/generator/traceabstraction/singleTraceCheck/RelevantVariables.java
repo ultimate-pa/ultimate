@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
@@ -850,7 +851,7 @@ public class RelevantVariables {
 	
 	private static class NestedConstraintAnalysis extends ModifiableNestedFormulas<ConstraintAnalysis, IPredicate> {
 
-		public NestedConstraintAnalysis(NestedWord<CodeBlock> nestedWord,
+		public NestedConstraintAnalysis(NestedWord<? extends IAction> nestedWord,
 				SortedMap<Integer, IPredicate> pendingContexts, 
 				NestedFormulas<TransFormula, IPredicate> traceWithFormulas) {
 			super(nestedWord, pendingContexts);

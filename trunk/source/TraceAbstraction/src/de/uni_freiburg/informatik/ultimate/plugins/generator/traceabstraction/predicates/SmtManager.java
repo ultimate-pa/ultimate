@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -560,7 +561,7 @@ public class SmtManager {
 		return result;
 	}
 
-	public LBool isInductive(IPredicate ps1, CodeBlock ta, IPredicate ps2) {
+	public LBool isInductive(IPredicate ps1, IInternalAction ta, IPredicate ps2) {
 		return isInductive(ps1, ta, ps2, false);
 	}
 
@@ -579,7 +580,7 @@ public class SmtManager {
 	 *         means that the theorem prover was not able give an answer to our
 	 *         question.
 	 */
-	public LBool isInductive(IPredicate ps1, CodeBlock ta, IPredicate ps2, boolean expectUnsat) {
+	public LBool isInductive(IPredicate ps1, IInternalAction ta, IPredicate ps2, boolean expectUnsat) {
 		assert !isLocked() : "SmtManager is busy";
 		long startTime = System.nanoTime();
 
@@ -598,7 +599,7 @@ public class SmtManager {
 		// return Script.LBool.UNSAT;
 		// }
 
-		TransFormula tf = ta.getTransitionFormula();
+		TransFormula tf = ta.getTransformula();
 		String procPred = ta.getPreceedingProcedure();
 		String procSucc = ta.getSucceedingProcedure();
 //		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
@@ -611,7 +612,7 @@ public class SmtManager {
 		if (expectUnsat) {
 			if (result == LBool.SAT) {
 				mLogger.error("From " + ps1.getFormula().toStringDirect());
-				mLogger.error("Statements " + ta.getPrettyPrintedStatements());
+				mLogger.error("Statements " + ta.toString());
 				mLogger.error("To " + ps2.getFormula().toStringDirect());
 				mLogger.error("Not inductive!");
 
@@ -1098,7 +1099,7 @@ public class SmtManager {
 				}
 
 				LBool inductivity;
-				CodeBlock transAnnot;
+				IAction transAnnot;
 
 				if (iEdge instanceof Call) {
 					transAnnot = ((Call) iEdge);
@@ -1117,11 +1118,11 @@ public class SmtManager {
 					if (((Summary) transAnnot).calledProcedureHasImplementation()) {
 						continue;
 					} else {
-						inductivity = isInductive(sf1, transAnnot, sf2, true);
+						inductivity = isInductive(sf1, (IInternalAction) transAnnot, sf2, true);
 					}
 				} else if (iEdge instanceof CodeBlock) {
 					transAnnot = ((CodeBlock) iEdge);
-					inductivity = isInductive(sf1, transAnnot, sf2, true);
+					inductivity = isInductive(sf1, (IInternalAction) transAnnot, sf2, true);
 				} else {
 					continue;
 				}
@@ -1276,10 +1277,10 @@ public class SmtManager {
 	}
 
 	// FIXME: remove once enough tested
-	private void testMyInternalDataflowCheck(IPredicate ps1, CodeBlock ta, IPredicate ps2, LBool result) {
+	private void testMyInternalDataflowCheck(IPredicate ps1, IInternalAction ta, IPredicate ps2, LBool result) {
 		if (ps2.getFormula() == m_Script.term("false")) {
 			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
-			Validity testRes = sdhtch.sdecInternalToFalse(ps1, (IInternalAction) ta);
+			Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) || testRes == IHoareTripleChecker.lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
 				// if (testRes != result) {
@@ -1290,7 +1291,7 @@ public class SmtManager {
 		}
 		if (ps1 == ps2) {
 			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
-			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, (IInternalAction) ta);
+			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
 				// if (testRes != result) {
@@ -1298,7 +1299,7 @@ public class SmtManager {
 				// }
 			}
 		}
-		if (ta.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
+		if (ta.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return;
 		}
 		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);

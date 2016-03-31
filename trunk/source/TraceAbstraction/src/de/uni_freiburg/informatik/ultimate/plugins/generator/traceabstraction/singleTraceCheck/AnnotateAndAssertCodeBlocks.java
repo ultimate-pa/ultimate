@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
@@ -49,7 +49,7 @@ public class AnnotateAndAssertCodeBlocks {
 
 	protected final Script m_Script;
 	protected final SmtManager m_SmtManager;
-	protected final NestedWord<CodeBlock> m_Trace;
+	protected final NestedWord<? extends IAction> m_Trace;
 
 	protected LBool m_Satisfiable;
 	protected final NestedFormulas<Term, Term> m_SSA;

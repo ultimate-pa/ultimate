@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -77,7 +78,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	 * @param instanticateArrayExt 
 	 */
 	public InterpolatingTraceCheckerCraig(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
 			PredicateUnifier predicateUnifier, INTERPOLATION interpolation, SmtManager tcSmtManager, boolean instanticateArrayExt) {
@@ -90,7 +91,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	}
 
 	public InterpolatingTraceCheckerCraig(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
 			PredicateUnifier predicateUnifier, INTERPOLATION interpolation, boolean instanticateArrayExt) {
@@ -226,7 +227,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		for (Integer nonPendingCall : nonPendingCallPositions) {
 			// compute subtrace from to call to corresponding return
 			int returnPosition = m_Trace.getReturnPosition(nonPendingCall);
-			NestedWord<CodeBlock> subtrace = m_Trace.getSubWord(nonPendingCall + 1, returnPosition);
+			NestedWord<? extends IAction> subtrace = m_Trace.getSubWord(nonPendingCall + 1, returnPosition);
 
 			Call call = (Call) m_Trace.getSymbol(nonPendingCall);
 			String calledMethod = call.getCallStatement().getMethodName();

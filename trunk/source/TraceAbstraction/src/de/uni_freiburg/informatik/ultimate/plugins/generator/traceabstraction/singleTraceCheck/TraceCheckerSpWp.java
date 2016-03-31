@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -102,7 +103,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			UnsatCores unsatCores, boolean useLiveVariables, 
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
@@ -187,7 +188,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * @param call_pos
 	 * @return
 	 */
-	private ProcedureSummary computeProcedureSummary(NestedWord<CodeBlock> trace, TransFormula Call,
+	private ProcedureSummary computeProcedureSummary(NestedWord<? extends IAction> trace, TransFormula Call,
 			TransFormula Return, TransFormula oldVarsAssignment, TransFormula globalVarsAssignment, 
 			NestedFormulas<TransFormula, IPredicate> rv,
 			int call_pos, int return_pos) {
@@ -207,7 +208,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * @return - a summary for the statements from the given trace from position
 	 *         "start" to position "end"
 	 */
-	private TransFormula computeSummaryForInterproceduralTrace(NestedWord<CodeBlock> trace,
+	private TransFormula computeSummaryForInterproceduralTrace(NestedWord<? extends IAction> trace,
 			NestedFormulas<TransFormula, IPredicate> rv, int start, int end) {
 		LinkedList<TransFormula> transformulasToComputeSummaryFor = new LinkedList<TransFormula>();
 		for (int i = start; i < end; i++) {
@@ -238,7 +239,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						// "end",
 						// then we handle this case as a pending-call
 						TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
-						String nameEndProcedure = ((ProgramPoint) trace.getSymbol(end).getTarget()).getProcedure();
+						String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 						Set<BoogieVar> modifiableGlobalsOfEndProcedure = m_ModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 						return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true,
 								false, s_TransformToCNF, transformulasToComputeSummaryFor,
@@ -247,7 +248,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					}
 				} else {
 					TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
-					String nameEndProcedure = ((ProgramPoint) trace.getSymbol(end).getTarget()).getProcedure();
+					String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
 					Set<BoogieVar> modifiableGlobalsOfEndProcedure = m_ModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 					return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true, false,
 							s_TransformToCNF, transformulasToComputeSummaryFor,
@@ -406,7 +407,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[m_Trace.length()];
 			boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[m_Trace.length()];
 			// Filter out the statements, which doesn't occur in the unsat core.
-			Set<CodeBlock> codeBlocksInUnsatCore = filterOutIrrelevantStatements(m_Trace, unsatCore,
+			Set<IAction> codeBlocksInUnsatCore = filterOutIrrelevantStatements(m_Trace, unsatCore,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
 			rtf = new RelevantTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
 					codeBlocksInUnsatCore, m_ModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
@@ -479,9 +480,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * of the trace, and therefore only these are important for the computations
 	 * done afterwards.
 	 */
-	private Set<CodeBlock> filterOutIrrelevantStatements(NestedWord<CodeBlock> trace, Set<Term> unsat_coresAsSet,
+	private Set<IAction> filterOutIrrelevantStatements(NestedWord<? extends IAction> trace, Set<Term> unsat_coresAsSet,
 			boolean[] localVarAssignmentAtCallInUnsatCore, boolean[] oldVarAssignmentAtCallInUnsatCore) {
-		Set<CodeBlock> codeBlocksInUnsatCore = new HashSet<CodeBlock>();
+		Set<IAction> codeBlocksInUnsatCore = new HashSet<>();
 		for (int i = 0; i < trace.length(); i++) {
 			if (!trace.isCallPosition(i)
 					&& unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))) {

@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -71,7 +72,7 @@ public class ModifiableNestedFormulas<TF, SF> extends
 	
 
 	public ModifiableNestedFormulas(
-			NestedWord<CodeBlock> nestedWord, SortedMap<Integer, SF> pendingContexts) {
+			NestedWord<? extends IAction> nestedWord, SortedMap<Integer, SF> pendingContexts) {
 		super(nestedWord, pendingContexts);
 		m_Terms = (TF[]) new Object[nestedWord.length()];
 	}

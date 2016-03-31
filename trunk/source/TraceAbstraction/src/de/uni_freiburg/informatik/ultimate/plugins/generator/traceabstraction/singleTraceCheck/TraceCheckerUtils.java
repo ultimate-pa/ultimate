@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
@@ -94,7 +95,7 @@ public class TraceCheckerUtils {
 	public static BackwardCoveringInformation computeCoverageCapability(
 			IUltimateServiceProvider services, 
 			IInterpolantGenerator traceChecker, Logger logger) {
-		NestedWord<CodeBlock> trace = NestedWord.nestedWord(traceChecker.getTrace());
+		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceChecker.getTrace());
 		List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
 		return computeCoverageCapability(services, traceChecker, programPoints, logger);
 	}
@@ -169,7 +170,7 @@ public class TraceCheckerUtils {
 	 * valid Hoare triple. If all triples are valid, we return true.
 	 * Otherwise an exception is thrown.
 	 */
-	public static boolean checkInterpolantsInductivityForward(IPredicate[] interpolants, NestedWord<CodeBlock> trace, 
+	public static boolean checkInterpolantsInductivityForward(IPredicate[] interpolants, NestedWord<? extends IAction> trace, 
 			IPredicate precondition, IPredicate postcondition, 
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
 			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
@@ -193,7 +194,7 @@ public class TraceCheckerUtils {
 	 * 
 	 * @see checkInterpolantsInductivityForward
 	 */
-	public static boolean checkInterpolantsInductivityBackward(IPredicate[] interpolants, NestedWord<CodeBlock> trace, 
+	public static boolean checkInterpolantsInductivityBackward(IPredicate[] interpolants, NestedWord<? extends IAction> trace, 
 			IPredicate precondition, IPredicate postcondition, 
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
 			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
@@ -213,22 +214,22 @@ public class TraceCheckerUtils {
 	
 	private static Validity checkInductivityAtPosition(int i,
 			InterpolantsPreconditionPostcondition ipp,
-			NestedWord<CodeBlock> trace,
+			NestedWord<? extends IAction> trace,
 			SortedMap<Integer, IPredicate> pendingContexts,
 			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
 			Logger logger) {
 		IHoareTripleChecker htc = new MonolithicHoareTripleChecker(smtManager);
 		IPredicate predecessor = ipp.getInterpolant(i);
 		IPredicate successor = ipp.getInterpolant(i+1);
-		CodeBlock cb = trace.getSymbol(i);
+		IAction cb = trace.getSymbol(i);
 		final Validity result;
 		if (trace.isCallPosition(i)) {
-			assert (cb instanceof Call) : "not Call at call position";
+			assert (cb instanceof ICallAction) : "not Call at call position";
 			result = htc.checkCall(predecessor, (ICallAction) cb, successor);
 			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result));
 		} else if (trace.isReturnPosition(i)) {
-			assert (cb instanceof Return) : "not Call at call position";
+			assert (cb instanceof IReturnAction) : "not Call at call position";
 			IPredicate hierarchicalPredecessor;
 			if (trace.isPendingReturn(i)) {
 				hierarchicalPredecessor = pendingContexts.get(i);
@@ -240,8 +241,7 @@ public class TraceCheckerUtils {
 			logger.info(new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result, hierarchicalPredecessor));
 		} else if (trace.isInternalPosition(i)) {
-			assert (cb instanceof SequentialComposition) || (cb instanceof ParallelComposition)
-			|| (cb instanceof StatementSequence) || (cb instanceof Summary) || (cb instanceof GotoEdge);
+			assert (cb instanceof IInternalAction);
 			result = htc.checkInternal(predecessor, (IInternalAction) cb, successor);
 			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result));

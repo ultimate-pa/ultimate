@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -85,7 +87,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 * @param interpolation 
 	 */
 	public InterpolatingTraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
 			PredicateUnifier predicateUnifier, SmtManager tcSmtManager) {
@@ -189,7 +191,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 						(Return) m_Trace.getSymbol(i), getInterpolant(i), true);
 				result |= (inductive == LBool.SAT);
 			} else {
-				LBool inductive = m_SmtManager.isInductive(getInterpolant(i - 1), m_Trace.getSymbol(i),
+				LBool inductive = m_SmtManager.isInductive(getInterpolant(i - 1), (IInternalAction) m_Trace.getSymbol(i),
 						getInterpolant(i), true);
 				result |= (inductive == LBool.SAT);
 			}

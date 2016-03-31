@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -66,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
-	private final NestedRun<CodeBlock, IPredicate> m_Run;
+	private final NestedRun<? extends IAction, IPredicate> m_Run;
 	private final IPredicate m_Precondition;
 	private final IPredicate m_Postcondition;
 	private final IPredicate[] m_Interpolants;
@@ -122,7 +124,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            reserved for future use.
 	 */
 	public PathInvariantsGenerator(IUltimateServiceProvider services,
-			IToolchainStorage storage, NestedRun<CodeBlock, IPredicate> run,
+			IToolchainStorage storage, NestedRun<? extends IAction, IPredicate> run,
 			IPredicate precondition, IPredicate postcondition,
 			PredicateUnifier predicateUnifier, SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager) {
@@ -153,7 +155,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            the factory to use with {@link CFGInvariantsGenerator}.
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
-			final NestedRun<CodeBlock, IPredicate> run,
+			final NestedRun<? extends IAction, IPredicate> run,
 			final IPredicate precondition, final IPredicate postcondition,
 			final PredicateUnifier predicateUnifier,
 			final ModifiableGlobalVariableManager modGlobVarManager,
@@ -197,8 +199,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					throw new UnsupportedOperationException(
 							"interprocedural traces are not supported (yet)");
 				}
-				final TransFormula transFormula = m_Run.getSymbol(i - 1)
-						.getTransitionFormula();
+				final TransFormula transFormula = ((IInternalAction) m_Run.getSymbol(i - 1))
+						.getTransformula();
 				transitions.add(new Transition(transFormula, locations
 						.get(i - 1), location));
 			}
@@ -240,7 +242,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Word<CodeBlock> getTrace() {
+	public Word<? extends IAction> getTrace() {
 		return m_Run.getWord();
 	}
 

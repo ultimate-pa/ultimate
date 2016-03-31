@@ -41,16 +41,14 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -191,7 +189,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * 
 	 * Partition the statements of the given trace according to their depth.
 	 */
-	private Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(NestedWord<CodeBlock> trace, RelationWithTreeSet<ProgramPoint, Integer> rwt,
+	private Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(NestedWord<? extends IAction> trace, RelationWithTreeSet<ProgramPoint, Integer> rwt,
 			List<ProgramPoint> pps) {
 		Map<Integer, Set<Integer>> depth2Statements = new HashMap<Integer, Set<Integer>>();
 		
@@ -202,7 +200,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
-		List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints(m_Trace);
+		List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints((NestedWord<CodeBlock>) m_Trace);
 		RelationWithTreeSet<ProgramPoint, Integer> rwt = computeRelationWithTreeSetForTrace(0, m_Trace.length(), pps);
 		
 		Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, m_Trace.length());
@@ -267,7 +265,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * See class description!
 	 */
-	private LBool annotateAndAssertStmtsAccording2Heuristic(NestedWord<CodeBlock> trace,
+	private LBool annotateAndAssertStmtsAccording2Heuristic(NestedWord<? extends IAction> trace,
 			Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
 			Map<Integer, Set<Integer>> depth2Statements
@@ -292,7 +290,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * See class description!
 	 */
 	private LBool annotateAndAssertStmtsAccording3Heuristic(
-			NestedWord<CodeBlock> trace, Collection<Integer> callPositions,
+			NestedWord<? extends IAction> trace, Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
 			Map<Integer, Set<Integer>> depth2Statements) {
 		List<Integer> keysInDescendingOrder = new ArrayList<Integer>(depth2Statements.keySet()); 
@@ -320,7 +318,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * See class description!
 	 */
 	private LBool annotateAndAssertStmtsAccording4Heuristic(
-			NestedWord<CodeBlock> trace, Collection<Integer> callPositions,
+			NestedWord<? extends IAction> trace, Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
 			Map<Integer, Set<Integer>> depth2Statements) {
 		LinkedList<Integer> depthAsQueue = new LinkedList<Integer>(depth2Statements.keySet()); 
@@ -380,11 +378,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * Partition the statements of the given trace into two sets. The first set consists of the statements, which contain only constants 
 	 * smaller than or equal to 'constantSize'. The second set contains the statements, which contain only constants greater than 'constantSize'. 
 	 */
-	private Set<Integer> partitionStmtsAccordingToConstantSize(NestedWord<CodeBlock> trace,	int constantSize) {
+	private Set<Integer> partitionStmtsAccordingToConstantSize(NestedWord<? extends IAction> trace,	int constantSize) {
 		Set<Integer> result = new HashSet<Integer>();
 		
 		for (int i = 0; i < trace.length(); i++) {
-			Term t = trace.getSymbolAt(i).getTransitionFormula().getFormula();
+			Term t = ((CodeBlock) trace.getSymbolAt(i)).getTransitionFormula().getFormula();
 			if (!termHasConstantGreaterThan(t, constantSize)) {
 				result.add(i);
 			}
@@ -396,7 +394,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * See class description!
 	 */
 	private LBool annotateAndAssertStmtsAccording5Heuristic(
-			NestedWord<CodeBlock> trace, Collection<Integer> callPositions,
+			NestedWord<? extends IAction> trace, Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions) {
 		// Choose statements that contains only constants <= constantSize and assert them
 		int constantSize = 10;
@@ -440,7 +438,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * Annotate and assert every statement <i>i</i> from the given trace, such that
 	 * <i>i</i> is an element of the given integer set stmtsToAssert.
 	 */
-	private void buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(NestedWord<CodeBlock> trace, 
+	private void buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(NestedWord<? extends IAction> trace, 
 			Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
 			Set<Integer> stmtsToAssert) {

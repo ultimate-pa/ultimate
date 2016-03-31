@@ -120,7 +120,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-		Word<CodeBlock> trace = m_InterpolantGenerator.getTrace();
+		Word<CodeBlock> trace = (Word<CodeBlock>) m_InterpolantGenerator.getTrace();
 		mLogger.debug("current trace:");
 		mLogger.debug(trace.toString());
 
