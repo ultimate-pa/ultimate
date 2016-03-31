@@ -83,12 +83,12 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		
 		ConverterToFTA<String, String> converter = new ConverterToFTA<String, String>();
-		
-		GenFTA<MySymbol<String>, MyState<String>> gen = converter.convertITreeToFTA(tree);	
+		GenFTA<MySymbol<String>, MyState<String>> gen = converter.convertITreeToFTA(tree);
+		System.out.println(gen.rulesToString());
 		ConverterFTAToTree<String, MyState<String>> reverseConverter = new ConverterFTAToTree<>();
 	
 		TreeAutomatonBU<String, MyState<String>> tt = reverseConverter.convertToTree(gen);
 		
-		System.out.printf("%s\n\n%s\n", tree, tt);
+		System.out.printf("%s\nX\n%s\n", tree.DebugString(), tt.DebugString());
 	}
 }

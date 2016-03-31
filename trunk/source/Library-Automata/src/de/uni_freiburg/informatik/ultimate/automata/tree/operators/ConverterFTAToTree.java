@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree.operators;
 
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 

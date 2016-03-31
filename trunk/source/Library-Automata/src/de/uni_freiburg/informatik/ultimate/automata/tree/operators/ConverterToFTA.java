@@ -1,11 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree.operators;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_muenster.cs.sev.lethal.treeautomata.common.FTARule;
@@ -16,13 +16,13 @@ public class ConverterToFTA<LETTER, STATE> extends Converter {
 	
 	public GenFTA<MySymbol<LETTER>, MyState<STATE>> convertITreeToFTA(TreeAutomatonBU<LETTER, STATE> tree) {
 		GenFTACreator<MySymbol<LETTER>, MyState<STATE>> g = new GenFTACreator<MySymbol<LETTER>, MyState<STATE>>();
-		Map<STATE, MyState<STATE>> myStates = new TreeMap<STATE, MyState<STATE>>();
-		Map<LETTER, MySymbol<LETTER>> mySymbols = new TreeMap<LETTER, MySymbol<LETTER>>();
+		Map<STATE, MyState<STATE>> myStates = new HashMap<STATE, MyState<STATE>>();
+		Map<LETTER, MySymbol<LETTER>> mySymbols = new HashMap<LETTER, MySymbol<LETTER>>();
 		Collection<FTARule<MySymbol<LETTER>, MyState<STATE>>> rules = new LinkedList<FTARule<MySymbol<LETTER>, MyState<STATE>>>();
 		
 		LinkedList<STATE> queue = new LinkedList<STATE>();
 		
-		for (STATE state : tree.getInitialStates()) {
+		for (STATE state : tree.getStates()) {
 			queue.add(state);
 			myStates.put(state, new MyState<STATE>(state));
 		}
@@ -50,7 +50,7 @@ public class ConverterToFTA<LETTER, STATE> extends Converter {
 				}
 			}
 		}
-		Collection<MyState<STATE>> finalStates = new TreeSet<MyState<STATE>>();
+		Collection<MyState<STATE>> finalStates = new HashSet<MyState<STATE>>();
 		for (STATE state : myStates.keySet()) {
 			if (tree.isFinalState(state)) {
 				finalStates.add(myStates.get(state));
