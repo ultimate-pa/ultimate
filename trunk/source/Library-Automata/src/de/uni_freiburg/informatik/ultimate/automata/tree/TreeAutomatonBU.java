@@ -18,11 +18,11 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 	
 	public void addRule(LETTER letter, List<STATE> src, STATE dest) {
 		// f(q1,...,qn) -> q
-		if (alphabet == null) {
-			alphabet = new HashSet<LETTER>();
+		addLetter(letter);
+		addState(dest);
+		for (STATE state : src) {
+			addState(state);
 		}
-		alphabet.add(letter);
-		
 		// children(q)[f] = <q1, ..., qn>
 		if (childrenMap == null) {
 			childrenMap = new HashMap<STATE, Map<LETTER,Iterable<List<STATE>>>>();
@@ -51,6 +51,23 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		LinkedList<STATE> parents = (LinkedList<STATE>) parentLetter.get(letter);
 		parents.add(dest);
 	}
+
+	public void addLetter(LETTER letter) {
+		if (alphabet == null) {
+			alphabet = new HashSet<LETTER>();
+		}
+		alphabet.add(letter);
+	}
+
+	public void addState(STATE state) {
+		// TODO Auto-generated method stub
+		states.add(state);
+	}
+	public void addFinalState(STATE state) {
+		finalStates.add(state);
+		addState(state);
+	}
+	
 	@Override
 	public Set<LETTER> getAlphabet() {
 		// TODO Auto-generated method stub
