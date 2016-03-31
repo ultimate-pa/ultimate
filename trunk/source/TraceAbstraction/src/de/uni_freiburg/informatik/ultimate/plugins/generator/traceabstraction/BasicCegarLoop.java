@@ -374,8 +374,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 			m_RcfgProgramExecution = interpolatingTraceChecker.getRcfgProgramExecution();
 			if (m_DoFaultLocalization && feasibility == LBool.SAT) {
+				CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(m_Services,
+						m_Pref.interprocedural(), super.m_SmtManager, mLogger);
+				NestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton.getNestedWordAutomaton(
+						super.m_RootNode, m_StateFactoryForRefinement, super.m_ErrorLocs);
 				FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(m_Counterexample,
-						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_Services, m_SmtManager,
+						(INestedWordAutomaton<CodeBlock, IPredicate>) cfg, m_Services, m_SmtManager,
 						m_ModGlobVarManager, predicateUnifier);
 				m_RcfgProgramExecution = m_RcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
