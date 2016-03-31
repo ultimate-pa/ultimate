@@ -16,6 +16,16 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 	private Set<LETTER> alphabet;
 	private Set<STATE> finalStates, initalStates, states;
 	
+	public TreeAutomatonBU() {
+		childrenMap = new HashMap<STATE, Map<LETTER,Iterable<List<STATE>>>>();
+		parentsMap = new HashMap<List<STATE>, Map<LETTER,Iterable<STATE>>>();
+		alphabet = new HashSet<LETTER>();
+
+		finalStates = new HashSet<STATE>();
+		states = new HashSet<STATE>();
+		initalStates = new HashSet<STATE>();
+		
+	}
 	public void addRule(LETTER letter, List<STATE> src, STATE dest) {
 		// f(q1,...,qn) -> q
 		addLetter(letter);
@@ -24,9 +34,6 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 			addState(state);
 		}
 		// children(q)[f] = <q1, ..., qn>
-		if (childrenMap == null) {
-			childrenMap = new HashMap<STATE, Map<LETTER,Iterable<List<STATE>>>>();
-		}
 		if (!childrenMap.containsKey(dest)) {
 			childrenMap.put(dest, new HashMap<LETTER, Iterable<List<STATE>>>());
 		}
@@ -38,9 +45,6 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		children.add(src);
 		
 		// parents(q1, ..., qn)[f] = q
-		if (parentsMap == null) {
-			parentsMap = new HashMap<List<STATE>, Map<LETTER,Iterable<STATE>>>();
-		}
 		if (!parentsMap.containsKey(src)) {
 			parentsMap.put(src, new HashMap<LETTER, Iterable<STATE>>());
 		}
@@ -53,42 +57,38 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 	}
 
 	public void addLetter(LETTER letter) {
-		if (alphabet == null) {
-			alphabet = new HashSet<LETTER>();
-		}
 		alphabet.add(letter);
 	}
 
 	public void addState(STATE state) {
-		// TODO Auto-generated method stub
 		states.add(state);
 	}
 	public void addFinalState(STATE state) {
 		finalStates.add(state);
 		addState(state);
 	}
+	public void addInitialState(STATE state) {
+		initalStates.add(state);
+		addState(state);
+	}
 	
 	@Override
 	public Set<LETTER> getAlphabet() {
-		// TODO Auto-generated method stub
 		return alphabet;
 	}
 
 	@Override
 	public StateFactory<STATE> getStateFactory() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
 		return states.size();
 	}
 
 	@Override
 	public String sizeInformation() {
-		// TODO Auto-generated method stub
 		return size() + " nodes";
 	}
 
@@ -98,6 +98,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		return initalStates;
 	}
 
+	public Set<STATE> getStates() {
+		return states;
+	}
 	@Override
 	public boolean isFinalState(STATE state) {
 		// TODO Auto-generated method stub
@@ -126,5 +129,27 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 
 	public Iterable<List<STATE>> getPredecessors(STATE state, LETTER letter) {
 		return childrenMap.get(state).get(letter);
+	}
+	public String DebugString() {
+		String statesString = "";
+		for (STATE state : states) {
+			statesString += state.toString();
+			if (initalStates.contains(state)) {
+				statesString += "_";
+			}
+			if (isFinalState(state)) {
+				statesString += "*";
+			} 
+			statesString += " ";
+		}
+		String rulesString = "";
+		for (STATE child : childrenMap.keySet()) {
+			for (LETTER letter : childrenMap.get(child).keySet()) {
+				for (List<STATE> rule : childrenMap.get(child).get(letter)) {
+					rulesString += String.format("%s(%s) ~~> %s\n", letter, rule, child);
+				}
+			}
+		}
+		return statesString + "\n" + rulesString;
 	}
 }
