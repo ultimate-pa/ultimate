@@ -74,6 +74,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		String list = "List", bool = "Bool";
 		tree.addState(bool); tree.addState(list);
 		tree.addFinalState(list);
+		tree.addInitialState(bool);tree.addInitialState(list);
 		ArrayList<String> st = new ArrayList<String>();
 		st.add(bool); st.add(list);
 		tree.addRule(letters[3], st, list);
