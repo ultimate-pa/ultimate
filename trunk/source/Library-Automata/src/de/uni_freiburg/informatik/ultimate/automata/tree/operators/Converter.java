@@ -29,6 +29,10 @@ public abstract class Converter {
 			return state;
 		}
 		private STATE state;
+		
+		public String toString() {
+			return state.toString();
+		}
 	}
 	
 }
