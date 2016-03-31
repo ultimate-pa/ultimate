@@ -35,6 +35,7 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.access.WalkerOptions.State;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -261,6 +262,34 @@ public class FlowSensitiveFaultLocalizer {
 	}
 	
 	
+	private boolean BranchRelevanceChecker(int a, int b, IPredicate weakestPreconditionOld, NestedWord<CodeBlock> counterexampleWord, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager)
+	{
+		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
+		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(b).getTransitionFormula();
+		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
+		for(int i = a+1; i<=b; i++)
+		{
+			CodeBlock Statement = counterexampleWord.getSymbol(i);
+			TransFormula TransitionFormula = Statement.getTransitionFormula();
+			combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,TransitionFormula);
+		}
+		TransFormula markhor = TransFormula.computeMarkhorTransFormula(combinedTransitionFormula, smtManager.getBoogie2Smt(), m_Services, m_Logger);
+		IPredicate weakestPreconditionNew = pt.weakestPrecondition(weakestPreconditionOld, markhor);
+		IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
+		String preceeding = counterexampleWord.getSymbolAt(a-1).getPreceedingProcedure();
+		String succeeding = counterexampleWord.getSymbolAt(b+1).getSucceedingProcedure();
+		BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, markhor);
+		
+		ERelevanceStatus relevance = rc.relevanceInternal(pre, basic, weakestPreconditionOld);
+		if(relevance == ERelevanceStatus.InUnsatCore || relevance == ERelevanceStatus.Sat) // Branch is RELEVANT
+		{
+			return true;
+		}
+		else // BRANCH IS NOT RELEVANT
+		{
+			return false;
+		}
+	}
 	private void computeFlowSensitiveTraceFormula(IRun<CodeBlock, IPredicate> counterexampleRun,
 		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager, ArrayList<int[]> informationFromCFG) 
 	
@@ -319,7 +348,7 @@ public class FlowSensitiveFaultLocalizer {
 				IPredicate pre = pre_precondition_list.get(pre_counter);
 				
 				ERelevanceStatus relevance = rc.relevanceInternal(pre, basic, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
-				if(relevance.toString() == "InUnsatCore")
+				if(relevance  == ERelevanceStatus.InUnsatCore) // This is the case when the the triple is unsatisfiable and the statment is in the Unsatisfiable core.
 				{
 					//m_Logger.warn("RELEVANT");
 					//m_Logger.warn(statement);
@@ -328,13 +357,77 @@ public class FlowSensitiveFaultLocalizer {
 					((RelevanceInformation) relevancy_of_statement).setCriteria1(true);
 					
 				}
+				else if(relevance == ERelevanceStatus.Sat) // The case when we have HAVOC statements. In this case the statement is relevant if the triple is satisfiable.
+				{
+					relevant.add(statement);
+					((RelevanceInformation) relevancy_of_statement).setCriteria1(true);
+				}
+				else
+				{
+					// ToDo ! 
+					// ADD here UNKNOWN ! after changing the criteria data type to ENUM.
+				}
 				wp_counter = wp_counter + 1;
 				pre_counter = pre_counter + 1;
-				// Adding relevancy information in the array list Relevance_of_statements
+				// Adding relevancy information in the array list Relevance_of_statements.
 				Relevance_of_statements.add(relevancy_of_statement);
 			
 			
 		}
+		
+		// INITIALIZING FLOW SENSITIVE ANALYSIS.
+		m_Logger.warn("Initializing FLOW SENSITIVE analysis");
+		// Main trace
+		IPredicate weakestPreconditionOld = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().constructFalse());
+		IPredicate weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().constructFalse());
+		IPredicate weakestPreconditionTemp = null;
+		IPredicate pre = null;
+		for ( int backwardcounter = counterexampleWord.length() - 1; backwardcounter >= 0 ; backwardcounter -- )
+		{
+			CodeBlock Statement = counterexampleWord.getSymbol(backwardcounter);
+			int flag = 0;
+			int a =0;
+			int b = 0;
+			// Find out if the current Statement is a BRANCH-IN statement.
+			for(int j =0; j<informationFromCFG.size(); j++)
+			{
+				if(backwardcounter == informationFromCFG.get(j)[1]-1)
+				{
+					flag = 1; // Yes it is a Branch-IN statement.
+					a = informationFromCFG.get(j)[0];
+					b = informationFromCFG.get(j)[1]-1;
+				}
+			}
+			if(flag == 1) // The current statement is a BRANCH-IN Statement.
+			{
+				// Check the relevancy of the branch ?
+				boolean c =  BranchRelevanceChecker(a,b,weakestPreconditionOld,counterexampleWord,smtManager,modGlobVarManager);
+				
+					
+			}
+			else // The statement under consideration is NOT a BRANCH-IN Statement.
+			{
+				weakestPreconditionOld = weakestPreconditionNew;
+				weakestPreconditionNew = pt.weakestPrecondition(weakestPreconditionOld, counterexampleWord.getSymbolAt(backwardcounter).getTransitionFormula());
+				pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
+				Statement = counterexampleWord.getSymbolAt(backwardcounter);
+				BasicInternalAction basic = new BasicInternalAction(Statement.getPreceedingProcedure(), Statement.getPreceedingProcedure(), Statement.getTransitionFormula());
+				ERelevanceStatus relevence = rc.relevanceInternal(pre, basic, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionOld)));
+				if(relevence == ERelevanceStatus.InUnsatCore || relevence == ERelevanceStatus.Sat)
+				{
+					int q = 0;
+					// RELEVANT With respect to the flow sensitive analysis !
+				}
+			}
+			
+			
+		}
+		// Start to analyse from backwards
+		// If you encounter a branch then check if the branch is relevant?  Make a Function:  Bool BranchRelevanceChecker();
+		// If it is relevant Then go inside the branch and do the analysis from behind
+		// Recursion
+		// Come out of the branch and give the full results.
+		
 	}
 
 	/**
