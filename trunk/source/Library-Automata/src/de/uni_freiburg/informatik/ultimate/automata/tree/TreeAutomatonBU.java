@@ -130,23 +130,24 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 	public Iterable<List<STATE>> getPredecessors(STATE state, LETTER letter) {
 		return childrenMap.get(state).get(letter);
 	}
+	public String stateString(STATE state) {
+		String res = state.toString();
+		if (initalStates.contains(state))
+			res += "_";
+		if (isFinalState(state))
+			res += "*";
+		return res;
+	}
 	public String DebugString() {
 		String statesString = "";
 		for (STATE state : states) {
-			statesString += state.toString();
-			if (initalStates.contains(state)) {
-				statesString += "_";
-			}
-			if (isFinalState(state)) {
-				statesString += "*";
-			} 
-			statesString += " ";
+			statesString += stateString(state) + " ";
 		}
 		String rulesString = "";
 		for (STATE child : childrenMap.keySet()) {
 			for (LETTER letter : childrenMap.get(child).keySet()) {
 				for (List<STATE> rule : childrenMap.get(child).get(letter)) {
-					rulesString += String.format("%s(%s) ~~> %s\n", letter, rule, child);
+					rulesString += String.format("%s(%s) ~~> %s\n", letter, rule, stateString(child));
 				}
 			}
 		}
