@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Basi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SequencePredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SequencePredicateTransformer.PredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -237,11 +237,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
 				}
 				postprocs.add(new UnifyPostprocessor());
-				SequencePredicateTransformer spt = new SequencePredicateTransformer(
+				IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
 						m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), m_ModifiedGlobals, m_Services, m_Trace, 
 						m_Precondition, m_Postcondition, m_PendingContexts);
-				m_InterpolantsFp = spt.computeForwardPredicates(rtf, postprocs).getInterpolants();
+				m_InterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
 			}
@@ -262,11 +262,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
 				}
 				postprocs.add(new UnifyPostprocessor());
-				SequencePredicateTransformer spt = new SequencePredicateTransformer(
+				IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
 						m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), m_ModifiedGlobals, m_Services, m_Trace, 
 						m_Precondition, m_Postcondition, m_PendingContexts);
-				m_InterpolantsBp = spt.computeBackwardPredicates(rtf, postprocs).getInterpolants();
+				m_InterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
 			}
