@@ -61,12 +61,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.NestedFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.NestedSsaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -298,7 +300,24 @@ public class FlowSensitiveFaultLocalizer {
 		PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
 		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		
-		
+		if (false) {
+			// 2016-04-01 Matthias: Code for computing sequence of weakest precondition
+			// that is also correct for traces with calls and returns.
+			final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
+					smtManager.getPredicateFactory(), smtManager.getVariableManager(), 
+					smtManager.getScript(), smtManager.getBoogie2Smt(), modGlobVarManager, 
+					m_Services, counterexampleWord, null, falsePredicate, null);
+			final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, 
+					null, falsePredicate, Collections.emptySortedMap(), modGlobVarManager, false);
+			final InterpolantsPreconditionPostcondition weakestPreconditionSequence = 
+					ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList());
+			// construction of this list might be superfluous because we can also
+			// iterate over the InterpolantsPreconditionPostcondition object
+			final List<IPredicate> weakestPreconditionList = new ArrayList<>();
+			for (int i=0; i < counterexampleWord.length()+1; i++) {
+				weakestPreconditionList.add(weakestPreconditionSequence.getInterpolant(i));
+			}
+		}
 		
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 		m_Logger.warn("Initializing Non-Flow Sensitive INCREMENTAL ANALYSIS . . .");
