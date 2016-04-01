@@ -1045,7 +1045,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		new HoareAnnotationExtractor(m_Services, abstraction, m_Haf);
-		(new HoareAnnotationWriter(m_RootNode.getRootAnnot(), m_SmtManager, m_Haf, m_Services))
 				.addHoareAnnotationToCFG();
 	}
 
