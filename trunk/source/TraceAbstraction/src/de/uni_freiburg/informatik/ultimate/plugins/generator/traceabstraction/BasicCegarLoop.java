@@ -446,8 +446,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						&& !(m_InterpolantGenerator instanceof InterpolantConsolidation)) {
 					throw new AssertionError("TWOTRACK only for TraceCheckerSpWp or InterpolantConsolidation");
 				}
-				IPredicate[] predicatesA = null;
-				IPredicate[] predicatesB = null;
+				final List<IPredicate> predicatesA;
+				final List<IPredicate> predicatesB;
 				boolean build2TrackAutomaton = false;
 				if (m_InterpolantGenerator instanceof TraceCheckerSpWp) {
 					TraceCheckerSpWp traceChecker = (TraceCheckerSpWp) m_InterpolantGenerator;
@@ -460,6 +460,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					predicatesA = ic.getInterpolantsOfType_I();
 					predicatesB = ic.getInterpolantsOfType_II();
 					build2TrackAutomaton = true;
+				} else {
+					predicatesA = null;
+					predicatesB = null;
 				}
 				if (build2TrackAutomaton) {
 					TwoTrackInterpolantAutomatonBuilder ttiab = new TwoTrackInterpolantAutomatonBuilder(m_Services,

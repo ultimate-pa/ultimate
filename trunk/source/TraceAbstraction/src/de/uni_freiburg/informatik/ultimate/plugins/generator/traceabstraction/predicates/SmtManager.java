@@ -287,10 +287,10 @@ public class SmtManager {
 	/**
 	 * Computes DAG size for an array of predicates.
 	 */
-	public int[] computeDagSizeOfPredicates(IPredicate[] predicates) {
-		int[] sizeOfPredicates = new int[predicates.length];
-		for (int i = 0; i < predicates.length; i++) {
-			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates[i]);
+	public int[] computeDagSizeOfPredicates(List<IPredicate> predicates) {
+		int[] sizeOfPredicates = new int[predicates.size()];
+		for (int i = 0; i < predicates.size(); i++) {
+			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i));
 		}
 		return sizeOfPredicates;
 	}

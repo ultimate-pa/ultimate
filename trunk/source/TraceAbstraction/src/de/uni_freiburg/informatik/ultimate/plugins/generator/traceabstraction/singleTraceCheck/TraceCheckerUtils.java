@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.SortedMap;
 
@@ -34,7 +36,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
@@ -43,15 +44,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
@@ -128,7 +122,7 @@ public class TraceCheckerUtils {
 	public static class InterpolantsPreconditionPostcondition {
 		private final IPredicate m_Precondition;
 		private final IPredicate m_Postcondition;
-		private final IPredicate[] m_Interpolants;
+		private final List<IPredicate> m_Interpolants;
 		
 		public InterpolantsPreconditionPostcondition(IInterpolantGenerator interpolantGenerator) {
 			if (interpolantGenerator.getInterpolants() == null) {
@@ -137,11 +131,11 @@ public class TraceCheckerUtils {
 			}
 			m_Precondition = interpolantGenerator.getPrecondition();
 			m_Postcondition = interpolantGenerator.getPostcondition();
-			m_Interpolants = interpolantGenerator.getInterpolants();
+			m_Interpolants = Arrays.asList(interpolantGenerator.getInterpolants());
 		}
 		
 		public InterpolantsPreconditionPostcondition(IPredicate precondition,
-				IPredicate postcondition, IPredicate[] interpolants) {
+				IPredicate postcondition, List<IPredicate> interpolants) {
 			super();
 			m_Precondition = precondition;
 			m_Postcondition = postcondition;
@@ -153,13 +147,17 @@ public class TraceCheckerUtils {
 				throw new AssertionError("index beyond precondition");
 			} else if (i == 0) {
 				return m_Precondition;
-			} else if (i <= m_Interpolants.length) {
-				return m_Interpolants[i-1];
-			} else if (i == m_Interpolants.length+1) {
+			} else if (i <= m_Interpolants.size()) {
+				return m_Interpolants.get(i-1);
+			} else if (i == m_Interpolants.size()+1) {
 				return m_Postcondition;
 			} else {
 				throw new AssertionError("index beyond postcondition");
 			}
+		}
+		
+		public List<IPredicate> getInterpolants() {
+			return Collections.unmodifiableList(m_Interpolants);
 		}
 	}
 	
@@ -170,7 +168,7 @@ public class TraceCheckerUtils {
 	 * valid Hoare triple. If all triples are valid, we return true.
 	 * Otherwise an exception is thrown.
 	 */
-	public static boolean checkInterpolantsInductivityForward(IPredicate[] interpolants, NestedWord<? extends IAction> trace, 
+	public static boolean checkInterpolantsInductivityForward(List<IPredicate> interpolants, NestedWord<? extends IAction> trace, 
 			IPredicate precondition, IPredicate postcondition, 
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
 			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
@@ -178,7 +176,7 @@ public class TraceCheckerUtils {
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
 		Validity result;
-		for (int i = 0; i <= interpolants.length; i++) {
+		for (int i = 0; i <= interpolants.size(); i++) {
 			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, smtManager, mgvManager, logger);
 			if (result != Validity.VALID && result != Validity.UNKNOWN) {
 				throw new AssertionError("invalid Hoare triple in " + computation);
@@ -194,7 +192,7 @@ public class TraceCheckerUtils {
 	 * 
 	 * @see checkInterpolantsInductivityForward
 	 */
-	public static boolean checkInterpolantsInductivityBackward(IPredicate[] interpolants, NestedWord<? extends IAction> trace, 
+	public static boolean checkInterpolantsInductivityBackward(List<IPredicate> interpolants, NestedWord<? extends IAction> trace, 
 			IPredicate precondition, IPredicate postcondition, 
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
 			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
@@ -202,7 +200,7 @@ public class TraceCheckerUtils {
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
 		Validity result;
-		for (int i = interpolants.length; i >= 0; i--) {
+		for (int i = interpolants.size(); i >= 0; i--) {
 			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, smtManager, mgvManager, logger);
 			if (result != Validity.VALID && result != Validity.UNKNOWN) {
 				throw new AssertionError("invalid Hoare triple in " + computation);

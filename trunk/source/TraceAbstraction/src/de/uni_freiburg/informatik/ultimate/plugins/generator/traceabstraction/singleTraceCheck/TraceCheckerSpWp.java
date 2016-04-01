@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -53,8 +54,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -75,9 +74,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 	// Forward relevant predicates
-	protected IPredicate[] m_InterpolantsFp;
+	protected List<IPredicate> m_InterpolantsFp;
 	// Backward relevant predicates
-	protected IPredicate[] m_InterpolantsBp;
+	protected List<IPredicate> m_InterpolantsBp;
 
 	private final UnsatCores m_UnsatCores;
 	private final boolean m_LiveVariables;
@@ -163,13 +162,13 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return m_ConstructBackwardInterpolantSequence;
 	}
 
-	public IPredicate[] getForwardPredicates() {
+	public List<IPredicate> getForwardPredicates() {
 		assert m_InterpolantsFp != null : "Forwards predicates not computed!";
 		return m_InterpolantsFp;
 	}
 
 
-	public IPredicate[] getBackwardPredicates() {
+	public List<IPredicate> getBackwardPredicates() {
 		assert m_InterpolantsBp != null : "Backwards predicates not computed!";
 		return m_InterpolantsBp;
 	}
@@ -331,7 +330,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ConstructForwardInterpolantSequence) {
 			m_Logger.debug("Computing forward predicates...");
 			try {
-				computeForwardPredicates(liveVariables, rtf);
+				m_InterpolantsFp = computeForwardPredicates(liveVariables, rtf).getInterpolants();
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
 			}
@@ -365,10 +364,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ConstructForwardInterpolantSequence && m_ConstructBackwardInterpolantSequence) {
 			// Post-process forwards predicates			
 			if (m_PostProcess_FP_Predicates) {
-				for (int i = 0; i < m_InterpolantsFp.length; i++) {
-					IPredicate p_old = m_InterpolantsFp[i];
+				for (int i = 0; i < m_InterpolantsFp.size(); i++) {
+					IPredicate p_old = m_InterpolantsFp.get(i);
 					IPredicate p_new = m_PredicateUnifier.getOrConstructPredicate(p_old.getFormula(), p_old.getVars(), p_old.getProcedures());
-					m_InterpolantsFp[i] = p_new;
+					m_InterpolantsFp.set(i, p_new);
 				}
 				if (m_CollectInformationAboutSizeOfPredicates) {
 					sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
@@ -386,9 +385,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ConstructForwardInterpolantSequence && m_ConstructBackwardInterpolantSequence) {
 			selectListOFPredicatesFromBothTypes();
 		} else if (m_ConstructForwardInterpolantSequence) {
-			m_Interpolants = m_InterpolantsFp;
+			m_Interpolants = m_InterpolantsFp.toArray(new IPredicate[m_InterpolantsFp.size()]);
 		} else if (m_ConstructBackwardInterpolantSequence) {
-			m_Interpolants = m_InterpolantsBp;
+			m_Interpolants = m_InterpolantsBp.toArray(new IPredicate[m_InterpolantsBp.size()]);
 		} else {
 			throw new AssertionError("illegal choice");
 		}
@@ -430,28 +429,28 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * 
 	 */
 	private void selectListOFPredicatesFromBothTypes() {
-		assert m_InterpolantsFp.length == m_InterpolantsBp.length;
-		m_Interpolants = new IPredicate[m_InterpolantsBp.length];
+		assert m_InterpolantsFp.size() == m_InterpolantsBp.size();
+		m_Interpolants = new IPredicate[m_InterpolantsBp.size()];
 		int i = 0; // position of predicate computed by strongest post-condition
-		int j = m_InterpolantsBp.length; // position of predicate computed by
+		int j = m_InterpolantsBp.size(); // position of predicate computed by
 		// weakest precondition
 		while (i != j) {
-			if (!(m_InterpolantsBp[j - 1] instanceof BasicPredicateExplicitQuantifier)) {
-				m_Interpolants[j - 1] = m_InterpolantsBp[j - 1];
+			if (!(m_InterpolantsBp.get(j - 1) instanceof BasicPredicateExplicitQuantifier)) {
+				m_Interpolants[j - 1] = m_InterpolantsBp.get(j - 1);
 				j--;
-			} else if (!(m_InterpolantsFp[i] instanceof BasicPredicateExplicitQuantifier)) {
-				m_Interpolants[i] = m_InterpolantsFp[i];
+			} else if (!(m_InterpolantsFp.get(i) instanceof BasicPredicateExplicitQuantifier)) {
+				m_Interpolants[i] = m_InterpolantsFp.get(i);
 				i++;
 			} else {
-				int numOfQuantifiedVarsInFp = ((BasicPredicateExplicitQuantifier) m_InterpolantsFp[i])
+				int numOfQuantifiedVarsInFp = ((BasicPredicateExplicitQuantifier) m_InterpolantsFp.get(i))
 						.getQuantifiedVariables().size();
-				int numOfQuantifiedVarsInBp = ((BasicPredicateExplicitQuantifier) m_InterpolantsBp[j - 1])
+				int numOfQuantifiedVarsInBp = ((BasicPredicateExplicitQuantifier) m_InterpolantsBp.get(j - 1))
 						.getQuantifiedVariables().size();
 				if (numOfQuantifiedVarsInFp < numOfQuantifiedVarsInBp) {
-					m_Interpolants[i] = m_InterpolantsFp[i];
+					m_Interpolants[i] = m_InterpolantsFp.get(i);
 					i++;
 				} else {
-					m_Interpolants[j - 1] = m_InterpolantsBp[j - 1];
+					m_Interpolants[j - 1] = m_InterpolantsBp.get(j - 1);
 					j--;
 				}
 			}
@@ -515,11 +514,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return codeBlocksInUnsatCore;
 	}
 
-	private void computeForwardPredicates(Set<BoogieVar>[] relevantVars,
+	private InterpolantsPreconditionPostcondition computeForwardPredicates(Set<BoogieVar>[] relevantVars,
 			NestedFormulas<TransFormula, IPredicate> rv) {
-		m_InterpolantsFp = new IPredicate[m_Trace.length() - 1];
+		IPredicate[] interpolantsFp = new IPredicate[m_Trace.length() - 1];
 		InterpolantsPreconditionPostcondition ipp = 
-				new InterpolantsPreconditionPostcondition(m_Precondition,m_Postcondition, m_InterpolantsFp);
+				new InterpolantsPreconditionPostcondition(m_Precondition, m_Postcondition, Arrays.asList(interpolantsFp));
 
 			for (int i = 0; i < m_Trace.length() - 1; i++) {
 				final IPredicate predecessor = ipp.getInterpolant(i); 
@@ -576,7 +575,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				} else {
 					projected = sp;
 				}
-				m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(
+				interpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(
 						projected.getFormula(), projected.getVars(), projected.getProcedures());
 //				if (m_CollectInformationAboutQuantifiedPredicates) {
 //					IPredicate p = getForwardPredicateAtPosition(i, tracePrecondition, false);
@@ -589,15 +588,16 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 //					}
 //				}
 			}
+			return ipp;
 	}
 	
 	
 	private void computeBackwardPredicates(Set<BoogieVar>[] relevantVars,
 			NestedFormulas<TransFormula, IPredicate> rv) {
 
-		m_InterpolantsBp = new IPredicate[m_Trace.length()-1];
+		IPredicate[] interpolantsBp = new IPredicate[m_Trace.length()-1];
 		InterpolantsPreconditionPostcondition ipp = 
-				new InterpolantsPreconditionPostcondition(m_Precondition,m_Postcondition, m_InterpolantsBp);
+				new InterpolantsPreconditionPostcondition(m_Precondition,m_Postcondition, Arrays.asList(interpolantsBp));
 
 		// Contains the predicates, which are computed during a Return with
 		// the second method, where the callerPred
@@ -680,7 +680,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			} else {
 				projected = wp;
 			}
-			m_InterpolantsBp[i-1] = m_PredicateUnifier.getOrConstructPredicate(
+			interpolantsBp[i-1] = m_PredicateUnifier.getOrConstructPredicate(
 					projected.getFormula(), projected.getVars(), projected.getProcedures());
 			
 //				if (m_CollectInformationAboutQuantifiedPredicates) {

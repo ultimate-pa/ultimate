@@ -333,7 +333,7 @@ public class TraceChecker {
 			}
 		}
 
-		public void reportSequenceOfInterpolants(IPredicate[] interpolants) {
+		public void reportSequenceOfInterpolants(List<IPredicate> interpolants) {
 			for (IPredicate pred : interpolants) {
 				boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
 				m_TraceCheckerBenchmarkGenerator.reportNewInterpolant(isQuantified);

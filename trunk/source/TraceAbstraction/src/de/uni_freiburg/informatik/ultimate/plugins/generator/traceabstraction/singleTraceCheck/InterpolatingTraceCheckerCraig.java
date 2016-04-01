@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -134,7 +135,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		default:
 			throw new UnsupportedOperationException("unsupportedInterpolation");
 		}
-		m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_Interpolants);
+		m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(m_Interpolants));
 		m_TraceCheckFinished = true;
 
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);

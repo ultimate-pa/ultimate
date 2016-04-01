@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -249,7 +250,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				m_InterpolatingTraceChecker.getInterpolants(),
 				interpolantsAfterConsolidation, m_HoareTripleChecker);
 
-		assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_ConsolidatedInterpolants, 
+		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(m_ConsolidatedInterpolants), 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in consolidated interpolants";
 		int numOfDisjunctionsGreaterOne = (int) m_InterpolantConsolidationBenchmarkGenerator.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
@@ -418,29 +419,29 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	}
 
-	public IPredicate[] getInterpolantsOfType_I() {
+	public List<IPredicate> getInterpolantsOfType_I() {
 		if (m_InterpolatingTraceChecker instanceof TraceCheckerSpWp) {
 			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) m_InterpolatingTraceChecker;
 			if (tcspwp.forwardsPredicatesComputed()) {
 				return tcspwp.getForwardPredicates();
 			} else {
-				return tcspwp.getInterpolants();
+				return Arrays.asList(tcspwp.getInterpolants());
 			}
 		} else {
-			return m_InterpolatingTraceChecker.getInterpolants();
+			return Arrays.asList(m_InterpolatingTraceChecker.getInterpolants());
 		}
 	}
 
-	public IPredicate[] getInterpolantsOfType_II() {
+	public List<IPredicate> getInterpolantsOfType_II() {
 		if (m_InterpolatingTraceChecker instanceof TraceCheckerSpWp) {
 			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) m_InterpolatingTraceChecker;
 			if (tcspwp.backwardsPredicatesComputed()) {
 				return tcspwp.getBackwardPredicates();
 			} else {
-				return tcspwp.getInterpolants();
+				return Arrays.asList(tcspwp.getInterpolants());
 			}
 		} else {
-			return m_InterpolatingTraceChecker.getInterpolants();
+			return Arrays.asList(m_InterpolatingTraceChecker.getInterpolants());
 		}
 	}
 
@@ -501,19 +502,19 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		if (!nwaStatesAndTransitionsAdded) {
 			addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, traceChecker.getPrecondition(), 
-					traceChecker.getPostcondition(), traceChecker.getInterpolants(), trace);
+					traceChecker.getPostcondition(), Arrays.asList(traceChecker.getInterpolants()), trace);
 		}
 		return nwa;
 	}
 
-	public IPredicate getInterpolantAtPosition(int i, IPredicate precondition, IPredicate postcondition, IPredicate[] interpolants) {
+	public IPredicate getInterpolantAtPosition(int i, IPredicate precondition, IPredicate postcondition, List<IPredicate> interpolants) {
 		if (i < 0) {
 			throw new AssertionError("index beyond precondition");
 		} else if (i == 0) {
 			return precondition;
-		} else if (i <= interpolants.length) {
-			return interpolants[i-1];
-		} else if (i == interpolants.length+1) {
+		} else if (i <= interpolants.size()) {
+			return interpolants.get(i-1);
+		} else if (i == interpolants.size()+1) {
 			return postcondition;
 		} else {
 			throw new AssertionError("index beyond postcondition");
@@ -523,7 +524,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private void addStatesAndCorrespondingTransitionsFromGivenInterpolants(
 			NestedWordAutomaton<CodeBlock, IPredicate> nwa,
 			IPredicate precondition, IPredicate postcondition,
-			IPredicate[] interpolants, NestedWord<CodeBlock> trace) {
+			List<IPredicate> interpolants, NestedWord<CodeBlock> trace) {
 		for (int i=0; i<trace.length(); i++) {
 			IPredicate pred = getInterpolantAtPosition(i, precondition, postcondition, interpolants);
 			IPredicate succ = getInterpolantAtPosition(i+1, precondition, postcondition, interpolants);

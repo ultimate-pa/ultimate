@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -93,7 +94,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 					+ "There should be one interpolant between each "
 					+ "two successive CodeBlocks");
 		}
-		assert TraceCheckerUtils.checkInterpolantsInductivityForward(interpolants, 
+		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "invariant map", 
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in invariant map";
 		m_Interpolants = interpolants;

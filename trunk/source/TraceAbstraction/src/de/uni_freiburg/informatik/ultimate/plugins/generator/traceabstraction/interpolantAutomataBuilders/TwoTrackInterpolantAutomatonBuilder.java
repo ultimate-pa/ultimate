@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -82,8 +83,8 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			IUltimateServiceProvider services, 
 			IRun<CodeBlock,IPredicate> nestedRun,
 			SmtManager smtManager,
-			IPredicate[] interpolantsFP,
-			IPredicate[] interpolantsBP,
+			List<IPredicate> interpolantsFP,
+			List<IPredicate> interpolantsBP,
 			IPredicate preCondition,
 			IPredicate postCondition,
 			IAutomaton<CodeBlock, IPredicate> abstraction) {
