@@ -330,7 +330,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ConstructForwardInterpolantSequence) {
 			m_Logger.debug("Computing forward predicates...");
 			try {
-				m_InterpolantsFp = computeForwardPredicates(rtf, new LiveVariablesPostprocessor_Forward(liveVariables)).getInterpolants();
+				List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				if (m_LiveVariables) {
+					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
+				}
+				postprocs.add(new UnifyPostprocessor());
+				m_InterpolantsFp = computeForwardPredicates(rtf, postprocs).getInterpolants();
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
 			}
@@ -346,7 +351,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ConstructBackwardInterpolantSequence) {
 			m_Logger.debug("Computing backward predicates...");
 			try {
-				m_InterpolantsBp = computeBackwardPredicates(rtf, new LiveVariablesPostprocessor_Backward(liveVariables)).getInterpolants();
+				List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				if (m_LiveVariables) {
+					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
+				}
+				postprocs.add(new UnifyPostprocessor());
+				m_InterpolantsBp = computeBackwardPredicates(rtf, postprocs).getInterpolants();
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
 			}
@@ -515,7 +525,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	}
 
 	private InterpolantsPreconditionPostcondition computeForwardPredicates(
-			NestedFormulas<TransFormula, IPredicate> rv, PredicatePostprocessor postproc) {
+			NestedFormulas<TransFormula, IPredicate> rv, List<PredicatePostprocessor> postprocs) {
 		IPredicate[] interpolantsFp = new IPredicate[m_Trace.length() - 1];
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(m_Precondition, m_Postcondition, Arrays.asList(interpolantsFp));
@@ -566,14 +576,23 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						predecessor,
 						rv.getFormulaFromNonCallPos(i));
 			}
-			interpolantsFp[i] = postproc.postprocess(sp, i);
-
+			IPredicate postprocessed = sp;
+			for (PredicatePostprocessor postproc : postprocs) {
+				postprocessed = postproc.postprocess(postprocessed, i+1);
+			}
+			interpolantsFp[i] = postprocessed;
 		}
 		return ipp;
 	}
 	
 	
 	public interface PredicatePostprocessor {
+		/**
+		 * Do post processing for the predicate before the i'th action of
+		 * the trace. This means especially, that if i==0 we do the post 
+		 * processing for the precondition and if i==trace.length() we do
+		 * the post processing for the postcondition.
+		 */
 		IPredicate postprocess(IPredicate pred, int i);
 	}
 	
@@ -582,24 +601,17 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		private final Set<BoogieVar>[] m_RelevantVars;
 		
 		public LiveVariablesPostprocessor_Forward(Set<BoogieVar>[] relevantVars) {
-			super();
 			m_RelevantVars = relevantVars;
 		}
 
 		@Override
 		public IPredicate postprocess(IPredicate pred, int i) {
-			final IPredicate projected;
-			Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i+1], pred);
+			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
+			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
+			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(
+					pred.getFormula(), QuantifiedFormula.EXISTS, nonLiveVars);
 			m_NonLiveVariablesFp += nonLiveVars.size();
-			if (m_LiveVariables) {
-				projected = m_SmtManager.getPredicateFactory().constructPredicate(pred.getFormula(), 
-						QuantifiedFormula.EXISTS, nonLiveVars);
-			} else {
-				projected = pred;
-			}
-			final IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(
-					projected.getFormula(), projected.getVars(), projected.getProcedures()); 
-			return unified;
+			return projected;
 		}
 		
 	}
@@ -608,7 +620,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	
 	
 	private InterpolantsPreconditionPostcondition computeBackwardPredicates(
-			NestedFormulas<TransFormula, IPredicate> rv, PredicatePostprocessor postproc) {
+			NestedFormulas<TransFormula, IPredicate> rv, List<PredicatePostprocessor> postprocs) {
 
 		IPredicate[] interpolantsBp = new IPredicate[m_Trace.length()-1];
 		InterpolantsPreconditionPostcondition ipp = 
@@ -686,9 +698,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				wp = m_PredicateTransformer.weakestPrecondition(
 						successor, rv.getFormulaFromNonCallPos(i));
 			}
-			interpolantsBp[i-1] = postproc.postprocess(wp, i);
-			
-
+			IPredicate postprocessed = wp;
+			for (PredicatePostprocessor postproc : postprocs) {
+				postprocessed = postproc.postprocess(postprocessed, i);
+			}
+			interpolantsBp[i-1] = postprocessed;
 		}
 		return ipp;
 	}
@@ -705,18 +719,21 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		@Override
 		public IPredicate postprocess(IPredicate pred, int i) {
-			final IPredicate projected;
-			Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
-			if (m_LiveVariables) {
-				projected = m_SmtManager.getPredicateFactory().constructPredicate(pred.getFormula(), 
-						QuantifiedFormula.FORALL, nonLiveVars);
-				m_NonLiveVariablesBp += nonLiveVars.size();
-			} else {
-				projected = pred;
-			}
-			IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(
-					projected.getFormula(), projected.getVars(), projected.getProcedures());
+			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
+			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
+			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(
+					pred.getFormula(), QuantifiedFormula.FORALL, nonLiveVars);
+			m_NonLiveVariablesBp += nonLiveVars.size();
+			return projected;
+		}
+	}
+	
+	public class UnifyPostprocessor implements PredicatePostprocessor {
 
+		@Override
+		public IPredicate postprocess(IPredicate pred, int i) {
+			IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(
+					pred.getFormula(), pred.getVars(), pred.getProcedures());
 			return unified;
 		}
 		
