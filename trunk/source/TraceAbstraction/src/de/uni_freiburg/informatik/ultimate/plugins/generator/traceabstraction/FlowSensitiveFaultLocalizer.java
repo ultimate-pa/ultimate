@@ -157,7 +157,7 @@ public class FlowSensitiveFaultLocalizer {
 	{
 		m_Logger.warn("Entered RelevantStatementInBranch ");
 		ArrayList<CodeBlock> result = new ArrayList<>();
-		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
+		PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
 		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		
 		//int[] tuple = new int[2];
@@ -264,7 +264,7 @@ public class FlowSensitiveFaultLocalizer {
 	
 	private boolean BranchRelevanceChecker(int a, int b, IPredicate weakestPreconditionOld, NestedWord<CodeBlock> counterexampleWord, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager)
 	{
-		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
+		PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
 		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(b).getTransitionFormula();
 		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		for(int i = a+1; i<=b; i++)
@@ -295,7 +295,7 @@ public class FlowSensitiveFaultLocalizer {
 	
 	{
 		NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
-		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
+		PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
 		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		
 		

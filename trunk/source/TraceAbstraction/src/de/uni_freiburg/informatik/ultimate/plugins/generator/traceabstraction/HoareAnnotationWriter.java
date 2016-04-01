@@ -66,7 +66,8 @@ public class HoareAnnotationWriter {
 		this.m_SmtManager = smtManager;
 		this.m_HoareAnnotationFragments = hoareAnnotationFragments;
 		this.m_UseEntry = true;
-		m_PredicateTransformer = new PredicateTransformer(smtManager, null, services);
+		m_PredicateTransformer = new PredicateTransformer(smtManager.getPredicateFactory(), 
+				smtManager.getVariableManager(), smtManager.getScript(), null, services);
 	}
 
 	public void addHoareAnnotationToCFG() {
