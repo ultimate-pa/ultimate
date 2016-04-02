@@ -327,12 +327,10 @@ public class FlowSensitiveFaultLocalizer {
 				ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList());
 		// End of the calculation
 		
-		IPredicate callPre = null; //Stores the PRE before the last call
 		for(int i = backward_counter-2 ; i >= 0; i--)
 		{
 				CodeBlock statement = counterexampleWord.getSymbolAt(i);
 				IAction action = counterexampleWord.getSymbolAt(i);
-				TransFormula a = statement.getTransitionFormula();
 				// Relevance Information.
 				relevancy_of_statement = new RelevanceInformation();
 				((RelevanceInformation) relevancy_of_statement).setStatement(statement);
@@ -350,14 +348,16 @@ public class FlowSensitiveFaultLocalizer {
 				else if(action instanceof ICallAction)
 				{
 					ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(i);
-					callPre = pre; // Update the PRE before this call
 					relevance = rc.relevanceCall(pre, call, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
 				}
 				else if(action instanceof IReturnAction)
 				{
 					IReturnAction returnn = (IReturnAction) counterexampleWord.getSymbolAt(i);
-					relevance = rc.relevanceReturn(pre, callPre, returnn, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
-					callPre = null; // Set it back to NULL.
+					assert counterexampleWord.isReturnPosition(i);
+					assert !counterexampleWord.isPendingReturn(i) : "pending returns not supported";
+					final int callPos = counterexampleWord.getCallPosition(i);
+					final IPredicate callPredecessor = weakestPreconditionSequence.getInterpolant(callPos); 
+					relevance = rc.relevanceReturn(pre, callPredecessor, returnn, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
 				}
 				else
 				{
