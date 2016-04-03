@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
@@ -57,17 +56,17 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         m_operand = automaton;
 
         Logger logger = services.getLoggingService().getLogger(operationName());
-        Logger convertLog = services.getLoggingService().getLogger("NiceConvert");
+        Logger convertLog = services.getLoggingService().getLogger("Convert");
         Logger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
         Logger solveLog = services.getLoggingService().getLogger("MaxSATSolve");
 
         logger.info(startMessage());
 
         convertLog.info("starting conversion");
-        NiceConvert<LETTER, STATE> converter = new NiceConvert<LETTER, STATE>(services, stateFactory, automaton);
-        NiceNWA nwa = converter.getNiceNWA();
+        Convert<LETTER, STATE> converter = new Convert<LETTER, STATE>(services, stateFactory, automaton);
+        NWA nwa = converter.getNWA();
         // it shouldn't be like this, but...
-        ArrayList<NiceHist> history = converter.computeHistoryStates();
+        ArrayList<Hist> history = converter.computeHistoryStates();
         convertLog.info(
                 "finished conversion. "
                 + Integer.toString(nwa.numStates) + " states, "
@@ -80,7 +79,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         );
 
         generateLog.info("starting clauses generation");
-        ArrayList<HornClause3> clauses = NwaMinimizationClausesGenerator.generateConstraints(nwa, history);
+        ArrayList<HornClause3> clauses = ClausesGenerator.generateConstraints(nwa, history);
         generateLog.info("finished clauses generation. " + Integer.toString(clauses.size()) + " clauses");
 
         solveLog.info("starting MaxSATSolve");
@@ -88,7 +87,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         solveLog.info("finished MaxSATSolve");
 
         generateLog.info("making equivalence classes from assignments");
-        NiceClasses eqCls = NwaMinimizationClausesGenerator.makeMergeRelation(nwa.numStates, assignments);
+        EqCls eqCls = ClausesGenerator.makeMergeRelation(nwa.numStates, assignments);
         generateLog.info("finished making equivalence classes");
 
         m_result = converter.constructMerged(eqCls);

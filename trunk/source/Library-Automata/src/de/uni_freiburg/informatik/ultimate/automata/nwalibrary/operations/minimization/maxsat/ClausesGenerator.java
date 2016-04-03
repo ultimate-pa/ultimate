@@ -43,19 +43,19 @@ import java.util.HashSet;
  *
  * @author stimpflj
  */
-public class NwaMinimizationClausesGenerator {
+public class ClausesGenerator {
 
 	/**
 	 * Convert a solved instance to a merge relation
 	 */
-	public static NiceClasses makeMergeRelation(int numStates, Assign[] assignments) {
+	public static EqCls makeMergeRelation(int numStates, Assign[] assignments) {
 		EqVarCalc calc = new EqVarCalc(numStates);
 
 		assert assignments.length == calc.getNumEqVars();
 		for (Assign x : assignments)
 			assert x == Assign.TRUE || x == Assign.FALSE;
 
-		NiceUnionFind unionFind = new NiceUnionFind(numStates);
+		UnionFind unionFind = new UnionFind(numStates);
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
 				int eqVar = calc.eqVar(i, j);
@@ -65,7 +65,7 @@ public class NwaMinimizationClausesGenerator {
 			}
 		}
 
-		return NiceClasses.compress(unionFind.getRoots());
+		return EqCls.compress(unionFind.getRoots());
 	}
 
 	/**
@@ -73,20 +73,20 @@ public class NwaMinimizationClausesGenerator {
 	 *
 	 * @param history precalculated history states for <code>inNWA</code>.
 	 *
-	 * @return A (consistent) NiceClasses which represents the minimized
-	 * automaton.
+	 * @return A (consistent) EqCls which represents the
+	 * minimized automaton.
 	 */
-	public static ArrayList<HornClause3> generateConstraints(NiceNWA inNWA, ArrayList<NiceHist> history) {
-		assert NiceHist.checkHistoryStatesConsistency(inNWA, history);
+	public static ArrayList<HornClause3> generateConstraints(NWA inNWA, ArrayList<Hist> history) {
+		assert Hist.checkHistoryStatesConsistency(inNWA, history);
 		{
 			// "assert" that there are no transitions which are never taken
-			HashSet<NiceHist> hs = new HashSet<NiceHist>();
-			for (NiceHist h : history)
+			HashSet<Hist> hs = new HashSet<Hist>();
+			for (Hist h : history)
 				hs.add(h);
-			for (NiceRTrans x : inNWA.rTrans) {
-				if (!hs.contains(new NiceHist(x.src, x.top)))
+			for (RTrans x : inNWA.rTrans) {
+				if (!hs.contains(new Hist(x.src, x.top)))
 					System.err.printf("missing %d %d\n",  x.src, x.top);
-				assert hs.contains(new NiceHist(x.src, x.top));
+				assert hs.contains(new Hist(x.src, x.top));
 			}
 		}
 
@@ -100,29 +100,29 @@ public class NwaMinimizationClausesGenerator {
 		int numITrans = inNWA.iTrans.length;
 		int numCTrans = inNWA.cTrans.length;
 		int numRTrans = inNWA.rTrans.length;
-		NiceITrans[] iTrans = inNWA.iTrans.clone();
-		NiceCTrans[] cTrans = inNWA.cTrans.clone();
-		NiceRTrans[] rTrans = inNWA.rTrans.clone();
-		NiceRTrans[] rTransTop = inNWA.rTrans.clone();
+		ITrans[] iTrans = inNWA.iTrans.clone();
+		CTrans[] cTrans = inNWA.cTrans.clone();
+		RTrans[] rTrans = inNWA.rTrans.clone();
+		RTrans[] rTransTop = inNWA.rTrans.clone();
 
-		history = new ArrayList<NiceHist>(history);
+		history = new ArrayList<Hist>(history);
 
 		// IMPORTANT. Sort inputs
-		Arrays.sort(iTrans, NiceITrans::compareSrcSymDst);
-		Arrays.sort(cTrans, NiceCTrans::compareSrcSymDst);
-		Arrays.sort(rTrans, NiceRTrans::compareSrcSymTopDst);
-		Arrays.sort(rTransTop, NiceRTrans::compareSrcTopSymDst);
+		Arrays.sort(iTrans, ITrans::compareSrcSymDst);
+		Arrays.sort(cTrans, CTrans::compareSrcSymDst);
+		Arrays.sort(rTrans, RTrans::compareSrcSymTopDst);
+		Arrays.sort(rTransTop, RTrans::compareSrcTopSymDst);
 
-		history.sort(NiceHist::compareLinHier);
+		history.sort(Hist::compareLinHier);
 
 		// All "outgoing" transitions, grouped by src, then sorted by (top), sym, dst
-		ArrayList<ArrayList<NiceITrans>> iTransOut = new ArrayList<ArrayList<NiceITrans>>();
-		ArrayList<ArrayList<NiceCTrans>> cTransOut = new ArrayList<ArrayList<NiceCTrans>>();
-		ArrayList<ArrayList<NiceRTrans>> rTransOut = new ArrayList<ArrayList<NiceRTrans>>();
+		ArrayList<ArrayList<ITrans>> iTransOut = new ArrayList<ArrayList<ITrans>>();
+		ArrayList<ArrayList<CTrans>> cTransOut = new ArrayList<ArrayList<CTrans>>();
+		ArrayList<ArrayList<RTrans>> rTransOut = new ArrayList<ArrayList<RTrans>>();
 
-		for (int i = 0; i < numStates; i++) iTransOut.add(new ArrayList<NiceITrans>());
-		for (int i = 0; i < numStates; i++) cTransOut.add(new ArrayList<NiceCTrans>());
-		for (int i = 0; i < numStates; i++) rTransOut.add(new ArrayList<NiceRTrans>());
+		for (int i = 0; i < numStates; i++) iTransOut.add(new ArrayList<ITrans>());
+		for (int i = 0; i < numStates; i++) cTransOut.add(new ArrayList<CTrans>());
+		for (int i = 0; i < numStates; i++) rTransOut.add(new ArrayList<RTrans>());
 
 		for (int i = 0; i < numITrans; i++) iTransOut.get(iTrans[i].src).add(iTrans[i]);
 		for (int i = 0; i < numCTrans; i++) cTransOut.get(cTrans[i].src).add(cTrans[i]);
@@ -150,7 +150,7 @@ public class NwaMinimizationClausesGenerator {
 			// symbol which are not in the outgoing return transitions as
 			// top-of-stack symbol.
 			int i = 0;
-			for (NiceHist h : history) {
+			for (Hist h : history) {
 				for (; i < numRTrans; i++)
 					if (h.lin < rTransTop[i].src
 							|| (h.lin == rTransTop[i].src && h.hier <= rTransTop[i].top))
@@ -170,13 +170,13 @@ public class NwaMinimizationClausesGenerator {
 		for (int i = 0; i < numStates; i++) for (int j = 0; j < hSet.get(i).size(); j++) assert j == 0 || hSet.get(i).get(j) > hSet.get(i).get(j-1);
 
 		// group rTrans by src and sym
-		HashMap<SrcSym, ArrayList<NiceRTrans>> bySrcSym = new HashMap<SrcSym, ArrayList<NiceRTrans>>();
+		HashMap<SrcSym, ArrayList<RTrans>> bySrcSym = new HashMap<SrcSym, ArrayList<RTrans>>();
 
-		for (NiceRTrans x : rTrans) {
+		for (RTrans x : rTrans) {
 			SrcSym srcsym = new SrcSym(x.src, x.sym);
-			ArrayList<NiceRTrans> a = bySrcSym.get(srcsym);
+			ArrayList<RTrans> a = bySrcSym.get(srcsym);
 			if (a == null) {
-				a = new ArrayList<NiceRTrans>();
+				a = new ArrayList<RTrans>();
 				bySrcSym.put(srcsym, a);
 			}
 			a.add(x);
@@ -215,8 +215,8 @@ public class NwaMinimizationClausesGenerator {
 				} else {
 					// rule 1
 					for (int x = 0, y = 0; x < iTransOut.get(i).size() && y < iTransOut.get(j).size();) {
-						NiceITrans t1 = iTransOut.get(i).get(x);
-						NiceITrans t2 = iTransOut.get(j).get(y);
+						ITrans t1 = iTransOut.get(i).get(x);
+						ITrans t2 = iTransOut.get(j).get(y);
 						if (t1.sym < t2.sym) {
 							x++;
 						} else if (t1.sym > t2.sym) {
@@ -231,8 +231,8 @@ public class NwaMinimizationClausesGenerator {
 					}
 					// rule 2
 					for (int x = 0, y = 0; x < cTransOut.get(i).size() && y < cTransOut.get(j).size();) {
-						NiceCTrans t1 = cTransOut.get(i).get(x);
-						NiceCTrans t2 = cTransOut.get(j).get(y);
+						CTrans t1 = cTransOut.get(i).get(x);
+						CTrans t2 = cTransOut.get(j).get(y);
 						if (t1.sym < t2.sym) {
 							x++;
 						} else if (t1.sym > t2.sym) {
@@ -263,8 +263,8 @@ public class NwaMinimizationClausesGenerator {
 				}
 				for (int s1 : rSet.get(i)) {
 					for (int s2 : rSet.get(j)) {
-						for (NiceRTrans t1 : bySrcSym.get(new SrcSym(i, s1))) {
-							for (NiceRTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
+						for (RTrans t1 : bySrcSym.get(new SrcSym(i, s1))) {
+							for (RTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
 								int eq1 = calc.eqVar(t1.src, t2.src);
 								int eq2 = calc.eqVar(t1.top, t2.top);
 								int eq3 = calc.eqVar(t1.dst, t2.dst);

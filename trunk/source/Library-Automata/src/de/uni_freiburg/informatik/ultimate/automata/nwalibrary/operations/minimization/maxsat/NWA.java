@@ -51,7 +51,7 @@ import java.util.HashSet;
  *
  * @author stimpflj
  */
-class NiceNWA implements Cloneable {
+class NWA implements Cloneable {
 	/** Number of states */
 	public int numStates;
 
@@ -71,38 +71,38 @@ class NiceNWA implements Cloneable {
 	public boolean[] isFinal;
 
 	/** Internal Transitions */
-	public NiceITrans[] iTrans;
+	public ITrans[] iTrans;
 
 	/** Call Transitions */
-	public NiceCTrans[] cTrans;
+	public CTrans[] cTrans;
 
 	/** Return Transitions */
-	public NiceRTrans[] rTrans;
+	public RTrans[] rTrans;
 
 
 	/**
-	 * @param nwa readonly <code>NiceNWA</code>
+	 * @param nwa readonly <code>NWA</code>
 	 *
 	 * @return <code>true</code> iff the automaton is consistent
 	 */
-	public static boolean checkConsistency(NiceNWA nwa) {
+	public static boolean checkConsistency(NWA nwa) {
 		if (nwa.numStates < 0) return false;
 		if (nwa.numISyms < 0) return false;
 		if (nwa.numRSyms < 0) return false;
 		if (nwa.numCSyms < 0) return false;
 		if (nwa.isInitial == null || nwa.isInitial.length != nwa.numStates) return false;
 		if (nwa.isFinal == null || nwa.isFinal.length != nwa.numStates) return false;
-		for (NiceITrans x : nwa.iTrans) {
+		for (ITrans x : nwa.iTrans) {
 			if (x.src < 0 || x.src >= nwa.numStates) return false;
 			if (x.sym < 0 || x.sym >= nwa.numISyms) return false;
 			if (x.dst < 0 || x.dst >= nwa.numStates) return false;
 		}
-		for (NiceCTrans x : nwa.cTrans) {
+		for (CTrans x : nwa.cTrans) {
 			if (x.src < 0 || x.src >= nwa.numStates) return false;
 			if (x.sym < 0 || x.sym >= nwa.numCSyms) return false;
 			if (x.dst < 0 || x.dst >= nwa.numStates) return false;
 		}
-		for (NiceRTrans x : nwa.rTrans) {
+		for (RTrans x : nwa.rTrans) {
 			if (x.src < 0 || x.src >= nwa.numStates) return false;
 			if (x.sym < 0 || x.sym >= nwa.numRSyms) return false;
 			if (x.top < 0 || x.top >= nwa.numStates) return false;
@@ -112,26 +112,26 @@ class NiceNWA implements Cloneable {
 	}
 
 	/**
-	 * @param nwa readonly <code>NiceNWA</code> which is consistent as by
+	 * @param nwa readonly <code>NWA</code> which is consistent as by
 	 *        <code>checkConsistency()</code>
 	 * @return <code>true</code> iff the automaton is deterministic (multiple identical transitions count as non-deterministic)
 	 */
-	public static boolean checkDeterminism(NiceNWA nwa) {
-		HashSet<NiceITrans> iSeen = new HashSet<NiceITrans>();
-		HashSet<NiceCTrans> cSeen = new HashSet<NiceCTrans>();
-		HashSet<NiceRTrans> rSeen = new HashSet<NiceRTrans>();
-		for (NiceITrans x : nwa.iTrans)	if (!iSeen.add(new NiceITrans(x.src, x.sym, 0))) return false;
-		for (NiceCTrans x : nwa.cTrans) if (!cSeen.add(new NiceCTrans(x.src, x.sym, 0))) return false;
-		for (NiceRTrans x : nwa.rTrans) if (!rSeen.add(new NiceRTrans(x.src, x.sym, x.top, 0))) return false;
+	public static boolean checkDeterminism(NWA nwa) {
+		HashSet<ITrans> iSeen = new HashSet<ITrans>();
+		HashSet<CTrans> cSeen = new HashSet<CTrans>();
+		HashSet<RTrans> rSeen = new HashSet<RTrans>();
+		for (ITrans x : nwa.iTrans)	if (!iSeen.add(new ITrans(x.src, x.sym, 0))) return false;
+		for (CTrans x : nwa.cTrans) if (!cSeen.add(new CTrans(x.src, x.sym, 0))) return false;
+		for (RTrans x : nwa.rTrans) if (!rSeen.add(new RTrans(x.src, x.sym, x.top, 0))) return false;
 		return true;
 	}
 
 	/**
-	 * @param nwa a NiceNWA which is consistent as by checkConsistency()
+	 * @param nwa a NWA which is consistent as by checkConsistency()
 	 * @return ArrayList containing all final states of the nwa, in strictly
 	 *         ascending order.
 	 */
-	public static ArrayList<Integer> computeInitialStates(NiceNWA nwa) {
+	public static ArrayList<Integer> computeInitialStates(NWA nwa) {
 		ArrayList<Integer> out = new ArrayList<Integer>();
 		for (int i = 0; i < nwa.numStates; i++)
 			if (nwa.isInitial[i])
@@ -140,11 +140,11 @@ class NiceNWA implements Cloneable {
 	}
 
 	/**
-	 * @param nwa a NiceNWA which is consistent as by checkConsistency
+	 * @param nwa a NWA which is consistent as by checkConsistency
 	 * @return ArrayList containing all final states of the nwa, in strictly
 	 *         ascending order.
 	 */
-	public static ArrayList<Integer> computeFinalStates(NiceNWA nwa) {
+	public static ArrayList<Integer> computeFinalStates(NWA nwa) {
 		ArrayList<Integer> out = new ArrayList<Integer>();
 		for (int i = 0; i < nwa.numStates; i++)
 			if (nwa.isFinal[i])
@@ -153,12 +153,12 @@ class NiceNWA implements Cloneable {
 	}
 
 	/**
-	 * @return A copy of this NiceNWA instance. No references are shared
-	 *         with the instance on which this method is called.
+	 * @return A copy of this NWA instance. No references are shared with the
+	 *         instance on which this method is called.
 	 */
 	@Override
-	public NiceNWA clone() {
-		NiceNWA out = new NiceNWA();
+	public NWA clone() {
+		NWA out = new NWA();
 		out.numStates = numStates;
 		out.numISyms = numISyms;
 		out.numCSyms = numCSyms;

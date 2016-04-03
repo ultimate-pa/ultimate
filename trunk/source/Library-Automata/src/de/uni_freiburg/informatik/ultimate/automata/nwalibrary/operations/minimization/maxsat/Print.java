@@ -33,15 +33,15 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 
 /**
- * A few static print methods for the Nice* classes
+ * A few static print methods
  *
  * @author stimpflj
  *
  */
-public class NicePrint {
+public class Print {
 
-	public static void printClasses(Writer writer, NiceClasses eq) {
-		assert NiceClasses.checkConsistency(eq);
+	public static void printClasses(Writer writer, EqCls eq) {
+		assert EqCls.checkConsistency(eq);
 		PrintWriter out = new PrintWriter(writer);
 		ArrayList<ArrayList<Integer>> classes = new ArrayList<ArrayList<Integer>>();
 		for (int i = 0; i < eq.numClasses; i++) classes.add(new ArrayList<Integer>());
@@ -56,15 +56,15 @@ public class NicePrint {
 	}
 
 	/**
-	 * @param nwa readonly NiceNWA
+	 * @param nwa readonly NWA
 	 * @param out
 	 *
 	 * nwa must have no null fields and must be constrained as suggested
 	 */
-	public static void printNWA(Writer writer, NiceNWA nwa) {
+	public static void printNWA(Writer writer, NWA nwa) {
 		PrintWriter p = new PrintWriter(writer);
-		ArrayList<Integer> initialStates = NiceNWA.computeInitialStates(nwa);
-		ArrayList<Integer> finalStates = NiceNWA.computeFinalStates(nwa);
+		ArrayList<Integer> initialStates = NWA.computeInitialStates(nwa);
+		ArrayList<Integer> finalStates = NWA.computeFinalStates(nwa);
 		p.printf("numStates %d\n", nwa.numStates);
 		p.printf("numISyms %d\n",  nwa.numISyms);
 		p.printf("numCSyms %d\n",  nwa.numCSyms);
@@ -76,21 +76,21 @@ public class NicePrint {
 		p.printf("numRTrans %d\n", nwa.rTrans.length);
 		for (int i : initialStates) p.printf("initial %d\n", i);
 		for (int i : finalStates) p.printf("final %d\n", i);
-		for (NiceITrans x : nwa.iTrans)	p.printf("iTrans %d %d %d\n", x.src, x.sym, x.dst);
-		for (NiceCTrans x : nwa.cTrans)	p.printf("cTrans %d %d %d\n", x.src, x.sym, x.dst);
-		for (NiceRTrans x : nwa.rTrans)	p.printf("rTrans %d %d %d %d\n", x.src, x.sym, x.top, x.dst);
+		for (ITrans x : nwa.iTrans)	p.printf("iTrans %d %d %d\n", x.src, x.sym, x.dst);
+		for (CTrans x : nwa.cTrans)	p.printf("cTrans %d %d %d\n", x.src, x.sym, x.dst);
+		for (RTrans x : nwa.rTrans)	p.printf("rTrans %d %d %d %d\n", x.src, x.sym, x.top, x.dst);
 		p.flush();
 	}
 
-	public static String makeString(NiceClasses cls) {
+	public static String makeString(EqCls cls) {
 		StringWriter w = new StringWriter();
-		NicePrint.printClasses(w,  cls);
+		Print.printClasses(w,  cls);
 		return w.toString();
 	}
 
-	public static String makeString(NiceNWA nwa) {
+	public static String makeString(NWA nwa) {
 		StringWriter w = new StringWriter();
-		NicePrint.printNWA(w,  nwa);
+		Print.printNWA(w,  nwa);
 		return w.toString();
 	}
 }

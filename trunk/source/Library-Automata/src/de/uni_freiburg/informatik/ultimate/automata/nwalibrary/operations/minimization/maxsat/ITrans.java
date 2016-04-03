@@ -28,57 +28,44 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
 /**
- * Return transition for nested word automata (NWA).
+ * Call transition for nested word automata (NWA).
  *
  * @author stimpflj
  */
-public class NiceRTrans implements Comparable<NiceRTrans> {
+public class ITrans {
 	/** Source state */
 	public int src;
 
-	/** Return symbol */
+	/** Internal symbol */
 	public int sym;
-
-	/** top-of-stack (hierarchical) state */
-	public int top;
 
 	/** Destination state */
 	public int dst;
 
 
-	public NiceRTrans() {}
+	public ITrans() {}
 
-	public NiceRTrans(int src, int sym, int top, int dst)
-		{ this.src = src; this.sym = sym; this.top = top; this.dst = dst; }
+	public ITrans(int src, int sym, int dst) {
+		this.src = src;
+		this.sym = sym;
+		this.dst = dst;
+	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof NiceRTrans))
+		if (obj == null || !(obj instanceof ITrans))
 			return false;
-		NiceRTrans b = (NiceRTrans) obj;
-		return src == b.src && top == b.top && sym == b.sym && dst == b.dst;
+		ITrans b = (ITrans) obj;
+		return src == b.src && sym == b.sym && dst == b.dst;
 	}
 
 	@Override
 	public int hashCode() {
-		return ((src * 31 + sym) * 31 + top) * 31 + dst;
+		return (src * 31 + sym) * 31 + dst;
 	}
 
-	@Override
-	public int compareTo(NiceRTrans b) {
-		return NiceRTrans.compareSrcSymTopDst(this, b);
-	}
-
-	public static int compareSrcSymTopDst(NiceRTrans a, NiceRTrans b) {
+	public static int compareSrcSymDst(ITrans a, ITrans b) {
 		if (a.src != b.src) return a.src - b.src;
-		if (a.sym != b.sym) return a.sym - b.sym;
-		if (a.top != b.top) return a.top - b.top;
-		return a.dst - b.dst;
-	}
-
-	public static int compareSrcTopSymDst(NiceRTrans a, NiceRTrans b) {
-		if (a.src != b.src) return a.src - b.src;
-		if (a.top != b.top) return a.top - b.top;
 		if (a.sym != b.sym) return a.sym - b.sym;
 		return a.dst - b.dst;
 	}

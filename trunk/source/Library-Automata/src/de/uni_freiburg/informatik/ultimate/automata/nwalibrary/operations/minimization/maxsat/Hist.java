@@ -27,65 +27,58 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-/* Personally I hate builder interfaces, but in Java it's easier than
- * declaring a POD type for edges */
+import java.util.ArrayList;
 
-public class NiceUnionFind {
-	private int[] root;
-	private int[] size;
-	private int[] stack;
+/**
+ * Utility functions for history states
+ *
+ * @author stimpflj
+ *
+ */
+public class Hist {
+	/** linear state */
+	int lin;
 
-	public NiceUnionFind(int numNodes) {
-		root = new int[numNodes];
-		size = new int[numNodes];
-		stack = new int[numNodes];
+	/** hierarchical (history) state */
+	int hier;
 
-		for (int i = 0; i < numNodes; i++) {
-			root[i] = i;
-			size[i] = 1;
-		}
+
+	public Hist() {}
+
+	public Hist(int lin, int hier) {
+		this.lin = lin;
+		this.hier = hier;
 	}
 
-	private void updateRoot(int node) {
-		int ptr = 0;
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Hist))
+			return false;
+		Hist b = (Hist) obj;
+		return lin == b.lin && hier == b.hier;
+	}
 
-		while (node != root[node]) {
-			stack[ptr++] = node;
-			node = root[node];
-		}
-		while (ptr --> 0)
-			root[stack[ptr]] = node;
+	@Override
+	public int hashCode() {
+		return 31 * lin + hier;
+	}
+
+	public static int compareLinHier(Hist a, Hist b) {
+		if (a.lin != b.lin) return a.lin - b.lin;
+		return a.hier - b.hier;
 	}
 
 	/**
-	 * Add an edge between two nodes. This makes them equivalent and they
-	 * will be together, with a root right over their heads. They'll share
-	 * the same root, yeah!
-	 *
-	 * @param n1 The one node.
-	 * @param n2 The other node, you know?
+	 * @return whether <code>history</code> is consistent with <code>nwa</code>
+	 * NOTE: history states can be -1. This means "bottom-of-stack" state.
 	 */
-	public void merge(int n1, int n2) {
-		updateRoot(n1);
-		updateRoot(n2);
-		n1 = root[n1];
-		n2 = root[n2];
-
-		if (n1 == n2)
-			return;
-
-		if (size[n1] < size[n2]) {
-			root[n1] = n2;
-			size[n2] += size[n1];
-		} else {
-			root[n2] = n1;
-			size[n1] += size[n2];
+	public static boolean checkHistoryStatesConsistency(NWA nwa, ArrayList<Hist> hist) {
+		for (int i = 0; i < hist.size(); i++) {
+			if (hist.get(i).lin < 0 || hist.get(i).lin >= nwa.numStates)
+				return false;
+			if (hist.get(i).hier < -1 || hist.get(i).hier >= nwa.numStates)
+				return false;
 		}
-	}
-
-	public int[] getRoots() {
-		for (int i = 0; i < root.length; i++)
-			updateRoot(i);
-		return root.clone();
+		return true;
 	}
 }

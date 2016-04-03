@@ -39,7 +39,7 @@ import java.io.Writer;
  * @author stimpflj
  *
  */
-public class NiceClasses {
+public class EqCls {
 	/** Number of equivalence classes */
 	int numClasses;
 
@@ -48,11 +48,11 @@ public class NiceClasses {
 
 
 	/** Convenience creator which also asserts consistency */
-	public static NiceClasses createConsistent(int numClasses, int[] classOf) {
-		NiceClasses result = new NiceClasses();
+	public static EqCls createConsistent(int numClasses, int[] classOf) {
+		EqCls result = new EqCls();
 		result.numClasses = numClasses;
 		result.classOf = classOf;
-		assert NiceClasses.checkConsistency(result);
+		assert EqCls.checkConsistency(result);
 		return result;
 	}
 
@@ -68,7 +68,7 @@ public class NiceClasses {
 	 * @param eq the NiceClasses whose consistency should be checked
 	 * @return <code>true</code> iff the input NiceClasses is consistent
 	 */
-	public static boolean checkConsistency(NiceClasses eq) {
+	public static boolean checkConsistency(EqCls eq) {
 		if (eq.numClasses < 0)
 			return false;
 
@@ -102,7 +102,7 @@ public class NiceClasses {
 	 * @param root Represents equivalence classes. <code>0 <= root[x] < root.length</code> for all x.
 	 * @return a NiceClasses structure carrying the compressed array
 	 */
-	public static NiceClasses compress(int[] root) {
+	public static EqCls compress(int[] root) {
 		for (int i = 0; i < root.length; i++)
 			assert 0 <= root[i] && root[i] < root.length;
 
@@ -120,24 +120,24 @@ public class NiceClasses {
 		for (int i = 0; i < root.length; i++)
 			classOf[i] = newName[root[i]];
 
-		return NiceClasses.createConsistent(numClasses, classOf);
+		return EqCls.createConsistent(numClasses, classOf);
 	}
 
 	/** "test" the thing */
 	public static void main(String[] args) {
 		Writer writer = new PrintWriter(new OutputStreamWriter(System.err));
-		NiceClasses cls;
+		EqCls cls;
 
-		cls = NiceClasses.compress(new int[] { 1, 1, 0, 5, 0, 0 });
-		NicePrint.printClasses(writer, cls);
+		cls = EqCls.compress(new int[] { 1, 1, 0, 5, 0, 0 });
+		Print.printClasses(writer, cls);
 		assert cls.numClasses == 3;
 		assert cls.classOf[0] == cls.classOf[1];
 		assert cls.classOf[2] == cls.classOf[4] && cls.classOf[2] == cls.classOf[5];
 		for (int i = 0; i < cls.classOf.length; i++)
 			assert(i == 3 || cls.classOf[i] != cls.classOf[3]);
 
-		cls = NiceClasses.compress(new int[] { 1, 1, 1, 1 });
-		NicePrint.printClasses(writer, cls);
+		cls = EqCls.compress(new int[] { 1, 1, 1, 1 });
+		Print.printClasses(writer, cls);
 		assert cls.numClasses == 1;
 		assert cls.classOf.length == 4;
 		for (int c : cls.classOf)

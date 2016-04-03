@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  *
  * @author stimpflj
  */
-public class NiceCTrans {
+public class CTrans {
 	/** Source state */
 	public int src;
 
@@ -43,9 +43,9 @@ public class NiceCTrans {
 	public int dst;
 
 
-	public NiceCTrans() {}
+	public CTrans() {}
 
-	public NiceCTrans(int src, int sym, int dst) {
+	public CTrans(int src, int sym, int dst) {
 		this.src = src;
 		this.sym = sym;
 		this.dst = dst;
@@ -53,9 +53,9 @@ public class NiceCTrans {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof NiceCTrans))
+		if (obj == null || !(obj instanceof CTrans))
 			return false;
-		NiceCTrans b = (NiceCTrans) obj;
+		CTrans b = (CTrans) obj;
 		return src == b.src && sym == b.sym && dst == b.dst;
 	}
 
@@ -64,7 +64,7 @@ public class NiceCTrans {
 		return (src * 31 + sym) * 31 + dst;
 	}
 
-	public static int compareSrcSymDst(NiceCTrans a, NiceCTrans b) {
+	public static int compareSrcSymDst(CTrans a, CTrans b) {
 		if (a.src != b.src) return a.src - b.src;
 		if (a.sym != b.sym) return a.sym - b.sym;
 		return a.dst - b.dst;

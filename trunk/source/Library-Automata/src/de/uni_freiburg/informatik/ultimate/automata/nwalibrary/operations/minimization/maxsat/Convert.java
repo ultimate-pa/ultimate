@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 
 /**
- * Convert a <code>INestedWordAutomaton</code> to a <code>NiceNWA</code>
+ * Convert a <code>INestedWordAutomaton</code> to a <code>NWA</code>
  * structure. Using the <code>constructMerge()</code> method, a smaller
  * equivalent automaton can be made later given a <code>NiceClasses</code>
  * structure.
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
  *
  * @author stimpflj
  */
-public class NiceConvert<LETTER, STATE> {
+public class Convert<LETTER, STATE> {
 	private AutomataLibraryServices services;
 	private StateFactory<STATE> factory;
 	private INestedWordAutomaton<LETTER, STATE> automaton;
@@ -80,12 +80,12 @@ public class NiceConvert<LETTER, STATE> {
 	private HashMap<STATE, Integer> oldStateIndex;
 	private ArrayList<STATE> oldState;
 
-	private NiceNWA converted;
+	private NWA converted;
 
 	/**
 	 * @return NiceNWA generated from input INestedWordAutomaton automaton.
 	 */
-	public NiceNWA getNiceNWA() { return converted.clone(); }
+	public NWA getNWA() { return converted.clone(); }
 
 	/**
 	 * Constructor. Remembers the necessary things about the input
@@ -98,7 +98,7 @@ public class NiceConvert<LETTER, STATE> {
 	 *        in the input automaton
 	 * @param automaton input INestedWordAutomaton
 	 */
-	public NiceConvert(
+	public Convert(
 			AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomaton<LETTER, STATE> automaton) {
@@ -165,27 +165,27 @@ public class NiceConvert<LETTER, STATE> {
 		for (int i = 0; i < numStates; i++) isInitial[i] = oldInitialStates.contains(oldState.get(i));
 		for (int i = 0; i < numStates; i++) isFinal[i] = oldFinalStates.contains(oldState.get(i));
 
-		ArrayList<NiceITrans> iTrans = new ArrayList<NiceITrans>();
-		ArrayList<NiceCTrans> cTrans = new ArrayList<NiceCTrans>();
-		ArrayList<NiceRTrans> rTrans = new ArrayList<NiceRTrans>();
+		ArrayList<ITrans> iTrans = new ArrayList<ITrans>();
+		ArrayList<CTrans> cTrans = new ArrayList<CTrans>();
+		ArrayList<RTrans> rTrans = new ArrayList<RTrans>();
 
 		for (int i = 0; i < numStates; i++) {
 			STATE st = oldState.get(i);
-			for (OutgoingInternalTransition<LETTER, STATE> x : automaton.internalSuccessors(st)) iTrans.add(new NiceITrans(i, iSymIndex.get(x.getLetter()), oldStateIndex.get(x.getSucc())));
-			for (OutgoingCallTransition<LETTER, STATE>     x : automaton.callSuccessors(st))     cTrans.add(new NiceCTrans(i, cSymIndex.get(x.getLetter()), oldStateIndex.get(x.getSucc())));
-			for (OutgoingReturnTransition<LETTER, STATE>   x : automaton.returnSuccessors(st))   rTrans.add(new NiceRTrans(i, rSymIndex.get(x.getLetter()), oldStateIndex.get(x.getHierPred()), oldStateIndex.get(x.getSucc())));
+			for (OutgoingInternalTransition<LETTER, STATE> x : automaton.internalSuccessors(st)) iTrans.add(new ITrans(i, iSymIndex.get(x.getLetter()), oldStateIndex.get(x.getSucc())));
+			for (OutgoingCallTransition<LETTER, STATE>     x : automaton.callSuccessors(st))     cTrans.add(new CTrans(i, cSymIndex.get(x.getLetter()), oldStateIndex.get(x.getSucc())));
+			for (OutgoingReturnTransition<LETTER, STATE>   x : automaton.returnSuccessors(st))   rTrans.add(new RTrans(i, rSymIndex.get(x.getLetter()), oldStateIndex.get(x.getHierPred()), oldStateIndex.get(x.getSucc())));
 		}
 
-		converted = new NiceNWA();
+		converted = new NWA();
 		converted.numStates = numStates;
 		converted.numISyms = numISyms;
 		converted.numCSyms = numCSyms;
 		converted.numRSyms = numRSyms;
 		converted.isInitial = isInitial;
 		converted.isFinal = isFinal;
-		converted.iTrans = iTrans.toArray(new NiceITrans[iTrans.size()]);
-		converted.cTrans = cTrans.toArray(new NiceCTrans[cTrans.size()]);
-		converted.rTrans = rTrans.toArray(new NiceRTrans[rTrans.size()]);
+		converted.iTrans = iTrans.toArray(new ITrans[iTrans.size()]);
+		converted.cTrans = cTrans.toArray(new CTrans[cTrans.size()]);
+		converted.rTrans = rTrans.toArray(new RTrans[rTrans.size()]);
 	}
 
 	/**
@@ -198,20 +198,20 @@ public class NiceConvert<LETTER, STATE> {
 	 *         data which was remembered from the input INestedWordAutomaton
 	 *         at construction time.
 	 */
-	public NestedWordAutomaton<LETTER, STATE> constructMerged(NiceClasses eqCls) {
+	public NestedWordAutomaton<LETTER, STATE> constructMerged(EqCls eqCls) {
 		assert(eqCls.classOf.length == oldState.size());
 
 		int numClasses = eqCls.numClasses;
 		int[] classOf = eqCls.classOf;
 
 		// Avoid duplicate edges in the merged automaton.
-		HashSet<NiceITrans> newITrans = new HashSet<NiceITrans>();
-		HashSet<NiceCTrans> newCTrans = new HashSet<NiceCTrans>();
-		HashSet<NiceRTrans> newRTrans = new HashSet<NiceRTrans>();
+		HashSet<ITrans> newITrans = new HashSet<ITrans>();
+		HashSet<CTrans> newCTrans = new HashSet<CTrans>();
+		HashSet<RTrans> newRTrans = new HashSet<RTrans>();
 
-		for (NiceITrans x : converted.iTrans) newITrans.add(new NiceITrans(classOf[x.src], x.sym, classOf[x.dst]));
-		for (NiceCTrans x : converted.cTrans) newCTrans.add(new NiceCTrans(classOf[x.src], x.sym, classOf[x.dst]));
-		for (NiceRTrans x : converted.rTrans) newRTrans.add(new NiceRTrans(classOf[x.src], x.sym, classOf[x.top], classOf[x.dst]));
+		for (ITrans x : converted.iTrans) newITrans.add(new ITrans(classOf[x.src], x.sym, classOf[x.dst]));
+		for (CTrans x : converted.cTrans) newCTrans.add(new CTrans(classOf[x.src], x.sym, classOf[x.dst]));
+		for (RTrans x : converted.rTrans) newRTrans.add(new RTrans(classOf[x.src], x.sym, classOf[x.top], classOf[x.dst]));
 
 		// For each equivalence class, the old STATEs in it.
 		ArrayList<ArrayList<STATE>> statesOfClass = new ArrayList<ArrayList<STATE>>();
@@ -246,16 +246,16 @@ public class NiceConvert<LETTER, STATE> {
 		for (STATE st : newState)
 			nwa.addState(newInitialStates.contains(st), newFinalStates.contains(st), st);
 
-		for (NiceITrans x : newITrans) nwa.addInternalTransition(newState.get(x.src), iSym.get(x.sym), newState.get(x.dst));
-		for (NiceCTrans x : newCTrans) nwa.addCallTransition    (newState.get(x.src), cSym.get(x.sym), newState.get(x.dst));
-		for (NiceRTrans x : newRTrans) nwa.addReturnTransition  (newState.get(x.src), newState.get(x.top), rSym.get(x.sym), newState.get(x.dst));
+		for (ITrans x : newITrans) nwa.addInternalTransition(newState.get(x.src), iSym.get(x.sym), newState.get(x.dst));
+		for (CTrans x : newCTrans) nwa.addCallTransition    (newState.get(x.src), cSym.get(x.sym), newState.get(x.dst));
+		for (RTrans x : newRTrans) nwa.addReturnTransition  (newState.get(x.src), newState.get(x.top), rSym.get(x.sym), newState.get(x.dst));
 
 		return nwa;
 	}
 
 	// compute history states, using a INestedWordAutomaton based implementation
-	public ArrayList<NiceHist> computeHistoryStates() {
-		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
+	public ArrayList<Hist> computeHistoryStates() {
+		ArrayList<Hist> hist = new ArrayList<Hist>();
 
 		STATE bottomOfStackState = automaton.getEmptyStackState();
 
@@ -267,10 +267,10 @@ public class NiceConvert<LETTER, STATE> {
 		doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) automaton;
 		for (int i = 0; i < oldState.size(); i++) {
 			if (doubleDecker.isDoubleDecker(oldState.get(i), bottomOfStackState))
-				hist.add(new NiceHist(i, -1));  // -1 is bottom-of-stack
+				hist.add(new Hist(i, -1));  // -1 is bottom-of-stack
 			for (int j = 0; j < oldState.size(); j++)
 				if (doubleDecker.isDoubleDecker(oldState.get(i), oldState.get(j)))
-					hist.add(new NiceHist(i, j));
+					hist.add(new Hist(i, j));
 		}
 
 		return hist;
