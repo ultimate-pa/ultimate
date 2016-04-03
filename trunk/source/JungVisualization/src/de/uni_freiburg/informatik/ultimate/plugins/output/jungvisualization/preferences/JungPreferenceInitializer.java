@@ -28,10 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.pre
 
 import org.eclipse.jface.resource.StringConverter;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool.QueryKeyword;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool.ModelQuery;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues.EdgeLabels;
 
@@ -65,8 +65,8 @@ public class JungPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(JungPreferenceValues.LABEL_SHAPE_NODE,
 						JungPreferenceValues.VALUE_SHAPE_NODE_DEFAULT, PreferenceType.Combo, new String[] {
 								"RoundRectangle", "Rectangle", "Ellipse" }),
-				new UltimatePreferenceItem<QueryKeyword>(JungPreferenceValues.LABEL_WHICH_MODEL, QueryKeyword.LAST,
-						PreferenceType.Combo, QueryKeyword.values()) 
+				new UltimatePreferenceItem<ModelQuery>(JungPreferenceValues.LABEL_WHICH_MODEL, ModelQuery.LAST,
+						PreferenceType.Combo, ModelQuery.values()) 
 						};
 	}
 

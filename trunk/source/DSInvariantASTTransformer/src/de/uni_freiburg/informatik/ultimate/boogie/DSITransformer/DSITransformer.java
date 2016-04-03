@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
@@ -52,7 +52,7 @@ public class DSITransformer implements IGenerator {
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
 
 	private DSITransformerObserver mObserver;
-	private GraphType mInputType;
+	private ModelType mInputType;
 	private IUltimateServiceProvider mServices;
 
 	/**
@@ -76,9 +76,9 @@ public class DSITransformer implements IGenerator {
 		return Collections.singletonList((IObserver) mObserver);
 	}
 
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		try {
-			return new GraphType(getPluginID(), GraphType.Type.AST, mInputType.getFileNames());
+			return new ModelType(getPluginID(), ModelType.Type.AST, mInputType.getFileNames());
 		} catch (Exception e) {
 			return null;
 		}
@@ -91,8 +91,8 @@ public class DSITransformer implements IGenerator {
 	/**
 	 * I give you every model.
 	 */
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
 	}
 
 	public void init() {
@@ -103,7 +103,7 @@ public class DSITransformer implements IGenerator {
 		return false;
 	}
 
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		mInputType = graphType;
 	}
 

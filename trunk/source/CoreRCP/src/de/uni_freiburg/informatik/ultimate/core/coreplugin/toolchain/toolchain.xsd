@@ -19,10 +19,10 @@
 <xsd:complexType name="SerializeType">
 <xsd:sequence>
   <xsd:element name="parser" minOccurs="0" maxOccurs="1"/>
-  <xsd:element name="model" type="ModelType" minOccurs="0" maxOccurs="unbounded"/>
+  <xsd:element name="model" type="ToolchainModelType" minOccurs="0" maxOccurs="unbounded"/>
 </xsd:sequence>
 </xsd:complexType>
 
-<xsd:complexType name="ModelType">  	<xsd:attribute name="id">	<xsd:simpleType>	  <xsd:restriction base="xsd:string">      	<xsd:pattern value="mostrecent|[A-Za-z0-9.]+"/>  	  </xsd:restriction>	</xsd:simpleType>	</xsd:attribute></xsd:complexType>
+<xsd:complexType name="ToolchainModelType">  	<xsd:attribute name="id">	<xsd:simpleType>	  <xsd:restriction base="xsd:string">      	<xsd:pattern value="mostrecent|[A-Za-z0-9.]+"/>  	  </xsd:restriction>	</xsd:simpleType>	</xsd:attribute></xsd:complexType>
 <xsd:complexType name="DropmodelType"><xsd:sequence>  <xsd:element name="parser" minOccurs="0" maxOccurs="1"/>  <xsd:element name="model" type="ModelIdOnlyType" minOccurs="0" maxOccurs="unbounded"/></xsd:sequence></xsd:complexType><xsd:complexType name="ModelIdOnlyType">  	<xsd:attribute name="id">	<xsd:simpleType>	  <xsd:restriction base="xsd:string">      	<xsd:pattern value="[A-Za-z0-9.]+"/>  	  </xsd:restriction>	</xsd:simpleType>	</xsd:attribute></xsd:complexType>
 </xsd:schema>

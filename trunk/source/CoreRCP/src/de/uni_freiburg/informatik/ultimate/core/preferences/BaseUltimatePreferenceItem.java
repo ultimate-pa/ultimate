@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class AbstractUltimatePreferenceItem {
+public abstract class BaseUltimatePreferenceItem {
 
 	boolean mUseCustomPreferencePage;
 
@@ -128,16 +128,16 @@ public abstract class AbstractUltimatePreferenceItem {
 	}
 
 	/**
-	 * Constructs a flattened list out of a given list of {@link AbstractUltimatePreferenceItem}s.
+	 * Constructs a flattened list out of a given list of {@link BaseUltimatePreferenceItem}s.
 	 * 
 	 * @param list
 	 *            The input list.
 	 * @return A flattened list.
 	 */
-	public static List<UltimatePreferenceItem<?>> constructFlattenedList(List<AbstractUltimatePreferenceItem> list) {
+	public static List<UltimatePreferenceItem<?>> constructFlattenedList(List<BaseUltimatePreferenceItem> list) {
 		List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
 
-		for (AbstractUltimatePreferenceItem elem : list) {
+		for (BaseUltimatePreferenceItem elem : list) {
 			returnList.addAll(elem.getFlattenedList());
 		}
 
@@ -145,13 +145,13 @@ public abstract class AbstractUltimatePreferenceItem {
 	}
 
 	/**
-	 * Constructs a flattened list out of a given list of {@link AbstractUltimatePreferenceItem}s.
+	 * Constructs a flattened list out of a given list of {@link BaseUltimatePreferenceItem}s.
 	 * 
 	 * @param list
 	 *            The input list.
 	 * @return A flattened list.
 	 */
-	public static List<UltimatePreferenceItem<?>> constructFlattenedList(AbstractUltimatePreferenceItem[] list) {
+	public static List<UltimatePreferenceItem<?>> constructFlattenedList(BaseUltimatePreferenceItem[] list) {
 		List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
 
 		for (int i = 0; i < list.length; i++) {
@@ -162,13 +162,13 @@ public abstract class AbstractUltimatePreferenceItem {
 	}
 
 	/**
-	 * Constructs a flattened array out of a given list of {@link AbstractUltimatePreferenceItem}s.
+	 * Constructs a flattened array out of a given list of {@link BaseUltimatePreferenceItem}s.
 	 * 
 	 * @param list
 	 *            The input list.
 	 * @return A flattened list.
 	 */
-	public static UltimatePreferenceItem<?>[] constructFlattenedArray(AbstractUltimatePreferenceItem[] list) {
+	public static UltimatePreferenceItem<?>[] constructFlattenedArray(BaseUltimatePreferenceItem[] list) {
 		final List<UltimatePreferenceItem<?>> returnList = constructFlattenedList(list);
 
 		return returnList.toArray(new UltimatePreferenceItem<?>[returnList.size()]);

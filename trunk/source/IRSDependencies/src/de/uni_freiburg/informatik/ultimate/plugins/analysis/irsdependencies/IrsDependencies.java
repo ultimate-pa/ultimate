@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetectorObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences.IRSDependenciesPreferenceInitializer;
 
@@ -51,7 +51,7 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		return null;
 	}
 
@@ -61,8 +61,8 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.ALL;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.ALL;
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
 
@@ -88,7 +88,7 @@ public class IrsDependencies implements IAnalysis {
 		}
 	}
 
-	private void setInputDefinitionModeDefault(GraphType graphType) {
+	private void setInputDefinitionModeDefault(ModelType graphType) {
 		String creator = graphType.getCreator();
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
 
@@ -48,7 +48,7 @@ public class JungVisualization implements IOutput {
 
 	private Logger mLogger;
 
-	private GraphType mGraphType;
+	private ModelType mGraphType;
 
 	private IUltimateServiceProvider mServices;
 
@@ -64,13 +64,13 @@ public class JungVisualization implements IOutput {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
+	public ModelQuery getModelQuery() {
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(getPluginID());
-		return ups.getEnum(JungPreferenceValues.LABEL_WHICH_MODEL, QueryKeyword.class);
+		return ups.getEnum(JungPreferenceValues.LABEL_WHICH_MODEL, ModelQuery.class);
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		mGraphType = graphType;
 	}
 

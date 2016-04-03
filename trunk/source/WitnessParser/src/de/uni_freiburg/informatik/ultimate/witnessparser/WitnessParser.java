@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
@@ -45,7 +45,7 @@ public class WitnessParser implements ISource {
 	private static final String[] sFileTypes = new String[] { "graphml" };
 	private IUltimateServiceProvider mServices;
 	private String mFilename;
-	private GraphType.Type mWitnessType;
+	private ModelType.Type mWitnessType;
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
@@ -125,8 +125,8 @@ public class WitnessParser implements ISource {
 	}
 
 	@Override
-	public GraphType getOutputDefinition() {
-		return new GraphType(getPluginID(), mWitnessType, Collections.singleton(mFilename));
+	public ModelType getOutputDefinition() {
+		return new ModelType(getPluginID(), mWitnessType, Collections.singleton(mFilename));
 	}
 
 	@Override

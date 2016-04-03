@@ -52,7 +52,7 @@ public class GraphNotFoundException extends Exception {
 	 * @param gt the graph that could not be found
 	 * @param e the exception thrown
 	 */
-	public GraphNotFoundException(GraphType gt, Exception e) {
+	public GraphNotFoundException(ModelType gt, Exception e) {
 		super("The Graphtype: " + gt + " could not be found. Neither in the map, nor in the repository" , e);
 	}
 
@@ -60,7 +60,7 @@ public class GraphNotFoundException extends Exception {
 	/**
 	 * @param gt
 	 */
-	public GraphNotFoundException(GraphType gt) {
+	public GraphNotFoundException(ModelType gt) {
 		super("The Graphtype: " + gt + " could not be found. Neither in the map, nor in the repository");
 	}
 

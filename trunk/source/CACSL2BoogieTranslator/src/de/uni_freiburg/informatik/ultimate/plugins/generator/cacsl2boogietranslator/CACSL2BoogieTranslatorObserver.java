@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
@@ -275,7 +275,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
 		if (currentModelIndex == numberOfModels -1) {
 			m_LastModel = true;
 		}

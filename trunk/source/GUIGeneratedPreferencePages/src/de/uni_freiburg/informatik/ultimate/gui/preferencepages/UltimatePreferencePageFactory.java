@@ -37,8 +37,8 @@ import org.eclipse.jface.preference.PreferenceManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
@@ -66,7 +66,7 @@ public class UltimatePreferencePageFactory {
 		IUltimatePlugin[] plugins = mCore.getRegisteredUltimatePlugins();
 		for (IUltimatePlugin plugin : plugins) {
 			if (plugin.getPreferences() != null) {
-				AbstractUltimatePreferenceItem[] preferenceItems = plugin.getPreferences().getDefaultPreferences();
+				BaseUltimatePreferenceItem[] preferenceItems = plugin.getPreferences().getDefaultPreferences();
 				if (preferenceItems != null) {
 					String parentNodeID = "GeneratedUltimatePreferences";
 
@@ -90,21 +90,21 @@ public class UltimatePreferencePageFactory {
 		}
 	}
 
-	private AbstractUltimatePreferenceItem[] filterPreferences(AbstractUltimatePreferenceItem[] items) {
-		ArrayList<AbstractUltimatePreferenceItem> list = new ArrayList<>();
-		for (AbstractUltimatePreferenceItem item : items) {
+	private BaseUltimatePreferenceItem[] filterPreferences(BaseUltimatePreferenceItem[] items) {
+		ArrayList<BaseUltimatePreferenceItem> list = new ArrayList<>();
+		for (BaseUltimatePreferenceItem item : items) {
 			if (!item.getUseCustomPreferencePage()) {
 				list.add(item);
 			}
 		}
-		return list.toArray(new AbstractUltimatePreferenceItem[list.size()]);
+		return list.toArray(new BaseUltimatePreferenceItem[list.size()]);
 	}
 
-	private void createPreferencePage(String pluginID, String title, AbstractUltimatePreferenceItem[] preferenceItems,
+	private void createPreferencePage(String pluginID, String title, BaseUltimatePreferenceItem[] preferenceItems,
 	        String parentNodeID) {
-		AbstractUltimatePreferenceItem[] pageItems = Arrays.stream(preferenceItems)
+		BaseUltimatePreferenceItem[] pageItems = Arrays.stream(preferenceItems)
 		        .filter(p -> p.getType() != PreferenceType.SubItemContainer)
-		        .toArray(i -> new AbstractUltimatePreferenceItem[i]);
+		        .toArray(i -> new BaseUltimatePreferenceItem[i]);
 
 		UltimatePreferenceItemContainer[] subContainerItems = Arrays.stream(preferenceItems)
 		        .filter(p -> p.getType() == PreferenceType.SubItemContainer)
@@ -123,8 +123,8 @@ public class UltimatePreferencePageFactory {
 			root.add(node);
 			for (UltimatePreferenceItemContainer container : subContainerItems) {
 
-				final AbstractUltimatePreferenceItem[] containerItems = container.getContainerItems()
-				        .toArray(new AbstractUltimatePreferenceItem[container.getContainerItems().size()]);
+				final BaseUltimatePreferenceItem[] containerItems = container.getContainerItems()
+				        .toArray(new BaseUltimatePreferenceItem[container.getContainerItems().size()]);
 
 				createPreferencePage(pluginID, container.getContainerName(), filterPreferences(containerItems),
 				        node.getId());

@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.Constants;
  * 
  * @author dietsch
  */
-public class GraphType implements Serializable {
+public class ModelType implements Serializable {
 
 	/**
 	 * long serialVersionUID
@@ -89,7 +89,7 @@ public class GraphType implements Serializable {
 		AST, CG, CFG, DFG, CST, TS, PG, OTHER, CORRECTNESS_WITNESS, VIOLATION_WITNESS
 	}
 
-	public GraphType(String creatorPluginID, Type type, Collection<String> fileNames) {
+	public ModelType(String creatorPluginID, Type type, Collection<String> fileNames) {
 		if (fileNames == null) {
 			throw new IllegalArgumentException("A graphtype has to have at least one filename");
 		}
@@ -123,8 +123,8 @@ public class GraphType implements Serializable {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof GraphType) {
-			GraphType t = (GraphType) obj;
+		if (obj instanceof ModelType) {
+			ModelType t = (ModelType) obj;
 			return t.mLastModified == mLastModified && t.mCreator.equals(mCreator);
 		}
 		return false;

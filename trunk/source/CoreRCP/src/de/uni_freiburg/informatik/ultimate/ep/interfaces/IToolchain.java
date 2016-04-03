@@ -33,7 +33,7 @@ import org.eclipse.core.runtime.IStatus;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
@@ -119,7 +119,7 @@ public interface IToolchain {
 	 */
 	public IStatus processToolchain(IProgressMonitor monitor) throws Throwable;
 
-	public void addAST(IElement root, GraphType outputDefinition);
+	public void addAST(IElement root, ModelType outputDefinition);
 
 	public long getId();
 

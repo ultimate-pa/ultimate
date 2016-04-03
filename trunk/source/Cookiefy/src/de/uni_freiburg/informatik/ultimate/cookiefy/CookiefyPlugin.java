@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class CookiefyPlugin implements IGenerator {
@@ -45,13 +45,13 @@ public class CookiefyPlugin implements IGenerator {
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private CookiefyAlgorithm m_CookiefyAlgorithm;
-	private GraphType m_InputType;
+	private ModelType m_InputType;
 	private Logger mLogger;
 
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		try {
-			return new GraphType(getPluginID(), GraphType.Type.AST, m_InputType.getFileNames());
+			return new ModelType(getPluginID(), ModelType.Type.AST, m_InputType.getFileNames());
 		} catch (Exception e) {
 			return null;
 		}
@@ -68,8 +68,8 @@ public class CookiefyPlugin implements IGenerator {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
 	}
 
 	@Override
@@ -79,7 +79,7 @@ public class CookiefyPlugin implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		this.m_InputType = graphType;
 	}
 

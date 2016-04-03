@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
 
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 
 /**
  * 
@@ -48,6 +48,6 @@ public interface IModifyingTool extends ITool {
 	 * 
 	 * @return A GraphType object which describes the underlying graph structure of a model
 	 */
-	GraphType getOutputDefinition();
+	ModelType getOutputDefinition();
 	
 }

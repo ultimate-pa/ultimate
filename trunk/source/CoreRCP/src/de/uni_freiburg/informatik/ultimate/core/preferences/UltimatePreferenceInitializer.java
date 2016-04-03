@@ -42,7 +42,7 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public abstract class UltimatePreferenceInitializer extends AbstractPreferenceInitializer {
 
-	private final AbstractUltimatePreferenceItem[] mPreferenceDescriptors;
+	private final BaseUltimatePreferenceItem[] mPreferenceDescriptors;
 	private final UltimatePreferenceStore mPreferenceStore;
 
 	public UltimatePreferenceInitializer() {
@@ -74,7 +74,7 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 			e.printStackTrace();
 		}
 
-		for (AbstractUltimatePreferenceItem prefItem : AbstractUltimatePreferenceItem
+		for (BaseUltimatePreferenceItem prefItem : BaseUltimatePreferenceItem
 		        .constructFlattenedList(mPreferenceDescriptors)) {
 			if (prefItem instanceof UltimatePreferenceItem) {
 				UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
@@ -117,7 +117,7 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 		}
 	}
 
-	public AbstractUltimatePreferenceItem[] getDefaultPreferences() {
+	public BaseUltimatePreferenceItem[] getDefaultPreferences() {
 		return mPreferenceDescriptors;
 	}
 
@@ -131,7 +131,7 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 	 * 
 	 * @return
 	 */
-	protected abstract AbstractUltimatePreferenceItem[] initDefaultPreferences();
+	protected abstract BaseUltimatePreferenceItem[] initDefaultPreferences();
 
 	/**
 	 * Should return the ID of the implementing plugin.

@@ -36,9 +36,9 @@ import java.util.List;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public final class UltimatePreferenceItemContainer extends AbstractUltimatePreferenceItem {
+public final class UltimatePreferenceItemContainer extends BaseUltimatePreferenceItem {
 
-	private final List<AbstractUltimatePreferenceItem> mContainerItems;
+	private final List<BaseUltimatePreferenceItem> mContainerItems;
 	private final String mContainerName;
 
 	public UltimatePreferenceItemContainer(final String containerName) {
@@ -51,11 +51,11 @@ public final class UltimatePreferenceItemContainer extends AbstractUltimatePrefe
 		return PreferenceType.SubItemContainer;
 	}
 
-	public void addItem(final AbstractUltimatePreferenceItem item) {
+	public void addItem(final BaseUltimatePreferenceItem item) {
 		mContainerItems.add(item);
 	}
 
-	public void addAbstractItems(final List<AbstractUltimatePreferenceItem> items) {
+	public void addAbstractItems(final List<BaseUltimatePreferenceItem> items) {
 		mContainerItems.addAll(items);
 	}
 	
@@ -63,7 +63,7 @@ public final class UltimatePreferenceItemContainer extends AbstractUltimatePrefe
 		mContainerItems.addAll(items);
 	}
 
-	public List<AbstractUltimatePreferenceItem> getContainerItems() {
+	public List<BaseUltimatePreferenceItem> getContainerItems() {
 		return mContainerItems;
 	}
 	
@@ -71,7 +71,7 @@ public final class UltimatePreferenceItemContainer extends AbstractUltimatePrefe
 	public List<UltimatePreferenceItem<?>> getFlattenedList() {
 		List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
 		
-		for (final AbstractUltimatePreferenceItem item : mContainerItems) {
+		for (final BaseUltimatePreferenceItem item : mContainerItems) {
 			returnList.addAll(item.getFlattenedList());
 		}
 		

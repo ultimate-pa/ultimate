@@ -49,11 +49,11 @@ public class ModelContainer implements Serializable {
 
 	private IElement mGraphRoot;
 
-	private GraphType mGraphType;
+	private ModelType mGraphType;
 
 	private String mGraphName;
 
-	protected ModelContainer(IElement rootNode, GraphType type, String name) {
+	protected ModelContainer(IElement rootNode, ModelType type, String name) {
 		mGraphRoot = rootNode;
 		mGraphType = type;
 		mGraphName = name;
@@ -76,7 +76,7 @@ public class ModelContainer implements Serializable {
 		return mGraphType.toString();
 	}
 
-	protected GraphType getType() {
+	protected ModelType getType() {
 		return mGraphType;
 	}
 

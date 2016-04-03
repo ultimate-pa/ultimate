@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
@@ -80,8 +80,8 @@ public class WitnessPrinter implements IOutput {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.ALL;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.ALL;
 	}
 
 	@Override
@@ -90,7 +90,7 @@ public class WitnessPrinter implements IOutput {
 	}
 
 	@Override
-	public void setInputDefinition(final GraphType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		if (graphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder")) {
 			mMatchingModel = true;
 		} else {

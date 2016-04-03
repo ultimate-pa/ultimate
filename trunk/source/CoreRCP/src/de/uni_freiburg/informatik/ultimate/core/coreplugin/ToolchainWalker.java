@@ -36,18 +36,18 @@ import org.eclipse.core.runtime.SubMonitor;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DropmodelType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ModelIdOnlyType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SerializeType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainModelType;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainCancel;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
@@ -335,8 +335,8 @@ final class ToolchainWalker implements IToolchainCancel {
 	 * @param serializeType
 	 */
 	private final void processSerializeStmt(CompleteToolchainData data, SerializeType serializeType) {
-		ArrayList<GraphType> models = new ArrayList<GraphType>();
-		GraphType graphType = null;
+		ArrayList<ModelType> models = new ArrayList<ModelType>();
+		ModelType graphType = null;
 		if (serializeType.getParser() != null) {
 			for (ISource parser : data.getParsers()) {
 				graphType = mModelManager.getGraphTypeByGeneratorPluginId(parser.getPluginID());
@@ -347,7 +347,7 @@ final class ToolchainWalker implements IToolchainCancel {
 				}
 			}
 		}
-		for (ModelType modelType : serializeType.getModel()) {
+		for (ToolchainModelType modelType : serializeType.getModel()) {
 			if (modelType.getId().equals("mostrecent")) {
 				graphType = this.mModelManager.getLastAdded();
 			} else {
@@ -359,7 +359,7 @@ final class ToolchainWalker implements IToolchainCancel {
 				mLogger.warn("Model " + modelType.getId() + " could not be found!");
 		}
 
-		for (GraphType model : models) {
+		for (ModelType model : models) {
 			try {
 				mLogger.debug("Attempting to serialize model " + model.toString() + " ...");
 				this.mModelManager.persistAndDropExistingGraph(model);
@@ -380,7 +380,7 @@ final class ToolchainWalker implements IToolchainCancel {
 	 */
 	private final void processDropmodelStmt(CompleteToolchainData data, DropmodelType dt) {
 		if (dt.getParser() != null) {
-			GraphType g = null;
+			ModelType g = null;
 			for (ISource parser : data.getParsers()) {
 				g = this.mModelManager.getGraphTypeByGeneratorPluginId(parser.getPluginID());
 				mLogger.debug("Attempting to drop parser model...");
@@ -397,7 +397,7 @@ final class ToolchainWalker implements IToolchainCancel {
 		}
 
 		for (ModelIdOnlyType m : dt.getModel()) {
-			GraphType g = null;
+			ModelType g = null;
 			g = this.mModelManager.getGraphTypeByGeneratorPluginId(m.getId());
 			mLogger.debug("Attempting to drop model " + m.getId() + " ...");
 			if (g == null) {

@@ -31,8 +31,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 
@@ -54,8 +54,8 @@ public class LpSolverPreferences {
 
 	public static final String DEF_VALUES_NUMBER_TYPE = VALUE_NUMBER_TYPE_BIGDECIMAL;
 
-	public static List<AbstractUltimatePreferenceItem> getPreferences() {
-		final List<AbstractUltimatePreferenceItem> returnList = new ArrayList<>();
+	public static List<BaseUltimatePreferenceItem> getPreferences() {
+		final List<BaseUltimatePreferenceItem> returnList = new ArrayList<>();
 
 		final UltimatePreferenceItemContainer lpSolverContainer = new UltimatePreferenceItemContainer("LP Solver");
 		

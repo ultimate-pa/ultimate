@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
@@ -79,10 +79,10 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	private final Logger mLogger;
 
 	private boolean mOpenWindow;
-	private final GraphType mInputGraphType;
+	private final ModelType mInputGraphType;
 	private final IUltimateServiceProvider mServices;
 
-	public JungVisualizationObserver(Logger logger, GraphType graphType, IUltimateServiceProvider services) {
+	public JungVisualizationObserver(Logger logger, ModelType graphType, IUltimateServiceProvider services) {
 		mLogger = logger;
 		mGraph = new DirectedOrderedSparseMultigraph<VisualizationNode, VisualizationEdge>();
 		mGraphLayout = new FRLayout2<VisualizationNode, VisualizationEdge>(mGraph);
@@ -92,7 +92,7 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
 		mSeenList = new HashMap<IElement, String>();
 		mNumberOfRoots = -1;
 	}
@@ -182,7 +182,7 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private String getName(GraphType graphType) {
+	private String getName(ModelType graphType) {
 		StringBuilder sb = new StringBuilder();
 
 		String[] parts = graphType.getCreator().split("\\.");

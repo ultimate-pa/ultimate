@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -60,7 +60,7 @@ public class BuchiAutomizer implements IGenerator {
 	private Logger mLogger;
 
 	private BuchiAutomizerObserver mObserver;
-	private GraphType mInputDefinition;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 
@@ -79,8 +79,8 @@ public class BuchiAutomizer implements IGenerator {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
 	}
 
 	@Override
@@ -90,7 +90,7 @@ public class BuchiAutomizer implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		this.mInputDefinition = graphType;
 	}
 
@@ -107,12 +107,12 @@ public class BuchiAutomizer implements IGenerator {
 	}
 
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		/*
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new GraphType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
+		return new ModelType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override

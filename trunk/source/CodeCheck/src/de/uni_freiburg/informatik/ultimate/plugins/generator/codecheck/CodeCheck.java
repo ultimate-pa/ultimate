@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
@@ -53,7 +53,7 @@ public class CodeCheck implements IGenerator {
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
 
 	private CodeCheckObserver m_Observer;
-	private GraphType m_InputDefinition;
+	private ModelType m_InputDefinition;
 
 	EdgeCheckOptimization edgeCheckOptimization = EdgeCheckOptimization.SDEC;
 	private IUltimateServiceProvider mServices;
@@ -77,8 +77,8 @@ public class CodeCheck implements IGenerator {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class CodeCheck implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		this.m_InputDefinition = graphType;
 	}
 
@@ -97,12 +97,12 @@ public class CodeCheck implements IGenerator {
 		return m_Observers;
 	}
 
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		/*
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new GraphType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
 
 	@Override

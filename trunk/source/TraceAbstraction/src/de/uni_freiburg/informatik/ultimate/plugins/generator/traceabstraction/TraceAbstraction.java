@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 
@@ -53,7 +53,7 @@ public class TraceAbstraction implements IGenerator {
 
 	private TraceAbstractionObserver m_Observer;
 	private List<IObserver> m_Observers;
-	private GraphType m_InputDefinition;
+	private ModelType m_InputDefinition;
 	private IToolchainStorage mStorage;
 	private IUltimateServiceProvider mServices;
 
@@ -74,8 +74,8 @@ public class TraceAbstraction implements IGenerator {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.ALL;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.ALL;
 	}
 
 	@Override
@@ -85,7 +85,7 @@ public class TraceAbstraction implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		this.m_InputDefinition = graphType;
 	}
 
@@ -94,12 +94,12 @@ public class TraceAbstraction implements IGenerator {
 		return m_Observers;
 	}
 
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		/*
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new GraphType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
 
 	@Override

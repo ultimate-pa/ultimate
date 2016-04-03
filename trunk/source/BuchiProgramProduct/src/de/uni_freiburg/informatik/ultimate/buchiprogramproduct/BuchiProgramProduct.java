@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -71,14 +71,14 @@ public class BuchiProgramProduct implements IGenerator {
 	private IToolchainStorage mStorage;
 
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		if (mPreviousToolFoundErrors) {
 			return null;
 		}
 
 		List<String> filenames = new ArrayList<String>();
 		filenames.add("LTL+Program Product");
-		return new GraphType(Activator.PLUGIN_ID, GraphType.Type.OTHER, filenames);
+		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.OTHER, filenames);
 	}
 
 	@Override
@@ -87,15 +87,15 @@ public class BuchiProgramProduct implements IGenerator {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
+	public ModelQuery getModelQuery() {
 		if (mPreviousToolFoundErrors) {
-			return QueryKeyword.LAST;
+			return ModelQuery.LAST;
 		}
-		return QueryKeyword.ALL;
+		return ModelQuery.ALL;
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		switch (graphType.getCreator()) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mModelIsRCFG = true;

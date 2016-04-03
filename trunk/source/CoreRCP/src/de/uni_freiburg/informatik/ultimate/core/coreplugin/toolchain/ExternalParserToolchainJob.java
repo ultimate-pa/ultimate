@@ -35,17 +35,17 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 
 public class ExternalParserToolchainJob extends BasicToolchainJob {
 
 	private IElement mAST;
-	private GraphType mOutputDefinition;
+	private ModelType mOutputDefinition;
 
 	public ExternalParserToolchainJob(String name, ICore core, IController controller, IElement ast,
-			GraphType outputDefinition, Logger logger) {
+			ModelType outputDefinition, Logger logger) {
 		super(name, core, controller, logger);
 		mAST = ast;
 		mOutputDefinition = outputDefinition;

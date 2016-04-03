@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
@@ -51,7 +51,7 @@ public class RootNodeFilterObserver<E extends IElement> implements IUnmanagedObs
 	}
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex,
+	public void init(ModelType modelType, int currentModelIndex,
 			int numberOfModels) throws Throwable {
 		// TODO Auto-generated method stub
 

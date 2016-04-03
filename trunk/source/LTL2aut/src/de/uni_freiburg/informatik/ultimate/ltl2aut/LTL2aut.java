@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 
@@ -74,11 +74,11 @@ public class LTL2aut implements IGenerator {
 	}
 
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		List<String> filenames = new ArrayList<String>();
 		filenames.add("Hardcoded");
 
-		return new GraphType(Activator.PLUGIN_ID, GraphType.Type.AST, filenames);
+		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.AST, filenames);
 	}
 
 	@Override
@@ -87,11 +87,11 @@ public class LTL2aut implements IGenerator {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
+	public ModelQuery getModelQuery() {
 		if (mSkip) {
-			return QueryKeyword.LAST;
+			return ModelQuery.LAST;
 		}
-		return QueryKeyword.ALL;
+		return ModelQuery.ALL;
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class LTL2aut implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		switch (graphType.getCreator()) {
 		case "de.uni_freiburg.informatik.ultimate.boogie.parser":
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator":

@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class PeaToBoogie implements ISource {
@@ -104,9 +104,9 @@ public class PeaToBoogie implements ISource {
 	}
 
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		try {
-			return new GraphType(getPluginID(), GraphType.Type.AST, mFileNames);
+			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
 		} catch (Exception ex) {
 			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
 			return null;
