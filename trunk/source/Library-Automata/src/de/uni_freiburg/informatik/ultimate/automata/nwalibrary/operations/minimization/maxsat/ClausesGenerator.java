@@ -188,8 +188,8 @@ public class ClausesGenerator {
 		 *
 		 */
 
-		HornCNFBuilder builder = new HornCNFBuilder();
 		EqVarCalc calc = new EqVarCalc(numStates);
+		HornCNFBuilder builder = new HornCNFBuilder(calc.getNumEqVars());
 
 		for (int i = 0; i < numStates; i++) {
 			int eq1 = calc.eqVar(i, i);
