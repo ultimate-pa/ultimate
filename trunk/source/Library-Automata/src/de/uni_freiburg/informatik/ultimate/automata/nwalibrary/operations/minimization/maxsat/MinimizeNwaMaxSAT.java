@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
@@ -65,6 +66,8 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         convertLog.info("starting conversion");
         NiceConvert<LETTER, STATE> converter = new NiceConvert<LETTER, STATE>(services, stateFactory, automaton);
         NiceNWA nwa = converter.getNiceNWA();
+        // it shouldn't be like this, but...
+        ArrayList<NiceHist> history = converter.computeHistoryStates();
         convertLog.info(
                 "finished conversion. "
                 + Integer.toString(nwa.numStates) + " states, "
@@ -75,8 +78,6 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
                 + Integer.toString(nwa.cTrans.length) + " cTrans, "
                 + Integer.toString(nwa.rTrans.length) + " rTrans."
         );
-        // it shouldn't be like this, but...
-        ArrayList<NiceHist> history = converter.computeHistoryStates();
 
         generateLog.info("starting clauses generation");
         ArrayList<HornClause3> clauses = NwaMinimizationClausesGenerator.generateConstraints(nwa, history);
