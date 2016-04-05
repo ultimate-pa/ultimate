@@ -323,28 +323,21 @@ public class FlowSensitiveFaultLocalizer {
 				IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionSequence.getInterpolant(i)));
 				
 				// Figure out what is the type of the statement (internal, call or Return) and act accordingly?
-				ERelevanceStatus relevance = null;
-				if(action instanceof IInternalAction)
-				{
+				final ERelevanceStatus relevance;
+				if(action instanceof IInternalAction) {
 					IInternalAction internal = (IInternalAction) counterexampleWord.getSymbolAt(i);
 					relevance = rc.relevanceInternal(pre, internal, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
-				}
-				else if(action instanceof ICallAction)
-				{
+				} else if(action instanceof ICallAction) {
 					ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(i);
 					relevance = rc.relevanceCall(pre, call, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
-				}
-				else if(action instanceof IReturnAction)
-				{
+				} else if(action instanceof IReturnAction) {
 					IReturnAction returnn = (IReturnAction) counterexampleWord.getSymbolAt(i);
 					assert counterexampleWord.isReturnPosition(i);
 					assert !counterexampleWord.isPendingReturn(i) : "pending returns not supported";
 					final int callPos = counterexampleWord.getCallPosition(i);
 					final IPredicate callPredecessor = weakestPreconditionSequence.getInterpolant(callPos); 
 					relevance = rc.relevanceReturn(pre, callPredecessor, returnn, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
-				}
-				else
-				{
+				} else {
 					throw new AssertionError("Unknown Action " +
 							action.getClass().getSimpleName());
 				}
