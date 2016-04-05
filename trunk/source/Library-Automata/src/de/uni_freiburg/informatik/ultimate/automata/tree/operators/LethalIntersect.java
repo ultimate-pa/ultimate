@@ -17,7 +17,17 @@ import de.uni_muenster.cs.sev.lethal.states.NamedState;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTA;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTAOps;
 
-public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
+
+/**
+ * Intersection operation from Lethal for TreeAutomatons.
+ * 
+ * 
+ * @param <LETTER> is the type of the alphabet.
+ * @param <STATE> is the type of the states.
+ * 
+ * @author Mostafa M.A.
+ */
+public class LethalIntersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
@@ -27,7 +37,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final TreeAutomatonBU<LETTER, NamedState<Pair<MyState<STATE>, MyState<STATE>>>> m_Result;
 	private final StateFactory<STATE> m_StateFactory;
 
-	public Intersect(AutomataLibraryServices services, TreeAutomatonBU<LETTER, STATE> fstOperand,
+	public LethalIntersect(AutomataLibraryServices services, TreeAutomatonBU<LETTER, STATE> fstOperand,
 			TreeAutomatonBU<LETTER, STATE> sndOperand) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
@@ -37,7 +47,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_Logger.info(startMessage());
 		ConverterToFTA<LETTER, STATE> converter = new ConverterToFTA<LETTER, STATE>();
 		GenFTA<MySymbol<LETTER>, NamedState<Pair<MyState<STATE>, MyState<STATE>>>> gen = GenFTAOps
-				.intersectionBU(converter.convertITreeToFTA(m_FstOperand), converter.convertITreeToFTA(m_SndOperand));
+				.intersectionWR(converter.convertITreeToFTA(m_FstOperand), converter.convertITreeToFTA(m_SndOperand));
 		ConverterFTAToTree<LETTER, NamedState<Pair<MyState<STATE>, MyState<STATE>>>> reverseConverter = new ConverterFTAToTree<>();
 		m_Result = reverseConverter.convertToTree(gen);
 		m_Logger.info(exitMessage());
@@ -68,28 +78,37 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return false;
 	}
-	public static void main(String[] args) {
-		TreeAutomatonBU<String, String> tree = new TreeAutomatonBU<>();
-		String[] letters = {"T", "F", "Nil", "cons"};
-		String list = "List", bool = "Bool";
-		tree.addState(bool); tree.addState(list);
-		tree.addFinalState(list);
-		tree.addInitialState(bool);tree.addInitialState(list);
+	public static void main(String[] args) throws AutomataLibraryException {
+		TreeAutomatonBU<String, String> treeA = new TreeAutomatonBU<>();
+		TreeAutomatonBU<String, String> treeB = new TreeAutomatonBU<>();
+		String[] letters = {"T", "F", "Nil", "cons", "succ"};
+		String list = "List", bool = "Bool", num = "Num";
+		treeA.addState(bool);
+		treeA.addState(list);
+		treeA.addFinalState(list);
+		treeA.addInitialState(bool);
+		treeA.addInitialState(list);
 		ArrayList<String> st = new ArrayList<String>();
 		st.add(bool); st.add(list);
-		tree.addRule(letters[3], st, list);
-		tree.addRule(letters[0], new ArrayList<String>(), bool);
-		tree.addRule(letters[1], new ArrayList<String>(), bool);
-		tree.addRule(letters[2], new ArrayList<String>(), list);
+		treeA.addRule(letters[3], st, list);
+		treeA.addRule(letters[0], new ArrayList<String>(), bool);
+		treeA.addRule(letters[1], new ArrayList<String>(), bool);
+		treeA.addRule(letters[2], new ArrayList<String>(), list);
+
+		treeB.addState(num);
+		treeB.addState(list);
+		treeB.addFinalState(list);
+		treeB.addInitialState(num);
+		treeB.addInitialState(list);
+		ArrayList<String> stB = new ArrayList<String>();
+		stB.add(num); stB.add(list);
+		treeB.addRule(letters[3], stB, list);
+		ArrayList<String> stQ = new ArrayList<>(); stQ.add(num);
+		treeB.addRule(letters[4], stQ, num);
+		treeB.addRule(letters[1], new ArrayList<String>(), num);
+		treeB.addRule(letters[2], new ArrayList<String>(), list);
 		
-		
-		ConverterToFTA<String, String> converter = new ConverterToFTA<String, String>();
-		GenFTA<MySymbol<String>, MyState<String>> gen = converter.convertITreeToFTA(tree);
-		System.out.println(gen.rulesToString());
-		ConverterFTAToTree<String, MyState<String>> reverseConverter = new ConverterFTAToTree<>();
-	
-		TreeAutomatonBU<String, MyState<String>> tt = reverseConverter.convertToTree(gen);
-		
-		System.out.printf("%s\nX\n%s\n", tree.DebugString(), tt.DebugString());
+		//LethalIntersect<String, String> intersector = new LethalIntersect<>(null, treeA, treeB);
+		//System.out.printf("1st:\n%s\n2nd:\n%s\n3rd:\n%s\n\n", treeA.DebugString(), treeB.DebugString(), intersector.getResult().DebugString());
 	}
 }

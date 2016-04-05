@@ -8,7 +8,15 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-
+/**
+ * A Bottom-up TreeAutomaton. The rules have the form f(q1,...,qn) ~> q
+ * 
+ * 
+ * @param <LETTER> is the type of the alphabet.
+ * @param <STATE> is the type of the states.
+ * 
+ * @author Mostafa M.A.
+ */
 public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, STATE> {
 	
 	private Map<List<STATE>, Map<LETTER, Iterable<STATE>>> parentsMap;

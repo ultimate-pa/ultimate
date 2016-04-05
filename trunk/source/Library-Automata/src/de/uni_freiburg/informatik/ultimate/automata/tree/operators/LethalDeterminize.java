@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree.operators;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -16,7 +17,16 @@ import de.uni_muenster.cs.sev.lethal.states.NamedState;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTA;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTAOps;
 
-public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
+/**
+ * Determinization operation from Lethal for TreeAutomatons.
+ * 
+ * 
+ * @param <LETTER> is the type of the alphabet.
+ * @param <STATE> is the type of the states.
+ * 
+ * @author Mostafa M.A.
+ */
+public class LethalDeterminize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
@@ -26,7 +36,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final StateFactory<STATE> m_StateFactory;
 	
 
-	public Determinize(AutomataLibraryServices services, TreeAutomatonBU<LETTER, STATE> operand) {
+	public LethalDeterminize(AutomataLibraryServices services, TreeAutomatonBU<LETTER, STATE> operand) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
@@ -64,4 +74,24 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return false;
 	}
 
+	public static void main(String[] args) throws AutomataLibraryException {
+		TreeAutomatonBU<String, String> treeA = new TreeAutomatonBU<>();
+		String[] letters = {"T", "F", "Nil", "cons", "succ"};
+		String list = "List", bool = "Bool", num = "Num";
+		treeA.addState(bool);
+		treeA.addState(list);
+		treeA.addFinalState(list);
+		treeA.addInitialState(bool);
+		treeA.addInitialState(list);
+		ArrayList<String> st = new ArrayList<String>();
+		st.add(bool); st.add(list);
+		treeA.addRule(letters[3], st, list);
+		treeA.addRule(letters[0], new ArrayList<String>(), bool);
+		treeA.addRule(letters[1], new ArrayList<String>(), bool);
+		treeA.addRule(letters[2], new ArrayList<String>(), list);
+
+		
+		//LethalDeterminize<String, String> determinizer = new LethalDeterminize<>(null, treeA);
+		//System.out.printf("1st:\n%s\n2nd:\n%s\n", treeA.DebugString(), determinizer.getResult().DebugString());
+	}
 }

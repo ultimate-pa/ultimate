@@ -16,7 +16,16 @@ import de.uni_muenster.cs.sev.lethal.states.NamedState;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTA;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTAOps;
 
-public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
+/**
+ * Complemention operation from Lethal for TreeAutomatons.
+ * 
+ * 
+ * @param <LETTER> is the type of the alphabet.
+ * @param <STATE> is the type of the states.
+ * 
+ * @author Mostafa M.A.
+ */
+public class LethalComplement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
@@ -26,7 +35,7 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final StateFactory<STATE> m_StateFactory;
 	
 
-	public Complement(AutomataLibraryServices services, TreeAutomatonBU<LETTER, STATE> operand) {
+	public LethalComplement(AutomataLibraryServices services, TreeAutomatonBU<LETTER, STATE> operand) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;

@@ -8,6 +8,15 @@ import de.uni_muenster.cs.sev.lethal.states.State;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTA;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTARule;
 
+/**
+ * Lethal GenFTA to Ultimate TreeAutomaton converter.
+ * 
+ * 
+ * @param <LETTER> is the type of the alphabet.
+ * @param <STATE> is the type of the states.
+ * 
+ * @author Mostafa M.A.
+ */
 public class ConverterFTAToTree<LETTER, STATE extends State> extends Converter {
 
 	public TreeAutomatonBU<LETTER, STATE> convertToTree(GenFTA<MySymbol<LETTER>, STATE> fta) {
