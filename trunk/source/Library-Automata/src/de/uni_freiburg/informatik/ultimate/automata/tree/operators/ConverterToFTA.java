@@ -43,7 +43,9 @@ public class ConverterToFTA<LETTER, STATE> extends Converter {
 			Map<LETTER, Iterable<List<STATE>>> predecessors = tree.getPredecessors(state);
 			for (LETTER letter : predecessors.keySet()) {
 				if (!mySymbols.containsKey(letter)) {
-					mySymbols.put(letter, new MySymbol<LETTER>(letter, predecessors.get(letter).iterator().next().size()));
+					int arity = predecessors.get(letter).iterator().next().size();
+					mySymbols.put(letter, new MySymbol<LETTER>(letter, arity));
+					assert arity <= 1 && arity >= 0;
 				}
 				MySymbol<LETTER> mySymbol = mySymbols.get(letter);
 				for (List<STATE> stateCombination : predecessors.get(letter)) {

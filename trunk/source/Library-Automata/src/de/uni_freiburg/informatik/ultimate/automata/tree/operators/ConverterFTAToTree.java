@@ -40,6 +40,7 @@ public class ConverterFTAToTree<LETTER, STATE extends State> extends Converter {
 			if (rule.getSymbol().getArity() == 0) {
 				result.addInitialState(rule.getDestState());
 			}
+			assert rule.getSymbol().getArity() <= 1 && rule.getSymbol().getArity() >= 0;
 		}
 		return result;
 	}
