@@ -75,8 +75,10 @@ public class SimpleFTARuleSet<F extends RankedSymbol, Q extends State,R extends 
 	 */
 	@Override
 	public boolean add(R e) {
-		if (symbolRules.containsKey(e.getSymbol()))
-			symbolRules.get(e.getSymbol()).add(e);
+		if (!symbolRules.containsKey(e.getSymbol())) {
+			symbolRules.put(e.getSymbol(), new HashSet<>());
+		}
+		symbolRules.get(e.getSymbol()).add(e);
 		return this.rules.add(e);
 	}
 
