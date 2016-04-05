@@ -29,13 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions.State;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -45,37 +42,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicCallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.DefaultTransFormulas;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.NestedSsaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 /**
  * 
@@ -311,8 +295,12 @@ public class FlowSensitiveFaultLocalizer {
 		m_Logger.warn("Initializing Non-Flow Sensitive INCREMENTAL ANALYSIS . . .");
 		int backward_counter = counterexampleWord.length();
 		//Relevency Information of the last statement
-		IRelevanceInformation relevancy_of_statement = new RelevanceInformation();
-		((RelevanceInformation) relevancy_of_statement).setStatement(counterexampleWord.getSymbolAt(backward_counter-1));
+		// 2016-04-05 Matthias: I think it is not necessary to handle the last
+		// statement separately, we can probably handle it in the loop like
+		// any other statement.
+		IRelevanceInformation relevancy_of_statement = new RelevanceInformation(
+				Collections.singletonList(counterexampleWord.getSymbolAt(backward_counter-1)), 
+				false, false, false);
 		Relevance_of_statements.add(relevancy_of_statement);
 		// Calculating the WP-List
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
@@ -329,11 +317,7 @@ public class FlowSensitiveFaultLocalizer {
 		
 		for(int i = backward_counter-2 ; i >= 0; i--)
 		{
-				CodeBlock statement = counterexampleWord.getSymbolAt(i);
 				IAction action = counterexampleWord.getSymbolAt(i);
-				// Relevance Information.
-				relevancy_of_statement = new RelevanceInformation();
-				((RelevanceInformation) relevancy_of_statement).setStatement(statement);
 				// Calculate WP and PRE
 				IPredicate wp = weakestPreconditionSequence.getInterpolant(i+1);
 				IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionSequence.getInterpolant(i)));
@@ -365,26 +349,33 @@ public class FlowSensitiveFaultLocalizer {
 							action.getClass().getSimpleName());
 				}
 				
-				
+				final boolean relevanceCriterion1uc;
+				final boolean relevanceCriterion1gf;
 				if(relevance  == ERelevanceStatus.InUnsatCore) // This is the case when the the triple is unsatisfiable and the statment is in the Unsatisfiable core.
 				{
-					// SET CRITERIA 1 TO TRUE
-					((RelevanceInformation) relevancy_of_statement).setCriteria1(true);
+					relevanceCriterion1uc = true;
+					relevanceCriterion1gf = false;
 					
 				}
 				else if(relevance == ERelevanceStatus.Sat) // The case when we have HAVOC statements. In this case the statement is relevant if the triple is satisfiable.
 				{
-					((RelevanceInformation) relevancy_of_statement).setCriteria1(true);
+					relevanceCriterion1uc = false;
+					relevanceCriterion1gf = true;
 				}
 				else
 				{
 					// ToDo ! 
 					// ADD here UNKNOWN ! after changing the criteria data type to ENUM.
+					relevanceCriterion1uc = false;
+					relevanceCriterion1gf = false;
 				}
 				// Adding relevance information in the array list Relevance_of_statements.
-				Relevance_of_statements.add(relevancy_of_statement);
-			
-			
+				RelevanceInformation ri = new RelevanceInformation(
+						Collections.singletonList(action), 
+						relevanceCriterion1uc, 
+						relevanceCriterion1gf, false);
+						
+				Relevance_of_statements.add(ri);
 		}
 		
 	}
@@ -430,7 +421,7 @@ public class FlowSensitiveFaultLocalizer {
 		m_Logger.warn("- - - - - - - -");
 		for(int i= 0;i <Relevance_of_statements.size();i++)
 		{
-			m_Logger.warn(((RelevanceInformation) Relevance_of_statements.get(i)).getStatement() +" | " +Relevance_of_statements.get(i).getShortString());
+			m_Logger.warn(((RelevanceInformation) Relevance_of_statements.get(i)).getActions() +" | " +Relevance_of_statements.get(i).getShortString());
 		}
 		return Relevance_of_statements;
 	}
