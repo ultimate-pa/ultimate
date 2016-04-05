@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.tree.operators;
+package de.uni_freiburg.informatik.ultimate.automata.tree.lethaloperators;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -17,7 +17,7 @@ import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTARule;
  * 
  * @author Mostafa M.A.
  */
-public class ConverterFTAToTree<LETTER, STATE extends State> extends Converter {
+public class ConverterLethalFTAToTree<LETTER, STATE extends State> extends Converter {
 
 	public TreeAutomatonBU<LETTER, STATE> convertToTree(GenFTA<MySymbol<LETTER>, STATE> fta) {
 		TreeAutomatonBU<LETTER, STATE> result = new TreeAutomatonBU<LETTER, STATE>();

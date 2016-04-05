@@ -1,6 +1,7 @@
-package de.uni_freiburg.informatik.ultimate.automata.tree.operators;
+package de.uni_freiburg.informatik.ultimate.automata.tree.lethaloperators;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -11,8 +12,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operators.Converter.MyState;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operators.Converter.MySymbol;
+import de.uni_freiburg.informatik.ultimate.automata.tree.lethaloperators.Converter.MyState;
+import de.uni_freiburg.informatik.ultimate.automata.tree.lethaloperators.Converter.MySymbol;
 import de.uni_muenster.cs.sev.lethal.states.NamedState;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTA;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTAOps;
@@ -26,26 +27,29 @@ import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTAOps;
  * 
  * @author Mostafa M.A.
  */
-public class LethalDeterminize<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class LethalMinimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private final TreeAutomatonBU<LETTER, STATE> m_Operand;
-	private TreeAutomatonBU<LETTER, NamedState<Set<MyState<STATE>>>> m_Result;
+	private final TreeAutomatonBU<LETTER, NamedState<Set<NamedState<Set<MyState<STATE>>>>>> m_Result;
 	private final StateFactory<STATE> m_StateFactory;
 	
 
-	public LethalDeterminize(AutomataLibraryServices services, TreeAutomatonBU<LETTER, STATE> operand) {
+	public LethalMinimize(AutomataLibraryServices services, TreeAutomatonBU<LETTER, STATE> operand) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_StateFactory = m_Operand.getStateFactory();
 		m_Logger.info(startMessage());
-		ConverterToFTA<LETTER, STATE> converter = new ConverterToFTA<LETTER, STATE>();
-		GenFTA<MySymbol<LETTER>, NamedState<Set<MyState<STATE>>>> gen = GenFTAOps.determinize(converter.convertITreeToFTA(m_Operand));
-		ConverterFTAToTree<LETTER, NamedState<Set<MyState<STATE>>>> reverseConverter = new ConverterFTAToTree<>();
-		m_Result = reverseConverter.convertToTree(gen);
+		ConverterTreeToLethalFTA<LETTER, STATE> converter = new ConverterTreeToLethalFTA<LETTER, STATE>();
+		GenFTA<MySymbol<LETTER>, NamedState<Set<MyState<STATE>>>> gen1 = GenFTAOps.determinize(converter.convertITreeToFTA(m_Operand));
+		NamedState<Set<MyState<STATE>>> st = new NamedState<Set<MyState<STATE>>>(new HashSet<>());
+		GenFTA<MySymbol<LETTER>, NamedState<Set<NamedState<Set<MyState<STATE>>>>>> gen2 = GenFTAOps.minimize(gen1, st);
+		
+		ConverterLethalFTAToTree<LETTER, NamedState<Set<NamedState<Set<MyState<STATE>>>>>> reverseConverter = new ConverterLethalFTAToTree<>();
+		m_Result = reverseConverter.convertToTree(gen2);
 		m_Logger.info(exitMessage());
 	}
 
@@ -65,7 +69,7 @@ public class LethalDeterminize<LETTER, STATE> implements IOperation<LETTER, STAT
 	}
 
 	@Override
-	public TreeAutomatonBU<LETTER, NamedState<Set<MyState<STATE>>>> getResult() throws AutomataLibraryException {
+	public TreeAutomatonBU<LETTER, NamedState<Set<NamedState<Set<MyState<STATE>>>>>> getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 
@@ -91,7 +95,7 @@ public class LethalDeterminize<LETTER, STATE> implements IOperation<LETTER, STAT
 		treeA.addRule(letters[2], new ArrayList<String>(), list);
 
 		
-		//LethalDeterminize<String, String> determinizer = new LethalDeterminize<>(null, treeA);
-		//System.out.printf("1st:\n%s\n2nd:\n%s\n", treeA.DebugString(), determinizer.getResult().DebugString());
+		//LethalMinimize<String, String> minimizer = new LethalMinimize<>(null, treeA);
+		//System.out.printf("1st:\n%s\n2nd:\n%s\n", treeA.DebugString(), minimizer.getResult().DebugString());
 	}
 }

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.tree.operators;
+package de.uni_freiburg.informatik.ultimate.automata.tree.lethaloperators;
 
 import java.util.Set;
 
@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operators.Converter.MyState;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operators.Converter.MySymbol;
+import de.uni_freiburg.informatik.ultimate.automata.tree.lethaloperators.Converter.MyState;
+import de.uni_freiburg.informatik.ultimate.automata.tree.lethaloperators.Converter.MySymbol;
 import de.uni_muenster.cs.sev.lethal.states.NamedState;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTA;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTAOps;
@@ -31,7 +31,7 @@ public class LethalComplement<LETTER, STATE> implements IOperation<LETTER, STATE
 	private final Logger m_Logger;
 	
 	private final TreeAutomatonBU<LETTER, STATE> m_Operand;
-	private TreeAutomatonBU<LETTER, NamedState<Set<MyState<STATE>>>> m_Result;
+	private final TreeAutomatonBU<LETTER, NamedState<Set<MyState<STATE>>>> m_Result;
 	private final StateFactory<STATE> m_StateFactory;
 	
 
@@ -41,9 +41,9 @@ public class LethalComplement<LETTER, STATE> implements IOperation<LETTER, STATE
 		m_Operand = operand;
 		m_StateFactory = m_Operand.getStateFactory();
 		m_Logger.info(startMessage());
-		ConverterToFTA<LETTER, STATE> converter = new ConverterToFTA<LETTER, STATE>();
+		ConverterTreeToLethalFTA<LETTER, STATE> converter = new ConverterTreeToLethalFTA<LETTER, STATE>();
 		GenFTA<MySymbol<LETTER>, NamedState<Set<MyState<STATE>>>> gen = GenFTAOps.complement(converter.convertITreeToFTA(m_Operand));
-		ConverterFTAToTree<LETTER, NamedState<Set<MyState<STATE>>>> reverseConverter = new ConverterFTAToTree<>();
+		ConverterLethalFTAToTree<LETTER, NamedState<Set<MyState<STATE>>>> reverseConverter = new ConverterLethalFTAToTree<>();
 		m_Result = reverseConverter.convertToTree(gen);
 		m_Logger.info(exitMessage());
 	}

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.tree.operators;
+package de.uni_freiburg.informatik.ultimate.automata.tree.lethaloperators;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,7 +21,7 @@ import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTACreator;
  * 
  * @author Mostafa M.A.
  */
-public class ConverterToFTA<LETTER, STATE> extends Converter {
+public class ConverterTreeToLethalFTA<LETTER, STATE> extends Converter {
 	
 	public GenFTA<MySymbol<LETTER>, MyState<STATE>> convertITreeToFTA(TreeAutomatonBU<LETTER, STATE> tree) {
 		GenFTACreator<MySymbol<LETTER>, MyState<STATE>> g = new GenFTACreator<MySymbol<LETTER>, MyState<STATE>>();

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.tree.operators;
+package de.uni_freiburg.informatik.ultimate.automata.tree.lethaloperators;
 
 import de.uni_muenster.cs.sev.lethal.states.State;
 import de.uni_muenster.cs.sev.lethal.symbol.common.RankedSymbol;
