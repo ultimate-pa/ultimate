@@ -53,7 +53,7 @@ public class CongruenceUtils {
 	 * @return A new list that contains the result of merging all {@link CongruenceDomainValue}s in the given list.
 	 */
 	protected static List<IEvaluationResult<CongruenceDomainValue>> mergeIfNecessary(
-	        final List<IEvaluationResult<CongruenceDomainValue>> results, int maxParallelStates) {
+	        final List<IEvaluationResult<CongruenceDomainValue>> results, final int maxParallelStates) {
 		if (results.size() > maxParallelStates) {
 			return Collections.singletonList(results.stream().reduce(CongruenceUtils::merge).get());
 		}
@@ -71,7 +71,7 @@ public class CongruenceUtils {
 	 * @return A new list that contains the result of merging all {@link CongruenceDomainState}s in the given list.
 	 */
 	protected static List<CongruenceDomainState> mergeStatesIfNecessary(final List<CongruenceDomainState> results,
-	        int maxParallelStates) {
+	        final int maxParallelStates) {
 		if (results.size() > maxParallelStates) {
 			return Collections.singletonList(results.stream().reduce(CongruenceUtils::merge).get());
 		}

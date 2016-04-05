@@ -56,16 +56,16 @@ public class CongruenceSingletonVariableExpressionEvaluator
 
 	private boolean mContainsBoolean = false;
 
-	private String mVariableName;
+	private final String mVariableName;
 
-	public CongruenceSingletonVariableExpressionEvaluator(String variableName) {
+	public CongruenceSingletonVariableExpressionEvaluator(final String variableName) {
 		mVariableName = variableName;
 		mVariableSet = new HashSet<>();
 		mVariableSet.add(variableName);
 	}
 
 	@Override
-	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(CongruenceDomainState currentState) {
+	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(final CongruenceDomainState currentState) {
 
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
@@ -110,7 +110,7 @@ public class CongruenceSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton variable expression evaluator.");
 	}
@@ -131,9 +131,9 @@ public class CongruenceSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public List<CongruenceDomainState> inverseEvaluate(IEvaluationResult<CongruenceDomainValue> computedValue,
-	        CongruenceDomainState currentState) {
-		List<CongruenceDomainState> returnList = new ArrayList<>();
+	public List<CongruenceDomainState> inverseEvaluate(final IEvaluationResult<CongruenceDomainValue> computedValue,
+	        final CongruenceDomainState currentState) {
+		final List<CongruenceDomainState> returnList = new ArrayList<>();
 		
 		if (mContainsBoolean) {
 			returnList.add(currentState.setBooleanValue(mVariableName, computedValue.getBooleanValue()));

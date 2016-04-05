@@ -63,7 +63,7 @@ public class CongruenceConditionalEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(CongruenceDomainState currentState) {
+	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(final CongruenceDomainState currentState) {
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
 		final List<IEvaluationResult<CongruenceDomainValue>> conditionResult = mConditionEvaluator.evaluate(currentState);
@@ -131,7 +131,7 @@ public class CongruenceConditionalEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
 		if (mNegatedConditionEvaluator == null) {
 			mNegatedConditionEvaluator = evaluator;
 		} else if (mConditionEvaluator == null) {
@@ -179,8 +179,8 @@ public class CongruenceConditionalEvaluator
 	}
 
 	@Override
-	public List<CongruenceDomainState> inverseEvaluate(IEvaluationResult<CongruenceDomainValue> computedValue,
-	        CongruenceDomainState currentState) {
+	public List<CongruenceDomainState> inverseEvaluate(final IEvaluationResult<CongruenceDomainValue> computedValue,
+	        final CongruenceDomainState currentState) {
 
 		final List<CongruenceDomainState> returnList = new ArrayList<>();
 

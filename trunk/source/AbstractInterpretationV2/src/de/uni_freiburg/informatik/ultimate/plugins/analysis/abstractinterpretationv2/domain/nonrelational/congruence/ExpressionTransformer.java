@@ -34,21 +34,21 @@ public class ExpressionTransformer {
 	 * Tranforms a given {@link Expression} to an equivalent linear normal form (if possible), w.r.t logical operators
 	 * Normal form: conjunctions / disjunctions of: k1 * x1 + ... + kn * xn + k0 (op 0) (where xi are variables and ki constant integers)
 	 */
-	public Expression transform(Expression e) {
-		if (e instanceof UnaryExpression) {
-			return transformUnary((UnaryExpression) e);
+	public Expression transform(final Expression expr) {
+		if (expr instanceof UnaryExpression) {
+			return transformUnary((UnaryExpression) expr);
 		}
-		if (e instanceof BinaryExpression) {
-			return transformBinary((BinaryExpression) e);
+		if (expr instanceof BinaryExpression) {
+			return transformBinary((BinaryExpression) expr);
 		}
-		return e;
+		return expr;
 	}
 
 	/**
 	 * Transforms a {@link UnaryExpression} to normal form
 	 * Just moves the not inside and uses atomicTransform
 	 */
-	private Expression transformUnary(UnaryExpression expr) {
+	private Expression transformUnary(final UnaryExpression expr) {
 		if (expr.getOperator() == UnaryExpression.Operator.LOGICNEG) {
 			if (expr.getExpr() instanceof BinaryExpression) {
 				final BinaryExpression binexp = (BinaryExpression) expr.getExpr();
@@ -58,7 +58,7 @@ public class ExpressionTransformer {
 				Expression newLeft = binexp.getLeft();
 				Expression newRight = binexp.getRight();
 				
-				ILocation loc = binexp.getLocation();
+				final ILocation loc = binexp.getLocation();
 
 				switch (binexp.getOperator()) {
 				case COMPEQ:
@@ -95,10 +95,10 @@ public class ExpressionTransformer {
 					break;
 				case LOGICIFF:
 					newOp = Operator.LOGICOR;
-					Expression leftLeft = newLeft;
-					Expression leftRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newRight);
-					Expression rightLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newLeft);
-					Expression rightRight = newRight;
+					final Expression leftLeft = newLeft;
+					final Expression leftRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newRight);
+					final Expression rightLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newLeft);
+					final Expression rightRight = newRight;
 					newLeft = new BinaryExpression(loc, Operator.LOGICAND, leftLeft, leftRight);
 					newRight = new BinaryExpression(loc, Operator.LOGICAND, rightLeft, rightRight);
 					break;
@@ -124,55 +124,55 @@ public class ExpressionTransformer {
 	 * Transforms a {@link BinaryExpression} to normal form
 	 * Just splits conjunctions / disjunctions and uses atomicTransform then
 	 */
-	private Expression transformBinary(BinaryExpression e) {
-		Operator newOp = e.getOperator();
+	private Expression transformBinary(final BinaryExpression expr) {
+		Operator newOp = expr.getOperator();
 		
-		Expression newLeft = e.getLeft();
-		Expression newRight = e.getRight();
+		Expression newLeft = expr.getLeft();
+		Expression newRight = expr.getRight();
 		
-		ExpressionTransformer left = new ExpressionTransformer();
-		ExpressionTransformer right = new ExpressionTransformer();
+		final ExpressionTransformer left = new ExpressionTransformer();
+		final ExpressionTransformer right = new ExpressionTransformer();
 		
-		ILocation loc = e.getLocation();
+		final ILocation loc = expr.getLocation();
 		
-		switch(e.getOperator()) {
+		switch(expr.getOperator()) {
 		case LOGICAND:
 		case LOGICOR:
-			newLeft = left.transform(e.getLeft());
-			newRight = right.transform(e.getRight());
+			newLeft = left.transform(expr.getLeft());
+			newRight = right.transform(expr.getRight());
 			break;
 		case LOGICIMPLIES:
 			newOp = Operator.LOGICOR;
-			newLeft = left.transform(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getLeft()));
-			newRight = right.transform(e.getRight());
+			newLeft = left.transform(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr.getLeft()));
+			newRight = right.transform(expr.getRight());
 			break;
 		case LOGICIFF:
 			// x <==> y --> (x && y) || (!x && !y)
 			newOp = Operator.LOGICOR;
-			newLeft = left.transform(new BinaryExpression(loc, Operator.LOGICAND, e.getLeft(), e.getRight()));		
-			Expression negLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getLeft());
-			Expression negRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getRight());
+			newLeft = left.transform(new BinaryExpression(loc, Operator.LOGICAND, expr.getLeft(), expr.getRight()));		
+			final Expression negLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr.getLeft());
+			final Expression negRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr.getRight());
 			newRight = right.transform(new BinaryExpression(loc, Operator.LOGICAND, negLeft, negRight));
 			break;
 		case COMPEQ:
 		case COMPNEQ:
-			if (e.getLeft().getType() instanceof PrimitiveType) {
-				PrimitiveType p = (PrimitiveType) e.getLeft().getType();
+			if (expr.getLeft().getType() instanceof PrimitiveType) {
+				final PrimitiveType p = (PrimitiveType) expr.getLeft().getType();
 				if (p.getTypeCode() == PrimitiveType.BOOL) {
-					newLeft = left.transform(e.getLeft());
-					newRight = right.transform(e.getRight());
+					newLeft = left.transform(expr.getLeft());
+					newRight = right.transform(expr.getRight());
 				} else if (p.getTypeCode() == PrimitiveType.INT) {
-					return atomicTransform(e);
+					return atomicTransform(expr);
 				} else {
-					return e;
+					return expr;
 				}
 				
 			} else {
-				return e;
+				return expr;
 			}
 			break;
 		default:
-			return atomicTransform(e);
+			return atomicTransform(expr);
 		}
 		return new BinaryExpression(loc, newOp, newLeft, newRight);
 	}
@@ -180,32 +180,32 @@ public class ExpressionTransformer {
 	/**
 	 * Transforms an atomic expression (without logical symbols) to normal form
 	 */
-	private Expression atomicTransform(Expression e) {
+	private Expression atomicTransform(final Expression expr) {
 		// Calculate the map + constant
-		process(e);
+		process(expr);
 		
-		if (!mIsLinear || e == null) {
-			return e;
+		if (!mIsLinear || expr == null) {
+			return expr;
 		}
 		// Construct an expression from the map + constant
-		ILocation loc = e.getLocation();
+		ILocation loc = expr.getLocation();
 		Expression newExpr = null;
-		for (Map.Entry<String, BigInteger> entry : mCoefficients.entrySet()) {
+		for (final Map.Entry<String, BigInteger> entry : mCoefficients.entrySet()) {
 			if (newExpr == null) {
-				Expression var = new IdentifierExpression(loc, entry.getKey());
+				final Expression var = new IdentifierExpression(loc, entry.getKey());
 				if (entry.getValue().equals(BigInteger.ONE)) {
 					newExpr = var;
 				} else if (entry.getValue().abs().equals(BigInteger.ONE)) {
 					newExpr = new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, var);
 				} else {
-					Expression coeff = new IntegerLiteral(loc, entry.getValue().toString());
+					final Expression coeff = new IntegerLiteral(loc, entry.getValue().toString());
 					newExpr = new BinaryExpression(loc, Operator.ARITHMUL, coeff, var);
 				}
 			} else {
-				Expression var = new IdentifierExpression(loc, entry.getKey());
-				Expression coeff = new IntegerLiteral(loc, entry.getValue().abs().toString());
-				Expression summand = new BinaryExpression(loc, Operator.ARITHMUL, coeff, var);
-				Operator op = entry.getValue().signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
+				final Expression var = new IdentifierExpression(loc, entry.getKey());
+				final Expression coeff = new IntegerLiteral(loc, entry.getValue().abs().toString());
+				final Expression summand = new BinaryExpression(loc, Operator.ARITHMUL, coeff, var);
+				final Operator op = entry.getValue().signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
 				if (entry.getValue().abs().equals(BigInteger.ONE)) {
 					newExpr = new BinaryExpression(loc, op, newExpr, var);
 				} else {
@@ -217,12 +217,12 @@ public class ExpressionTransformer {
 		if (newExpr == null) {
 			newExpr = new IntegerLiteral(loc, mConstant.toString());;
 		} else if (mConstant.signum() != 0) {
-			Expression constant = new IntegerLiteral(loc, mConstant.abs().toString());
-			Operator op = mConstant.signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
+			final Expression constant = new IntegerLiteral(loc, mConstant.abs().toString());
+			final Operator op = mConstant.signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
 			newExpr = new BinaryExpression(loc, op, newExpr, constant);
 		}
-		if (e instanceof BinaryExpression) {
-			Operator op = ((BinaryExpression) e).getOperator();
+		if (expr instanceof BinaryExpression) {
+			final Operator op = ((BinaryExpression) expr).getOperator();
 			// Transform suitable <, >, <=, >= Expressions to ... != 0 (better to handle)
 			if (newExpr instanceof BinaryExpression) {
 				if ((op == Operator.COMPGT || op == Operator.COMPGEQ) && mConstant.signum() < 0 ||
@@ -237,7 +237,8 @@ public class ExpressionTransformer {
 				case COMPGEQ:
 				case COMPEQ:
 				case COMPNEQ:
-					newExpr = new BinaryExpression(loc, op, newExpr, new IntegerLiteral(loc, "0"));	
+					newExpr = new BinaryExpression(loc, op, newExpr, new IntegerLiteral(loc, "0"));
+					break;
 				default:
 					break;
 			}
@@ -248,53 +249,53 @@ public class ExpressionTransformer {
 	/**
 	 *  Calculates the coefficients and the constant
 	 */
-	private void process(Expression e) {
-		if (e instanceof IntegerLiteral) {
-			String value = ((IntegerLiteral) e).getValue();
+	private void process(final Expression expr) {
+		if (expr instanceof IntegerLiteral) {
+			String value = ((IntegerLiteral) expr).getValue();
 			mConstant = new BigInteger(value);
-		} else if (e instanceof IdentifierExpression) {
-			String varName = ((IdentifierExpression) e).getIdentifier();
+		} else if (expr instanceof IdentifierExpression) {
+			String varName = ((IdentifierExpression) expr).getIdentifier();
 			mCoefficients.put(varName, BigInteger.ONE);
-		} else if (e instanceof UnaryExpression) {
-			processUnary((UnaryExpression) e);
-		} else if (e instanceof BinaryExpression) {
-			processBinary((BinaryExpression) e);
+		} else if (expr instanceof UnaryExpression) {
+			processUnary((UnaryExpression) expr);
+		} else if (expr instanceof BinaryExpression) {
+			processBinary((BinaryExpression) expr);
 		} else {
 			mIsLinear = false;
 		}
 	}
 	
-	private void processUnary(UnaryExpression e) {
-		if (e.getOperator() == UnaryExpression.Operator.ARITHNEGATIVE) {
-			ExpressionTransformer sub = new ExpressionTransformer();
-			sub.process(e.getExpr());
+	private void processUnary(final UnaryExpression expr) {
+		if (expr.getOperator() == UnaryExpression.Operator.ARITHNEGATIVE) {
+			final ExpressionTransformer sub = new ExpressionTransformer();
+			sub.process(expr.getExpr());
 			if (sub.mIsLinear) {
 				mConstant = sub.mConstant.negate();
-				for (Map.Entry<String, BigInteger> entry : sub.mCoefficients.entrySet()) {
+				for (final Map.Entry<String, BigInteger> entry : sub.mCoefficients.entrySet()) {
 					mCoefficients.put(entry.getKey(), entry.getValue().negate());
 				}
 			}
 		}
 	}
 	
-	private void processBinary(BinaryExpression e) {
-		ExpressionTransformer left = new ExpressionTransformer();
-		left.process(e.getLeft());
+	private void processBinary(final BinaryExpression expr) {
+		final ExpressionTransformer left = new ExpressionTransformer();
+		left.process(expr.getLeft());
 		if (!left.mIsLinear) {
 			mIsLinear = false;
 			return;
 		}
-		ExpressionTransformer right = new ExpressionTransformer();
-		right.process(e.getRight());
+		final ExpressionTransformer right = new ExpressionTransformer();
+		right.process(expr.getRight());
 		if (!right.mIsLinear) {
 			mIsLinear = false;
 			return;
 		}
 		
-		int sLeft = left.mCoefficients.size();
-		int sRight = right.mCoefficients.size();
+		final boolean noVarsLeft = left.mCoefficients.isEmpty();
+		final boolean noVarsRight = right.mCoefficients.isEmpty();
 		
-		switch (e.getOperator()) {
+		switch (expr.getOperator()) {
 			case ARITHMINUS:
 			case COMPLT:
 			case COMPGT:
@@ -303,18 +304,18 @@ public class ExpressionTransformer {
 			case COMPEQ:
 			case COMPNEQ:
 				mConstant = left.mConstant.subtract(right.mConstant);
-				for (Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
-					BigInteger value = right.mCoefficients.get(entry.getKey());
+				for (final Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
+					final BigInteger value = right.mCoefficients.get(entry.getKey());
 					if (value == null) {
 						mCoefficients.put(entry.getKey(), entry.getValue());
 					} else {
-						BigInteger newValue = entry.getValue().subtract(value);
+						final BigInteger newValue = entry.getValue().subtract(value);
 						if (newValue.signum() != 0) {
 							mCoefficients.put(entry.getKey(), newValue);
 						}
 					}
 				}
-				for (Map.Entry<String, BigInteger> entry : right.mCoefficients.entrySet()) {
+				for (final Map.Entry<String, BigInteger> entry : right.mCoefficients.entrySet()) {
 					if (!left.mCoefficients.containsKey(entry.getKey())) {
 						mCoefficients.put(entry.getKey(), entry.getValue().negate());
 					}
@@ -322,36 +323,36 @@ public class ExpressionTransformer {
 				break;
 			case ARITHPLUS:
 				mConstant = left.mConstant.add(right.mConstant);
-				for (Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
-					BigInteger value = right.mCoefficients.get(entry.getKey());
+				for (final Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
+					final BigInteger value = right.mCoefficients.get(entry.getKey());
 					if (value == null) {
 						mCoefficients.put(entry.getKey(), entry.getValue());
 					} else {
-						BigInteger newValue = entry.getValue().add(value);
+						final BigInteger newValue = entry.getValue().add(value);
 						if (newValue.signum() != 0) {
 							mCoefficients.put(entry.getKey(), newValue);
 						}
 					}
 				}
-				for (Map.Entry<String, BigInteger> entry : right.mCoefficients.entrySet()) {
+				for (final Map.Entry<String, BigInteger> entry : right.mCoefficients.entrySet()) {
 					if (!left.mCoefficients.containsKey(entry.getKey())) {
 						mCoefficients.put(entry.getKey(), entry.getValue());
 					}
 				}
 				break;
 			case ARITHMUL:
-				if (sLeft == 0 && sRight == 0) {
+				if (noVarsLeft && noVarsRight) {
 					mConstant = left.mConstant.multiply(right.mConstant);
-				} else if (sLeft == 0) {
+				} else if (noVarsLeft) {
 					if (left.mConstant.signum() == 0) { return; }
 					mConstant = left.mConstant.multiply(right.mConstant);
-					for (Map.Entry<String, BigInteger> entry : right.mCoefficients.entrySet()) {
+					for (final Map.Entry<String, BigInteger> entry : right.mCoefficients.entrySet()) {
 						mCoefficients.put(entry.getKey(), entry.getValue().multiply(left.mConstant));
 					}
-				} else if (sRight == 0) {
+				} else if (noVarsRight) {
 					if (right.mConstant.signum() == 0) { return; }
 					mConstant = left.mConstant.multiply(right.mConstant);
-					for (Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
+					for (final Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
 						mCoefficients.put(entry.getKey(), entry.getValue().multiply(right.mConstant));
 					}
 				} else {
@@ -359,9 +360,9 @@ public class ExpressionTransformer {
 				}
 				break;
 			case ARITHMOD:
-				if (sLeft == 0 && sRight == 0 && right.mConstant.signum() != 0) {
+				if (noVarsLeft && noVarsRight && right.mConstant.signum() != 0) {
 					mConstant = left.mConstant.mod(right.mConstant.abs());
-				} else if (sRight == 0 && right.mConstant.abs().equals(BigInteger.ONE)){
+				} else if (noVarsRight && right.mConstant.abs().equals(BigInteger.ONE)){
 					// x % +-1 = 0
 					break;
 				} else {
@@ -369,7 +370,7 @@ public class ExpressionTransformer {
 				}
 				break;
 			case ARITHDIV:
-				if (sLeft == 0 && sRight == 0 && right.mConstant.signum() != 0) {
+				if (noVarsLeft && noVarsRight && right.mConstant.signum() != 0) {
 					mConstant = left.mConstant.divide(right.mConstant);
 					if (left.mConstant.signum() < 0) {
 						if (right.mConstant.signum() > 0) {
@@ -378,14 +379,14 @@ public class ExpressionTransformer {
 							mConstant = mConstant.add(BigInteger.ONE);
 						}
 					}
-				} else if (sRight == 0 && right.mConstant.equals(BigInteger.ONE)){
+				} else if (noVarsRight && right.mConstant.equals(BigInteger.ONE)){
 					// x / 1 = x
 					mConstant = left.mConstant;
 					mCoefficients = left.mCoefficients;
-				} else if (sRight == 0 && right.mConstant.negate().equals(BigInteger.ONE)){
+				} else if (noVarsRight && right.mConstant.negate().equals(BigInteger.ONE)){
 					// x / -1 = -x
 					mConstant = left.mConstant.negate();
-					for (Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
+					for (final Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
 						mCoefficients.put(entry.getKey(), entry.getValue().negate());
 					}
 				} else {

@@ -57,7 +57,7 @@ public class CongruenceSingletonValueExpressionEvaluator
 	 * @param value
 	 *            The value of the evaluator.
 	 */
-	protected CongruenceSingletonValueExpressionEvaluator(CongruenceDomainValue value) {
+	protected CongruenceSingletonValueExpressionEvaluator(final CongruenceDomainValue value) {
 		mValue = value;
 	}
 
@@ -67,7 +67,7 @@ public class CongruenceSingletonValueExpressionEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(CongruenceDomainState currentState) {
+	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(final CongruenceDomainState currentState) {
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
 		returnList.add(new CongruenceDomainEvaluationResult(mValue, new BooleanValue()));
@@ -76,7 +76,7 @@ public class CongruenceSingletonValueExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
 	}
@@ -97,8 +97,8 @@ public class CongruenceSingletonValueExpressionEvaluator
 	}
 
 	@Override
-	public List<CongruenceDomainState> inverseEvaluate(IEvaluationResult<CongruenceDomainValue> computedValue,
-	        CongruenceDomainState currentState) {
+	public List<CongruenceDomainState> inverseEvaluate(final IEvaluationResult<CongruenceDomainValue> computedValue,
+	        final CongruenceDomainState currentState) {
 		final List<CongruenceDomainState> returnList = new ArrayList<>();
 		returnList.add(currentState);
 		return returnList;

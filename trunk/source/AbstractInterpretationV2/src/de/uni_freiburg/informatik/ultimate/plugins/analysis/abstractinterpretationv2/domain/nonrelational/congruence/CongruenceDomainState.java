@@ -70,33 +70,56 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 
 	private final Logger mLogger;
 
-	private boolean mIsFixpoint;
-
 	protected enum VariableType {
 		VARIABLE, BOOLEAN, ARRAY
 	}
 
+	/**
+	 * Test constructor of an {@link CongruenceDomainState}.
+	 * 
+	 * <p>
+	 * <b>Note:</b> This constructor is for internal (i.e. testing) use only. Do not use except you know what you are
+	 * doing, as it could break the abstract interpretation framework if used in conjunction with other abstract
+	 * interpretation classes.
+	 * </p>
+	 */
 	protected CongruenceDomainState() {
 		this(null);
 	}
 
-	protected CongruenceDomainState(Logger logger) {
+	/**
+	 * Default constructor of an {@link CongruenceDomainState}.
+	 * 
+	 * @param logger
+	 *            The current logger object in the current context.
+	 */
+	protected CongruenceDomainState(final Logger logger) {
 		mVariablesMap = new HashMap<String, IBoogieVar>();
 		mValuesMap = new HashMap<String, CongruenceDomainValue>();
 		mBooleanValuesMap = new HashMap<String, BooleanValue>();
-		mIsFixpoint = false;
 		sId++;
 		mId = sId;
 		mLogger = logger;
 	}
 
-	protected CongruenceDomainState(Logger logger, Map<String, IBoogieVar> variablesMap,
-			Map<String, CongruenceDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
-			boolean isFixpoint) {
+	/**
+	 * Creates a new instance of {@link CongruenceDomainState} with given logger, variables map, values map and boolean
+	 * values map.
+	 * 
+	 * @param logger
+	 *            The current logger object in the current context.
+	 * @param variablesMap
+	 *            The map with all variable identifiers and their types.
+	 * @param valuesMap
+	 *            The values of all variables.
+	 * @param booleanValuesMap
+	 *            The values of all boolean variables.
+	 */
+	protected CongruenceDomainState(final Logger logger, final Map<String, IBoogieVar> variablesMap,
+			final Map<String, CongruenceDomainValue> valuesMap, final Map<String, BooleanValue> booleanValuesMap) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, CongruenceDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
-		mIsFixpoint = isFixpoint;
 		sId++;
 		mId = sId;
 		mLogger = logger;
@@ -115,7 +138,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 *            The name of the variable to get the {@link CongruenceDomainValue} for.
 	 * @return A new {@link CongruenceDomainValue} containing the {@link CongruenceDomainValue} of the given variable.
 	 */
-	protected CongruenceDomainValue getValue(String variableName) {
+	protected CongruenceDomainValue getValue(final String variableName) {
 		if (!mValuesMap.containsKey(variableName)) {
 			throw new UnsupportedOperationException("There is no value of variable " + variableName + ".");
 		}
@@ -131,7 +154,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 *            The name of the boolean variable to get the {@link BooleanValue} for.
 	 * @return A new {@link BooleanValue} containing the {@link BooleanValue} of the given variable.
 	 */
-	protected BooleanValue getBooleanValue(String booleanVariableName) {
+	protected BooleanValue getBooleanValue(final String booleanVariableName) {
 		if (!mBooleanValuesMap.containsKey(booleanVariableName)) {
 			throw new UnsupportedOperationException(
 					"There is no boolean variable with name " + booleanVariableName + ".");
@@ -140,13 +163,37 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		return new BooleanValue(mBooleanValuesMap.get(booleanVariableName));
 	}
 
-	protected CongruenceDomainState setValue(String name, CongruenceDomainValue value) {
+	/**
+	 * Sets the value of a variable with given name to the given value.
+	 * 
+	 * @param name
+	 *            The name of the variable.
+	 * @param value
+	 *            The value to set.
+	 * @return A new {@link CongruenceDomainState} which is the copy of <code>this</code> where the value of the given
+	 *         variable has been set to the given value.
+	 */
+	protected CongruenceDomainState setValue(final String name, final CongruenceDomainValue value) {
 		final CongruenceDomainState returnState = copy();
 		setValueInternally(returnState, name, value);
 		return returnState;
 	}
 
-	protected CongruenceDomainState setValues(String[] vars, CongruenceDomainValue[] values) {
+	/**
+	 * Sets the values of multiple given variables at once.
+	 * 
+	 * <p>
+	 * <b>Note:</b> that the values and variables arrays must have the same size.
+	 * </p>
+	 * 
+	 * @param vars
+	 *            The variables to set the values for.
+	 * @param values
+	 *            The array of values to set.
+	 * @return A new {@link CongruenceDomainState} which is the copy of <code>this</code> where the values of the given
+	 *         variables have been set to the given values.
+	 */
+	protected CongruenceDomainState setValues(final String[] vars, final CongruenceDomainValue[] values) {
 		assert vars != null;
 		assert values != null;
 		assert vars.length == values.length;
@@ -155,7 +202,17 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 				new CongruenceDomainValue[0]);
 	}
 
-	protected CongruenceDomainState setBooleanValue(String name, BooleanValue.Value value) {
+	/**
+	 * Sets the value of a boolean variable.
+	 * 
+	 * @param name
+	 *            The boolean variable to set the value for.
+	 * @param value
+	 *            The value to set.
+	 * @return A new {@link CongruenceDomainState} which is the copy of <code>this</code> where the value of the given
+	 *         variable has been set to the given value.
+	 */
+	protected CongruenceDomainState setBooleanValue(final String name, final BooleanValue.Value value) {
 		assert name != null;
 		assert value != null;
 
@@ -164,18 +221,52 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		return returnState;
 	}
 
-	protected CongruenceDomainState setBooleanValue(String bool, boolean value) {
+	/**
+	 * Sets the value of a boolean variable.
+	 * 
+	 * @param name
+	 *            The boolean variable to set the value for.
+	 * @param value
+	 *            The value to set.
+	 * @return A new {@link CongruenceDomainState} which is the copy of <code>this</code> where the value of the given
+	 *         variable has been set to the given value.
+	 */
+	protected CongruenceDomainState setBooleanValue(final String bool, final boolean value) {
 		return setBooleanValue(bool, new BooleanValue(value));
 	}
 
-	protected CongruenceDomainState setBooleanValue(String bool, BooleanValue value) {
+	/**
+	 * Sets the value of a boolean variable.
+	 * 
+	 * @param name
+	 *            The boolean variable to set the value for.
+	 * @param value
+	 *            The value to set.
+	 * @return A new {@link CongruenceDomainState} which is the copy of <code>this</code> where the value of the given
+	 *         variable has been set to the given value.
+	 */
+	protected CongruenceDomainState setBooleanValue(final String bool, final BooleanValue value) {
 		assert bool != null;
 		assert value != null;
 
 		return setBooleanValue(bool, value.getValue());
 	}
 
-	protected CongruenceDomainState setBooleanValues(String[] vars, BooleanValue.Value[] values) {
+	/**
+	 * Sets the values of multiple given boolean variables at once.
+	 * 
+	 * <p>
+	 * <b>Note:</b> that the values and variables arrays must have the same size.
+	 * </p>
+	 * 
+	 * @param vars
+	 *            The variables to set the values for.
+	 * @param values
+	 *            The array of values to set.
+	 * @return A new {@link CongruenceDomainState} which is the copy of <code>this</code> where the values of the given
+	 *         variables have been set to the given values.
+	 */
+	protected CongruenceDomainState setBooleanValues(final String[] vars, final BooleanValue.Value[] values) {
 		assert vars != null;
 		assert values != null;
 		assert vars.length == values.length;
@@ -196,7 +287,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 * @return A new {@link CongruenceDomainState} which is the copy of <code>this</code> but with updated value for the
 	 *         given array variable.
 	 */
-	protected CongruenceDomainState setArrayValue(String array, CongruenceDomainValue value) {
+	protected CongruenceDomainState setArrayValue(final String array, final CongruenceDomainValue value) {
 		assert array != null;
 		assert value != null;
 		final CongruenceDomainState returnState = copy();
@@ -204,7 +295,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		return returnState;
 	}
 
-	protected CongruenceDomainState setArrayValues(String[] arrays, CongruenceDomainValue[] values) {
+	protected CongruenceDomainState setArrayValues(final String[] arrays, final CongruenceDomainValue[] values) {
 		assert arrays != null;
 		assert values != null;
 		assert arrays.length == values.length;
@@ -228,8 +319,9 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 *            A list of values which corresponds to the list of boolean variable identifiers.
 	 * @return A new {@link CongruenceDomainState} which is the copy of <code>this</code> but with the updated values.
 	 */
-	protected CongruenceDomainState setMixedValues(String[] vars, CongruenceDomainValue[] values, String[] booleanVars,
-			BooleanValue.Value[] booleanValues, String[] arrays, CongruenceDomainValue[] arrayValues) {
+	protected CongruenceDomainState setMixedValues(final String[] vars, final CongruenceDomainValue[] values,
+			final String[] booleanVars, final BooleanValue.Value[] booleanValues, final String[] arrays,
+			final CongruenceDomainValue[] arrayValues) {
 		assert vars != null;
 		assert values != null;
 		assert booleanVars != null;
@@ -253,7 +345,18 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		return returnState;
 	}
 
-	private static void setValueInternally(CongruenceDomainState state, String name, CongruenceDomainValue value) {
+	/**
+	 * Internally sets the value of a variable of a given {@link CongruenceDomainState}.
+	 * 
+	 * @param state
+	 *            The state to set the variable value for.
+	 * @param name
+	 *            The name of the variable to change the value for.
+	 * @param value
+	 *            The value to set.
+	 */
+	private static void setValueInternally(final CongruenceDomainState state, final String name,
+			final CongruenceDomainValue value) {
 		assert state != null;
 		assert name != null;
 		assert value != null;
@@ -262,7 +365,18 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		state.mValuesMap.put(name, value);
 	}
 
-	private static void setValueInternally(CongruenceDomainState state, String name, BooleanValue value) {
+	/**
+	 * Internally sets the value of a boolean variable of a given {@link CongruenceDomainState}.
+	 * 
+	 * @param state
+	 *            The state to set the variable value for.
+	 * @param name
+	 *            The name of the variable to change the value for.
+	 * @param value
+	 *            The value to set.
+	 */
+	private static void setValueInternally(final CongruenceDomainState state, final String name,
+			final BooleanValue value) {
 		assert state != null;
 		assert name != null;
 		assert state.mVariablesMap.get(name) != null : "Variable unknown";
@@ -271,7 +385,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	}
 
 	@Override
-	public CongruenceDomainState addVariable(String name, IBoogieVar variable) {
+	public CongruenceDomainState addVariable(final String name, final IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
@@ -280,7 +394,14 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		return returnState;
 	}
 
-	protected VariableType getVariableType(String var) {
+	/**
+	 * Returns the type of a given variable.
+	 * 
+	 * @param var
+	 *            The variable name to obtain the type for.
+	 * @return The {@link VariableType} of the variable.
+	 */
+	protected VariableType getVariableType(final String var) {
 		if (!containsVariable(var)) {
 			throw new UnsupportedOperationException("The variable " + var + " does not exist in the current state.");
 		}
@@ -306,7 +427,8 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 * @param variable
 	 *            The type of the variable.
 	 */
-	private static void addVariableInternally(CongruenceDomainState state, String name, IBoogieVar variable) {
+	private static void addVariableInternally(final CongruenceDomainState state, final String name,
+			final IBoogieVar variable) {
 		assert state != null;
 		assert name != null;
 		assert variable != null;
@@ -338,7 +460,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	}
 
 	@Override
-	public CongruenceDomainState removeVariable(String name, IBoogieVar variable) {
+	public CongruenceDomainState removeVariable(final String name, final IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
@@ -349,11 +471,11 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		final Map<String, BooleanValue> newBooleanValMap = new HashMap<String, BooleanValue>(mBooleanValuesMap);
 		newBooleanValMap.remove(name);
 
-		return new CongruenceDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new CongruenceDomainState(mLogger, newVarMap, newValMap, newBooleanValMap);
 	}
 
 	@Override
-	public CongruenceDomainState addVariables(Map<String, IBoogieVar> variables) {
+	public CongruenceDomainState addVariables(final Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		if (variables.isEmpty()) {
 			// nothing to add, nothing changes
@@ -392,11 +514,11 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			}
 		}
 
-		return new CongruenceDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new CongruenceDomainState(mLogger, newVarMap, newValMap, newBooleanValMap);
 	}
 
 	@Override
-	public CongruenceDomainState removeVariables(Map<String, IBoogieVar> variables) {
+	public CongruenceDomainState removeVariables(final Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
@@ -409,11 +531,11 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			newBooleanValMap.remove(entry.getKey());
 		}
 
-		return new CongruenceDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new CongruenceDomainState(mLogger, newVarMap, newValMap, newBooleanValMap);
 	}
 
 	@Override
-	public boolean containsVariable(String name) {
+	public boolean containsVariable(final String name) {
 		final IBoogieVar var = mVariablesMap.get(name);
 		return var != null;
 	}
@@ -438,14 +560,6 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		}
 
 		return false;
-	}
-
-	public boolean isFixpoint() {
-		return mIsFixpoint;
-	}
-
-	public CongruenceDomainState setFixpoint(boolean value) {
-		return new CongruenceDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, value);
 	}
 
 	/**
@@ -481,7 +595,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	}
 
 	@Override
-	public boolean isEqualTo(CongruenceDomainState other) {
+	public boolean isEqualTo(final CongruenceDomainState other) {
 		if (!hasSameVariables(other)) {
 			return false;
 		}
@@ -504,12 +618,25 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	}
 
 	public CongruenceDomainState copy() {
-		return new CongruenceDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, mIsFixpoint);
+		return new CongruenceDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap);
 	}
 
 	@Override
 	public int hashCode() {
 		return mId;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj == null) {
+			return false;
+		}
+
+		if (!(obj instanceof CongruenceDomainState)) {
+			return false;
+		}
+
+		return obj == this;
 	}
 
 	/**
@@ -519,7 +646,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 *            The other state to check for same variables.
 	 * @return <code>true</code> iff the variables are the same, <code>false</code> otherwise.
 	 */
-	protected boolean hasSameVariables(CongruenceDomainState other) {
+	protected boolean hasSameVariables(final CongruenceDomainState other) {
 		if (other == null) {
 			return false;
 		}
@@ -550,18 +677,18 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 *            The other state to intersect with.
 	 * @return A new {@link IAbstractState} that corresponds to the intersection of
 	 */
-	protected CongruenceDomainState intersect(CongruenceDomainState other) {
+	protected CongruenceDomainState intersect(final CongruenceDomainState other) {
 		assert other != null;
 		assert hasSameVariables(other);
 
 		final CongruenceDomainState returnState = copy();
 
-		for (Entry<String, CongruenceDomainValue> entry : mValuesMap.entrySet()) {
+		for (final Entry<String, CongruenceDomainValue> entry : mValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
 					entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
 		}
 
-		for (Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
+		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
 					new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
 		}
@@ -570,7 +697,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	}
 
 	@Override
-	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
 		if (isBottom()) {
 			return script.term("false");
 		}
@@ -582,6 +709,8 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			assert var != null : "Error during TermVar creation";
 			final Sort sort = var.getSort().getRealSort();
 			if (!sort.isNumericSort()) {
+				// TODO: Handle boolean variables (easy)
+				// TODO: what about arrays (hard -- but perhaps not necessary, c.f. Matthias' integer programs)
 				continue;
 			}
 			final Term newterm = entry.getValue().getTerm(script, sort, var);
@@ -600,7 +729,14 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		return acc;
 	}
 
-	private Term getTermVar(IBoogieVar var) {
+	/**
+	 * Generates an SMT {@link Term} for a given variable.
+	 * 
+	 * @param var
+	 *            The variable to generate the SMT Term for.
+	 * @return The SMT Term.
+	 */
+	private Term getTermVar(final IBoogieVar var) {
 		assert var != null : "Cannot get TermVariable from null";
 		if (var instanceof BoogieVar) {
 			final TermVariable termvar = ((BoogieVar) var).getTermVariable();
@@ -618,7 +754,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 * @return A new {@link CongruenceDomainState} containing the same set of variables but with values set to &bot;.
 	 */
 	protected CongruenceDomainState bottomState() {
-		CongruenceDomainState ret = copy();
+		final CongruenceDomainState ret = copy();
 		for (final Entry<String, CongruenceDomainValue> entry : ret.mValuesMap.entrySet()) {
 			entry.setValue(CongruenceDomainValue.createBottom());
 		}
@@ -642,7 +778,8 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 * @return A new {@link CongruenceDomainState} that is the copy of <code>this</code>, where all occurring variables,
 	 *         booleans, and arrays given in the parameters are set to &top;.
 	 */
-	protected CongruenceDomainState setVarsToTop(List<String> vars, List<String> bools, List<String> arrays) {
+	protected CongruenceDomainState setVarsToTop(final List<String> vars, final List<String> bools,
+			final List<String> arrays) {
 		final CongruenceDomainState returnState = copy();
 
 		for (final String var : vars) {
@@ -671,7 +808,8 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 * @return A new {@link CongruenceDomainState} that is the copy of <code>this</code>, where all occurring variables,
 	 *         booleans, and arrays given as parameters are set to &bot;.
 	 */
-	protected CongruenceDomainState setVarsToBottom(List<String> vars, List<String> bools, List<String> arrays) {
+	protected CongruenceDomainState setVarsToBottom(final List<String> vars, final List<String> bools,
+			final List<String> arrays) {
 		final CongruenceDomainState returnState = copy();
 
 		for (final String var : vars) {
@@ -689,7 +827,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	}
 
 	@Override
-	public IBoogieVar getVariableDeclarationType(String name) {
+	public IBoogieVar getVariableDeclarationType(final String name) {
 		assert name != null;
 		final IBoogieVar var = mVariablesMap.get(name);
 		assert var != null : "Unknown variable";
@@ -700,7 +838,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	public CongruenceDomainState patch(final CongruenceDomainState dominator) {
 		assert dominator != null;
 
-		CongruenceDomainState returnState = copy();
+		final CongruenceDomainState returnState = copy();
 
 		for (final Entry<String, IBoogieVar> var : dominator.mVariablesMap.entrySet()) {
 			if (!returnState.containsVariable(var.getKey())) {
@@ -727,15 +865,15 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	}
 
 	/**
-	 * Merges <code>this</code> with another {@link CongruenceDomainState}. All variables that occur in
-	 * <code>this</code> must also occur in the other state.
+	 * Merges <code>this</code> with another {@link CongruenceDomainState}. All variables that occur in <code>this</code>
+	 * must also occur in the other state.
 	 * 
 	 * @param other
 	 *            The other state to merge with.
 	 * @return A new {@link CongruenceDomainState} which is the result of the merger of <code>this</code> and
 	 *         <code>other</code>.
 	 */
-	protected CongruenceDomainState merge(CongruenceDomainState other) {
+	protected CongruenceDomainState merge(final CongruenceDomainState other) {
 		assert other != null;
 
 		if (!hasSameVariables(other)) {
@@ -771,15 +909,10 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	@Override
 	public SubsetResult isSubsetOf(final CongruenceDomainState other) {
 		assert hasSameVariables(other);
-		SubsetResult res = SubsetResult.EQUAL;		
 		for (final Entry<String, CongruenceDomainValue> entry : mValuesMap.entrySet()) {
 			final CongruenceDomainValue thisValue = entry.getValue();
 			final CongruenceDomainValue otherValue = other.mValuesMap.get(entry.getKey());
-			if (thisValue.isEqualTo(otherValue)) {
-				continue;
-			} else if (thisValue.isContainedIn(otherValue)) {
-				res = SubsetResult.STRICT;
-			} else {
+			if (!thisValue.isContainedIn(otherValue)) {
 				return SubsetResult.NONE;
 			}
 		}
@@ -787,15 +920,10 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			final BooleanValue thisValue = entry.getValue();
 			final BooleanValue otherValue = other.mBooleanValuesMap.get(entry.getKey());
-			if (thisValue.isEqualTo(otherValue)) {
-				continue;
-			} else if (thisValue.isContainedIn(otherValue)) {
-				res = SubsetResult.STRICT;
-			} else {
+			if (!thisValue.isContainedIn(otherValue)) {
 				return SubsetResult.NONE;
 			}
 		}
-
-		return res;
+		return SubsetResult.NON_STRICT;
 	}
 }

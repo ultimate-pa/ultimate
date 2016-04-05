@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -67,7 +66,7 @@ public class CongruenceBinaryExpressionEvaluator
 
 	private Operator mOperator;
 
-	protected CongruenceBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
+	protected CongruenceBinaryExpressionEvaluator(final Logger logger) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 		mMaxParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
@@ -75,7 +74,7 @@ public class CongruenceBinaryExpressionEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(CongruenceDomainState currentState) {
+	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(final CongruenceDomainState currentState) {
 
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
@@ -84,10 +83,10 @@ public class CongruenceBinaryExpressionEvaluator
 		final List<IEvaluationResult<CongruenceDomainValue>> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<CongruenceDomainValue>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+		for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 
@@ -96,28 +95,28 @@ public class CongruenceBinaryExpressionEvaluator
 				CongruenceDomainValue returnValue = CongruenceDomainValue.createTop();
 				BooleanValue returnBool = new BooleanValue();
 
-				CongruenceDomainValue v1 = res1.getValue();
-				CongruenceDomainValue v2 = res2.getValue();
+				final CongruenceDomainValue value1 = res1.getValue();
+				final CongruenceDomainValue value2 = res2.getValue();
 
 				switch (mOperator) {
 				case ARITHPLUS:
-					returnValue = v1.add(v2);
+					returnValue = value1.add(value2);
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMINUS:
-					returnValue = v1.subtract(v2);
+					returnValue = value1.subtract(value2);
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMUL:
-					returnValue = v1.multiply(v2);
+					returnValue = value1.multiply(value2);
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHDIV:
-					returnValue = v1.divide(v2);
+					returnValue = value1.divide(value2);
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMOD:
-					returnValue = v1.mod(v2);
+					returnValue = value1.mod(value2);
 					returnBool = new BooleanValue(false);
 					break;
 				case LOGICAND:
@@ -139,15 +138,15 @@ public class CongruenceBinaryExpressionEvaluator
 						}
 					}
 
-					returnValue = v1.intersect(v2);
+					returnValue = value1.intersect(value2);
 
 					if (returnBool.isBottom() || returnValue.isBottom()) {
 						returnBool = new BooleanValue(false);
 						break;
 					}
 					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
-						if (v1.isConstant() && v2.isConstant()) {
-							returnBool = new BooleanValue(v1.value().equals(v2.value()));
+						if (value1.isConstant() && value2.isConstant()) {
+							returnBool = new BooleanValue(value1.value().equals(value2.value()));
 							break;
 						}
 						if (returnValue.isBottom()) {
@@ -159,35 +158,37 @@ public class CongruenceBinaryExpressionEvaluator
 					break;
 				// !=, <, >, ... can only be computed for constants
 				case COMPNEQ:
-					if (v1.isConstant() && v2.isConstant()) {
-						returnBool = new BooleanValue(!v1.value().equals(v2.value()));
+					if (value1.isConstant() && value2.isConstant()) {
+						returnBool = new BooleanValue(!value1.value().equals(value2.value()));
 					}
 					break;
 				case COMPGT:
-					if (v1.isConstant() && v2.isConstant()) {
-						returnBool = new BooleanValue(v1.value().compareTo(v2.value()) > 0);
+					if (value1.isConstant() && value2.isConstant()) {
+						returnBool = new BooleanValue(value1.value().compareTo(value2.value()) > 0);
 					}
 					break;
 				case COMPGEQ:
-					if (v1.isConstant() && v2.isConstant()) {
-						returnBool = new BooleanValue(v1.value().compareTo(v2.value()) >= 0);
+					if (value1.isConstant() && value2.isConstant()) {
+						returnBool = new BooleanValue(value1.value().compareTo(value2.value()) >= 0);
 					}
 					break;
 				case COMPLT:
-					if (v1.isConstant() && v2.isConstant()) {
-						returnBool = new BooleanValue(v1.value().compareTo(v2.value()) < 0);
+					if (value1.isConstant() && value2.isConstant()) {
+						returnBool = new BooleanValue(value1.value().compareTo(value2.value()) < 0);
 					}
 					break;
 				case COMPLEQ:
-					if (v1.isConstant() && v2.isConstant()) {
-						returnBool = new BooleanValue(v1.value().compareTo(v2.value()) <= 0);
+					if (value1.isConstant() && value2.isConstant()) {
+						returnBool = new BooleanValue(value1.value().compareTo(value2.value()) <= 0);
 					}
 					break;
 				case COMPPO:
 				default:
 					returnBool = new BooleanValue(false);
-					mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
-					        + ". Returning current state.");
+					if (mLogger.isDebugEnabled()) {
+						mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
+						        + ". Returning current state.");
+					}
 					returnValue = CongruenceDomainValue.createTop();
 				}
 				returnList.add(new CongruenceDomainEvaluationResult(returnValue, returnBool));
@@ -206,7 +207,7 @@ public class CongruenceBinaryExpressionEvaluator
 
 	@Override
 	public void addSubEvaluator(
-	        IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	        final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -232,7 +233,7 @@ public class CongruenceBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void setOperator(Object operator) {
+	public void setOperator(final Object operator) {
 		assert operator != null;
 		assert operator instanceof Operator;
 
@@ -297,7 +298,8 @@ public class CongruenceBinaryExpressionEvaluator
 			sb.append(" || ");
 			break;
 		default:
-			mOperator.name();
+			sb.append(mOperator.name());
+			break;
 		}
 
 		sb.append(mRightSubEvaluator);
@@ -319,7 +321,7 @@ public class CongruenceBinaryExpressionEvaluator
 
 		for (final IEvaluationResult<CongruenceDomainValue> left : leftValue) {
 			for (final IEvaluationResult<CongruenceDomainValue> right : rightValue) {
-				List<CongruenceDomainState> returnStates = new ArrayList<>();
+				final List<CongruenceDomainState> returnStates = new ArrayList<>();
 
 				switch (mOperator) {
 				case LOGICAND:
@@ -425,7 +427,7 @@ public class CongruenceBinaryExpressionEvaluator
 	}
 
 	private CongruenceDomainValue computeNewValue(final CongruenceDomainValue referenceValue,
-	        final CongruenceDomainValue oldValue, final CongruenceDomainValue otherValue, boolean left) {
+	        final CongruenceDomainValue oldValue, final CongruenceDomainValue otherValue, final boolean left) {
 		CongruenceDomainValue newValue;
 
 		switch (mOperator) {

@@ -4,7 +4,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class CongruenceMergeOperator implements IAbstractStateBinaryOperator<CongruenceDomainState> {
 	@Override
-	public CongruenceDomainState apply(CongruenceDomainState first, CongruenceDomainState second) {
+	public CongruenceDomainState apply(final CongruenceDomainState first, final CongruenceDomainState second) {
 		assert first != null;
 		assert second != null;
 

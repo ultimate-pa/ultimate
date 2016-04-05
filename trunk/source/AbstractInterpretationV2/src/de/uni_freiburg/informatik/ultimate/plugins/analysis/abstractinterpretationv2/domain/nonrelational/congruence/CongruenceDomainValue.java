@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 
-public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
+public final class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 
 	private BigInteger mValue = null;
 	private boolean mIsBottom = true;
@@ -30,23 +30,23 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return new CongruenceDomainValue();
 	}
 	
-	protected static CongruenceDomainValue createNonConstant(BigInteger value, boolean nonZero) {
+	protected static CongruenceDomainValue createNonConstant(final BigInteger value, final boolean nonZero) {
 		if (value.signum() == 0) {
 			return nonZero ? createBottom() : createConstant(BigInteger.ZERO);
 		}
-		CongruenceDomainValue res = new CongruenceDomainValue();
+		final CongruenceDomainValue res = new CongruenceDomainValue();
 		res.mValue = value.abs();
 		res.mNonZero = nonZero;
 		res.mIsBottom = false;
 		return res;
 	}
 	
-	protected static CongruenceDomainValue createNonConstant(BigInteger value) {
+	protected static CongruenceDomainValue createNonConstant(final BigInteger value) {
 		return createNonConstant(value, false);
 	}
 	
-	protected static CongruenceDomainValue createConstant(BigInteger value) {
-		CongruenceDomainValue res = new CongruenceDomainValue();
+	protected static CongruenceDomainValue createConstant(final BigInteger value) {
+		final CongruenceDomainValue res = new CongruenceDomainValue();
 		res.mValue = value;
 		res.mNonZero = value.signum() != 0;
 		res.mIsBottom = false;
@@ -67,12 +67,12 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	}
 	
 	@Override
-	public int compareTo(CongruenceDomainValue other) {
+	public int compareTo(final CongruenceDomainValue other) {
 		throw new UnsupportedOperationException(
 		        "The compareTo operation is not defined on congruence clases and can therefore not be used.");
 	}
 	
-	protected CongruenceDomainValue merge(CongruenceDomainValue other) {
+	protected CongruenceDomainValue merge(final CongruenceDomainValue other) {
 		if (other == null) {
 			return createBottom();
 		}
@@ -89,7 +89,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return createNonConstant(mValue.gcd(other.mValue), mNonZero && other.mNonZero);
 	}
 	
-	protected CongruenceDomainValue intersect(CongruenceDomainValue other) {
+	protected CongruenceDomainValue intersect(final CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
 			return createBottom();
 		}
@@ -127,7 +127,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return createNonConstant(mValue.multiply(other.mValue).divide(mValue.gcd(other.mValue)), mNonZero || other.mNonZero);
 	}
 
-	protected CongruenceDomainValue add(CongruenceDomainValue other) {
+	protected CongruenceDomainValue add(final CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
 			return createBottom();
 		}
@@ -150,7 +150,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return createNonConstant(mValue.gcd(other.mValue), nonZero);
 	}
 	
-	protected CongruenceDomainValue subtract(CongruenceDomainValue other) {
+	protected CongruenceDomainValue subtract(final CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
 			return createBottom();
 		}
@@ -174,7 +174,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	}
 	
 
-	protected CongruenceDomainValue mod(CongruenceDomainValue other) {
+	protected CongruenceDomainValue mod(final CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
 			return createBottom();
 		}
@@ -196,7 +196,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return createNonConstant(mValue.gcd(other.mValue), mIsConstant && mValue.mod(other.mValue).signum() != 0);
 	}
 	
-	protected CongruenceDomainValue multiply(CongruenceDomainValue other) {
+	protected CongruenceDomainValue multiply(final CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
 			return createBottom();
 		}
@@ -206,7 +206,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return createNonConstant(mValue.multiply(other.mValue), mNonZero && other.mNonZero);
 	}
 	
-	protected CongruenceDomainValue divide (CongruenceDomainValue other) {
+	protected CongruenceDomainValue divide (final CongruenceDomainValue other) {
 		if (other == null || mIsBottom || other.mIsBottom) {
 			return createBottom();
 		}
@@ -279,14 +279,14 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		if (mIsConstant) {
 			return script.term("=", var, script.numeral(mValue));
 		}
-		Term nonZeroTerm = script.term("not", script.term("=", var, script.numeral(BigInteger.ZERO)));
+		final Term nonZeroTerm = script.term("not", script.term("=", var, script.numeral(BigInteger.ZERO)));
 		if (mValue.equals(BigInteger.ONE)) {
 			if (mNonZero) {
 				return nonZeroTerm;
 			}
 			return script.term("true");
 		}
-		Term modTerm = script.term("=", script.term("mod", var, script.numeral(mValue)), script.numeral(BigInteger.ZERO));
+		final Term modTerm = script.term("=", script.term("mod", var, script.numeral(mValue)), script.numeral(BigInteger.ZERO));
 		if (mNonZero) {
 			return script.term("and", modTerm, nonZeroTerm);
 		}
@@ -297,7 +297,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	/**
 	 * Returns <code>true</code> if and only if <code>this</code> is equal to <code>other</code>.
 	 */
-	protected boolean isEqualTo(CongruenceDomainValue other) {
+	protected boolean isEqualTo(final CongruenceDomainValue other) {
 		if (other == null) {
 			return false;
 		}
@@ -323,7 +323,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	/**
 	 * Return the the new value for x for a "x % this == rest" - expression (soft-merge)
 	 */
-	protected CongruenceDomainValue modEquals(CongruenceDomainValue rest) {
+	protected CongruenceDomainValue modEquals(final CongruenceDomainValue rest) {
 		if (mIsBottom ||  rest == null || rest.mIsBottom) {
 			return createBottom();
 		}
@@ -354,7 +354,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	 *            The other value to check against.
 	 * @return <code>true</code> if and only if the value of this is contained in the value of other, <code>false</code>
 	 */
-	public boolean isContainedIn(CongruenceDomainValue other) {
+	public boolean isContainedIn(final CongruenceDomainValue other) {
 		if (mIsBottom) {
 			return true;
 		}
@@ -374,7 +374,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		if (mIsConstant) {
 			return mValue.signum() == 0 ? createBottom() : copy();
 		}
-		CongruenceDomainValue res = copy();
+		final CongruenceDomainValue res = copy();
 		res.mNonZero = true;
 		return res;
 	}
