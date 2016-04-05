@@ -48,18 +48,18 @@ public class ClausesGenerator {
 	/**
 	 * Convert a solved instance to a merge relation
 	 */
-	public static EqCls makeMergeRelation(int numStates, Assign[] assignments) {
+	public static EqCls makeMergeRelation(int numStates, char[] assignments) {
 		EqVarCalc calc = new EqVarCalc(numStates);
 
 		assert assignments.length == calc.getNumEqVars();
-		for (Assign x : assignments)
-			assert x == Assign.TRUE || x == Assign.FALSE;
+		for (int x : assignments)
+			assert x == MaxSATSolve.TRUE || x == MaxSATSolve.FALSE;
 
 		UnionFind unionFind = new UnionFind(numStates);
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
 				int eqVar = calc.eqVar(i, j);
-				if (assignments[eqVar] == Assign.TRUE) {
+				if (assignments[eqVar] == MaxSATSolve.TRUE) {
 					unionFind.merge(i, j);
 				}
 			}
@@ -78,8 +78,9 @@ public class ClausesGenerator {
 	 */
 	public static ArrayList<HornClause3> generateConstraints(NWA inNWA, ArrayList<Hist> history) {
 		assert Hist.checkHistoryStatesConsistency(inNWA, history);
+
+		// "assert" that there are no transitions which are never taken
 		{
-			// "assert" that there are no transitions which are never taken
 			HashSet<Hist> hs = new HashSet<Hist>();
 			for (Hist h : history)
 				hs.add(h);
@@ -128,17 +129,17 @@ public class ClausesGenerator {
 		for (int i = 0; i < numCTrans; i++) cTransOut.get(cTrans[i].src).add(cTrans[i]);
 		for (int i = 0; i < numRTrans; i++) rTransOut.get(rTrans[i].src).add(rTrans[i]);
 
-		ArrayList<ArrayList<Integer>> iSet = new ArrayList<ArrayList<Integer>>();
-		ArrayList<ArrayList<Integer>> cSet = new ArrayList<ArrayList<Integer>>();
-		ArrayList<ArrayList<Integer>> rSet = new ArrayList<ArrayList<Integer>>();
-		ArrayList<ArrayList<Integer>> rTop = new ArrayList<ArrayList<Integer>>();
-		ArrayList<ArrayList<Integer>> hSet = new ArrayList<ArrayList<Integer>>();
+		ArrayList<IntArray> iSet = new ArrayList<IntArray>();
+		ArrayList<IntArray> cSet = new ArrayList<IntArray>();
+		ArrayList<IntArray> rSet = new ArrayList<IntArray>();
+		ArrayList<IntArray> rTop = new ArrayList<IntArray>();
+		ArrayList<IntArray> hSet = new ArrayList<IntArray>();
 
-		for (int i = 0; i < numStates; i++) iSet.add(new ArrayList<Integer>());
-		for (int i = 0; i < numStates; i++) cSet.add(new ArrayList<Integer>());
-		for (int i = 0; i < numStates; i++) rSet.add(new ArrayList<Integer>());
-		for (int i = 0; i < numStates; i++) rTop.add(new ArrayList<Integer>());
-		for (int i = 0; i < numStates; i++) hSet.add(new ArrayList<Integer>());
+		for (int i = 0; i < numStates; i++) iSet.add(new IntArray());
+		for (int i = 0; i < numStates; i++) cSet.add(new IntArray());
+		for (int i = 0; i < numStates; i++) rSet.add(new IntArray());
+		for (int i = 0; i < numStates; i++) rTop.add(new IntArray());
+		for (int i = 0; i < numStates; i++) hSet.add(new IntArray());
 
 		for (int i = 0; i < numITrans; i++)	if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) iSet.get(iTrans[i].src).add(iTrans[i].sym);
 		for (int i = 0; i < numCTrans; i++)	if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) cSet.get(cTrans[i].src).add(cTrans[i].sym);

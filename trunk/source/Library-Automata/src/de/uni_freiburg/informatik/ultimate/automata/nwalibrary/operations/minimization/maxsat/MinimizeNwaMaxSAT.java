@@ -83,7 +83,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         generateLog.info("finished clauses generation. " + Integer.toString(clauses.size()) + " clauses");
 
         solveLog.info("starting MaxSATSolve");
-        Assign[] assignments = new MaxSATSolve(clauses).solve();
+        char[] assignments = new MaxSATSolve(clauses).solve();
         solveLog.info("finished MaxSATSolve");
 
         generateLog.info("making equivalence classes from assignments");
