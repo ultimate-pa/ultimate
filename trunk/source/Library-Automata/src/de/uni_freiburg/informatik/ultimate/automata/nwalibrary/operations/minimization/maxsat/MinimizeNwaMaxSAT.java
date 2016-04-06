@@ -58,7 +58,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         Logger logger = services.getLoggingService().getLogger(operationName());
         Logger convertLog = services.getLoggingService().getLogger("Convert");
         Logger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
-        Logger solveLog = services.getLoggingService().getLogger("MaxSATSolve");
+        Logger solveLog = services.getLoggingService().getLogger("Solver");
 
         logger.info(startMessage());
 
@@ -79,15 +79,15 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         );
 
         generateLog.info("starting clauses generation");
-        ArrayList<HornClause3> clauses = ClausesGenerator.generateConstraints(nwa, history);
+        Horn3Array clauses = Generator.generateClauses(nwa, history);
         generateLog.info("finished clauses generation. " + Integer.toString(clauses.size()) + " clauses");
 
-        solveLog.info("starting MaxSATSolve");
-        char[] assignments = new MaxSATSolve(clauses).solve();
-        solveLog.info("finished MaxSATSolve");
+        solveLog.info("starting Solver");
+        char[] assignments = new Solver(clauses).solve();
+        solveLog.info("finished Solver");
 
         generateLog.info("making equivalence classes from assignments");
-        EqCls eqCls = ClausesGenerator.makeMergeRelation(nwa.numStates, assignments);
+        EqCls eqCls = Generator.makeMergeRelation(nwa.numStates, assignments);
         generateLog.info("finished making equivalence classes");
 
         m_result = converter.constructMerged(eqCls);

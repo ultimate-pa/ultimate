@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Jens Stimpfle <stimpflj@informatik.uni-freiburg.de>
-
+ *
  * Copyright (C) 2016 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
@@ -27,62 +27,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-public class UnionFind {
-	private int[] root;
-	private int[] size;
-	private int[] stack;
+public class Horn3Clause {
+	public int x;
+	public int y;
+	public int z;
 
-	public UnionFind(int numNodes) {
-		root = new int[numNodes];
-		size = new int[numNodes];
-		stack = new int[numNodes];
-
-		for (int i = 0; i < numNodes; i++) {
-			root[i] = i;
-			size[i] = 1;
-		}
-	}
-
-	private void updateRoot(int node) {
-		int ptr = 0;
-
-		while (node != root[node]) {
-			stack[ptr++] = node;
-			node = root[node];
-		}
-		while (ptr --> 0)
-			root[stack[ptr]] = node;
-	}
-
-	/**
-	 * Add an edge between two nodes. This makes them equivalent and they
-	 * will be together, with a root right over their heads. They'll share
-	 * the same root, yeah!
-	 *
-	 * @param n1 The one node.
-	 * @param n2 The other node, you know?
-	 */
-	public void merge(int n1, int n2) {
-		updateRoot(n1);
-		updateRoot(n2);
-		n1 = root[n1];
-		n2 = root[n2];
-
-		if (n1 == n2)
-			return;
-
-		if (size[n1] < size[n2]) {
-			root[n1] = n2;
-			size[n2] += size[n1];
-		} else {
-			root[n2] = n1;
-			size[n1] += size[n2];
-		}
-	}
-
-	public int[] getRoots() {
-		for (int i = 0; i < root.length; i++)
-			updateRoot(i);
-		return root.clone();
+	public Horn3Clause(int a, int b, int c) {
+		x = a;
+		y = b;
+		z = c;
 	}
 }

@@ -65,8 +65,8 @@ public class EqCls {
 	 * <li><code>x</code> in <code>classOf</code> for each <code>x</code> in [0, <code>numClasses</code>)
 	 * </ul>
 	 *
-	 * @param eq the NiceClasses whose consistency should be checked
-	 * @return <code>true</code> iff the input NiceClasses is consistent
+	 * @param eq the Classes whose consistency should be checked
+	 * @return <code>true</code> iff the input Classes is consistent
 	 */
 	public static boolean checkConsistency(EqCls eq) {
 		if (eq.numClasses < 0)
@@ -89,18 +89,18 @@ public class EqCls {
 	}
 
 	/**
-	 * This static utility method is useful for making a NiceClasses structure
-	 * from a root node array as returned by NiceUnionFind.
+	 * This static utility method is useful for making a EqCls structure
+	 * from a root node array as returned by UnionFind.
 	 *
 	 * It creates a copy of the input array with the values renamed to fit in
 	 * the range <code>[0, numClasses)</code> where <code>numClasses</code>
 	 * is the number of distinct values in the array.
 	 *
      * <p>This "compressed" array is returned together with
-     * the <code>numClasses</code> value as a NiceClasses structure.
+     * the <code>numClasses</code> value as a Classes structure.
 	 *
 	 * @param root Represents equivalence classes. <code>0 <= root[x] < root.length</code> for all x.
-	 * @return a NiceClasses structure carrying the compressed array
+	 * @return a Classes structure carrying the compressed array
 	 */
 	public static EqCls compress(int[] root) {
 		for (int i = 0; i < root.length; i++)

@@ -27,91 +27,78 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-import java.util.Arrays;
 import java.util.Iterator;
 
-public class IntArray implements Iterable<Integer> {
-	private int[] array;
-	private int size;
-	private int capacity;
+public class Horn3Array implements Iterable<Horn3Clause> {
 
-	public IntArray() {
-		array = new int[0];
-		size = 0;
-		capacity = 0;
+	public static final int FALSEVAR = 0;
+	public static final int TRUEVAR = 1;
+
+	private final int numEqVars;
+
+	private IntArray a0;
+	private IntArray a1;
+	private IntArray a2;
+
+	public Horn3Array(int numEqVars) {
+		this.numEqVars = numEqVars;
+
+		a0 = new IntArray();
+		a1 = new IntArray();
+		a2 = new IntArray();
 	}
 
-	public int get(int idx) {
-		if (idx < 0 || idx >= size)
-			throw new ArrayIndexOutOfBoundsException();
-		return array[idx];
-	}
+	public void add(int x, int y, int z) {
+		assert 0 <= x && x < numEqVars;
+		assert 0 <= y && y < numEqVars;
+		assert 0 <= z && z < numEqVars;
 
-	public void set(int idx, int val) {
-		if (idx < 0 || idx >= size)
-			throw new ArrayIndexOutOfBoundsException();
-		array[idx] = val;
-	}
-
-	public void add(int val) {
-		if (size == capacity) {
-			int newCapacity = (capacity == 0) ? 4 : 2 * capacity;
-			array = Arrays.copyOf(array, newCapacity);
-			capacity = newCapacity;
-		}
-		array[size++] = val;
-	}
-
-	public void clear() {
-		array = new int[0];
-		size = 0;
-		capacity = 0;
+		a0.add(x);
+		a1.add(y);
+		a2.add(z);
 	}
 
 	public int size() {
-		return size;
+		return a0.size();
 	}
 
-	public boolean equals(IntArray b) {
-		if (b == null)
-			return false;
-		if (b.size != size)
-			return false;
-		for (int i = 0; i < size; i++)
-			if (b.array[i] != array[i])
-				return false;
-		return true;
+	public Horn3Clause get(int idx, Horn3Clause out) {
+		if (idx < 0 || idx >= a0.size())
+			throw new ArrayIndexOutOfBoundsException();
+
+		out.x = a0.get(idx);
+		out.y = a1.get(idx);
+		out.z = a2.get(idx);
+
+		return out;
 	}
 
 	@Override
-	public Iterator<Integer> iterator() {
-		return new IntArrayIterator(array, 0, size);
+	public Iterator<Horn3Clause> iterator() {
+		return new Horn3Iterator(this);
 	}
 
-	public static class IntArrayIterator implements Iterator<Integer> {
-		private final int[] array;
-		private final int last;
+
+	public static class Horn3Iterator implements Iterator<Horn3Clause> {
+		private Horn3Array h3a;
+		private Horn3Clause h3c;
 		private int idx;
 
-		public IntArrayIterator(int[] array, int first, int last) {
-			assert 0 <= first && first <= last && last <= array.length;
-
-			this.array = array;
-			this.last = last;
-			this.idx = first;
+		public Horn3Iterator(Horn3Array h3a) {
+			this.h3a = h3a;
+			this.h3c = new Horn3Clause(-1,-1,-1);
+			this.idx = 0;
 		}
 
 		@Override
 		public boolean hasNext() {
-			return idx < last;
+			return idx < h3a.size();
 		}
 
 		@Override
-		public Integer next() {
-			if (idx == last)
-				throw new ArrayIndexOutOfBoundsException();
-
-			return array[idx++];
+		public Horn3Clause next() {
+			h3a.get(idx++, h3c);
+			return h3c;
 		}
 	}
 }

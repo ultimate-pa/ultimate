@@ -43,23 +43,24 @@ import java.util.HashSet;
  *
  * @author stimpflj
  */
-public class ClausesGenerator {
+public class Generator {
 
 	/**
 	 * Convert a solved instance to a merge relation
 	 */
-	public static EqCls makeMergeRelation(int numStates, char[] assignments) {
+	public static EqCls makeMergeRelation(int numStates, char[] assigned) {
 		EqVarCalc calc = new EqVarCalc(numStates);
 
-		assert assignments.length == calc.getNumEqVars();
-		for (int x : assignments)
-			assert x == MaxSATSolve.TRUE || x == MaxSATSolve.FALSE;
+		assert assigned.length == calc.getNumEqVars();
+		for (int x : assigned)
+			assert x == Solver.TRUE || x == Solver.FALSE;
 
 		UnionFind unionFind = new UnionFind(numStates);
+
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
 				int eqVar = calc.eqVar(i, j);
-				if (assignments[eqVar] == MaxSATSolve.TRUE) {
+				if (assigned[eqVar] == Solver.TRUE) {
 					unionFind.merge(i, j);
 				}
 			}
@@ -76,7 +77,7 @@ public class ClausesGenerator {
 	 * @return A (consistent) EqCls which represents the
 	 * minimized automaton.
 	 */
-	public static ArrayList<HornClause3> generateConstraints(NWA inNWA, ArrayList<Hist> history) {
+	public static Horn3Array generateClauses(NWA inNWA, ArrayList<Hist> history) {
 		assert Hist.checkHistoryStatesConsistency(inNWA, history);
 
 		// "assert" that there are no transitions which are never taken
@@ -190,7 +191,7 @@ public class ClausesGenerator {
 		 */
 
 		EqVarCalc calc = new EqVarCalc(numStates);
-		HornCNFBuilder builder = new HornCNFBuilder(calc.getNumEqVars());
+		Horn3ArrayBuilder builder = new Horn3ArrayBuilder(calc.getNumEqVars());
 
 		for (int i = 0; i < numStates; i++) {
 			int eq1 = calc.eqVar(i, i);
@@ -207,7 +208,6 @@ public class ClausesGenerator {
 		}
 
 		for (int i = 0; i < numStates; i++) {
-			System.err.printf("now at %d, %d clauses %d requests\n", i, builder.getNumClauses(), builder.getNumRequests());
 			for (int j = i; j < numStates; j++) {
 				if (!iSet.get(i).equals(iSet.get(j))
 						|| !cSet.get(i).equals(cSet.get(j))) {
@@ -278,7 +278,6 @@ public class ClausesGenerator {
 		}
 
 		for (int i = 0; i < numStates; i++) {
-			System.err.printf("transitive clauses: now at %d, %d clauses, %d requests\n", i, builder.getNumClauses(), builder.getNumRequests());
 			for (int j = i+1; j < numStates; j++) {
 				for (int k = j+1; k < numStates; k++) {
 					int eq1 = calc.eqVar(i, j);
@@ -310,9 +309,7 @@ public class ClausesGenerator {
 		}
 		*/
 
-		ArrayList<HornClause3> clauses = builder.getClauses();
-		System.err.printf("number of clauses: %d\n", clauses.size());
-		System.err.printf("number of clause-add requests: %d\n", builder.getNumRequests());
+		Horn3Array clauses = builder.extract();
 
 		return clauses;
 	}

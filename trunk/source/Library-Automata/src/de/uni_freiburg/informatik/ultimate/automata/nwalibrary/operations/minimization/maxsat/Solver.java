@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-import java.util.ArrayList;
-
 enum Sat { OK, UNSATISFIABLE; };
 
 /**
@@ -42,7 +40,7 @@ enum Sat { OK, UNSATISFIABLE; };
  *
  * @author stimpflj
  */
-public class MaxSATSolve {
+public class Solver {
 	public static final char NONE = 0;
 	public static final char TRUE = 1;
 	public static final char FALSE = 2;
@@ -51,7 +49,7 @@ public class MaxSATSolve {
     int numVars;
 
     /** the problem in CNF */
-    private ArrayList<HornClause3> clauses;
+    private Horn3Array clauses;
 
     /** variable -> clauses in which it occurs */
     private IntArray[] occur;
@@ -62,17 +60,22 @@ public class MaxSATSolve {
     /** last assignment operations */
     private IntArray op;
 
-    public MaxSATSolve(ArrayList<HornClause3> clauses) {
+    /** pre-allocate a clause to avoid garbage collection overhead */
+    private Horn3Clause clause;
+
+    public Solver(Horn3Array clauses) {
         this.clauses = clauses;
+        this.clause = new Horn3Clause(-1,-1,-1);
 
         numVars = 2; // const true and const false
-        for (HornClause3 c : clauses) {
-            assert 0 <= c.l0;
-            assert 0 <= c.l1;
-            assert 0 <= c.l2;
-            numVars = Math.max(numVars, c.l0 + 1);
-            numVars = Math.max(numVars, c.l1 + 1);
-            numVars = Math.max(numVars, c.l2 + 1);
+        for (Horn3Clause c : clauses) {
+            assert 0 <= c.x;
+            assert 0 <= c.y;
+            assert 0 <= c.z;
+
+            numVars = Math.max(numVars, c.x + 1);
+            numVars = Math.max(numVars, c.y + 1);
+            numVars = Math.max(numVars, c.z + 1);
         }
 
         assign = new char[numVars];
@@ -83,15 +86,17 @@ public class MaxSATSolve {
         	occur[i] = new IntArray();
 
         for (int i = 0; i < clauses.size(); i++) {
-            occur[clauses.get(i).l0].add(i);
-            occur[clauses.get(i).l1].add(i);
-            occur[clauses.get(i).l2].add(i);
+        	clauses.get(i, clause);
+
+            occur[clause.x].add(i);
+            occur[clause.y].add(i);
+            occur[clause.z].add(i);
         }
 
         for (int i = 0; i < numVars; i++)
             assign[i] = NONE;
-        assign[HornClause3.trueVar] = TRUE;
-        assign[HornClause3.falseVar] = FALSE;
+        assign[Horn3Array.TRUEVAR] = TRUE;
+        assign[Horn3Array.FALSEVAR] = FALSE;
     }
 
     private void setVar(int v, char a) {
@@ -101,23 +106,23 @@ public class MaxSATSolve {
         assign[v] = a;
     }
 
-    private Sat check(HornClause3 c) {
-        if (assign[c.l0] == TRUE &&
-            assign[c.l1] == TRUE &&
-            assign[c.l2] == FALSE)
+    private Sat check(Horn3Clause c) {
+        if (assign[c.x] == TRUE &&
+            assign[c.y] == TRUE &&
+            assign[c.z] == FALSE)
             return Sat.UNSATISFIABLE;
-        else if (assign[c.l0] == NONE &&
-                 assign[c.l1] == TRUE &&
-                 assign[c.l2] == FALSE)
-            setVar(c.l0, FALSE);
-        else if (assign[c.l0] == TRUE &&
-                 assign[c.l1] == NONE &&
-                 assign[c.l2] == FALSE)
-            setVar(c.l1, FALSE);
-        else if (assign[c.l0] == TRUE &&
-                 assign[c.l1] == TRUE &&
-                 assign[c.l2] == NONE)
-            setVar(c.l2, TRUE);
+        else if (assign[c.x] == NONE &&
+                 assign[c.y] == TRUE &&
+                 assign[c.z] == FALSE)
+            setVar(c.x, FALSE);
+        else if (assign[c.x] == TRUE &&
+                 assign[c.y] == NONE &&
+                 assign[c.z] == FALSE)
+            setVar(c.y, FALSE);
+        else if (assign[c.x] == TRUE &&
+                 assign[c.y] == TRUE &&
+                 assign[c.z] == NONE)
+            setVar(c.z, TRUE);
         return Sat.OK;
     }
 
@@ -126,7 +131,7 @@ public class MaxSATSolve {
          * loop body might insert new elements into `op' */
         for (int i = 0; i < op.size(); i++) {
             for (int c : occur[op.get(i)]) {
-                if (check(clauses.get(c)) == Sat.UNSATISFIABLE) {
+                if (check(clauses.get(c, clause)) == Sat.UNSATISFIABLE) {
                     return Sat.UNSATISFIABLE;
                 }
             }
@@ -151,7 +156,7 @@ public class MaxSATSolve {
     /**
      * Solve the thing. Call only once, i.e.
      *
-     * char[] = new MaxSATSolve(numVars, theclauses).solve()
+     * char[] = new Solver(numVars, theclauses).solve()
      *
      * (Yes, this is a broken design. But I bet Java is happy to create
      * another object for you.)
@@ -162,7 +167,7 @@ public class MaxSATSolve {
     public char[] solve() {
         assert op.size() == 0;
 
-        for (HornClause3 c : clauses)
+        for (Horn3Clause c : clauses)
             if (check(c) == Sat.UNSATISFIABLE)
                 return null;
         if (propagate() == Sat.UNSATISFIABLE)
@@ -180,10 +185,10 @@ public class MaxSATSolve {
         }
 
         /* test */
-        for (HornClause3 c : clauses) {
-            assert assign[c.l0] == FALSE
-                    || assign[c.l1] == FALSE
-                    || assign[c.l2] == TRUE;
+        for (Horn3Clause c : clauses) {
+            assert assign[c.x] == FALSE
+                    || assign[c.y] == FALSE
+                    || assign[c.z] == TRUE;
         }
 
         return assign;
@@ -193,34 +198,33 @@ public class MaxSATSolve {
     // "test" the thing
     public static void main(String[] args) {
         char assign[];
-        ArrayList<HornClause3> clauses;
+        Horn3ArrayBuilder builder;
 
-        clauses = new ArrayList<HornClause3>();
-        clauses.add(HornClause3.F(3));
-        clauses.add(HornClause3.FT(2, 3));
+        builder = new Horn3ArrayBuilder(4);
+        builder.addClauseF(3);
+        builder.addClauseFT(2, 3);
 
-        assign = new MaxSATSolve(clauses).solve();
+        assign = new Solver(builder.extract()).solve();
         assert assign[2] == FALSE;
         assert assign[3] == FALSE;
 
-        clauses = new ArrayList<HornClause3>();
-        clauses.add(HornClause3.T(2));
-        clauses.add(HornClause3.FT(2, 3));
-        clauses.add(HornClause3.FFT(2, 3, 4));
+        builder = new Horn3ArrayBuilder(5);
+        builder.addClauseT(2);
+        builder.addClauseFT(2, 3);
+        builder.addClauseFFT(2, 3, 4);
 
-        assign = new MaxSATSolve(clauses).solve();
+        assign = new Solver(builder.extract()).solve();
         assert assign[2] == TRUE;
         assert assign[3] == TRUE;
         assert assign[4] == TRUE;
 
-        clauses = new ArrayList<HornClause3>();
-        clauses.add(HornClause3.T(2));
-        clauses.add(HornClause3.FT(2, 3));
-        clauses.add(HornClause3.FFT(2, 3, 4));
-        clauses.add(HornClause3.F(4));
+        builder = new Horn3ArrayBuilder(5);
+        builder.addClauseT(2);
+        builder.addClauseFT(2, 3);
+        builder.addClauseFFT(2, 3, 4);
+        builder.addClauseF(4);
 
-        assign = new MaxSATSolve(clauses).solve();
-        assert assign == null;
+        assert builder.extract() == null;
 
         System.err.printf("tests passed\n");
     }
