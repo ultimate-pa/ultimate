@@ -71,6 +71,7 @@ public class IterativePredicateTransformer {
 	private final IPredicate m_Precondition;
 	private final IPredicate m_Postcondition;
 	protected final SortedMap<Integer, IPredicate> m_PendingContexts;
+	private final IPredicate m_FalsePredicate;
 	
 	private static final boolean s_TransformSummaryToCNF = true;
 
@@ -80,7 +81,8 @@ public class IterativePredicateTransformer {
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
 			IUltimateServiceProvider services, NestedWord<? extends IAction> trace, 
 			IPredicate precondition, IPredicate postcondition, 
-			SortedMap<Integer, IPredicate> pendingContexts) {
+			SortedMap<Integer, IPredicate> pendingContexts,
+			IPredicate falsePredicate) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_Boogie2SMT = boogie2smt;
@@ -91,6 +93,7 @@ public class IterativePredicateTransformer {
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
 		m_PendingContexts = pendingContexts;
+		m_FalsePredicate = falsePredicate;
 	}
 	
 
@@ -190,7 +193,8 @@ public class IterativePredicateTransformer {
 	 * after it was constructed via WP. May be empty.
 	 */
 	public InterpolantsPreconditionPostcondition computeWeakestPreconditionSequence(
-			NestedFormulas<TransFormula, IPredicate> nf, List<PredicatePostprocessor> postprocs) {
+			NestedFormulas<TransFormula, IPredicate> nf, List<PredicatePostprocessor> postprocs,
+			boolean callPredecessorIsAlwaysFalse) {
 		final IPredicate[] wpSequence = new IPredicate[m_Trace.length()-1];
 		final InterpolantsPreconditionPostcondition ipp = new InterpolantsPreconditionPostcondition(
 				m_Precondition, m_Postcondition, Arrays.asList(wpSequence));
@@ -233,7 +237,11 @@ public class IterativePredicateTransformer {
 
 				final Set<BoogieVar> varsOccurringBetweenCallAndReturn;
 				if (m_Trace.isPendingReturn(i)) {
-					callerPred = m_PendingContexts.get(new Integer(i));
+					if (callPredecessorIsAlwaysFalse) {
+						callerPred = m_FalsePredicate;
+					} else {
+						callerPred = m_PendingContexts.get(new Integer(i));
+					}
 					// we may get the local variable assignment (pending
 					// context)
 					// by requesting it at the position of the
@@ -253,10 +261,15 @@ public class IterativePredicateTransformer {
 							m_Trace, callLocalVarsAssignment, returnTf, 
 							oldVarAssignments, globalVarsAssignments, nf, callPos, i);
 					varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
-					callerPred = m_PredicateTransformer.weakestPrecondition(
+					IPredicate wpOfSummary = m_PredicateTransformer.weakestPrecondition(
 							successor,
 							summary.getWithCallAndReturn());
-					callerPredicatesComputed.put(callPos, callerPred);
+					callerPredicatesComputed.put(callPos, wpOfSummary);
+					if (callPredecessorIsAlwaysFalse) {
+						callerPred = m_FalsePredicate;
+					} else {
+						callerPred = wpOfSummary;
+					}
 				}
 				wp = m_PredicateTransformer.weakestPrecondition(
 						successor, callerPred, returnTf, callLocalVarsAssignment,

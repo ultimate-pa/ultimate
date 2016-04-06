@@ -240,7 +240,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
 						m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), m_ModifiedGlobals, m_Services, m_Trace, 
-						m_Precondition, m_Postcondition, m_PendingContexts);
+						m_Precondition, m_Postcondition, m_PendingContexts, null);
 				m_InterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
@@ -265,8 +265,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
 						m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), m_ModifiedGlobals, m_Services, m_Trace, 
-						m_Precondition, m_Postcondition, m_PendingContexts);
-				m_InterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs).getInterpolants();
+						m_Precondition, m_Postcondition, m_PendingContexts, null);
+				m_InterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
 			}

@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -73,13 +75,14 @@ public class FlowSensitiveFaultLocalizer {
 
 	private IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
-	private ArrayList<IRelevanceInformation> Relevance_of_statements = new ArrayList<>(); 
+	private final IRelevanceInformation[] Relevance_of_statements; 
 
 	public FlowSensitiveFaultLocalizer(IRun<CodeBlock, IPredicate> counterexample,
 			INestedWordAutomaton<CodeBlock, IPredicate> cfg, IUltimateServiceProvider services, SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		Relevance_of_statements = new IRelevanceInformation[counterexample.getLength() - 1];
 		//ArrayList<int[]> informationFromCFG = computeInformationFromCFG( (NestedRun<CodeBlock, IPredicate>) counterexample, cfg); //Get branch information. in the form of an array list
 		computeFlowSensitiveTraceFormula(counterexample, predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager/*,informationFromCFG*/);
 	}
@@ -301,18 +304,19 @@ public class FlowSensitiveFaultLocalizer {
 		IRelevanceInformation relevancy_of_statement = new RelevanceInformation(
 				Collections.singletonList(counterexampleWord.getSymbolAt(backward_counter-1)), 
 				false, false, false);
-		Relevance_of_statements.add(relevancy_of_statement);
+		Relevance_of_statements[Relevance_of_statements.length - 1] = relevancy_of_statement;
 		// Calculating the WP-List
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
 				smtManager.getPredicateFactory(), smtManager.getVariableManager(), 
 				smtManager.getScript(), smtManager.getBoogie2Smt(), modGlobVarManager, 
-				m_Services, counterexampleWord, null, falsePredicate, null);
+				m_Services, counterexampleWord, null, falsePredicate, null, 
+				smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)));
 		
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, 
 				null, falsePredicate, Collections.emptySortedMap(), modGlobVarManager, false);
 		
 		final InterpolantsPreconditionPostcondition weakestPreconditionSequence = 
-				ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList());
+				ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), true);
 		// End of the calculation
 		
 		for(int i = backward_counter-2 ; i >= 0; i--)
@@ -368,8 +372,17 @@ public class FlowSensitiveFaultLocalizer {
 						relevanceCriterion1uc, 
 						relevanceCriterion1gf, false);
 						
-				Relevance_of_statements.add(ri);
+				Relevance_of_statements[i] = ri;
 		}
+		
+		if (m_Logger.isInfoEnabled()) {
+			for (int i=0; i<counterexampleRun.getLength()-1; i++) {
+				m_Logger.info(weakestPreconditionSequence.getInterpolant(i));
+				m_Logger.info(Relevance_of_statements[i]);
+			}
+			m_Logger.info(weakestPreconditionSequence.getInterpolant(counterexampleRun.getLength()-1));
+		}
+
 		
 	}
 
@@ -403,20 +416,14 @@ public class FlowSensitiveFaultLocalizer {
 	 * @return List of {@link RelevanceInformation}s one for each 
 	 * {@link CodeBlock} in the counterexample.
 	 */
-	public ArrayList<IRelevanceInformation> getRelevanceInformation() 
+	public List<IRelevanceInformation> getRelevanceInformation() 
 	{
-		for(int i= 0;i <Relevance_of_statements.size()/2;i++)
-		{
-			IRelevanceInformation temp = Relevance_of_statements.get(i);
-			Relevance_of_statements.set(i, Relevance_of_statements.get(Relevance_of_statements.size()-i-1));
-			Relevance_of_statements.set(Relevance_of_statements.size()-i-1, temp);
-		}
 		m_Logger.warn("- - - - - - - -");
-		for(int i= 0;i <Relevance_of_statements.size();i++)
+		for(int i= 0;i <Relevance_of_statements.length;i++)
 		{
-			m_Logger.warn(((RelevanceInformation) Relevance_of_statements.get(i)).getActions() +" | " +Relevance_of_statements.get(i).getShortString());
+			m_Logger.warn(((RelevanceInformation) Relevance_of_statements[i]).getActions() +" | " +Relevance_of_statements[i].getShortString());
 		}
-		return Relevance_of_statements;
+		return Arrays.asList(Relevance_of_statements);
 	}
 	
 }
