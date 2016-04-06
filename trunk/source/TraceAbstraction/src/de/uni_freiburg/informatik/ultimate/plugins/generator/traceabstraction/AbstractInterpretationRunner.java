@@ -99,6 +99,9 @@ public class AbstractInterpretationRunner {
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter.runOnPathProgram(
 					(NestedRun<CodeBlock, IPredicate>) currentCex, currentAbstraction, mRoot, timer, mServices);
 			mAbsIntResult = result;
+			if(hasShownInfeasibility()){
+				mCegarLoopBenchmark.announceStrongAbsInt();
+			}
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 		}

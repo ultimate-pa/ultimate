@@ -58,6 +58,7 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 	public static final String s_TotalInterpolationBenchmark = "TotalInterpolationBenchmark";
 	public static final String s_AbsIntTime = "Abstract Interpretation Time";
 	public static final String s_AbsIntIterations = "Abstract Interpretation iterations";
+	public static final String s_AbsIntStrong = "AbstractInterpretationStrong";
 
 	private static final CegarLoopBenchmarkType s_Instance = new CegarLoopBenchmarkType();
 
@@ -73,6 +74,7 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 		keyList.add(s_AbsIntTime);
 		keyList.add(s_OverallIterations);
 		keyList.add(s_AbsIntIterations);
+		keyList.add(s_AbsIntStrong);
 		keyList.add(s_AutomataDifference);
 		keyList.add(s_DeadEndRemovalTime);
 		keyList.add(s_AutomataMinimizationTime);
@@ -136,6 +138,7 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 		case s_StatesRemovedByMinimization:
 		case s_OverallIterations:
 		case s_AbsIntIterations:
+		case s_AbsIntStrong:
 			Integer number1 = (Integer) value1;
 			Integer number2 = (Integer) value2;
 			return number1 + number2;
@@ -185,13 +188,11 @@ public class CegarLoopBenchmarkType implements IStatisticsType {
 		sb.append(prettyprintNanoseconds(time));
 		sb.append(". ");
 
-		sb.append("Abstract interpretation took ");
-		Long aiTime = (Long) benchmarkData.getValue(s_AbsIntTime);
-		sb.append(prettyprintNanoseconds(aiTime));
-		sb.append(" and ");
-		Integer absIntIterations = (Integer) benchmarkData.getValue(s_AbsIntIterations);
-		sb.append(absIntIterations);
-		sb.append(" iterations. ");
+		final Integer absIntStrong = (Integer) benchmarkData.getValue(s_AbsIntStrong);
+		final Long aiTime = (Long) benchmarkData.getValue(s_AbsIntTime);
+		final Integer absIntIterations = (Integer) benchmarkData.getValue(s_AbsIntIterations);
+		sb.append("Abstract interpretation took ").append(prettyprintNanoseconds(aiTime)).append(" and ")
+				.append(absIntIterations).append(" iterations (").append(absIntStrong).append(" strong). ");
 
 		SizeIterationPair sip = (SizeIterationPair) benchmarkData.getValue(s_BiggestAbstraction);
 		sb.append("Biggest automaton had ");
