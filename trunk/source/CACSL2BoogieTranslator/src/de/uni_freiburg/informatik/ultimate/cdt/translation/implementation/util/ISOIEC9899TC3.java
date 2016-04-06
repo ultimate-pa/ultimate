@@ -35,8 +35,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -45,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
@@ -190,7 +194,74 @@ public final class ISOIEC9899TC3 {
 			FunctionDeclarations functionDeclarations) {
 		if (bitvectorTranslation) {
 			//TODO bitprecise Float translation
-			return null;
+			String value = val;
+			int exponentLength = 0;
+			int significantLength = 0;
+			int exponentValue = 0;
+			final Expression sign;
+			final Expression significant;
+			final Expression exponent;			
+			double floatVal = Double.valueOf(value);
+
+			// if there is a float-suffix: throw it away
+			for (String s : SUFFIXES_FLOAT) {
+				if (val.endsWith(s)) {
+					value = val.substring(0, val.length() - s.length());
+					String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
+					throw new UnsupportedSyntaxException(loc, msg);
+				}
+			}
+			
+			// set sign bit if value is negative make it positive
+			if (floatVal < 0) {
+				sign = new BitvecLiteral(loc, Integer.toString(1) , 1);
+				floatVal = floatVal * -1;
+			} else {
+				sign = new BitvecLiteral(loc, Integer.toString(0) , 1);
+			}
+			
+			// Set floatIndices depending on the value of the val
+			// TODO find out correct type ranges
+			final CType resultType;
+			if (floatVal <= (1.0 * Math.pow(10, 37))) {
+				exponentLength = 5;
+				significantLength = 15;
+				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
+			} else if (floatVal <= (1.0 * Math.pow(10, 255))) {
+				exponentLength = 8;
+				significantLength = 23;
+				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
+			} else if (floatVal <= (1.0 * Math.pow(10, 2047))) {
+				exponentLength = 11;
+				significantLength = 52;
+				resultType = new CPrimitive(CPrimitive.PRIMITIVE.DOUBLE);
+			} else if (floatVal <= (1.0 * Math.pow(10, 32767))) {
+				exponentLength = 15;
+				significantLength = 113;
+				resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
+			} else {
+				throw new IllegalArgumentException("arguments are out of range");
+			}
+			
+			// TODO find out how to work this with NaN
+			/*
+			if (val.equals("nan") || val.equals("NaN")) {
+				exponent = new IntegerLiteral(loc, Integer.toString(exponentLength));
+				significant = new IntegerLiteral(loc, Integer.toString(significantLength + 1));
+				FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "NaN", new Expression[]{exponent, significant});
+				return new RValue(func, resultType);
+			}*/
+			
+			// calculate exponent value and value of the significant
+			while (floatVal > 2.0) {
+				floatVal = floatVal / 2.0;
+				exponentValue++;
+			}
+			exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
+			significant = new BitvecLiteral(loc, Double.toString(floatVal), significantLength);
+			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "fp", new Expression[]{sign, exponent, significant});
+			return new RValue(func, resultType);
+			
 		} else {
 			String value = val;
 			// if there is a float-suffix: throw it away
