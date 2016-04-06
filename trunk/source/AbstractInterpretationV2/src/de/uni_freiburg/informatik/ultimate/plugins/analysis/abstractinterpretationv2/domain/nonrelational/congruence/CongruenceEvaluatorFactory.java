@@ -67,7 +67,7 @@ public class CongruenceEvaluatorFactory
 
 	@Override
 	public INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(
-	        final int arity, EvaluatorType type) {
+	        final int arity, final EvaluatorType type) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 

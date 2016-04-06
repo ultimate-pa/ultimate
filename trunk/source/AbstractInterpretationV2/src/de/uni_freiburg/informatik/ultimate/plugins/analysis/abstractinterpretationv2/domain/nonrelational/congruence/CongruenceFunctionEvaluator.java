@@ -55,7 +55,7 @@ public class CongruenceFunctionEvaluator
 
 	private final List<IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar>> mInputParamEvaluators;
 
-	protected CongruenceFunctionEvaluator(String name, final int numInParams) {
+	protected CongruenceFunctionEvaluator(final String name, final int numInParams) {
 		mName = name;
 		mInParamCount = numInParams;
 		mInputParamEvaluators = new ArrayList<>();
@@ -105,15 +105,14 @@ public class CongruenceFunctionEvaluator
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append(mName);
-		sb.append("(");
+		sb.append(mName).append('(');
 		for (int i = 0; i < mInputParamEvaluators.size(); i++) {
 			if (i > 0) {
 				sb.append(", ");
 			}
 			sb.append(mInputParamEvaluators.get(i));
 		}
-		sb.append(")");
+		sb.append(')');
 
 		return sb.toString();
 	}

@@ -253,13 +253,11 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 		while (!uniqueFound) {
 			for (int i = 0; i < argNum; i++) {
 				final StringBuilder sb = new StringBuilder();
-				sb.append(paramPrefix);
-				sb.append(i);
+				sb.append(paramPrefix).append(i);
 				final String currentParamName = sb.toString();
 				if (state.containsVariable(currentParamName)) {
 					final StringBuilder paramBuilder = new StringBuilder();
-					paramBuilder.append(paramPrefix);
-					paramBuilder.append("_");
+					paramBuilder.append(paramPrefix).append('_');
 					paramPrefix = paramBuilder.toString();
 					break;
 				}
@@ -269,8 +267,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 		for (int i = 0; i < argNum; i++) {
 			final StringBuilder sb = new StringBuilder();
-			sb.append(paramPrefix);
-			sb.append(i);
+			sb.append(paramPrefix).append(i);
 			returnMap.put(i, sb.toString());
 		}
 

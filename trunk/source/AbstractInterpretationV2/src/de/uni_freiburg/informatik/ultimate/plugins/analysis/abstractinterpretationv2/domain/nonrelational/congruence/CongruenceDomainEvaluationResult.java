@@ -69,10 +69,7 @@ public class CongruenceDomainEvaluationResult implements IEvaluationResult<Congr
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Value: ");
-		sb.append(mValue);
-		sb.append(" -- Boolean Value: ");
-		sb.append(mBooleanValue);
+		sb.append("Value: ").append(mValue).append(" -- Boolean Value: ").append(mBooleanValue);
 		return sb.toString();
 	}
 }

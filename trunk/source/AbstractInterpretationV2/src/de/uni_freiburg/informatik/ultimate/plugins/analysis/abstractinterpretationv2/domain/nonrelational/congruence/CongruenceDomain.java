@@ -25,7 +25,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 	private IAbstractStateBinaryOperator<CongruenceDomainState> mMergeOperator;
 	private IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> mPostOperator;
 	
-	public CongruenceDomain(Logger logger, final BoogieSymbolTable symbolTable) {
+	public CongruenceDomain(final Logger logger, final BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		

@@ -140,23 +140,21 @@ public class CongruenceUnaryExpressionEvaluator
 
 		switch (mOperator) {
 		case LOGICNEG:
-			sb.append("!");
+			sb.append('!');
 			break;
 		case OLD:
 			sb.append("old(");
 			break;
 		case ARITHNEGATIVE:
-			sb.append("-");
+			sb.append('-');
 			break;
 		default:
-			sb.append(mOperator.name());
-			break;
 		}
 
 		sb.append(mSubEvaluator);
 
 		if (mOperator == Operator.OLD) {
-			sb.append(")");
+			sb.append(')');
 		}
 
 		return sb.toString();

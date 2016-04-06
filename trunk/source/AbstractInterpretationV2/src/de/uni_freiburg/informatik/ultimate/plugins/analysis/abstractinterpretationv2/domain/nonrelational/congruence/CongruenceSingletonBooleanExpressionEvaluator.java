@@ -98,7 +98,7 @@ public class CongruenceSingletonBooleanExpressionEvaluator
 
 	@Override
 	public List<CongruenceDomainState> inverseEvaluate(final IEvaluationResult<CongruenceDomainValue> computedValue,
-	        CongruenceDomainState currentState) {
+	        final CongruenceDomainState currentState) {
 		final List<CongruenceDomainState> returnList = new ArrayList<>();
 		returnList.add(currentState);
 		return returnList;

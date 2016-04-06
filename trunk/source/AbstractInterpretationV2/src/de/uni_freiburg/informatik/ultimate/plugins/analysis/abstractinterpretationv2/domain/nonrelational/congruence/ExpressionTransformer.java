@@ -188,7 +188,7 @@ public class ExpressionTransformer {
 			return expr;
 		}
 		// Construct an expression from the map + constant
-		ILocation loc = expr.getLocation();
+		final ILocation loc = expr.getLocation();
 		Expression newExpr = null;
 		for (final Map.Entry<String, BigInteger> entry : mCoefficients.entrySet()) {
 			if (newExpr == null) {
@@ -205,39 +205,44 @@ public class ExpressionTransformer {
 				final Expression var = new IdentifierExpression(loc, entry.getKey());
 				final Expression coeff = new IntegerLiteral(loc, entry.getValue().abs().toString());
 				final Expression summand = new BinaryExpression(loc, Operator.ARITHMUL, coeff, var);
-				final Operator op = entry.getValue().signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
+				final Operator operator = entry.getValue().signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
 				if (entry.getValue().abs().equals(BigInteger.ONE)) {
-					newExpr = new BinaryExpression(loc, op, newExpr, var);
+					newExpr = new BinaryExpression(loc, operator, newExpr, var);
 				} else {
-					newExpr = new BinaryExpression(loc, op, newExpr, summand);
+					newExpr = new BinaryExpression(loc, operator, newExpr, summand);
 				}
 				
 			}
 		}
 		if (newExpr == null) {
-			newExpr = new IntegerLiteral(loc, mConstant.toString());;
+			newExpr = new IntegerLiteral(loc, mConstant.toString());
 		} else if (mConstant.signum() != 0) {
 			final Expression constant = new IntegerLiteral(loc, mConstant.abs().toString());
-			final Operator op = mConstant.signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
-			newExpr = new BinaryExpression(loc, op, newExpr, constant);
+			final Operator operator = mConstant.signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
+			newExpr = new BinaryExpression(loc, operator, newExpr, constant);
 		}
 		if (expr instanceof BinaryExpression) {
-			final Operator op = ((BinaryExpression) expr).getOperator();
-			// Transform suitable <, >, <=, >= Expressions to ... != 0 (better to handle)
-			if (newExpr instanceof BinaryExpression) {
-				if ((op == Operator.COMPGT || op == Operator.COMPGEQ) && mConstant.signum() < 0 ||
-						(op == Operator.COMPLT || op == Operator.COMPLEQ) && mConstant.signum() > 0) {
-					return new BinaryExpression(loc, Operator.COMPNEQ, ((BinaryExpression) newExpr).getLeft(), new IntegerLiteral(loc, "0"));
-				}
-			}
-			switch (op) {
+			final Operator operator = ((BinaryExpression) expr).getOperator();
+			switch (operator) {
 				case COMPLT:
-				case COMPGT:
 				case COMPLEQ:
+					if (newExpr instanceof BinaryExpression && mConstant.signum() > 0) {
+						newExpr = new BinaryExpression(loc, Operator.COMPNEQ, ((BinaryExpression) newExpr).getLeft(), new IntegerLiteral(loc, "0"));
+					} else {
+						newExpr = new BinaryExpression(loc, operator, newExpr, new IntegerLiteral(loc, "0"));
+					}
+					break;
+				case COMPGT:
 				case COMPGEQ:
+					if (newExpr instanceof BinaryExpression && mConstant.signum() < 0) {
+						newExpr = new BinaryExpression(loc, Operator.COMPNEQ, ((BinaryExpression) newExpr).getLeft(), new IntegerLiteral(loc, "0"));
+					} else {
+						newExpr = new BinaryExpression(loc, operator, newExpr, new IntegerLiteral(loc, "0"));
+					}
+					break;
 				case COMPEQ:
 				case COMPNEQ:
-					newExpr = new BinaryExpression(loc, op, newExpr, new IntegerLiteral(loc, "0"));
+					newExpr = new BinaryExpression(loc, operator, newExpr, new IntegerLiteral(loc, "0"));
 					break;
 				default:
 					break;
@@ -251,10 +256,10 @@ public class ExpressionTransformer {
 	 */
 	private void process(final Expression expr) {
 		if (expr instanceof IntegerLiteral) {
-			String value = ((IntegerLiteral) expr).getValue();
+			final String value = ((IntegerLiteral) expr).getValue();
 			mConstant = new BigInteger(value);
 		} else if (expr instanceof IdentifierExpression) {
-			String varName = ((IdentifierExpression) expr).getIdentifier();
+			final String varName = ((IdentifierExpression) expr).getIdentifier();
 			mCoefficients.put(varName, BigInteger.ONE);
 		} else if (expr instanceof UnaryExpression) {
 			processUnary((UnaryExpression) expr);
