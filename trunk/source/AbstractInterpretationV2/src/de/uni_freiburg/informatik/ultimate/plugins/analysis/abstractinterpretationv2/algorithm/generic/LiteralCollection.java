@@ -44,14 +44,34 @@ public class LiteralCollection {
 
 	private final List<BigDecimal> mSortedNumbersSet;
 
+	/**
+	 * Default constructor to create a new {@link LiteralCollection} object.
+	 * 
+	 * @param realsSet
+	 *            The set of occurring numbered literals in the current analyzed program.
+	 */
 	public LiteralCollection(Set<BigDecimal> realsSet) {
 		mSortedNumbersSet = realsSet.stream().sorted().collect(Collectors.toList());
 	}
 
+	/**
+	 * Computes the next real-valued literal starting from the given value.
+	 * 
+	 * @param value
+	 *            The value to compute the next literal from.
+	 * @return The next occurring literal, or <code>null</code> if none was found.
+	 */
 	public BigDecimal getNextRealPositive(BigDecimal value) {
 		return getNextNumberPositive(value);
 	}
 
+	/**
+	 * Computes the previous real-valued literal starting from the given value.
+	 * 
+	 * @param value
+	 *            The value to compute the previous literal from.
+	 * @return The previous occurring literal, or <code>null</code> if none was found.
+	 */
 	public BigDecimal getNextRealNegative(BigDecimal value) {
 		return getNextNumberNegative(value);
 	}
@@ -90,6 +110,6 @@ public class LiteralCollection {
 			return "Empty LiteralCollection";
 		}
 		return "LiteralCollection " + String.join("; ",
-				mSortedNumbersSet.stream().map(a -> a.toPlainString()).collect(Collectors.toList()));
+		        mSortedNumbersSet.stream().map(a -> a.toPlainString()).collect(Collectors.toList()));
 	}
 }

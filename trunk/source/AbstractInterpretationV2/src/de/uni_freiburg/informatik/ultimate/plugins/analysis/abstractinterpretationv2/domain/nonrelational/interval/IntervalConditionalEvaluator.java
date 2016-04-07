@@ -234,7 +234,7 @@ public class IntervalConditionalEvaluator
 			}
 		}
 
-		if (returnList.size() == 0) {
+		if (returnList.isEmpty()) {
 			returnList.add(currentState.bottomState());
 		}
 

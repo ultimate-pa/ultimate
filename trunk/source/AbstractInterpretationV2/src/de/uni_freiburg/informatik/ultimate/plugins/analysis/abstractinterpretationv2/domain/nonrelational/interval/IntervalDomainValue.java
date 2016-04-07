@@ -35,7 +35,6 @@ import java.math.RoundingMode;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 
 /**
@@ -88,11 +87,9 @@ public class IntervalDomainValue {
 	 *            The upper value of the interval.
 	 */
 	public IntervalDomainValue(final IntervalValue lower, final IntervalValue upper) {
-		if (!lower.isInfinity() && !upper.isInfinity()) {
-			if (lower.getValue().compareTo(upper.getValue()) > 0) {
-				mIsBottom = true;
-				return;
-			}
+		if (!lower.isInfinity() && !upper.isInfinity() && lower.getValue().compareTo(upper.getValue()) > 0) {
+			mIsBottom = true;
+			return;
 		}
 
 		mLower = lower;
@@ -271,7 +268,7 @@ public class IntervalDomainValue {
 		}
 
 		return (mLower.compareTo(other.mLower) <= 0 && mUpper.compareTo(other.mUpper) >= 0)
-				|| (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
+		        || (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
 	}
 
 	/**
@@ -323,14 +320,14 @@ public class IntervalDomainValue {
 			return "{}";
 		}
 
-		final String lower = (mLower.isInfinity() ? "-\\infty" : mLower.toString());
-		final String upper = (mUpper.isInfinity() ? "\\infty" : mUpper.toString());
+		final String lower = mLower.isInfinity() ? "-\\infty" : mLower.toString();
+		final String upper = mUpper.isInfinity() ? "\\infty" : mUpper.toString();
 
 		return new StringBuilder().append("[ ").append(lower).append("; ").append(upper).append(" ]").toString();
 	}
 
 	/**
-	 * Adds two {@link IntervalDomainValue}s following the scheme:
+	 * Adds another {@link IntervalDomainValue} to <code>this</code> following the scheme:
 	 * 
 	 * <p>
 	 * <ul>
@@ -338,10 +335,8 @@ public class IntervalDomainValue {
 	 * </ul>
 	 * </p>
 	 * 
-	 * @param firstResult
-	 *            The first interval.
-	 * @param secondResult
-	 *            The second interval.
+	 * @param other
+	 *            The other interval.
 	 * @return A new evaluation result corresponding to the addition of the two input intervals.
 	 */
 	public IntervalDomainValue add(final IntervalDomainValue other) {
@@ -391,7 +386,7 @@ public class IntervalDomainValue {
 		}
 
 		return (mLower.isInfinity() || mLower.getValue().signum() <= 0)
-				&& (mUpper.isInfinity() || mUpper.getValue().signum() >= 0);
+		        && (mUpper.isInfinity() || mUpper.getValue().signum() >= 0);
 	}
 
 	/**
@@ -577,7 +572,8 @@ public class IntervalDomainValue {
 	}
 
 	/**
-	 * Computes the result of the multiplication of two {@link IntervalDomainValue}s following the scheme:
+	 * Computes the result of the multiplication of another {@link IntervalDomainValue} with <code>this</code> following
+	 * the scheme:
 	 * 
 	 * <p>
 	 * <ul>
@@ -585,10 +581,8 @@ public class IntervalDomainValue {
 	 * </ul>
 	 * </p>
 	 * 
-	 * @param firstResult
-	 *            The first interval.
-	 * @param secondResult
-	 *            The second interval.
+	 * @param other
+	 *            The other interval.
 	 * @return A new interval representing the result of <code>firstResult</code> * <code>secondRestult</code>.
 	 */
 	public IntervalDomainValue multiply(final IntervalDomainValue other) {
@@ -620,17 +614,15 @@ public class IntervalDomainValue {
 	}
 
 	/**
-	 * Computes the subtraction of two {@link IntervalDomainValue}s following the scheme:
+	 * Computes the subtraction of another {@link IntervalDomainValue} from <code>this</code> following the scheme:
 	 * <p>
 	 * <ul>
 	 * <li>[a, b] - [c, d] = [a - d, b - c]</li>
 	 * </ul>
 	 * </p>
 	 * 
-	 * @param firstResult
-	 *            The first interval.
-	 * @param secondResult
-	 *            The second interval.
+	 * @param other
+	 *            The other interval.
 	 * @return A new interval representing the result of <code>firstResult</code> - <code>secondResult</code>.
 	 */
 	public IntervalDomainValue subtract(final IntervalDomainValue other) {
@@ -694,11 +686,11 @@ public class IntervalDomainValue {
 		}
 
 		// The sign of the divisor does not matter for the euclidean modulo.
-		final IntervalDomainValue absDivisor = divisor.abs(); 
-		
-		// [a; b] % [c; d] = [a; b] if (0 <= a) and (b < c)
+		final IntervalDomainValue absDivisor = divisor.abs();
+
+		// [a; b] % [c; d] = [a; b], when (0 <= a) and (b < c)
 		if (!mLower.isInfinity() && !absDivisor.mLower.isInfinity() && new IntervalValue(0).compareTo(mLower) <= 0
-				&& mUpper.compareTo(absDivisor.mLower) < 0) {
+		        && mUpper.compareTo(absDivisor.mLower) < 0) {
 			return new IntervalDomainValue(mLower, mUpper);
 		}
 
@@ -744,9 +736,11 @@ public class IntervalDomainValue {
 			max = new IntervalValue();
 			if (containsZero() || (lowerIsInf && upperIsInf)) {
 				min = new IntervalValue(0);
-			} else if (lowerIsInf) { // && !upperIsInf
+			} else if (lowerIsInf) {
+				// && !upperIsInf
 				min = new IntervalValue(mUpper.getValue().abs());
-			} else { // upperIsInf && !lowerIsInf
+			} else {
+				// upperIsInf && !lowerIsInf
 				min = new IntervalValue(mLower.getValue().abs());
 			}
 		} else {
@@ -784,9 +778,26 @@ public class IntervalDomainValue {
 		}
 
 		return new IntervalDomainValue(new IntervalValue(getUpper().getValue().negate()),
-				new IntervalValue(getLower().getValue().negate()));
+		        new IntervalValue(getLower().getValue().negate()));
 	}
 
+	/**
+	 * Returns an SMT {@link Term} of <code>this</code>.
+	 * 
+	 * <p>
+	 * Variables are expressed as var &geq; lowerBound, var &leq; upperBound. If a variable has no lower, or upper
+	 * bound, no constraint is added. If a variable is &top;, <code>true</code> is used as term. If a variable is &bot;,
+	 * <code>false</code> is used as term.
+	 * </p>
+	 * 
+	 * @param script
+	 *            The script to use.
+	 * @param sort
+	 *            The sort to use.
+	 * @param var
+	 *            The term of the variable to use.
+	 * @return A Term corresponding to the value.
+	 */
 	public Term getTerm(final Script script, final Sort sort, final Term var) {
 		assert sort.isNumericSort();
 		if (isBottom()) {
@@ -812,7 +823,7 @@ public class IntervalDomainValue {
 				// its a normal interval
 				final Term upper = script.term("<=", var, mUpper.getTerm(sort, script));
 				final Term lower = script.term(">=", var, mLower.getTerm(sort, script));
-//				return Util.and(script, lower, upper);
+				// return Util.and(script, lower, upper);
 				return script.term("and", lower, upper);
 			}
 		}
@@ -871,7 +882,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -905,7 +916,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getUpper().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -938,7 +949,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -974,7 +985,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getUpper().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1034,7 +1045,7 @@ public class IntervalDomainValue {
 					}
 				} else {
 					returnValue = updateIfSmaller(returnValue,
-							getLower().getValue().multiply(other.getLower().getValue()), valuePresent);
+					        getLower().getValue().multiply(other.getLower().getValue()), valuePresent);
 					valuePresent = true;
 				}
 			}
@@ -1073,7 +1084,7 @@ public class IntervalDomainValue {
 					}
 				} else {
 					returnValue = updateIfSmaller(returnValue,
-							getLower().getValue().multiply(other.getUpper().getValue()), valuePresent);
+					        getLower().getValue().multiply(other.getUpper().getValue()), valuePresent);
 					valuePresent = true;
 				}
 			}
@@ -1111,7 +1122,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1144,7 +1155,7 @@ public class IntervalDomainValue {
 				}
 			} else {
 				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1154,7 +1165,7 @@ public class IntervalDomainValue {
 	}
 
 	private IntervalValue updateIfLarger(final IntervalValue oldValue, final BigDecimal newValue,
-			final boolean valuePresent) {
+	        final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) <= 0) {
 				return new IntervalValue(newValue);
@@ -1167,7 +1178,7 @@ public class IntervalDomainValue {
 	}
 
 	private IntervalValue updateIfSmaller(final IntervalValue oldValue, final BigDecimal newValue,
-			final boolean valuePresent) {
+	        final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) >= 0) {
 				return new IntervalValue(newValue);
@@ -1190,9 +1201,9 @@ public class IntervalDomainValue {
 	 * If 0 is containd in [x; y], the resulting interval will always be (-&infin;; &infin;).
 	 * </p>
 	 * 
-	 * @param evaluatedValue
+	 * @param other
 	 *            Another {@link IntervalDomainValue} of the form [x; y].
-	 * @return
+	 * @return A new {@link IntervalDomainValue} corresponding to the result of the computation of the division.
 	 */
 	public IntervalDomainValue divide(final IntervalDomainValue other) {
 		return divideInternally(other);
@@ -1202,8 +1213,9 @@ public class IntervalDomainValue {
 	 * Performs the divison of <code>this</code> with the given {@link IntervalDomainValue}. The division is done using
 	 * the euclidean method.
 	 * 
-	 * @param evaluatedValue
-	 * @return
+	 * @param other
+	 *            Another {@link IntervalDomainValue} of the form [x; y].
+	 * @return A new {@link IntervalDomainValue} corresponding to the result of the computation of the division.
 	 */
 	public IntervalDomainValue integerDivide(final IntervalDomainValue other) {
 		IntervalDomainValue result;
@@ -1214,9 +1226,9 @@ public class IntervalDomainValue {
 			}
 
 			final IntervalDomainValue negZero = new IntervalDomainValue(other.getLower(),
-					new IntervalValue(new BigDecimal(-1)));
+			        new IntervalValue(new BigDecimal(-1)));
 			final IntervalDomainValue posZero = new IntervalDomainValue(new IntervalValue(BigDecimal.ONE),
-					other.getUpper());
+			        other.getUpper());
 
 			final IntervalDomainValue resultNeg = divideInternally(negZero);
 			final IntervalDomainValue resultPos = divideInternally(posZero);
