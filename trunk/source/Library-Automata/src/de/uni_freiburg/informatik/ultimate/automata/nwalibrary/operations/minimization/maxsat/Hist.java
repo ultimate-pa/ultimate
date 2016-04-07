@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * @author stimpflj
  *
  */
-public class Hist {
+final class Hist {
 	/** linear state */
 	int lin;
 
@@ -43,9 +43,9 @@ public class Hist {
 	int hier;
 
 
-	public Hist() {}
+	Hist() {}
 
-	public Hist(int lin, int hier) {
+	Hist(int lin, int hier) {
 		this.lin = lin;
 		this.hier = hier;
 	}
@@ -54,7 +54,9 @@ public class Hist {
 	public boolean equals(Object obj) {
 		if (!(obj instanceof Hist))
 			return false;
+
 		Hist b = (Hist) obj;
+
 		return lin == b.lin && hier == b.hier;
 	}
 
@@ -63,16 +65,18 @@ public class Hist {
 		return 31 * lin + hier;
 	}
 
-	public static int compareLinHier(Hist a, Hist b) {
-		if (a.lin != b.lin) return a.lin - b.lin;
+	static int compareLinHier(Hist a, Hist b) {
+		if (a.lin != b.lin)
+			return a.lin - b.lin;
 		return a.hier - b.hier;
 	}
 
 	/**
 	 * @return whether <code>history</code> is consistent with <code>nwa</code>
-	 * NOTE: history states can be -1. This means "bottom-of-stack" state.
+	 *         NOTE: history states can be -1. This means "bottom-of-stack"
+	 *         state.
 	 */
-	public static boolean checkHistoryStatesConsistency(NWA nwa, ArrayList<Hist> hist) {
+	static boolean checkConsistency(NWA nwa, ArrayList<Hist> hist) {
 		for (int i = 0; i < hist.size(); i++) {
 			if (hist.get(i).lin < 0 || hist.get(i).lin >= nwa.numStates)
 				return false;

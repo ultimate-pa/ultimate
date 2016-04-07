@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 public class MinimizeNwaMaxSAT<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
-	private final NestedWordAutomaton<LETTER, STATE> m_result;
-
-	private final INestedWordAutomaton<LETTER, STATE> m_operand;
 	private final AutomataLibraryServices m_services;
+	private final INestedWordAutomaton<LETTER, STATE> m_operand;
+
+	private final NestedWordAutomaton<LETTER, STATE> m_result;
 
 	public MinimizeNwaMaxSAT(
 			AutomataLibraryServices services,

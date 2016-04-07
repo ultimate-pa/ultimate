@@ -55,33 +55,33 @@ import java.util.HashSet;
  *
  * @author stimpflj
  */
-class NWA implements Cloneable {
+final class NWA implements Cloneable {
 	/** Number of states */
-	public int numStates;
+	int numStates;
 
 	/** Number of internal symbols */
-	public int numISyms;
+	int numISyms;
 
 	/** Number of call symbols */
-	public int numCSyms;
+	int numCSyms;
 
 	/** Number of return symbols */
-	public int numRSyms;
+	int numRSyms;
 
 	/** For each state whether it is initial */
-	public boolean[] isInitial;
+	boolean[] isInitial;
 
 	/** For each state whether it is final */
-	public boolean[] isFinal;
+	boolean[] isFinal;
 
 	/** Internal Transitions */
-	public ITrans[] iTrans;
+	ITrans[] iTrans;
 
 	/** Call Transitions */
-	public CTrans[] cTrans;
+	CTrans[] cTrans;
 
 	/** Return Transitions */
-	public RTrans[] rTrans;
+	RTrans[] rTrans;
 
 
 	/**
@@ -89,7 +89,7 @@ class NWA implements Cloneable {
 	 *
 	 * @return <code>true</code> iff the automaton is consistent
 	 */
-	public static boolean checkConsistency(NWA nwa) {
+	static boolean checkConsistency(NWA nwa) {
 		if (nwa.numStates < 0) return false;
 		if (nwa.numISyms < 0) return false;
 		if (nwa.numRSyms < 0) return false;
@@ -125,7 +125,7 @@ class NWA implements Cloneable {
 	 * @return <code>true</code> iff the automaton is deterministic (multiple
 	 *         identical transitions count as non-deterministic)
 	 */
-	public static boolean checkDeterminism(NWA nwa) {
+	static boolean checkDeterminism(NWA nwa) {
 		HashSet<ITrans> iSeen = new HashSet<ITrans>();
 		HashSet<CTrans> cSeen = new HashSet<CTrans>();
 		HashSet<RTrans> rSeen = new HashSet<RTrans>();
@@ -143,7 +143,7 @@ class NWA implements Cloneable {
 	 * @return ArrayList containing all final states of <code>nwa</code>, in
 	 *         strictly ascending order.
 	 */
-	public static ArrayList<Integer> computeInitialStates(NWA nwa) {
+	static ArrayList<Integer> computeInitialStates(NWA nwa) {
 		ArrayList<Integer> out = new ArrayList<Integer>();
 
 		for (int i = 0; i < nwa.numStates; i++)
@@ -159,7 +159,7 @@ class NWA implements Cloneable {
 	 * @return ArrayList containing all final states of <code>nwa</code>, in
 	 *         strictly ascending order.
 	 */
-	public static ArrayList<Integer> computeFinalStates(NWA nwa) {
+	static ArrayList<Integer> computeFinalStates(NWA nwa) {
 		ArrayList<Integer> out = new ArrayList<Integer>();
 
 		for (int i = 0; i < nwa.numStates; i++)

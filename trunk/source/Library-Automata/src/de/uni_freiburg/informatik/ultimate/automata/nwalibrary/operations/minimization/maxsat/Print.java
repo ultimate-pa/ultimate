@@ -38,9 +38,9 @@ import java.util.ArrayList;
  * @author stimpflj
  *
  */
-public class Print {
+final class Print {
 
-	public static void printPartition(Writer writer, Partition partition) {
+	static void printPartition(Writer writer, Partition partition) {
 		assert Partition.checkConsistency(partition);
 
 		ArrayList<ArrayList<Integer>> classes = new ArrayList<ArrayList<Integer>>();
@@ -70,7 +70,7 @@ public class Print {
 	 *            as suggested
 	 * @param out
 	 */
-	public static void printNWA(Writer writer, NWA nwa) {
+	static void printNWA(Writer writer, NWA nwa) {
 		ArrayList<Integer> initialStates = NWA.computeInitialStates(nwa);
 		ArrayList<Integer> finalStates = NWA.computeFinalStates(nwa);
 
@@ -100,13 +100,13 @@ public class Print {
 		p.flush();
 	}
 
-	public static String makeString(Partition cls) {
+	static String makeString(Partition cls) {
 		StringWriter w = new StringWriter();
 		Print.printPartition(w,  cls);
 		return w.toString();
 	}
 
-	public static String makeString(NWA nwa) {
+	static String makeString(NWA nwa) {
 		StringWriter w = new StringWriter();
 		Print.printNWA(w,  nwa);
 		return w.toString();

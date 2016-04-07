@@ -32,20 +32,19 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  *
  * @author stimpflj
  */
-public class CTrans {
+final class CTrans {
 	/** Source state */
-	public int src;
+	int src;
 
 	/** Call symbol */
-	public int sym;
+	int sym;
 
 	/** Destination state */
-	public int dst;
+	int dst;
 
+	CTrans() {}
 
-	public CTrans() {}
-
-	public CTrans(int src, int sym, int dst) {
+	CTrans(int src, int sym, int dst) {
 		this.src = src;
 		this.sym = sym;
 		this.dst = dst;
@@ -55,7 +54,9 @@ public class CTrans {
 	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof CTrans))
 			return false;
+
 		CTrans b = (CTrans) obj;
+
 		return src == b.src && sym == b.sym && dst == b.dst;
 	}
 
@@ -64,9 +65,11 @@ public class CTrans {
 		return (src * 31 + sym) * 31 + dst;
 	}
 
-	public static int compareSrcSymDst(CTrans a, CTrans b) {
-		if (a.src != b.src) return a.src - b.src;
-		if (a.sym != b.sym) return a.sym - b.sym;
+	static int compareSrcSymDst(CTrans a, CTrans b) {
+		if (a.src != b.src)
+			return a.src - b.src;
+		if (a.sym != b.sym)
+			return a.sym - b.sym;
 		return a.dst - b.dst;
 	}
 }

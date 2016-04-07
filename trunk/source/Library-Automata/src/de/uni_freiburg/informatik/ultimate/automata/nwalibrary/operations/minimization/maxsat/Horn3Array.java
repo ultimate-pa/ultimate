@@ -38,46 +38,46 @@ import java.util.Iterator;
  *
  * @author stimpflj
  */
-public class Horn3Array implements Iterable<Horn3Clause> {
+final class Horn3Array implements Iterable<Horn3Clause> {
 
-	public static final int FALSEVAR = 0;
-	public static final int TRUEVAR = 1;
+	static final int FALSEVAR = 0;
+	static final int TRUEVAR = 1;
 
-	private final int numEqVars;
+	private final int numVars;
 
-	private IntArray a0;
-	private IntArray a1;
-	private IntArray a2;
+	private IntArray ax;
+	private IntArray ay;
+	private IntArray az;
 
-	public Horn3Array(int numEqVars) {
-		this.numEqVars = numEqVars;
+	Horn3Array(int numVars) {
+		this.numVars = numVars;
 
-		a0 = new IntArray();
-		a1 = new IntArray();
-		a2 = new IntArray();
+		ax = new IntArray();
+		ay = new IntArray();
+		az = new IntArray();
 	}
 
-	public void add(int x, int y, int z) {
-		assert 0 <= x && x < numEqVars;
-		assert 0 <= y && y < numEqVars;
-		assert 0 <= z && z < numEqVars;
+	void add(int x, int y, int z) {
+		assert 0 <= x && x < numVars;
+		assert 0 <= y && y < numVars;
+		assert 0 <= z && z < numVars;
 
-		a0.add(x);
-		a1.add(y);
-		a2.add(z);
+		ax.add(x);
+		ay.add(y);
+		az.add(z);
 	}
 
-	public int size() {
-		return a0.size();
+	int size() {
+		return ax.size();
 	}
 
-	public Horn3Clause get(int idx, Horn3Clause out) {
-		if (idx < 0 || idx >= a0.size())
+	Horn3Clause get(int idx, Horn3Clause out) {
+		if (idx < 0 || idx >= ax.size())
 			throw new ArrayIndexOutOfBoundsException();
 
-		out.x = a0.get(idx);
-		out.y = a1.get(idx);
-		out.z = a2.get(idx);
+		out.x = ax.get(idx);
+		out.y = ay.get(idx);
+		out.z = az.get(idx);
 
 		return out;
 	}
@@ -96,13 +96,13 @@ public class Horn3Array implements Iterable<Horn3Clause> {
 	 *
 	 * @author stimpflj
 	 */
-	public static class Horn3Iterator implements Iterator<Horn3Clause> {
+	static private final class Horn3Iterator implements Iterator<Horn3Clause> {
 
 		private Horn3Array h3a;
 		private Horn3Clause h3c;
 		private int idx;
 
-		public Horn3Iterator(Horn3Array h3a) {
+		Horn3Iterator(Horn3Array h3a) {
 			this.h3a = h3a;
 			this.h3c = new Horn3Clause(-1,-1,-1);
 			this.idx = 0;

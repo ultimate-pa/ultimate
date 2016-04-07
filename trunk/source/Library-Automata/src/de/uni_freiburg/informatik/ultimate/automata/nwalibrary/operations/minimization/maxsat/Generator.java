@@ -38,17 +38,14 @@ import java.util.HashSet;
  *
  * A solution to the instance can be converted to a merge relation later.
  *
- * This is currently not practical since state equivalency needs to be
- * transitive and we need numStates^3 clauses for transitivity.
- *
  * @author stimpflj
  */
-public class Generator {
+final class Generator {
 
 	/**
-	 * Converter a solved instance to a merge relation
+	 * Convert a solved instance to a merge relation
 	 */
-	public static Partition makeMergeRelation(int numStates, char[] assigned) {
+	static Partition makeMergeRelation(int numStates, char[] assigned) {
 		EqVarCalc calc = new EqVarCalc(numStates);
 
 		assert assigned.length == calc.getNumEqVars();
@@ -66,7 +63,7 @@ public class Generator {
 			}
 		}
 
-		return Partition.compress(unionFind.getRoots());
+		return Partition.compress(unionFind.extractRoots());
 	}
 
 	/**
@@ -79,8 +76,8 @@ public class Generator {
 	 * @return A (consistent) Partition which represents the minimized
 	 *         automaton.
 	 */
-	public static Horn3Array generateClauses(NWA inNWA, ArrayList<Hist> history) {
-		assert Hist.checkHistoryStatesConsistency(inNWA, history);
+	static Horn3Array generateClauses(NWA inNWA, ArrayList<Hist> history) {
+		assert Hist.checkConsistency(inNWA, history);
 
 		// "assert" that there are no transitions which are never taken
 		{
@@ -294,52 +291,54 @@ public class Generator {
 		Horn3Array clauses = builder.extract();
 		return clauses;
 	}
-}
 
-/**
- * This encapsulates some evil intricate knowledge about the
- * representation of the equivalence variables as integers
- */
-class EqVarCalc {
-	private int n;
+	/**
+	 * This encapsulates some evil intricate knowledge about the
+	 * representation of the equivalence variables as integers
+	 */
+	private static final class EqVarCalc {
+		private final int n;
 
-	public EqVarCalc(int numStates) {
-		this.n = numStates;
+		EqVarCalc(int numStates) {
+			this.n = numStates;
+		}
+
+		int getNumEqVars() {
+			// add 2 because 0 and 1 are reserved for const false / const true
+			return 2 + n*(n+1)/2;
+		}
+
+		int eqVar(int a, int b) {
+			assert 0 <= a && a < n;
+			assert 0 <= b && b < n;
+			if (a > b) return eqVar(b, a);
+			// add 2 because 0 and 1 are reserved for const false / const true
+			return 2 + (n*(n+1)/2)-((n-a)*(n-a+1)/2) + b-a;
+		}
 	}
 
-	public int getNumEqVars() {
-		// add 2 because 0 and 1 are reserved for const false / const true
-		return 2 + n*(n+1)/2;
-	}
+	private static final class SrcSym {
+		private final int src;
+		private final int sym;
 
-	public int eqVar(int a, int b) {
-		assert 0 <= a && a < n;
-		assert 0 <= b && b < n;
-		if (a > b) return eqVar(b, a);
-		// add 2 because 0 and 1 are reserved for const false / const true
-		return 2 + (n*(n+1)/2)-((n-a)*(n-a+1)/2) + b-a;
-	}
-}
+		SrcSym(int src, int sym) {
+			this.src = src;
+			this.sym = sym;
+		}
 
-class SrcSym {
-	int src;
-	int sym;
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == null || !(obj instanceof SrcSym))
+				return false;
 
-	public SrcSym(int src, int sym) {
-		this.src = src;
-		this.sym = sym;
-	}
+			SrcSym b = (SrcSym) obj;
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof SrcSym))
-			return false;
-		SrcSym b = (SrcSym) obj;
-		return src == b.src && sym == b.sym;
-	}
+			return src == b.src && sym == b.sym;
+		}
 
-	@Override
-	public int hashCode() {
-		return src * 31 + sym;
+		@Override
+		public int hashCode() {
+			return src * 31 + sym;
+		}
 	}
 }

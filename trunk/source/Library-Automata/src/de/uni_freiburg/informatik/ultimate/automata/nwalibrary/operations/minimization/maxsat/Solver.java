@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-enum Sat { OK, UNSATISFIABLE; };
 
 /**
  * Simple SAT solver.
@@ -40,13 +39,15 @@ enum Sat { OK, UNSATISFIABLE; };
  *
  * @author stimpflj
  */
-public class Solver {
-	public static final char NONE = 0;
-	public static final char TRUE = 1;
-	public static final char FALSE = 2;
+final class Solver {
+	static final char NONE = 0;
+	static final char TRUE = 1;
+	static final char FALSE = 2;
+
+	private static enum Sat { OK, UNSATISFIABLE; };
 
 	/** the number of boolean variables */
-	int numVars;
+	private int numVars;
 
 	/** the problem in CNF */
 	private Horn3Array clauses;
@@ -63,7 +64,7 @@ public class Solver {
 	/** pre-allocate a clause to avoid garbage collection overhead */
 	private Horn3Clause clause;
 
-	public Solver(Horn3Array clauses) {
+	Solver(Horn3Array clauses) {
 		this.clauses = clauses;
 		this.clause = new Horn3Clause(-1,-1,-1);
 
@@ -164,7 +165,7 @@ public class Solver {
 	 * @return <code>null</code> if there is no solution, or an array
 	 * of assignments (TRUE or FALSE) for each variable.
 	 */
-	public char[] solve() {
+	char[] solve() {
 		assert op.size() == 0;
 
 		for (Horn3Clause c : clauses)

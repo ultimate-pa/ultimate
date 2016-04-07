@@ -32,30 +32,36 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  *
  * @author stimpflj
  */
-public class RTrans implements Comparable<RTrans> {
+final class RTrans implements Comparable<RTrans> {
 	/** Source state */
-	public int src;
+	int src;
 
 	/** Return symbol */
-	public int sym;
+	int sym;
 
 	/** top-of-stack (hierarchical) state */
-	public int top;
+	int top;
 
 	/** Destination state */
-	public int dst;
+	int dst;
 
 
-	public RTrans() {}
+	RTrans() {}
 
-	public RTrans(int src, int sym, int top, int dst)
-		{ this.src = src; this.sym = sym; this.top = top; this.dst = dst; }
+	RTrans(int src, int sym, int top, int dst) {
+		this.src = src;
+		this.sym = sym;
+		this.top = top;
+		this.dst = dst;
+	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof RTrans))
 			return false;
+
 		RTrans b = (RTrans) obj;
+
 		return src == b.src && top == b.top && sym == b.sym && dst == b.dst;
 	}
 
@@ -69,14 +75,14 @@ public class RTrans implements Comparable<RTrans> {
 		return RTrans.compareSrcSymTopDst(this, b);
 	}
 
-	public static int compareSrcSymTopDst(RTrans a, RTrans b) {
+	static int compareSrcSymTopDst(RTrans a, RTrans b) {
 		if (a.src != b.src) return a.src - b.src;
 		if (a.sym != b.sym) return a.sym - b.sym;
 		if (a.top != b.top) return a.top - b.top;
 		return a.dst - b.dst;
 	}
 
-	public static int compareSrcTopSymDst(RTrans a, RTrans b) {
+	static int compareSrcTopSymDst(RTrans a, RTrans b) {
 		if (a.src != b.src) return a.src - b.src;
 		if (a.top != b.top) return a.top - b.top;
 		if (a.sym != b.sym) return a.sym - b.sym;

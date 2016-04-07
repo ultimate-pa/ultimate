@@ -27,14 +27,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-public class Horn3Clause {
-	public int x;
-	public int y;
-	public int z;
+final class Horn3Clause {
+	int x;
+	int y;
+	int z;
 
-	public Horn3Clause(int a, int b, int c) {
-		x = a;
-		y = b;
-		z = c;
+	Horn3Clause(int x, int y, int z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
 	}
 }

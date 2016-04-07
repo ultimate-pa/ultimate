@@ -40,21 +40,16 @@ import java.io.Writer;
  * @author stimpflj
  *
  */
-public class Partition {
+final class Partition {
 	/** Number of equivalence classes */
 	int numClasses;
 
 	/** For each old state, to what equivalence class it belongs */
 	int[] classOf;
 
-
-	/** Convenience creator which also asserts consistency */
-	public static Partition createConsistent(int numClasses, int[] classOf) {
-		Partition result = new Partition();
-		result.numClasses = numClasses;
-		result.classOf = classOf;
-		assert Partition.checkConsistency(result);
-		return result;
+	Partition(int numClasses, int[] classOf) {
+		this.numClasses = numClasses;
+		this.classOf = classOf;
 	}
 
 	/**
@@ -62,11 +57,15 @@ public class Partition {
 	 *
 	 * <ul>
 	 * <li><code>0 <= numClasses</code>
-	 * <li><code>0 <= x < numClasses</code> for all <code>x</code> in <code>classOf</code>
-	 * <li><code>x</code> in <code>classOf</code> for each <code>x</code> in [0, <code>numClasses</code>)
+	 * <li><code>0 <= x < numClasses</code> for all <code>x</code> in
+	 * <code>classOf</code>
+	 * <li><code>x</code> in <code>classOf</code> for each <code>x</code> in [0,
+	 * <code>numClasses</code>)
 	 * </ul>
 	 *
-	 * @param eq the Classes whose consistency should be checked
+	 * @param eq
+	 *            the Classes whose consistency should be checked
+	 *
 	 * @return <code>true</code> iff the input Classes is consistent
 	 */
 	public static boolean checkConsistency(Partition eq) {
@@ -104,6 +103,7 @@ public class Partition {
 	 * @param root
 	 *            Represents equivalence classes.
 	 *            <code>0 <= root[x] < root.length</code> for all x.
+	 *
 	 * @return a <code>Partition</code> carrying the compressed array
 	 */
 	public static Partition compress(int[] root) {
@@ -115,16 +115,20 @@ public class Partition {
 		int[] newName = new int[root.length];
 		boolean[] seen = new boolean[root.length];
 
-		for (int i = 0; i < root.length; i++)
+		for (int i = 0; i < root.length; i++) {
 			if (!seen[root[i]]) {
 				seen[root[i]] = true;
 				newName[root[i]] = numClasses++;
 			}
+		}
 
 		for (int i = 0; i < root.length; i++)
 			classOf[i] = newName[root[i]];
 
-		return Partition.createConsistent(numClasses, classOf);
+		Partition result = new Partition(numClasses, classOf);
+		assert Partition.checkConsistency(result);
+
+		return result;
 	}
 
 	/** "test" the thing */

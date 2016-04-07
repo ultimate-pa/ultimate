@@ -28,11 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
 /**
- * Save some clauses while building up a Horn3Array
+ * Save some clauses while building up a <code>Horn3Array</code>
  *
  * @author stimpflj
  */
-public class Horn3ArrayBuilder {
+final class Horn3ArrayBuilder {
 
 	private static final int FALSEVAR = Horn3Array.FALSEVAR;
 	private static final int TRUEVAR = Horn3Array.TRUEVAR;
@@ -43,26 +43,27 @@ public class Horn3ArrayBuilder {
 
 	private Horn3Array array;
 
-	// for each equivalence variable, UNSET or SETTRUE or SETFALSE
+	/** for each equivalence variable, UNSET or SETTRUE or SETFALSE
+	 */
 	private char[] single;
 
 	private boolean solveable;
 
-	public Horn3ArrayBuilder(int numEqVars) {
+	Horn3ArrayBuilder(int numEqVars) {
 		array = new Horn3Array(numEqVars);
 		single = new char[numEqVars];
 		solveable = true;
 	}
 
-	public boolean solveable() {
+	boolean solveable() {
 		return solveable;
 	}
 
-	public boolean isAlreadyFalse(int x) {
+	boolean isAlreadyFalse(int x) {
 		return single[x] == SETFALSE;
 	}
 
-	public void addClauseF(int x) {
+	void addClauseF(int x) {
 		if (single[x] == UNSET) {
 			array.add(TRUEVAR, x, FALSEVAR);
 			single[x] = SETFALSE;
@@ -71,7 +72,7 @@ public class Horn3ArrayBuilder {
 		}
 	}
 
-	public void addClauseT(int x) {
+	void addClauseT(int x) {
 		if (single[x] == UNSET) {
 			array.add(TRUEVAR, TRUEVAR, x);
 			single[x] = SETTRUE;
@@ -80,7 +81,7 @@ public class Horn3ArrayBuilder {
 		}
 	}
 
-	public void addClauseFF(int x, int y) {
+	void addClauseFF(int x, int y) {
 		if (x > y) {
 			addClauseFF(y, x);
 		} else if (single[x] == SETFALSE) {
@@ -96,7 +97,7 @@ public class Horn3ArrayBuilder {
 		}
 	}
 
-	public void addClauseFT(int y, int z) {
+	void addClauseFT(int y, int z) {
 		if (single[y] == SETFALSE) {
 			// satisfied
 		} else if (single[y] == SETTRUE) {
@@ -110,7 +111,7 @@ public class Horn3ArrayBuilder {
 		}
 	}
 
-	public void addClauseFFT(int x, int y, int z) {
+	void addClauseFFT(int x, int y, int z) {
 		if (x > y) {
 			addClauseFFT(y, x, z);
 		} else if (single[x] == SETFALSE) {
@@ -130,7 +131,7 @@ public class Horn3ArrayBuilder {
 		}
 	}
 
-	public Horn3Array extract() {
+	Horn3Array extract() {
 		Horn3Array result = solveable ? array : null;
 
 		array = null;

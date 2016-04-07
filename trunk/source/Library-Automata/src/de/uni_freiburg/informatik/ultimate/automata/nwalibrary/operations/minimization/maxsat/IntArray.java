@@ -35,36 +35,36 @@ import java.util.Iterator;
  * a native int[] array for efficiency. This is crucial if millions of integers
  * should be stored, because that would be too much for the GC.
  *
- * @author jfs
+ * @author stimpflj
  *
  */
-public class IntArray implements Iterable<Integer> {
+final class IntArray implements Iterable<Integer> {
 
 	private int[] array;
 	private int size;
 	private int capacity;
 
-	public IntArray() {
+	IntArray() {
 		array = new int[0];
 		size = 0;
 		capacity = 0;
 	}
 
-	public int get(int idx) {
+	int get(int idx) {
 		if (idx < 0 || idx >= size)
 			throw new ArrayIndexOutOfBoundsException();
 
 		return array[idx];
 	}
 
-	public void set(int idx, int val) {
+	void set(int idx, int val) {
 		if (idx < 0 || idx >= size)
 			throw new ArrayIndexOutOfBoundsException();
 
 		array[idx] = val;
 	}
 
-	public void add(int val) {
+	void add(int val) {
 		if (size == capacity) {
 			int newCapacity = (capacity == 0) ? 4 : 2 * capacity;
 			array = Arrays.copyOf(array, newCapacity);
@@ -74,13 +74,13 @@ public class IntArray implements Iterable<Integer> {
 		array[size++] = val;
 	}
 
-	public void clear() {
+	void clear() {
 		array = new int[0];
 		size = 0;
 		capacity = 0;
 	}
 
-	public int size() {
+	int size() {
 		return size;
 	}
 
@@ -106,12 +106,12 @@ public class IntArray implements Iterable<Integer> {
 		return new IntArrayIterator(array, 0, size);
 	}
 
-	public static class IntArrayIterator implements Iterator<Integer> {
+	private static final class IntArrayIterator implements Iterator<Integer> {
 		private final int[] array;
 		private final int last;
 		private int idx;
 
-		public IntArrayIterator(int[] array, int first, int last) {
+		IntArrayIterator(int[] array, int first, int last) {
 			assert 0 <= first && first <= last && last <= array.length;
 
 			this.array = array;

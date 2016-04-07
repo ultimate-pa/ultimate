@@ -32,20 +32,20 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  *
  * @author stimpflj
  */
-public class ITrans {
+final class ITrans {
 	/** Source state */
-	public int src;
+	int src;
 
 	/** Internal symbol */
-	public int sym;
+	int sym;
 
 	/** Destination state */
-	public int dst;
+	int dst;
 
 
-	public ITrans() {}
+	ITrans() {}
 
-	public ITrans(int src, int sym, int dst) {
+	ITrans(int src, int sym, int dst) {
 		this.src = src;
 		this.sym = sym;
 		this.dst = dst;
@@ -65,7 +65,7 @@ public class ITrans {
 		return (src * 31 + sym) * 31 + dst;
 	}
 
-	public static int compareSrcSymDst(ITrans a, ITrans b) {
+	static int compareSrcSymDst(ITrans a, ITrans b) {
 		if (a.src != b.src) return a.src - b.src;
 		if (a.sym != b.sym) return a.sym - b.sym;
 		return a.dst - b.dst;

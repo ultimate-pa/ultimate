@@ -41,7 +41,7 @@ import java.io.StreamTokenizer;
  * @author stimpflj
  *
  */
-public class Scan {
+final class Scan {
 
 	/**
 	 * @param reader
@@ -49,7 +49,7 @@ public class Scan {
 	 * @return parsed <code>NWA</code> or <code>null</code>
 	 * @throws java.io.IOException
 	 */
-	public static NWA scanNWA(Reader reader) throws IOException {
+	static NWA scanNWA(Reader reader) throws IOException {
 		int numStates;
 		int numISyms;
 		int numCSyms;
@@ -178,7 +178,7 @@ public class Scan {
 	 *
 	 * @throws FileNotFoundException
 	 */
-	public static NWA inputAsRelations(String filepath) throws FileNotFoundException, IOException {
+	static NWA inputAsRelations(String filepath) throws FileNotFoundException, IOException {
 		InputStream inputStream = new FileInputStream(filepath);
 		Reader reader = new InputStreamReader(inputStream);
 		return scanNWA(reader);
@@ -188,9 +188,12 @@ public class Scan {
 	 */
 
 	@SuppressWarnings("serial")
-	private static class ParseNWAException extends Exception {
-		public String problem;
-		ParseNWAException(String x) { problem = x; }
+	static final class ParseNWAException extends Exception {
+		String problem;
+
+		ParseNWAException(String problem) {
+			this.problem = problem;
+		}
 	}
 
 	private static void expectString(java.io.StreamTokenizer in, String x) throws java.io.IOException, ParseNWAException {

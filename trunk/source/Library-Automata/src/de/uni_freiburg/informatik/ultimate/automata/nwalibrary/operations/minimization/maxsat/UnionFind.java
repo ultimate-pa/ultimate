@@ -27,12 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-public class UnionFind {
+final class UnionFind {
 	private int[] root;
 	private int[] size;
 	private int[] stack;
 
-	public UnionFind(int numNodes) {
+	UnionFind(int numNodes) {
 		root = new int[numNodes];
 		size = new int[numNodes];
 		stack = new int[numNodes];
@@ -41,17 +41,6 @@ public class UnionFind {
 			root[i] = i;
 			size[i] = 1;
 		}
-	}
-
-	private void updateRoot(int node) {
-		int ptr = 0;
-
-		while (node != root[node]) {
-			stack[ptr++] = node;
-			node = root[node];
-		}
-		while (ptr --> 0)
-			root[stack[ptr]] = node;
 	}
 
 	/**
@@ -64,7 +53,7 @@ public class UnionFind {
 	 * @param n2
 	 *            The other node, you know?
 	 */
-	public void merge(int n1, int n2) {
+	void merge(int n1, int n2) {
 		updateRoot(n1);
 		updateRoot(n2);
 
@@ -83,10 +72,24 @@ public class UnionFind {
 		}
 	}
 
-	public int[] getRoots() {
+	int[] extractRoots() {
 		for (int i = 0; i < root.length; i++)
 			updateRoot(i);
 
-		return root.clone();
+		int[] result = root;
+
+		root = null;
+		return result;
+	}
+
+	private void updateRoot(int node) {
+		int ptr = 0;
+
+		while (node != root[node]) {
+			stack[ptr++] = node;
+			node = root[node];
+		}
+		while (ptr --> 0)
+			root[stack[ptr]] = node;
 	}
 }
