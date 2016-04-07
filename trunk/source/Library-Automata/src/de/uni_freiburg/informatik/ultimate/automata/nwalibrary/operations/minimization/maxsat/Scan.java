@@ -44,38 +44,113 @@ import java.io.StreamTokenizer;
 public class Scan {
 
 	/**
-	 * @param reader where to scan from
+	 * @param reader
+	 *            where to scan from
 	 * @return parsed <code>NWA</code> or <code>null</code>
 	 * @throws java.io.IOException
 	 */
 	public static NWA scanNWA(Reader reader) throws IOException {
-		int numStates, numISyms, numCSyms, numRSyms, numITrans, numCTrans, numRTrans;
-		int numInitial, numFinal;
-		boolean[] isInitial, isFinal;
-		ITrans[] iTrans; CTrans[] cTrans; RTrans[] rTrans;
+		int numStates;
+		int numISyms;
+		int numCSyms;
+		int numRSyms;
+		int numInitial;
+		int numFinal;
+		int numITrans;
+		int numCTrans;
+		int numRTrans;
+		boolean[] isInitial;
+		boolean[] isFinal;
+		ITrans[] iTrans;
+		CTrans[] cTrans;
+		RTrans[] rTrans;
+
 		StreamTokenizer in = new StreamTokenizer(reader);
 		in.eolIsSignificant(true);
+
 		try {
-		expectString(in, "numStates"); numStates = parseInt(in); expectEOL(in);
-		expectString(in, "numISyms");  numISyms = parseInt(in);  expectEOL(in);
-		expectString(in, "numCSyms");  numCSyms = parseInt(in);  expectEOL(in);
-		expectString(in, "numRSyms");  numRSyms = parseInt(in);  expectEOL(in);
-		expectString(in, "numInitial"); numInitial = parseInt(in); expectEOL(in);
-		expectString(in, "numFinal"); numFinal = parseInt(in); expectEOL(in);
-		expectString(in, "numITrans"); numITrans = parseInt(in); expectEOL(in);
-		expectString(in, "numCTrans"); numCTrans = parseInt(in); expectEOL(in);
-		expectString(in, "numRTrans"); numRTrans = parseInt(in); expectEOL(in);
-		isInitial = new boolean[numStates];
-		isFinal = new boolean[numStates];
-		iTrans = new ITrans[numITrans];
-		cTrans = new CTrans[numCTrans];
-		rTrans = new RTrans[numRTrans];
-		for (int i = 0; i < numInitial; i++) { expectString(in, "initial"); int x = parseInt(in, numStates); isInitial[x] = true; expectEOL(in); }
-		for (int i = 0; i < numFinal; i++) { expectString(in, "final"); int x = parseInt(in, numStates); isFinal[x] = true; expectEOL(in); }
-		for (int i = 0; i < numITrans; i++) { expectString(in, "iTrans"); int src = parseInt(in, numStates); int sym = parseInt(in, numISyms); int dst = parseInt(in, numStates); iTrans[i] = new ITrans(src, sym, dst); expectEOL(in); }
-		for (int i = 0; i < numCTrans; i++) { expectString(in, "cTrans"); int src = parseInt(in, numStates); int sym = parseInt(in, numCSyms); int dst = parseInt(in, numStates); cTrans[i] = new CTrans(src, sym, dst); expectEOL(in); }
-		for (int i = 0; i < numRTrans; i++) { expectString(in, "rTrans"); int src = parseInt(in, numStates); int sym = parseInt(in, numRSyms); int top = parseInt(in, numStates); int dst = parseInt(in, numStates); rTrans[i] = new RTrans(src, sym, top, dst); expectEOL(in); }
-		expectEOF(in);
+			expectString(in, "numStates");
+			numStates = parseInt(in);
+			expectEOL(in);
+			expectString(in, "numISyms");
+			numISyms = parseInt(in);
+			expectEOL(in);
+			expectString(in, "numCSyms");
+			numCSyms = parseInt(in);
+			expectEOL(in);
+			expectString(in, "numRSyms");
+			numRSyms = parseInt(in);
+			expectEOL(in);
+			expectString(in, "numInitial");
+			numInitial = parseInt(in);
+			expectEOL(in);
+			expectString(in, "numFinal");
+			numFinal = parseInt(in);
+			expectEOL(in);
+			expectString(in, "numITrans");
+			numITrans = parseInt(in);
+			expectEOL(in);
+			expectString(in, "numCTrans");
+			numCTrans = parseInt(in);
+			expectEOL(in);
+			expectString(in, "numRTrans");
+			numRTrans = parseInt(in);
+			expectEOL(in);
+
+			isInitial = new boolean[numStates];
+			isFinal = new boolean[numStates];
+			iTrans = new ITrans[numITrans];
+			cTrans = new CTrans[numCTrans];
+			rTrans = new RTrans[numRTrans];
+
+			for (int i = 0; i < numInitial; i++) {
+				expectString(in, "initial");
+				int x = parseInt(in, numStates);
+				isInitial[x] = true;
+				expectEOL(in);
+			}
+
+			for (int i = 0; i < numFinal; i++) {
+				expectString(in, "final");
+				int x = parseInt(in, numStates);
+				isFinal[x] = true;
+				expectEOL(in);
+			}
+
+			for (int i = 0; i < numITrans; i++) {
+				expectString(in, "iTrans");
+				int src = parseInt(in, numStates);
+				int sym = parseInt(in, numISyms);
+				int dst = parseInt(in, numStates);
+				iTrans[i] = new ITrans(src, sym, dst);
+				expectEOL(in);
+			}
+
+			for (int i = 0; i < numCTrans; i++) {
+				expectString(in, "cTrans");
+				int src = parseInt(in, numStates);
+				int sym = parseInt(in, numCSyms);
+				int dst = parseInt(in, numStates);
+				cTrans[i] = new CTrans(src, sym, dst);
+				expectEOL(in);
+			}
+
+			for (int i = 0; i < numRTrans; i++) {
+				expectString(in, "rTrans");
+				int src = parseInt(in, numStates);
+				int sym = parseInt(in, numRSyms);
+				int top = parseInt(in, numStates);
+				int dst = parseInt(in, numStates);
+				rTrans[i] = new RTrans(src, sym, top, dst);
+				expectEOL(in);
+			}
+
+			expectEOF(in);
+
+		} catch (ParseNWAException exc) {
+			System.err.println(exc.problem);
+			return null;
+		}
 
 		NWA out = new NWA();
 		out.numStates = numStates;
@@ -87,22 +162,19 @@ public class Scan {
 		out.iTrans = iTrans;
 		out.cTrans = cTrans;
 		out.rTrans = rTrans;
+
 		if (!NWA.checkConsistency(out)) {
 			System.err.println("ERROR: Parsed automaton is not consistent");
 			return null;
 		}
-		return out;
 
-		} catch (ParseNWAException exc) {
-            System.err.println(exc.problem);
-			return null;
-		}
+		return out;
 	}
 
 	/**
-	 * Convenience method which calls <code>inputAsRelations(Reader)</code>
-	 * with an <code>InputStreamReader</code> made from the
-	 * <code>filepath</code> argument.
+	 * Convenience method which calls <code>inputAsRelations(Reader)</code> with
+	 * an <code>InputStreamReader</code> made from the <code>filepath</code>
+	 * argument.
 	 *
 	 * @throws FileNotFoundException
 	 */
@@ -112,31 +184,49 @@ public class Scan {
 		return scanNWA(reader);
 	}
 
-	// shitty helpers for inputAsRelations()
+	/* shitty helpers for inputAsRelations()
+	 */
+
 	@SuppressWarnings("serial")
 	private static class ParseNWAException extends Exception {
 		public String problem;
         ParseNWAException(String x) { problem = x; }
 	}
+
 	private static void expectString(java.io.StreamTokenizer in, String x) throws java.io.IOException, ParseNWAException {
-		in.nextToken(); if (in.ttype != StreamTokenizer.TT_WORD ||!in.sval.equals(x)) throw new ParseNWAException("expected " + x + ", but got " + in.sval);
+		in.nextToken();
+		if (in.ttype != StreamTokenizer.TT_WORD ||!in.sval.equals(x))
+			throw new ParseNWAException("expected " + x + ", but got " + in.sval);
 	}
+
 	private static void expectEOL(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
-		in.nextToken(); if (in.ttype != StreamTokenizer.TT_EOL) throw new ParseNWAException("expected EOL");
+		in.nextToken();
+		if (in.ttype != StreamTokenizer.TT_EOL)
+			throw new ParseNWAException("expected EOL");
 	}
+
 	private static void expectEOF(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
-		in.nextToken(); if (in.ttype != StreamTokenizer.TT_EOF) throw new ParseNWAException("expected EOF");
+		in.nextToken();
+		if (in.ttype != StreamTokenizer.TT_EOF)
+			throw new ParseNWAException("expected EOF");
 	}
+
 	private static int parseInt(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
 		in.nextToken();
-        if (in.ttype != StreamTokenizer.TT_NUMBER) throw new ParseNWAException("expected number");
+        if (in.ttype != StreamTokenizer.TT_NUMBER)
+        	throw new ParseNWAException("expected number");
         return (int) in.nval;
 	}
-	private static int parseInt(java.io.StreamTokenizer in, int max) throws java.io.IOException, ParseNWAException {
+
+	private static int parseInt(java.io.StreamTokenizer in, int max)throws java.io.IOException, ParseNWAException {
 		in.nextToken();
-        if (in.ttype != StreamTokenizer.TT_NUMBER) throw new ParseNWAException("expected number");
+        if (in.ttype != StreamTokenizer.TT_NUMBER)
+        	throw new ParseNWAException("expected number");
         int n = (int) in.nval;
-        if (n < 0 || n >= max) throw new ParseNWAException("expected number between 0 and " + Integer.toString(max) + ", but got " + Integer.toString(n));
+        if (n < 0 || n >= max)
+        	throw new ParseNWAException(
+        			"expected number between 0 and " + Integer.toString(max)
+        			+ ", but got " + Integer.toString(n));
         return n;
 	}
 }

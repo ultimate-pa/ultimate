@@ -43,27 +43,26 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 
 /**
- * Convert a <code>INestedWordAutomaton</code> to a <code>NWA</code>
- * structure. Using the <code>constructMerge()</code> method, a smaller
- * equivalent automaton can be made later given a <code>NiceClasses</code>
- * structure.
- *
- * <p>This is best-effort since the semantics / invariants etc. of the input
- * automaton class are not known.
+ * Convert a <code>INestedWordAutomaton</code> to a <code>NWA</code> structure.
+ * Using the <code>constructMerged()</code> method, a smaller equivalent
+ * automaton can be made later given a <code>Partition</code> structure.
  *
  * @author stimpflj
  */
-public class Convert<LETTER, STATE> {
+public class Converter<LETTER, STATE> {
+
 	private AutomataLibraryServices services;
 	private StateFactory<STATE> factory;
 	private INestedWordAutomaton<LETTER, STATE> automaton;
 
-	// LETTERs are shared between old (input) and new (output) automaton
+	/* LETTERs are shared between old (input) and new (output) automaton
+	 */
 	private Set<LETTER> iAlphabet;
 	private Set<LETTER> cAlphabet;
 	private Set<LETTER> rAlphabet;
 
-	// LETTERs <-> Integers bijection
+	/* LETTERs <-> Integers bijection
+	 */
 	private HashMap<LETTER, Integer> iSymIndex;
 	private HashMap<LETTER, Integer> cSymIndex;
 	private HashMap<LETTER, Integer> rSymIndex;
@@ -71,34 +70,39 @@ public class Convert<LETTER, STATE> {
 	private ArrayList<LETTER> cSym;
 	private ArrayList<LETTER> rSym;
 
-	// STATEs are *not* shared between old and new automaton
+	/* STATEs are *not* shared between old and new automaton
+	 */
 	private Set<STATE> oldStates;
 	private Set<STATE> oldInitialStates;
 	private Collection<STATE> oldFinalStates;
 
-	// STATEs <-> Integers bijection
+	/* STATEs <-> Integers bijection
+	 */
 	private HashMap<STATE, Integer> oldStateIndex;
 	private ArrayList<STATE> oldState;
 
 	private NWA converted;
 
 	/**
-	 * @return NiceNWA generated from input INestedWordAutomaton automaton.
+	 * @return NWA generated from input <code>INestedWordAutomaton</code>
+	 *         automaton.
 	 */
 	public NWA getNWA() { return converted.clone(); }
 
 	/**
 	 * Constructor. Remembers the necessary things about the input
-	 * INestedWordAutomaton for later minimization. Stores a NiceNWA
-	 * converted from the INestedWordAutomaton.
+	 * INestedWordAutomaton for later minimization. Stores a NWA converted from
+	 * the INestedWordAutomaton.
 	 *
 	 * @param logger
 	 * @param services
-	 * @param stateFactory the StateFactory which was used to make the states
-	 *        in the input automaton
-	 * @param automaton input INestedWordAutomaton
+	 * @param stateFactory
+	 *            the StateFactory which was used to make the states in the
+	 *            input automaton
+	 * @param automaton
+	 *            input INestedWordAutomaton
 	 */
-	public Convert(
+	public Converter(
 			AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomaton<LETTER, STATE> automaton) {
@@ -189,22 +193,23 @@ public class Convert<LETTER, STATE> {
 	}
 
 	/**
-	 * @param eqCls A (consistent) NiceClasses which represents state
-	 *        equivalencies. The number of old states in eqCls (i.e.,
-	 *        eqCls.classOf.length) must be consistent with the NiceNWA
-	 *        stored in this NiceConvert instance.
+	 * @param partition
+	 *            A (consistent) <code>Partition</code> which represents state
+	 *            equivalencies. The number of old states in
+	 *            <code>partition</code> (i.e., partition.classOf.length) must
+	 *            be consistent with the NWA stored in this Convert instance.
 	 *
-	 * @return A NestedWordAutomaton constructed from eqCls and from the
-	 *         data which was remembered from the input INestedWordAutomaton
-	 *         at construction time.
+	 * @return A NestedWordAutomaton constructed from <code>partition</code> and
+	 *         from the data which was remembered from the input
+	 *         INestedWordAutomaton at construction time.
 	 */
-	public NestedWordAutomaton<LETTER, STATE> constructMerged(EqCls eqCls) {
-		assert(eqCls.classOf.length == oldState.size());
+	public NestedWordAutomaton<LETTER, STATE> constructMerged(Partition partition) {
+		assert(partition.classOf.length == oldState.size());
 
-		int numClasses = eqCls.numClasses;
-		int[] classOf = eqCls.classOf;
+		int numClasses = partition.numClasses;
+		int[] classOf = partition.classOf;
 
-		// Avoid duplicate edges in the merged automaton.
+		// Avoid duplicate edges in the merged automaton
 		HashSet<ITrans> newITrans = new HashSet<ITrans>();
 		HashSet<CTrans> newCTrans = new HashSet<CTrans>();
 		HashSet<RTrans> newRTrans = new HashSet<RTrans>();
@@ -213,7 +218,7 @@ public class Convert<LETTER, STATE> {
 		for (CTrans x : converted.cTrans) newCTrans.add(new CTrans(classOf[x.src], x.sym, classOf[x.dst]));
 		for (RTrans x : converted.rTrans) newRTrans.add(new RTrans(classOf[x.src], x.sym, classOf[x.top], classOf[x.dst]));
 
-		// For each equivalence class, the old STATEs in it.
+		// For each equivalence class, the old STATEs in it
 		ArrayList<ArrayList<STATE>> statesOfClass = new ArrayList<ArrayList<STATE>>();
 		for (int i = 0; i < numClasses; i++)
 			statesOfClass.add(new ArrayList<STATE>());
@@ -255,19 +260,21 @@ public class Convert<LETTER, STATE> {
 
 	// compute history states, using a INestedWordAutomaton based implementation
 	public ArrayList<Hist> computeHistoryStates() {
-		ArrayList<Hist> hist = new ArrayList<Hist>();
-
 		STATE bottomOfStackState = automaton.getEmptyStackState();
+		ArrayList<Hist> hist = new ArrayList<Hist>();
 
 		// casting doesn't really make sense here, but it seems this is
 		// currently the only implementation of history states
-		IDoubleDeckerAutomaton<LETTER, STATE> doubleDecker;
 		if (!(automaton instanceof IDoubleDeckerAutomaton<?, ?>))
 			throw new IllegalArgumentException("Operand must be an IDoubleDeckerAutomaton.");
+
+		IDoubleDeckerAutomaton<LETTER, STATE> doubleDecker;
 		doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) automaton;
+
 		for (int i = 0; i < oldState.size(); i++) {
 			if (doubleDecker.isDoubleDecker(oldState.get(i), bottomOfStackState))
 				hist.add(new Hist(i, -1));  // -1 is bottom-of-stack
+
 			for (int j = 0; j < oldState.size(); j++)
 				if (doubleDecker.isDoubleDecker(oldState.get(i), oldState.get(j)))
 					hist.add(new Hist(i, j));

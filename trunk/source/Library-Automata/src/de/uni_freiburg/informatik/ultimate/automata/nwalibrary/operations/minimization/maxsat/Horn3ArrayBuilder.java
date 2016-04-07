@@ -27,19 +27,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
+/**
+ * Save some clauses while building up a Horn3Array
+ *
+ * @author stimpflj
+ */
 public class Horn3ArrayBuilder {
 
 	private static final int FALSEVAR = Horn3Array.FALSEVAR;
 	private static final int TRUEVAR = Horn3Array.TRUEVAR;
 
 	private static final int UNSET = 0;
-	private static final int SETTRUE = 1;
-	private static final int SETFALSE = 2;
+	private static final int SETFALSE = 1;
+	private static final int SETTRUE = 2;
 
 	private Horn3Array array;
-	private boolean solveable;
+
 	// for each equivalence variable, UNSET or SETTRUE or SETFALSE
 	private char[] single;
+
+	private boolean solveable;
 
 	public Horn3ArrayBuilder(int numEqVars) {
 		array = new Horn3Array(numEqVars);
@@ -51,9 +58,13 @@ public class Horn3ArrayBuilder {
 		return solveable;
 	}
 
+	public boolean isAlreadyFalse(int x) {
+		return single[x] == SETFALSE;
+	}
+
 	public void addClauseF(int x) {
 		if (single[x] == UNSET) {
-			array.add(x, TRUEVAR, FALSEVAR);
+			array.add(TRUEVAR, x, FALSEVAR);
 			single[x] = SETFALSE;
 		} else if (single[x] == SETTRUE) {
 			solveable = false;
@@ -73,11 +84,11 @@ public class Horn3ArrayBuilder {
 		if (x > y) {
 			addClauseFF(y, x);
 		} else if (single[x] == SETFALSE) {
-			// ok
+			// satisfied
 		} else if (single[x] == SETTRUE) {
 			addClauseF(y);
 		} else if (single[y] == SETFALSE) {
-			// ok
+			// satisfied
 		} else if (single[y] == SETTRUE) {
 			addClauseF(x);
 		} else {
@@ -87,13 +98,13 @@ public class Horn3ArrayBuilder {
 
 	public void addClauseFT(int y, int z) {
 		if (single[y] == SETFALSE) {
-			// ok
+			// satisfied
 		} else if (single[y] == SETTRUE) {
 			addClauseT(z);
 		} else if (single[z] == SETFALSE) {
 			addClauseF(y);
 		} else if (single[z] == SETTRUE) {
-			// ok
+			// satisfied
 		} else {
 			array.add(TRUEVAR, y, z);
 		}
@@ -103,17 +114,17 @@ public class Horn3ArrayBuilder {
 		if (x > y) {
 			addClauseFFT(y, x, z);
 		} else if (single[x] == SETFALSE) {
-			// ok
+			// satisfied
 		} else if (single[x] == SETTRUE) {
 			addClauseFT(y, z);
 		} else if (single[y] == SETFALSE) {
-			// ok
+			// satisfied
 		} else if (single[y] == SETTRUE) {
 			addClauseFT(x, z);
 		} else if (single[z] == SETFALSE) {
 			addClauseFF(x, y);
 		} else if (single[z] == SETTRUE) {
-			// ok
+			// satisfied
 		} else {
 			array.add(x, y, z);
 		}

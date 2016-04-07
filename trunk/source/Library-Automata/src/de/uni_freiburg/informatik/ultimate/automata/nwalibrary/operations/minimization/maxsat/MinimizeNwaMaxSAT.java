@@ -52,18 +52,19 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
             AutomataLibraryServices services,
             StateFactory<STATE> stateFactory,
             INestedWordAutomaton<LETTER, STATE> automaton) {
+
         m_services = services;
         m_operand = automaton;
 
         Logger logger = services.getLoggingService().getLogger(operationName());
-        Logger convertLog = services.getLoggingService().getLogger("Convert");
+        Logger convertLog = services.getLoggingService().getLogger("Converter");
         Logger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
         Logger solveLog = services.getLoggingService().getLogger("Solver");
 
         logger.info(startMessage());
 
         convertLog.info("starting conversion");
-        Convert<LETTER, STATE> converter = new Convert<LETTER, STATE>(services, stateFactory, automaton);
+        Converter<LETTER, STATE> converter = new Converter<LETTER, STATE>(services, stateFactory, automaton);
         NWA nwa = converter.getNWA();
         // it shouldn't be like this, but...
         ArrayList<Hist> history = converter.computeHistoryStates();
@@ -87,7 +88,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         solveLog.info("finished Solver");
 
         generateLog.info("making equivalence classes from assignments");
-        EqCls eqCls = Generator.makeMergeRelation(nwa.numStates, assignments);
+        Partition eqCls = Generator.makeMergeRelation(nwa.numStates, assignments);
         generateLog.info("finished making equivalence classes");
 
         m_result = converter.constructMerged(eqCls);
@@ -128,16 +129,19 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
      }
 
     /**
-     * This method checks language inclusion of the first automaton
-wrt. the
-     * second automaton.
-     *
-     * @param subset automaton describing the subset language
-     * @param superset automaton describing the superset language
-     * @param stateFactory state factory
-     * @return true iff language is included
-     * @throws AutomataLibraryException thrown by inclusion check
-     */
+	 * This method checks language inclusion of the first automaton wrt. the
+	 * second automaton.
+	 *
+	 * @param subset
+	 *            automaton describing the subset language
+	 * @param superset
+	 *            automaton describing the superset language
+	 * @param stateFactory
+	 *            state factory
+	 * @return <code>true</code> iff language is included
+	 * @throws AutomataLibraryException
+	 *             thrown by inclusion check
+	 */
     private final boolean checkInclusion(
             final INestedWordAutomatonSimple<LETTER, STATE> subset,
             final INestedWordAutomatonSimple<LETTER, STATE> superset,

@@ -34,12 +34,13 @@ import java.io.Writer;
 /**
  * A partition of a number of (integer) states into equivalence classes.
  *
- * <p>There is a static <code>checkConsistency()</code> method.
+ * <p>
+ * There is a static <code>checkConsistency()</code> method.
  *
  * @author stimpflj
  *
  */
-public class EqCls {
+public class Partition {
 	/** Number of equivalence classes */
 	int numClasses;
 
@@ -48,11 +49,11 @@ public class EqCls {
 
 
 	/** Convenience creator which also asserts consistency */
-	public static EqCls createConsistent(int numClasses, int[] classOf) {
-		EqCls result = new EqCls();
+	public static Partition createConsistent(int numClasses, int[] classOf) {
+		Partition result = new Partition();
 		result.numClasses = numClasses;
 		result.classOf = classOf;
-		assert EqCls.checkConsistency(result);
+		assert Partition.checkConsistency(result);
 		return result;
 	}
 
@@ -68,7 +69,7 @@ public class EqCls {
 	 * @param eq the Classes whose consistency should be checked
 	 * @return <code>true</code> iff the input Classes is consistent
 	 */
-	public static boolean checkConsistency(EqCls eq) {
+	public static boolean checkConsistency(Partition eq) {
 		if (eq.numClasses < 0)
 			return false;
 
@@ -89,20 +90,23 @@ public class EqCls {
 	}
 
 	/**
-	 * This static utility method is useful for making a EqCls structure
+	 * This static utility method is useful for making a Partition structure
 	 * from a root node array as returned by UnionFind.
 	 *
 	 * It creates a copy of the input array with the values renamed to fit in
-	 * the range <code>[0, numClasses)</code> where <code>numClasses</code>
-	 * is the number of distinct values in the array.
+	 * the range <code>[0, numClasses)</code> where <code>numClasses</code> is
+	 * the number of distinct values in the array.
 	 *
-     * <p>This "compressed" array is returned together with
-     * the <code>numClasses</code> value as a Classes structure.
+	 * <p>
+	 * This "compressed" array is returned together with the
+	 * <code>numClasses</code> value as a <code>Partition</code>.
 	 *
-	 * @param root Represents equivalence classes. <code>0 <= root[x] < root.length</code> for all x.
-	 * @return a Classes structure carrying the compressed array
+	 * @param root
+	 *            Represents equivalence classes.
+	 *            <code>0 <= root[x] < root.length</code> for all x.
+	 * @return a <code>Partition</code> carrying the compressed array
 	 */
-	public static EqCls compress(int[] root) {
+	public static Partition compress(int[] root) {
 		for (int i = 0; i < root.length; i++)
 			assert 0 <= root[i] && root[i] < root.length;
 
@@ -120,27 +124,28 @@ public class EqCls {
 		for (int i = 0; i < root.length; i++)
 			classOf[i] = newName[root[i]];
 
-		return EqCls.createConsistent(numClasses, classOf);
+		return Partition.createConsistent(numClasses, classOf);
 	}
 
 	/** "test" the thing */
 	public static void main(String[] args) {
 		Writer writer = new PrintWriter(new OutputStreamWriter(System.err));
-		EqCls cls;
+		Partition partition = null;
 
-		cls = EqCls.compress(new int[] { 1, 1, 0, 5, 0, 0 });
-		Print.printClasses(writer, cls);
-		assert cls.numClasses == 3;
-		assert cls.classOf[0] == cls.classOf[1];
-		assert cls.classOf[2] == cls.classOf[4] && cls.classOf[2] == cls.classOf[5];
-		for (int i = 0; i < cls.classOf.length; i++)
-			assert(i == 3 || cls.classOf[i] != cls.classOf[3]);
+		partition = Partition.compress(new int[] { 1, 1, 0, 5, 0, 0 });
+		Print.printPartition(writer, partition);
+		assert partition.numClasses == 3;
+		assert partition.classOf[0] == partition.classOf[1];
+		assert partition.classOf[2] == partition.classOf[4];
+		assert partition.classOf[2] == partition.classOf[5];
+		for (int i = 0; i < partition.classOf.length; i++)
+			assert(i == 3 || partition.classOf[i] != partition.classOf[3]);
 
-		cls = EqCls.compress(new int[] { 1, 1, 1, 1 });
-		Print.printClasses(writer, cls);
-		assert cls.numClasses == 1;
-		assert cls.classOf.length == 4;
-		for (int c : cls.classOf)
+		partition = Partition.compress(new int[] { 1, 1, 1, 1 });
+		Print.printPartition(writer, partition);
+		assert partition.numClasses == 1;
+		assert partition.classOf.length == 4;
+		for (int c : partition.classOf)
 			assert c == 0;
 	}
 }

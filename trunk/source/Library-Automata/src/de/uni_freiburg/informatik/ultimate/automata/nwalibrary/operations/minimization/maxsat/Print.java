@@ -40,31 +40,42 @@ import java.util.ArrayList;
  */
 public class Print {
 
-	public static void printClasses(Writer writer, EqCls eq) {
-		assert EqCls.checkConsistency(eq);
-		PrintWriter out = new PrintWriter(writer);
+	public static void printPartition(Writer writer, Partition partition) {
+		assert Partition.checkConsistency(partition);
+
 		ArrayList<ArrayList<Integer>> classes = new ArrayList<ArrayList<Integer>>();
-		for (int i = 0; i < eq.numClasses; i++) classes.add(new ArrayList<Integer>());
-		for (int i = 0; i < eq.classOf.length; i++) classes.get(eq.classOf[i]).add(i);
+
+		for (int i = 0; i < partition.numClasses; i++)
+			classes.add(new ArrayList<Integer>());
+
+		for (int i = 0; i < partition.classOf.length; i++)
+			classes.get(partition.classOf[i]).add(i);
+
+		PrintWriter out = new PrintWriter(writer);
+
 		for (ArrayList<Integer> cls : classes) {
 			out.print("{");
-			for (int i : cls) out.printf(" %d", i);
+			for (int i : cls)
+				out.printf(" %d", i);
 			out.print(" }");
 		}
+
 		out.print("\n");
 		out.flush();
 	}
 
 	/**
-	 * @param nwa readonly NWA
+	 * @param nwa
+	 *            readonly NWA. Must have no null fields and must be constrained
+	 *            as suggested
 	 * @param out
-	 *
-	 * nwa must have no null fields and must be constrained as suggested
 	 */
 	public static void printNWA(Writer writer, NWA nwa) {
-		PrintWriter p = new PrintWriter(writer);
 		ArrayList<Integer> initialStates = NWA.computeInitialStates(nwa);
 		ArrayList<Integer> finalStates = NWA.computeFinalStates(nwa);
+
+		PrintWriter p = new PrintWriter(writer);
+
 		p.printf("numStates %d\n", nwa.numStates);
 		p.printf("numISyms %d\n",  nwa.numISyms);
 		p.printf("numCSyms %d\n",  nwa.numCSyms);
@@ -74,17 +85,24 @@ public class Print {
 		p.printf("numITrans %d\n", nwa.iTrans.length);
 		p.printf("numCTrans %d\n", nwa.cTrans.length);
 		p.printf("numRTrans %d\n", nwa.rTrans.length);
-		for (int i : initialStates) p.printf("initial %d\n", i);
-		for (int i : finalStates) p.printf("final %d\n", i);
-		for (ITrans x : nwa.iTrans)	p.printf("iTrans %d %d %d\n", x.src, x.sym, x.dst);
-		for (CTrans x : nwa.cTrans)	p.printf("cTrans %d %d %d\n", x.src, x.sym, x.dst);
-		for (RTrans x : nwa.rTrans)	p.printf("rTrans %d %d %d %d\n", x.src, x.sym, x.top, x.dst);
+
+		for (int i : initialStates)
+			p.printf("initial %d\n", i);
+		for (int i : finalStates)
+			p.printf("final %d\n", i);
+		for (ITrans x : nwa.iTrans)
+			p.printf("iTrans %d %d %d\n", x.src, x.sym, x.dst);
+		for (CTrans x : nwa.cTrans)
+			p.printf("cTrans %d %d %d\n", x.src, x.sym, x.dst);
+		for (RTrans x : nwa.rTrans)
+			p.printf("rTrans %d %d %d %d\n", x.src, x.sym, x.top, x.dst);
+
 		p.flush();
 	}
 
-	public static String makeString(EqCls cls) {
+	public static String makeString(Partition cls) {
 		StringWriter w = new StringWriter();
-		Print.printClasses(w,  cls);
+		Print.printPartition(w,  cls);
 		return w.toString();
 	}
 

@@ -35,19 +35,23 @@ import java.util.HashSet;
  * A Nested Word automaton. There is no distinction between linear and
  * hierarchical states.
  *
- * <p>This is a mostly normalized POD (plain old data) representation of NWAs.
+ * <p>
+ * This is a mostly normalized POD (plain old data) representation of NWAs.
  *
- * <p>The following constraints are useful in most situations:
+ * <p>
+ * The following constraints are useful in most situations:
+ *
  * <ul>
  * <li>numStates >= 0 && numISyms >= 0 && numRSyms >= 0
  * <li>isInitial != null && isInitial.length == numStates
  * <li>isFinal != null && isFinal.length == numStates
  * <li>iTrans, cTrans, rTrans are not null and use only symbols and states from
- *     the ranges [0, numStates), [0, numISyms), [0, numCSyms), [0, numRSyms)
+ * the ranges [0, numStates), [0, numISyms), [0, numCSyms), [0, numRSyms)
  * </ul>
  *
- * <p>This class has static methods to verify these constraints, and also
- * methods to assert determinism.
+ * <p>
+ * This class has static methods to verify these constraints, and also methods
+ * to assert determinism.
  *
  * @author stimpflj
  */
@@ -90,8 +94,10 @@ class NWA implements Cloneable {
 		if (nwa.numISyms < 0) return false;
 		if (nwa.numRSyms < 0) return false;
 		if (nwa.numCSyms < 0) return false;
+
 		if (nwa.isInitial == null || nwa.isInitial.length != nwa.numStates) return false;
 		if (nwa.isFinal == null || nwa.isFinal.length != nwa.numStates) return false;
+
 		for (ITrans x : nwa.iTrans) {
 			if (x.src < 0 || x.src >= nwa.numStates) return false;
 			if (x.sym < 0 || x.sym >= nwa.numISyms) return false;
@@ -108,47 +114,58 @@ class NWA implements Cloneable {
 			if (x.top < 0 || x.top >= nwa.numStates) return false;
 			if (x.dst < 0 || x.dst >= nwa.numStates) return false;
 		}
+
 		return true;
 	}
 
 	/**
-	 * @param nwa readonly <code>NWA</code> which is consistent as by
-	 *        <code>checkConsistency()</code>
-	 * @return <code>true</code> iff the automaton is deterministic (multiple identical transitions count as non-deterministic)
+	 * @param nwa
+	 *            readonly <code>NWA</code> which is consistent as by
+	 *            <code>checkConsistency()</code>
+	 * @return <code>true</code> iff the automaton is deterministic (multiple
+	 *         identical transitions count as non-deterministic)
 	 */
 	public static boolean checkDeterminism(NWA nwa) {
 		HashSet<ITrans> iSeen = new HashSet<ITrans>();
 		HashSet<CTrans> cSeen = new HashSet<CTrans>();
 		HashSet<RTrans> rSeen = new HashSet<RTrans>();
+
 		for (ITrans x : nwa.iTrans)	if (!iSeen.add(new ITrans(x.src, x.sym, 0))) return false;
 		for (CTrans x : nwa.cTrans) if (!cSeen.add(new CTrans(x.src, x.sym, 0))) return false;
 		for (RTrans x : nwa.rTrans) if (!rSeen.add(new RTrans(x.src, x.sym, x.top, 0))) return false;
+
 		return true;
 	}
 
 	/**
-	 * @param nwa a NWA which is consistent as by checkConsistency()
-	 * @return ArrayList containing all final states of the nwa, in strictly
-	 *         ascending order.
+	 * @param nwa
+	 *            a NWA which is consistent as by checkConsistency()
+	 * @return ArrayList containing all final states of <code>nwa</code>, in
+	 *         strictly ascending order.
 	 */
 	public static ArrayList<Integer> computeInitialStates(NWA nwa) {
 		ArrayList<Integer> out = new ArrayList<Integer>();
+
 		for (int i = 0; i < nwa.numStates; i++)
 			if (nwa.isInitial[i])
 				out.add(i);
+
 		return out;
 	}
 
 	/**
-	 * @param nwa a NWA which is consistent as by checkConsistency
-	 * @return ArrayList containing all final states of the nwa, in strictly
-	 *         ascending order.
+	 * @param nwa
+	 *            an NWA which is consistent as by checkConsistency
+	 * @return ArrayList containing all final states of <code>nwa</code>, in
+	 *         strictly ascending order.
 	 */
 	public static ArrayList<Integer> computeFinalStates(NWA nwa) {
 		ArrayList<Integer> out = new ArrayList<Integer>();
+
 		for (int i = 0; i < nwa.numStates; i++)
 			if (nwa.isFinal[i])
 				out.add(i);
+
 		return out;
 	}
 
@@ -168,6 +185,7 @@ class NWA implements Cloneable {
 		out.iTrans = iTrans.clone();
 		out.cTrans = cTrans.clone();
 		out.rTrans = rTrans.clone();
+
 		return out;
 	}
 }

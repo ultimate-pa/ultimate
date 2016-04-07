@@ -46,9 +46,9 @@ import java.util.HashSet;
 public class Generator {
 
 	/**
-	 * Convert a solved instance to a merge relation
+	 * Converter a solved instance to a merge relation
 	 */
-	public static EqCls makeMergeRelation(int numStates, char[] assigned) {
+	public static Partition makeMergeRelation(int numStates, char[] assigned) {
 		EqVarCalc calc = new EqVarCalc(numStates);
 
 		assert assigned.length == calc.getNumEqVars();
@@ -66,16 +66,18 @@ public class Generator {
 			}
 		}
 
-		return EqCls.compress(unionFind.getRoots());
+		return Partition.compress(unionFind.getRoots());
 	}
 
 	/**
-	 * @param inNWA input NWA.
+	 * @param inNWA
+	 *            input NWA.
 	 *
-	 * @param history precalculated history states for <code>inNWA</code>.
+	 * @param history
+	 *            precalculated history states for <code>inNWA</code>.
 	 *
-	 * @return A (consistent) EqCls which represents the
-	 * minimized automaton.
+	 * @return A (consistent) Partition which represents the minimized
+	 *         automaton.
 	 */
 	public static Horn3Array generateClauses(NWA inNWA, ArrayList<Hist> history) {
 		assert Hist.checkHistoryStatesConsistency(inNWA, history);
@@ -130,22 +132,22 @@ public class Generator {
 		for (int i = 0; i < numCTrans; i++) cTransOut.get(cTrans[i].src).add(cTrans[i]);
 		for (int i = 0; i < numRTrans; i++) rTransOut.get(rTrans[i].src).add(rTrans[i]);
 
-		ArrayList<IntArray> iSet = new ArrayList<IntArray>();
-		ArrayList<IntArray> cSet = new ArrayList<IntArray>();
-		ArrayList<IntArray> rSet = new ArrayList<IntArray>();
-		ArrayList<IntArray> rTop = new ArrayList<IntArray>();
-		ArrayList<IntArray> hSet = new ArrayList<IntArray>();
+		IntArray[] iSet = new IntArray[numStates];
+		IntArray[] cSet = new IntArray[numStates];
+		IntArray[] rSet = new IntArray[numStates];
+		IntArray[] rTop = new IntArray[numStates];
+		IntArray[] hSet = new IntArray[numStates];
 
-		for (int i = 0; i < numStates; i++) iSet.add(new IntArray());
-		for (int i = 0; i < numStates; i++) cSet.add(new IntArray());
-		for (int i = 0; i < numStates; i++) rSet.add(new IntArray());
-		for (int i = 0; i < numStates; i++) rTop.add(new IntArray());
-		for (int i = 0; i < numStates; i++) hSet.add(new IntArray());
+		for (int i = 0; i < numStates; i++) iSet[i] = new IntArray();
+		for (int i = 0; i < numStates; i++) cSet[i] = new IntArray();
+		for (int i = 0; i < numStates; i++) rSet[i] = new IntArray();
+		for (int i = 0; i < numStates; i++) rTop[i] = new IntArray();
+		for (int i = 0; i < numStates; i++) hSet[i] = new IntArray();
 
-		for (int i = 0; i < numITrans; i++)	if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) iSet.get(iTrans[i].src).add(iTrans[i].sym);
-		for (int i = 0; i < numCTrans; i++)	if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) cSet.get(cTrans[i].src).add(cTrans[i].sym);
-		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym) rSet.get(rTrans[i].src).add(rTrans[i].sym);
-		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTransTop[i-1].src != rTransTop[i].src || rTransTop[i-1].top != rTransTop[i].top) rTop.get(rTransTop[i].src).add(rTransTop[i].top);
+		for (int i = 0; i < numITrans; i++)	if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) iSet[iTrans[i].src].add(iTrans[i].sym);
+		for (int i = 0; i < numCTrans; i++)	if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) cSet[cTrans[i].src].add(cTrans[i].sym);
+		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym) rSet[rTrans[i].src].add(rTrans[i].sym);
+		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTransTop[i-1].src != rTransTop[i].src || rTransTop[i-1].top != rTransTop[i].top) rTop[rTransTop[i].src].add(rTransTop[i].top);
 
 		{
 			// make the hSet, i.e. those history states except bottom-of-stack
@@ -161,15 +163,15 @@ public class Generator {
 						|| h.lin < rTransTop[i].src
 						|| (h.lin == rTransTop[i].src && h.hier < rTransTop[i].top))
 					if (h.hier >= 0) // could be bottom-of-stack (-1)
-						hSet.get(h.lin).add(h.hier);
+						hSet[h.lin].add(h.hier);
 			}
 		}
 
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < iSet.get(i).size(); j++) assert j == 0 || iSet.get(i).get(j) > iSet.get(i).get(j-1);
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < cSet.get(i).size(); j++) assert j == 0 || cSet.get(i).get(j) > cSet.get(i).get(j-1);
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < rSet.get(i).size(); j++) assert j == 0 || rSet.get(i).get(j) > rSet.get(i).get(j-1);
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < rTop.get(i).size(); j++) assert j == 0 || rTop.get(i).get(j) > rTop.get(i).get(j-1);
-		for (int i = 0; i < numStates; i++) for (int j = 0; j < hSet.get(i).size(); j++) assert j == 0 || hSet.get(i).get(j) > hSet.get(i).get(j-1);
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < iSet[i].size(); j++) assert j == 0 || iSet[i].get(j) > iSet[i].get(j-1);
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < cSet[i].size(); j++) assert j == 0 || cSet[i].get(j) > cSet[i].get(j-1);
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < rSet[i].size(); j++) assert j == 0 || rSet[i].get(j) > rSet[i].get(j-1);
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < rTop[i].size(); j++) assert j == 0 || rTop[i].get(j) > rTop[i].get(j-1);
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < hSet[i].size(); j++) assert j == 0 || hSet[i].get(j) > hSet[i].get(j-1);
 
 		// group rTrans by src and sym
 		HashMap<SrcSym, ArrayList<RTrans>> bySrcSym = new HashMap<SrcSym, ArrayList<RTrans>>();
@@ -209,9 +211,12 @@ public class Generator {
 
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i; j < numStates; j++) {
-				if (!iSet.get(i).equals(iSet.get(j))
-						|| !cSet.get(i).equals(cSet.get(j))) {
-					int eq1 = calc.eqVar(i, j);
+				int eq1 = calc.eqVar(i, j);
+
+				if (builder.isAlreadyFalse(eq1))
+					continue;
+
+				if (!iSet[i].equals(iSet[j]) || !cSet[i].equals(cSet[j])) {
 					builder.addClauseF(eq1);
 				} else {
 					// rule 1
@@ -223,7 +228,6 @@ public class Generator {
 						} else if (t1.sym > t2.sym) {
 							y++;
 						} else {
-							int eq1 = calc.eqVar(t1.src, t2.src);
 							int eq2 = calc.eqVar(t1.dst, t2.dst);
 							builder.addClauseFT(eq1, eq2);
 							x++;
@@ -239,7 +243,6 @@ public class Generator {
 						} else if (t1.sym > t2.sym) {
 							y++;
 						} else {
-							int eq1 = calc.eqVar(t1.src, t2.src);
 							int eq2 = calc.eqVar(t1.dst, t2.dst);
 							builder.addClauseFT(eq1, eq2);
 							x++;
@@ -248,25 +251,22 @@ public class Generator {
 					}
 				}
 				// rule 3
-				for (int k : rTop.get(i)) {
-					for (int l : hSet.get(j)) {
-						int eq1 = calc.eqVar(i, j);
+				for (int k : rTop[i]) {
+					for (int l : hSet[j]) {
 						int eq2 = calc.eqVar(k, l);
 						builder.addClauseFF(eq1, eq2);
 					}
 				}
-				for (int k : hSet.get(i)) {
-					for (int l : rTop.get(j)) {
-						int eq1 = calc.eqVar(i, j);
+				for (int k : hSet[i]) {
+					for (int l : rTop[j]) {
 						int eq2 = calc.eqVar(k, l);
 						builder.addClauseFF(eq1, eq2);
 					}
 				}
-				for (int s1 : rSet.get(i)) {
-					for (int s2 : rSet.get(j)) {
+				for (int s1 : rSet[i]) {
+					for (int s2 : rSet[j]) {
 						for (RTrans t1 : bySrcSym.get(new SrcSym(i, s1))) {
 							for (RTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
-								int eq1 = calc.eqVar(t1.src, t2.src);
 								int eq2 = calc.eqVar(t1.top, t2.top);
 								int eq3 = calc.eqVar(t1.dst, t2.dst);
 								builder.addClauseFFT(eq1, eq2, eq3);
@@ -279,8 +279,9 @@ public class Generator {
 
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
+				int eq1 = calc.eqVar(i, j);
+
 				for (int k = j+1; k < numStates; k++) {
-					int eq1 = calc.eqVar(i, j);
 					int eq2 = calc.eqVar(j, k);
 					int eq3 = calc.eqVar(i, k);
 					builder.addClauseFFT(eq1, eq2, eq3);
@@ -290,27 +291,7 @@ public class Generator {
 			}
 		}
 
-		/*
-		{
-			HashMap<Integer, String> name = new HashMap<Integer, String>();
-			name.put(0, "F");
-			name.put(1, "T");
-			for (int i = 0; i < numStates; i++)
-				for (int j = i; j < numStates; j++)
-					name.put(calc.eqVar(i, j), "X_" + Integer.toString(i) + "," + Integer.toString(j));
-
-			System.err.printf("\nClauses:\n");
-			for (HornClause3 x : builder.getClauses()) {
-				String s0 =	name.get(x.l0);
-				String s1 = name.get(x.l1);
-				String s2 = name.get(x.l2);
-				System.err.printf("NOT %s OR NOT %s OR %s\n", s0, s1, s2);
-			}
-		}
-		*/
-
 		Horn3Array clauses = builder.extract();
-
 		return clauses;
 	}
 }

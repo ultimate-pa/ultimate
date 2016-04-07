@@ -30,7 +30,16 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 import java.util.Arrays;
 import java.util.Iterator;
 
+/**
+ * Int array with get, set, add, and clear operations which is implemented using
+ * a native int[] array for efficiency. This is crucial if millions of integers
+ * should be stored, because that would be too much for the GC.
+ *
+ * @author jfs
+ *
+ */
 public class IntArray implements Iterable<Integer> {
+
 	private int[] array;
 	private int size;
 	private int capacity;
@@ -44,12 +53,14 @@ public class IntArray implements Iterable<Integer> {
 	public int get(int idx) {
 		if (idx < 0 || idx >= size)
 			throw new ArrayIndexOutOfBoundsException();
+
 		return array[idx];
 	}
 
 	public void set(int idx, int val) {
 		if (idx < 0 || idx >= size)
 			throw new ArrayIndexOutOfBoundsException();
+
 		array[idx] = val;
 	}
 
@@ -59,6 +70,7 @@ public class IntArray implements Iterable<Integer> {
 			array = Arrays.copyOf(array, newCapacity);
 			capacity = newCapacity;
 		}
+
 		array[size++] = val;
 	}
 
@@ -72,14 +84,20 @@ public class IntArray implements Iterable<Integer> {
 		return size;
 	}
 
-	public boolean equals(IntArray b) {
-		if (b == null)
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof IntArray))
 			return false;
+
+		IntArray b = (IntArray) obj;
+
 		if (b.size != size)
 			return false;
+
 		for (int i = 0; i < size; i++)
 			if (b.array[i] != array[i])
 				return false;
+
 		return true;
 	}
 

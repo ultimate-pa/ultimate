@@ -55,16 +55,19 @@ public class UnionFind {
 	}
 
 	/**
-	 * Add an edge between two nodes. This makes them equivalent and they
-	 * will be together, with a root right over their heads. They'll share
-	 * the same root, yeah!
+	 * Add an edge between two nodes. This makes them equivalent and they will
+	 * be together, with a root right over their heads. They'll share the same
+	 * root, yeah!
 	 *
-	 * @param n1 The one node.
-	 * @param n2 The other node, you know?
+	 * @param n1
+	 *            The one node.
+	 * @param n2
+	 *            The other node, you know?
 	 */
 	public void merge(int n1, int n2) {
 		updateRoot(n1);
 		updateRoot(n2);
+
 		n1 = root[n1];
 		n2 = root[n2];
 
@@ -83,6 +86,7 @@ public class UnionFind {
 	public int[] getRoots() {
 		for (int i = 0; i < root.length; i++)
 			updateRoot(i);
+
 		return root.clone();
 	}
 }

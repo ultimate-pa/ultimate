@@ -55,6 +55,7 @@ public class ITrans {
 	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof ITrans))
 			return false;
+
 		ITrans b = (ITrans) obj;
 		return src == b.src && sym == b.sym && dst == b.dst;
 	}
