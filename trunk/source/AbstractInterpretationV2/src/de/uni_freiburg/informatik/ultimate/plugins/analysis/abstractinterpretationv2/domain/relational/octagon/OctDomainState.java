@@ -382,39 +382,36 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		return result;
 	}
 
-	public Term lastTerm = null;
-
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
 		if (isBottom()) {
 			return script.term("false");
 		}
-		Term n = getTermNumericAbstraction(script, bpl2smt);
-		Term b = getTermBooleanAbstraction(script, bpl2smt);
-		lastTerm = n;
-//		return Util.and(script, n, b);
-		return script.term("and", n, b);
+
+		final List<Term> terms = new ArrayList<Term>();
+		terms.addAll(getTermNumericAbstraction(script, bpl2smt));
+		terms.addAll(getTermBooleanAbstraction(script, bpl2smt));
+		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
 
-	private Term getTermNumericAbstraction(Script script, Boogie2SMT bpl2smt) {
-		Term[] mapIndexToTerm = new Term[mMapNumericVarToIndex.size()];
-		for (Map.Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
-			Term termVar = getTermVar(entry.getKey());
+	private List<Term> getTermNumericAbstraction(Script script, Boogie2SMT bpl2smt) {
+		final Term[] mapIndexToTerm = new Term[mMapNumericVarToIndex.size()];
+		for (final Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
+			final Term termVar = getTermVar(entry.getKey());
 			mapIndexToTerm[entry.getValue()] = termVar;
 		}
 		return cachedSelectiveClosure().getTerm(script, mapIndexToTerm);
 	}
 
-	private Term getTermBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {
-		Term acc = script.term("true");
-		for (Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
-			Term termVar = getTermVar(entry.getKey());
-			Sort sort = termVar.getSort().getRealSort();
-			Term newTerm = entry.getValue().getTerm(script, sort, termVar);
-//			acc = Util.and(script, acc, newTerm);
-			acc = script.term("and", acc, newTerm);
+	private List<Term> getTermBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {
+		final List<Term> rtr = new ArrayList<Term>(mBooleanAbstraction.size());
+		for (final Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
+			final Term termVar = getTermVar(entry.getKey());
+			final Sort sort = termVar.getSort().getRealSort();
+			final Term newTerm = entry.getValue().getTerm(script, sort, termVar);
+			rtr.add(newTerm);
 		}
-		return acc;
+		return rtr;
 	}
 
 	private Term getTermVar(String varName) {

@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -702,7 +703,8 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			return script.term("false");
 		}
 
-		Term acc = script.term("true");
+		final List<Term> acc = new ArrayList<Term>((mValuesMap.size() + mBooleanValuesMap.size()));
+
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			final IBoogieVar boogievar = mVariablesMap.get(entry.getKey());
 			final Term var = getTermVar(boogievar);
@@ -713,20 +715,17 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 				// TODO: what about arrays (hard -- but perhaps not necessary, c.f. Matthias' integer programs)
 				continue;
 			}
-			final Term newterm = entry.getValue().getTerm(script, sort, var);
-//			acc = Util.and(script, acc, newterm);
-			acc = script.term("and", acc, newterm);
+			acc.add(entry.getValue().getTerm(script, sort, var));
 		}
 		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			final IBoogieVar boogievar = mVariablesMap.get(entry.getKey());
 			final Term var = getTermVar(boogievar);
 			assert var != null : "Error during TermVar creation";
 			final Sort sort = var.getSort().getRealSort();
-			final Term newterm = entry.getValue().getTerm(script, sort, var);
-//			acc = Util.and(script, acc, newterm);
-			acc = script.term("and", acc, newterm);
+			acc.add(entry.getValue().getTerm(script, sort, var));
 		}
-		return acc;
+
+		return Util.and(script, acc.toArray(new Term[acc.size()]));
 	}
 
 	/**
