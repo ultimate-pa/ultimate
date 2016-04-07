@@ -45,7 +45,7 @@ public class Scan {
 
 	/**
 	 * @param reader
-	 *            where to scan from
+	 *			  where to scan from
 	 * @return parsed <code>NWA</code> or <code>null</code>
 	 * @throws java.io.IOException
 	 */
@@ -190,7 +190,7 @@ public class Scan {
 	@SuppressWarnings("serial")
 	private static class ParseNWAException extends Exception {
 		public String problem;
-        ParseNWAException(String x) { problem = x; }
+		ParseNWAException(String x) { problem = x; }
 	}
 
 	private static void expectString(java.io.StreamTokenizer in, String x) throws java.io.IOException, ParseNWAException {
@@ -213,20 +213,20 @@ public class Scan {
 
 	private static int parseInt(java.io.StreamTokenizer in) throws java.io.IOException, ParseNWAException {
 		in.nextToken();
-        if (in.ttype != StreamTokenizer.TT_NUMBER)
-        	throw new ParseNWAException("expected number");
-        return (int) in.nval;
+		if (in.ttype != StreamTokenizer.TT_NUMBER)
+			throw new ParseNWAException("expected number");
+		return (int) in.nval;
 	}
 
 	private static int parseInt(java.io.StreamTokenizer in, int max)throws java.io.IOException, ParseNWAException {
 		in.nextToken();
-        if (in.ttype != StreamTokenizer.TT_NUMBER)
-        	throw new ParseNWAException("expected number");
-        int n = (int) in.nval;
-        if (n < 0 || n >= max)
-        	throw new ParseNWAException(
-        			"expected number between 0 and " + Integer.toString(max)
-        			+ ", but got " + Integer.toString(n));
-        return n;
+		if (in.ttype != StreamTokenizer.TT_NUMBER)
+			throw new ParseNWAException("expected number");
+		int n = (int) in.nval;
+		if (n < 0 || n >= max)
+			throw new ParseNWAException(
+					"expected number between 0 and " + Integer.toString(max)
+					+ ", but got " + Integer.toString(n));
+		return n;
 	}
 }
