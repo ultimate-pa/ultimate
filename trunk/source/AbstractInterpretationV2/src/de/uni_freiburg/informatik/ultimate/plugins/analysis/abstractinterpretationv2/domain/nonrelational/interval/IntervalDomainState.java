@@ -703,7 +703,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			return script.term("false");
 		}
 
-		final List<Term> acc = new ArrayList<Term>((mValuesMap.size() + mBooleanValuesMap.size()));
+		final List<Term> acc = new ArrayList<Term>(mValuesMap.size() + mBooleanValuesMap.size());
 
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			final IBoogieVar boogievar = mVariablesMap.get(entry.getKey());
