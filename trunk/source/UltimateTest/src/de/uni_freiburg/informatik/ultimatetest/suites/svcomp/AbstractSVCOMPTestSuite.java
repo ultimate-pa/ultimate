@@ -218,7 +218,10 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition(
 						"Abstract Interpretation Time", "AI Avg. Time",
-						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(
+						"AbstractInterpretationStrong", "AI Strong",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition(
 						"Overall time", "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
