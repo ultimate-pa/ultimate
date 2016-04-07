@@ -195,9 +195,9 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			AtomicTraceElement<RCFGEdge> codeBlock = rcfgProgramExecution.getTraceElement(i);
 			Map<TermVariable, Boolean>[] branchEncoders = rcfgProgramExecution.getBranchEncoders();
 			if (branchEncoders == null || i >= branchEncoders.length) {
-				addCodeBlock(codeBlock.getTraceElement(), trace, null, codeBlock.getmRelevanceInformation());
+				addCodeBlock(codeBlock.getTraceElement(), trace, null, codeBlock.getRelevanceInformation());
 			} else {
-				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i], codeBlock.getmRelevanceInformation());
+				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i], codeBlock.getRelevanceInformation());
 			}
 			int posInNewTrace = trace.size() - 1;
 			ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);

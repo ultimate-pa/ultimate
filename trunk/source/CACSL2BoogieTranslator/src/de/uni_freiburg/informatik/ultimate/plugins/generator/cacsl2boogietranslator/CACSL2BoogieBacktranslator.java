@@ -151,13 +151,13 @@ public class CACSL2BoogieBacktranslator
 
 	@Override
 	public IProgramExecution<CACSLLocation, IASTExpression> translateProgramExecution(
-			IProgramExecution<BoogieASTNode, Expression> oldPE) {
+			final IProgramExecution<BoogieASTNode, Expression> oldPE) {
 
 		// initial state
 		ProgramState<IASTExpression> initialState = translateProgramState(oldPE.getInitialProgramState());
 
 		// translate trace and program state in tandem
-		List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements = new ArrayList<>();
+		final List<AtomicTraceElement<CACSLLocation>> translatedATEs = new ArrayList<>();
 		final List<ProgramState<IASTExpression>> translatedProgramStates = new ArrayList<>();
 		for (int i = 0; i < oldPE.getLength(); ++i) {
 
@@ -191,7 +191,7 @@ public class CACSL2BoogieBacktranslator
 					// last normal state
 					i = findMergeSequence(oldPE, i, loc);
 					if (cnode instanceof CASTTranslationUnit) {
-						if (translatedAtomicTraceElements.size() > 0) {
+						if (translatedATEs.size() > 0) {
 							translatedProgramStates.remove(translatedProgramStates.size() - 1);
 							translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 						} else {
@@ -201,67 +201,48 @@ public class CACSL2BoogieBacktranslator
 					continue;
 				} else if (cnode instanceof CASTIfStatement) {
 					// if cnode is an if, we point to the condition
-					CASTIfStatement ifstmt = (CASTIfStatement) cnode;
-					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc,
-							LocationFactory.createCLocation(ifstmt.getConditionExpression()), ate.getStepInfo(), ate.getmRelevanceInformation()));
+					final CASTIfStatement ifstmt = (CASTIfStatement) cnode;
+					translatedATEs.add(new AtomicTraceElement<CACSLLocation>(cloc,
+							LocationFactory.createCLocation(ifstmt.getConditionExpression()), ate.getStepInfo(),
+							ate.getRelevanceInformation()));
 				} else if (cnode instanceof CASTWhileStatement) {
 					// if cnode is a while, we know that it is not ignored and that
 					// it comes from the if(!cond)break; construct in Boogie.
 					// we therefore invert the stepinfo, i.e. from condevaltrue
 					// to condevalfalse
-					EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
-					if (newSi == null) {
-						continue;
-					}
-					CASTWhileStatement whileStmt = (CASTWhileStatement) cnode;
-					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc,
-							LocationFactory.createCLocation(whileStmt.getCondition()), newSi, ate.getmRelevanceInformation()));
+					handleConditional(ate, cloc, ((CASTWhileStatement) cnode).getCondition(), translatedATEs);
 				} else if (cnode instanceof CASTDoStatement) {
 					// same as while
-					CASTDoStatement doStmt = (CASTDoStatement) cnode;
-					EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
-					if (newSi == null) {
-						continue;
-					}
-					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc,
-							LocationFactory.createCLocation(doStmt.getCondition()), newSi, ate.getmRelevanceInformation()));
+					handleConditional(ate, cloc, ((CASTDoStatement) cnode).getCondition(), translatedATEs);
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
-					CASTForStatement forStmt = (CASTForStatement) cnode;
-					EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
-					if (newSi == null) {
-						continue;
-					}
-					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc,
-							LocationFactory.createCLocation(forStmt.getConditionExpression()), newSi, ate.getmRelevanceInformation()));
+					handleConditional(ate, cloc, ((CASTForStatement) cnode).getConditionExpression(), translatedATEs);
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					// more complex, handled separately
 					i = handleCASTFunctionCallExpression(oldPE, i, (CASTFunctionCallExpression) cnode, cloc,
-							translatedAtomicTraceElements, translatedProgramStates);
+							translatedATEs, translatedProgramStates);
 					continue;
 				} else {
 					// just use as it, all special cases should have been
 					// handled
-					// we merge all things in a row that point to the same
+					
+					// first, check if we should merge all things in a row that point to the same
 					// location, as they only contain temporary stuff
+					//FIXME: merge relevance information of skipped ATEs
 					i = findMergeSequence(oldPE, i, loc);
-					// String raw = cnode.getRawSignature(); // debug
-					if (ate.getTraceElement() instanceof HavocStatement) {
-						HavocStatement havoc = (HavocStatement) ate.getTraceElement();
-						CheckForTempVars check = new CheckForTempVars();
-						check.processStatement(havoc);
-						if (check.areAllTemp()) {
-							// we dont want to see no dirty temp havoc
-							continue;
-						}
+					
+					if (ate.getTraceElement() instanceof HavocStatement && checkTempHavoc(ate)) {
+						// we dont want to see no dirty temp havoc
+						continue;
 					}
-					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, ate.getmRelevanceInformation()));
+					translatedATEs.add(new AtomicTraceElement<CACSLLocation>(cloc, ate.getRelevanceInformation()));
 				}
 				translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 
 			} else if (loc instanceof ACSLLocation) {
 				// for now, just use ACSL as-it
-				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>((ACSLLocation) loc, ate.getmRelevanceInformation()));
+				translatedATEs
+						.add(new AtomicTraceElement<CACSLLocation>((ACSLLocation) loc, ate.getRelevanceInformation()));
 				translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 
 			} else {
@@ -271,11 +252,27 @@ public class CACSL2BoogieBacktranslator
 			}
 		}
 
-		// replace all expr eval occurences with the right atomictraceelements
+		// replace all expr eval occurences with the right atomictraceelements and return the result
 		final CheckForSubtreeInclusion check = new CheckForSubtreeInclusion();
-		translatedAtomicTraceElements = check.check(translatedAtomicTraceElements);
+		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = check.check(translatedATEs);
+		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates, mLogger);
+	}
 
-		return new CACSLProgramExecution(initialState, translatedAtomicTraceElements, translatedProgramStates, mLogger);
+	private boolean checkTempHavoc(final AtomicTraceElement<BoogieASTNode> ate) {
+		final HavocStatement havoc = (HavocStatement) ate.getTraceElement();
+		final CheckForTempVars check = new CheckForTempVars();
+		check.processStatement(havoc);
+		return check.areAllTemp();
+	}
+
+	private void handleConditional(final AtomicTraceElement<BoogieASTNode> ate, final CACSLLocation cloc,
+			final IASTExpression condition, final List<AtomicTraceElement<CACSLLocation>> translatedATEs) {
+		final EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
+		if (newSi == null) {
+			return;
+		}
+		translatedATEs.add(new AtomicTraceElement<CACSLLocation>(cloc, LocationFactory.createCLocation(condition),
+				newSi, ate.getRelevanceInformation()));
 	}
 
 	/**
@@ -304,17 +301,16 @@ public class CACSL2BoogieBacktranslator
 			default:
 				set.add(oldSi);
 				break;
-
 			}
 		}
 		return set;
 	}
 
-	private int handleCASTFunctionCallExpression(IProgramExecution<BoogieASTNode, Expression> programExecution, int i,
-			CASTFunctionCallExpression fcall, CLocation cloc,
-			List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements,
-			List<ProgramState<IASTExpression>> translatedProgramStates) {
-		// directly after the functioncall expression we find
+	private int handleCASTFunctionCallExpression(final IProgramExecution<BoogieASTNode, Expression> programExecution,
+			final int i, final CASTFunctionCallExpression fcall, final CLocation cloc,
+			final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements,
+			final List<ProgramState<IASTExpression>> translatedProgramStates) {
+		// directly after the function call expression we find
 		// for each argument a CASTFunctionDefinition / AssignmentStatement that
 		// maps the input variable to a new local one (because boogie function
 		// params are immutable)
@@ -324,19 +320,19 @@ public class CACSL2BoogieBacktranslator
 		if (!(origFuncCall.getTraceElement() instanceof CallStatement)) {
 			// this is some special case, e.g. an assert false or an havoc
 			if (origFuncCall.getTraceElement() instanceof AssertStatement) {
-				translatedAtomicTraceElements
-						.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(), origFuncCall.getmRelevanceInformation()));
+				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
+						origFuncCall.getStepInfo(), origFuncCall.getRelevanceInformation()));
 				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+				return i;
 			} else if (origFuncCall.getTraceElement() instanceof HavocStatement) {
-				HavocStatement havoc = (HavocStatement) origFuncCall.getTraceElement();
-				CheckForTempVars check = new CheckForTempVars();
-				check.processStatement(havoc);
-				if (!check.areAllTemp()) {
-					translatedAtomicTraceElements
-							.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(), origFuncCall.getmRelevanceInformation()));
+				if (!checkTempHavoc(origFuncCall)) {
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc,
+							origFuncCall.getStepInfo(), origFuncCall.getRelevanceInformation()));
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+					return i;
 				}
 			}
+			// if this anything else we just throw it away
 			return i;
 		}
 
@@ -345,15 +341,9 @@ public class CACSL2BoogieBacktranslator
 			return i;
 		}
 
-		translatedAtomicTraceElements
-				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(), origFuncCall.getmRelevanceInformation()));
+		translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo(),
+				origFuncCall.getRelevanceInformation()));
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
-
-		if (origFuncCall.hasStepInfo(StepInfo.PROC_RETURN)) {
-			// if it is a return we are already finished.
-			return i;
-		}
-
 		return i;
 	}
 
@@ -368,27 +358,26 @@ public class CACSL2BoogieBacktranslator
 	 * @param loc
 	 * @return
 	 */
-	private int findMergeSequence(IProgramExecution<BoogieASTNode, Expression> programExecution, int i, ILocation loc) {
+	private int findMergeSequence(final IProgramExecution<BoogieASTNode, Expression> programExecution, final int i,
+			final ILocation loc) {
 		if (i >= programExecution.getLength() || i < 0) {
 			throw new IllegalArgumentException("i has an invalid value");
 		}
 		int j = i;
 		for (; j < programExecution.getLength(); ++j) {
-			// suche nach weiteren knoten die diese loc haben, um sie in
-			// einem neuen statement zusammenzufassen
-			AtomicTraceElement<BoogieASTNode> lookahead = programExecution.getTraceElement(j);
+			// search for other nodes that have the same location in order to merge them all into one new statement
+			final AtomicTraceElement<BoogieASTNode> lookahead = programExecution.getTraceElement(j);
 			if (!lookahead.getTraceElement().getLocation().equals(loc)) {
 				j--;
 				break;
 			}
 		}
-		// springe zu dem, das wir zusammenfassen können
+		// jump to the resulting statement
 		if (j < programExecution.getLength()) {
-			i = j;
+			return j;
 		} else {
-			i = programExecution.getLength() - 1;
+			return programExecution.getLength() - 1;
 		}
-		return i;
 	}
 
 	private ProgramState<IASTExpression> translateProgramState(ProgramState<Expression> programState) {
@@ -952,15 +941,15 @@ public class CACSL2BoogieBacktranslator
 				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
 
 			// first, compute lookup data structure
-			HashMap<AtomicTraceElement<CACSLLocation>, HashSet<IASTNode>> ateToParents = new HashMap<>();
+			final Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents = new HashMap<>();
 			for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
-				AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
+				final AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
 
 				if (!(ate.getStep() instanceof CLocation)) {
 					continue;
 				}
-				IASTNode origNode = ((CLocation) ate.getStep()).getNode();
-				HashSet<IASTNode> parents = new HashSet<>();
+				final IASTNode origNode = ((CLocation) ate.getStep()).getNode();
+				final Set<IASTNode> parents = new HashSet<>();
 
 				IASTNode currentParent = origNode.getParent();
 				while (currentParent != null) {
@@ -972,9 +961,10 @@ public class CACSL2BoogieBacktranslator
 			}
 
 			// second, compute actual tree inclusion check
-			List<AtomicTraceElement<CACSLLocation>> rtr = new ArrayList<>();
+			final List<AtomicTraceElement<CACSLLocation>> rtr = new ArrayList<>();
 			for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
 				AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
+				//TODO: Why do i not update i ?
 				rtr.add(check(ate, translatedAtomicTraceElements, i + 1, StepInfo.EXPR_EVAL, ateToParents));
 			}
 			return rtr;
@@ -982,9 +972,9 @@ public class CACSL2BoogieBacktranslator
 
 		private AtomicTraceElement<CACSLLocation> check(AtomicTraceElement<CACSLLocation> ate,
 				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements, int start, StepInfo newSi,
-				HashMap<AtomicTraceElement<CACSLLocation>, HashSet<IASTNode>> ateToParents) {
+				Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents) {
 
-			HashSet<IASTNode> parents = ateToParents.get(ate);
+			Set<IASTNode> parents = ateToParents.get(ate);
 
 			if (parents == null) {
 				// not implemented for ACSL
@@ -1003,6 +993,9 @@ public class CACSL2BoogieBacktranslator
 					// skip acsl nodes
 					continue;
 				}
+				
+				//TODO: Fix relevance information 
+				
 				IASTNode candidate = ((CLocation) current.getStep()).getNode();
 				if (parents.contains(candidate)) {
 					EnumSet<StepInfo> set = ate.getStepInfo();
@@ -1011,8 +1004,8 @@ public class CACSL2BoogieBacktranslator
 					} else {
 						set.add(newSi);
 					}
-					return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(), 
-							set, current.getmRelevanceInformation());
+					return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(), set,
+							current.getRelevanceInformation());
 				}
 			}
 			return ate;

@@ -126,13 +126,13 @@ public class BoogiePreprocessorBacktranslator
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
 			IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
-		List<BoogieASTNode> newTrace = new ArrayList<>();
-		List<ProgramState<Expression>> newProgramStates = new ArrayList<>();
+		final List<BoogieASTNode> newTrace = new ArrayList<>();
+		final List<ProgramState<Expression>> newProgramStates = new ArrayList<>();
 
-		ProgramState<Expression> newInitialState = backtranslateProgramState(programExecution.getInitialProgramState());
-		int length = programExecution.getLength();
+		final ProgramState<Expression> newInitialState = backtranslateProgramState(programExecution.getInitialProgramState());
+		final int length = programExecution.getLength();
 		for (int i = 0; i < length; ++i) {
-			BoogieASTNode elem = programExecution.getTraceElement(i).getTraceElement();
+			final BoogieASTNode elem = programExecution.getTraceElement(i).getTraceElement();
 			// the call to backtranslateTraceElements may produce null values,
 			// but we keep them anyways s.t. the indices between newTrace and
 			// programExecution match
@@ -219,14 +219,14 @@ public class BoogiePreprocessorBacktranslator
 				WhileStatement stmt = (WhileStatement) elem;
 				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
 				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
-						info, stringProvider, ate.getmRelevanceInformation()));
+						info, stringProvider, ate.getRelevanceInformation()));
 
 			} else if (elem instanceof IfStatement) {
 				AssumeStatement assumeStmt = (AssumeStatement) ate.getTraceElement();
 				IfStatement stmt = (IfStatement) elem;
 				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
 				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), 
-						info, stringProvider, ate.getmRelevanceInformation()));
+						info, stringProvider, ate.getRelevanceInformation()));
 
 			} else if (elem instanceof CallStatement) {
 				// for call statements, we simply rely on the stepinfo of our
@@ -235,16 +235,16 @@ public class BoogiePreprocessorBacktranslator
 
 				if (ate.hasStepInfo(StepInfo.NONE)) {
 					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL, 
-							stringProvider, ate.getmRelevanceInformation()));
+							stringProvider, ate.getRelevanceInformation()));
 				} else {
 					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem,
-							ate.getStepInfo(), stringProvider, ate.getmRelevanceInformation()));
+							ate.getStepInfo(), stringProvider, ate.getRelevanceInformation()));
 				}
 
 			} else {
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, stringProvider, ate.getmRelevanceInformation()));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, stringProvider, ate.getRelevanceInformation()));
 			}
 		}
 

@@ -168,7 +168,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 						translatedStep = stepMapping.getOriginalNode();
 					}
 					translatedTrace.add(new AtomicTraceElement<BoogieASTNode>(translatedTraceElem, translatedStep,
-							traceElem.getStepInfo(), stringProvider, traceElem.getmRelevanceInformation()));
+							traceElem.getStepInfo(), stringProvider, traceElem.getRelevanceInformation()));
 				} else {
 					continue; // discards the associated ProgramState (State
 								// makes no sense, without Statement)

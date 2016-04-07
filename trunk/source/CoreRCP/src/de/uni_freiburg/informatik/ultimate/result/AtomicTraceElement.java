@@ -31,10 +31,9 @@ import java.util.EnumSet;
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 
 /**
- * An atomic trace element in the sense of a debugger trace of a program. It
- * consists of an {@link AtomicTraceElement#getTraceElement() trace element} ,
- * which is probably a statement of some program, and the currently evaluated
- * {@link AtomicTraceElement#getStep() part of this statement}.
+ * An atomic trace element in the sense of a debugger trace of a program. It consists of an
+ * {@link AtomicTraceElement#getTraceElement() trace element} , which is probably a statement of some program, and the
+ * currently evaluated {@link AtomicTraceElement#getStep() part of this statement}.
  * 
  * This class is used to display an error trace for the user.
  * 
@@ -46,18 +45,16 @@ import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 public class AtomicTraceElement<TE> {
 
 	/**
-	 * StepInfo provides additional information for
-	 * {@link AtomicTraceElement#getStep()}.
+	 * StepInfo provides additional information for {@link AtomicTraceElement#getStep()}.
 	 * 
-	 * This may be replaced by an actual object later, but for now it should be
-	 * sufficient.
+	 * This may be replaced by an actual object later, but for now it should be sufficient.
 	 * 
 	 * @author dietsch@informatik.uni-freiburg.de
 	 * 
 	 */
 	public enum StepInfo {
-		NONE("NONE"), CONDITION_EVAL_TRUE("COND TRUE"), CONDITION_EVAL_FALSE("COND FALSE"), PROC_CALL("CALL"), PROC_RETURN(
-				"RET"), ARG_EVAL("ARG"), EXPR_EVAL("EXPR"), FUNC_CALL("FCALL");
+		NONE("NONE"), CONDITION_EVAL_TRUE("COND TRUE"), CONDITION_EVAL_FALSE("COND FALSE"), PROC_CALL(
+				"CALL"), PROC_RETURN("RET"), ARG_EVAL("ARG"), EXPR_EVAL("EXPR"), FUNC_CALL("FCALL");
 
 		private final String mText;
 
@@ -78,8 +75,8 @@ public class AtomicTraceElement<TE> {
 	private final IRelevanceInformation mRelevanceInformation;
 
 	/**
-	 * Creates an instance where the trace element is evaluated atomically (i.e.
-	 * {@link #getTraceElement()} == {@link #getStep()}).
+	 * Creates an instance where the trace element is evaluated atomically (i.e. {@link #getTraceElement()} ==
+	 * {@link #getStep()}).
 	 */
 	public AtomicTraceElement(TE element, IRelevanceInformation relInfo) {
 		this(element, element, StepInfo.NONE, relInfo);
@@ -90,26 +87,26 @@ public class AtomicTraceElement<TE> {
 	}
 
 	/**
-	 * Creates an instance where the trace element is not necessarily evaluated
-	 * atomically (i.e. {@link #getTraceElement()} != {@link #getStep()} is
-	 * allowed)
+	 * Creates an instance where the trace element is not necessarily evaluated atomically (i.e.
+	 * {@link #getTraceElement()} != {@link #getStep()} is allowed)
 	 * 
 	 * @param element
 	 * @param step
 	 * @param info
-	 *            provides additional information about the step, e.g. if its a
-	 *            condition that evaluated to true or false, if it is a call or
-	 *            a return, etc.
+	 *            provides additional information about the step, e.g. if its a condition that evaluated to true or
+	 *            false, if it is a call or a return, etc.
 	 */
 	public AtomicTraceElement(TE element, TE step, AtomicTraceElement.StepInfo info, IRelevanceInformation relInfo) {
 		this(element, step, EnumSet.of(info), relInfo);
 	}
 
-	public AtomicTraceElement(TE element, TE step, AtomicTraceElement.StepInfo info, IToString<TE> toStringProvider, IRelevanceInformation relInfo) {
+	public AtomicTraceElement(TE element, TE step, AtomicTraceElement.StepInfo info, IToString<TE> toStringProvider,
+			IRelevanceInformation relInfo) {
 		this(element, step, EnumSet.of(info), toStringProvider, relInfo);
 	}
 
-	public AtomicTraceElement(TE element, TE step, EnumSet<AtomicTraceElement.StepInfo> info, IRelevanceInformation relInfo) {
+	public AtomicTraceElement(TE element, TE step, EnumSet<AtomicTraceElement.StepInfo> info,
+			IRelevanceInformation relInfo) {
 		this(element, step, info, a -> a.toString(), relInfo);
 	}
 
@@ -138,13 +135,11 @@ public class AtomicTraceElement<TE> {
 	}
 
 	/**
-	 * @return An expression or statement which is evaluated atomically as part
-	 *         of the evaluation of {@link #getTraceElement()} or a statement
-	 *         that is equal to {@link #getTraceElement()} when
+	 * @return An expression or statement which is evaluated atomically as part of the evaluation of
+	 *         {@link #getTraceElement()} or a statement that is equal to {@link #getTraceElement()} when
 	 *         {@link #getTraceElement()} itself is evaluated atomically.
 	 * 
-	 *         This is always a reference to some subtree of
-	 *         {@link #getTraceElement()}.
+	 *         This is always a reference to some subtree of {@link #getTraceElement()}.
 	 */
 	public TE getStep() {
 		return mStep;
@@ -157,18 +152,23 @@ public class AtomicTraceElement<TE> {
 	public EnumSet<AtomicTraceElement.StepInfo> getStepInfo() {
 		return EnumSet.copyOf(mStepInfo);
 	}
-	
-	public IRelevanceInformation getmRelevanceInformation() {
+
+	public IRelevanceInformation getRelevanceInformation() {
 		return mRelevanceInformation;
 	}
 
 	@Override
 	public String toString() {
+		final IRelevanceInformation relInfo = getRelevanceInformation();
+		final String rtr;
 		if (mStepInfo.contains(StepInfo.NONE)) {
-			return mToStringFunc.toString(getTraceElement());
+			rtr = mToStringFunc.toString(getTraceElement());
 		} else {
-			return String.format("%s  %s", getStepInfo(), mToStringFunc.toString(getStep()));
+			rtr = String.format("%s  %s", getStepInfo(), mToStringFunc.toString(getStep()), getRelevanceInformation());
 		}
-
+		if (relInfo != null) {
+			return rtr + " " + relInfo;
+		}
+		return rtr;
 	}
 }

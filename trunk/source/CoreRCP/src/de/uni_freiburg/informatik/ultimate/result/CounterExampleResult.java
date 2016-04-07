@@ -101,7 +101,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 
 	@Override
 	public String getLongDescription() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(getShortDescription());
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("We found a FailurePath: ");
