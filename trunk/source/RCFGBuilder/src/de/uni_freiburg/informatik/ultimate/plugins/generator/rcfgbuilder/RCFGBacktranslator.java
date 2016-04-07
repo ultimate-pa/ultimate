@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCF
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
@@ -314,7 +313,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		// mLogger.info(" label loc " + label.getPayload().getLocation().getStartLine() + "-"
 		// + label.getPayload().getLocation().getEndLine());
 		// }
-		ConditionAnnotation coan = ConditionAnnotation.getAnnotation(label);
+//		ConditionAnnotation coan = ConditionAnnotation.getAnnotation(label);
 		new MultigraphEdge<>(source, label, target);
 	}
 

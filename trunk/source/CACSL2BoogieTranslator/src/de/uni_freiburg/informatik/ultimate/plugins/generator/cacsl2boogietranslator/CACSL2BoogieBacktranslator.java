@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -67,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
@@ -95,6 +97,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
@@ -225,12 +228,12 @@ public class CACSL2BoogieBacktranslator
 				} else {
 					// just use as it, all special cases should have been
 					// handled
-					
+
 					// first, check if we should merge all things in a row that point to the same
 					// location, as they only contain temporary stuff
-					//FIXME: merge relevance information of skipped ATEs
+					// FIXME: merge relevance information of skipped ATEs
 					i = findMergeSequence(oldPE, i, loc);
-					
+
 					if (ate.getTraceElement() instanceof HavocStatement && checkTempHavoc(ate)) {
 						// we dont want to see no dirty temp havoc
 						continue;
@@ -963,24 +966,25 @@ public class CACSL2BoogieBacktranslator
 			// second, compute actual tree inclusion check
 			final List<AtomicTraceElement<CACSLLocation>> rtr = new ArrayList<>();
 			for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
-				AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
-				//TODO: Why do i not update i ?
-				rtr.add(check(ate, translatedAtomicTraceElements, i + 1, StepInfo.EXPR_EVAL, ateToParents));
+				final AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
+				final AtomicTraceElement<CACSLLocation> currentResult = check(ate, translatedAtomicTraceElements, i + 1,
+						StepInfo.EXPR_EVAL, ateToParents);
+				rtr.add(currentResult);
 			}
 			return rtr;
 		}
 
-		private AtomicTraceElement<CACSLLocation> check(AtomicTraceElement<CACSLLocation> ate,
-				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements, int start, StepInfo newSi,
-				Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents) {
+		private AtomicTraceElement<CACSLLocation> check(final AtomicTraceElement<CACSLLocation> ate,
+				final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements, final int start,
+				final StepInfo newSi, final Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents) {
 
-			Set<IASTNode> parents = ateToParents.get(ate);
+			final Set<IASTNode> parents = ateToParents.get(ate);
 
 			if (parents == null) {
 				// not implemented for ACSL
 				return ate;
 			}
-			IASTNode origNode = ((CLocation) ate.getStep()).getNode();
+			final IASTNode origNode = ((CLocation) ate.getStep()).getNode();
 
 			if (!(origNode instanceof IASTExpression)) {
 				// do nothing for statements
@@ -988,15 +992,15 @@ public class CACSL2BoogieBacktranslator
 			}
 
 			for (int j = start; j < translatedAtomicTraceElements.size(); ++j) {
-				AtomicTraceElement<CACSLLocation> current = translatedAtomicTraceElements.get(j);
+				final AtomicTraceElement<CACSLLocation> current = translatedAtomicTraceElements.get(j);
 				if (!(current.getStep() instanceof CLocation)) {
 					// skip acsl nodes
 					continue;
 				}
-				
-				//TODO: Fix relevance information 
-				
-				IASTNode candidate = ((CLocation) current.getStep()).getNode();
+
+				// TODO: Fix relevance information
+
+				final IASTNode candidate = ((CLocation) current.getStep()).getNode();
 				if (parents.contains(candidate)) {
 					EnumSet<StepInfo> set = ate.getStepInfo();
 					if (set.isEmpty() || set.contains(StepInfo.NONE)) {
@@ -1005,11 +1009,21 @@ public class CACSL2BoogieBacktranslator
 						set.add(newSi);
 					}
 					return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(), set,
-							current.getRelevanceInformation());
+							mergeRelevaneInformation(ate.getRelevanceInformation(), current.getRelevanceInformation()));
 				}
 			}
 			return ate;
 		}
+	}
+
+	private IRelevanceInformation mergeRelevaneInformation(final IRelevanceInformation... relInfos) {
+		if (relInfos == null || relInfos.length == 0) {
+			return null;
+		}
+		if (relInfos.length == 1) {
+			return relInfos[0];
+		}
+		return Arrays.stream(relInfos).filter(a -> a != null).reduce((a, b) -> a.merge(b)).get();
 	}
 
 	private class SynthesizedExpressionTransformer extends BoogieTransformer {
