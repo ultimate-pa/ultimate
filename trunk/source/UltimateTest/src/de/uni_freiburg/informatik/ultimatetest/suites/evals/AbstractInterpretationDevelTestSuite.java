@@ -57,9 +57,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL 
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
@@ -145,8 +145,11 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 					"Abstract Interpretation iterations", "AI Iter{-}ations",
 					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 			new ColumnDefinition(
+					"AbstractInterpretationStrong", "AI Strong",
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
 					"Abstract Interpretation Time", "AI Avg. Time",
-					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
 			new ColumnDefinition(
 					"Overall time", "Trace Abstraction Time",
 					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
