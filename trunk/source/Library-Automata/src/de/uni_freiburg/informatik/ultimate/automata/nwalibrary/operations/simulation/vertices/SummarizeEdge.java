@@ -83,10 +83,10 @@ public final class SummarizeEdge<LETTER, STATE> {
 		m_Src = src;
 		m_Dest = dest;
 		m_DuplicatorEntryShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
-				TransitionType.SUMMARIZE_ENTRY, this);
+				ETransitionType.SUMMARIZE_ENTRY, this);
 		m_SpoilerShadow = new SpoilerDoubleDeckerVertex<LETTER, STATE>(NO_PRIORITY, false, null, null, this);
 		m_DuplicatorExitShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
-				TransitionType.SUMMARIZE_EXIT, this);
+				ETransitionType.SUMMARIZE_EXIT, this);
 	}
 
 	/**
@@ -155,7 +155,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * vertex.
 	 * 
 	 * @param priority
-	 *            THe priority to set
+	 *            The priority to set
 	 */
 	public void setPriority(final int priority) {
 		m_SpoilerShadow.setPriority(priority);

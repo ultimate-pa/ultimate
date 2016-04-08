@@ -70,7 +70,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * The type of the transition, i.e. if it stands for an internal, call or
 	 * return transition.
 	 */
-	private final TransitionType m_TransitionType;
+	private final ETransitionType m_TransitionType;
 	/**
 	 * Internal set of all down state configurations of the vertex.
 	 */
@@ -100,7 +100,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *            call or return transition
 	 */
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final TransitionType transitionType) {
+			final LETTER a, final ETransitionType transitionType) {
 		this(priority, b, q0, q1, a, transitionType, null, null);
 	}
 
@@ -112,7 +112,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * information if needed.
 	 * 
 	 * The double decker information first is blank after construction. If the
-	 * used transition is of type {@link TransitionType#SINK} one can set
+	 * used transition is of type {@link ETransitionType#SINK} one can set
 	 * <tt>sink</tt> to distinguish between similar sinks.
 	 * 
 	 * @param priority
@@ -133,7 +133,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *            vertex for such.
 	 */
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final TransitionType transitionType, final DuplicatorWinningSink<LETTER, STATE> sink) {
+			final LETTER a, final ETransitionType transitionType, final DuplicatorWinningSink<LETTER, STATE> sink) {
 		this(priority, b, q0, q1, a, transitionType, null, sink);
 	}
 
@@ -145,8 +145,8 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * information if needed.
 	 * 
 	 * The double decker information first is blank after construction. If the
-	 * used transition is of type {@link TransitionType#SUMMARIZE_ENTRY} or
-	 * {@link TransitionType#SUMMARIZE_EXIT} one can set <tt>summarizeEdge</tt>
+	 * used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY} or
+	 * {@link ETransitionType#SUMMARIZE_EXIT} one can set <tt>summarizeEdge</tt>
 	 * to distinguish between similar summarize edges.
 	 * 
 	 * @param priority
@@ -167,7 +167,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *            as a shadow vertex.
 	 */
 	public DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final TransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
+			final LETTER a, final ETransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
 		this(priority, b, q0, q1, a, transitionType, summarizeEdge, null);
 	}
 
@@ -179,10 +179,10 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * information if needed.
 	 * 
 	 * The double decker information first is blank after construction. If the
-	 * used transition is of type {@link TransitionType#SUMMARIZE_ENTRY} or
-	 * {@link TransitionType#SUMMARIZE_EXIT} one can set <tt>summarizeEdge</tt>
+	 * used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY} or
+	 * {@link ETransitionType#SUMMARIZE_EXIT} one can set <tt>summarizeEdge</tt>
 	 * to distinguish between similar summarize edges. If the used transition is
-	 * of type {@link TransitionType#SINK} one can set <tt>sink</tt> to
+	 * of type {@link ETransitionType#SINK} one can set <tt>sink</tt> to
 	 * distinguish between similar sinks.
 	 * 
 	 * @param priority
@@ -206,7 +206,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *            vertex for such.
 	 */
 	private DuplicatorDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
-			final LETTER a, final TransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
+			final LETTER a, final ETransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
 			final DuplicatorWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1, a);
 		m_VertexDownStates = new HashSet<>();
@@ -274,15 +274,16 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	public String getName() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getQ0() + "," + getQ1() + ",");
-		if (m_TransitionType.equals(TransitionType.SUMMARIZE_ENTRY)) {
+		if (m_TransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
 			sb.append("SEntry/").append(m_SummarizeEdge.hashCode());
-		} else if (m_TransitionType.equals(TransitionType.SUMMARIZE_EXIT)) {
+		} else if (m_TransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {
 			sb.append("SExit/").append(m_SummarizeEdge.hashCode());
-		} else if (m_TransitionType.equals(TransitionType.SINK)) {
+		} else if (m_TransitionType.equals(ETransitionType.SINK)) {
 			sb.append("Sink/").append(m_Sink.hashCode());
 		} else {
 			sb.append(getLetter());
 		}
+		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
 		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
@@ -299,7 +300,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	/**
 	 * Gets the sink this vertex belongs to or <tt>null</tt> if not set. This
 	 * field should only be used if the type of the used transition is
-	 * {@link TransitionType#SINK}.
+	 * {@link ETransitionType#SINK}.
 	 * 
 	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
 	 *         set.
@@ -311,8 +312,8 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	/**
 	 * Gets the summarize edge this vertex belongs to or <tt>null</tt> if not
 	 * set. This field should only be used if the type of the used transition is
-	 * {@link TransitionType#SUMMARIZE_ENTRY} or
-	 * {@link TransitionType#SUMMARIZE_EXIT}.
+	 * {@link ETransitionType#SUMMARIZE_ENTRY} or
+	 * {@link ETransitionType#SUMMARIZE_EXIT}.
 	 * 
 	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
 	 *         set.
@@ -326,7 +327,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * 
 	 * @return The type of the transition represented by this vertex.
 	 */
-	public TransitionType getTransitionType() {
+	public ETransitionType getTransitionType() {
 		return m_TransitionType;
 	}
 
@@ -389,15 +390,16 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1()).append(",");
-		if (m_TransitionType.equals(TransitionType.SUMMARIZE_ENTRY)) {
+		if (m_TransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
 			sb.append("SEntry/").append(m_SummarizeEdge.hashCode());
-		} else if (m_TransitionType.equals(TransitionType.SUMMARIZE_EXIT)) {
+		} else if (m_TransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {
 			sb.append("SExit/").append(m_SummarizeEdge.hashCode());
-		} else if (m_TransitionType.equals(TransitionType.SINK)) {
+		} else if (m_TransitionType.equals(ETransitionType.SINK)) {
 			sb.append("Sink/").append(m_Sink.hashCode());
 		} else {
 			sb.append(getLetter());
 		}
+		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
 		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {

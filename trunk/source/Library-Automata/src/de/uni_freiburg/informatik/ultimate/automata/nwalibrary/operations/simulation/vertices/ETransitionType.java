@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  * @author Daniel Tischner
  *
  */
-public enum TransitionType {
+public enum ETransitionType {
 	/**
 	 * Type for call transitions.
 	 */

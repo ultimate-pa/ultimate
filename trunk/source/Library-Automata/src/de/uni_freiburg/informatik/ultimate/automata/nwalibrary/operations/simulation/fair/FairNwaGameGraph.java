@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -47,7 +49,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.SummarizeEdge;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.TransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.SummarizeEdgePrioritySearch;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
@@ -87,7 +90,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * <b>(State of spoiler or q0, Letter spoiler used before, State of
 	 * duplicator or q1, bit, type of transition, summarize edge, sink)</b>.
 	 */
-	private final HashMap<Hep<STATE, STATE, LETTER, Boolean, TransitionType, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, DuplicatorVertex<LETTER, STATE>> m_BuechiStatesToGraphDuplicatorVertex;
+	private final HashMap<Hep<STATE, STATE, LETTER, Boolean, ETransitionType, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, DuplicatorVertex<LETTER, STATE>> m_BuechiStatesToGraphDuplicatorVertex;
 	/**
 	 * Data structure that allows a fast access to {@link SpoilerVertex} objects
 	 * by using their representation:<br/>
@@ -155,7 +158,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		generateRegularEdges();
 		logger.debug("Generating summarize edges.");
 		generateSummarizeEdges();
-		// TODO Calculate priorities of summarize edges
+		logger.debug("Computing priorities of summarize edges.");
+		computeSummarizeEdgePriorities();
 
 		m_DuplicatorReturningVertices.clear();
 		m_EntryToSink.clear();
@@ -166,7 +170,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 	/**
 	 * Unsupported operation. Use
-	 * {@link #getDuplicatorVertex(Object, Object, Object, boolean, TransitionType, Object)}
+	 * {@link #getDuplicatorVertex(Object, Object, Object, boolean, ETransitionType, Object)}
 	 * instead.
 	 * 
 	 * @throws UnsupportedOperationException
@@ -197,18 +201,18 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 *            Type of the transition
 	 * @param summarizeEdge
 	 *            Summarize edge the vertex belongs to if the transition is of
-	 *            type {@link TransitionType#SUMMARIZE_ENTRY} or
-	 *            {@link TransitionType#SUMMARIZE_EXIT}. Use <tt>null</tt> if
+	 *            type {@link ETransitionType#SUMMARIZE_ENTRY} or
+	 *            {@link ETransitionType#SUMMARIZE_EXIT}. Use <tt>null</tt> if
 	 *            that is not the case.
 	 * @param sink
 	 *            Sink the vertex belongs to if the transition is of type
-	 *            {@link TransitionType#SINK}. Use <tt>null</tt> if that is not
+	 *            {@link ETransitionType#SINK}. Use <tt>null</tt> if that is not
 	 *            the case.
 	 * @return The duplicator vertex associated to the given signature. See
 	 *         {@link #getDuplicatorVertex(Object, Object, Object, boolean)}.
 	 */
 	public DuplicatorVertex<LETTER, STATE> getDuplicatorVertex(final STATE q0, final STATE q1, final LETTER a,
-			final boolean bit, final TransitionType transType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
+			final boolean bit, final ETransitionType transType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
 			final DuplicatorWinningSink<LETTER, STATE> sink) {
 		return m_BuechiStatesToGraphDuplicatorVertex.get(new Hep<>(q0, q1, a, bit, transType, summarizeEdge, sink));
 	}
@@ -366,6 +370,57 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	}
 
 	/**
+	 * Computes the priorities of all previous generated summarize edges.
+	 * 
+	 * @throws IllegalStateException
+	 *             If computing summarize edge priorities could not be done
+	 *             because of cyclic dependencies between some summarize edges
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	private void computeSummarizeEdgePriorities() throws OperationCanceledException {
+		Queue<SummarizeEdgePrioritySearch<LETTER, STATE>> searchQueue = new LinkedList<>();
+		int maxAmountOfSearches = 0;
+		int searchCounter = 0;
+
+		for (SummarizeEdge<LETTER, STATE> summaryEdge : m_SrcDestToSummarizeEdges.values()) {
+			searchQueue.add(new SummarizeEdgePrioritySearch<>(summaryEdge, this));
+			maxAmountOfSearches++;
+		}
+
+		// Process all search elements until all finish
+		// Abort computation if every element got stuck
+		while (!searchQueue.isEmpty() && searchCounter < maxAmountOfSearches) {
+			SummarizeEdgePrioritySearch<LETTER, STATE> searchElement = searchQueue.poll();
+			searchElement.search();
+			if (!searchElement.isFinished()) {
+				// Search got stuck, add it to the end of the queue
+				searchCounter++;
+				searchQueue.add(searchElement);
+			} else {
+				// Search finished, reset counter and apply search results
+				searchCounter = 0;
+				int priority = searchElement.getPriorityResult();
+				searchElement.getSummarizeEdge().setPriority(priority);
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in computeSummarizeEdgePriorities");
+				throw new OperationCanceledException(this.getClass());
+			}
+		}
+		// If there are still stuck search elements that can not be resolved
+		// because of cyclic dependencies
+		if (!searchQueue.isEmpty()) {
+			throw new IllegalStateException(
+					"Computing summarize edge priorities could not be done because of cyclic dependencies between some summarize edges.");
+		}
+	}
+
+	/**
 	 * Creates an iterator over all possible vertex down states for two given up
 	 * states.
 	 * 
@@ -405,7 +460,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 				for (STATE fixState : m_Nwa.getStates()) {
 					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
 					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), false,
-							TransitionType.INTERNAL, null, null);
+							ETransitionType.INTERNAL, null, null);
 					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
@@ -414,7 +469,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 					// Spoiler edges q1 -a-> q2 : (q1, x) -> (q2, x, a)
 					src = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
-					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false, TransitionType.INTERNAL,
+					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false, ETransitionType.INTERNAL,
 							null, null);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
@@ -440,7 +495,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 				for (STATE fixState : m_Nwa.getStates()) {
 					// Duplicator edges q1 -c-> q2 : (x, q1, c) -> (x, q2)
 					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), false,
-							TransitionType.CALL, null, null);
+							ETransitionType.CALL, null, null);
 					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
@@ -449,7 +504,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 					// Spoiler edges q1 -c-> q2 : (q1, x) -> (q2, x, c)
 					src = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
-					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false, TransitionType.CALL, null,
+					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false, ETransitionType.CALL, null,
 							null);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
@@ -477,7 +532,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 				for (STATE fixState : m_Nwa.getStates()) {
 					// Duplicator edges q1 -r/q0-> q2 : (x, q1, r/q0) -> (x, q2)
 					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getLinPred(), trans.getLetter(),
-							false, TransitionType.RETURN, null, null);
+							false, ETransitionType.RETURN, null, null);
 					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false, null, null);
 					// Ensure that the edge represents a possible move.
 					// This is when the hierPred state is a down state of q1
@@ -495,7 +550,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 					// Spoiler edges q1 -r/q0-> q2 : (q1, x) -> (q2, x, r/q0)
 					src = getSpoilerVertex(trans.getLinPred(), fixState, false, null, null);
-					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false, TransitionType.RETURN,
+					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false, ETransitionType.RETURN,
 							null, null);
 					// Ensure that the edge represents a possible move.
 					// This is when the hierPred state is a down state of q1
@@ -617,14 +672,14 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 				// Vertices generated by internal transitions
 				for (LETTER letter : m_Nwa.lettersInternalIncoming(leftState)) {
 					DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(2,
-							false, leftState, rightState, letter, TransitionType.INTERNAL);
+							false, leftState, rightState, letter, ETransitionType.INTERNAL);
 					applyVertexDownStatesToVertex(duplicatorVertex);
 					addDuplicatorVertex(duplicatorVertex);
 				}
 				// Vertices generated by call transitions
 				for (LETTER letter : m_Nwa.lettersCallIncoming(leftState)) {
 					DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(2,
-							false, leftState, rightState, letter, TransitionType.CALL);
+							false, leftState, rightState, letter, ETransitionType.CALL);
 					applyVertexDownStatesToVertex(duplicatorVertex);
 					addDuplicatorVertex(duplicatorVertex);
 				}
@@ -637,9 +692,9 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 					if (hasDownState(transition.getLinPred(), transition.getHierPred())) {
 						// Only add if not already existent
 						if (getDuplicatorVertex(leftState, rightState, transition.getLetter(), false,
-								TransitionType.RETURN, null, null) == null) {
+								ETransitionType.RETURN, null, null) == null) {
 							DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(
-									2, false, leftState, rightState, transition.getLetter(), TransitionType.RETURN);
+									2, false, leftState, rightState, transition.getLetter(), ETransitionType.RETURN);
 							applyVertexDownStatesToVertex(duplicatorVertex);
 							addDuplicatorVertex(duplicatorVertex);
 						}

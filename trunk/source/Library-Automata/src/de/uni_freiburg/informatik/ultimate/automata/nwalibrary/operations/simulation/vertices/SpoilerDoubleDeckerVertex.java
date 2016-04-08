@@ -238,6 +238,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		if (m_Sink != null) {
 			sb.append("[Sink/").append(m_Sink.hashCode() + "]");
 		}
+		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
 		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
@@ -335,6 +336,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		if (m_Sink != null) {
 			sb.append("[Sink/").append(m_Sink.hashCode() + "]");
 		}
+		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
 		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {

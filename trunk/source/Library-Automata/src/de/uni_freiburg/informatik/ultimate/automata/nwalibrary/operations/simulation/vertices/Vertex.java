@@ -140,8 +140,6 @@ public class Vertex<LETTER, STATE> {
 		Vertex other = (Vertex) obj;
 		if (b != other.b)
 			return false;
-		if (priority != other.priority)
-			return false;
 		if (q0 == null) {
 			if (other.q0 != null)
 				return false;
@@ -255,7 +253,6 @@ public class Vertex<LETTER, STATE> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + (b ? 1231 : 1237);
-		result = prime * result + priority;
 		result = prime * result + ((q0 == null) ? 0 : q0.hashCode());
 		result = prime * result + ((q1 == null) ? 0 : q1.hashCode());
 		return result;
