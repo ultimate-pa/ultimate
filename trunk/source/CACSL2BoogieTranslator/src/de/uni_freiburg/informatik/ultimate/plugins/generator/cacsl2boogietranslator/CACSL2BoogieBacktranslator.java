@@ -1022,7 +1022,7 @@ public class CACSL2BoogieBacktranslator
 		if (relInfos.length == 1) {
 			return relInfos[0];
 		}
-		return Arrays.stream(relInfos).filter(a -> a != null).reduce((a, b) -> a.merge(b)).get();
+		return Arrays.stream(relInfos).filter(a -> a != null).reduce(null, (a, b) -> (a == null ? b : a.merge(b)));
 	}
 
 	private class SynthesizedExpressionTransformer extends BoogieTransformer {
