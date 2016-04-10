@@ -272,16 +272,34 @@ final class Generator {
 			}
 		}
 
-		for (int i = 0; i < numStates; i++) {
-			for (int j = i+1; j < numStates; j++) {
-				int eq1 = calc.eqVar(i, j);
+		/*
+		 * Transitivity clauses
+		 *
+		 * The naive way is visiting all or almost all clauses. This needs
+		 * O(n^3) time.
+		 *
+		 * Instead we precompute an index of the state pairings that are not
+		 * (yet) known to be unmergeable. The other pairings need not be
+		 * visited.
+		 */
 
-				for (int k = j+1; k < numStates; k++) {
+		IntArray[] possible = new IntArray[numStates];
+
+		for (int i = 0; i < numStates; i++)
+			possible[i] = new IntArray();
+
+		for (int i = 0; i < numStates; i++)
+			for (int j = 0; j < numStates; j++)
+				if (!builder.isAlreadyFalse(calc.eqVar(i, j)))
+					possible[i].add(j);
+
+		for (int i = 0; i < numStates; i++) {
+			for (int j : possible[i]) {
+				int eq1 = calc.eqVar(i, j);
+				for (int k : possible[j]) {
 					int eq2 = calc.eqVar(j, k);
 					int eq3 = calc.eqVar(i, k);
 					builder.addClauseFFT(eq1, eq2, eq3);
-					builder.addClauseFFT(eq2, eq3, eq1);
-					builder.addClauseFFT(eq3, eq1, eq2);
 				}
 			}
 		}
