@@ -27,7 +27,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
+/**
+ * Horn clause with at most three literals.
+ *
+ * By convention literals <code>x</code> and <code>y</code> are negative, and
+ * <code>z</code> is positive. For clauses with less than three literals, the
+ * special variables <code>FALSEVAR</code> and <code>TRUEVAR</code> are used
+ * which are considered "constant" false or true variables.
+ */
 final class Horn3Clause {
+
+	static final int FALSEVAR = 0;
+	static final int TRUEVAR = 1;
+
 	int x;
 	int y;
 	int z;

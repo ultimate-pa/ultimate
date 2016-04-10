@@ -56,8 +56,8 @@ final class Partition {
 	 * Check consistency of equivalence classes:
 	 *
 	 * <ul>
-	 * <li><code>0 <= numClasses</code>
-	 * <li><code>0 <= x < numClasses</code> for all <code>x</code> in
+	 * <li><code>0 &le; numClasses</code>
+	 * <li><code>0 &le; x &lt; numClasses</code> for all <code>x</code> in
 	 * <code>classOf</code>
 	 * <li><code>x</code> in <code>classOf</code> for each <code>x</code> in [0,
 	 * <code>numClasses</code>)

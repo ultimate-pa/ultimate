@@ -96,8 +96,8 @@ final class Solver {
 
 		for (int i = 0; i < numVars; i++)
 			assign[i] = NONE;
-		assign[Horn3Array.TRUEVAR] = TRUE;
-		assign[Horn3Array.FALSEVAR] = FALSE;
+		assign[Horn3Clause.TRUEVAR] = TRUE;
+		assign[Horn3Clause.FALSEVAR] = FALSE;
 	}
 
 	private void setVar(int v, char a) {

@@ -28,14 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
 /**
- * Save some clauses while building up a <code>Horn3Array</code>
+ * Save some clauses building up a <code>Horn3Array</code>.
  *
  * @author stimpflj
  */
 final class Horn3ArrayBuilder {
 
-	private static final int FALSEVAR = Horn3Array.FALSEVAR;
-	private static final int TRUEVAR = Horn3Array.TRUEVAR;
+	private static final int FALSEVAR = Horn3Clause.FALSEVAR;
+	private static final int TRUEVAR = Horn3Clause.TRUEVAR;
 
 	private static final int UNSET = 0;
 	private static final int SETFALSE = 1;

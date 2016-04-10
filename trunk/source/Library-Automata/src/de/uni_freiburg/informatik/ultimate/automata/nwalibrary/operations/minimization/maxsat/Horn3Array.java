@@ -30,24 +30,17 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 import java.util.Iterator;
 
 /**
- * Array of Horn clauses with at most three literals. By convention literals
- * <code>x</code> and <code>y</code> are positive, and <code>z</code> is
- * negative. For clauses with less than three literals, the special variables
- * <code>FALSEVAR</code> and <code>TRUEVAR</code> are used which are considered
- * "constant" false or true variables.
+ * Array of Horn clauses with at most three literals.
  *
  * @author stimpflj
  */
 final class Horn3Array implements Iterable<Horn3Clause> {
 
-	static final int FALSEVAR = 0;
-	static final int TRUEVAR = 1;
-
 	private final int numVars;
 
-	private IntArray ax;
-	private IntArray ay;
-	private IntArray az;
+	private final IntArray ax;
+	private final IntArray ay;
+	private final IntArray az;
 
 	Horn3Array(int numVars) {
 		this.numVars = numVars;
@@ -98,8 +91,8 @@ final class Horn3Array implements Iterable<Horn3Clause> {
 	 */
 	static private final class Horn3Iterator implements Iterator<Horn3Clause> {
 
-		private Horn3Array h3a;
-		private Horn3Clause h3c;
+		private final Horn3Clause h3c;
+		private final Horn3Array h3a;
 		private int idx;
 
 		Horn3Iterator(Horn3Array h3a) {

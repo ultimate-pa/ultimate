@@ -46,13 +46,13 @@ final class Generator {
 	 * Convert a solved instance to a merge relation
 	 */
 	static Partition makeMergeRelation(int numStates, char[] assigned) {
+		UnionFind unionFind = new UnionFind(numStates);
 		EqVarCalc calc = new EqVarCalc(numStates);
 
 		assert assigned.length == calc.getNumEqVars();
+
 		for (int x : assigned)
 			assert x == Solver.TRUE || x == Solver.FALSE;
-
-		UnionFind unionFind = new UnionFind(numStates);
 
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
@@ -84,11 +84,8 @@ final class Generator {
 			HashSet<Hist> hs = new HashSet<Hist>();
 			for (Hist h : history)
 				hs.add(h);
-			for (RTrans x : inNWA.rTrans) {
-				if (!hs.contains(new Hist(x.src, x.top)))
-					System.err.printf("missing %d %d\n",  x.src, x.top);
+			for (RTrans x : inNWA.rTrans)
 				assert hs.contains(new Hist(x.src, x.top));
-			}
 		}
 
 		// some "namespace imports"

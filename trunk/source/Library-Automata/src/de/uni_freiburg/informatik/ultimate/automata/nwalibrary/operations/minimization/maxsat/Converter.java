@@ -45,7 +45,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 /**
  * Convert a <code>INestedWordAutomaton</code> to a <code>NWA</code> structure.
  * Using the <code>constructMerged()</code> method, a smaller equivalent
- * automaton can be made later given a <code>Partition</code> structure.
+ * <code>NestedWordAutomaton</code> can be made later given a
+ * <code>Partition</code> structure.
  *
  * @author stimpflj
  */
@@ -97,7 +98,7 @@ final class Converter<LETTER, STATE> {
 	 * @param logger
 	 * @param services
 	 * @param stateFactory
-	 *            the StateFactory which was used to make the states in the
+	 *            the StateFactory that was used to make the states in the
 	 *            input automaton
 	 * @param automaton
 	 *            input INestedWordAutomaton
@@ -207,7 +208,7 @@ final class Converter<LETTER, STATE> {
 	 *         INestedWordAutomaton at construction time.
 	 */
 	NestedWordAutomaton<LETTER, STATE> constructMerged(Partition partition) {
-		assert(partition.classOf.length == oldState.size());
+		assert partition.classOf.length == oldState.size();
 
 		int numclasses = partition.numClasses;
 		int[] classOf = partition.classOf;
