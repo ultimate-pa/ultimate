@@ -59,6 +59,12 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	public String getAcronym() {
 		return "IRD";
 	}
+	
+	@Override
+	public boolean resultIsXjunction() {
+		return true;
+	};
+
 
 	@Override
 	public Term[] tryToEliminate(int quantifier, Term[] oldParams,

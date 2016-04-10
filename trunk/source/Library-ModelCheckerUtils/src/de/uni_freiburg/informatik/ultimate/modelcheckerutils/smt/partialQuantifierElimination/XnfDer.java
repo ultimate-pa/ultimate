@@ -66,6 +66,12 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	public String getAcronym() {
 		return "DER";
 	}
+	
+	@Override
+	public boolean resultIsXjunction() {
+		return true;
+	};
+
 
 	@Override
 	public Term[] tryToEliminate(int quantifier, Term[] inputAtoms,

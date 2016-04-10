@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 /**

@@ -27,12 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -50,9 +48,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfIrd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfTir;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUpd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUsr;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -297,14 +297,8 @@ public class PartialQuantifierElimination {
 		// apply TIR
 		Term termAfterTIR;
 		if (USE_TIR) {
-			Set<TermVariable> eliminateesTir = new HashSet<TermVariable>(eliminatees);
 			XnfTir xnfTir = new XnfTir(script, services, freshTermVariableConstructor);
-			Term[] oldParams = getXjunctsOuter(quantifier, result);
-			Term[] newParams = xnfTir.tryToEliminate(quantifier, oldParams, eliminateesTir);
-			termAfterTIR = composeXjunctsOuter(script, quantifier, newParams);
-			Set<TermVariable> remainingAfterTIR = new HashSet<TermVariable>(eliminatees);
-			remainingAfterTIR.retainAll(Arrays.asList(termAfterTIR.getFreeVars()));
-			eliminatees.retainAll(remainingAfterTIR);
+			termAfterTIR = applyEliminationOuter(script, quantifier, eliminatees, result, xnfTir);
 			result = termAfterTIR;
 		}
 
@@ -316,17 +310,9 @@ public class PartialQuantifierElimination {
 		// apply Unconnected Parameter Deletion
 		Term termAfterUPD = null;
 		if (USE_UPD) {
-			Term[] oldParams = getXjunctsOuter(quantifier, result);
-			Term[] newParams = new Term[oldParams.length];
-			for (int i = 0; i < oldParams.length; i++) {
-				Set<TermVariable> eliminateesUPD = new HashSet<TermVariable>(eliminatees);
-				newParams[i] = updSimple(script, quantifier, oldParams[i], eliminateesUPD, logger);
-			}
-			termAfterUPD = composeXjunctsOuter(script, quantifier, newParams);
+			XnfUpd xnfUpd = new XnfUpd(script, services);
+			termAfterUPD = applyEliminationOuter(script, quantifier, eliminatees, result, xnfUpd);
 			result = termAfterUPD;
-			Set<TermVariable> remainingAfterUPD = new HashSet<TermVariable>(eliminatees);
-			remainingAfterUPD.retainAll(Arrays.asList(result.getFreeVars()));
-			eliminatees.retainAll(remainingAfterUPD);
 		}
 
 		if (eliminatees.isEmpty()) {
@@ -398,8 +384,64 @@ public class PartialQuantifierElimination {
 		return result;
 	}
 
+	private static Term applyEliminationOuter(Script script, int quantifier, final Set<TermVariable> eliminatees, Term term,
+			XjunctPartialQuantifierElimination elimination) {
+		final Term[] oldXjunctsOuter = getXjunctsOuter(quantifier, term);
+		final Term[] newXjunctsOuter = new Term[oldXjunctsOuter.length];
+		for (int i = 0; i < oldXjunctsOuter.length; i++) {
+			HashSet<TermVariable> localEliminatees = constructIntersectionWithFreeVars(eliminatees, oldXjunctsOuter[i]);
+			if (localEliminatees.isEmpty()) {
+				newXjunctsOuter[i] = oldXjunctsOuter[i];
+			} else {
+				newXjunctsOuter[i] = applyEliminationInner(script, quantifier, localEliminatees, oldXjunctsOuter[i], elimination);
+				if (quantifier == QuantifiedFormula.EXISTS) {
+					if (SmtUtils.isTrue(newXjunctsOuter[i])) {
+						eliminatees.clear();
+						return script.term("true");
+					}
+				} else if (quantifier == QuantifiedFormula.FORALL) {
+					if (SmtUtils.isFalse(newXjunctsOuter[i])) {
+						eliminatees.clear();
+						return script.term("false");
+					}
+				} else {
+					throw new AssertionError("unknown quantifier");
+				}
+			}
+		}
+		final Term result = composeXjunctsOuter(script, quantifier, newXjunctsOuter);
+		final Set<TermVariable> remainingEliminatees = new HashSet<TermVariable>(eliminatees);
+		remainingEliminatees.retainAll(Arrays.asList(result.getFreeVars()));
+		eliminatees.retainAll(remainingEliminatees);
+		return result;
+	}
 
 
+
+	
+	private static Term applyEliminationInner(Script script, int quantifier, final Set<TermVariable> eliminatees, Term term,
+			XjunctPartialQuantifierElimination elimination) {
+		final Set<TermVariable> eliminateesCopy = new HashSet<TermVariable>(eliminatees);
+		final Term[] oldXjunctsInner = getXjunctsInner(quantifier, term);
+		final Term[] newXjunctsInner = elimination.tryToEliminate(quantifier, oldXjunctsInner, eliminateesCopy);
+		final Term result = composeXjunctsInner(script, quantifier, newXjunctsInner);
+		return result;
+	}
+
+	/**
+	 * Construct a new HashSet that contains all TermVariables that are
+	 * in vars and occur as free variable in term.
+	 */
+	private static HashSet<TermVariable> constructIntersectionWithFreeVars(
+			final Set<TermVariable> vars, final Term term) {
+		final HashSet<TermVariable> result = new HashSet<TermVariable>();
+		for (TermVariable tv : term.getFreeVars()) {
+			if (vars.contains(tv)) {
+				result.add(tv);
+			}
+		}
+		return result;
+	}
 
 
 	public static Term sos(Script script, int quantifier, Term term, Set<TermVariable> eliminatees, Logger logger,
@@ -432,116 +474,116 @@ public class PartialQuantifierElimination {
 		return result;
 	}
 
-	/**
-	 * Try to eliminate the variables vars = {x_1,...,x_n} in term φ_1∧...∧φ_m.
-	 * Therefore we use the following approach, which we call Unconnected
-	 * Parameter Drop. If X is a subset of {x_1,...,x_n} and Φ is a subset
-	 * {φ_1,...,φ_m} such that - variables in X occur only in term of Φ, and -
-	 * terms in Φ contain only variables of X, and - the conjunction of all term
-	 * in Φ is satisfiable. Then we can remove the conjuncts Φ and the
-	 * quantified variables X from φ_1∧...∧φ_m and obtain an equivalent formula.
-	 * 
-	 * Is only sound if there are no uninterpreted function symbols in the term
-	 * TODO: extend this to uninterpreted function symbols (for soundness)
-	 * 
-	 * @param logger
-	 */
-	public static Term updSimple(Script script, int quantifier, Term term, Set<TermVariable> vars, Logger logger) {
-		Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
-		vars.retainAll(occuringVars);
-		Set<Term> parameters;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			parameters = new HashSet<Term>(Arrays.asList(SmtUtils.getConjuncts(term)));
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			parameters = new HashSet<Term>(Arrays.asList(SmtUtils.getDisjuncts(term)));
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		ConnectionPartition connection = new ConnectionPartition(parameters);
-		List<TermVariable> removeableTvs = new ArrayList<TermVariable>();
-		List<TermVariable> unremoveableTvs = new ArrayList<TermVariable>();
-		List<Term> removeableTerms = new ArrayList<Term>();
-		List<Term> unremoveableTerms = new ArrayList<Term>();
-		for (Set<Term> connectedTerms : connection.getConnectedVariables()) {
-			Set<TermVariable> connectedVars = SmtUtils.getFreeVars(connectedTerms);
-			boolean isSuperfluous;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				Term simplified = isSuperfluousConjunction(script, connectedTerms, connectedVars, vars);
-				if (SmtUtils.isTrue(simplified)) {
-					isSuperfluous = true;
-				} else if (SmtUtils.isFalse(simplified)) {
-					return simplified;
-				} else if (simplified == null) {
-					isSuperfluous = false;
-				} else {
-					throw new AssertionError("illegal case");
-				}
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				Term simplified = isSuperfluousDisjunction(script, connectedTerms, connectedVars, vars);
-				if (SmtUtils.isFalse(simplified)) {
-					isSuperfluous = true;
-				} else if (SmtUtils.isTrue(simplified)) {
-					return simplified;
-				} else if (simplified == null) {
-					isSuperfluous = false;
-				} else {
-					throw new AssertionError("illegal case");
-				}
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
-			if (isSuperfluous) {
-				removeableTvs.addAll(connectedVars);
-				removeableTerms.addAll(connectedTerms);
-			} else {
-				unremoveableTvs.addAll(connectedVars);
-				unremoveableTerms.addAll(connectedTerms);
-			}
-		}
-		List<Term> termsWithoutTvs = connection.getTermsWithOutTvs();
-		assert occuringVars.size() == removeableTvs.size() + unremoveableTvs.size();
-		assert parameters.size() == removeableTerms.size() + unremoveableTerms.size() + termsWithoutTvs.size();
-		for (Term termWithoutTvs : termsWithoutTvs) {
-			LBool sat = Util.checkSat(script, termWithoutTvs);
-			if (sat == LBool.UNSAT) {
-				if (quantifier == QuantifiedFormula.EXISTS) {
-					vars.clear();
-					return script.term("false");
-				} else if (quantifier == QuantifiedFormula.FORALL) {
-					// we drop this term its equivalent to false
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
-			} else if (sat == LBool.SAT) {
-				if (quantifier == QuantifiedFormula.EXISTS) {
-					// we drop this term its equivalent to true
-				} else if (quantifier == QuantifiedFormula.FORALL) {
-					vars.clear();
-					return script.term("true");
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
-			} else {
-				throw new AssertionError("expecting sat or unsat");
-			}
-		}
-		if (removeableTerms.isEmpty()) {
-			logger.debug(new DebugMessage("not eliminated quantifier via UPD for {0}", occuringVars));
-			return term;
-		} else {
-			vars.removeAll(removeableTvs);
-			logger.debug(new DebugMessage("eliminated quantifier via UPD for {0}", removeableTvs));
-			Term result;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				result = Util.and(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				result = Util.or(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
-			return result;
-		}
-	}
+//	/**
+//	 * Try to eliminate the variables vars = {x_1,...,x_n} in term φ_1∧...∧φ_m.
+//	 * Therefore we use the following approach, which we call Unconnected
+//	 * Parameter Drop. If X is a subset of {x_1,...,x_n} and Φ is a subset
+//	 * {φ_1,...,φ_m} such that - variables in X occur only in term of Φ, and -
+//	 * terms in Φ contain only variables of X, and - the conjunction of all term
+//	 * in Φ is satisfiable. Then we can remove the conjuncts Φ and the
+//	 * quantified variables X from φ_1∧...∧φ_m and obtain an equivalent formula.
+//	 * 
+//	 * Is only sound if there are no uninterpreted function symbols in the term
+//	 * TODO: extend this to uninterpreted function symbols (for soundness)
+//	 * 
+//	 * @param logger
+//	 */
+//	public static Term updSimple(Script script, int quantifier, Term term, Set<TermVariable> vars, Logger logger) {
+//		Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
+//		vars.retainAll(occuringVars);
+//		Set<Term> parameters;
+//		if (quantifier == QuantifiedFormula.EXISTS) {
+//			parameters = new HashSet<Term>(Arrays.asList(SmtUtils.getConjuncts(term)));
+//		} else if (quantifier == QuantifiedFormula.FORALL) {
+//			parameters = new HashSet<Term>(Arrays.asList(SmtUtils.getDisjuncts(term)));
+//		} else {
+//			throw new AssertionError("unknown quantifier");
+//		}
+//		ConnectionPartition connection = new ConnectionPartition(parameters);
+//		List<TermVariable> removeableTvs = new ArrayList<TermVariable>();
+//		List<TermVariable> unremoveableTvs = new ArrayList<TermVariable>();
+//		List<Term> removeableTerms = new ArrayList<Term>();
+//		List<Term> unremoveableTerms = new ArrayList<Term>();
+//		for (Set<Term> connectedTerms : connection.getConnectedVariables()) {
+//			Set<TermVariable> connectedVars = SmtUtils.getFreeVars(connectedTerms);
+//			boolean isSuperfluous;
+//			if (quantifier == QuantifiedFormula.EXISTS) {
+//				Term simplified = isSuperfluousConjunction(script, connectedTerms, connectedVars, vars);
+//				if (SmtUtils.isTrue(simplified)) {
+//					isSuperfluous = true;
+//				} else if (SmtUtils.isFalse(simplified)) {
+//					return simplified;
+//				} else if (simplified == null) {
+//					isSuperfluous = false;
+//				} else {
+//					throw new AssertionError("illegal case");
+//				}
+//			} else if (quantifier == QuantifiedFormula.FORALL) {
+//				Term simplified = isSuperfluousDisjunction(script, connectedTerms, connectedVars, vars);
+//				if (SmtUtils.isFalse(simplified)) {
+//					isSuperfluous = true;
+//				} else if (SmtUtils.isTrue(simplified)) {
+//					return simplified;
+//				} else if (simplified == null) {
+//					isSuperfluous = false;
+//				} else {
+//					throw new AssertionError("illegal case");
+//				}
+//			} else {
+//				throw new AssertionError("unknown quantifier");
+//			}
+//			if (isSuperfluous) {
+//				removeableTvs.addAll(connectedVars);
+//				removeableTerms.addAll(connectedTerms);
+//			} else {
+//				unremoveableTvs.addAll(connectedVars);
+//				unremoveableTerms.addAll(connectedTerms);
+//			}
+//		}
+//		List<Term> termsWithoutTvs = connection.getTermsWithOutTvs();
+//		assert occuringVars.size() == removeableTvs.size() + unremoveableTvs.size();
+//		assert parameters.size() == removeableTerms.size() + unremoveableTerms.size() + termsWithoutTvs.size();
+//		for (Term termWithoutTvs : termsWithoutTvs) {
+//			LBool sat = Util.checkSat(script, termWithoutTvs);
+//			if (sat == LBool.UNSAT) {
+//				if (quantifier == QuantifiedFormula.EXISTS) {
+//					vars.clear();
+//					return script.term("false");
+//				} else if (quantifier == QuantifiedFormula.FORALL) {
+//					// we drop this term its equivalent to false
+//				} else {
+//					throw new AssertionError("unknown quantifier");
+//				}
+//			} else if (sat == LBool.SAT) {
+//				if (quantifier == QuantifiedFormula.EXISTS) {
+//					// we drop this term its equivalent to true
+//				} else if (quantifier == QuantifiedFormula.FORALL) {
+//					vars.clear();
+//					return script.term("true");
+//				} else {
+//					throw new AssertionError("unknown quantifier");
+//				}
+//			} else {
+//				throw new AssertionError("expecting sat or unsat");
+//			}
+//		}
+//		if (removeableTerms.isEmpty()) {
+//			logger.debug(new DebugMessage("not eliminated quantifier via UPD for {0}", occuringVars));
+//			return term;
+//		} else {
+//			vars.removeAll(removeableTvs);
+//			logger.debug(new DebugMessage("eliminated quantifier via UPD for {0}", removeableTvs));
+//			Term result;
+//			if (quantifier == QuantifiedFormula.EXISTS) {
+//				result = Util.and(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
+//			} else if (quantifier == QuantifiedFormula.FORALL) {
+//				result = Util.or(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
+//			} else {
+//				throw new AssertionError("unknown quantifier");
+//			}
+//			return result;
+//		}
+//	}
 
 	/**
 	 * Return "true" if connectedVars is a subset of quantifiedVars and the

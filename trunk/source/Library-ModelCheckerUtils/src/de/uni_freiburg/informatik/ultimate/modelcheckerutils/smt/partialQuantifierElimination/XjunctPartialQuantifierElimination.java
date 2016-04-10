@@ -56,6 +56,13 @@ public abstract class XjunctPartialQuantifierElimination {
 	}
 	public abstract String getName();
 	public abstract String getAcronym();
+	/**
+	 * Returns true if the returned result is again an Xjunction (conjunction
+	 * for existential quantifier, disjunction for universal quantifier).
+	 * E.g., if we apply TIR for existential quantification to a conjunction,
+	 * we may obtain a (large) disjunction of conjunction.
+	 */
+	public abstract boolean resultIsXjunction();
 	public abstract Term[] tryToEliminate(int quantifier, Term[] oldParams, Set<TermVariable> eliminatees);
 
 }
