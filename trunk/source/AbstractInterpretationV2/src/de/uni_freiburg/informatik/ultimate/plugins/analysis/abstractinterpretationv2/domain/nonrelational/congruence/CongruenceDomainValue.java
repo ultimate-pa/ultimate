@@ -15,12 +15,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public final class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 
-	private BigInteger mValue = null;
-	private boolean mIsBottom = true;
-	private boolean mIsConstant = false;
-	private boolean mNonZero = false;
+	private BigInteger mValue;
+	private boolean mIsBottom;
+	private boolean mIsConstant;
+	private boolean mNonZero;
 	
-	private CongruenceDomainValue() {}
+	/**
+	 * Creates a bottom value (shouldn't be called, just necessary for the static create-methods)
+	 */
+	private CongruenceDomainValue() {
+		mValue = null;
+		mIsBottom = true;
+		mIsConstant = false;
+		mNonZero = false;
+	}
 	
 	protected static CongruenceDomainValue createTop() {
 		return createNonConstant(BigInteger.ONE);
@@ -371,11 +379,12 @@ public final class CongruenceDomainValue implements Comparable<CongruenceDomainV
 	}
 	
 	protected CongruenceDomainValue getNonZeroValue() {
-		if (mIsConstant) {
-			return mValue.signum() == 0 ? createBottom() : copy();
+		if (mIsBottom || mValue.signum() == 0) {
+			return createBottom();
 		}
-		final CongruenceDomainValue res = copy();
-		res.mNonZero = true;
-		return res;
+		if (mIsConstant) {
+			return copy();
+		}
+		return createNonConstant(mValue, true);
 	}
 }

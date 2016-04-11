@@ -386,7 +386,9 @@ public class CongruenceBinaryExpressionEvaluator
 				case ARITHPLUS:
 				case COMPNEQ:
 				case COMPLT:
+				case COMPLEQ:
 				case COMPGT:
+				case COMPGEQ:
 					final CongruenceDomainValue newArithValueLeft = computeNewValue(referenceValue, left.getValue(),
 					        right.getValue(), true);
 					final CongruenceDomainValue newArithValueRight = computeNewValue(referenceValue, right.getValue(),
@@ -463,17 +465,39 @@ public class CongruenceBinaryExpressionEvaluator
 			newValue = oldValue.intersect(otherValue);
 			break;
 		case COMPNEQ:
+			if (otherValue.isConstant() && otherValue.value().signum() == 0) {
+				newValue = oldValue.getNonZeroValue();
+			} else {
+				newValue = oldValue;
+			}
+			break;
 		case COMPLT:
+			if (otherValue.isConstant() && otherValue.value().signum() <= 0) {
+				newValue = oldValue.getNonZeroValue();
+			} else {
+				newValue = oldValue;
+			}
+			break;
 		case COMPGT:
-			if (otherValue.value().signum() == 0) {
+			if (otherValue.isConstant() && otherValue.value().signum() >= 0) {
 				newValue = oldValue.getNonZeroValue();
 			} else {
 				newValue = oldValue;
 			}
 			break;
 		case COMPLEQ:
+			if (otherValue.isConstant() && otherValue.value().signum() < 0) {
+				newValue = oldValue.getNonZeroValue();
+			} else {
+				newValue = oldValue;
+			}
+			break;
 		case COMPGEQ:
-			newValue = referenceValue;
+			if (otherValue.isConstant() && otherValue.value().signum() > 0) {
+				newValue = oldValue.getNonZeroValue();
+			} else {
+				newValue = oldValue;
+			}
 			break;
 		default:
 			throw new UnsupportedOperationException("Not implemented: " + mOperator);

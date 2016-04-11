@@ -226,23 +226,17 @@ public class ExpressionTransformer {
 			switch (operator) {
 				case COMPLT:
 				case COMPLEQ:
-					if (newExpr instanceof BinaryExpression && mConstant.signum() > 0) {
-						newExpr = new BinaryExpression(loc, Operator.COMPNEQ, ((BinaryExpression) newExpr).getLeft(), new IntegerLiteral(loc, "0"));
-					} else {
-						newExpr = new BinaryExpression(loc, operator, newExpr, new IntegerLiteral(loc, "0"));
-					}
-					break;
 				case COMPGT:
 				case COMPGEQ:
-					if (newExpr instanceof BinaryExpression && mConstant.signum() < 0) {
-						newExpr = new BinaryExpression(loc, Operator.COMPNEQ, ((BinaryExpression) newExpr).getLeft(), new IntegerLiteral(loc, "0"));
+				case COMPEQ:
+				case COMPNEQ:
+					if (newExpr instanceof BinaryExpression && mConstant.signum() != 0) {
+						// For comparison operators, the constant is on the right side (better to handle for non-zero)
+						final IntegerLiteral integer = new IntegerLiteral(loc, mConstant.negate().toString());
+						newExpr = new BinaryExpression(loc, operator, ((BinaryExpression) newExpr).getLeft(), integer);
 					} else {
 						newExpr = new BinaryExpression(loc, operator, newExpr, new IntegerLiteral(loc, "0"));
 					}
-					break;
-				case COMPEQ:
-				case COMPNEQ:
-					newExpr = new BinaryExpression(loc, operator, newExpr, new IntegerLiteral(loc, "0"));
 					break;
 				default:
 					break;
