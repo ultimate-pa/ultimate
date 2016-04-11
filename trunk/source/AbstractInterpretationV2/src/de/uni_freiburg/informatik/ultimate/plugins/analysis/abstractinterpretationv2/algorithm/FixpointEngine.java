@@ -98,14 +98,13 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
 		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
-		// mMaxParallelStates = 1;
 	}
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
 			final Boogie2SMT bpl2smt,
 			final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> intermediateResult) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName());
-		mResult = (intermediateResult == null ? new AbstractInterpretationResult<>() : intermediateResult);
+		mResult = intermediateResult == null ? new AbstractInterpretationResult<>() : intermediateResult;
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
 		mResult.saveTerms(mStateStorage, start, script, bpl2smt);
@@ -137,9 +136,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			}
 
 			final List<STATE> postStates = calculateAbstractPost(currentItem, postOp, mergeOp);
-			if (postStates == null) {
-				continue;
-			}
 
 			for (final STATE pendingNewPostState : postStates) {
 				final STATE postState = preprocessPostState(currentItem, pendingNewPostState);
@@ -187,7 +183,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageEmptyIsBottom());
 			}
-			return null;
+			return Collections.emptyList();
 		}
 
 		if (postStates.size() > mMaxParallelStates) {
@@ -513,11 +509,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			return null;
 		}
 
-		// // if the stack is too small, we do not need to widen
-		// if (relevantStackItems.size() <= mMaxUnwindings) {
-		// return null;
-		// }
-
 		final List<STATE> orderedStates = relevantStackItems.stream().sequential()
 				.map(a -> a.getSecond().getAbstractPostStates(currentAction)).flatMap(a -> a.stream().sequential())
 				.collect(Collectors.toList());
@@ -544,9 +535,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				mLogger.debug(prefix + a.getSecond().toString());
 			});
 			mLogger.debug(prefix + "Ordered states " + getTransitionString(currentAction));
-			orderedStates.stream().sequential().forEach(a -> {
-				mLogger.debug(prefix + getStateString(a));
-			});
+			orderedStates.stream().sequential().forEach(a -> mLogger.debug(prefix + getStateString(a)));
 			mLogger.debug(prefix + "Selected " + lastState.hashCode());
 		}
 		return lastState;
