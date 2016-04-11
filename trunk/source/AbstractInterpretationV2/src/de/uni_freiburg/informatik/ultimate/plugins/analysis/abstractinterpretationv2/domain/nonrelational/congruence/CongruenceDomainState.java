@@ -909,10 +909,15 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	@Override
 	public SubsetResult isSubsetOf(final CongruenceDomainState other) {
 		assert hasSameVariables(other);
+		SubsetResult res = SubsetResult.EQUAL;		
 		for (final Entry<String, CongruenceDomainValue> entry : mValuesMap.entrySet()) {
 			final CongruenceDomainValue thisValue = entry.getValue();
 			final CongruenceDomainValue otherValue = other.mValuesMap.get(entry.getKey());
-			if (!thisValue.isContainedIn(otherValue)) {
+			if (thisValue.isEqualTo(otherValue)) {
+				continue;
+			} else if (thisValue.isContainedIn(otherValue)) {
+				res = SubsetResult.STRICT;
+			} else {
 				return SubsetResult.NONE;
 			}
 		}
@@ -920,10 +925,15 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			final BooleanValue thisValue = entry.getValue();
 			final BooleanValue otherValue = other.mBooleanValuesMap.get(entry.getKey());
-			if (!thisValue.isContainedIn(otherValue)) {
+			if (thisValue.isEqualTo(otherValue)) {
+				continue;
+			} else if (thisValue.isContainedIn(otherValue)) {
+				res = SubsetResult.STRICT;
+			} else {
 				return SubsetResult.NONE;
 			}
 		}
-		return SubsetResult.NON_STRICT;
+
+		return res;
 	}
 }
