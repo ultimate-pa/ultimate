@@ -61,10 +61,15 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	private final DuplicatorDoubleDeckerVertex<LETTER, STATE> m_DuplicatorExitShadow;
 	/**
+	 * Spoiler vertex that invoked creating the summarize edge. This is the
+	 * spoiler vertex that used the corresponding return edge.
+	 */
+	private final SpoilerDoubleDeckerVertex<LETTER, STATE> m_SpoilerInvoker;
+
+	/**
 	 * Spoilers shadow vertex to create a valid edge.
 	 */
 	private final SpoilerDoubleDeckerVertex<LETTER, STATE> m_SpoilerShadow;
-
 	/**
 	 * Source of the edge.
 	 */
@@ -77,11 +82,16 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 *            Source of the edge
 	 * @param dest
 	 *            Destination of the edge
+	 * @param spoilerInvoker
+	 *            Spoiler vertex that invoked creating the summarize edge. This
+	 *            is the spoiler vertex that used the corresponding return edge.
 	 */
 	public SummarizeEdge(final SpoilerDoubleDeckerVertex<LETTER, STATE> src,
-			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest) {
+			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest,
+			final SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerInvoker) {
 		m_Src = src;
 		m_Dest = dest;
+		m_SpoilerInvoker = spoilerInvoker;
 		m_DuplicatorEntryShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
 				ETransitionType.SUMMARIZE_ENTRY, this);
 		m_SpoilerShadow = new SpoilerDoubleDeckerVertex<LETTER, STATE>(NO_PRIORITY, false, null, null, this);
@@ -148,6 +158,16 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	public SpoilerVertex<LETTER, STATE> getSource() {
 		return m_Src;
+	}
+
+	/**
+	 * Spoiler vertex that invoked creating the summarize edge. This is the
+	 * spoiler vertex that used the corresponding return edge.
+	 * 
+	 * @return The spoiler vertex that invoked creating the summarize edge
+	 */
+	public SpoilerDoubleDeckerVertex<LETTER, STATE> getSpoilerInvoker() {
+		return m_SpoilerInvoker;
 	}
 
 	/**

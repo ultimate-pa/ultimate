@@ -314,12 +314,16 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 *            Source of the summarize edge
 	 * @param dest
 	 *            Destination of the summarize edge
+	 * @param spoilerInvoker
+	 *            Spoiler vertex that invoked creating the summarize edge. This
+	 *            is the spoiler vertex that used the corresponding return edge.
 	 */
 	private void addSummarizeEdge(final SpoilerDoubleDeckerVertex<LETTER, STATE> src,
-			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest) {
+			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest,
+			final SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerInvoker) {
 		// Only add if not already existent
 		if (m_SrcDestToSummarizeEdges.get(new Pair<>(src, dest)) == null) {
-			SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, dest);
+			SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, dest, spoilerInvoker);
 			m_SrcDestToSummarizeEdges.put(new Pair<>(src, dest), summarizeEdge);
 
 			DuplicatorVertex<LETTER, STATE> entryShadowVertex = summarizeEdge.getEntryShadowVertex();
@@ -385,7 +389,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		int searchCounter = 0;
 
 		for (SummarizeEdge<LETTER, STATE> summaryEdge : m_SrcDestToSummarizeEdges.values()) {
-			searchQueue.add(new SummarizeEdgePrioritySearch<>(summaryEdge, this));
+			searchQueue.add(new SummarizeEdgePrioritySearch<>(summaryEdge, this, getLogger(), getProgressTimer()));
 			maxAmountOfSearches++;
 		}
 
@@ -612,7 +616,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 							continue;
 						}
 						SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
-						addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD);
+						addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD, preInvokerAsDD);
 					}
 				}
 
@@ -631,13 +635,13 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			for (Vertex<LETTER, STATE> succ : getSuccessors(returnInvoker)) {
 				removeEdge(returnInvoker, succ);
 			}
-			for (Vertex<LETTER, STATE> pre : getPredecessors(returnInvoker)) {
-				removeEdge(pre, returnInvoker);
+			for (Vertex<LETTER, STATE> pred : getPredecessors(returnInvoker)) {
+				removeEdge(pred, returnInvoker);
 				// Care for dead end spoiler vertices because they are not
 				// allowed in a legal game graph.
 				// They need to form a legal instant win for Duplicator.
-				if (!hasSuccessors(pre) && pre instanceof SpoilerDoubleDeckerVertex<?, ?>) {
-					SpoilerDoubleDeckerVertex<LETTER, STATE> preAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pre;
+				if (!hasSuccessors(pred) && pred instanceof SpoilerDoubleDeckerVertex<?, ?>) {
+					SpoilerDoubleDeckerVertex<LETTER, STATE> preAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pred;
 					addDuplicatorWinningSink(preAsDD);
 				}
 			}

@@ -29,8 +29,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 
 /**
  * Breadth-first search that computes the priority of a given summarize edge
@@ -59,10 +64,18 @@ public final class SummarizeEdgePrioritySearch<LETTER, STATE> {
 	 */
 	private boolean m_IsFinished;
 	/**
+	 * Logger to use for logging.
+	 */
+	private final Logger m_Logger;
+	/**
 	 * The resulting priority for the summarize edge or
 	 * {@link SummarizeEdge#NO_PRIORITY NO_PRIORITY} if unknown.
 	 */
 	private int m_PriorityResult;
+	/**
+	 * Timer used for responding to timeouts and operation cancellation.
+	 */
+	private final IProgressAwareTimer m_ProgressTimer;
 	/**
 	 * Queue of vertices to process for the breadth-first search.
 	 */
@@ -72,15 +85,23 @@ public final class SummarizeEdgePrioritySearch<LETTER, STATE> {
 	 */
 	private final SummarizeEdge<LETTER, STATE> m_SummarizeEdge;
 	/**
-	 * Data structure that stores for each vertex of the breadth-first search a
-	 * search priority value.
-	 */
-	private final HashMap<Vertex<LETTER, STATE>, Integer> m_VertexToSearchPriority;
-	/**
 	 * The vertex of this summary edge which has no priority. The search tries
 	 * to compute a priority for this vertex.
 	 */
 	private final Vertex<LETTER, STATE> m_SummarizeEdgeNoPriorityVertex;
+	/**
+	 * The entry vertex of this summary edge.
+	 */
+	private final Vertex<LETTER, STATE> m_SummarizeEdgeEntry;
+	/**
+	 * The exit vertex of this summary edge.
+	 */
+	private final Vertex<LETTER, STATE> m_SummarizeEdgeExit;
+	/**
+	 * Data structure that stores for each vertex of the breadth-first search a
+	 * search priority value.
+	 */
+	private final HashMap<Vertex<LETTER, STATE>, Integer> m_VertexToSearchPriority;
 
 	/**
 	 * Creates a new summarize edge priority search instance that computes the
@@ -95,19 +116,28 @@ public final class SummarizeEdgePrioritySearch<LETTER, STATE> {
 	 *            Edge to compute priority for
 	 * @param gameGraph
 	 *            Game graph to work on
+	 * @param logger
+	 *            Logger to use for logging
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation
 	 */
 	public SummarizeEdgePrioritySearch(final SummarizeEdge<LETTER, STATE> summarizeEdge,
-			final AGameGraph<LETTER, STATE> gameGraph) {
+			final AGameGraph<LETTER, STATE> gameGraph, final Logger logger, final IProgressAwareTimer progressTimer) {
+		m_Logger = logger;
+		m_ProgressTimer = progressTimer;
 		m_SummarizeEdge = summarizeEdge;
 		m_SummarizeEdgeNoPriorityVertex = m_SummarizeEdge.getMiddleShadowVertex();
+		m_SummarizeEdgeEntry = m_SummarizeEdge.getEntryShadowVertex();
+		m_SummarizeEdgeExit = m_SummarizeEdge.getExitShadowVertex();
 		m_GameGraph = gameGraph;
 		m_IsFinished = false;
 		m_PriorityResult = SummarizeEdge.NO_PRIORITY;
 		m_VertexToSearchPriority = new HashMap<>();
 		m_SearchQueue = new LinkedList<>();
 
-		Vertex<LETTER, STATE> root = summarizeEdge.getDestination();
-		// TODO What is the starting priority?
+		// Start the search at spoiler invoker
+		Vertex<LETTER, STATE> root = summarizeEdge.getSpoilerInvoker();
 		m_VertexToSearchPriority.put(root, root.getPriority());
 		m_SearchQueue.add(root);
 	}
@@ -150,101 +180,133 @@ public final class SummarizeEdgePrioritySearch<LETTER, STATE> {
 	 * set, it can be continued by calling this method again. The search has
 	 * finished when {@link #isFinished()} returns <tt>true</tt>. After that the
 	 * resulting priority can be accessed using {@link #getPriorityResult()}.
+	 * 
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
-	public void search() {
+	public void search() throws OperationCanceledException {
 		boolean gotStuck = false;
 
 		// Process queue until all vertices are processed or search got stuck
 		while (!m_SearchQueue.isEmpty() && !gotStuck) {
 			Vertex<LETTER, STATE> currentVertex = m_SearchQueue.peek();
 
-			for (Vertex<LETTER, STATE> pred : m_GameGraph.getPredecessors(currentVertex)) {
-				// Reject predecessor if it was already processed by the search
-				if (m_VertexToSearchPriority.containsKey(pred)) {
-					continue;
-				}
-				// Reject predecessor if it represents the summarize edge for
-				// which the priority should be computed in this search
-				if (pred.equals(m_SummarizeEdgeNoPriorityVertex)) {
-					continue;
-				}
-				// Ignore return edges
-				if (pred instanceof DuplicatorDoubleDeckerVertex) {
-					DuplicatorDoubleDeckerVertex<LETTER, STATE> predAsDuplicatorDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) pred;
-					if (predAsDuplicatorDD.getTransitionType() == ETransitionType.RETURN) {
-						// TODO Should we also ignore call edges?
+			Set<Vertex<LETTER, STATE>> predecessors = m_GameGraph.getPredecessors(currentVertex);
+			// Only do a search if there are predecessors, i.e. the current
+			// vertex is no leaf
+			if (predecessors != null) {
+				for (Vertex<LETTER, STATE> pred : predecessors) {
+					// Reject predecessor if it is null
+					if (pred == null) {
 						continue;
 					}
-				}
-				// If priority is unknown set gotStuck and abort
-				if (pred.getPriority() == SummarizeEdge.NO_PRIORITY) {
-					gotStuck = true;
-					break;
-				}
-
-				// Calculate search priority for predecessor
-				int optimalSuccPriority = SummarizeEdge.NO_PRIORITY;
-				boolean isSpoiler = pred.isSpoilerVertex();
-				int optimalValue;
-				if (isSpoiler) {
-					optimalValue = 1;
-				} else {
-					optimalValue = 0;
-				}
-				// Compute the optimal successor of predecessor priority
-				for (Vertex<LETTER, STATE> succOfPred : m_GameGraph.getSuccessors(pred)) {
-					// Reject successor if it represents the summarize edge for
-					// which the priority should be computed in this search
-					if (succOfPred.equals(m_SummarizeEdgeNoPriorityVertex)) {
+					// Reject predecessor if it represents the summarize edge
+					// for which the priority should be computed in this search.
+					// Also reject if it is the entry or exit vertex of this
+					// summarize edge.
+					if (pred.equals(m_SummarizeEdgeNoPriorityVertex) || pred.equals(m_SummarizeEdgeEntry)
+							|| pred.equals(m_SummarizeEdgeExit)) {
 						continue;
 					}
-
-					// Select priority candidate for successor of
-					// predecessor
-					int succOfPredPriority;
-					Integer succOfPredSearchPriority = m_VertexToSearchPriority.get(succOfPred);
-					if (succOfPredSearchPriority != null) {
-						// TODO Which priority to use for successor of
-						// predecessor, the default or the search variant or
-						// a combination of both?
-						succOfPredPriority = succOfPredSearchPriority;
-					} else {
-						succOfPredPriority = succOfPred.getPriority();
+					// Ignore return edges
+					if (pred instanceof DuplicatorDoubleDeckerVertex) {
+						DuplicatorDoubleDeckerVertex<LETTER, STATE> predAsDuplicatorDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) pred;
+						if (predAsDuplicatorDD.getTransitionType() == ETransitionType.RETURN) {
+							// TODO Should we also ignore call edges?
+							continue;
+						}
 					}
-
-					// Ignore successor if his priority is unknown
-					if (succOfPredPriority == SummarizeEdge.NO_PRIORITY) {
-						continue;
-					}
-					// Search for optimal value under all successors of
-					// predecessor
-					// If that is not present try to increase to 2
-					if (succOfPredPriority > optimalSuccPriority) {
-						optimalSuccPriority = succOfPredPriority;
-					}
-					if (succOfPredPriority == optimalValue) {
-						optimalSuccPriority = succOfPredPriority;
+					// If priority is unknown set gotStuck and abort
+					if (pred.getPriority() == SummarizeEdge.NO_PRIORITY) {
+						gotStuck = true;
 						break;
 					}
-				}
 
-				// Vertex is forced to select the minimum from the optimal
-				// successor priority and its own priority
-				int searchPriority;
-				if (optimalSuccPriority != SummarizeEdge.NO_PRIORITY) {
-					searchPriority = Math.min(optimalSuccPriority, pred.getPriority());
-				} else {
-					searchPriority = pred.getPriority();
-				}
+					// Calculate search priority for predecessor
+					int optimalSuccPriority = SummarizeEdge.NO_PRIORITY;
+					boolean isSpoiler = pred.isSpoilerVertex();
+					int optimalValue;
+					if (isSpoiler) {
+						optimalValue = 1;
+					} else {
+						optimalValue = 0;
+					}
+					// Compute the optimal successor of predecessor priority
+					for (Vertex<LETTER, STATE> succOfPred : m_GameGraph.getSuccessors(pred)) {
+						// Reject successor if it represents the summarize edge
+						// for which the priority should be computed in this
+						// search.
+						// Also reject if it is the entry or exit vertex of this
+						// summarize edge.
+						if (succOfPred.equals(m_SummarizeEdgeNoPriorityVertex)
+								|| succOfPred.equals(m_SummarizeEdgeEntry) || succOfPred.equals(m_SummarizeEdgeExit)) {
+							continue;
+						}
 
-				// Put the search priority for the predecessor and add it to the
-				// queue for breadth-first processing
-				m_VertexToSearchPriority.put(pred, searchPriority);
-				m_SearchQueue.add(pred);
+						// Select priority candidate for successor of
+						// predecessor
+						int succOfPredPriority;
+						Integer succOfPredSearchPriority = m_VertexToSearchPriority.get(succOfPred);
+						// Use the search priority or the vertex priority if
+						// unknown
+						if (succOfPredSearchPriority != null) {
+							succOfPredPriority = succOfPredSearchPriority;
+						} else {
+							succOfPredPriority = succOfPred.getPriority();
+						}
+
+						// Ignore successor if his priority is unknown
+						if (succOfPredPriority == SummarizeEdge.NO_PRIORITY) {
+							continue;
+						}
+						// Search for optimal value under all successors of
+						// predecessor
+						// If that is not present try to increase to 2
+						if (succOfPredPriority > optimalSuccPriority) {
+							optimalSuccPriority = succOfPredPriority;
+						}
+						if (succOfPredPriority == optimalValue) {
+							optimalSuccPriority = succOfPredPriority;
+							break;
+						}
+					}
+
+					// Vertex is forced to select the minimum from the optimal
+					// successor priority and its own priority
+					int searchPriority;
+					if (optimalSuccPriority != SummarizeEdge.NO_PRIORITY) {
+						searchPriority = Math.min(optimalSuccPriority, pred.getPriority());
+					} else {
+						searchPriority = pred.getPriority();
+					}
+
+					// Put the search priority for the predecessor and add it to
+					// the
+					// queue for breadth-first processing
+					Integer previousSearchPriorityValue = m_VertexToSearchPriority.put(pred, searchPriority);
+					// Continue search if a search priority is new for the
+					// vertex or
+					// if values have changed.
+					// The search will converge to a fix point since min-method
+					// is
+					// monotone and the set of priorities is bounded
+					if (previousSearchPriorityValue == null || previousSearchPriorityValue != searchPriority) {
+						m_SearchQueue.add(pred);
+						m_Logger.debug("\tSetting '" + searchPriority + "' for: " + pred);
+					}
+				}
 			}
 
 			if (!gotStuck) {
 				m_SearchQueue.poll();
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
+				m_Logger.debug("Stopped in search");
+				throw new OperationCanceledException(this.getClass());
 			}
 		}
 
