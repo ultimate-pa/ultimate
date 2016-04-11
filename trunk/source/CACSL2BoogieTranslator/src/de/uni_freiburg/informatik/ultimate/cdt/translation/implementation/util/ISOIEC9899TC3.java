@@ -215,7 +215,7 @@ public final class ISOIEC9899TC3 {
 			// set sign bit if value is negative make it positive
 			if (floatVal < 0) {
 				sign = new BitvecLiteral(loc, Integer.toString(1) , 1);
-				floatVal = floatVal * -1;
+				floatVal = floatVal * -1.0;
 			} else {
 				sign = new BitvecLiteral(loc, Integer.toString(0) , 1);
 			}
@@ -225,7 +225,7 @@ public final class ISOIEC9899TC3 {
 			final CType resultType;
 			if (floatVal <= (1.0 * Math.pow(10, 37))) {
 				exponentLength = 5;
-				significantLength = 15;
+				significantLength = 10;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
 			} else if (floatVal <= (1.0 * Math.pow(10, 255))) {
 				exponentLength = 8;
@@ -237,7 +237,7 @@ public final class ISOIEC9899TC3 {
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.DOUBLE);
 			} else if (floatVal <= (1.0 * Math.pow(10, 32767))) {
 				exponentLength = 15;
-				significantLength = 113;
+				significantLength = 112;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
 			} else {
 				throw new IllegalArgumentException("arguments are out of range");
