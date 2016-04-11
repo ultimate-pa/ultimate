@@ -6,6 +6,7 @@
 **/bin/*
 **/.recommenders/*
 /trunk/source/Servers
+/trunk/source/.sonarlint/*
 
 /trunk/source/Website/WebContent/WEB-INF/classes
 /trunk/source/Website/WebContent/json/*.json
