@@ -195,6 +195,7 @@ public final class ISOIEC9899TC3 {
 		if (bitvectorTranslation) {
 			//TODO bitprecise Float translation
 			String value = val;
+			String floatType = null;
 			int exponentLength = 0;
 			int significantLength = 0;
 			int exponentValue = 0;
@@ -207,8 +208,7 @@ public final class ISOIEC9899TC3 {
 			for (String s : SUFFIXES_FLOAT) {
 				if (val.endsWith(s)) {
 					value = val.substring(0, val.length() - s.length());
-					String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
-					throw new UnsupportedSyntaxException(loc, msg);
+					floatType = s;
 				}
 			}
 			
@@ -221,36 +221,25 @@ public final class ISOIEC9899TC3 {
 			}
 			
 			// Set floatIndices depending on the value of the val
-			// TODO find out correct type ranges
 			final CType resultType;
-			if (floatVal <= (1.0 * Math.pow(10, 37))) {
-				exponentLength = 5;
-				significantLength = 10;
-				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
-			} else if (floatVal <= (1.0 * Math.pow(10, 255))) {
-				exponentLength = 8;
-				significantLength = 23;
-				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
-			} else if (floatVal <= (1.0 * Math.pow(10, 2047))) {
+			if (floatType == null || floatType.equals("d") || floatType.equals("D")) {
 				exponentLength = 11;
 				significantLength = 52;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.DOUBLE);
-			} else if (floatVal <= (1.0 * Math.pow(10, 32767))) {
+			} else if (floatType.equals("f") || floatType.equals("F")) {
+				exponentLength = 8;
+				significantLength = 23;
+				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
+			} else if (floatType.equals("l") || floatType.equals("L")) {
 				exponentLength = 15;
 				significantLength = 112;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
 			} else {
-				throw new IllegalArgumentException("arguments are out of range");
+				// TODO evaluate exception type
+				throw new IllegalArgumentException("not a float type");
 			}
 			
 			// TODO find out how to work this with NaN
-			/*
-			if (val.equals("nan") || val.equals("NaN")) {
-				exponent = new IntegerLiteral(loc, Integer.toString(exponentLength));
-				significant = new IntegerLiteral(loc, Integer.toString(significantLength + 1));
-				FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "NaN", new Expression[]{exponent, significant});
-				return new RValue(func, resultType);
-			}*/
 			
 			// calculate exponent value and value of the significant
 			while (floatVal > 2.0) {
