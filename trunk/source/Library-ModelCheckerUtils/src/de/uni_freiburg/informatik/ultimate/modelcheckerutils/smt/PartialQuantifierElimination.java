@@ -231,13 +231,7 @@ public class PartialQuantifierElimination {
 
 		// transform to DNF (resp. CNF)
 		result = (new IteRemover(script)).transform(term);
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = (new Dnf(script, services, freshTermVariableConstructor)).transform(result);
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = (new Cnf(script, services, freshTermVariableConstructor)).transform(result);
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
+		result = transformToXnf(services, script, quantifier, freshTermVariableConstructor, result);
 		if (result instanceof QuantifiedFormula) {
 			QuantifiedFormula qf = (QuantifiedFormula) result;
 			if (qf.getQuantifier() != quantifier) {
@@ -298,8 +292,9 @@ public class PartialQuantifierElimination {
 		Term termAfterTIR;
 		if (USE_TIR) {
 			XnfTir xnfTir = new XnfTir(script, services, freshTermVariableConstructor);
-			termAfterTIR = applyEliminationOuter(script, quantifier, eliminatees, result, xnfTir);
+			termAfterTIR = applyEliminationOuter(script, quantifier, eliminatees, result, xnfTir, services, freshTermVariableConstructor);
 			result = termAfterTIR;
+			
 		}
 
 		if (eliminatees.isEmpty()) {
@@ -311,7 +306,7 @@ public class PartialQuantifierElimination {
 		Term termAfterUPD = null;
 		if (USE_UPD) {
 			XnfUpd xnfUpd = new XnfUpd(script, services);
-			termAfterUPD = applyEliminationOuter(script, quantifier, eliminatees, result, xnfUpd);
+			termAfterUPD = applyEliminationOuter(script, quantifier, eliminatees, result, xnfUpd, services, freshTermVariableConstructor);
 			result = termAfterUPD;
 		}
 
@@ -384,8 +379,20 @@ public class PartialQuantifierElimination {
 		return result;
 	}
 
+	private static Term transformToXnf(IUltimateServiceProvider services, Script script, int quantifier,
+			IFreshTermVariableConstructor freshTermVariableConstructor, Term term) throws AssertionError {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			term = (new Dnf(script, services, freshTermVariableConstructor)).transform(term);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			term = (new Cnf(script, services, freshTermVariableConstructor)).transform(term);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return term;
+	}
+
 	private static Term applyEliminationOuter(Script script, int quantifier, final Set<TermVariable> eliminatees, Term term,
-			XjunctPartialQuantifierElimination elimination) {
+			XjunctPartialQuantifierElimination elimination, IUltimateServiceProvider services, IFreshTermVariableConstructor freshTermVariableConstructor) {
 		final Term[] oldXjunctsOuter = getXjunctsOuter(quantifier, term);
 		final Term[] newXjunctsOuter = new Term[oldXjunctsOuter.length];
 		for (int i = 0; i < oldXjunctsOuter.length; i++) {
@@ -409,10 +416,13 @@ public class PartialQuantifierElimination {
 				}
 			}
 		}
-		final Term result = composeXjunctsOuter(script, quantifier, newXjunctsOuter);
+		Term result = composeXjunctsOuter(script, quantifier, newXjunctsOuter);
 		final Set<TermVariable> remainingEliminatees = new HashSet<TermVariable>(eliminatees);
 		remainingEliminatees.retainAll(Arrays.asList(result.getFreeVars()));
 		eliminatees.retainAll(remainingEliminatees);
+		if (!elimination.resultIsXjunction()) {
+			result = transformToXnf(services, script, quantifier, freshTermVariableConstructor, result);
+		}
 		return result;
 	}
 
