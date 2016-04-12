@@ -211,7 +211,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		UltimatePreferenceStore m_Prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		m_UnsatCores = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		m_UseLiveVariables = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
-		m_DoFaultLocalization = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS);
+		m_DoFaultLocalization = m_Prefs
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS);
 
 		if (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION)) {
@@ -376,8 +377,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			if (m_DoFaultLocalization && feasibility == LBool.SAT) {
 				CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(m_Services,
 						m_Pref.interprocedural(), super.m_SmtManager, mLogger);
-				NestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton.getNestedWordAutomaton(
-						super.m_RootNode, m_StateFactoryForRefinement, super.m_ErrorLocs);
+				NestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
+						.getNestedWordAutomaton(super.m_RootNode, m_StateFactoryForRefinement, super.m_ErrorLocs);
 				FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(m_Counterexample,
 						(INestedWordAutomaton<CodeBlock, IPredicate>) cfg, m_Services, m_SmtManager,
 						m_ModGlobVarManager, predicateUnifier);
@@ -513,8 +514,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final PredicateUnifier predUnifier = m_InterpolantGenerator.getPredicateUnifier();
-		if (mAbsIntRunner != null && mAbsIntRunner.hasShownInfeasibility()) {
-			return mAbsIntRunner.refine(predUnifier, m_InterpolAutomaton, m_Counterexample,
+		if (mAbsIntRunner != null) {
+			if (mAbsIntRunner.hasShownInfeasibility()) {
+				return mAbsIntRunner.refine(predUnifier, m_InterpolAutomaton, m_Counterexample,
+						this::refineWithGivenAutomaton);
+			}
+			mAbsIntRunner.refineAnyways(predUnifier, m_SmtManager,
+					(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_Counterexample,
 					this::refineWithGivenAutomaton);
 		}
 		return refineWithGivenAutomaton(m_InterpolAutomaton, predUnifier);

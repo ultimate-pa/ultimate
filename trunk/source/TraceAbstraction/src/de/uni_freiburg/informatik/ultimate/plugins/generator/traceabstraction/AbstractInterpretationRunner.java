@@ -92,14 +92,15 @@ public class AbstractInterpretationRunner {
 
 			// allow for 20% of the remaining time
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-			mLogger.info("Running abstract interpretation on error trace of length " + currentCex.getLength()
+			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
 					+ " with the following transitions: ");
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
 					.map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter.runOnPathProgram(
-					(NestedRun<CodeBlock, IPredicate>) currentCex, currentAbstraction, mRoot, timer, mServices);
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter
+					.runOnPathProgram((NestedRun<CodeBlock, IPredicate>) currentCex, currentAbstraction, mRoot, timer,
+							mServices);
 			mAbsIntResult = result;
-			if(hasShownInfeasibility()){
+			if (hasShownInfeasibility()) {
 				mCegarLoopBenchmark.announceStrongAbsInt();
 			}
 		} finally {
@@ -133,13 +134,22 @@ public class AbstractInterpretationRunner {
 
 		mCegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
 		try {
-			mLogger.info("Constructing abstract interpretation automaton");
+			mLogger.info("Constructing AI automaton");
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = new AbstractInterpretationAutomatonGenerator(
 					mServices, abstraction, mAbsIntResult, predUnifier, smtManager).getResult();
 			return aiInterpolAutomaton;
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 		}
+	}
+
+	public void refineAnyways(final PredicateUnifier predUnifier, final SmtManager smtManager,
+			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate> cex,
+			final RefineFunction refineFun) throws AutomataLibraryException {
+		mLogger.info("Refining with AI automaton anyways");
+		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = constructInterpolantAutomaton(
+				predUnifier, smtManager, (INestedWordAutomaton<CodeBlock, IPredicate>) abstraction, cex);
+		refine(predUnifier, aiInterpolAutomaton, cex, refineFun);
 	}
 
 	/**
@@ -151,6 +161,7 @@ public class AbstractInterpretationRunner {
 			final IRun<CodeBlock, IPredicate> currentCex, final RefineFunction refineFun)
 			throws AutomataLibraryException {
 		if (mSkipIteration) {
+			mLogger.debug("Cannot refine with AI when iteration was skipped");
 			return false;
 		}
 		if (mAbsIntResult == null) {
@@ -160,11 +171,10 @@ public class AbstractInterpretationRunner {
 
 		mCegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
 		try {
-			mLogger.info("Refining with abstract interpretation automaton");
+			mLogger.info("Refining with AI automaton");
 			boolean aiResult = refineFun.refine(aiInterpolAutomaton, predUnifier);
 			assert hasAiProgress(aiResult, aiInterpolAutomaton, currentCex) : "No progress during AI refinement";
-			mLogger.info("Finished additional refinement with abstract interpretation automaton. Did we make progress: "
-					+ aiResult);
+			mLogger.info("Finished additional refinement with AI automaton. Did we make progress: " + aiResult);
 			return !mAbsIntResult.hasReachedError();
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
@@ -193,8 +203,7 @@ public class AbstractInterpretationRunner {
 		if (mAbsIntResult.hasReachedError()) {
 			return true;
 		}
-		mLogger.fatal(
-				"No progress during refinement with abstract interpretation although AI did not reach the error state. The following run is still accepted.");
+		mLogger.fatal("No progress during refinement with AI. The following run is still accepted.");
 		mLogger.fatal(cex);
 		mLogger.fatal("Used the following AI result: " + mAbsIntResult.toSimplifiedString(this::simplify));
 		mLogger.fatal("Automaton had the following predicates: " + aiInterpolAutomaton.getStates());
