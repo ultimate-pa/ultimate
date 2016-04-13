@@ -5,9 +5,9 @@
 
 assert(!isEmpty(nwa));
 // Before operation
-print(nwa);
+//print(nwa);
 // After operation
-//print(reduceNwaFairSimulation(nwa, false));
+print(reduceNwaFairSimulation(nwa, false));
 // Check correctness of operation
 //print(reduceNwaFairSimulation(nwa, true, true));
 
@@ -84,7 +84,7 @@ NestedWordAutomaton nwa = (
 );
 */
 // Generated corresponding game graph
-
+/*
 NestedWordAutomaton nwa = (
 	callAlphabet = { },
 	internalAlphabet = {a},
@@ -108,3 +108,33 @@ NestedWordAutomaton nwa = (
 	},
 	returnTransitions = {}
 );
+*/
+// Example with cyclic dependent summarize edges
+
+NestedWordAutomaton nwa = (
+  callAlphabet = {c},
+  internalAlphabet = {a},
+  returnAlphabet = {r},
+  states = {q1 q2 q3 q4},
+  initialStates = {q1},
+  finalStates = {q2 q4},
+  callTransitions = {
+	  (q1 c q3)
+	  (q2 c q3)
+  },
+  internalTransitions = {
+      (q1 a q2)
+	  (q2 a q1)
+	  (q4 a q1)
+	  (q4 a q2)
+  },
+  returnTransitions = {
+	  (q3 q1 r q4)
+	  (q3 q2 r q4)
+  }
+);
+
+// Generated corresponding game graph
+/*
+
+*/

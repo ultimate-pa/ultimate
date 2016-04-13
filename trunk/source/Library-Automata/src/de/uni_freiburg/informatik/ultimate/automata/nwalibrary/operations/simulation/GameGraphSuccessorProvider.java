@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 import java.util.HashSet;
 import java.util.Iterator;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 
 /**

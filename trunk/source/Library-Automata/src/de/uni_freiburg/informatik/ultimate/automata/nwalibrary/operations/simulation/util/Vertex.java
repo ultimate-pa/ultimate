@@ -26,7 +26,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util;
 
 import java.util.Set;
 

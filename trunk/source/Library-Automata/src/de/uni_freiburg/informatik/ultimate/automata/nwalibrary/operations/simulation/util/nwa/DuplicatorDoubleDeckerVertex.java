@@ -24,11 +24,13 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 
 /**
  * A vertex representing that its <i>Duplicator</i>s turn in the game defined by

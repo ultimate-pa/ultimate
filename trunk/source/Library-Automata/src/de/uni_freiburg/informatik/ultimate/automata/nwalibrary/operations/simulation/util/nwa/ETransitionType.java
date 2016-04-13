@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
- * Copyright (C) 2009-2016 University of Freiburg
+ * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,32 +24,40 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices;
-
-import java.util.Comparator;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
 /**
- * Compares two vertices based on their progress measure as returned by
- * {@link Vertex#getPM(java.util.Set, int)} but with reverse ordering, i.e.
- * greater values come before smaller ones.
+ * Possible types of a transitions.
  * 
  * @author Daniel Tischner
  *
- * @param <LETTER>
- *            Letter class for vertices
- * @param <STATE>
- *            State class for vertices
  */
-public final class VertexPmReverseComparator<LETTER, STATE> implements Comparator<Vertex<LETTER, STATE>> {
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+public enum ETransitionType {
+	/**
+	 * Type for call transitions.
 	 */
-	@Override
-	public int compare(final Vertex<LETTER, STATE> firstVertex, final Vertex<LETTER, STATE> secondVertex) {
-		return Integer.compare(secondVertex.getPM(null, 0), firstVertex.getPM(null, 0));
-	}
-
+	CALL,
+	/**
+	 * Type for internal transitions.
+	 */
+	INTERNAL,
+	/**
+	 * Type for return transitions.
+	 */
+	RETURN,
+	/**
+	 * Type for auxiliary transitions that represent the a sink that is winning
+	 * for duplicator.
+	 */
+	SINK,
+	/**
+	 * Type for auxiliary transitions that represent the entry of a summarize
+	 * edge.
+	 */
+	SUMMARIZE_ENTRY,
+	/**
+	 * Type for auxiliary transitions that represent the exit of a summarize
+	 * edge.
+	 */
+	SUMMARIZE_EXIT
 }

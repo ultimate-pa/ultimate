@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -35,6 +35,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 
 /**
@@ -186,6 +187,7 @@ public final class SummarizeEdgePrioritySearch<LETTER, STATE> {
 	 *             framework.
 	 */
 	public void search() throws OperationCanceledException {
+		m_Logger.debug("Starting search: " + hashCode());
 		boolean gotStuck = false;
 
 		// Process queue until all vertices are processed or search got stuck
@@ -213,7 +215,6 @@ public final class SummarizeEdgePrioritySearch<LETTER, STATE> {
 					if (pred instanceof DuplicatorDoubleDeckerVertex) {
 						DuplicatorDoubleDeckerVertex<LETTER, STATE> predAsDuplicatorDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) pred;
 						if (predAsDuplicatorDD.getTransitionType() == ETransitionType.RETURN) {
-							// TODO Should we also ignore call edges?
 							continue;
 						}
 					}
@@ -300,6 +301,8 @@ public final class SummarizeEdgePrioritySearch<LETTER, STATE> {
 
 			if (!gotStuck) {
 				m_SearchQueue.poll();
+			} else {
+				m_Logger.debug("Got stuck: " + hashCode());
 			}
 
 			// If operation was canceled, for example from the
@@ -318,6 +321,7 @@ public final class SummarizeEdgePrioritySearch<LETTER, STATE> {
 				m_PriorityResult = searchPriorityResult;
 				m_IsFinished = true;
 			} else {
+				// TODO Solve cyclic dependency problems
 				throw new IllegalStateException(
 						"Computing summarize edge priority could not be done. Somehow the source of the edge was no search priority though it was processed by the search.");
 			}

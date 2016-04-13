@@ -24,11 +24,11 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util;
 
 /**
  * Container for vertex values. Holds relevant fields of
- * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices.Vertex vertices}.
+ * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex vertices}.
  * 
  * @author Daniel Tischner
  *

@@ -26,7 +26,7 @@
  * resulting work.
  */
 /**
- * This packages contains classes representing vertices in game graphs needed
- * for buechi reduction using simulation.
+ * This packages contains utility classes used for automata reduction using
+ * simulation. For example vertices used in game graphs.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util;

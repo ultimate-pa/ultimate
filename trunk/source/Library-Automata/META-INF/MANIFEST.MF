@@ -37,7 +37,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.old.vertex,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance,
- de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.vertices,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions,

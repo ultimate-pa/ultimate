@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.nwa;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -35,6 +35,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 
 /**
