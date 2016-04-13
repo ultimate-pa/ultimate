@@ -42,9 +42,9 @@ import java.util.HashSet;
  * The following constraints are useful in most situations:
  *
  * <ul>
- * <li>numStates >= 0 && numISyms >= 0 && numRSyms >= 0
- * <li>isInitial != null && isInitial.length == numStates
- * <li>isFinal != null && isFinal.length == numStates
+ * <li>numStates &ge; 0 && numISyms &ge; 0 && numRSyms &ge; 0
+ * <li>isInitial &ne; null && isInitial.length = numStates
+ * <li>isFinal &ne; null && isFinal.length = numStates
  * <li>iTrans, cTrans, rTrans are not null and use only symbols and states from
  * the ranges [0, numStates), [0, numISyms), [0, numCSyms), [0, numRSyms)
  * </ul>
@@ -187,5 +187,158 @@ final class NWA implements Cloneable {
 		out.rTrans = rTrans.clone();
 
 		return out;
+	}
+}
+
+
+/**
+ * Call transition for nested word automata (NWA).
+ *
+ * @author stimpflj
+ */
+final class ITrans {
+	/** Source state */
+	int src;
+
+	/** Internal symbol */
+	int sym;
+
+	/** Destination state */
+	int dst;
+
+
+	ITrans() {}
+
+	ITrans(int src, int sym, int dst) {
+		this.src = src;
+		this.sym = sym;
+		this.dst = dst;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof ITrans))
+			return false;
+
+		ITrans b = (ITrans) obj;
+		return src == b.src && sym == b.sym && dst == b.dst;
+	}
+
+	@Override
+	public int hashCode() {
+		return (src * 31 + sym) * 31 + dst;
+	}
+
+	static int compareSrcSymDst(ITrans a, ITrans b) {
+		if (a.src != b.src) return a.src - b.src;
+		if (a.sym != b.sym) return a.sym - b.sym;
+		return a.dst - b.dst;
+	}
+}
+
+
+/**
+ * Call transition for nested word automata (NWA)
+ *
+ * @author stimpflj
+ */
+final class CTrans {
+	/** Source state */
+	int src;
+
+	/** Call symbol */
+	int sym;
+
+	/** Destination state */
+	int dst;
+
+	CTrans() {}
+
+	CTrans(int src, int sym, int dst) {
+		this.src = src;
+		this.sym = sym;
+		this.dst = dst;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof CTrans))
+			return false;
+
+		CTrans b = (CTrans) obj;
+
+		return src == b.src && sym == b.sym && dst == b.dst;
+	}
+
+	@Override
+	public int hashCode() {
+		return (src * 31 + sym) * 31 + dst;
+	}
+
+	static int compareSrcSymDst(CTrans a, CTrans b) {
+		if (a.src != b.src)
+			return a.src - b.src;
+		if (a.sym != b.sym)
+			return a.sym - b.sym;
+		return a.dst - b.dst;
+	}
+}
+
+
+/**
+ * Return transition for nested word automata (NWA).
+ *
+ * @author stimpflj
+ */
+final class RTrans {
+	/** Source state */
+	int src;
+
+	/** Return symbol */
+	int sym;
+
+	/** top-of-stack (hierarchical) state */
+	int top;
+
+	/** Destination state */
+	int dst;
+
+
+	RTrans() {}
+
+	RTrans(int src, int sym, int top, int dst) {
+		this.src = src;
+		this.sym = sym;
+		this.top = top;
+		this.dst = dst;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof RTrans))
+			return false;
+
+		RTrans b = (RTrans) obj;
+
+		return src == b.src && top == b.top && sym == b.sym && dst == b.dst;
+	}
+
+	@Override
+	public int hashCode() {
+		return ((src * 31 + sym) * 31 + top) * 31 + dst;
+	}
+
+	static int compareSrcSymTopDst(RTrans a, RTrans b) {
+		if (a.src != b.src) return a.src - b.src;
+		if (a.sym != b.sym) return a.sym - b.sym;
+		if (a.top != b.top) return a.top - b.top;
+		return a.dst - b.dst;
+	}
+
+	static int compareSrcTopSymDst(RTrans a, RTrans b) {
+		if (a.src != b.src) return a.src - b.src;
+		if (a.top != b.top) return a.top - b.top;
+		if (a.sym != b.sym) return a.sym - b.sym;
+		return a.dst - b.dst;
 	}
 }
