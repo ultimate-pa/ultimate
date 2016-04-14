@@ -397,12 +397,14 @@ public class AffineExpression {
 		return sb.toString();
 	}
 
+	/** @see AffineExpression#getOneVarForm() */
 	public static class OneVarForm {
 		public String var;
 		public boolean negVar;
 		public OctValue constant;
 	}
 
+	/** @see AffineExpression#getTwoVarForm() */
 	public static class TwoVarForm {
 		public String var1, var2;
 		public boolean negVar2, negVar1;

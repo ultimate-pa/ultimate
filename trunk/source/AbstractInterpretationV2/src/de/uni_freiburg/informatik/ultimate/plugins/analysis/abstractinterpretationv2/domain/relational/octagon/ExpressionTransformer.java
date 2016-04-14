@@ -1,10 +1,35 @@
+/*
+ * Copyright (C) 2015-2016 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -15,87 +40,150 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
+/**
+ * Methods to transform Boogie expressions into {@link AffineExpression}s
+ * {@link IfThenElseExpression}-free expressions and logic negations.
+ * Transformations are cached.
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class ExpressionTransformer {
 
-	private Map<Expression, AffineExpression> mCacheAffineExpr = new HashMap<>();
-	private Map<Expression, Expression> mCacheLogicNeg = new HashMap<>();
-	private Map<Expression, IfExpressionTree> mCacheRemoveIfExpr = new HashMap<>();
+	/**
+	 * Cache of already processed expressions and their affine version.
+	 * Expressions that are not present as a map key were never processed.
+	 * Expressions that map to {@code null} were processed, but could not be transformed.
+	 */
+	private final Map<Expression, AffineExpression> mCacheAffineExpr = new HashMap<>();
+
+	/**
+	 * Cache of already processed expressions and their logical negation.
+	 * Expressions that are not present as a map key were never processed.
+	 */
+	private final Map<Expression, Expression> mCacheLogicNeg = new HashMap<>();
 	
-	public AffineExpression affineExprCached(Expression e) {
-		if (mCacheAffineExpr.containsKey(e)) {
-			return mCacheAffineExpr.get(e); // may return null
+	/**
+	 * Cache of already processed expressions and their if-free version.
+	 * Expressions that are not present as a map key were never processed.
+	 */
+	private final Map<Expression, IfExpressionTree> mCacheRemoveIfExpr = new HashMap<>();
+	
+	/**
+	 * Transform an expression into an {@link AffineExpression}.
+	 * Expressions that cannot be transformed return {@code null}.
+	 * <p>
+	 * The result of the transformation is cached
+	 * -- subsequent calls with the same parameter will return the very same object.
+	 * 
+	 * @param expr Expression to be transformed.
+	 * @return {@link AffineExpression} or {@code null}
+	 */
+	public AffineExpression affineExprCached(final Expression expr) {
+		if (mCacheAffineExpr.containsKey(expr)) {
+			return mCacheAffineExpr.get(expr); // may return null
 		} else {
-			AffineExpression cachedAe = toAffineExpr(e);
-			mCacheAffineExpr.put(e, cachedAe);
-			return cachedAe;
+			final AffineExpression cachedAffExpr = toAffineExpr(expr);
+			mCacheAffineExpr.put(expr, cachedAffExpr);
+			return cachedAffExpr;
 		}
 	}
 
 	// TODO implement transformation to AffineExpression, using known concrete values
 	// (x = [1, 1] is concrete, y = [1, 2] is not.)
 
-	public Expression logicNegCached(Expression e) {
-		Expression cachedLn = mCacheLogicNeg.get(e);
-		if (cachedLn == null) {
-			cachedLn = logicNeg(e);
-			mCacheLogicNeg.put(e, cachedLn);
+	/**
+	 * Negate a boolean expression.
+	 * The negation is not deep. The resulting negation of {@code x < y} is {@code !(x < y)} and not {@code x >= y}.
+	 * Only boolean literals and already negated expressions (for instance {@code !(expr)} are negated without
+	 * enclosing them in a further negation.
+	 * <p>
+	 * The result of the transformation is cached
+	 * -- subsequent calls with the same parameter will return the very same object.
+	 * 
+	 * @param expr Expression to be transformed.
+	 * @return Logical negation
+	 */
+	public Expression logicNegCached(final Expression expr) {
+		Expression cachedNeg = mCacheLogicNeg.get(expr);
+		if (cachedNeg == null) {
+			cachedNeg = logicNeg(expr);
+			mCacheLogicNeg.put(expr, cachedNeg);
 		}
-		return cachedLn;
+		return cachedNeg;
 	}
 
-	public IfExpressionTree removeIfExprsCached(Expression e) {
-		IfExpressionTree cachedTree = mCacheRemoveIfExpr.get(e);
+	/**
+	 * Removes {@link IfThenElseExpression}s from an expression.
+	 * Each {@code if} is substituted by two assume statements.
+	 * {@code if}s inside the body of other {@code if}s are removed.
+	 * {@code if}s inside the conditions of other {@code if}s are <b>not</b> removed.
+	 * <p>
+	 * The result of the transformation is cached
+	 * -- subsequent calls with the same parameter will return the very same object.
+	 * 
+	 * @param expr Expression to be transformed.
+	 * @return Expression without {@code if}s
+	 * 
+	 * @see IfExpressionTree
+	 */
+	public IfExpressionTree removeIfExprsCached(final Expression expr) {
+		IfExpressionTree cachedTree = mCacheRemoveIfExpr.get(expr);
 		if (cachedTree == null) {
 			// cachedTree = removeIfExprs(e);
-			cachedTree = IfExpressionTree.buildTree(e, this);
-			mCacheRemoveIfExpr.put(e, cachedTree);
+			cachedTree = IfExpressionTree.buildTree(expr, this);
+			mCacheRemoveIfExpr.put(expr, cachedTree);
 		}
 		return cachedTree;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	private AffineExpression toAffineExpr(Expression e) {
-		assert TypeUtil.isNumeric(e.getType()) : "Cannot transform non-numeric expression to affine expression: " + e;
-		if (e instanceof IntegerLiteral) {
-			String value = ((IntegerLiteral) e).getValue();
+	/** Internal, non-cached version of {@link #affineExprCached(Expression)}. */
+	private AffineExpression toAffineExpr(final Expression expr) {
+		assert TypeUtil.isNumeric(expr.getType()) : "Cannot transform non-numeric expression to affine expression: " + expr;
+		if (expr instanceof IntegerLiteral) {
+			final String value = ((IntegerLiteral) expr).getValue();
 			return new AffineExpression(new BigDecimal(value));
-		} else if (e instanceof RealLiteral) {
-			String value = ((RealLiteral) e).getValue();
+		} else if (expr instanceof RealLiteral) {
+			final String value = ((RealLiteral) expr).getValue();
 			return new AffineExpression(new BigDecimal(value));
-		} else if (e instanceof IdentifierExpression) {
-			String varName = ((IdentifierExpression) e).getIdentifier();
+		} else if (expr instanceof IdentifierExpression) {
+			final String varName = ((IdentifierExpression) expr).getIdentifier();
 			Map<String, BigDecimal> coefficients = Collections.singletonMap(varName, BigDecimal.ONE);
 			return new AffineExpression(coefficients, BigDecimal.ZERO);
-		} else if (e instanceof UnaryExpression) {
-			return unaryExprToAffineExpr((UnaryExpression) e);
-		} else if (e instanceof BinaryExpression) {
-			return binaryExprToAffineExpr((BinaryExpression) e);
+		} else if (expr instanceof UnaryExpression) {
+			return unaryExprToAffineExpr((UnaryExpression) expr);
+		} else if (expr instanceof BinaryExpression) {
+			return binaryExprToAffineExpr((BinaryExpression) expr);
 		}
 		return null;
 	}
 
-	private AffineExpression unaryExprToAffineExpr(UnaryExpression e) {
-		switch (e.getOperator()) {
+	/** @see #toAffineExpr(Expression) */
+	private AffineExpression unaryExprToAffineExpr(final UnaryExpression expr) {
+		switch (expr.getOperator()) {
 		case ARITHNEGATIVE:
-			AffineExpression sub = affineExprCached(e.getExpr());
+			final AffineExpression sub = affineExprCached(expr.getExpr());
 			return sub == null ? null : sub.negate();
 		default:
 			return null;
 		}
 	}
 	
-	private AffineExpression binaryExprToAffineExpr(BinaryExpression e) {
-		AffineExpression left = affineExprCached(e.getLeft());
-		if (left == null) { return null; }
-		AffineExpression right = affineExprCached(e.getRight());
-		if (right == null) { return null; }
-		boolean isInteger = TypeUtil.isNumericInt(e.getType());
-		switch (e.getOperator()) {
+	/** @see #toAffineExpr(Expression) */
+	private AffineExpression binaryExprToAffineExpr(final BinaryExpression expr) {
+		final AffineExpression left = affineExprCached(expr.getLeft());
+		if (left == null) {
+			return null;
+		}
+		final AffineExpression right = affineExprCached(expr.getRight());
+		if (right == null) {
+			return null;
+		}
+		boolean isInteger = TypeUtil.isNumericInt(expr.getType());
+		switch (expr.getOperator()) {
 		case ARITHDIV:
 			return left.divide(right, isInteger);
 		case ARITHMINUS:
@@ -113,109 +201,19 @@ public class ExpressionTransformer {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	private Expression logicNeg(Expression e) {
-		assert TypeUtil.isBoolean(e.getType()) : "Logical negation of non-boolean expression: " + e;
-		if (e instanceof UnaryExpression) {
-			UnaryExpression ue = (UnaryExpression) e;
-			if (ue.getOperator() == UnaryExpression.Operator.LOGICNEG) {
-				return ue.getExpr();
+	/** Internal, non-cached version of {@link #logicNeg(Expression)}. */
+	private Expression logicNeg(final Expression expr) {
+		assert TypeUtil.isBoolean(expr.getType()) : "Logical negation of non-boolean expression: " + expr;
+		if (expr instanceof UnaryExpression) {
+			final UnaryExpression unaryExpr = (UnaryExpression) expr;
+			if (unaryExpr.getOperator() == UnaryExpression.Operator.LOGICNEG) {
+				return unaryExpr.getExpr();
 			}
-		} else if (e instanceof BooleanLiteral) {
-			BooleanLiteral bl = (BooleanLiteral) e;
-			return new BooleanLiteral(bl.getLocation(), bl.getType(), !bl.getValue());
+		} else if (expr instanceof BooleanLiteral) {
+			final BooleanLiteral boolLit = (BooleanLiteral) expr;
+			return new BooleanLiteral(boolLit.getLocation(), boolLit.getType(), !boolLit.getValue());
 		}
-		return new UnaryExpression(e.getLocation(), e.getType(), UnaryExpression.Operator.LOGICNEG, e);
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// TODO remove methods below -- IfThenElseExpressions are now handled by IfExpressionTree
-	
-	private List<Pair<List<Expression>, Expression>> removeIfExprs(Expression e) {
-		if (e instanceof IfThenElseExpression) {
-			return removeIfExprsFromIfExpr((IfThenElseExpression) e);
-		} else if (e instanceof BinaryExpression) {
-			return removeIfExprsFromBinaryExpr((BinaryExpression) e);
-		} else if (e instanceof UnaryExpression) {
-			return removeIfExprsFromUnaryExpr((UnaryExpression) e);
-		} else {
-			// Expression does not contain further expressions
-			// except for Quantifiers or Array*Expressions -- but they are are not interpreted by the post-operator
-			return pathWithoutIfs(e);
-		}
-	}
-
-	private List<Pair<List<Expression>, Expression>> removeIfExprsFromIfExpr(IfThenElseExpression e) {
-		List<Pair<List<Expression>, Expression>> thenPaths, elsePaths;
-		thenPaths = removeIfExprs(e.getThenPart());
-		elsePaths = removeIfExprs(e.getElsePart());
-		Expression condition, notCondition;
-		condition = e.getCondition();
-		// note: condition may contain further IfThenElseExpressions which will not be removed.
-		if (!(condition instanceof WildcardExpression)) {
-			notCondition = logicNegCached(condition);
-			thenPaths.forEach(p -> p.getFirst().add(condition));
-			elsePaths.forEach(p -> p.getFirst().add(notCondition));
-			// note: Assumptions are added to the end of the list. Results in "innermost if-condition first".
-			//       Not wrong, but interpretation MAY be not as precise (depending on abstr. domain and post-operator).
-		}
-		return concatLists(thenPaths, elsePaths);
-	}
-	
-	private List<Pair<List<Expression>, Expression>> removeIfExprsFromBinaryExpr(BinaryExpression e) {
-		List<Pair<List<Expression>, Expression>> leftPaths, rightPaths;
-		leftPaths = removeIfExprs(e.getLeft());
-		rightPaths = removeIfExprs(e.getRight());
-		
-		if (leftPaths.size() == 1 && rightPaths.size() == 1) {
-			
-			// TODO remove assertion (complete line)
-			assert leftPaths.get(0).getSecond() == e.getLeft() && rightPaths.get(0).getSecond() == e.getRight()
-					&& leftPaths.get(0).getFirst().isEmpty() && rightPaths.get(0).getFirst().isEmpty();
-			return pathWithoutIfs(e);
-
-		} else {
-			
-			int cartesianProductSize = leftPaths.size() * rightPaths.size();
-			// TODO throw exception if cartesian product is too large
-			// it is possible (but unlikely) that a lot of nested IfThenElseExpressions appear (maybe in svcomp eca?)
-			List<Pair<List<Expression>, Expression>> newPaths = new ArrayList<>(cartesianProductSize);
-			for (Pair<List<Expression>, Expression> pl : leftPaths) {
-				for (Pair<List<Expression>, Expression> pr : rightPaths) {
-					BinaryExpression flatBe = new BinaryExpression(
-							e.getLocation(), e.getType(), e.getOperator(), pl.getSecond(), pr.getSecond());
-					newPaths.add(new Pair<>(concatLists(pl.getFirst(), pr.getFirst()), flatBe));
-				}
-			}
-			return newPaths;
-		}
-	}
-	
-	private List<Pair<List<Expression>, Expression>> removeIfExprsFromUnaryExpr(UnaryExpression e) {
-		List<Pair<List<Expression>, Expression>> paths = removeIfExprs(e.getExpr());
-		if (paths.size() == 1) {
-			assert paths.get(0).getSecond() == e.getExpr() && paths.get(0).getFirst().isEmpty(); // TODO remove
-			return pathWithoutIfs(e);
-		} else {
-			// modify paths in-place (value is used only here)
-			for (int i = 0; i < paths.size(); ++i) {
-				Pair<List<Expression>, Expression> p = paths.get(i);
-				paths.set(i, new Pair<>(p.getFirst(),
-						new UnaryExpression(e.getLocation(), e.getType(), e.getOperator(), p.getSecond())));
-			}
-			return paths;
-		}
-	}
-	
-	private List<Pair<List<Expression>, Expression>> pathWithoutIfs(Expression e) {
-		// "new ArrayList()" instead of "Collection.emptyList()" allows to add values later on (and is NOT slower!)
-		return Collections.singletonList(new Pair<>(new ArrayList<>(), e));
-	}
-	
-	private <T> List<T> concatLists(List<T> first, List<T> second) {
-		List<T> result = new ArrayList<>(first.size() + second.size());
-		result.addAll(first);
-		result.addAll(second);
-		return result;
+		return new UnaryExpression(expr.getLocation(), expr.getType(), UnaryExpression.Operator.LOGICNEG, expr);
 	}
 
 }
