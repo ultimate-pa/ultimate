@@ -72,7 +72,7 @@ public class ExpressionTransformer {
 	
 	/**
 	 * Transform an expression into an {@link AffineExpression}.
-	 * Expressions that cannot be transformed return {@code null}.
+	 * Expressions that cannot be transformed result in {@code null}.
 	 * <p>
 	 * The result of the transformation is cached
 	 * -- subsequent calls with the same parameter will return the very same object.
@@ -151,7 +151,7 @@ public class ExpressionTransformer {
 			return new AffineExpression(new BigDecimal(value));
 		} else if (expr instanceof IdentifierExpression) {
 			final String varName = ((IdentifierExpression) expr).getIdentifier();
-			Map<String, BigDecimal> coefficients = Collections.singletonMap(varName, BigDecimal.ONE);
+			final Map<String, BigDecimal> coefficients = Collections.singletonMap(varName, BigDecimal.ONE);
 			return new AffineExpression(coefficients, BigDecimal.ZERO);
 		} else if (expr instanceof UnaryExpression) {
 			return unaryExprToAffineExpr((UnaryExpression) expr);
@@ -182,7 +182,7 @@ public class ExpressionTransformer {
 		if (right == null) {
 			return null;
 		}
-		boolean isInteger = TypeUtil.isNumericInt(expr.getType());
+		final boolean isInteger = TypeUtil.isNumericInt(expr.getType());
 		switch (expr.getOperator()) {
 		case ARITHDIV:
 			return left.divide(right, isInteger);

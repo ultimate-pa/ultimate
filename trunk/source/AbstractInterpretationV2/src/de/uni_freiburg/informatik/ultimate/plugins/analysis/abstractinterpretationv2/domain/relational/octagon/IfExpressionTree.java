@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -66,10 +67,11 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class IfExpressionTree {
+public final class IfExpressionTree {
 
 	/**
 	 * Construct a new {@linkplain IfExpressionTree} from an expression.
+	 * 
 	 * @param expr Expression to be transformed.
 	 * @param exprTransformer Transformer to be used for transformation (contains cache for negations of expressions).
 	 * @return {@linkplain IfExpressionTree}
@@ -150,9 +152,10 @@ public class IfExpressionTree {
 
 	/**
 	 * Create a new leaf of an IfExpressionTree.
+	 * 
 	 * @param expressionWithoutIf Effective, if-free expression, when assuming all expressions on the path to this leaf.
 	 */
-	private IfExpressionTree(Expression expressionWithoutIf) {
+	private IfExpressionTree(final Expression expressionWithoutIf) {
 		mLeafExpr = expressionWithoutIf;
 	}
 
@@ -165,7 +168,7 @@ public class IfExpressionTree {
 	 * @param elseCondition Negated condition of the if.
 	 * @param elseChild IfExpressionTree node when taking the else-branch.
 	 */
-	private IfExpressionTree(Expression thenCondition, IfExpressionTree thenChild,
+	private IfExpressionTree(final Expression thenCondition, final IfExpressionTree thenChild,
 			Expression elseCondition, IfExpressionTree elseChild) {
 		if (thenCondition != null && thenCondition == thenChild.mThenCondition) {
 			assert false;
@@ -177,8 +180,9 @@ public class IfExpressionTree {
 	}
 
 	/**
-	 * Deep-copy this tree. Only this node and its children is copied. Expressions are immutable and are not copied.
-	 * @return Deep copy of this tree and its children
+	 * Deep-copy this tree. Only this node and its children are copied. Expressions are immutable and are not copied.
+	 * 
+	 * @return Deep copy of this tree node and its children
 	 */
 	public IfExpressionTree deepCopy() {
 		if (isLeaf()) {
@@ -188,18 +192,32 @@ public class IfExpressionTree {
 		}
 	}
 
-	/** @return This node is a leaf. */
+	/** @return This node is a leaf */
 	public boolean isLeaf() {
+		// assert: this is a leaf OR this has exactly two children
 		assert compareNonLeafAttributesToNull(mLeafExpr == null);
 		return mLeafExpr != null;
 	}
 
-	private boolean compareNonLeafAttributesToNull(boolean not) {
+	/**
+	 * Used to assert that the attributes {@link #mThenCondition}, {@link #mThenChild},
+	 * {@link #mElseCondition}, {@link #mElseChild} are all {@code null}.
+	 *  
+	 * @param not Negate the result: Attributes must NOT be null.
+	 * @return The attributes are all {@code null} (or not {@code null}, iff parameter is true)
+	 */
+	private boolean compareNonLeafAttributesToNull(final boolean not) {
 		return (not ^ (mThenCondition == null)) && (not ^ (mThenChild == null))
 				&& (not ^ (mElseCondition == null)) && (not ^ (mElseChild == null));
 	}
 
-	private void mapLeafExprs(Function<Expression, Expression> function) {
+	/**
+	 * Apply a function to all leaf expressions from left to right
+	 * and overwrite the leaf expressions with the result of the function.
+	 * 
+	 * @param function Function to be applied
+	 */
+	private void mapLeafExprs(final Function<Expression, Expression> function) {
 		if (isLeaf()) {
 			mLeafExpr = function.apply(mLeafExpr);
 		} else {
@@ -236,7 +254,7 @@ public class IfExpressionTree {
 	 * @param suffix tree to be appended (may be modified)
 	 * @param function f(thisLeaf, suffixLeaf) = resultLeaf
 	 */
-	private void append(IfExpressionTree suffix, BiFunction<Expression, Expression, Expression> function) {
+	private void append(final IfExpressionTree suffix, final BiFunction<Expression, Expression, Expression> function) {
 		if (suffix.isLeaf()) {
 			// it is faster to handle this common case separately
 			mapLeafExprs(thisLeaf -> function.apply(thisLeaf, suffix.mLeafExpr));
@@ -245,7 +263,9 @@ public class IfExpressionTree {
 		}
 	}
 
-	private void appendNonLeaf(IfExpressionTree suffix, BiFunction<Expression, Expression, Expression> function) {
+	/** @see #append(IfExpressionTree, BiFunction) */
+	private void appendNonLeaf(
+			final IfExpressionTree suffix, final BiFunction<Expression, Expression, Expression> function) {
 		if (isLeaf()) {
 			assert !suffix.isLeaf();
 			mThenCondition = suffix.mThenCondition;
@@ -262,16 +282,36 @@ public class IfExpressionTree {
 		}
 	}
 
-	public List<Pair<Expression, List<OctDomainState>>> assumeLeafs(OctPostOperator postOp,
-			List<OctDomainState> oldStates) {
+	/**
+	 * Assumes conditions of {@link IfThenElseExpression} represented by this tree.
+	 * The result is a list of if-free expressions and a list of abstract states for each of these expressions.
+	 * Each if-free expressions corresponds to a path through the ifs of the original expression.
+	 * The associated list of abstract states contains the pre-states,
+	 * to which the if-free expression should be applied.
+	 * <p>
+	 * The name <i>assume leafs</i> can be misleading. We do not "{@code assume} leaf expressions"
+	 * but assume the leafs to be the expression to be evaluated, that is,
+	 * we "@code{assume} expressions on the path to the leafs".
+	 * <p>
+	 * This method respects the setting {@link OctPostOperator#getMaxParallelStates()} as far as possible.
+	 * The length of the returned list does not depend on the setting, but each list entry will have
+	 * at most {@code maxParallelStates} abstract pre-states.
+	 * 
+	 * @param postOp Post operator to be used to assume the if-conditions.
+	 * @param oldStates Abstract octagon states - will be modified in-place.
+	 * @return If-free expressions with lists of corresponding abstract pre-states
+	 */
+	public List<Pair<Expression, List<OctDomainState>>> assumeLeafs(
+			final OctPostOperator postOp, final List<OctDomainState> oldStates) {
 
 		if (isLeaf()) {
 			return CollectionUtil.singeltonArrayList(new Pair<>(mLeafExpr, oldStates));
 		}
 
-		List<OctDomainState> thenStates, elseStates;
+		List<OctDomainState> thenStates;
+		List<OctDomainState> elseStates;
 
-		int maxParallelStates = postOp.getMaxParallelStates();
+		final int maxParallelStates = postOp.getMaxParallelStates();
 		OctAssumeProcessor ap = postOp.getAssumeProcessor();
 		thenStates = ap.assume(mThenCondition, OctPostOperator.deepCopy(oldStates));
 		elseStates = ap.assume(mElseCondition, oldStates); // oldStates may be modified
@@ -286,34 +326,32 @@ public class IfExpressionTree {
 			elseStates = OctPostOperator.joinToSingleton(elseStates);
 		}
 		if (thenStates.size() + elseStates.size() > maxParallelStates) {
-			// maxParallelStates == 1
+			// we know: maxParallelStates == 1
 			thenStates.addAll(elseStates);
 			thenStates = OctPostOperator.joinToSingleton(thenStates);
 			elseStates = OctPostOperator.deepCopy(thenStates);
 		}
 
-		List<Pair<Expression, List<OctDomainState>>> thenLeafs, elseLeafs;
-		thenLeafs = mThenChild.assumeLeafs(postOp, thenStates);
-		elseLeafs = mElseChild.assumeLeafs(postOp, elseStates);
-
+		final List<Pair<Expression, List<OctDomainState>>> thenLeafs = mThenChild.assumeLeafs(postOp, thenStates);
+		final List<Pair<Expression, List<OctDomainState>>> elseLeafs = mElseChild.assumeLeafs(postOp, elseStates);
 		thenLeafs.addAll(elseLeafs);
 		return thenLeafs;
 	}
 
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		toString("", sb);
-		return sb.toString();
+		final StringBuilder strBuilder = new StringBuilder();
+		toString("", strBuilder);
+		return strBuilder.toString();
 	}
 
-    private void toString(String prefix, StringBuilder sb) {
+    private void toString(final String prefix, final StringBuilder strBuilder) {
     	if (isLeaf()) {
-        	sb.append(prefix + "└╼ " + BoogiePrettyPrinter.print(mLeafExpr) + "\n");
+        	strBuilder.append(prefix + "└╼ " + BoogiePrettyPrinter.print(mLeafExpr) + "\n");
         } else {
-        	sb.append(prefix + "├─ " + BoogiePrettyPrinter.print(mThenCondition) + "\n");
-        	mThenChild.toString(prefix + "│  ", sb);
-        	sb.append(prefix + "└─ " + BoogiePrettyPrinter.print(mElseCondition) + "\n");
-        	mElseChild.toString(prefix + "   ", sb);
+        	strBuilder.append(prefix + "├─ " + BoogiePrettyPrinter.print(mThenCondition) + "\n");
+        	mThenChild.toString(prefix + "│  ", strBuilder);
+        	strBuilder.append(prefix + "└─ " + BoogiePrettyPrinter.print(mElseCondition) + "\n");
+        	mElseChild.toString(prefix + "   ", strBuilder);
         }
     }
 }
