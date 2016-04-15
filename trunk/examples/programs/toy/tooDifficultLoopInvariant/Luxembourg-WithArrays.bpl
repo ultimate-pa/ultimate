@@ -16,14 +16,14 @@ procedure main()
   assume (x > y);
   
   a[x] := 0;
-  a[y] := 1;
+  a[y] := 1000;
 
   while (*) {
     a[x] := a[x] + 1;
     a[y] := a[y] - 1;
   }
   
-  if (x == y && a[x] == 1000) {
+  if (a[x] == 1000) {
     assert (a[y] <= 0);
   }
 
