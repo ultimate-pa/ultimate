@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
@@ -51,12 +50,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdgePrioritySearch;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.VertexDoubleDecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SearchElement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.VertexDownState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.util.UniqueQueue;
 import de.uni_freiburg.informatik.ultimate.util.relation.Hep;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.relation.Quin;
@@ -99,6 +100,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	private final HashMap<Quin<STATE, STATE, Boolean, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, SpoilerVertex<LETTER, STATE>> m_BuechiStatesToGraphSpoilerVertex;
 	/**
+	 * Map of all summarize edges of the graph. Provides a fast access via its
+	 * invoking double decker vertex.
+	 */
+	private final HashMap<VertexDoubleDecker<STATE>, SummarizeEdge<LETTER, STATE>> m_DoubleDeckerToSummarizeEdge;
+	/**
 	 * Data structure of all duplicator vertices that use an outgoing return
 	 * transition. They are used for summarize edge generation.
 	 */
@@ -138,6 +144,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		m_BuechiStatesToGraphSpoilerVertex = new HashMap<>();
 		m_DuplicatorReturningVertices = new HashSet<>();
 		m_SrcDestToSummarizeEdges = new HashMap<>();
+		m_DoubleDeckerToSummarizeEdge = new HashMap<>();
 		m_EntryToSink = new HashMap<>();
 		m_Bottom = m_Nwa.getEmptyStackState();
 	}
@@ -165,6 +172,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		m_DuplicatorReturningVertices.clear();
 		m_EntryToSink.clear();
 		m_SrcDestToSummarizeEdges.clear();
+		m_DoubleDeckerToSummarizeEdge.clear();
 
 		setGraphBuildTime(System.currentTimeMillis() - graphBuildTimeStart);
 	}
@@ -327,6 +335,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, dest, spoilerInvoker);
 			m_SrcDestToSummarizeEdges.put(new Pair<>(src, dest), summarizeEdge);
 
+			// Memorize invoking double decker of edge
+			VertexDoubleDecker<STATE> invokingDoubleDecker = new VertexDoubleDecker<>(spoilerInvoker.getQ0(),
+					src.getQ0(), spoilerInvoker.getQ1(), src.getQ1());
+			m_DoubleDeckerToSummarizeEdge.put(invokingDoubleDecker, summarizeEdge);
+
 			DuplicatorVertex<LETTER, STATE> entryShadowVertex = summarizeEdge.getEntryShadowVertex();
 			SpoilerVertex<LETTER, STATE> middleShadowVertex = summarizeEdge.getMiddleShadowVertex();
 			DuplicatorVertex<LETTER, STATE> exitShadowVertex = summarizeEdge.getExitShadowVertex();
@@ -379,49 +392,294 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * 
 	 * @throws IllegalStateException
 	 *             If computing summarize edge priorities could not be done
-	 *             because of cyclic dependencies between some summarize edges
+	 *             because a live lock occurred.
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	private void computeSummarizeEdgePriorities() throws OperationCanceledException {
-		Queue<SummarizeEdgePrioritySearch<LETTER, STATE>> searchQueue = new LinkedList<>();
-		int maxAmountOfSearches = 0;
+		// TODO Do we find a better data structure, space complexity increases
+		// with UniqueQueue.
+		Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
+		HashMap<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, Integer> searchPriorities = new HashMap<>();
+
+		// Every vertex can maximal be added '3 * out-degree' times to the queue
+		int maxAmountOfSearches = getSize() * getSize() * 3;
 		int searchCounter = 0;
 
-		for (SummarizeEdge<LETTER, STATE> summaryEdge : m_SrcDestToSummarizeEdges.values()) {
-			searchQueue.add(new SummarizeEdgePrioritySearch<>(summaryEdge, this, getLogger(), getProgressTimer()));
-			maxAmountOfSearches++;
+		// Add starting elements
+		for (SummarizeEdge<LETTER, STATE> summarizeEdge : m_SrcDestToSummarizeEdges.values()) {
+			SearchElement<LETTER, STATE> searchElement = SearchElement
+					.createRootSearchElement(summarizeEdge.getSpoilerInvoker(), summarizeEdge.getSource());
+			searchQueue.add(searchElement);
 		}
 
-		// Process all search elements until all finish
-		// Abort computation if every element got stuck
-		while (!searchQueue.isEmpty() && searchCounter < maxAmountOfSearches) {
-			SummarizeEdgePrioritySearch<LETTER, STATE> searchElement = searchQueue.poll();
-			searchElement.search();
-			if (!searchElement.isFinished()) {
-				// Search got stuck, add it to the end of the queue
-				searchCounter++;
-				searchQueue.add(searchElement);
+		// Start the search
+		while (!searchQueue.isEmpty() && searchCounter <= maxAmountOfSearches) {
+			searchCounter++;
+			SearchElement<LETTER, STATE> searchElement = searchQueue.poll();
+			Vertex<LETTER, STATE> searchVertex = searchElement.getVertex();
+			VertexDownState<STATE> searchDownState = searchElement.getDownState();
+
+			boolean isSearchVertexDuplicatorDD = false;
+			DuplicatorDoubleDeckerVertex<LETTER, STATE> searchVertexAsDuplicatorDD = null;
+			if (searchVertex instanceof DuplicatorDoubleDeckerVertex) {
+				searchVertexAsDuplicatorDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) searchVertex;
+				isSearchVertexDuplicatorDD = true;
+			}
+
+			// Calculate search priority of element by using the priorities of
+			// successors
+			int optimalSuccPriority = SummarizeEdge.NO_PRIORITY;
+			boolean isSpoiler = searchVertex.isSpoilerVertex();
+			int optimalValue;
+			if (isSpoiler) {
+				optimalValue = 1;
 			} else {
-				// Search finished, reset counter and apply search results
-				searchCounter = 0;
-				int priority = searchElement.getPriorityResult();
-				searchElement.getSummarizeEdge().setPriority(priority);
+				optimalValue = 0;
+			}
+			Set<Vertex<LETTER, STATE>> successors = getSuccessors(searchVertex);
+			if (successors != null) {
+				for (Vertex<LETTER, STATE> succ : successors) {
+					int succPriority = SummarizeEdge.NO_PRIORITY;
+
+					// Reject successor if it is null
+					if (succ == null) {
+						continue;
+					}
+					if (succ instanceof DuplicatorDoubleDeckerVertex) {
+						// Successor is duplicator vertex
+						DuplicatorDoubleDeckerVertex<LETTER, STATE> succAsDuplicatorDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) succ;
+						ETransitionType transitionType = succAsDuplicatorDD.getTransitionType();
+						if (transitionType == ETransitionType.RETURN || transitionType == ETransitionType.SINK
+								|| transitionType == ETransitionType.SUMMARIZE_EXIT) {
+							// Ignore return and special edges
+							continue;
+						} else if (transitionType == ETransitionType.SUMMARIZE_ENTRY) {
+							// Use min(summarizeEdgePriority,
+							// summarizeEdgeDestinationPriority) as priority
+							// candidate
+							SummarizeEdge<LETTER, STATE> summarizeEdge = succAsDuplicatorDD.getSummarizeEdge();
+							Vertex<LETTER, STATE> destination = summarizeEdge.getDestination();
+							int summarizeEdgePriority = summarizeEdge.getPriority();
+
+							if (summarizeEdgePriority == SummarizeEdge.NO_PRIORITY) {
+								// TODO What to do if summarize edge priority is
+								// unknown, abort and line in again?
+								getLogger().debug("Summarize edge priority is unknown. Don't know what to do, help.");
+							}
+
+							int destinationPriority = destination.getPriority();
+							Integer destinationSearchPriority = searchPriorities
+									.get(new Pair<>(destination, searchDownState));
+							if (destinationSearchPriority != null
+									&& destinationSearchPriority != SummarizeEdge.NO_PRIORITY) {
+								destinationPriority = destinationSearchPriority;
+							}
+							succPriority = Math.min(summarizeEdgePriority, destinationPriority);
+						} else if (transitionType == ETransitionType.CALL) {
+							succPriority = succ.getPriority();
+							// Left down state changes by using
+							// 'spoiler -call-> duplicator'
+							VertexDownState<STATE> downState = new VertexDownState<>(searchVertex.getQ0(),
+									searchDownState.getRightDownState());
+							Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, downState));
+							if (succSearchPriority != null && succSearchPriority != SummarizeEdge.NO_PRIORITY) {
+								succPriority = succSearchPriority;
+							}
+						} else {
+							succPriority = succ.getPriority();
+							Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, searchDownState));
+							if (succSearchPriority != null && succSearchPriority != SummarizeEdge.NO_PRIORITY) {
+								succPriority = succSearchPriority;
+							}
+						}
+					} else {
+						// Successor is spoiler vertex
+						if (isSearchVertexDuplicatorDD) {
+							ETransitionType transitionType = searchVertexAsDuplicatorDD.getTransitionType();
+							if (transitionType == ETransitionType.RETURN || transitionType == ETransitionType.SINK
+									|| transitionType == ETransitionType.SUMMARIZE_ENTRY
+									|| transitionType == ETransitionType.SUMMARIZE_EXIT) {
+								// Ignore return and special edges
+								break;
+							} else if (transitionType == ETransitionType.CALL) {
+								succPriority = succ.getPriority();
+								// Right down state changes by using
+								// 'duplicator -call-> spoiler'
+								VertexDownState<STATE> downState = new VertexDownState<>(
+										searchDownState.getLeftDownState(), searchVertex.getQ1());
+								Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, downState));
+								if (succSearchPriority != null && succSearchPriority != SummarizeEdge.NO_PRIORITY) {
+									succPriority = succSearchPriority;
+								}
+							} else {
+								succPriority = succ.getPriority();
+								Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, searchDownState));
+								if (succSearchPriority != null && succSearchPriority != SummarizeEdge.NO_PRIORITY) {
+									succPriority = succSearchPriority;
+								}
+							}
+						}
+					}
+					// Search for the optimal value under all successors.
+					// If that is not present try to increase to 2 until optimal
+					// value is reached.
+					if (succPriority > optimalSuccPriority) {
+						optimalSuccPriority = succPriority;
+					}
+					if (succPriority == optimalValue) {
+						optimalSuccPriority = succPriority;
+						break;
+					}
+
+					// If operation was canceled, for example from the
+					// Ultimate framework
+					if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+						getLogger().debug("Stopped in computeSummarizeEdgePriorties/successors");
+						throw new OperationCanceledException(this.getClass());
+					}
+				}
 			}
 
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				getLogger().debug("Stopped in computeSummarizeEdgePriorities");
-				throw new OperationCanceledException(this.getClass());
+			// Vertex is forced to select the minimum from the optimal
+			// successor priority and its own priority
+			int searchPriority;
+			if (optimalSuccPriority != SummarizeEdge.NO_PRIORITY) {
+				searchPriority = Math.min(optimalSuccPriority, searchVertex.getPriority());
+			} else {
+				searchPriority = searchVertex.getPriority();
+			}
+
+			// Put the search priority for the vertex and decide whether to
+			// continue the search for this element
+			Integer previousSearchPriorityValue = searchPriorities.put(new Pair<>(searchVertex, searchDownState),
+					searchPriority);
+			boolean continueSearch = false;
+			// Continue search if a search priority is new for the
+			// vertex or if values have changed.
+			// The search will converge to a fix point since min-method
+			// is monotone and the set of priorities is bounded.
+			if (previousSearchPriorityValue == null || previousSearchPriorityValue != searchPriority) {
+				continueSearch = true;
+				getLogger().debug("\tSetting '" + searchPriority + "' for: " + searchElement);
+
+				// If search element is a duplicator vertex that uses a call
+				// transition, then update the priority of the corresponding
+				// summarize edge, if existent.
+				if (isSearchVertexDuplicatorDD) {
+					ETransitionType transitionType = searchVertexAsDuplicatorDD.getTransitionType();
+					if (transitionType == ETransitionType.CALL) {
+						VertexDoubleDecker<STATE> vertexDoubleDecker = searchElement.getPredecessor();
+						// XXX Remove those two prints after debugging
+						getLogger().debug("\t\tPred is: " + vertexDoubleDecker);
+						for (VertexDoubleDecker<STATE> key : m_DoubleDeckerToSummarizeEdge.keySet()) {
+							getLogger().debug("\t\tSaved key is: " + key);
+						}
+						
+						SummarizeEdge<LETTER, STATE> correspondingEdge = m_DoubleDeckerToSummarizeEdge
+								.get(vertexDoubleDecker);
+						if (correspondingEdge != null) {
+							correspondingEdge.setPriority(searchPriority);
+							getLogger().debug("\t\tUpdated summarize edge: " + correspondingEdge);
+						}
+					}
+				}
+			}
+
+			// If search should be continued, add predecessors to the queue
+			if (continueSearch) {
+				Set<Vertex<LETTER, STATE>> predecessors = getPredecessors(searchVertex);
+				if (predecessors != null) {
+					VertexDoubleDecker<STATE> searchDoubleDecker = SearchElement
+							.extractVertexDoubleDecker(searchElement);
+					for (Vertex<LETTER, STATE> pred : predecessors) {
+						// Reject predecessor if it is null
+						if (pred == null) {
+							continue;
+						}
+						if (pred instanceof DuplicatorDoubleDeckerVertex) {
+							// Predecessor is duplicator vertex
+							DuplicatorDoubleDeckerVertex<LETTER, STATE> predAsDuplicatorDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) pred;
+							ETransitionType transitionType = predAsDuplicatorDD.getTransitionType();
+							if (transitionType == ETransitionType.RETURN || transitionType == ETransitionType.RETURN
+									|| transitionType == ETransitionType.SINK
+									|| transitionType == ETransitionType.SUMMARIZE_ENTRY) {
+								// Ignore return and special edges
+								continue;
+							} else if (transitionType == ETransitionType.CALL) {
+								// Right down state changes by using
+								// 'duplicator -call-> spoiler'
+								Set<VertexDownState<STATE>> downStates = predAsDuplicatorDD.getVertexDownStates();
+								// TODO Increase performance using a better data
+								// structure with faster access.
+								// Create search elements for all corresponding
+								// correct double decker.
+								for (VertexDownState<STATE> downState : downStates) {
+									if (downState.getLeftDownState().equals(searchDownState.getLeftDownState())) {
+										searchQueue.add(
+												new SearchElement<LETTER, STATE>(pred, downState, searchDoubleDecker));
+									}
+								}
+							} else if (transitionType == ETransitionType.SUMMARIZE_EXIT) {
+								// Follow summarize edge to the source and use
+								// this vertex
+								searchQueue.add(new SearchElement<LETTER, STATE>(
+										predAsDuplicatorDD.getSummarizeEdge().getDestination(), searchDownState,
+										searchDoubleDecker));
+							} else {
+								searchQueue.add(
+										new SearchElement<LETTER, STATE>(pred, searchDownState, searchDoubleDecker));
+							}
+						} else {
+							// Predecessor is spoiler vertex
+							if (isSearchVertexDuplicatorDD) {
+								ETransitionType transitionType = searchVertexAsDuplicatorDD.getTransitionType();
+								if (transitionType == ETransitionType.RETURN || transitionType == ETransitionType.SINK
+										|| transitionType == ETransitionType.SUMMARIZE_ENTRY
+										|| transitionType == ETransitionType.SUMMARIZE_EXIT) {
+									// Ignore return and special edges
+									break;
+								} else if (transitionType == ETransitionType.CALL) {
+									if (pred instanceof SpoilerDoubleDeckerVertex) {
+										SpoilerDoubleDeckerVertex<LETTER, STATE> predAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pred;
+										// Left down state changes by using
+										// 'spoiler -call-> duplicator'
+										Set<VertexDownState<STATE>> downStates = predAsSpoilerDD.getVertexDownStates();
+										// TODO Increase performance using a
+										// better data structure with faster
+										// access.
+										// Create search elements for all
+										// corresponding correct double decker.
+										for (VertexDownState<STATE> downState : downStates) {
+											if (downState.getRightDownState()
+													.equals(searchDownState.getRightDownState())) {
+												searchQueue.add(new SearchElement<LETTER, STATE>(pred, downState,
+														searchDoubleDecker));
+											}
+										}
+									}
+								} else {
+									searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState,
+											searchDoubleDecker));
+								}
+							}
+						}
+
+						// If operation was canceled, for example from the
+						// Ultimate framework
+						if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+							getLogger().debug("Stopped in computeSummarizeEdgePriorties/predecessors");
+							throw new OperationCanceledException(this.getClass());
+						}
+					}
+				}
 			}
 		}
-		// If there are still stuck search elements that can not be resolved
-		// because of cyclic dependencies
-		if (!searchQueue.isEmpty()) {
+
+		if (searchCounter > maxAmountOfSearches) {
 			throw new IllegalStateException(
-					"Computing summarize edge priorities could not be done because of cyclic dependencies between some summarize edges.");
+					"Computing summarize edge priorities could not be done. The process detected a live lock and aborted.");
 		}
 	}
 

@@ -55,7 +55,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVertex<LETTER, STATE> {
+public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVertex<LETTER, STATE>
+		implements IHasVertexDownStates<STATE> {
 
 	/**
 	 * The sink this vertex belongs to if it is generated as a shadow vertex for
@@ -274,12 +275,13 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		return m_SummarizeEdge;
 	}
 
-	/**
-	 * Gets an unmodifiable set of all vertex down states of this vertex.
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @return Returns an unmodifiable set of all vertex down states of this
-	 *         vertex.
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.IHasVertexDownStates#getVertexDownStates()
 	 */
+	@Override
 	public Set<VertexDownState<STATE>> getVertexDownStates() {
 		return Collections.unmodifiableSet(m_VertexDownStates);
 	}
@@ -298,26 +300,27 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		return result;
 	}
 
-	/**
-	 * Returns if the vertex has a given vertex down state.
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @param leftDownState
-	 *            Left state of the down state configuration
-	 * @param rightDownState
-	 *            Right state of the down state configuration
-	 * @return If the vertex has the given down state configuration
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.IHasVertexDownStates#hasVertexDownState(java.lang.
+	 * Object, java.lang.Object)
 	 */
+	@Override
 	public boolean hasVertexDownState(final STATE leftDownState, final STATE rightDownState) {
 		return m_VertexDownStates.contains(new VertexDownState<STATE>(leftDownState, rightDownState));
 	}
 
-	/**
-	 * Returns if the vertex has a given vertex down state.
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @param vertexDownState
-	 *            Down state configuration in ask
-	 * @return If the vertex has the given down state configuration
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.IHasVertexDownStates#hasVertexDownState(de.
+	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.VertexDownState)
 	 */
+	@Override
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
 		return m_VertexDownStates.contains(vertexDownState);
 	}

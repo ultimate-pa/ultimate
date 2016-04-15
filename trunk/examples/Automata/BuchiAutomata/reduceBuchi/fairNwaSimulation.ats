@@ -17,7 +17,7 @@ print(reduceNwaFairSimulation(nwa, false));
 // Some example automaton
 
 // Small nwa example from whiteboard
-/*
+
 NestedWordAutomaton nwa = (
   callAlphabet = {c},
   internalAlphabet = {a},
@@ -35,7 +35,7 @@ NestedWordAutomaton nwa = (
 	  (q1 q0 r q1)
   }
 );
-*/
+
 // Generated corresponding game graph
 /*
 NestedWordAutomaton nwa = (
@@ -110,7 +110,7 @@ NestedWordAutomaton nwa = (
 );
 */
 // Example with cyclic dependent summarize edges
-
+/*
 NestedWordAutomaton nwa = (
   callAlphabet = {c},
   internalAlphabet = {a},
@@ -133,7 +133,7 @@ NestedWordAutomaton nwa = (
 	  (q3 q2 r q4)
   }
 );
-
+*/
 // Generated corresponding game graph
 /*
 
