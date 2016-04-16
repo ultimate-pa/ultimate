@@ -26,10 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.nwa;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -59,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.UniqueQueue;
 import de.uni_freiburg.informatik.ultimate.util.relation.Hep;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.relation.Quin;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
@@ -100,11 +103,6 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	private final HashMap<Quin<STATE, STATE, Boolean, SummarizeEdge<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>>, SpoilerVertex<LETTER, STATE>> m_BuechiStatesToGraphSpoilerVertex;
 	/**
-	 * Map of all summarize edges of the graph. Provides a fast access via its
-	 * invoking double decker vertex.
-	 */
-	private final HashMap<VertexDoubleDecker<STATE>, SummarizeEdge<LETTER, STATE>> m_DoubleDeckerToSummarizeEdge;
-	/**
 	 * Data structure of all duplicator vertices that use an outgoing return
 	 * transition. They are used for summarize edge generation.
 	 */
@@ -123,16 +121,13 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * Map of all summarize edges of the graph. Provides a fast access via
 	 * source and destination of the edge.
 	 */
-	private final HashMap<Pair<SpoilerDoubleDeckerVertex<LETTER, STATE>, SpoilerDoubleDeckerVertex<LETTER, STATE>>, SummarizeEdge<LETTER, STATE>> m_SrcDestToSummarizeEdges;
+	private final NestedMap2<SpoilerDoubleDeckerVertex<LETTER, STATE>, SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> m_SrcDestToSummarizeEdges;
 
 	@SuppressWarnings("unchecked")
 	public FairNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> nwa,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
-		// TODO Do we have a better conversion method? One that can not alter
-		// the automaton itself because this might influence simulation metrics.
-
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
 		if (nwa instanceof IDoubleDeckerAutomaton<?, ?>) {
@@ -143,8 +138,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		m_BuechiStatesToGraphDuplicatorVertex = new HashMap<>();
 		m_BuechiStatesToGraphSpoilerVertex = new HashMap<>();
 		m_DuplicatorReturningVertices = new HashSet<>();
-		m_SrcDestToSummarizeEdges = new HashMap<>();
-		m_DoubleDeckerToSummarizeEdge = new HashMap<>();
+		m_SrcDestToSummarizeEdges = new NestedMap2<>();
 		m_EntryToSink = new HashMap<>();
 		m_Bottom = m_Nwa.getEmptyStackState();
 	}
@@ -172,7 +166,6 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		m_DuplicatorReturningVertices.clear();
 		m_EntryToSink.clear();
 		m_SrcDestToSummarizeEdges.clear();
-		m_DoubleDeckerToSummarizeEdge.clear();
 
 		setGraphBuildTime(System.currentTimeMillis() - graphBuildTimeStart);
 	}
@@ -331,14 +324,9 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest,
 			final SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerInvoker) {
 		// Only add if not already existent
-		if (m_SrcDestToSummarizeEdges.get(new Pair<>(src, dest)) == null) {
+		if (m_SrcDestToSummarizeEdges.get(src, dest) == null) {
 			SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, dest, spoilerInvoker);
-			m_SrcDestToSummarizeEdges.put(new Pair<>(src, dest), summarizeEdge);
-
-			// Memorize invoking double decker of edge
-			VertexDoubleDecker<STATE> invokingDoubleDecker = new VertexDoubleDecker<>(spoilerInvoker.getQ0(),
-					src.getQ0(), spoilerInvoker.getQ1(), src.getQ1());
-			m_DoubleDeckerToSummarizeEdge.put(invokingDoubleDecker, summarizeEdge);
+			m_SrcDestToSummarizeEdges.put(src, dest, summarizeEdge);
 
 			DuplicatorVertex<LETTER, STATE> entryShadowVertex = summarizeEdge.getEntryShadowVertex();
 			SpoilerVertex<LETTER, STATE> middleShadowVertex = summarizeEdge.getMiddleShadowVertex();
@@ -408,7 +396,9 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		int searchCounter = 0;
 
 		// Add starting elements
-		for (SummarizeEdge<LETTER, STATE> summarizeEdge : m_SrcDestToSummarizeEdges.values()) {
+		for (Triple<SpoilerDoubleDeckerVertex<LETTER, STATE>, SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : m_SrcDestToSummarizeEdges
+				.entrySet()) {
+			SummarizeEdge<LETTER, STATE> summarizeEdge = summarizeEdgeEntry.getThird();
 			SearchElement<LETTER, STATE> searchElement = SearchElement
 					.createRootSearchElement(summarizeEdge.getSpoilerInvoker(), summarizeEdge.getSource());
 			searchQueue.add(searchElement);
@@ -556,6 +546,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			Integer previousSearchPriorityValue = searchPriorities.put(new Pair<>(searchVertex, searchDownState),
 					searchPriority);
 			boolean continueSearch = false;
+			boolean updateCorrespondingSummarizeEdge = false;
 			// Continue search if a search priority is new for the
 			// vertex or if values have changed.
 			// The search will converge to a fix point since min-method
@@ -570,19 +561,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 				if (isSearchVertexDuplicatorDD) {
 					ETransitionType transitionType = searchVertexAsDuplicatorDD.getTransitionType();
 					if (transitionType == ETransitionType.CALL) {
-						VertexDoubleDecker<STATE> vertexDoubleDecker = searchElement.getPredecessor();
-						// XXX Remove those two prints after debugging
-						getLogger().debug("\t\tPred is: " + vertexDoubleDecker);
-						for (VertexDoubleDecker<STATE> key : m_DoubleDeckerToSummarizeEdge.keySet()) {
-							getLogger().debug("\t\tSaved key is: " + key);
-						}
-						
-						SummarizeEdge<LETTER, STATE> correspondingEdge = m_DoubleDeckerToSummarizeEdge
-								.get(vertexDoubleDecker);
-						if (correspondingEdge != null) {
-							correspondingEdge.setPriority(searchPriority);
-							getLogger().debug("\t\tUpdated summarize edge: " + correspondingEdge);
-						}
+						updateCorrespondingSummarizeEdge = transitionType == ETransitionType.CALL;
 					}
 				}
 			}
@@ -608,11 +587,18 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 								// Ignore return and special edges
 								continue;
 							} else if (transitionType == ETransitionType.CALL) {
+								// If right states are not equals, the call is
+								// not possible.
+								// For example: (q0, q3, c) -> (q0, q4,
+								// [q0,q0]), the correct down state must
+								// be [q0,q3]. Thus [q0, q0] should not
+								// produce new search elements.
+								if (!pred.getQ1().equals(searchDownState.getRightDownState())) {
+									continue;
+								}
 								// Right down state changes by using
 								// 'duplicator -call-> spoiler'
 								Set<VertexDownState<STATE>> downStates = predAsDuplicatorDD.getVertexDownStates();
-								// TODO Increase performance using a better data
-								// structure with faster access.
 								// Create search elements for all corresponding
 								// correct double decker.
 								for (VertexDownState<STATE> downState : downStates) {
@@ -623,13 +609,23 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 								}
 							} else if (transitionType == ETransitionType.SUMMARIZE_EXIT) {
 								// Follow summarize edge to the source and use
-								// this vertex
-								searchQueue.add(new SearchElement<LETTER, STATE>(
-										predAsDuplicatorDD.getSummarizeEdge().getDestination(), searchDownState,
-										searchDoubleDecker));
+								// this vertex if the edge belongs to the
+								// current down state configuration
+								Vertex<LETTER, STATE> source = predAsDuplicatorDD.getSummarizeEdge().getSource();
+								if (source instanceof SpoilerDoubleDeckerVertex) {
+									SpoilerDoubleDeckerVertex<LETTER, STATE> sourceAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) source;
+									if (sourceAsSpoilerDD.hasVertexDownState(searchDownState)) {
+										searchQueue.add(new SearchElement<LETTER, STATE>(source, searchDownState,
+												searchDoubleDecker));
+									}
+								}
 							} else {
-								searchQueue.add(
-										new SearchElement<LETTER, STATE>(pred, searchDownState, searchDoubleDecker));
+								// Only add the vertex if the edge belongs to
+								// the current down state configuration
+								if (predAsDuplicatorDD.hasVertexDownState(searchDownState)) {
+									searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState,
+											searchDoubleDecker));
+								}
 							}
 						} else {
 							// Predecessor is spoiler vertex
@@ -642,13 +638,19 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 									break;
 								} else if (transitionType == ETransitionType.CALL) {
 									if (pred instanceof SpoilerDoubleDeckerVertex) {
+										// If left states are not equals, the
+										// call is not possible.
+										// For example: (q0, q3) -> (q0, q3, c,
+										// [q1,q0]), the correct down state must
+										// be [q0,q0]. Thus [q1,q0] should not
+										// produce new search elements.
+										if (!pred.getQ0().equals(searchDownState.getLeftDownState())) {
+											continue;
+										}
 										SpoilerDoubleDeckerVertex<LETTER, STATE> predAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pred;
 										// Left down state changes by using
 										// 'spoiler -call-> duplicator'
 										Set<VertexDownState<STATE>> downStates = predAsSpoilerDD.getVertexDownStates();
-										// TODO Increase performance using a
-										// better data structure with faster
-										// access.
 										// Create search elements for all
 										// corresponding correct double decker.
 										for (VertexDownState<STATE> downState : downStates) {
@@ -656,12 +658,29 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 													.equals(searchDownState.getRightDownState())) {
 												searchQueue.add(new SearchElement<LETTER, STATE>(pred, downState,
 														searchDoubleDecker));
+												// If values have changed we
+												// need to update the summarize
+												// edge corresponding to the
+												// current searchVertex.
+												// We find the summarize edges
+												// by using the predecessors.
+												if (updateCorrespondingSummarizeEdge) {
+													updateCorrespondingSummarizeEdge(searchElement, searchPriority,
+															predAsSpoilerDD, downState);
+												}
 											}
 										}
 									}
 								} else {
-									searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState,
-											searchDoubleDecker));
+									// Only add the vertex if the edge belongs
+									// to the current down state configuration
+									if (pred instanceof SpoilerDoubleDeckerVertex) {
+										SpoilerDoubleDeckerVertex<LETTER, STATE> predAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pred;
+										if (predAsSpoilerDD.hasVertexDownState(searchDownState)) {
+											searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState,
+													searchDoubleDecker));
+										}
+									}
 								}
 							}
 						}
@@ -991,6 +1010,47 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	private boolean hasDownState(final STATE upState, final STATE downState) {
 		return m_Nwa.getDownStates(upState).contains(downState);
+	}
+
+	/**
+	 * Updates the priority of the summarize edge corresponding to the given
+	 * objects.
+	 * 
+	 * @param invoker
+	 *            Element corresponding to the duplicator vertex that uses the
+	 *            call which invoked the summarize edge
+	 * @param priorityToSet
+	 *            Priority to set for the summarize edge
+	 * @param pred
+	 *            The predecessor of the element which is the source of the
+	 *            corresponding summarize edge
+	 * @param predDownState
+	 *            The current down state processing for the predecessor to which
+	 *            the summarize edge needs to correspond to
+	 */
+	private void updateCorrespondingSummarizeEdge(final SearchElement<LETTER, STATE> invoker, int priorityToSet,
+			final SpoilerDoubleDeckerVertex<LETTER, STATE> pred, final VertexDownState<STATE> predDownState) {
+		// Search the corresponding summarize edge. Its source must be a
+		// predecessor of the invoker.
+		// TODO Involve the down state to find the correct corresponding summarize edge
+		Map<SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> destToSummarizeEdge = m_SrcDestToSummarizeEdges
+				.get(pred);
+		if (destToSummarizeEdge == null || destToSummarizeEdge.isEmpty()) {
+			return;
+		}
+		Collection<SummarizeEdge<LETTER, STATE>> summarizeEdges = destToSummarizeEdge.values();
+		for (SummarizeEdge<LETTER, STATE> summarizeEdge : summarizeEdges) {
+			summarizeEdge.setPriority(priorityToSet);
+			getLogger().debug("\t\tUpdated summarize edge: " + summarizeEdge);
+		}
+
+		// XXX Remove debug stuff
+		int amountOfEdgesUpdated = summarizeEdges.size();
+		if (amountOfEdgesUpdated > 1) {
+			// TODO This should not be possible, we need to resolve that
+			// problem.
+			getLogger().debug("\t\tUpdated multiple summarize edges, this indicates a bug: " + amountOfEdgesUpdated);
+		}
 	}
 
 	/*
