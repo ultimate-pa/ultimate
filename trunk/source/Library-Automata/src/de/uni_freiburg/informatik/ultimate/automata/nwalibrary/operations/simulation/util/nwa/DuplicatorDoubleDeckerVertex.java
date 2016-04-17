@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
@@ -75,9 +75,10 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	private final ETransitionType m_TransitionType;
 	/**
-	 * Internal set of all down state configurations of the vertex.
+	 * Internal map of all down state configurations of the vertex and if they
+	 * are marked as safe.
 	 */
-	private final HashSet<VertexDownState<STATE>> m_VertexDownStates;
+	private final HashMap<VertexDownState<STATE>, Boolean> m_VertexDownStates;
 
 	/**
 	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
@@ -212,14 +213,15 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 			final LETTER a, final ETransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
 			final DuplicatorWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1, a);
-		m_VertexDownStates = new HashSet<>();
+		m_VertexDownStates = new HashMap<>();
 		m_TransitionType = transitionType;
 		m_SummarizeEdge = summarizeEdge;
 		m_Sink = sink;
 	}
 
 	/**
-	 * Adds a given vertex down state to the vertex if not already present.
+	 * Adds a given vertex down state to the vertex if not already present. It
+	 * gets initially marked as not safe.
 	 * 
 	 * @param vertexDownState
 	 *            Configuration to add
@@ -227,7 +229,11 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *         was not already present.
 	 */
 	public boolean addVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return m_VertexDownStates.add(vertexDownState);
+		if (!m_VertexDownStates.containsKey(vertexDownState)) {
+			m_VertexDownStates.put(vertexDownState, false);
+			return true;
+		}
+		return false;
 	}
 
 	/*
@@ -289,7 +295,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
+		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
@@ -342,7 +348,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	@Override
 	public Set<VertexDownState<STATE>> getVertexDownStates() {
-		return Collections.unmodifiableSet(m_VertexDownStates);
+		return Collections.unmodifiableSet(m_VertexDownStates.keySet());
 	}
 
 	/*
@@ -369,7 +375,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	@Override
 	public boolean hasVertexDownState(final STATE leftDownState, final STATE rightDownState) {
-		return m_VertexDownStates.contains(new VertexDownState<STATE>(leftDownState, rightDownState));
+		return hasVertexDownState(new VertexDownState<STATE>(leftDownState, rightDownState));
 	}
 
 	/*
@@ -382,7 +388,35 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	@Override
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return m_VertexDownStates.contains(vertexDownState);
+		return m_VertexDownStates.containsKey(vertexDownState);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.IHasVertexDownStates#isVertexDownStateSafe(de.
+	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.VertexDownState)
+	 */
+	@Override
+	public Boolean isVertexDownStateSafe(final VertexDownState<STATE> vertexDownState) {
+		return m_VertexDownStates.get(vertexDownState);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.IHasVertexDownStates#setVertexDownStateSafe(de.
+	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.util.nwa.VertexDownState, boolean)
+	 */
+	@Override
+	public void setVertexDownStateSafe(final VertexDownState<STATE> vertexDownState, final boolean isSafe) {
+		if (m_VertexDownStates.containsKey(vertexDownState)) {
+			m_VertexDownStates.put(vertexDownState, isSafe);
+		}
 	}
 
 	/*
@@ -407,7 +441,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates) {
+		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}

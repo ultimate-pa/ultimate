@@ -77,45 +77,22 @@ public final class SearchElement<LETTER, STATE> {
 	 * The down state of this element.
 	 */
 	private final VertexDownState<STATE> m_DownState;
-
-	/**
-	 * Predecessor element of this search element.
-	 */
-	private final VertexDoubleDecker<STATE> m_Predecessor;
 	/**
 	 * The vertex of this element.
 	 */
 	private final Vertex<LETTER, STATE> m_Vertex;
 
 	/**
-	 * Creates a new search element with a given vertex, a down state and a
-	 * predecessor element. Together they form a double decker vertex.
+	 * Creates a new search element with a given vertex and a down state. Together they form a double decker vertex.
 	 * 
 	 * @param vertex
 	 *            Vertex for this element
 	 * @param downState
 	 *            Down state for this element
-	 * @param predecessor
-	 *            Predecessor element of this search element
 	 */
-	public SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState,
-			final VertexDoubleDecker<STATE> predecessor) {
+	public SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState) {
 		m_Vertex = vertex;
 		m_DownState = downState;
-		m_Predecessor = predecessor;
-	}
-
-	/**
-	 * Creates a new root search element with a given vertex and a down state.
-	 * Together they form a double decker vertex.
-	 * 
-	 * @param vertex
-	 *            Vertex for this element
-	 * @param downState
-	 *            Down state for this element
-	 */
-	private SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState) {
-		this(vertex, downState, null);
 	}
 
 	/*
@@ -159,15 +136,6 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	public VertexDownState<STATE> getDownState() {
 		return m_DownState;
-	}
-
-	/**
-	 * Gets the predecessor element of this search element.
-	 * 
-	 * @return The predecessor of this element.
-	 */
-	public VertexDoubleDecker<STATE> getPredecessor() {
-		return m_Predecessor;
 	}
 
 	/**

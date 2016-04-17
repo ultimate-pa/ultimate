@@ -64,4 +64,24 @@ public interface IHasVertexDownStates<STATE> {
 	 * @return If the object has the given down state configuration
 	 */
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState);
+
+	/**
+	 * Returns whether a given vertex down state is marked as safe or not.
+	 * 
+	 * @param vertexDownState
+	 *            Down state configuration in ask
+	 * @return Whether the given vertex down state is marked as safe or not. Returns <tt>null</tt> if the element is not contained.
+	 */
+	public Boolean isVertexDownStateSafe(final VertexDownState<STATE> vertexDownState);
+
+	/**
+	 * Sets whether a given vertex down state is marked as safe or not. The vertex must already be contained.
+	 * 
+	 * @param vertexDownState
+	 *            Down state configuration to mark which needs to be contained already
+	 * @param isSafe
+	 *            Whether the given vertex down state should be marked as safe
+	 *            or not
+	 */
+	public void setVertexDownStateSafe(final VertexDownState<STATE> vertexDownState, final boolean isSafe);
 }
