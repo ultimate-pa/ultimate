@@ -78,12 +78,17 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	private final VertexDownState<STATE> m_DownState;
 	/**
+	 * Vertex down state that was used right before this search element.
+	 */
+	private final VertexDownState<STATE> m_History;
+	/**
 	 * The vertex of this element.
 	 */
 	private final Vertex<LETTER, STATE> m_Vertex;
 
 	/**
-	 * Creates a new search element with a given vertex and a down state. Together they form a double decker vertex.
+	 * Creates a new search element with a given vertex and a down state.
+	 * Together they form a double decker vertex.
 	 * 
 	 * @param vertex
 	 *            Vertex for this element
@@ -91,8 +96,26 @@ public final class SearchElement<LETTER, STATE> {
 	 *            Down state for this element
 	 */
 	public SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState) {
+		this(vertex, downState, null);
+	}
+
+	/**
+	 * Creates a new search element with a given vertex, a down state and a
+	 * history element. Together they form a double decker vertex.
+	 * 
+	 * @param vertex
+	 *            Vertex for this element
+	 * @param downState
+	 *            Down state for this element
+	 * @param history
+	 *            Vertex down state that was used right before this search
+	 *            element
+	 */
+	public SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState,
+			final VertexDownState<STATE> history) {
 		m_Vertex = vertex;
 		m_DownState = downState;
+		m_History = history;
 	}
 
 	/*
@@ -136,6 +159,17 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	public VertexDownState<STATE> getDownState() {
 		return m_DownState;
+	}
+
+	/**
+	 * Gets the vertex down state that was used right before this search
+	 * element.
+	 * 
+	 * @return The vertex down state that was used right before this search
+	 *         element.
+	 */
+	public VertexDownState<STATE> getHistory() {
+		return m_History;
 	}
 
 	/**
