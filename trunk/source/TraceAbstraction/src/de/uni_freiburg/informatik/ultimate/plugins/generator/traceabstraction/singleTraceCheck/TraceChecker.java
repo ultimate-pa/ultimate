@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
@@ -54,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -123,7 +126,7 @@ public class TraceChecker {
 	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
 	 */
 	protected final ModifiableGlobalVariableManager m_ModifiedGlobals;
-	protected final NestedWord<CodeBlock> m_Trace;
+	protected final NestedWord<? extends IAction> m_Trace;
 	protected final IPredicate m_Precondition;
 	protected final IPredicate m_Postcondition;
 	/**
@@ -330,7 +333,7 @@ public class TraceChecker {
 			}
 		}
 
-		public void reportSequenceOfInterpolants(IPredicate[] interpolants) {
+		public void reportSequenceOfInterpolants(List<IPredicate> interpolants) {
 			for (IPredicate pred : interpolants) {
 				boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
 				m_TraceCheckerBenchmarkGenerator.reportNewInterpolant(isQuantified);
@@ -368,7 +371,7 @@ public class TraceChecker {
 	 * @param services
 	 */
 	public TraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution) {
 		this(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
@@ -377,7 +380,7 @@ public class TraceChecker {
 	}
 
 	protected TraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
 			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat) {
@@ -393,7 +396,7 @@ public class TraceChecker {
 	 * 
 	 */
 	protected TraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
 			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat, SmtManager tcSmtManager) {
@@ -535,7 +538,7 @@ public class TraceChecker {
 		Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		unlockSmtManager();
 		m_TraceCheckFinished = true;
-		return new RcfgProgramExecution(m_NestedFormulas.getTrace().lettersAsList(), emptyMap, branchEncoders);
+		return new RcfgProgramExecution((List<? extends RCFGEdge>) m_NestedFormulas.getTrace().lettersAsList(), emptyMap, branchEncoders);
 	}
 
 	/**
@@ -546,7 +549,7 @@ public class TraceChecker {
 		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals,
 				(NestedWord<CodeBlock>) m_Trace, relVars, m_SmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		for (int i = 0; i < m_Trace.length(); i++) {
-			CodeBlock cb = m_Trace.getSymbolAt(i);
+			CodeBlock cb = (CodeBlock) m_Trace.getSymbolAt(i);
 			TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
 			if (tf.getBranchEncoders().size() > 0) {
 				Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
@@ -618,7 +621,7 @@ public class TraceChecker {
 		return result;
 	}
 
-	public NestedWord<CodeBlock> getTrace() {
+	public NestedWord<? extends IAction> getTrace() {
 		return m_Trace;
 	}
 

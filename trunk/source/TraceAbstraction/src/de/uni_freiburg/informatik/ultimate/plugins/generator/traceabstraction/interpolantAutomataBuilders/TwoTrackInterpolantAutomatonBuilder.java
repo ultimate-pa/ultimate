@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -81,8 +83,8 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			IUltimateServiceProvider services, 
 			IRun<CodeBlock,IPredicate> nestedRun,
 			SmtManager smtManager,
-			IPredicate[] interpolantsFP,
-			IPredicate[] interpolantsBP,
+			List<IPredicate> interpolantsFP,
+			List<IPredicate> interpolantsBP,
 			IPredicate preCondition,
 			IPredicate postCondition,
 			IAutomaton<CodeBlock, IPredicate> abstraction) {
@@ -218,7 +220,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			assert callerPred != null : "callerPred shouldn't be null for a Return statement.";
 			return (m_SmtManager.isInductiveReturn(p1, callerPred,(Return) statement, p2) == LBool.UNSAT);
 		} else {
-			return (m_SmtManager.isInductive(p1, statement, p2) == LBool.UNSAT);
+			return (m_SmtManager.isInductive(p1, (IInternalAction) statement, p2) == LBool.UNSAT);
 		}
 	}
 	

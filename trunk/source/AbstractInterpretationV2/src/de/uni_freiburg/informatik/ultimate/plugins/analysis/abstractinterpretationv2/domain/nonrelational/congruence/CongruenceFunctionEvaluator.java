@@ -55,14 +55,14 @@ public class CongruenceFunctionEvaluator
 
 	private final List<IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar>> mInputParamEvaluators;
 
-	protected CongruenceFunctionEvaluator(String name, int numInParams) {
+	protected CongruenceFunctionEvaluator(final String name, final int numInParams) {
 		mName = name;
 		mInParamCount = numInParams;
 		mInputParamEvaluators = new ArrayList<>();
 	}
 
 	@Override
-	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(CongruenceDomainState currentState) {
+	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(final CongruenceDomainState currentState) {
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
 		final CongruenceDomainEvaluationResult res = new CongruenceDomainEvaluationResult(CongruenceDomainValue.createTop(),
@@ -73,7 +73,7 @@ public class CongruenceFunctionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
 		if (mInputParamEvaluators.size() < mInParamCount) {
 			mInputParamEvaluators.add(evaluator);
 		} else {
@@ -105,22 +105,21 @@ public class CongruenceFunctionEvaluator
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append(mName);
-		sb.append("(");
+		sb.append(mName).append('(');
 		for (int i = 0; i < mInputParamEvaluators.size(); i++) {
 			if (i > 0) {
 				sb.append(", ");
 			}
 			sb.append(mInputParamEvaluators.get(i));
 		}
-		sb.append(")");
+		sb.append(')');
 
 		return sb.toString();
 	}
 
 	@Override
-	public List<CongruenceDomainState> inverseEvaluate(IEvaluationResult<CongruenceDomainValue> computedValue,
-	        CongruenceDomainState currentState) {
+	public List<CongruenceDomainState> inverseEvaluate(final IEvaluationResult<CongruenceDomainValue> computedValue,
+	        final CongruenceDomainState currentState) {
 		final List<CongruenceDomainState> returnList = new ArrayList<>();
 		returnList.add(currentState);
 		return returnList;

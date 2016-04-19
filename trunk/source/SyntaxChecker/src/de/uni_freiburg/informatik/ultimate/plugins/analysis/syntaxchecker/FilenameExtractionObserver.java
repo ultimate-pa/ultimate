@@ -30,7 +30,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
@@ -43,7 +43,7 @@ public class FilenameExtractionObserver implements IUnmanagedObserver {
 	private String m_Filename;
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
+	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
 		// TODO Auto-generated method stub
 
 	}

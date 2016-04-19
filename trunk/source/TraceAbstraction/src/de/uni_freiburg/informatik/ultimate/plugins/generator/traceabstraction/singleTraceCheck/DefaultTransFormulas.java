@@ -31,6 +31,10 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -48,7 +52,7 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 		return m_ModifiableGlobalVariableManager;
 	}
 
-	public DefaultTransFormulas(NestedWord<CodeBlock> nestedWord, 
+	public DefaultTransFormulas(NestedWord<? extends IAction> nestedWord, 
 			IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
@@ -66,19 +70,23 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 	
 	@Override
 	protected TransFormula getFormulaFromValidNonCallPos(int i) {
-		CodeBlock cb = super.getTrace().getSymbolAt(i);
-		if (m_WithBranchEncoders) {
-			return cb.getTransitionFormulaWithBranchEncoders();
+		if (super.getTrace().isReturnPosition(i)) {
+			IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
+			return ret.getAssignmentOfReturn();
 		} else {
-			return cb.getTransitionFormula();
+			IInternalAction cb = (IInternalAction) super.getTrace().getSymbolAt(i);
+			if (m_WithBranchEncoders) {
+				return ((CodeBlock) cb).getTransitionFormulaWithBranchEncoders();
+			} else {
+				return cb.getTransformula();
+			}
 		}
 	}
 
 	@Override
 	protected TransFormula getLocalVarAssignmentFromValidPos(int i) {
-		CodeBlock cb = super.getTrace().getSymbolAt(i);
-		assert ((cb instanceof Call) || (cb instanceof InterproceduralSequentialComposition)); 
-		return cb.getTransitionFormula();
+		ICallAction cb = (ICallAction) super.getTrace().getSymbolAt(i);
+		return cb.getLocalVarsAssignment();
 	}
 
 	@Override
@@ -98,24 +106,15 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 	 * TODO: return set of all pending calls in case of InterproceduralSequentialComposition
 	 */
 	private String getCalledProcedure(int i) {
-		CodeBlock cb = super.getTrace().getSymbolAt(i);
-		assert ((cb instanceof Call) || (cb instanceof InterproceduralSequentialComposition) 
-				|| (cb instanceof Return)); 
-		if (cb instanceof InterproceduralSequentialComposition) {
-			throw new UnsupportedOperationException("not yet implemented");
-			// collect all pending calls use modifiable globals of all
-		}
-		
-		Call call;
-		if (cb instanceof Return) {
-			call = ((Return) cb).getCorrespondingCall();
-		} else if (cb instanceof Call) {
-			call = (Call) cb;
+		if (super.getTrace().isCallPosition(i)) {
+			ICallAction call = (ICallAction) super.getTrace().getSymbolAt(i);
+			return call.getSucceedingProcedure();
+		} else if (super.getTrace().isPendingReturn(i)) {
+			IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
+			return ret.getPreceedingProcedure();
 		} else {
-			throw new UnsupportedOperationException("neither call nor return");
+			throw new UnsupportedOperationException("only available for call and pending return");
 		}
-		String calledProcedure = call.getCallStatement().getMethodName();
-		return calledProcedure;
 	}
 
 

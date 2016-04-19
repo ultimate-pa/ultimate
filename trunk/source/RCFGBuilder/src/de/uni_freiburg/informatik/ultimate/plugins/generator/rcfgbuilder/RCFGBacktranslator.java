@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCF
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
@@ -195,9 +194,9 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			AtomicTraceElement<RCFGEdge> codeBlock = rcfgProgramExecution.getTraceElement(i);
 			Map<TermVariable, Boolean>[] branchEncoders = rcfgProgramExecution.getBranchEncoders();
 			if (branchEncoders == null || i >= branchEncoders.length) {
-				addCodeBlock(codeBlock.getTraceElement(), trace, null, codeBlock.getmRelevanceInformation());
+				addCodeBlock(codeBlock.getTraceElement(), trace, null, codeBlock.getRelevanceInformation());
 			} else {
-				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i], codeBlock.getmRelevanceInformation());
+				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i], codeBlock.getRelevanceInformation());
 			}
 			int posInNewTrace = trace.size() - 1;
 			ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
@@ -314,7 +313,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		// mLogger.info(" label loc " + label.getPayload().getLocation().getStartLine() + "-"
 		// + label.getPayload().getLocation().getEndLine());
 		// }
-		ConditionAnnotation coan = ConditionAnnotation.getAnnotation(label);
+//		ConditionAnnotation coan = ConditionAnnotation.getAnnotation(label);
 		new MultigraphEdge<>(source, label, target);
 	}
 

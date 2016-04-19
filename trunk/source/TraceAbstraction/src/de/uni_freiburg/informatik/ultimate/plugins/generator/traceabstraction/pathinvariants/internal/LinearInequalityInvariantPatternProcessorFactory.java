@@ -51,7 +51,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	protected final PredicateUnifier predUnifier;
 	protected final SmtManager smtManager;
 	protected final ILinearInequalityInvariantPatternStrategy strategy;
-	private final boolean m_UseNonlinearConstraints = false;
+	private final boolean m_UseNonlinearConstraints = true;
 
 	/**
 	 * Constructs a new factory for
@@ -111,7 +111,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver settings to use
 	 */
 	protected Settings produceSolverSettings() {
-		boolean dumpSmtScriptToFile = true;
+		boolean dumpSmtScriptToFile = false;
 		String pathOfDumpedScript = ".";
 		String baseNameOfDumpedScript = "contraintSolving";
 		final String solverCommand;

@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
 import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.GraphType.Type;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
@@ -101,7 +101,7 @@ public class CDTController implements IController {
 		mChecker.setStorage(mToolchainData.getStorage());
 
 		mCurrentJob = new ManualReleaseToolchainJob("Run Ultimate...", mUltimate, this, new WrapperNode(null, ast),
-				new GraphType(Activator.PLUGIN_ID, Type.AST, new ArrayList<String>()), mLogger);
+				new ModelType(Activator.PLUGIN_ID, Type.AST, new ArrayList<String>()), mLogger);
 		mCurrentJob.setUser(true);
 		mCurrentJob.schedule();
 		mCurrentJob.join();
@@ -232,7 +232,7 @@ public class CDTController implements IController {
 		private IToolchain mCurrentChain;
 
 		public ManualReleaseToolchainJob(String name, ICore core, IController controller, IElement ast,
-				GraphType outputDefinition, Logger logger) {
+				ModelType outputDefinition, Logger logger) {
 			super(name, core, controller, ast, outputDefinition, logger);
 		}
 

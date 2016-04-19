@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefGraphAnnotationProvider;
@@ -53,11 +53,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class ReachingDefinitions implements IAnalysis {
 
-	private GraphType mCurrentGraphType;
+	private ModelType mCurrentGraphType;
 	private IUltimateServiceProvider mServices;
 
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		return mCurrentGraphType;
 	}
 
@@ -67,8 +67,8 @@ public class ReachingDefinitions implements IAnalysis {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class ReachingDefinitions implements IAnalysis {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		mCurrentGraphType = graphType;
 	}
 

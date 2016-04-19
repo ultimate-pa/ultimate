@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -44,30 +44,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.DefaultTransFormulas;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.NestedSsaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 /**
  * 
@@ -81,15 +75,16 @@ public class FlowSensitiveFaultLocalizer {
 
 	private IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
-	private ArrayList<IRelevanceInformation> Relevance_of_statements = new ArrayList<>(); 
+	private final IRelevanceInformation[] Relevance_of_statements; 
 
 	public FlowSensitiveFaultLocalizer(IRun<CodeBlock, IPredicate> counterexample,
 			INestedWordAutomaton<CodeBlock, IPredicate> cfg, IUltimateServiceProvider services, SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		ArrayList<int[]> informationFromCFG = computeInformationFromCFG( (NestedRun<CodeBlock, IPredicate>) counterexample, cfg); //Get branch information. in the form of an array list
-		computeFlowSensitiveTraceFormula(counterexample, predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager,informationFromCFG);
+		Relevance_of_statements = new IRelevanceInformation[counterexample.getLength() - 1];
+		//ArrayList<int[]> informationFromCFG = computeInformationFromCFG( (NestedRun<CodeBlock, IPredicate>) counterexample, cfg); //Get branch information. in the form of an array list
+		computeFlowSensitiveTraceFormula(counterexample, predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager/*,informationFromCFG*/);
 	}
 
 
@@ -156,7 +151,7 @@ public class FlowSensitiveFaultLocalizer {
 	{
 		m_Logger.warn("Entered RelevantStatementInBranch ");
 		ArrayList<CodeBlock> result = new ArrayList<>();
-		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
+		PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
 		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		
 		//int[] tuple = new int[2];
@@ -261,80 +256,134 @@ public class FlowSensitiveFaultLocalizer {
 	}
 	
 	
+	private boolean BranchRelevanceChecker(int a, int b, IPredicate weakestPreconditionOld, NestedWord<CodeBlock> counterexampleWord, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager)
+	{
+		PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
+		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(b).getTransitionFormula();
+		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
+		for(int i = a+1; i<=b; i++)
+		{
+			CodeBlock Statement = counterexampleWord.getSymbol(i);
+			TransFormula TransitionFormula = Statement.getTransitionFormula();
+			combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,TransitionFormula);
+		}
+		TransFormula markhor = TransFormula.computeMarkhorTransFormula(combinedTransitionFormula, smtManager.getBoogie2Smt(), m_Services, m_Logger);
+		IPredicate weakestPreconditionNew = pt.weakestPrecondition(weakestPreconditionOld, markhor);
+		IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
+		String preceeding = counterexampleWord.getSymbolAt(a-1).getPreceedingProcedure();
+		String succeeding = counterexampleWord.getSymbolAt(b+1).getSucceedingProcedure();
+		BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, markhor);
+		
+		ERelevanceStatus relevance = rc.relevanceInternal(pre, basic, weakestPreconditionOld);
+		if(relevance == ERelevanceStatus.InUnsatCore || relevance == ERelevanceStatus.Sat) // Branch is RELEVANT
+		{
+			return true;
+		}
+		else // BRANCH IS NOT RELEVANT
+		{
+			return false;
+		}
+	}
+	
+	
+	
 	private void computeFlowSensitiveTraceFormula(IRun<CodeBlock, IPredicate> counterexampleRun,
-		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager, ArrayList<int[]> informationFromCFG) 
+		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager /*, ArrayList<int[]> informationFromCFG */) 
 	
 	{
 		NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
-		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
+		PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
 		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
-		
-		
-		
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 		m_Logger.warn("Initializing Non-Flow Sensitive INCREMENTAL ANALYSIS . . .");
-
-		ArrayList<CodeBlock> relevant = new ArrayList<>(); //Will store the terms relevant for the error.
-		ArrayList<IPredicate> weakest_precondition_list = new ArrayList<>();
-		ArrayList<IPredicate> pre_precondition_list = new ArrayList<>();
-		
 		int backward_counter = counterexampleWord.length();
-		
 		//Relevency Information of the last statement
-		IRelevanceInformation relevancy_of_statement = new RelevanceInformation();
-		((RelevanceInformation) relevancy_of_statement).setStatement(counterexampleWord.getSymbolAt(backward_counter-1));
-		Relevance_of_statements.add(relevancy_of_statement);
+		// 2016-04-05 Matthias: I think it is not necessary to handle the last
+		// statement separately, we can probably handle it in the loop like
+		// any other statement.
+		IRelevanceInformation relevancy_of_statement = new RelevanceInformation(
+				Collections.singletonList(counterexampleWord.getSymbolAt(backward_counter-1)), 
+				false, false, false);
+		Relevance_of_statements[Relevance_of_statements.length - 1] = relevancy_of_statement;
+		// Calculating the WP-List
+		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
+				smtManager.getPredicateFactory(), smtManager.getVariableManager(), 
+				smtManager.getScript(), smtManager.getBoogie2Smt(), modGlobVarManager, 
+				m_Services, counterexampleWord, null, falsePredicate, null, 
+				smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)));
 		
-		IPredicate weakest_precondition = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().constructFalse()); // FALSE for WP(False, error_trace)
-
-		for(int j = counterexampleWord.length() - 1; j>=0; j--)
-		{
-			CodeBlock statement = counterexampleWord.getSymbolAt(j);
-			TransFormula transition_formula = statement.getTransitionFormula();
-			weakest_precondition = pt.weakestPrecondition(weakest_precondition, transition_formula);
-			weakest_precondition_list.add(weakest_precondition);
-			pre_precondition_list.add(smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakest_precondition)));
-			
-
-				
-		}
-		int wp_counter = 0;
-		int pre_counter = wp_counter + 1;
+		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, 
+				null, falsePredicate, Collections.emptySortedMap(), modGlobVarManager, false);
+		
+		final InterpolantsPreconditionPostcondition weakestPreconditionSequence = 
+				ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), true);
+		// End of the calculation
+		
 		for(int i = backward_counter-2 ; i >= 0; i--)
 		{
-
-			
+				IAction action = counterexampleWord.getSymbolAt(i);
+				// Calculate WP and PRE
+				IPredicate wp = weakestPreconditionSequence.getInterpolant(i+1);
+				IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionSequence.getInterpolant(i)));
 				
-				CodeBlock statement = counterexampleWord.getSymbolAt(i);
-				TransFormula a = statement.getTransitionFormula();
-				// Relevancy Information.
-				relevancy_of_statement = new RelevanceInformation();
-				((RelevanceInformation) relevancy_of_statement).setStatement(statement);
+				// Figure out what is the type of the statement (internal, call or Return) and act accordingly?
+				final ERelevanceStatus relevance;
+				if(action instanceof IInternalAction) {
+					IInternalAction internal = (IInternalAction) counterexampleWord.getSymbolAt(i);
+					relevance = rc.relevanceInternal(pre, internal, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
+				} else if(action instanceof ICallAction) {
+					ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(i);
+					relevance = rc.relevanceCall(pre, call, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
+				} else if(action instanceof IReturnAction) {
+					IReturnAction returnn = (IReturnAction) counterexampleWord.getSymbolAt(i);
+					assert counterexampleWord.isReturnPosition(i);
+					assert !counterexampleWord.isPendingReturn(i) : "pending returns not supported";
+					final int callPos = counterexampleWord.getCallPosition(i);
+					final IPredicate callPredecessor = weakestPreconditionSequence.getInterpolant(callPos); 
+					relevance = rc.relevanceReturn(pre, callPredecessor, returnn, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
+				} else {
+					throw new AssertionError("Unknown Action " +
+							action.getClass().getSimpleName());
+				}
 				
-				BasicInternalAction basic = new BasicInternalAction(statement.getPreceedingProcedure(),statement.getSucceedingProcedure(), statement.getTransitionFormula());
-				
-				
-				
-				IPredicate wp = weakest_precondition_list.get(wp_counter);
-				IPredicate pre = pre_precondition_list.get(pre_counter);
-				
-				ERelevanceStatus relevance = rc.relevanceInternal(pre, basic, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(wp)));
-				if(relevance.toString() == "InUnsatCore")
+				final boolean relevanceCriterion1uc;
+				final boolean relevanceCriterion1gf;
+				if(relevance  == ERelevanceStatus.InUnsatCore) // This is the case when the the triple is unsatisfiable and the statment is in the Unsatisfiable core.
 				{
-					//m_Logger.warn("RELEVANT");
-					//m_Logger.warn(statement);
-					relevant.add(statement);
-					// SET CRITERIA 1 TO TRUE
-					((RelevanceInformation) relevancy_of_statement).setCriteria1(true);
+					relevanceCriterion1uc = true;
+					relevanceCriterion1gf = false;
 					
 				}
-				wp_counter = wp_counter + 1;
-				pre_counter = pre_counter + 1;
-				// Adding relevancy information in the array list Relevance_of_statements
-				Relevance_of_statements.add(relevancy_of_statement);
-			
-			
+				else if(relevance == ERelevanceStatus.Sat) // The case when we have HAVOC statements. In this case the statement is relevant if the triple is satisfiable.
+				{
+					relevanceCriterion1uc = false;
+					relevanceCriterion1gf = true;
+				}
+				else
+				{
+					// ToDo ! 
+					// ADD here UNKNOWN ! after changing the criteria data type to ENUM.
+					relevanceCriterion1uc = false;
+					relevanceCriterion1gf = false;
+				}
+				// Adding relevance information in the array list Relevance_of_statements.
+				RelevanceInformation ri = new RelevanceInformation(
+						Collections.singletonList(action), 
+						relevanceCriterion1uc, 
+						relevanceCriterion1gf, false);
+						
+				Relevance_of_statements[i] = ri;
 		}
+		
+		if (m_Logger.isInfoEnabled()) {
+			for (int i=0; i<counterexampleRun.getLength()-1; i++) {
+				m_Logger.info(weakestPreconditionSequence.getInterpolant(i));
+				m_Logger.info(Relevance_of_statements[i]);
+			}
+			m_Logger.info(weakestPreconditionSequence.getInterpolant(counterexampleRun.getLength()-1));
+		}
+
+		
 	}
 
 	/**
@@ -367,20 +416,14 @@ public class FlowSensitiveFaultLocalizer {
 	 * @return List of {@link RelevanceInformation}s one for each 
 	 * {@link CodeBlock} in the counterexample.
 	 */
-	public ArrayList<IRelevanceInformation> getRelevanceInformation() 
+	public List<IRelevanceInformation> getRelevanceInformation() 
 	{
-		for(int i= 0;i <Relevance_of_statements.size()/2;i++)
-		{
-			IRelevanceInformation temp = Relevance_of_statements.get(i);
-			Relevance_of_statements.set(i, Relevance_of_statements.get(Relevance_of_statements.size()-i-1));
-			Relevance_of_statements.set(Relevance_of_statements.size()-i-1, temp);
-		}
 		m_Logger.warn("- - - - - - - -");
-		for(int i= 0;i <Relevance_of_statements.size();i++)
+		for(int i= 0;i <Relevance_of_statements.length;i++)
 		{
-			m_Logger.warn(((RelevanceInformation) Relevance_of_statements.get(i)).getStatement() +" | " +Relevance_of_statements.get(i).getShortString());
+			m_Logger.warn(((RelevanceInformation) Relevance_of_statements[i]).getActions() +" | " +Relevance_of_statements[i].getShortString());
 		}
-		return Relevance_of_statements;
+		return Arrays.asList(Relevance_of_statements);
 	}
 	
 }

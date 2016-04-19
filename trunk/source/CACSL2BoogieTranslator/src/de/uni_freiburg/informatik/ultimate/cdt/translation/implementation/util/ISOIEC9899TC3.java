@@ -35,8 +35,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -45,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
@@ -190,7 +194,63 @@ public final class ISOIEC9899TC3 {
 			FunctionDeclarations functionDeclarations) {
 		if (bitvectorTranslation) {
 			//TODO bitprecise Float translation
-			return null;
+			String value = val;
+			String floatType = null;
+			int exponentLength = 0;
+			int significantLength = 0;
+			int exponentValue = 0;
+			final Expression sign;
+			final Expression significant;
+			final Expression exponent;			
+			double floatVal = Double.valueOf(value);
+
+			// if there is a float-suffix: throw it away
+			for (String s : SUFFIXES_FLOAT) {
+				if (val.endsWith(s)) {
+					value = val.substring(0, val.length() - s.length());
+					floatType = s;
+				}
+			}
+			
+			// set sign bit if value is negative make it positive
+			if (floatVal < 0) {
+				sign = new BitvecLiteral(loc, Integer.toString(1) , 1);
+				floatVal = floatVal * -1.0;
+			} else {
+				sign = new BitvecLiteral(loc, Integer.toString(0) , 1);
+			}
+			
+			// Set floatIndices depending on the value of the val
+			final CType resultType;
+			if (floatType == null || floatType.equals("d") || floatType.equals("D")) {
+				exponentLength = 11;
+				significantLength = 52;
+				resultType = new CPrimitive(CPrimitive.PRIMITIVE.DOUBLE);
+			} else if (floatType.equals("f") || floatType.equals("F")) {
+				exponentLength = 8;
+				significantLength = 23;
+				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
+			} else if (floatType.equals("l") || floatType.equals("L")) {
+				exponentLength = 15;
+				significantLength = 112;
+				resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
+			} else {
+				// TODO evaluate exception type
+				throw new IllegalArgumentException("not a float type");
+			}
+			
+			// TODO find out how to work this with NaN
+			
+			// calculate exponent value and value of the significant
+			while (floatVal > 2.0) {
+				floatVal = floatVal / 2.0;
+				exponentValue++;
+			}
+			exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
+			significant = new BitvecLiteral(loc, Double.toString(floatVal), significantLength);
+			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "fp", new Expression[]{sign, exponent, significant});
+			return new RValue(func, resultType);
+			
 		} else {
 			String value = val;
 			// if there is a float-suffix: throw it away

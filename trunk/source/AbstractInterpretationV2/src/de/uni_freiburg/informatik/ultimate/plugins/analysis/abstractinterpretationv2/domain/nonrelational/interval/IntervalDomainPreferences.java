@@ -31,8 +31,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 
@@ -62,8 +62,8 @@ public class IntervalDomainPreferences {
 	public static final String DEF_WIDENING_OPERATOR = VALUE_WIDENING_OPERATOR_LITERALS;
 	public static final String DEF_EVALUATOR_TYPE = VALUE_EVALUATOR_DEFAULT;
 
-	public static List<AbstractUltimatePreferenceItem> getPreferences() {
-		final List<AbstractUltimatePreferenceItem> rtr = new ArrayList<>();
+	public static List<BaseUltimatePreferenceItem> getPreferences() {
+		final List<BaseUltimatePreferenceItem> rtr = new ArrayList<>();
 		
 		final UltimatePreferenceItemContainer intervalContainer = new UltimatePreferenceItemContainer(
 		        "Interval Domain");

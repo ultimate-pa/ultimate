@@ -57,12 +57,12 @@ public class CongruenceUnaryExpressionEvaluator
 	protected IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
 	protected Operator mOperator;
 
-	protected CongruenceUnaryExpressionEvaluator(Logger logger) {
+	protected CongruenceUnaryExpressionEvaluator(final Logger logger) {
 		mLogger = logger;
 	}
 
 	@Override
-	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(CongruenceDomainState currentState) {
+	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(final CongruenceDomainState currentState) {
 
 		final List<IEvaluationResult<CongruenceDomainValue>> subEvaluatorResult = mSubEvaluator.evaluate(currentState);
 
@@ -82,12 +82,13 @@ public class CongruenceUnaryExpressionEvaluator
 				returnValue = CongruenceDomainValue.createTop();
 				break;
 			default:
-				mLogger.warn(
-				        "Operator " + mOperator + " not implemented. Assuming logical interpretation to be TOP.");
 				returnBool = new BooleanValue();
-				mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
-				        + ". Returning current state. Returned value is top.");
 				returnValue = CongruenceDomainValue.createTop();
+				if (mLogger.isDebugEnabled()) {
+					mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator 
+							+ ". Returning current state. Returned value is top.");
+				}
+				break;
 			}
 
 			returnEvaluationResults.add(new CongruenceDomainEvaluationResult(returnValue, returnBool));
@@ -99,7 +100,7 @@ public class CongruenceUnaryExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
 
@@ -122,7 +123,7 @@ public class CongruenceUnaryExpressionEvaluator
 	}
 
 	@Override
-	public void setOperator(Object operator) {
+	public void setOperator(final Object operator) {
 		assert operator != null;
 		assert operator instanceof Operator;
 		mOperator = (Operator) operator;
@@ -139,13 +140,13 @@ public class CongruenceUnaryExpressionEvaluator
 
 		switch (mOperator) {
 		case LOGICNEG:
-			sb.append("!");
+			sb.append('!');
 			break;
 		case OLD:
 			sb.append("old(");
 			break;
 		case ARITHNEGATIVE:
-			sb.append("-");
+			sb.append('-');
 			break;
 		default:
 		}
@@ -153,16 +154,15 @@ public class CongruenceUnaryExpressionEvaluator
 		sb.append(mSubEvaluator);
 
 		if (mOperator == Operator.OLD) {
-			sb.append(")");
+			sb.append(')');
 		}
 
 		return sb.toString();
 	}
 
 	@Override
-	public List<CongruenceDomainState> inverseEvaluate(IEvaluationResult<CongruenceDomainValue> computedValue,
-	        CongruenceDomainState currentState) {
-		final List<CongruenceDomainState> returnList = new ArrayList<>();
+	public List<CongruenceDomainState> inverseEvaluate(final IEvaluationResult<CongruenceDomainValue> computedValue,
+	        final CongruenceDomainState currentState) {
 		CongruenceDomainValue evalValue = computedValue.getValue();
 		BooleanValue evalBool = computedValue.getBooleanValue();
 
@@ -179,8 +179,6 @@ public class CongruenceUnaryExpressionEvaluator
 		}
 
 		final CongruenceDomainEvaluationResult evalResult = new CongruenceDomainEvaluationResult(evalValue, evalBool);
-		final List<CongruenceDomainState> result = mSubEvaluator.inverseEvaluate(evalResult, currentState);
-		returnList.addAll(result);
-		return returnList;
+		return mSubEvaluator.inverseEvaluate(evalResult, currentState);
 	}
 }

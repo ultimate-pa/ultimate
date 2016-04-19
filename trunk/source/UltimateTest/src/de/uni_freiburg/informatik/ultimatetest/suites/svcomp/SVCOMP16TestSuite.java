@@ -67,7 +67,7 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		//BitVectors.set
 		//Concurrency.set
 		//ControlFlowInteger.set
-		//DeviceDrivers64.set
+		//DeviceDriversLinux64.set
 		//DriverChallenges.set
 		//ECA.set
 		//Floats.set
@@ -83,13 +83,15 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		//Termination-ext.set
 		//@formatter:on
 
-		rtr.addAll(getForAll("ControlFlow"));
+//		rtr.addAll(getForAll("ControlFlow"));
 		rtr.addAll(getForAll("Simple"));
-		rtr.addAll(getForAll("ECA", 10));
+		// rtr.addAll(getForAll("ECA", 10));
+		rtr.addAll(getForAll("DeviceDriversLinux64", 50));
 		rtr.addAll(getForAll("Loops"));
 		rtr.addAll(getForAll("Recursive"));
-		rtr.addAll(getForAll("ProductLines", 10));
-		rtr.addAll(getForAll("Sequentialized", 10));
+		rtr.addAll(getForAll("ArraysReach"));
+		// rtr.addAll(getForAll("ProductLines", 10));
+		// rtr.addAll(getForAll("Sequentialized", 10));
 
 		return rtr;
 	}
@@ -113,6 +115,13 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
 		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf", timeout, limit));
 
+		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
+		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_INT.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
+		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_OCT.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
+		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_CON.epf", timeout, limit));
+
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-32bit-Automizer_Default.epf",
 				timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
@@ -123,6 +132,15 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf", timeout, limit));
+
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-64bit-Automizer_Default.epf",
+		// timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_INT.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_OCT.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_CON.epf", timeout, limit));
 
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf", timeout, limit));

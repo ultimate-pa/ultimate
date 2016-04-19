@@ -48,6 +48,7 @@ public class CegarLoopBenchmarkGenerator extends StatisticsGeneratorWithStopwatc
 	private int m_AbsIntIterations = 0;
 	private SizeIterationPair m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation m_BCI = new BackwardCoveringInformation(0, 0);
+	private int m_AbsIntStrong = 0;
 
 	@Override
 	public Collection<String> getKeys() {
@@ -93,6 +94,10 @@ public class CegarLoopBenchmarkGenerator extends StatisticsGeneratorWithStopwatc
 	public void announceNextAbsIntIteration() {
 		m_AbsIntIterations++;
 	}
+	
+	public void announceStrongAbsInt() {
+		m_AbsIntStrong++;
+	}
 
 	public void reportAbstractionSize(int size, int iteration) {
 		if (size > m_BiggestAbstraction.getSize()) {
@@ -133,6 +138,8 @@ public class CegarLoopBenchmarkGenerator extends StatisticsGeneratorWithStopwatc
 			return m_Iterations;
 		case CegarLoopBenchmarkType.s_AbsIntIterations:
 			return m_AbsIntIterations;
+		case CegarLoopBenchmarkType.s_AbsIntStrong:
+			return m_AbsIntStrong;			
 		case CegarLoopBenchmarkType.s_BiggestAbstraction:
 			return m_BiggestAbstraction;
 		case CegarLoopBenchmarkType.s_InterpolantCoveringCapability:

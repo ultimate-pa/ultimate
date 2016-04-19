@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
@@ -118,8 +118,8 @@ public class SmtParser implements ISource {
 		return mFileTypes;
 	}
 
-	public GraphType getOutputDefinition() {
-		return new GraphType(Activator.PLUGIN_ID,GraphType.Type.OTHER, mFileNames);
+	public ModelType getOutputDefinition() {
+		return new ModelType(Activator.PLUGIN_ID,ModelType.Type.OTHER, mFileNames);
 	}
 
 	@Override

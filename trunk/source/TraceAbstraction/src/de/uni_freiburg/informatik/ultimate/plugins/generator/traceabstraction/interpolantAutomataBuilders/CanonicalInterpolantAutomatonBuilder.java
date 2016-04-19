@@ -155,7 +155,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 	private void addTransition(int prePos, int symbolPos, int succPos) {
 		IPredicate pred = m_IPP.getInterpolant(prePos);
 		IPredicate succ = m_IPP.getInterpolant(succPos);
-		CodeBlock symbol = m_NestedWord.getSymbol(symbolPos);
+		CodeBlock symbol = (CodeBlock) m_NestedWord.getSymbol(symbolPos);
 		if (m_NestedWord.isCallPosition(symbolPos)) {
 			m_IA.addCallTransition(pred, symbol, succ);
 			if (m_IPP.getInterpolant(prePos) != m_IPP.getInterpolant(symbolPos)) {

@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
@@ -84,7 +84,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
+	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
 		// TODO Auto-generated method stub
 		
 	}

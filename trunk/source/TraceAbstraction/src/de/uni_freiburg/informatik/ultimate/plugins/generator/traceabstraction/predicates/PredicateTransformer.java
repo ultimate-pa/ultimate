@@ -65,21 +65,23 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
  * 
  */
 public class PredicateTransformer {
-	private final PredicateFactory m_SmtManager;
+	private final PredicateFactory m_PredicateFactory;
 	private final Script m_Script;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	private final VariableManager m_VariableManager;
 	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
 
-	public PredicateTransformer(SmtManager smtManager, ModifiableGlobalVariableManager modifiableGlobalVariableManager,
+	public PredicateTransformer(PredicateFactory predicateFactory, 
+			VariableManager variableManager, Script script, 
+			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
 			IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_SmtManager = smtManager.getPredicateFactory();
-		m_Script = smtManager.getScript();
+		m_PredicateFactory = predicateFactory;
+		m_Script = script;
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
-		m_VariableManager = smtManager.getVariableManager();
+		m_VariableManager = variableManager;
 	}
 
 
@@ -141,7 +143,7 @@ public class PredicateTransformer {
 
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
-		return m_SmtManager.constructPredicate(result, Script.EXISTS, varsToQuantify);
+		return m_PredicateFactory.constructPredicate(result, Script.EXISTS, varsToQuantify);
 	}
 
 	/**
@@ -202,7 +204,7 @@ public class PredicateTransformer {
 			renamedPredicate = new SafeSubstitutionWithLocalSimplification(m_Script, m_VariableManager, substitutionMapping).transform(p.getFormula());
 		}
 		Term sucessorTerm = Util.and(m_Script, renamedPredicate, renamedOldVarsAssignment);
-		return m_SmtManager.constructPredicate(sucessorTerm, Script.EXISTS, varsToQuantify);
+		return m_PredicateFactory.constructPredicate(sucessorTerm, Script.EXISTS, varsToQuantify);
 	}
 	
 	
@@ -287,7 +289,7 @@ public class PredicateTransformer {
 		}
 		Term sucessorTerm = Util.and(m_Script, renamedPredicate, renamedLocalVarsAssignment, renamedOldVarsAssignment,
 				renamedGlobalVarAssignment);
-		return m_SmtManager.constructPredicate(sucessorTerm, Script.EXISTS, varsToQuantify);
+		return m_PredicateFactory.constructPredicate(sucessorTerm, Script.EXISTS, varsToQuantify);
 	}
 
 	/**
@@ -431,13 +433,13 @@ public class PredicateTransformer {
 			varsToQuantifyPendingCall.addAll(varsToQuantifyNonModOldVars);
 			varsToQuantifyPendingCall.addAll(allAuxVars);
 
-			return m_SmtManager.constructPredicate(predANDCallANDGlobalVars, Script.EXISTS, varsToQuantifyPendingCall);
+			return m_PredicateFactory.constructPredicate(predANDCallANDGlobalVars, Script.EXISTS, varsToQuantifyPendingCall);
 		} else {
 			Term predRenamed = new SafeSubstitutionWithLocalSimplification(m_Script, varsToRenameInPredNonPendingCall)
 					.transform(predNonModOldVarsRenamed);
 			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
 			varsToQuantifyNonPendingCall.addAll(allAuxVars);
-			return m_SmtManager.constructPredicate(
+			return m_PredicateFactory.constructPredicate(
 					Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed), Script.EXISTS,
 					varsToQuantifyNonPendingCall);
 		}
@@ -616,7 +618,7 @@ public class PredicateTransformer {
 		// 3. Result
 		varsToQuantifyOverAll.addAll(allAuxVars);
 
-		return m_SmtManager.constructPredicate(
+		return m_PredicateFactory.constructPredicate(
 				Util.and(m_Script, calleePredRenamedQuantified, retTermRenamed, calleRPredANDCallTFRenamedQuantified),
 				Script.EXISTS, varsToQuantifyOverAll);
 	}
@@ -670,7 +672,7 @@ public class PredicateTransformer {
 		final Term result = Util.or(m_Script, Util.not(m_Script, renamedTransFormula), renamedSuccessor);
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
-		return m_SmtManager.constructPredicate(result, Script.FORALL, varsToQuantify);
+		return m_PredicateFactory.constructPredicate(result, Script.FORALL, varsToQuantify);
 	}
 
 	/**
@@ -750,7 +752,7 @@ public class PredicateTransformer {
 				Util.not(m_Script, Util.and(m_Script, call_TFrenamed, globalVarsAssignmentsRenamed, oldVarsAssignmentsRenamed)),
 				calleePredRenamed);
 		varsToQuantify.addAll(call_TF.getAuxVars());
-		return m_SmtManager.constructPredicate(result, Script.FORALL, varsToQuantify);
+		return m_PredicateFactory.constructPredicate(result, Script.FORALL, varsToQuantify);
 	}
 
 	/**
@@ -882,7 +884,7 @@ public class PredicateTransformer {
 				callTermRenamed, globalVarsRenamed);
 
 		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturnAndGlobalVars), returnPredRenamed);
-		return m_SmtManager.constructPredicate(result, Script.FORALL, varsToQuantify);
+		return m_PredicateFactory.constructPredicate(result, Script.FORALL, varsToQuantify);
 	}
 	
 

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 
 /**
  * Main class of Plug-In LassoRanker
@@ -51,7 +51,7 @@ public class LassoRanker implements IAnalysis {
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
 	
 	private LassoRankerObserver m_Observer;
-	private GraphType m_InputDefinition;
+	private ModelType m_InputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 
@@ -80,8 +80,8 @@ public class LassoRanker implements IAnalysis {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
 	}
 
 	@Override
@@ -90,7 +90,7 @@ public class LassoRanker implements IAnalysis {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		this.m_InputDefinition = graphType;
 	}
 
@@ -100,12 +100,12 @@ public class LassoRanker implements IAnalysis {
 		return Collections.singletonList((IObserver) m_Observer);
 	}
 	
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		/* 
 		 * TODO This generated method body only assumes a standard case.
 		 * Adapt it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new GraphType(Activator.s_PLUGIN_ID,
+		return new ModelType(Activator.s_PLUGIN_ID,
 				m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
 	

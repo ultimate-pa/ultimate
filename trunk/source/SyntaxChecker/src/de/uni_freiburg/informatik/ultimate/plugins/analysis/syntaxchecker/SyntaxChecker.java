@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
@@ -67,7 +67,7 @@ public class SyntaxChecker implements IAnalysis {
 			new FilenameExtractionObserver();
 	
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -76,8 +76,8 @@ public class SyntaxChecker implements IAnalysis {
 		return false;
 	}
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.SOURCE;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.SOURCE;
 	}
 	@Override
 	public List<String> getDesiredToolID() {
@@ -85,7 +85,7 @@ public class SyntaxChecker implements IAnalysis {
 		return null;
 	}
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
@@ -220,9 +220,9 @@ public class BoogieParser implements ISource {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutputDefinition#
 	 * getOutputDefinition()
 	 */
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		try {
-			return new GraphType(getPluginID(), GraphType.Type.AST, this.mFileNames);
+			return new ModelType(getPluginID(), ModelType.Type.AST, this.mFileNames);
 		} catch (Exception ex) {
 			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
 			return null;

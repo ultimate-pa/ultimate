@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.heapseparator.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
@@ -57,7 +57,7 @@ public class HeapSeparator implements IGenerator {
 	private IUltimateServiceProvider m_services;
 
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -66,9 +66,9 @@ public class HeapSeparator implements IGenerator {
 		return false;
 	}
 	@Override
-	public QueryKeyword getQueryKeyword() {
+	public ModelQuery getModelQuery() {
 		// TODO is this the right setting??
-		return QueryKeyword.LAST;
+		return ModelQuery.LAST;
 	}
 	@Override
 	public List<String> getDesiredToolID() {
@@ -76,7 +76,7 @@ public class HeapSeparator implements IGenerator {
 		return null;
 	}
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -146,7 +146,7 @@ public final class AbstractInterpreter {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Run abstract interpretation on the whole RCFG.
 	 * 
@@ -226,6 +226,8 @@ public final class AbstractInterpreter {
 					bpl2smt);
 			if (!result.hasReachedError()) {
 				logger.info("NWA was safe (error state unreachable)");
+			} else {
+				logger.info("Could not show that NWA was safe (error state reachable)");
 			}
 			if (logger.isDebugEnabled()) {
 				logger.debug("Found the following predicates:");

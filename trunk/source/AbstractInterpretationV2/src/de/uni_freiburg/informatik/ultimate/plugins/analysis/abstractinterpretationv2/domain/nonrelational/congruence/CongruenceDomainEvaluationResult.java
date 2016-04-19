@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class CongruenceDomainEvaluationResult implements IEvaluationResult<CongruenceDomainValue> {
 
-	private CongruenceDomainValue mValue;
-	private BooleanValue mBooleanValue;
+	private final CongruenceDomainValue mValue;
+	private final BooleanValue mBooleanValue;
 
 	/**
 	 * Default constructor for an {@link CongruenceDomainEvaluationResult}.
@@ -51,7 +51,7 @@ public class CongruenceDomainEvaluationResult implements IEvaluationResult<Congr
 	 * @param booleanValue
 	 *            The {@link BooleanValue} to set in the result.
 	 */
-	protected CongruenceDomainEvaluationResult(CongruenceDomainValue value, BooleanValue booleanValue) {
+	protected CongruenceDomainEvaluationResult(final CongruenceDomainValue value, final BooleanValue booleanValue) {
 		mValue = value;
 		mBooleanValue = booleanValue;
 	}
@@ -69,10 +69,7 @@ public class CongruenceDomainEvaluationResult implements IEvaluationResult<Congr
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Value: ");
-		sb.append(mValue);
-		sb.append(" -- Boolean Value: ");
-		sb.append(mBooleanValue);
+		sb.append("Value: ").append(mValue).append(" -- Boolean Value: ").append(mBooleanValue);
 		return sb.toString();
 	}
 }

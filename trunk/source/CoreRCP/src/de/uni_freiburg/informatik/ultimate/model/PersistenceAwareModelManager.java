@@ -67,14 +67,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.Constants;
  */
 public class PersistenceAwareModelManager implements IModelManager {
 
-	private Map<GraphType, ModelContainer> mModelMap;
+	private Map<ModelType, ModelContainer> mModelMap;
 	private IRepository<String, ModelContainer> mRepository;
 	private Logger mLogger;
-	private GraphType mLastAdded;
+	private ModelType mLastAdded;
 
 	public PersistenceAwareModelManager(File repositoryRoot, Logger logger) {
 		assert logger != null;
-		mModelMap = new HashMap<GraphType, ModelContainer>();
+		mModelMap = new HashMap<ModelType, ModelContainer>();
 		mLogger = logger;
 		mLogger.info("Repository-Root is: " + repositoryRoot.getAbsolutePath());
 		this.mRepository = new SerializationRepository(repositoryRoot, mLogger);
@@ -143,7 +143,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 *            The concrete type of graph this node belongs to (should this be calculated or set somehow here ? )
 	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
 	 */
-	public boolean addItem(IElement rootNode, GraphType graphtype) {
+	public boolean addItem(IElement rootNode, ModelType graphtype) {
 		ModelContainer vault = new ModelContainer(rootNode, graphtype, createFileNameFromNode(rootNode));
 		setLastAdded(vault.getType());
 		return this.addItem(vault);
@@ -152,7 +152,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	@Override
 	public ArrayList<String> getItemNames() {
 		ArrayList<String> names = new ArrayList<String>();
-		for (GraphType t : this.mModelMap.keySet()) {
+		for (ModelType t : this.mModelMap.keySet()) {
 			names.add(t.toString());
 		}
 		names.addAll(this.mRepository.listKeys());
@@ -160,12 +160,12 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public GraphType getLastAdded() {
+	public ModelType getLastAdded() {
 		return this.mLastAdded;
 	}
 
 	@Override
-	public IElement getRootNode(GraphType graph) throws GraphNotFoundException {
+	public IElement getRootNode(ModelType graph) throws GraphNotFoundException {
 		ModelContainer container = this.mModelMap.get(graph);
 		if (container == null) {
 			try {
@@ -188,7 +188,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	@Override
 	public void persistAll(boolean keepInMemory) throws StoreObjectException {
-		for (final Entry<GraphType, ModelContainer> mapEntry : mModelMap.entrySet()) {
+		for (final Entry<ModelType, ModelContainer> mapEntry : mModelMap.entrySet()) {
 			if(mapEntry.getKey() == null || mapEntry.getValue() == null){
 				continue;
 			}
@@ -200,12 +200,12 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public void persistAndDropExistingGraph(GraphType key) throws StoreObjectException, GraphNotFoundException {
+	public void persistAndDropExistingGraph(ModelType key) throws StoreObjectException, GraphNotFoundException {
 		persistExistingGraph(key, false);
 	}
 
 	@Override
-	public void persistExistingGraph(GraphType key, boolean keepInMemory)
+	public void persistExistingGraph(ModelType key, boolean keepInMemory)
 			throws StoreObjectException, GraphNotFoundException {
 		if (this.mModelMap.containsKey(key)) {
 			this.mRepository.addOrReplace(key.toString(), this.mModelMap.get(key));
@@ -224,7 +224,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public boolean removeItem(GraphType graphtype) {
+	public boolean removeItem(ModelType graphtype) {
 		boolean successfull = true;
 		if (this.mModelMap.containsKey(graphtype)) {
 			successfull = this.mModelMap.remove(graphtype) != null;
@@ -235,7 +235,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	@Override
 	public boolean removeItem(String id) {
 		boolean successfull = true;
-		GraphType graphType = getInMemoryGraphTypeById(id);
+		ModelType graphType = getInMemoryGraphTypeById(id);
 		if (graphType != null) {
 			successfull = this.mModelMap.remove(graphType) != null;
 		}
@@ -248,8 +248,8 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public GraphType getGraphTypeById(String s) {
-		for (GraphType t : this.mModelMap.keySet()) {
+	public ModelType getGraphTypeById(String s) {
+		for (ModelType t : this.mModelMap.keySet()) {
 			if (t.toString().equals(s)) {
 				return t;
 			}
@@ -264,8 +264,8 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return null;
 	}
 
-	private GraphType getInMemoryGraphTypeById(String id) {
-		for (GraphType t : this.mModelMap.keySet()) {
+	private ModelType getInMemoryGraphTypeById(String id) {
+		for (ModelType t : this.mModelMap.keySet()) {
 			if (t.toString().equals(id)) {
 				return t;
 			}
@@ -274,8 +274,8 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public GraphType getGraphTypeByGeneratorPluginId(String id) {
-		for (GraphType t : this.mModelMap.keySet()) {
+	public ModelType getGraphTypeByGeneratorPluginId(String id) {
+		for (ModelType t : this.mModelMap.keySet()) {
 			if (t.getCreator().equals(id)) {
 				return t;
 			}
@@ -283,7 +283,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 		for (String keyFromRepos : this.mRepository.listKeys()) {
 			if (keyFromRepos.contains(id)) {
 				try {
-					GraphType graphType = this.mRepository.get(keyFromRepos).getType();
+					ModelType graphType = this.mRepository.get(keyFromRepos).getType();
 					if (graphType.getCreator().equals(id))
 						return graphType;
 				} catch (DataAccessException e) {
@@ -295,7 +295,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public void setLastAdded(GraphType lastAdded) {
+	public void setLastAdded(ModelType lastAdded) {
 		this.mLastAdded = lastAdded;
 	}
 
@@ -318,7 +318,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public List<GraphType> getItemKeys() {
-		return new ArrayList<GraphType>(mModelMap.keySet());
+	public List<ModelType> getItemKeys() {
+		return new ArrayList<ModelType>(mModelMap.keySet());
 	}
 }

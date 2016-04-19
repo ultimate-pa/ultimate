@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 
@@ -64,8 +64,8 @@ public class OctPreferences {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public static List<AbstractUltimatePreferenceItem> createPreferences() {
-		List<AbstractUltimatePreferenceItem> prf = new ArrayList<>();
+	public static List<BaseUltimatePreferenceItem> createPreferences() {
+		List<BaseUltimatePreferenceItem> prf = new ArrayList<>();
 		final UltimatePreferenceItemContainer octagonContainer = new UltimatePreferenceItemContainer("Octagon Domain");
 
 		octagonContainer.addItem(new UltimatePreferenceItem<LogMessageFormatting>(LOG_STRING_FORMAT,

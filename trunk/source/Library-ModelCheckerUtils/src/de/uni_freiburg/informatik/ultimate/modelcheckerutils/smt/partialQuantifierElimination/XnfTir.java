@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  * Transitive inequality resolution (TIR) for terms in XNF.
  * @author Matthias Heizmann
  */
-public class XnfTir extends XnfPartialQuantifierElimination {
+public class XnfTir extends XjunctPartialQuantifierElimination {
 	
 	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 
@@ -78,13 +78,20 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 		return "TIR";
 	}
 	
+	@Override
+	public boolean resultIsXjunction() {
+		return false;
+	};
+
+	
 	public enum BoundType { UPPER, LOWER }
 
 	@Override
-	public Term[] tryToEliminate(int quantifier, Term[] inputDisjuncts,
+	public Term[] tryToEliminate(int quantifier, Term[] inputConjuncts,
 			Set<TermVariable> eliminatees) {
-		List<Term> currentDisjuncts = new ArrayList<Term>(Arrays.asList(inputDisjuncts));
-		Iterator<TermVariable> it = eliminatees.iterator();
+		final Term inputConjunction = PartialQuantifierElimination.composeXjunctsInner(m_Script, quantifier, inputConjuncts);
+		List<Term> currentDisjuncts = new ArrayList<Term>(Arrays.asList(inputConjunction));
+		final Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
 			List<Term> nextDisjuncts = new ArrayList<Term>();
 			TermVariable eliminatee = it.next();
@@ -111,7 +118,9 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 			}
 			currentDisjuncts = nextDisjuncts;
 		}
-		return currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
+		final Term[] resultDisjuncts = currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
+		final Term resultDisjunction =  PartialQuantifierElimination.composeXjunctsOuter(m_Script, 0, resultDisjuncts);
+		return new Term[] { resultDisjunction };
 	}
 
 	private List<Term> tryToEliminate_singleDisjuct(int quantifier, Term disjunct,

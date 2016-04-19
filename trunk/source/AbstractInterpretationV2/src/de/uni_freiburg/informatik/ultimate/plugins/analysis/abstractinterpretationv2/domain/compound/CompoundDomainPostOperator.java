@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -128,7 +127,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 				result.stream().map(a -> a.toLogString()).forEach(a -> mLogger.debug(new StringBuilder(sb).append(a)));
 			}
 
-			if (result.size() == 0) {
+			if (result.isEmpty()) {
 				return new ArrayList<>();
 			}
 
@@ -228,7 +227,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	private CodeBlock createBlockWithoutState(final List<IAbstractState<?, CodeBlock, IBoogieVar>> states,
 			final int index, final CodeBlock transition) {
 
-		assert states.size() > 0;
+		assert !states.isEmpty();
 
 		Term assumeTerm = null;
 		for (int i = 0; i < states.size(); i++) {
@@ -278,7 +277,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			final List<IAbstractState> result = applyInternally(beforeStates.get(i), afterStates.get(i),
 					domainsBefore.get(i).getPostOperator(), transition);
 
-			if (result.size() == 0) {
+			if (result.isEmpty()) {
 				return new ArrayList<>();
 			}
 

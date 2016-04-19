@@ -31,11 +31,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -49,18 +46,17 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -74,9 +70,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 	// Forward relevant predicates
-	protected IPredicate[] m_InterpolantsFp;
+	protected List<IPredicate> m_InterpolantsFp;
 	// Backward relevant predicates
-	protected IPredicate[] m_InterpolantsBp;
+	protected List<IPredicate> m_InterpolantsBp;
 
 	private final UnsatCores m_UnsatCores;
 	private final boolean m_LiveVariables;
@@ -92,17 +88,14 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private final boolean m_ConstructForwardInterpolantSequence;
 	private final boolean m_ConstructBackwardInterpolantSequence;
 
-	private static final boolean s_TransformToCNF = true;
-
 	private AnnotateAndAssertConjunctsOfCodeBlocks m_AnnotateAndAsserterConjuncts;
-	private final PredicateTransformer m_PredicateTransformer;
 	
 	private int m_NonLiveVariablesFp = 0;
 	private int m_NonLiveVariablesBp = 0;
 	
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<? extends IAction> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			UnsatCores unsatCores, boolean useLiveVariables, 
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
@@ -128,7 +121,6 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		default:
 			throw new UnsupportedOperationException("unsupportedInterpolation");
 		}
-		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, m_ModifiedGlobals, m_Services);
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
 		}
@@ -162,108 +154,18 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return m_ConstructBackwardInterpolantSequence;
 	}
 
-	public IPredicate[] getForwardPredicates() {
+	public List<IPredicate> getForwardPredicates() {
 		assert m_InterpolantsFp != null : "Forwards predicates not computed!";
 		return m_InterpolantsFp;
 	}
 
 
-	public IPredicate[] getBackwardPredicates() {
+	public List<IPredicate> getBackwardPredicates() {
 		assert m_InterpolantsBp != null : "Backwards predicates not computed!";
 		return m_InterpolantsBp;
 	}
 
-	/**
-	 * Computes a summary of the procedure. The procedure consists (or is
-	 * represented) by the Call statement, the Return statement and the inner
-	 * statements.
-	 * 
-	 * @param trace
-	 *            - the inner statements of the procedure
-	 * @param Call
-	 * @param Return
-	 * @param oldVarsAssignment
-	 * @param rv
-	 * @param call_pos
-	 * @return
-	 */
-	private ProcedureSummary computeProcedureSummary(NestedWord<CodeBlock> trace, TransFormula Call,
-			TransFormula Return, TransFormula oldVarsAssignment, TransFormula globalVarsAssignment, 
-			NestedFormulas<TransFormula, IPredicate> rv,
-			int call_pos, int return_pos) {
-		TransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(trace, rv, call_pos + 1,
-				return_pos);
-		TransFormula summaryWithCallAndReturn = TransFormula.sequentialCompositionWithCallAndReturn(
-				m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, Call, 
-				oldVarsAssignment, globalVarsAssignment,
-				summaryOfInnerStatements, Return, m_Logger, m_Services);
-		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
-	}
 
-	/**
-	 * Computes a summary for the given trace, but only for the statements from
-	 * position "start" to position "end".
-	 * 
-	 * @return - a summary for the statements from the given trace from position
-	 *         "start" to position "end"
-	 */
-	private TransFormula computeSummaryForInterproceduralTrace(NestedWord<CodeBlock> trace,
-			NestedFormulas<TransFormula, IPredicate> rv, int start, int end) {
-		LinkedList<TransFormula> transformulasToComputeSummaryFor = new LinkedList<TransFormula>();
-		for (int i = start; i < end; i++) {
-			if (trace.getSymbol(i) instanceof Call) {
-				TransFormula callTf = rv.getLocalVarAssignment(i);
-				TransFormula oldVarsAssignment = rv.getOldVarAssignment(i);
-				TransFormula globalVarsAssignment = rv.getGlobalVarAssignment(i);
-				if (!trace.isPendingCall(i)) {
-					// Case: non-pending call
-					// Compute a summary for Call and corresponding Return, but
-					// only if the position of the corresponding
-					// Return is smaller than the position "end"
-					int returnPosition = trace.getReturnPosition(i);
-					if (returnPosition < end) {
-						// 1. Compute a summary for the statements between this
-						// non-pending Call
-						// and the corresponding Return recursively
-						TransFormula summaryBetweenCallAndReturn = computeSummaryForInterproceduralTrace(trace, rv,
-								i + 1, returnPosition);
-						TransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
-						transformulasToComputeSummaryFor.addLast(TransFormula.sequentialCompositionWithCallAndReturn(
-								m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, callTf, oldVarsAssignment,
-								globalVarsAssignment, summaryBetweenCallAndReturn, returnTf,
-								m_Logger, m_Services));
-						i = returnPosition;
-					} else {
-						// If the position of the corresponding Return is >=
-						// "end",
-						// then we handle this case as a pending-call
-						TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
-						String nameEndProcedure = ((ProgramPoint) trace.getSymbol(end).getTarget()).getProcedure();
-						Set<BoogieVar> modifiableGlobalsOfEndProcedure = m_ModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-						return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true,
-								false, s_TransformToCNF, transformulasToComputeSummaryFor,
-								callTf, oldVarsAssignment, summaryAfterPendingCall,
-								m_Logger, m_Services, modifiableGlobalsOfEndProcedure);
-					}
-				} else {
-					TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
-					String nameEndProcedure = ((ProgramPoint) trace.getSymbol(end).getTarget()).getProcedure();
-					Set<BoogieVar> modifiableGlobalsOfEndProcedure = m_ModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-					return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true, false,
-							s_TransformToCNF, transformulasToComputeSummaryFor,
-							callTf, oldVarsAssignment, summaryAfterPendingCall, m_Logger,
-							m_Services, modifiableGlobalsOfEndProcedure);
-				}
-			} else if (trace.getSymbol(i) instanceof Return) {
-				// Nothing to do
-			} else {
-				transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
-			}
-		}
-		return TransFormula.sequentialComposition(m_Logger, m_Services, m_SmtManager.getBoogie2Smt(), true, false,
-				s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]));
-
-	}
 
 	/***
 	 * Computes predicates (interpolants) for the statements of an infeasible
@@ -330,7 +232,16 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ConstructForwardInterpolantSequence) {
 			m_Logger.debug("Computing forward predicates...");
 			try {
-				computeForwardPredicates(liveVariables, rtf);
+				List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				if (m_LiveVariables) {
+					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
+				}
+				postprocs.add(new UnifyPostprocessor());
+				IterativePredicateTransformer spt = new IterativePredicateTransformer(
+						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
+						m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), m_ModifiedGlobals, m_Services, m_Trace, 
+						m_Precondition, m_Postcondition, m_PendingContexts, null);
+				m_InterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
 			}
@@ -346,7 +257,16 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ConstructBackwardInterpolantSequence) {
 			m_Logger.debug("Computing backward predicates...");
 			try {
-				computeBackwardPredicates(liveVariables, rtf);
+				List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				if (m_LiveVariables) {
+					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
+				}
+				postprocs.add(new UnifyPostprocessor());
+				IterativePredicateTransformer spt = new IterativePredicateTransformer(
+						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
+						m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), m_ModifiedGlobals, m_Services, m_Trace, 
+						m_Precondition, m_Postcondition, m_PendingContexts, null);
+				m_InterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
 			}
@@ -364,10 +284,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ConstructForwardInterpolantSequence && m_ConstructBackwardInterpolantSequence) {
 			// Post-process forwards predicates			
 			if (m_PostProcess_FP_Predicates) {
-				for (int i = 0; i < m_InterpolantsFp.length; i++) {
-					IPredicate p_old = m_InterpolantsFp[i];
+				for (int i = 0; i < m_InterpolantsFp.size(); i++) {
+					IPredicate p_old = m_InterpolantsFp.get(i);
 					IPredicate p_new = m_PredicateUnifier.getOrConstructPredicate(p_old.getFormula(), p_old.getVars(), p_old.getProcedures());
-					m_InterpolantsFp[i] = p_new;
+					m_InterpolantsFp.set(i, p_new);
 				}
 				if (m_CollectInformationAboutSizeOfPredicates) {
 					sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
@@ -385,9 +305,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ConstructForwardInterpolantSequence && m_ConstructBackwardInterpolantSequence) {
 			selectListOFPredicatesFromBothTypes();
 		} else if (m_ConstructForwardInterpolantSequence) {
-			m_Interpolants = m_InterpolantsFp;
+			m_Interpolants = m_InterpolantsFp.toArray(new IPredicate[m_InterpolantsFp.size()]);
 		} else if (m_ConstructBackwardInterpolantSequence) {
-			m_Interpolants = m_InterpolantsBp;
+			m_Interpolants = m_InterpolantsBp.toArray(new IPredicate[m_InterpolantsBp.size()]);
 		} else {
 			throw new AssertionError("illegal choice");
 		}
@@ -406,7 +326,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[m_Trace.length()];
 			boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[m_Trace.length()];
 			// Filter out the statements, which doesn't occur in the unsat core.
-			Set<CodeBlock> codeBlocksInUnsatCore = filterOutIrrelevantStatements(m_Trace, unsatCore,
+			Set<IAction> codeBlocksInUnsatCore = filterOutIrrelevantStatements(m_Trace, unsatCore,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
 			rtf = new RelevantTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
 					codeBlocksInUnsatCore, m_ModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
@@ -429,28 +349,28 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * 
 	 */
 	private void selectListOFPredicatesFromBothTypes() {
-		assert m_InterpolantsFp.length == m_InterpolantsBp.length;
-		m_Interpolants = new IPredicate[m_InterpolantsBp.length];
+		assert m_InterpolantsFp.size() == m_InterpolantsBp.size();
+		m_Interpolants = new IPredicate[m_InterpolantsBp.size()];
 		int i = 0; // position of predicate computed by strongest post-condition
-		int j = m_InterpolantsBp.length; // position of predicate computed by
+		int j = m_InterpolantsBp.size(); // position of predicate computed by
 		// weakest precondition
 		while (i != j) {
-			if (!(m_InterpolantsBp[j - 1] instanceof BasicPredicateExplicitQuantifier)) {
-				m_Interpolants[j - 1] = m_InterpolantsBp[j - 1];
+			if (!(m_InterpolantsBp.get(j - 1) instanceof BasicPredicateExplicitQuantifier)) {
+				m_Interpolants[j - 1] = m_InterpolantsBp.get(j - 1);
 				j--;
-			} else if (!(m_InterpolantsFp[i] instanceof BasicPredicateExplicitQuantifier)) {
-				m_Interpolants[i] = m_InterpolantsFp[i];
+			} else if (!(m_InterpolantsFp.get(i) instanceof BasicPredicateExplicitQuantifier)) {
+				m_Interpolants[i] = m_InterpolantsFp.get(i);
 				i++;
 			} else {
-				int numOfQuantifiedVarsInFp = ((BasicPredicateExplicitQuantifier) m_InterpolantsFp[i])
+				int numOfQuantifiedVarsInFp = ((BasicPredicateExplicitQuantifier) m_InterpolantsFp.get(i))
 						.getQuantifiedVariables().size();
-				int numOfQuantifiedVarsInBp = ((BasicPredicateExplicitQuantifier) m_InterpolantsBp[j - 1])
+				int numOfQuantifiedVarsInBp = ((BasicPredicateExplicitQuantifier) m_InterpolantsBp.get(j - 1))
 						.getQuantifiedVariables().size();
 				if (numOfQuantifiedVarsInFp < numOfQuantifiedVarsInBp) {
-					m_Interpolants[i] = m_InterpolantsFp[i];
+					m_Interpolants[i] = m_InterpolantsFp.get(i);
 					i++;
 				} else {
-					m_Interpolants[j - 1] = m_InterpolantsBp[j - 1];
+					m_Interpolants[j - 1] = m_InterpolantsBp.get(j - 1);
 					j--;
 				}
 			}
@@ -479,9 +399,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * of the trace, and therefore only these are important for the computations
 	 * done afterwards.
 	 */
-	private Set<CodeBlock> filterOutIrrelevantStatements(NestedWord<CodeBlock> trace, Set<Term> unsat_coresAsSet,
+	private Set<IAction> filterOutIrrelevantStatements(NestedWord<? extends IAction> trace, Set<Term> unsat_coresAsSet,
 			boolean[] localVarAssignmentAtCallInUnsatCore, boolean[] oldVarAssignmentAtCallInUnsatCore) {
-		Set<CodeBlock> codeBlocksInUnsatCore = new HashSet<CodeBlock>();
+		Set<IAction> codeBlocksInUnsatCore = new HashSet<>();
 		for (int i = 0; i < trace.length(); i++) {
 			if (!trace.isCallPosition(i)
 					&& unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))) {
@@ -514,184 +434,67 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return codeBlocksInUnsatCore;
 	}
 
-	private void computeForwardPredicates(Set<BoogieVar>[] relevantVars,
-			NestedFormulas<TransFormula, IPredicate> rv) {
-		m_InterpolantsFp = new IPredicate[m_Trace.length() - 1];
-		InterpolantsPreconditionPostcondition ipp = 
-				new InterpolantsPreconditionPostcondition(m_Precondition,m_Postcondition, m_InterpolantsFp);
 
-			for (int i = 0; i < m_Trace.length() - 1; i++) {
-				final IPredicate predecessor = ipp.getInterpolant(i); 
-				final IPredicate sp;
-				if (m_Trace.getSymbol(i) instanceof Call) {
-					final Call call = (Call) m_Trace.getSymbol(i); 
-					final String calledMethod = call.getCallStatement().getMethodName();
-					final Set<BoogieVar> modifiedGlobals = m_ModifiedGlobals.getModifiedBoogieVars(calledMethod);
-					if (m_Trace.isPendingCall(i)) {
-						sp = m_PredicateTransformer.strongestPostconditionCall(
-								predecessor, rv.getLocalVarAssignment(i),
-								rv.getGlobalVarAssignment(i), rv.getOldVarAssignment(i),
-								modifiedGlobals);
-					} else {
-						sp = m_PredicateTransformer.weakLocalPostconditionCall(
-								predecessor,
-								rv.getGlobalVarAssignment(i),
-								modifiedGlobals);
-					}
-				} else if (m_Trace.getSymbol(i) instanceof Return) {
-					final IPredicate callerPred;
-					final TransFormula callGlobalVarsAssignment;
-					final TransFormula callOldVarsAssignment;
-					final TransFormula callLocalVarsAssignment;
-					if (m_Trace.isPendingReturn(i)) {
-						callerPred = m_PendingContexts.get(i);
-						callOldVarsAssignment = rv.getOldVarAssignment(i);
-						callGlobalVarsAssignment = null;
-						callLocalVarsAssignment = rv.getLocalVarAssignment(i);
-					} else {
-						int callPos = m_Trace.getCallPosition(i);
-						assert callPos >= 0 && callPos <= i : "Bad call position!";
-						callerPred = ipp.getInterpolant(callPos);
-						callGlobalVarsAssignment = rv.getGlobalVarAssignment(callPos);
-						callOldVarsAssignment = null;
-						callLocalVarsAssignment = rv.getLocalVarAssignment(callPos);
-					}
-					final TransFormula returnTransFormula = rv.getFormulaFromNonCallPos(i);
-					sp = m_PredicateTransformer.strongestPostcondition(
-							predecessor, callerPred,
-							returnTransFormula, callLocalVarsAssignment, 
-							callGlobalVarsAssignment, callOldVarsAssignment);
-				} else {
-					sp = m_PredicateTransformer.strongestPostcondition(
-							predecessor,
-							rv.getFormulaFromNonCallPos(i));
-				}
-				final IPredicate projected;
-				Set<TermVariable> nonLiveVars = computeIrrelevantVariables(relevantVars[i+1], sp);
-				m_NonLiveVariablesFp += nonLiveVars.size();
-				if (m_LiveVariables) {
-					projected = m_SmtManager.getPredicateFactory().constructPredicate(sp.getFormula(), 
-							QuantifiedFormula.EXISTS, nonLiveVars);
-				} else {
-					projected = sp;
-				}
-				m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(
-						projected.getFormula(), projected.getVars(), projected.getProcedures());
-//				if (m_CollectInformationAboutQuantifiedPredicates) {
-//					IPredicate p = getForwardPredicateAtPosition(i, tracePrecondition, false);
-//					if (p != null && p instanceof BasicPredicateExplicitQuantifier) {
-//						numberOfQuantifiedPredicates[0]++;
-//					}
-//					p = getForwardPredicateAtPosition(i, tracePrecondition, true);
-//					if (p != null && p instanceof BasicPredicateExplicitQuantifier) {
-//						numberOfQuantifiedPredicates[1]++;
-//					}
-//				}
-			}
+	
+	public class LiveVariablesPostprocessor_Forward implements PredicatePostprocessor {
+
+		private final Set<BoogieVar>[] m_RelevantVars;
+		
+		public LiveVariablesPostprocessor_Forward(Set<BoogieVar>[] relevantVars) {
+			m_RelevantVars = relevantVars;
+		}
+
+		@Override
+		public IPredicate postprocess(IPredicate pred, int i) {
+			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
+			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
+			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(
+					pred.getFormula(), QuantifiedFormula.EXISTS, nonLiveVars);
+			m_NonLiveVariablesFp += nonLiveVars.size();
+			return projected;
+		}
+		
 	}
 	
 	
-	private void computeBackwardPredicates(Set<BoogieVar>[] relevantVars,
-			NestedFormulas<TransFormula, IPredicate> rv) {
+	
+	
 
-		m_InterpolantsBp = new IPredicate[m_Trace.length()-1];
-		InterpolantsPreconditionPostcondition ipp = 
-				new InterpolantsPreconditionPostcondition(m_Precondition,m_Postcondition, m_InterpolantsBp);
+	
+	
+	public class LiveVariablesPostprocessor_Backward implements PredicatePostprocessor {
 
-		// Contains the predicates, which are computed during a Return with
-		// the second method, where the callerPred
-		// is computed as wp(returnerPred, summaryOfCalledProcedure).
-		Map<Integer, IPredicate> callerPredicatesComputed = new HashMap<Integer, IPredicate>();
-		for (int i = m_Trace.length()-1; i >= 1; i--) {
-			final IPredicate wp;
-			IPredicate successor = ipp.getInterpolant(i+1);
-			if (m_Trace.getSymbol(i) instanceof Call) {
-				if (m_Trace.isPendingCall(i)) {
-					final Call call = (Call) m_Trace.getSymbol(i); 
-					final String calledMethod = call.getCallStatement().getMethodName();
-					final Set<BoogieVar> modifiedGlobals = m_ModifiedGlobals.getModifiedBoogieVars(calledMethod);
-					wp = m_PredicateTransformer.weakestPrecondition(
-							successor,
-							rv.getLocalVarAssignment(i), rv.getGlobalVarAssignment(i),
-							rv.getOldVarAssignment(i), modifiedGlobals);
-				} else {
-					wp = callerPredicatesComputed.get(i);
-					assert wp != null : "must have already been computed";
-					//						wp = m_SmtManager.renameVarsOfOtherProcsToFreshVars(callerPredicatesComputed.get(i + 1),
-					//								((Call) trace.getSymbol(i + 1)).getPreceedingProcedure());
-					//						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(), wp.getVars(),
-					//								wp.getProcedures());
-				}
-			} else if (m_Trace.getSymbol(i) instanceof Return) {
-				final IPredicate callerPred;
-				final TransFormula globalVarsAssignments;
-				final TransFormula oldVarAssignments;
-				final TransFormula callLocalVarsAssignment;
-				final TransFormula returnTf = rv.getFormulaFromNonCallPos(i);
-				final Return returnCB = (Return) m_Trace.getSymbol(i);
-				final String calledMethod = returnCB.getCallStatement().getMethodName();
-				final Set<BoogieVar> modifiableGlobals = m_ModifiedGlobals.getModifiedBoogieVars(calledMethod);
+		private final Set<BoogieVar>[] m_RelevantVars;
+		
+		public LiveVariablesPostprocessor_Backward(Set<BoogieVar>[] relevantVars) {
+			super();
+			m_RelevantVars = relevantVars;
+		}
 
-				final Set<BoogieVar> varsOccurringBetweenCallAndReturn;
-				if (m_Trace.isPendingReturn(i)) {
-					callerPred = m_PendingContexts.get(new Integer(i));
-					// we may get the local variable assignment (pending
-					// context)
-					// by requesting it at the position of the
-					// pending-return.
-					callLocalVarsAssignment = rv.getLocalVarAssignment(i);
-					oldVarAssignments = rv.getOldVarAssignment(i);
-					globalVarsAssignments = rv.getGlobalVarAssignment(i);
-					// this is probably not yet supported
-					varsOccurringBetweenCallAndReturn = null;
-				} else {
-					int callPos = m_Trace.getCallPosition(i);
-					assert callPos >= 0 && callPos <= i : "Bad call position!";
-					callLocalVarsAssignment = rv.getLocalVarAssignment(callPos);
-					globalVarsAssignments = rv.getGlobalVarAssignment(callPos);
-					oldVarAssignments = rv.getOldVarAssignment(callPos);
-					final ProcedureSummary summary = computeProcedureSummary(
-							m_Trace, callLocalVarsAssignment, returnTf, 
-							oldVarAssignments, globalVarsAssignments, rv, callPos, i);
-					varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
-					callerPred = m_PredicateTransformer.weakestPrecondition(
-							successor,
-							summary.getWithCallAndReturn());
-					callerPredicatesComputed.put(
-							callPos,
-							m_PredicateUnifier.getOrConstructPredicate(callerPred.getFormula(),
-									callerPred.getVars(), callerPred.getProcedures()));
-				}
-				wp = m_PredicateTransformer.weakestPrecondition(
-						successor, callerPred, returnTf, callLocalVarsAssignment,
-						globalVarsAssignments, oldVarAssignments, modifiableGlobals,
-						varsOccurringBetweenCallAndReturn);
-			} else {
-				wp = m_PredicateTransformer.weakestPrecondition(
-						successor, rv.getFormulaFromNonCallPos(i));
-			}
-			final IPredicate projected;
-			Set<TermVariable> nonLiveVars = computeIrrelevantVariables(relevantVars[i], wp);
-			if (m_LiveVariables) {
-				projected = m_SmtManager.getPredicateFactory().constructPredicate(wp.getFormula(), 
-						QuantifiedFormula.FORALL, nonLiveVars);
-				m_NonLiveVariablesBp += nonLiveVars.size();
-			} else {
-				projected = wp;
-			}
-			m_InterpolantsBp[i-1] = m_PredicateUnifier.getOrConstructPredicate(
-					projected.getFormula(), projected.getVars(), projected.getProcedures());
-			
-//				if (m_CollectInformationAboutQuantifiedPredicates) {
-//					if (wp != null && wp instanceof BasicPredicateExplicitQuantifier) {
-//						numberOfQuantifiedPredicates[2]++;
-//					}
-//					if (bp instanceof BasicPredicateExplicitQuantifier) {
-//						numberOfQuantifiedPredicates[3]++;
-//					}
-//				}
+		@Override
+		public IPredicate postprocess(IPredicate pred, int i) {
+			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
+			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
+			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(
+					pred.getFormula(), QuantifiedFormula.FORALL, nonLiveVars);
+			m_NonLiveVariablesBp += nonLiveVars.size();
+			return projected;
 		}
 	}
+	
+	public class UnifyPostprocessor implements PredicatePostprocessor {
+
+		@Override
+		public IPredicate postprocess(IPredicate pred, int i) {
+			IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(
+					pred.getFormula(), pred.getVars(), pred.getProcedures());
+			return unified;
+		}
+		
+	}
+	
+	
+
 	
 	
 	/**
@@ -712,100 +515,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	
 	
 
-	private class ProcedureSummary {
-		private final TransFormula m_WithCallAndReturn;
-		private final TransFormula m_WithoutCallAndReturn;
 
-		public ProcedureSummary(TransFormula withCallAndReturn, TransFormula withoutCallAndReturn) {
-			super();
-			m_WithCallAndReturn = withCallAndReturn;
-			m_WithoutCallAndReturn = withoutCallAndReturn;
-		}
-
-		public TransFormula getWithCallAndReturn() {
-			return m_WithCallAndReturn;
-		}
-
-		public TransFormula getWithoutCallAndReturn() {
-			return m_WithoutCallAndReturn;
-		}
-
-		/**
-		 * Returns a set that contains all variables that occur in the summary
-		 * without call and return.
-		 */
-		public Set<BoogieVar> computeVariableInInnerSummary() {
-			return new Set<BoogieVar>() {
-
-				@Override
-				public boolean add(BoogieVar e) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean addAll(Collection<? extends BoogieVar> c) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public void clear() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean contains(Object o) {
-					return m_WithoutCallAndReturn.getInVars().containsKey(o)
-							|| m_WithoutCallAndReturn.getOutVars().containsKey(o);
-				}
-
-				@Override
-				public boolean containsAll(Collection<?> c) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean isEmpty() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public Iterator<BoogieVar> iterator() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean remove(Object o) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean removeAll(Collection<?> c) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean retainAll(Collection<?> c) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public int size() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public Object[] toArray() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public <T> T[] toArray(T[] a) {
-					throw new UnsupportedOperationException();
-				}
-			};
-		}
-
-	}
 
 	/***
 	 * Check for each predicate computed via the strongest post-condition,

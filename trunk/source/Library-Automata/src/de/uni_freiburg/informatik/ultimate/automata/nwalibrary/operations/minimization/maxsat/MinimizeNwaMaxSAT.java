@@ -5,25 +5,26 @@
  *
  * This file is part of the ULTIMATE Automata Library.
  *
- * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * The ULTIMATE Automata Library is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
- * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * The ULTIMATE Automata Library is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE Automata Library. If not, see
+ * <http://www.gnu.org/licenses/>.
  *
- * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
- * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE Automata Library grant you additional permission
- * to convey the resulting work.
+ * Additional permission under GNU GPL version 3 section 7: If you modify the
+ * ULTIMATE Automata Library, or any covered work, by linking or combining it
+ * with Eclipse RCP (or a modified version of Eclipse RCP), containing parts
+ * covered by the terms of the Eclipse Public License, the licensors of the
+ * ULTIMATE Automata Library grant you additional permission to convey the
+ * resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
@@ -41,111 +42,115 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 
 public class MinimizeNwaMaxSAT<LETTER, STATE>
-        implements IOperation<LETTER, STATE> {
+		implements IOperation<LETTER, STATE> {
 
-    private final NestedWordAutomaton<LETTER, STATE> m_result;
+	private final AutomataLibraryServices m_services;
+	private final INestedWordAutomaton<LETTER, STATE> m_operand;
 
-    private final INestedWordAutomaton<LETTER, STATE> m_operand;
-    private final AutomataLibraryServices m_services;
+	private final NestedWordAutomaton<LETTER, STATE> m_result;
 
-    public MinimizeNwaMaxSAT(
-            AutomataLibraryServices services,
-            StateFactory<STATE> stateFactory,
-            INestedWordAutomaton<LETTER, STATE> automaton) {
-        m_services = services;
-        m_operand = automaton;
+	public MinimizeNwaMaxSAT(
+			AutomataLibraryServices services,
+			StateFactory<STATE> stateFactory,
+			INestedWordAutomaton<LETTER, STATE> automaton) {
 
-        Logger logger = services.getLoggingService().getLogger(operationName());
-        Logger convertLog = services.getLoggingService().getLogger("NiceConvert");
-        Logger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
-        Logger solveLog = services.getLoggingService().getLogger("MaxSATSolve");
+		m_services = services;
+		m_operand = automaton;
 
-        logger.info(startMessage());
+		Logger logger = services.getLoggingService().getLogger(operationName());
+		Logger convertLog = services.getLoggingService().getLogger("Converter");
+		Logger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
+		Logger solveLog = services.getLoggingService().getLogger("Solver");
 
-        convertLog.info("starting conversion");
-        NiceConvert<LETTER, STATE> converter = new NiceConvert<LETTER, STATE>(services, stateFactory, automaton);
-        NiceNWA nwa = converter.getNiceNWA();
-        convertLog.info(
-                "finished conversion. "
-                + Integer.toString(nwa.numStates) + " states, "
-                + Integer.toString(nwa.numISyms) + " iSyms, "
-                + Integer.toString(nwa.numCSyms) + " cSyms, "
-                + Integer.toString(nwa.numRSyms) + " rSyms, "
-                + Integer.toString(nwa.iTrans.length) + " iTrans, "
-                + Integer.toString(nwa.cTrans.length) + " cTrans, "
-                + Integer.toString(nwa.rTrans.length) + " rTrans."
-        );
-        // it shouldn't be like this, but...
-        ArrayList<NiceHist> history = converter.computeHistoryStates();
+		logger.info(startMessage());
 
-        generateLog.info("starting clauses generation");
-        ArrayList<HornClause3> clauses = NwaMinimizationClausesGenerator.generateConstraints(nwa, history);
-        generateLog.info("finished clauses generation. " + Integer.toString(clauses.size()) + " clauses");
+		convertLog.info("starting conversion");
+		Converter<LETTER, STATE> converter = new Converter<LETTER, STATE>(services, stateFactory, automaton);
+		NWA nwa = converter.getNWA();
+		// it shouldn't be like this, but...
+		ArrayList<Hist> history = converter.computeHistoryStates();
+		convertLog.info(
+				"finished conversion. "
+				+ Integer.toString(nwa.numStates) + " states, "
+				+ Integer.toString(nwa.numISyms) + " iSyms, "
+				+ Integer.toString(nwa.numCSyms) + " cSyms, "
+				+ Integer.toString(nwa.numRSyms) + " rSyms, "
+				+ Integer.toString(nwa.iTrans.length) + " iTrans, "
+				+ Integer.toString(nwa.cTrans.length) + " cTrans, "
+				+ Integer.toString(nwa.rTrans.length) + " rTrans."
+		);
 
-        solveLog.info("starting MaxSATSolve");
-        Assign[] assignments = new MaxSATSolve(clauses).solve();
-        solveLog.info("finished MaxSATSolve");
+		generateLog.info("starting clauses generation");
+		Horn3Array clauses = Generator.generateClauses(nwa, history);
+		generateLog.info("finished clauses generation. " + Integer.toString(clauses.size()) + " clauses");
 
-        generateLog.info("making equivalence classes from assignments");
-        NiceClasses eqCls = NwaMinimizationClausesGenerator.makeMergeRelation(nwa.numStates, assignments);
-        generateLog.info("finished making equivalence classes");
+		solveLog.info("starting Solver");
+		char[] assignments = new Solver(clauses).solve();
+		solveLog.info("finished Solver");
 
-        m_result = converter.constructMerged(eqCls);
-        convertLog.info("constructed minimized automaton");
+		generateLog.info("making equivalence classes from assignments");
+		Partition eqCls = Generator.makeMergeRelation(nwa.numStates, assignments);
+		generateLog.info("finished making equivalence classes");
 
-        logger.info(exitMessage());
-    }
+		m_result = converter.constructMerged(eqCls);
+		convertLog.info("constructed minimized automaton");
 
-    @Override
-    public String operationName() {
-        return "MinimizeNwaMaxSAT";
-    }
+		logger.info(exitMessage());
+	}
 
-    @Override
-    public String startMessage() {
-        return "starting MinimizeNwaMaxSAT";
-    }
+	@Override
+	public String operationName() {
+		return "MinimizeNwaMaxSAT";
+	}
 
-    @Override
-    public String exitMessage() {
-        return "ending MinimizeNwaMaxSAT";
-    }
+	@Override
+	public String startMessage() {
+		return "starting MinimizeNwaMaxSAT";
+	}
 
-    @Override
-    public NestedWordAutomaton<LETTER, STATE> getResult() {
-        return m_result;
-    }
+	@Override
+	public String exitMessage() {
+		return "ending MinimizeNwaMaxSAT";
+	}
 
-    @Override
-    public final boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-        if (checkInclusion(m_operand, getResult(), stateFactory)
-            && checkInclusion(getResult(), m_operand, stateFactory))
-                return true;
-        else {
-            ResultChecker.writeToFileIfPreferred(m_services, operationName() + " failed", "language equality check failed", m_operand);
-            return false;
-        }
-     }
+	@Override
+	public NestedWordAutomaton<LETTER, STATE> getResult() {
+		return m_result;
+	}
 
-    /**
-     * This method checks language inclusion of the first automaton
-wrt. the
-     * second automaton.
-     *
-     * @param subset automaton describing the subset language
-     * @param superset automaton describing the superset language
-     * @param stateFactory state factory
-     * @return true iff language is included
-     * @throws AutomataLibraryException thrown by inclusion check
-     */
-    private final boolean checkInclusion(
-            final INestedWordAutomatonSimple<LETTER, STATE> subset,
-            final INestedWordAutomatonSimple<LETTER, STATE> superset,
-            final StateFactory<STATE> stateFactory)
-                throws AutomataLibraryException {
-        return ResultChecker.nwaLanguageInclusion(m_services,
-                ResultChecker.getOldApiNwa(m_services, subset),
-                ResultChecker.getOldApiNwa(m_services, superset),
-                stateFactory) == null;
-    }
+	@Override
+	public final boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (checkInclusion(m_operand, getResult(), stateFactory)
+			&& checkInclusion(getResult(), m_operand, stateFactory))
+				return true;
+		else {
+			ResultChecker.writeToFileIfPreferred(m_services, operationName() + " failed", "language equality check failed", m_operand);
+			return false;
+		}
+	 }
+
+	/**
+	 * This method checks language inclusion of the first automaton wrt. the
+	 * second automaton.
+	 *
+	 * @param subset
+	 *			  automaton describing the subset language
+	 * @param superset
+	 *			  automaton describing the superset language
+	 * @param stateFactory
+	 *			  state factory
+	 * @return <code>true</code> iff language is included
+	 * @throws AutomataLibraryException
+	 *			   thrown by inclusion check
+	 */
+	private final boolean checkInclusion(
+			final INestedWordAutomatonSimple<LETTER, STATE> subset,
+			final INestedWordAutomatonSimple<LETTER, STATE> superset,
+			final StateFactory<STATE> stateFactory)
+				throws AutomataLibraryException {
+		return ResultChecker.nwaLanguageInclusion(m_services,
+				ResultChecker.getOldApiNwa(m_services, subset),
+				ResultChecker.getOldApiNwa(m_services, superset),
+				stateFactory) == null;
+	}
 }

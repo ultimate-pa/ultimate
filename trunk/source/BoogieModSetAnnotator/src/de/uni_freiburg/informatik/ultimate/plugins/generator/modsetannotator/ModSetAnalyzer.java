@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
@@ -136,7 +136,7 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 	}
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
+	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
 		// TODO Auto-generated method stub
 
 	}

@@ -53,7 +53,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		Validity result = IHoareTripleChecker.lbool2validity(m_SmtManager.isInductive(pre, (CodeBlock) act, succ));
+		Validity result = IHoareTripleChecker.lbool2validity(m_SmtManager.isInductive(pre, act, succ));
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:

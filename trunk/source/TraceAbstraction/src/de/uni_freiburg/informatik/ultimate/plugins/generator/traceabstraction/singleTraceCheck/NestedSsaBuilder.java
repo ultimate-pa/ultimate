@@ -45,12 +45,12 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -166,7 +166,7 @@ public class NestedSsaBuilder {
 	private final TermTransferrer m_TermTransferrer;
 	
 
-	public NestedSsaBuilder(NestedWord<CodeBlock> trace, SmtManager smtManager,
+	public NestedSsaBuilder(NestedWord<? extends IAction> trace, SmtManager smtManager,
 			NestedFormulas<TransFormula, IPredicate> nestedTransFormulas, 
 			ModifiableGlobalVariableManager globModVarManager, Logger logger,
 			boolean transferToScriptNeeded) {
@@ -257,7 +257,7 @@ public class NestedSsaBuilder {
 		 */
 		if (m_currentProcedure == null) {
 			assert numberPendingContexts == 0;
-			CodeBlock firstCodeBlock = m_Formulas.getTrace().getSymbolAt(0);
+			IAction firstCodeBlock = m_Formulas.getTrace().getSymbolAt(0);
 			m_currentProcedure = firstCodeBlock.getPreceedingProcedure();
 		}
 		reVersionModifiableGlobals();
@@ -276,7 +276,7 @@ public class NestedSsaBuilder {
 		 */
 		int numberOfPendingCalls = 0;
 		for (int i = 0; i < m_Formulas.getTrace().length(); i++) {
-			CodeBlock symbol = m_Formulas.getTrace().getSymbolAt(i);
+			IAction symbol = m_Formulas.getTrace().getSymbolAt(i);
 //			if (symbol instanceof GotoEdge) {
 //				throw new IllegalArgumentException(s_GotosUnsupportedMessage);
 //			}

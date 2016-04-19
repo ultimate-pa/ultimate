@@ -40,10 +40,11 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 /**
- * Offers a method to compute the strongly connected components (SCCs) of
- * the game graph. Implementation of Tarjan SCC algorithm. {@link http
- * ://en.wikipedia
- * .org/wiki/Tarjan%27s_strongly_connected_components_algorithm}
+ * Computes strongly connected components (SCCs) of a graph. 
+ * Implementation of Tarjan SCC algorithm. 
+ * {@link http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm}
+ * @param <NODE> Type of objects that represent nodes of the graph.
+ * @param <COMP> Type of objects that represent strongly connected components.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */

@@ -53,7 +53,7 @@ public class CongruenceUtils {
 	 * @return A new list that contains the result of merging all {@link CongruenceDomainValue}s in the given list.
 	 */
 	protected static List<IEvaluationResult<CongruenceDomainValue>> mergeIfNecessary(
-	        final List<IEvaluationResult<CongruenceDomainValue>> results, int maxParallelStates) {
+	        final List<IEvaluationResult<CongruenceDomainValue>> results, final int maxParallelStates) {
 		if (results.size() > maxParallelStates) {
 			return Collections.singletonList(results.stream().reduce(CongruenceUtils::merge).get());
 		}
@@ -71,20 +71,20 @@ public class CongruenceUtils {
 	 * @return A new list that contains the result of merging all {@link CongruenceDomainState}s in the given list.
 	 */
 	protected static List<CongruenceDomainState> mergeStatesIfNecessary(final List<CongruenceDomainState> results,
-	        int maxParallelStates) {
+	        final int maxParallelStates) {
 		if (results.size() > maxParallelStates) {
 			return Collections.singletonList(results.stream().reduce(CongruenceUtils::merge).get());
 		}
 		return results;
 	}
 
-	private static IEvaluationResult<CongruenceDomainValue> merge(final IEvaluationResult<CongruenceDomainValue> a,
-	        final IEvaluationResult<CongruenceDomainValue> b) {
-		return new CongruenceDomainEvaluationResult(a.getValue().merge(b.getValue()),
-		        a.getBooleanValue().merge(b.getBooleanValue()));
+	private static IEvaluationResult<CongruenceDomainValue> merge(final IEvaluationResult<CongruenceDomainValue> res1,
+	        final IEvaluationResult<CongruenceDomainValue> res2) {
+		return new CongruenceDomainEvaluationResult(res1.getValue().merge(res2.getValue()),
+		        res1.getBooleanValue().merge(res2.getBooleanValue()));
 	}
 
-	private static CongruenceDomainState merge(final CongruenceDomainState a, final CongruenceDomainState b) {
-		return a.merge(b);
+	private static CongruenceDomainState merge(final CongruenceDomainState state1, final CongruenceDomainState state2) {
+		return state1.merge(state2);
 	}
 }

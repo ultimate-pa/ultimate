@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin;
 import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 
@@ -53,15 +53,15 @@ import de.uni_freiburg.informatik.ultimate.model.IModelManager;
  * PluginConnector executes observers of a single {@link ITool} in a
  * {@link ToolchainData}. It uses the following live cycle:
  * <ul>
- * <li>Select all desired models according to {@link ITool#getQueryKeyword()}
+ * <li>Select all desired models according to {@link ITool#getModelQuery()}
  * <li>foreach model
  * <ul>
- * <li> {@link ITool#setInputDefinition(GraphType)}
+ * <li> {@link ITool#setInputDefinition(ModelType)}
  * <li> {@link ITool#getObservers()}
  * <li>execute each {@link IObserver} on the current model with
  * <ul>
  * <li> {@link IObserver#getWalkerOptions()}
- * <li> {@link IObserver#init(GraphType, int, int)}
+ * <li> {@link IObserver#init(ModelType, int, int)}
  * <li>use an {@link IWalker} to run {@link IObserver} on model
  * <li> {@link IObserver#finish()}
  * <li>if tool is an instance of {@link IGenerator}, store model in the
@@ -116,7 +116,7 @@ public class PluginConnector {
 		mLogger.info("------------------------" + mTool.getPluginName() + "----------------------------");
 		init();
 		initializePlugin(mLogger, mTool, mServices, mStorage);
-		List<GraphType> models = selectModels();
+		List<ModelType> models = selectModels();
 		if (models.isEmpty()) {
 			IllegalArgumentException ex = new IllegalArgumentException();
 			mLogger.error("Tool did not select a valid model", ex);
@@ -126,7 +126,7 @@ public class PluginConnector {
 		mCurrent = 1;
 
 		for (int i = mMax - 1; i >= 0; --i) {
-			GraphType currentModel = models.get(i);
+			ModelType currentModel = models.get(i);
 			mTool.setInputDefinition(currentModel);
 			List<IObserver> observers = mTool.getObservers();
 			runTool(observers, currentModel, mMax - i - 1, mMax);
@@ -144,7 +144,7 @@ public class PluginConnector {
 		return mTool.getPluginName();
 	}
 
-	private void runTool(List<IObserver> observers, GraphType currentModel, int currentModelIndex, int numberOfModels)
+	private void runTool(List<IObserver> observers, ModelType currentModel, int currentModelIndex, int numberOfModels)
 			throws Throwable {
 		IElement entryNode = getEntryPoint(currentModel);
 
@@ -161,7 +161,7 @@ public class PluginConnector {
 		}
 	}
 
-	private void runObserver(IObserver observer, GraphType currentModel, IElement entryNode, int currentModelIndex,
+	private void runObserver(IObserver observer, ModelType currentModel, IElement entryNode, int currentModelIndex,
 			int numberOfModels) throws Throwable {
 		logObserverRun(observer, currentModel);
 		IWalker walker = selectWalker(currentModel, observer.getWalkerOptions());
@@ -172,7 +172,7 @@ public class PluginConnector {
 		mHasPerformedChanges = mHasPerformedChanges || observer.performedChanges();
 	}
 
-	private void logObserverRun(IObserver observer, GraphType model) {
+	private void logObserverRun(IObserver observer, ModelType model) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Executing the observer ");
 		sb.append(observer.getClass().getSimpleName());
@@ -188,7 +188,7 @@ public class PluginConnector {
 		mLogger.info(sb.toString());
 	}
 
-	private IElement getEntryPoint(GraphType definition) {
+	private IElement getEntryPoint(ModelType definition) {
 		IElement n = null;
 		try {
 			n = mModelManager.getRootNode(definition);
@@ -200,7 +200,7 @@ public class PluginConnector {
 
 	private void retrieveModel(IGenerator tool, String observer) {
 		IElement element = tool.getModel();
-		GraphType type = tool.getOutputDefinition();
+		ModelType type = tool.getOutputDefinition();
 		if (element != null && type != null) {
 			mModelManager.addItem(element, type);
 		} else {
@@ -210,17 +210,17 @@ public class PluginConnector {
 		}
 	}
 
-	private List<GraphType> selectModels() {
-		List<GraphType> models = new ArrayList<GraphType>();
+	private List<ModelType> selectModels() {
+		List<ModelType> models = new ArrayList<ModelType>();
 
-		switch (mTool.getQueryKeyword()) {
+		switch (mTool.getModelQuery()) {
 		case ALL:
 			models.addAll(mModelManager.getItemKeys());
 			break;
 		case USER:
 			if (mModelManager.size() > 1) {
 				for (String s : mController.selectModel(mModelManager.getItemNames())) {
-					GraphType t = mModelManager.getGraphTypeById(s);
+					ModelType t = mModelManager.getGraphTypeById(s);
 					if (t != null) {
 						models.add(t);
 					}
@@ -234,7 +234,7 @@ public class PluginConnector {
 			break;
 		case SOURCE:
 			models.addAll(mModelManager.getItemKeys());
-			for (GraphType t : models) {
+			for (ModelType t : models) {
 				if (!t.isFromSource()) {
 					models.remove(t);
 				}
@@ -246,8 +246,8 @@ public class PluginConnector {
 				break;
 			} else {
 				models.addAll(mModelManager.getItemKeys());
-				List<GraphType> removeModels = new ArrayList<GraphType>();
-				for (GraphType t : models) {
+				List<ModelType> removeModels = new ArrayList<ModelType>();
+				for (ModelType t : models) {
 					if (!desiredToolIDs.contains(t.getCreator()))
 						removeModels.add(t);
 				}
@@ -265,7 +265,7 @@ public class PluginConnector {
 		return models;
 	}
 
-	private IWalker selectWalker(GraphType currentModel, WalkerOptions options) {
+	private IWalker selectWalker(ModelType currentModel, WalkerOptions options) {
 		// TODO implement walker selection logics
 		if (currentModel.getType().name().equals("CFG")) {
 			return new CFGWalker(mLogger);

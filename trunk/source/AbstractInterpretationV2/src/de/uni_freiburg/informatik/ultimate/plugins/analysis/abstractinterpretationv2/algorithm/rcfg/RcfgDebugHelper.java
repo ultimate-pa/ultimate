@@ -92,7 +92,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoo
 			mLogger.fatal(
 					"Post: {" + SmtUtils.simplify(mScript, postcond.getFormula(), mServices).toStringDirect() + "}");
 		}
-		return result == Validity.VALID;
+		return result != Validity.INVALID;
 	}
 
 	private IPredicate createPredicateFromState(Collection<STATE> states) {

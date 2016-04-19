@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <VALUE>
  *            The type of the domain's values.
+ * @param <STATE>
+ *            The type of the abstract state to be used for the evaluators.
  * @param <ACTION>
  *            Any action type.
  * @param <VARDECL>
@@ -46,16 +48,59 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	public INAryEvaluator<VALUE, STATE, ACTION, VARDECL> createNAryExpressionEvaluator(int arity, EvaluatorType type);
+	/**
+	 * Creates an n-ary evaluator for n-ary expressions.
+	 * 
+	 * @param arity
+	 *            The arity of the evaluator.
+	 * @param type
+	 *            The type of the evaluator.
+	 * @return A new {@link INAryEvaluator}.
+	 */
+	INAryEvaluator<VALUE, STATE, ACTION, VARDECL> createNAryExpressionEvaluator(int arity, EvaluatorType type);
 
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createFunctionEvaluator(String functionName, int inputParamCount);
+	/**
+	 * Creates a function evaluator for expressions that contain functions.
+	 * 
+	 * @param functionName
+	 *            The name of the function.
+	 * @param inputParamCount
+	 *            The number of input parameters of the function.
+	 * @return A new {@link IEvaluator}.
+	 */
+	IEvaluator<VALUE, STATE, ACTION, VARDECL> createFunctionEvaluator(String functionName, int inputParamCount);
 
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createConditionalEvaluator();
+	/**
+	 * @return A new conditional evaluator.
+	 */
+	IEvaluator<VALUE, STATE, ACTION, VARDECL> createConditionalEvaluator();
 
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value,
-	        Class<?> valueType);
+	/**
+	 * Creates an evaluator for single values that are occurring in expressions.
+	 * 
+	 * @param value
+	 *            The value.
+	 * @param valueType
+	 *            The type of the value.
+	 * @return A new {@link IEvaluator}.
+	 */
+	IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value, Class<?> valueType);
 
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
+	/**
+	 * Creates an evaluator for single variables that are occurring in expressions.
+	 * 
+	 * @param variableName
+	 *            The name of the variable.
+	 * @return A new {@link IEvaluator}.
+	 */
+	IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
 
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(BooleanValue value);
+	/**
+	 * Creates an evaluator for single boolean values that are occurring in expressions.
+	 * 
+	 * @param value
+	 *            The boolean value.
+	 * @return A new {@link IEvaluator}.
+	 */
+	IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(BooleanValue value);
 }

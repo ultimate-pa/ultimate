@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -838,7 +838,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
 		// TODO Auto-generated method stub
 
 	}

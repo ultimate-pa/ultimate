@@ -42,8 +42,8 @@ import org.apache.commons.collections15.Transformer;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.GraphType.Type;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
@@ -74,7 +74,7 @@ public class WitnessAutomatonConstructor {
 	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
 	private Map<String, WitnessNode> mNodes;
-	private GraphType.Type mWitnessType;
+	private ModelType.Type mWitnessType;
 	private WitnessGraphAnnotation mGraphAnnotation;
 
 	public WitnessAutomatonConstructor(IUltimateServiceProvider services) {
@@ -335,7 +335,7 @@ public class WitnessAutomatonConstructor {
 		return node;
 	}
 
-	public GraphType.Type getWitnessType() {
+	public ModelType.Type getWitnessType() {
 		return mWitnessType;
 	}
 

@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -102,7 +103,7 @@ public class NestedInterpolantsBuilder {
 
 	private int startOfCurrentSubtree;
 
-	private final NestedWord<CodeBlock> m_Trace;
+	private final NestedWord<? extends IAction> m_Trace;
 
 	private int m_stackHeightAtLastInterpolatedPosition;
 

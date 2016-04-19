@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 
 /**
  * 
@@ -60,8 +60,8 @@ public class BoogieModSetAnnotator implements IAnalysis {
 	/**
 	 * I give you every model.
 	 */
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
 	}
 
 	/**
@@ -71,12 +71,12 @@ public class BoogieModSetAnnotator implements IAnalysis {
 		return null;
 	}
 
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		/* use old graph type definition */
 		return null;
 	}
 
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		// not required.
 	}
 

@@ -58,6 +58,12 @@ public class XnfUsr extends XjunctPartialQuantifierElimination {
 	public String getAcronym() {
 		return "USR";
 	}
+	
+	@Override
+	public boolean resultIsXjunction() {
+		return true;
+	};
+
 
 	@Override
 	public Term[] tryToEliminate(int quantifier, Term[] inputAtoms,

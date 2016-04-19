@@ -386,23 +386,25 @@ public class AffineExpression {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder strBuilder = new StringBuilder();
 		for (final Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
-			sb.append(entry.getValue());
-			sb.append('\u22C5'); // multiplication dot
-			sb.append(entry.getKey());
-			sb.append(" + ");
+			strBuilder.append(entry.getValue());
+			strBuilder.append('\u22C5'); // multiplication dot
+			strBuilder.append(entry.getKey());
+			strBuilder.append(" + ");
 		}
-		sb.append(mConstant);
-		return sb.toString();
+		strBuilder.append(mConstant);
+		return strBuilder.toString();
 	}
 
+	/** @see AffineExpression#getOneVarForm() */
 	public static class OneVarForm {
 		public String var;
 		public boolean negVar;
 		public OctValue constant;
 	}
 
+	/** @see AffineExpression#getTwoVarForm() */
 	public static class TwoVarForm {
 		public String var1, var2;
 		public boolean negVar2, negVar1;

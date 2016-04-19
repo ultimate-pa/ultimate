@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -63,7 +64,7 @@ public class CoverageAnalysis {
 
 	protected final Logger mLogger ;
 	
-	protected final NestedWord<CodeBlock> m_NestedWord;
+	protected final NestedWord<? extends IAction> m_NestedWord;
 	private List<ProgramPoint> m_ProgramPointSequence;
 	private final IPredicate[] m_Interpolants;
 	private final PredicateUnifier m_PredicateUnifier;

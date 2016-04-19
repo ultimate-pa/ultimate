@@ -43,7 +43,7 @@ public class SimplePositiveTestTransformer extends ClosedWorldTransformator {
 			//Transition transition = pea.getPhases()[0].getTransitions().get(0);
 			//transition.setGuard(transition.getGuard().and(s.negate()));
 		}
-		return trapAutomaton;
+		return trapAutomaton; 
 	}
 	
 	@Override

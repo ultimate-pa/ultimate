@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
  *            The type of the preference. Usually a primitive, an enum, or something that can be easily constructed from
  *            a String.
  */
-public final class UltimatePreferenceItem<T> extends AbstractUltimatePreferenceItem {
+public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem {
 
 	private final String mLabel;
 	private final T mDefaultValue;

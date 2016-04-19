@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
@@ -78,8 +78,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String INDENT = "   ";
 
 	@Override
-	protected AbstractUltimatePreferenceItem[] initDefaultPreferences() {
-		final ArrayList<AbstractUltimatePreferenceItem> rtr = new ArrayList<>();
+	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
+		final ArrayList<BaseUltimatePreferenceItem> rtr = new ArrayList<>();
 		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS_UNTIL_WIDENING, DEF_ITERATIONS_UNTIL_WIDENING,
 		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_MAX_PARALLEL_STATES, DEF_STATES_UNTIL_MERGE,
@@ -112,7 +112,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		// LPSolver Preferences
 		rtr.addAll(LpSolverPreferences.getPreferences());
 		
-		return rtr.toArray(new AbstractUltimatePreferenceItem[rtr.size()]);
+		return rtr.toArray(new BaseUltimatePreferenceItem[rtr.size()]);
 	}
 
 	@Override

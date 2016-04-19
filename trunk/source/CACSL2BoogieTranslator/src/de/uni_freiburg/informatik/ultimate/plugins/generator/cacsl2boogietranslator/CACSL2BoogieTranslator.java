@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
@@ -55,7 +55,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private CACSL2BoogieTranslatorObserver mObserver;
-	private GraphType mInputDefinition;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 
@@ -75,8 +75,8 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.ALL;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.ALL;
 	}
 
 	@Override
@@ -85,7 +85,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		mInputDefinition = graphType;
 	}
 
@@ -95,8 +95,8 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	}
 
 	@Override
-	public GraphType getOutputDefinition() {
-		return new GraphType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
+	public ModelType getOutputDefinition() {
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override

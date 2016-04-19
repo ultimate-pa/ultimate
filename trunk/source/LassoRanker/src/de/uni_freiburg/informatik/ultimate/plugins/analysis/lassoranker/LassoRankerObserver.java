@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
@@ -86,7 +86,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	}
 	
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
 //		Ordinal.testcases();
 	}
 

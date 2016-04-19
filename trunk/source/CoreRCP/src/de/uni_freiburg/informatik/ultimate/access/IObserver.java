@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.access;
 
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 
 /**
  * Access to models in Ultimate is managed through observers. UltimateCore
@@ -78,7 +78,7 @@ public interface IObserver {
 	 *             because plugins can fail any way they want during
 	 *             {@link #init()} and the core will (try to) handle it.
 	 */
-	void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable;
+	void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable;
 
 	/**
 	 * After an observer has finished executing on a model (or chosen to ignore

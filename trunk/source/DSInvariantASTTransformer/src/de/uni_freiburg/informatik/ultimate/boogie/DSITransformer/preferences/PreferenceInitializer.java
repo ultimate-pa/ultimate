@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.Activator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 

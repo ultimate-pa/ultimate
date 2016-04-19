@@ -51,16 +51,16 @@ public class ProgramExecutionFormatter<TE, E> {
 		mStringProvider = stringProvider;
 	}
 
-	public String formatProgramExecution(IProgramExecution<TE, E> execution) {
-		StringBuilder sb = new StringBuilder();
+	public String formatProgramExecution(final IProgramExecution<TE, E> execution) {
+		final StringBuilder sb = new StringBuilder();
 		String valuation = getValuesAsString(execution.getInitialProgramState());
-		String lineSeparator = CoreUtil.getPlatformLineSeparator();
-		String fillChar = " ";
+		final String lineSeparator = CoreUtil.getPlatformLineSeparator();
+		final String fillChar = " ";
 
-		List<String> lineNumerColumn = getLineNumberColumn(execution);
-		int lineNumberColumnLength = getMaxLength(lineNumerColumn) + 2;
+		final List<String> lineNumerColumn = getLineNumberColumn(execution);
+		final int lineNumberColumnLength = getMaxLength(lineNumerColumn) + 2;
 
-		List<String> stepInfoColum = getStepInfoColum(execution);
+		final List<String> stepInfoColum = getStepInfoColum(execution);
 		int stepInfoColumLength = getMaxLength(stepInfoColum) + 2;
 		if (stepInfoColumLength < 6) {
 			// because of IVAL+2
@@ -238,10 +238,10 @@ public class ProgramExecutionFormatter<TE, E> {
 	}
 	
 	private List<String> getRelevanceInformationColumn(IProgramExecution<TE, E> execution) {
-		List<String> rtr = new ArrayList<>();
+		final List<String> rtr = new ArrayList<>();
 		int numberOfRelevanceInformations = 0;
 		for (int i = 0; i < execution.getLength(); ++i) {
-			IRelevanceInformation ri = execution.getTraceElement(i).getmRelevanceInformation();
+			final IRelevanceInformation ri = execution.getTraceElement(i).getRelevanceInformation();
 			if (ri == null) {
 				rtr.add("?");
 			} else {

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.SpaceExModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
@@ -174,9 +174,9 @@ public class SpaceExParser implements ISource {
 	}
 
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		try {
-			return new GraphType(Activator.PLUGIN_ID, GraphType.Type.AST, mFileNames);
+			return new ModelType(Activator.PLUGIN_ID, ModelType.Type.AST, mFileNames);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

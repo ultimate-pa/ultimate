@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -34,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
@@ -52,12 +54,12 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		InterpolatingTraceChecker {
 	
 	private final IToolchainStorage m_Storage;
-	private final NestedRun<CodeBlock, IPredicate> m_NestedRun;
+	private final NestedRun<? extends IAction, IPredicate> m_NestedRun;
 	
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(
 			IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts,
-			NestedRun<CodeBlock, IPredicate> run, SmtManager smtManager,
+			NestedRun<? extends IAction, IPredicate> run, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services,
@@ -92,7 +94,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 					+ "There should be one interpolant between each "
 					+ "two successive CodeBlocks");
 		}
-		assert TraceCheckerUtils.checkInterpolantsInductivityForward(interpolants, 
+		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "invariant map", 
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in invariant map";
 		m_Interpolants = interpolants;

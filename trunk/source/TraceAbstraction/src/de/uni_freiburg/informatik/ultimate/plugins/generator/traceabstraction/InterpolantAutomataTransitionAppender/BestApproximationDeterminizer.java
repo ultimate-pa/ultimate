@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -110,10 +111,10 @@ public class BestApproximationDeterminizer
 		}
 		if (m_TaPreferences.computeHoareAnnotation()) {
 			assert(m_SmtManager.isInductive(getState(detState), 
-						symbol, 
+						(IInternalAction) symbol, 
 						getState(succDetState)) == Script.LBool.UNSAT ||
 					m_SmtManager.isInductive(detState.getContent(m_StateFactory), 
-						symbol, 
+						(IInternalAction) symbol, 
 						getState(succDetState)) == Script.LBool.UNKNOWN);
 		}
 		return succDetState;	
@@ -334,7 +335,7 @@ public class BestApproximationDeterminizer
 		}
 		IPredicate presentPs = state;
 		IPredicate succPs = succ;
-		LBool sat = m_SmtManager.isInductive(presentPs, symbol, succPs);
+		LBool sat = m_SmtManager.isInductive(presentPs, (IInternalAction) symbol, succPs);
 		m_AnswerInternalSolver++;
 		if (sat == Script.LBool.UNSAT) {
 			m_Nwa.addInternalTransition(state, symbol, succ);

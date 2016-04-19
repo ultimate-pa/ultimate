@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.GraphType.Type;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
@@ -55,7 +55,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private WitnessNode m_WitnessNode;
 	private boolean m_LastModel = false;
 	private IToolchainStorage m_Storage;
-	private GraphType m_CurrentGraphType;
+	private ModelType m_CurrentGraphType;
 
 
 	public TraceAbstractionObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
@@ -92,11 +92,11 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private boolean isBlockEncodingRcfg(GraphType currentGraphType) {
+	private boolean isBlockEncodingRcfg(ModelType currentGraphType) {
 		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding");
 	}
 	
-	private boolean isOriginalRcfg(GraphType currentGraphType) {
+	private boolean isOriginalRcfg(ModelType currentGraphType) {
 		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder");
 	}
 
@@ -140,7 +140,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
 		m_CurrentGraphType = modelType;
 		if (currentModelIndex == numberOfModels -1) {
 			m_LastModel = true;

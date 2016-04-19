@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -30,11 +32,11 @@ public class PeaTestGeneratorExecution implements IProgramExecution<BoogieASTNod
 	public String toString() {
 		StringBuilder out = new StringBuilder();
 		//for each state makes a list of variables
-		out.append("####################################### Test Sequence ###############################################\n");
+		out.append("################################# Test Sequence ###############################################\n");
 		for(int i = 1; i < this.states.size() ; i++){
-			out.append("-------------------------------- Step ------------------------------------------------------\n");
+			out.append("-------------------------------- Step "+ Integer.toString(i) +" ------------------------------------------------------\n");
 			out.append(this.reportChanges(this.states.get(i-1), this.states.get(i)));
-			out.append(this.reportOracle(this.phases.get(i)));
+			//out.append(this.reportOracle(this.phases.get(i)));
 			out.append("\n");
 		}
 		return out.toString();
@@ -57,9 +59,9 @@ public class PeaTestGeneratorExecution implements IProgramExecution<BoogieASTNod
 	// compare last state with next state and only print the non internal non primed variabels
 	private String reportChanges(ProgramState<Expression> oldState,ProgramState<Expression> state){
 		StringBuilder out = new StringBuilder("");
-		String ident;
+		String ident; 
 		//TODO: this loop makes variable selection hacky, make nicer!
-		out.append("INPUT :");
+		out.append("INPUT :"); 
 		for(Expression variable: state.getVariables()){
 			ident = ((IdentifierExpression)variable).getIdentifier();
 			if(!this.sysInfo.isInput(ident)|| ident.endsWith("'")) continue;
@@ -79,7 +81,7 @@ public class PeaTestGeneratorExecution implements IProgramExecution<BoogieASTNod
 				+"    "); 
 			}
 		}
-		out.append("\nINTERNALS:");
+		/*out.append("\nINTERNALS:");
 		for(Expression variable: state.getVariables()){
 			ident = ((IdentifierExpression)variable).getIdentifier();
 			if(!this.sysInfo.isInternal(ident)|| ident.endsWith("'")) continue;
@@ -88,7 +90,7 @@ public class PeaTestGeneratorExecution implements IProgramExecution<BoogieASTNod
 			BoogiePrettyPrinter.print(state.getValues(variable).stream().findFirst().get())
 				+"    ");
 			}
-		}
+		}*/
 		return out.toString();
 	}
 

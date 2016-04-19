@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2015-2016 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.MathContext;
@@ -22,13 +49,11 @@ import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
  * Matrix for octagons (as presented by Antoine Mine).
  * <p>
  * 
- * TODO More documentation
- * Stores entries for variables +v1, -v1, ..., +vn, -vn
- * Variables (names, type, ...) aren't stored
- * Matrix is divided into 2x2 blocks
- * Different matrices, same octagon -> closures
+ * TODO More documentation Stores entries for variables +v1, -v1, ..., +vn, -vn Variables (names, type, ...) aren't
+ * stored Matrix is divided into 2x2 blocks Different matrices, same octagon -> closures
  * 
  * This class ensures coherence (as seen in the following ASCII art).
+ * 
  * <pre>
  *     \ .   D B   L J
  *     . \   C A   K I
@@ -43,51 +68,50 @@ import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctMatrix {
-	
+
 	public final static OctMatrix NEW = new OctMatrix(0);
 
 	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosurePrimitiveSparse;
-//	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
-//			if (m.mSize <= 0) {
-//				return;
-//			}
-//			String s = m.toStringLower();
-//			BufferedWriter bw;
-//			try {
-//				bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
-//				try {
-//					bw.write(s);
-//				} finally {
-//					bw.close();
-//				}
-//			} catch (IOException e) {
-//				throw new AssertionError("Could not write benchmark file.", e);
-//			}
-//			m.shortestPathClosurePrimitiveSparse();
-//	};
-//	private static String makeFilename() {
-//		int i;
-//		synchronized (OctMatrix.class) {
-//			i = ++sFileNameCounter;
-//		}
-//		return "/tmp/closureBenchmarkSvcomp/" + String.format("%08d", i);
-//	}
-//	private static volatile int sFileNameCounter = 0;
-	
+	// private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
+	// if (m.mSize <= 0) {
+	// return;
+	// }
+	// String s = m.toStringLower();
+	// BufferedWriter bw;
+	// try {
+	// bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
+	// try {
+	// bw.write(s);
+	// } finally {
+	// bw.close();
+	// }
+	// } catch (IOException e) {
+	// throw new AssertionError("Could not write benchmark file.", e);
+	// }
+	// m.shortestPathClosurePrimitiveSparse();
+	// };
+	// private static String makeFilename() {
+	// int i;
+	// synchronized (OctMatrix.class) {
+	// i = ++sFileNameCounter;
+	// }
+	// return "/tmp/closureBenchmarkSvcomp/" + String.format("%08d", i);
+	// }
+	// private static volatile int sFileNameCounter = 0;
+
 	/**
-	 * Size of this matrix (size = #rows = #columns).
-	 * Size is always an even number.
+	 * Size of this matrix (size = #rows = #columns). Size is always an even number.
 	 * 
 	 * @see #variables()
 	 */
 	private final int mSize;
-	
+
 	/**
 	 * Stores the elements of this matrix.
-	 * <p> 
-	 * Some elements are neglected because they are coherent to other elements
-	 * (see documentation of this class). The stored elements and their
-	 * indices are shown in the following ASCII art.
+	 * <p>
+	 * Some elements are neglected because they are coherent to other elements (see documentation of this class). The
+	 * stored elements and their indices are shown in the following ASCII art.
+	 * 
 	 * <pre>
 	 *     0 1 . . . .    legend
 	 *     2 3 . . . .    -----------------
@@ -96,9 +120,9 @@ public class OctMatrix {
 	 *     # # # # # #
 	 *     # # # # # #    m_0,0 is top left
 	 * </pre>
-	 * The matrix is divided into 2x2 blocks. Every block that contains
-	 * at least one element from the block lower triangular matrix is completely
-	 * stored. Elements are stored row-wise from top to bottom, left to right.
+	 * 
+	 * The matrix is divided into 2x2 blocks. Every block that contains at least one element from the block lower
+	 * triangular matrix is completely stored. Elements are stored row-wise from top to bottom, left to right.
 	 * 
 	 * @see #indexOf(int, int)
 	 */
@@ -106,7 +130,7 @@ public class OctMatrix {
 
 	private OctMatrix mStrongClosure;
 	private OctMatrix mTightClosure;
-	
+
 	public OctMatrix copy() {
 		OctMatrix copy = new OctMatrix(mSize);
 		System.arraycopy(this.mElements, 0, copy.mElements, 0, mElements.length);
@@ -120,7 +144,8 @@ public class OctMatrix {
 		String[] elements = m.length() > 0 ? m.split("\\s+") : new String[0];
 		int size = (int) (Math.sqrt(2 * elements.length + 1) - 1);
 		if (size % 2 != 0) {
-			throw new IllegalArgumentException("Number of elements does not match any 2x2 block lower triangular matrix.");
+			throw new IllegalArgumentException(
+					"Number of elements does not match any 2x2 block lower triangular matrix.");
 		}
 		OctMatrix oct = new OctMatrix(size);
 		for (int i = 0; i < elements.length; ++i) {
@@ -128,13 +153,14 @@ public class OctMatrix {
 		}
 		return oct;
 	}
-	
+
 	public static OctMatrix random(int variables) {
 		return random(variables, Math.random());
 	}
 
 	/**
-	 * @param infProbability probability that an element will be infinity (0 = never, 1 = always)
+	 * @param infProbability
+	 *            probability that an element will be infinity (0 = never, 1 = always)
 	 */
 	public static OctMatrix random(int variables, double infProbability) {
 		OctMatrix m = new OctMatrix(variables * 2);
@@ -149,65 +175,67 @@ public class OctMatrix {
 				} else {
 					v = new OctValue((int) (Math.random() * 20 - 10));
 				}
-				m.set(i, j , v);
+				m.set(i, j, v);
 			}
 		}
 		return m;
 	}
-	
+
 	protected OctMatrix(int size) {
 		mSize = size;
 		mElements = new OctValue[size * size / 2 + size];
 	}
-	
+
 	protected void fillInPlace(OctValue fill) {
 		for (int i = 0; i < mElements.length; ++i) {
 			mElements[i] = fill;
 		}
 		mStrongClosure = mTightClosure = null;
 	}
-	
+
 	/**
-	 * Returns the number of rows (= number of columns) in this octagon matrix.
-	 * Octagon matrices always have an even-numbered size, since every variable
-	 * corresponds to two rows (and two columns) of the octagon matrix.
+	 * Returns the number of rows (= number of columns) in this octagon matrix. Octagon matrices always have an
+	 * even-numbered size, since every variable corresponds to two rows (and two columns) of the octagon matrix.
 	 * 
 	 * @return size of this octagon matrix.
 	 */
 	public int getSize() {
 		return mSize;
 	}
-	
+
 	/**
-	 * Returns the number of variables, stored by this octagon.
-	 * Each variable corresponds to two rows and two columns of the octagon matrix.
+	 * Returns the number of variables, stored by this octagon. Each variable corresponds to two rows and two columns of
+	 * the octagon matrix.
 	 * 
 	 * @return number of variables in this octagon
 	 */
 	public int variables() {
 		return mSize / 2;
 	}
-	
+
 	public OctValue get(int row, int col) {
 		return mElements[indexOf(row, col)];
 	}
-	
+
 	protected void set(int row, int col, OctValue value) {
 		assert value != null : "null is not a valid matrix element.";
 		mStrongClosure = mTightClosure = null;
 		mElements[indexOf(row, col)] = value;
 	}
-	
+
 	/**
-	 * Changes an entry of this matrix iff the new value is smaller than the old value.
-	 * If the new value is not smaller than the old value, this matrix remains unchanged.
+	 * Changes an entry of this matrix iff the new value is smaller than the old value. If the new value is not smaller
+	 * than the old value, this matrix remains unchanged.
 	 * <p>
-	 * This method models the effect of {@code assume vCol - vRow <= newValue}, where {@code vRow} and {@code vCol}
-	 * are positive or negative forms of a program variable.
+	 * This method models the effect of {@code assume vCol - vRow <= newValue}, where {@code vRow} and {@code vCol} are
+	 * positive or negative forms of a program variable.
 	 * 
-	 * @param row row of the matrix entry
-	 * @param col column of the matrix entry
-	 * @param newValue new value of the matrix entry (must be smaller than the old value to have an effect)
+	 * @param row
+	 *            row of the matrix entry
+	 * @param col
+	 *            column of the matrix entry
+	 * @param newValue
+	 *            new value of the matrix entry (must be smaller than the old value to have an effect)
 	 */
 	protected void setMin(int row, int col, OctValue newValue) {
 		assert newValue != null : "null is not a valid matrix element.";
@@ -218,11 +246,11 @@ public class OctMatrix {
 			mStrongClosure = mTightClosure = null;
 		}
 	}
-	
+
 	/**
-	 * Set positive values on the main diagonal to zero.
-	 * Negative values are kept, since they denote that this octagon is \bot.
-	 * When encountering an negative value, this method exits early => positive values may remain on the diagonal.
+	 * Set positive values on the main diagonal to zero. Negative values are kept, since they denote that this octagon
+	 * is \bot. When encountering an negative value, this method exits early => positive values may remain on the
+	 * diagonal.
 	 * 
 	 * @return A value on the main diagonal was smaller than zero (=> negative self loop => this=\bot)
 	 */
@@ -232,7 +260,7 @@ public class OctMatrix {
 		}
 		return false;
 	}
-	
+
 	private boolean minimizeDiagonalElement(int i) {
 		int ii = indexOfLower(i, i);
 		int sig = mElements[ii].signum();
@@ -243,7 +271,7 @@ public class OctMatrix {
 		}
 		return sig < 0;
 	}
-	
+
 	private int indexOf(int row, int col) {
 		assert row < mSize && col < mSize : row + "," + col + " is not an index for matrix of size " + mSize + ".";
 		if (row < col) {
@@ -264,7 +292,7 @@ public class OctMatrix {
 		}
 		return result;
 	}
-	
+
 	public boolean elementwiseRelation(OctMatrix other, BiFunction<OctValue, OctValue, Boolean> relation) {
 		checkCompatibility(other);
 		for (int i = 0; i < mElements.length; ++i) {
@@ -274,9 +302,9 @@ public class OctMatrix {
 		}
 		return true;
 	}
-	
+
 	private void checkCompatibility(OctMatrix other) {
-		if (other.mSize != mSize) {			
+		if (other.mSize != mSize) {
 			throw new IllegalArgumentException("Incompatible matrices");
 		}
 	}
@@ -284,11 +312,11 @@ public class OctMatrix {
 	public OctMatrix add(OctMatrix other) {
 		return elementwiseOperation(other, OctValue::add);
 	}
-	
+
 	public static OctMatrix min(OctMatrix a, OctMatrix b) {
 		return a.elementwiseOperation(b, OctValue::min);
 	}
-	
+
 	public static OctMatrix max(OctMatrix a, OctMatrix b) {
 		return a.elementwiseOperation(b, OctValue::max);
 		// TODO set cached closure of result:
@@ -316,7 +344,7 @@ public class OctMatrix {
 		}
 		return true;
 	}
-	
+
 	public boolean isBlockEqualTo(int bRow, int bCol, OctMatrix other, int otherBRow, int otherBCol) {
 		bRow *= 2;
 		bCol *= 2;
@@ -331,12 +359,12 @@ public class OctMatrix {
 		}
 		return true;
 	}
-	
+
 	// note: "not less-equal than" does not necessarily mean "greater than". OctMatrices are only partial ordered!
 	public boolean isLessEqualThan(OctMatrix other) {
-		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);		
+		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);
 	}
-	
+
 	// TODO document: cached closure is the original object. Do not modify!
 	public OctMatrix cachedStrongClosure() {
 		if (mStrongClosure != null) {
@@ -344,7 +372,7 @@ public class OctMatrix {
 		}
 		return strongClosure(sDefaultShortestPathClosure);
 	}
-	
+
 	public OctMatrix strongClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix sc = copy();
 		boolean isObviouslyBottom = sc.minimizeDiagonal();
@@ -364,11 +392,11 @@ public class OctMatrix {
 		}
 		return tightClosure(sDefaultShortestPathClosure);
 	}
-	
+
 	public boolean hasCachedStrongClosure() {
 		return mStrongClosure != null;
 	}
-	
+
 	public boolean hasCachedTightClosure() {
 		return mTightClosure != null;
 	}
@@ -376,7 +404,7 @@ public class OctMatrix {
 	public OctMatrix tightClosurePrimitiveSparse() {
 		return tightClosure(OctMatrix::shortestPathClosurePrimitiveSparse);
 	}
-	
+
 	public OctMatrix tightClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix tc;
 		tc = copy();
@@ -404,7 +432,7 @@ public class OctMatrix {
 			}
 		}
 	}
-	
+
 	protected void shortestPathClosureFullSparse() {
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
@@ -434,7 +462,7 @@ public class OctMatrix {
 		}
 		return index;
 	}
-	
+
 	// outgoing edges of k
 	private List<Integer> indexFiniteElementsInRow(int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
@@ -445,7 +473,7 @@ public class OctMatrix {
 		}
 		return index;
 	}
-	
+
 	protected void shortestPathClosureSparse() {
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
@@ -473,7 +501,7 @@ public class OctMatrix {
 			}
 		}
 	}
-	
+
 	private List<Integer> indexFiniteElementsInBlockColumn(int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		int kk = k ^ 1;
@@ -484,7 +512,7 @@ public class OctMatrix {
 		}
 		return index;
 	}
-	
+
 	private List<Integer> indexFiniteElementsInBlockRow(int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		int kk = k ^ 1;
@@ -495,7 +523,7 @@ public class OctMatrix {
 		}
 		return index;
 	}
-	
+
 	protected void shortestPathClosurePrimitiveSparse() {
 		int[] rk = null; // indices of finite elements in rows k and k^1
 		int[] ck = null; // indices of finite elements in columns k and k^1
@@ -527,7 +555,7 @@ public class OctMatrix {
 			}
 		}
 	}
-	
+
 	// note: rowIndex is not sorted. Block elements are swapped.
 	private int primitiveIndexFiniteElementsInBlockRowAndColumn(int k, int[] rowIndex, int[] colIndex) {
 		int indexLength = 0;
@@ -535,7 +563,7 @@ public class OctMatrix {
 		for (int i = 0; i < mSize; ++i) {
 			if (!get(i, k).isInfinity() || !get(i, kk).isInfinity()) {
 				colIndex[indexLength] = i;
-				rowIndex[indexLength] = i^1;
+				rowIndex[indexLength] = i ^ 1;
 				++indexLength;
 			}
 		}
@@ -546,11 +574,11 @@ public class OctMatrix {
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				OctValue ik = get(i, k);
-				OctValue ikk = get(i, k^1);
+				OctValue ikk = get(i, k ^ 1);
 				int maxCol = i | 1;
 				for (int j = 0; j <= maxCol; ++j) {
 					OctValue kj = get(k, j);
-					OctValue kkj = get(k^1, j);
+					OctValue kkj = get(k ^ 1, j);
 					OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
 					if (get(i, j).compareTo(indirectRoute) > 0) {
 						set(i, j, indirectRoute);
@@ -564,35 +592,35 @@ public class OctMatrix {
 		// blocks on the diagonal (upper, lower bounds) won't change by strengthening
 		// => iterate only 2x2 blocks that are _strictly_ below the main diagonal
 		for (int i = 2; i < mSize; ++i) {
-			OctValue ib = get(i, i^1).half();
+			OctValue ib = get(i, i ^ 1).half();
 			int maxCol = (i - 2) | 1;
 			for (int j = 0; j <= maxCol; ++j) {
-				OctValue jb = get(j^1, j).half();
+				OctValue jb = get(j ^ 1, j).half();
 				OctValue b = ib.add(jb);
 				if (get(i, j).compareTo(b) > 0) {
 					set(i, j, b);
 				}
 			}
-		}		
+		}
 	}
 
 	private void tighteningInPlace() {
 		for (int i = 0; i < mSize; ++i) {
-			OctValue ib = get(i, i^1).half().floor();
+			OctValue ib = get(i, i ^ 1).half().floor();
 			int maxCol = i | 1;
 			for (int j = 0; j <= maxCol; ++j) {
-				OctValue jb = get(j^1, j).half().floor();
+				OctValue jb = get(j ^ 1, j).half().floor();
 				OctValue b = ib.add(jb);
 				if (get(i, j).compareTo(b) > 0) {
 					set(i, j, b);
 				}
 			}
-		}		
+		}
 	}
 
 	/**
-	 * Checks for negative self loops in the graph represented by this adjacency matrix.
-	 * Self loops are represented by this matrix' diagonal elements.
+	 * Checks for negative self loops in the graph represented by this adjacency matrix. Self loops are represented by
+	 * this matrix' diagonal elements.
 	 * <p>
 	 * <b>m</b> is strongly closed and has a negative self loop <=> <b>m</b> is empty in <b>R</b><br>
 	 * <b>m</b> is tightly closed and has a negative self loop <=> <b>m</b> is empty in <b>Z</b>
@@ -635,26 +663,26 @@ public class OctMatrix {
 			}
 			return OctValue.min(result, threshold);
 		});
-//		OctValue result = nij;
-//		if (result.compareTo(threshold) > 0) {
-//			return OctValue.INFINITY;
-//		}
-//		int resultComp = result.compareTo(OctValue.ZERO);
-//		if (resultComp > 0) {
-//			result = OctValue.max(nij.add(nij), OctValue.ONE);
-//		} else if (resultComp < 0) {
-//			result = nij.half(); // there is no -inf => will always converge towards 0
-//			result = result.compareTo(OctValue.MINUS_ONE) > 0 ? OctValue.ZERO : result;
-//		} else {
-//			result = nij; // == 0
-//		}
-//		return result;
+		// OctValue result = nij;
+		// if (result.compareTo(threshold) > 0) {
+		// return OctValue.INFINITY;
+		// }
+		// int resultComp = result.compareTo(OctValue.ZERO);
+		// if (resultComp > 0) {
+		// result = OctValue.max(nij.add(nij), OctValue.ONE);
+		// } else if (resultComp < 0) {
+		// result = nij.half(); // there is no -inf => will always converge towards 0
+		// result = result.compareTo(OctValue.MINUS_ONE) > 0 ? OctValue.ZERO : result;
+		// } else {
+		// result = nij; // == 0
+		// }
+		// return result;
 	}
 
 	public interface WideningStepSupplier {
 		public OctValue nextWideningStep(OctValue v);
 	}
-	
+
 	public OctMatrix widenStepwise(OctMatrix n, WideningStepSupplier stepSupplier) {
 		return elementwiseOperation(n, (mij, nij) -> {
 			if (mij.compareTo(nij) >= 0) {
@@ -666,7 +694,7 @@ public class OctMatrix {
 	}
 
 	public OctMatrix addVariables(int count) {
-		if (count < 0 ) {
+		if (count < 0) {
 			throw new IllegalArgumentException("Cannot add " + count + " variables.");
 		} else if (count == 0) {
 			return this;
@@ -677,11 +705,11 @@ public class OctMatrix {
 		// cached closures are of different size and cannot be (directly) reused
 		return n;
 	}
-	
+
 	public OctMatrix removeVariable(int v) {
 		return removeVariables(Collections.singleton(v));
 	}
-	
+
 	public OctMatrix removeVariables(Set<Integer> vars) {
 		if (areVariablesLast(vars)) {
 			return removeLastVariables(vars.size()); // note: sets cannot contain duplicates
@@ -697,7 +725,7 @@ public class OctMatrix {
 		for (int v : varsDescending) {
 			if (v < 0 || v >= variables()) {
 				throw new IllegalArgumentException("Variable " + v + " does not exist.");
-			} else if (v + 1 == vPrev) {				
+			} else if (v + 1 == vPrev) {
 				vPrev = v;
 			} else {
 				return false;
@@ -715,7 +743,7 @@ public class OctMatrix {
 		// cached closures are of different size and cannot be (directly) reused
 		return n;
 	}
-	
+
 	public OctMatrix removeArbitraryVariables(Set<Integer> vars) {
 		OctMatrix n = new OctMatrix(mSize - (2 * vars.size())); // note: sets cannot contain duplicates
 		int in = 0;
@@ -745,7 +773,7 @@ public class OctMatrix {
 	protected void copySelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar) {
 
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = mapTargetVarToSourceVar.inverse();
-		
+
 		if (source.mElements == mElements) {
 			for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
 				if (!entry.getKey().equals(entry.getValue())) {
@@ -763,7 +791,7 @@ public class OctMatrix {
 				if (row == null) {
 					setBlock(targetOther, targetVar, OctValue.INFINITY);
 				} else {
-					copyBlock(targetOther, targetVar, /* := */ source, row, sourceVar); 
+					copyBlock(targetOther, targetVar, /* := */ source, row, sourceVar);
 				}
 			}
 		}
@@ -783,7 +811,7 @@ public class OctMatrix {
 		m.copySelection(source, mapTargetVarToSourceVar);
 		return m;
 	}
-	
+
 	protected void copyBlock(int targetBRow, int targetBCol, OctMatrix source, int sourceBRow, int sourceBCol) {
 		targetBRow *= 2;
 		targetBCol *= 2;
@@ -805,15 +833,17 @@ public class OctMatrix {
 			}
 		}
 	}
-	
+
 	/**
 	 * Assigns one variable to another variable in this matrix. {@code x := y;}
 	 * <p>
-	 * This method is exact. No precision is lost. Closure in advance is not necessary.
-	 * Already closed matrices remain closed.
+	 * This method is exact. No precision is lost. Closure in advance is not necessary. Already closed matrices remain
+	 * closed.
 	 * 
-	 * @param targetVar variable which will be changed
-	 * @param sourceVar variable which will be copied
+	 * @param targetVar
+	 *            variable which will be changed
+	 * @param sourceVar
+	 *            variable which will be copied
 	 */
 	protected void assignVarCopy(int targetVar, int sourceVar) {
 		if (targetVar == sourceVar) {
@@ -821,7 +851,7 @@ public class OctMatrix {
 		}
 		boolean wasStronglyClosed = mStrongClosure == this;
 		boolean wasTightlyClosed = mTightClosure == this;
-		
+
 		int t2 = targetVar * 2;
 		int s2 = sourceVar * 2;
 		int t21 = t2 + 1;
@@ -838,12 +868,12 @@ public class OctMatrix {
 
 		// copy (block lower) block-column (without diagonal block)
 		for (int row = length; row < mSize; ++row) {
-			set(row, t2 , get(row, s2));
+			set(row, t2, get(row, s2));
 			set(row, t21, get(row, s21));
 		}
 
 		copyBlock(targetVar, targetVar, this, sourceVar, sourceVar);
-		
+
 		// cached closures were reset by "set"
 		if (wasStronglyClosed) {
 			mStrongClosure = this;
@@ -857,10 +887,11 @@ public class OctMatrix {
 	/**
 	 * Negates a variable. {@code x := -x;}
 	 * <p>
-	 * This method is exact. No precision is lost. Closure in advance is not necessary.
-	 * Already closed matrices remain closed.
+	 * This method is exact. No precision is lost. Closure in advance is not necessary. Already closed matrices remain
+	 * closed.
 	 * 
-	 * @param targetVar variable which will be negated
+	 * @param targetVar
+	 *            variable which will be negated
 	 */
 	protected void negateVar(int targetVar) {
 		int t2 = targetVar * 2;
@@ -871,10 +902,10 @@ public class OctMatrix {
 		int t21RowStart = indexOf(t21, 0);
 		int length = t2 + 2;
 		OctValue[] tmpRow = new OctValue[length];
-		System.arraycopy(mElements, t2RowStart, tmpRow, 0, length);              // tmp row   := upper row
+		System.arraycopy(mElements, t2RowStart, tmpRow, 0, length); // tmp row := upper row
 		System.arraycopy(mElements, t21RowStart, mElements, t2RowStart, length); // upper row := lower row
-		System.arraycopy(tmpRow, 0, mElements, t21RowStart, length);             // lower row := tmp row
-		
+		System.arraycopy(tmpRow, 0, mElements, t21RowStart, length); // lower row := tmp row
+
 		// swap (block lower) sub-columns of block-column (including diagonal block)
 		for (int row = t2; row < mSize; ++row) {
 			int left = indexOfLower(row, t2);
@@ -891,16 +922,17 @@ public class OctMatrix {
 			mTightClosure = null;
 		}
 	}
-	
+
 	/**
-	 * Adds a constant to a variable. {@code v := v + c;}
-	 * The constant may also be negative.
+	 * Adds a constant to a variable. {@code v := v + c;} The constant may also be negative.
 	 * <p>
-	 * This method is exact. No precision is lost. Closure in advance is not necessary.
-	 * Already closed matrices remain closed.
+	 * This method is exact. No precision is lost. Closure in advance is not necessary. Already closed matrices remain
+	 * closed.
 	 * 
-	 * @param targetVar variable to be incremented
-	 * @param constant summand
+	 * @param targetVar
+	 *            variable to be incremented
+	 * @param constant
+	 *            summand
 	 */
 	protected void incrementVar(int targetVar, OctValue constant) {
 		int t2 = targetVar * 2;
@@ -911,10 +943,10 @@ public class OctMatrix {
 			if (row / 2 == targetVar) {
 				continue; // block (v, v) is processed after this loop
 			}
-			int iT2 = indexOf(row, t2);   // left sub-column of block-column
-			int iT21 = indexOf(row, t21); // right        ...
-			mElements[iT2] = mElements[iT2].add(constant);        //  (v + c) − ? ≤ ?  <=>   v − ? ≤ ?
-			mElements[iT21] = mElements[iT21].subtract(constant); // −(v + c) − ? ≤ ?  <=>  −v − ? ≤ ? − c
+			int iT2 = indexOf(row, t2); // left sub-column of block-column
+			int iT21 = indexOf(row, t21); // right ...
+			mElements[iT2] = mElements[iT2].add(constant); // (v + c) − ? ≤ ? <=> v − ? ≤ ?
+			mElements[iT21] = mElements[iT21].subtract(constant); // −(v + c) − ? ≤ ? <=> −v − ? ≤ ? − c
 		}
 
 		OctValue doubleConstant = constant.add(constant);
@@ -922,7 +954,7 @@ public class OctMatrix {
 		int iLowerBound2 = indexOf(t2, t21);
 		mElements[iUpperBound2] = mElements[iUpperBound2].add(doubleConstant);
 		mElements[iLowerBound2] = mElements[iLowerBound2].subtract(doubleConstant);
-		
+
 		if (mStrongClosure != this) {
 			mStrongClosure = null;
 		}
@@ -931,7 +963,7 @@ public class OctMatrix {
 			mTightClosure = null;
 		}
 	}
-	
+
 	protected void assignVarConstant(int targetVar, OctValue constant) {
 		havocVar(targetVar);
 		int t2 = targetVar * 2;
@@ -950,7 +982,7 @@ public class OctMatrix {
 		setMin(t21, t2, doubleConstant);
 		// cached closures were already reset by "set"
 	}
-	
+
 	protected void assignVarInterval(int targetVar, OctValue min, OctValue max) {
 		havocVar(targetVar);
 		int t2 = targetVar * 2;
@@ -959,8 +991,7 @@ public class OctMatrix {
 		set(t21, t2, max.add(max));
 		// cached closures were already reset by "set"
 	}
-	
-	
+
 	protected void assumeVarInterval(int targetVar, OctValue min, OctValue max) {
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;
@@ -970,8 +1001,8 @@ public class OctMatrix {
 	}
 
 	// var1 + var2 <= constant
-	protected void assumeVarRelationLeConstant(
-			int var1, boolean var1Negate, int var2, boolean var2Negate, OctValue constant) {
+	protected void assumeVarRelationLeConstant(int var1, boolean var1Negate, int var2, boolean var2Negate,
+			OctValue constant) {
 		var1 *= 2;
 		var2 *= 2;
 		if (!var1Negate) {
@@ -982,7 +1013,7 @@ public class OctMatrix {
 		}
 		setMin(var1, var2, constant);
 	}
-	
+
 	protected void havocVar(int targetVar) {
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;
@@ -993,10 +1024,10 @@ public class OctMatrix {
 		}
 		set(t2, t2, OctValue.ZERO);
 		set(t21, t21, OctValue.ZERO);
-		
+
 		// cached closures were already reset by "set"
 	}
-	
+
 	// only kept for comparison -- do not use regularly
 	@Deprecated
 	protected void mineAssignRelational(int targetVar, int sourceVar, OctValue addConstant) {
@@ -1026,12 +1057,12 @@ public class OctMatrix {
 			strengtheningInPlace();
 			havocVar(targetVar);
 			int ov2 = sourceVar * 2;
-			set(ov2, v2, addConstant);        // also sets entry (v2 + 1, ov2 + 1) by coherence
+			set(ov2, v2, addConstant); // also sets entry (v2 + 1, ov2 + 1) by coherence
 			set(v2, ov2, addConstantNegated); // also sets entry (ov2 + 1, v2 + 1) by coherence
 		}
 		mStrongClosure = mTightClosure = null;
 	}
-	
+
 	public double infinityPercentageInBlockLowerHalf() {
 		if (mElements.length == 0) {
 			return Double.NaN;
@@ -1045,26 +1076,25 @@ public class OctMatrix {
 		return infCounter / (double) mElements.length;
 	}
 
-	public Term getTerm(Script script, Term[] vars) {
-		Term acc = script.term("true");
-		for (int row = 0; row < 2*variables(); ++row) {
-			Term rowVar = selectVar(script, row, vars);
+	public List<Term> getTerm(Script script, Term[] vars) {
+		final List<Term> rtr = new ArrayList<Term>(variables() * variables());
+		for (int row = 0; row < 2 * variables(); ++row) {
+			final Term rowVar = selectVar(script, row, vars);
 			// iterate only block lower triangular matrix (skip coherent upper part)
-			for (int col = 0; col < (row/2 + 1) * 2; ++col) {
-				OctValue entry = get(row, col);
+			for (int col = 0; col < (row / 2 + 1) * 2; ++col) {
+				final OctValue entry = get(row, col);
 				if (col == row) {
 					if (entry.signum() < 0) {
-						return script.term("false"); // constraint of the form (0 <= -1)
+						return Collections.singletonList(script.term("false")); // constraint of the form (0 <= -1)
 					} else {
 						continue; // constraint of the form (0 <= 1)
 					}
 				}
-				Term colVar = selectVar(script, col, vars);
-//				acc = Util.and(script, acc, createBoundedDiffTerm(script, colVar, rowVar, entry));
-				acc = script.term("and", acc, createBoundedDiffTerm(script, colVar, rowVar, entry));
+				final Term colVar = selectVar(script, col, vars);
+				rtr.add(createBoundedDiffTerm(script, colVar, rowVar, entry));
 			}
 		}
-		return acc;
+		return rtr;
 	}
 
 	// returns variable in positive or negative form, depending on row or column
@@ -1101,7 +1131,7 @@ public class OctMatrix {
 	public String toString() {
 		return toStringHalf();
 	}
-	
+
 	public String toStringFull() {
 		StringBuilder sb = new StringBuilder();
 		for (int row = 0; row < mSize; ++row) {
@@ -1115,17 +1145,17 @@ public class OctMatrix {
 		}
 		return sb.toString();
 	}
-	
+
 	public String toStringHalf() {
 		StringBuilder sb = new StringBuilder();
-		int n = 2;      // input of integer sequence floor(n^2 / 2 -1)
+		int n = 2; // input of integer sequence floor(n^2 / 2 -1)
 		int rowEnd = 1; // index of last element in current row (= output of integer sequence)
 		for (int i = 0; i < mElements.length; ++i) {
 			sb.append(mElements[i]);
 			if (i == rowEnd) {
 				sb.append("\n");
 				++n;
-				rowEnd = n * n / 2 -1;
+				rowEnd = n * n / 2 - 1;
 			} else {
 				sb.append("\t");
 			}

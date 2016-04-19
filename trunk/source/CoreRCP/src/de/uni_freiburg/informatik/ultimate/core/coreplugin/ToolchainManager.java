@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.PersistenceAwareModelManager;
@@ -245,7 +245,7 @@ public class ToolchainManager {
 				File input = entry.getKey();
 
 				IElement element = runParser(input, parser);
-				GraphType t = parser.getOutputDefinition();
+				ModelType t = parser.getOutputDefinition();
 				if (t == null) {
 					String errorMsg = parser.getPluginName() + " returned invalid output definition for file "
 							+ input.getAbsolutePath();
@@ -308,7 +308,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public void addAST(IElement root, GraphType outputDefinition) {
+		public void addAST(IElement root, ModelType outputDefinition) {
 			if (mModelManager.addItem(root, outputDefinition)) {
 				mLogger.debug(getLogPrefix() + ": Successfully added AST to model manager");
 			} else {

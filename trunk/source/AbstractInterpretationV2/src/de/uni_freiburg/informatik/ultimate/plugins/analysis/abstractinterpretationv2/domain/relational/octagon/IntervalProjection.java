@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2015-2016 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
@@ -14,60 +41,89 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 
+/**
+ * Utilities to project octagons to intervals, calculated expression using intervals,
+ * and assigning the resulting intervals to octagons.
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class IntervalProjection {
 
-	public static List<OctDomainState> assignNumericVarWithoutIfs(String var, Expression rhs,
+	/**
+	 * Processes an assignment by projection to intervals.
+	 * 
+	 * @param var Variable to be assigned.
+	 * @param rhs Expression without if-expressions, describing te new value of the variable.
+	 * @param oldStates Octagon abstract states to be updated -- will be modified in-place.
+	 * @return Updated states in the same list.
+	 */
+	public static List<OctDomainState> assignNumericVarWithoutIfs(final String var, final Expression rhs,
 			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
-		for (OctDomainState state : oldStates) {
-			IntervalDomainValue i = projectNumericExprWithoutIfs(rhs, state);
-			state.assignNumericVarInterval(var, new OctInterval(i));
+		for (final OctDomainState state : oldStates) {
+			final IntervalDomainValue interval = projectNumericExprWithoutIfs(rhs, state);
+			state.assignNumericVarInterval(var, new OctInterval(interval));
 		}
 		return oldStates;
 	}
 
-	public static List<OctDomainState> assignNumericVarAffine(String var, AffineExpression rhs,
+	/**
+	 * Processes an assignment by projection to intervals.
+	 * 
+	 * @param var Variable to be assigned.
+	 * @param rhs Affine expression, describing te new value of the variable.
+	 * @param oldStates Octagon abstract states to be updated -- will be modified in-place.
+	 * @return Updated states in the same list.
+	 */
+	public static List<OctDomainState> assignNumericVarAffine(final String var, final AffineExpression rhs,
 			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
-		for (OctDomainState state : oldStates) {
-			IntervalDomainValue i = projectAffineExpr(rhs, state);
-			state.assignNumericVarInterval(var, new OctInterval(i));
+		for (final OctDomainState state : oldStates) {
+			final IntervalDomainValue interval = projectAffineExpr(rhs, state);
+			state.assignNumericVarInterval(var, new OctInterval(interval));
 		}
 		return oldStates;
 	}
-	
-	public static IntervalDomainValue projectNumericExprWithoutIfs(Expression expr, OctDomainState state) {
+
+	/**
+	 * Project an octagon to intervals and calculate the abstract result (interval) of an expression.
+	 * 
+	 * @param expr Expression to be evaluated.
+	 * @param state Octagon abstract state, describing the values variables can have.
+	 * @return Abstract result (interval) of the expression
+	 */
+	public static IntervalDomainValue projectNumericExprWithoutIfs(final Expression expr, final OctDomainState state) {
 		// TODO (?) cache interval projections of each variable
 
 		if (expr instanceof IntegerLiteral) {
-			IntervalValue c = new IntervalValue(((IntegerLiteral) expr).getValue());
-			return new IntervalDomainValue(c, c);
+			final IntervalValue pointInterval = new IntervalValue(((IntegerLiteral) expr).getValue());
+			return new IntervalDomainValue(pointInterval, pointInterval);
 		
 		} else if (expr instanceof RealLiteral) {
-			IntervalValue c = new IntervalValue(((IntegerLiteral) expr).getValue());
-			return new IntervalDomainValue(c, c);
+			final IntervalValue pointInterval = new IntervalValue(((IntegerLiteral) expr).getValue());
+			return new IntervalDomainValue(pointInterval, pointInterval);
 		
 		} else if (expr instanceof IdentifierExpression) {
-			String var = ((IdentifierExpression) expr).getIdentifier();
-			OctInterval oi = state.projectToInterval(var);
-			return oi.toIvlInterval();
+			final String var = ((IdentifierExpression) expr).getIdentifier();
+			final OctInterval octInterval = state.projectToInterval(var);
+			return octInterval.toIvlInterval();
 
 		} else if (expr instanceof UnaryExpression) {
-			UnaryExpression ue = (UnaryExpression) expr;
-			switch (ue.getOperator()) {
+			final UnaryExpression unExpr = (UnaryExpression) expr;
+			switch (unExpr.getOperator()) {
 			case ARITHNEGATIVE:
-				return projectNumericExprWithoutIfs(ue.getExpr(), state).negate();
+				return projectNumericExprWithoutIfs(unExpr.getExpr(), state).negate();
 			default:
 				// see end of this method
 			}
 			
 		} else if (expr instanceof BinaryExpression) {
-			BinaryExpression be = (BinaryExpression) expr;
-			IntervalDomainValue left = projectNumericExprWithoutIfs(be.getLeft(), state);
-			IntervalDomainValue right = projectNumericExprWithoutIfs(be.getRight(), state);
-			switch (be.getOperator()) {
+			final BinaryExpression binExpr = (BinaryExpression) expr;
+			final IntervalDomainValue left = projectNumericExprWithoutIfs(binExpr.getLeft(), state);
+			final IntervalDomainValue right = projectNumericExprWithoutIfs(binExpr.getRight(), state);
+			switch (binExpr.getOperator()) {
 			case ARITHPLUS:
 				return left.add(right);
 			case ARITHMINUS:
@@ -75,13 +131,13 @@ public class IntervalProjection {
 			case ARITHMUL:
 				return left.multiply(right);
 			case ARITHDIV:
-				if (TypeUtil.isNumericInt(be.getType())) {
+				if (TypeUtil.isNumericInt(binExpr.getType())) {
 					return left.integerDivide(right);
 				} else {
 					return left.divide(right);
 				}
 			case ARITHMOD:
-				return left.modulo(right, TypeUtil.isNumericInt(be.getType()));
+				return left.modulo(right, TypeUtil.isNumericInt(binExpr.getType()));
 			default:
 				// see end of this method
 			}
@@ -90,16 +146,23 @@ public class IntervalProjection {
 		return new IntervalDomainValue(); // \top = safe over-approximation
 	}
 	
-	public static IntervalDomainValue projectAffineExpr(AffineExpression expr, OctDomainState state) {
-		IntervalDomainValue i = new IntervalDomainValue(0, 0);
-		for (Map.Entry<String, BigDecimal> summand : expr.getCoefficients().entrySet()) {
-			IntervalDomainValue varIvl = state.projectToInterval(summand.getKey()).toIvlInterval();
-			IntervalValue factor = new IntervalValue(summand.getValue());
-			i = i.add(varIvl.multiply(new IntervalDomainValue(factor, factor)));
+	/**
+	 * Project an octagon to intervals and calculate the abstract result (interval) of an affine expression.
+	 * 
+	 * @param expr Affine expression to be evaluated.
+	 * @param state Octagon abstract state, describing the values variables can have.
+	 * @return Abstract result (interval) of the expression
+	 */
+	public static IntervalDomainValue projectAffineExpr(final AffineExpression expr, final OctDomainState state) {
+		IntervalDomainValue resultInterval = new IntervalDomainValue(0, 0);
+		for (final Map.Entry<String, BigDecimal> summand : expr.getCoefficients().entrySet()) {
+			final IntervalDomainValue varValue = state.projectToInterval(summand.getKey()).toIvlInterval();
+			final IntervalValue factor = new IntervalValue(summand.getValue());
+			resultInterval = resultInterval.add(varValue.multiply(new IntervalDomainValue(factor, factor)));
 		}
-		IntervalValue constant = new IntervalValue(expr.getConstant());
-		i = i.add(new IntervalDomainValue(constant, constant));
-		return i;
+		final IntervalValue constant = new IntervalValue(expr.getConstant());
+		resultInterval = resultInterval.add(new IntervalDomainValue(constant, constant));
+		return resultInterval;
 	}
 
 }

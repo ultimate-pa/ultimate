@@ -57,10 +57,10 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL 
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
@@ -78,12 +78,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 			
 			//### C
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_SMTInterpol.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+////			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+////			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
+////			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_SMTInterpol.epf"),
+////			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
@@ -100,11 +100,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
+//			"examples/programs/abstractInterpretation/congruence.bpl",
 //			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
 			
 //			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
+			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
 //			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
 //			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
 //			"examples/programs/abstractInterpretation/regression/procedure-Loops.bpl",
@@ -113,7 +114,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/svcomp/bitvector-loops/diamond_false-unreach-call2.i",
 //			"examples/svcomp/product-lines/email_spec11_productSimulator_false-unreach-call.cil.c",
 //			"examples/svcomp/product-lines/email_spec4_product32_false-unreach-call.cil.c",
-			"examples/svcomp/loop-invgen/down_true-unreach-call.i",
+//			"examples/svcomp/loop-invgen/down_true-unreach-call.i",
 //			"examples/svcomp/loop-lit/css2003_true-unreach-call.c.i",
 //			"examples/svcomp/loop-invgen/string_concat-noarr_true-unreach-call.i",
 	};
@@ -144,8 +145,11 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 					"Abstract Interpretation iterations", "AI Iter{-}ations",
 					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 			new ColumnDefinition(
+					"AbstractInterpretationStrong", "AI Strong",
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
 					"Abstract Interpretation Time", "AI Avg. Time",
-					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
 			new ColumnDefinition(
 					"Overall time", "Trace Abstraction Time",
 					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	

@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.access;
 
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 
 /**
  * Simple construct to implement {@link IUnmanagedObserver}s and ignore extended
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 public abstract class BaseObserver implements IUnmanagedObserver {
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
 
 	}
 

@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
 import java.io.File;
 
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
@@ -97,7 +97,7 @@ public interface ISource extends IToolchainPlugin {
 	 * @return A GraphType object which describes the underlying graph structure
 	 *         of a model
 	 */
-	GraphType getOutputDefinition();
+	ModelType getOutputDefinition();
 
 	/**
 	 * This method is used by the core to set the prelude file for the parser.

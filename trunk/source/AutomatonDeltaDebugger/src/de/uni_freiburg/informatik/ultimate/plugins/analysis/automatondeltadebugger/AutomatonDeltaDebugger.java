@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ATester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AutomatonDeltaDebuggerObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.DebuggerException;
@@ -83,7 +83,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 	
 	@Override
-	public GraphType getOutputDefinition() {
+	public ModelType getOutputDefinition() {
 		return null;
 	}
 	
@@ -93,8 +93,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 	
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
 	}
 	
 	@Override
@@ -103,7 +103,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 	
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
 		

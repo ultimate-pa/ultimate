@@ -120,7 +120,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
-			CallStatement callStatement = (CallStatement) call.getCallStatement();
+			final CallStatement callStatement = (CallStatement) call.getCallStatement();
 			final Expression[] args = callStatement.getArguments();
 
 			// If there are no arguments, we don't need to rewrite states.
@@ -129,11 +129,11 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 				return returnList;
 			}
 
-			Map<Integer, String> paramNames = getArgumentTemporaries(args.length, stateBeforeLeaving);
+			final Map<Integer, String> paramNames = getArgumentTemporaries(args.length, stateBeforeLeaving);
 
 			final List<LeftHandSide> idents = new ArrayList<>();
 
-			Map<String, IBoogieVar> paramVariables = new HashMap<>();
+			final Map<String, IBoogieVar> paramVariables = new HashMap<>();
 			for (int i = 0; i < args.length; i++) {
 				final String name = paramNames.get(i);
 				final IBoogieVar boogieVar = BoogieUtil.createTemporaryIBoogieVar(name, args[i].getType());
@@ -160,7 +160,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 			final List<String> paramIdentifiers = new ArrayList<>();
 
 			for (final VarList varlist : inParams) {
-				for (String var : varlist.getIdentifiers()) {
+				for (final String var : varlist.getIdentifiers()) {
 					paramIdentifiers.add(var);
 				}
 			}
@@ -191,8 +191,9 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 						// We treat Arrays as normal variables for the time being.
 						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					} else {
-						mLogger.warn("The IBoogieVar type " + type.getIType()
-						        + " cannot be handled. Assuming normal variable type.");
+						if (mLogger.isDebugEnabled()) {
+							mLogger.warn("The IBoogieVar type " + type.getIType() + " cannot be handled. Assuming normal variable type.");
+						}
 						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					}
 				}
@@ -243,7 +244,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 	 * @return A map containing for each index of the call statement's argument
 	 */
 	private Map<Integer, String> getArgumentTemporaries(final int argNum, final CongruenceDomainState state) {
-		Map<Integer, String> returnMap = new HashMap<>();
+		final Map<Integer, String> returnMap = new HashMap<>();
 
 		String paramPrefix = "param_";
 
@@ -252,13 +253,11 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 		while (!uniqueFound) {
 			for (int i = 0; i < argNum; i++) {
 				final StringBuilder sb = new StringBuilder();
-				sb.append(paramPrefix);
-				sb.append(i);
+				sb.append(paramPrefix).append(i);
 				final String currentParamName = sb.toString();
 				if (state.containsVariable(currentParamName)) {
 					final StringBuilder paramBuilder = new StringBuilder();
-					paramBuilder.append(paramPrefix);
-					paramBuilder.append("_");
+					paramBuilder.append(paramPrefix).append('_');
 					paramPrefix = paramBuilder.toString();
 					break;
 				}
@@ -268,8 +267,7 @@ public class CongruencePostOperator implements IAbstractPostOperator<CongruenceD
 
 		for (int i = 0; i < argNum; i++) {
 			final StringBuilder sb = new StringBuilder();
-			sb.append(paramPrefix);
-			sb.append(i);
+			sb.append(paramPrefix).append(i);
 			returnMap.put(i, sb.toString());
 		}
 

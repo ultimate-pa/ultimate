@@ -49,7 +49,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -63,12 +63,12 @@ import de.uni_freiburg.informatik.ultimate.gui.customeditors.MultiLineTextFieldE
 public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
 	private final String mPluginID;
-	private final AbstractUltimatePreferenceItem[] mDefaultPreferences;
+	private final BaseUltimatePreferenceItem[] mDefaultPreferences;
 	private final String mTitle;
 	private final ScopedPreferenceStore mPreferenceStore;
 	private final Map<FieldEditor, UltimatePreferenceItem<?>> mCheckedFields;
 
-	public UltimateGeneratedPreferencePage(String pluginID, String title, AbstractUltimatePreferenceItem[] preferences) {
+	public UltimateGeneratedPreferencePage(String pluginID, String title, BaseUltimatePreferenceItem[] preferences) {
 		super(GRID);
 		mPluginID = pluginID;
 		mDefaultPreferences = preferences;
@@ -86,7 +86,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 
 	@Override
 	protected void createFieldEditors() {
-		for (final AbstractUltimatePreferenceItem prefItem : mDefaultPreferences) {
+		for (final BaseUltimatePreferenceItem prefItem : mDefaultPreferences) {
 			if (prefItem instanceof UltimatePreferenceItem) {
 				UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
 				final FieldEditor editor;

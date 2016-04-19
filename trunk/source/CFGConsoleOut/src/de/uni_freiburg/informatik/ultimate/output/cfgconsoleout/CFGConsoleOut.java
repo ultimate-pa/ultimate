@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 
 public class CFGConsoleOut implements IOutput {
 
@@ -51,8 +51,8 @@ public class CFGConsoleOut implements IOutput {
 	}
 
 	@Override
-	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
 	}
 
 	@Override
@@ -61,7 +61,7 @@ public class CFGConsoleOut implements IOutput {
 	}
 
 	@Override
-	public void setInputDefinition(GraphType graphType) {
+	public void setInputDefinition(ModelType graphType) {
 
 	}
 

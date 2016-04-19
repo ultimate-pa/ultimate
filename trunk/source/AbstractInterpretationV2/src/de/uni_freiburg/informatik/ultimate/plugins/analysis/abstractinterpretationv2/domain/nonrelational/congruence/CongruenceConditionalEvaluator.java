@@ -63,7 +63,7 @@ public class CongruenceConditionalEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(CongruenceDomainState currentState) {
+	public List<IEvaluationResult<CongruenceDomainValue>> evaluate(final CongruenceDomainState currentState) {
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
 		final List<IEvaluationResult<CongruenceDomainValue>> conditionResult = mConditionEvaluator.evaluate(currentState);
@@ -131,7 +131,7 @@ public class CongruenceConditionalEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(final IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
 		if (mNegatedConditionEvaluator == null) {
 			mNegatedConditionEvaluator = evaluator;
 		} else if (mConditionEvaluator == null) {
@@ -163,24 +163,17 @@ public class CongruenceConditionalEvaluator
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder(50);
 
-		sb.append("if ");
-		sb.append(mConditionEvaluator);
-		sb.append(" [[ ");
-		sb.append(mNegatedConditionEvaluator);
-		sb.append(" ]]");
-		sb.append(" then ");
-		sb.append(mIfEvaluator);
-		sb.append(" else ");
-		sb.append(mElseEvaluator);
+		sb.append("if ").append(mConditionEvaluator).append(" [[ ").append(mNegatedConditionEvaluator).append(" ]]")
+		        .append(" then ").append(mIfEvaluator).append(" else ").append(mElseEvaluator);
 
 		return sb.toString();
 	}
 
 	@Override
-	public List<CongruenceDomainState> inverseEvaluate(IEvaluationResult<CongruenceDomainValue> computedValue,
-	        CongruenceDomainState currentState) {
+	public List<CongruenceDomainState> inverseEvaluate(final IEvaluationResult<CongruenceDomainValue> computedValue,
+	        final CongruenceDomainState currentState) {
 
 		final List<CongruenceDomainState> returnList = new ArrayList<>();
 

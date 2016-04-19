@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -55,16 +56,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public abstract class NestedFormulas<TF, SF> {
 	
-	private final NestedWord<CodeBlock> m_NestedWord;
+	private final NestedWord<? extends IAction> m_NestedWord;
 	private SF m_Precondition;
 	private SF m_Postcondition;
 	private final SortedMap<Integer, SF> m_PendingContexts;
 	
-	public final NestedWord<CodeBlock> getTrace() {
+	public final NestedWord<? extends IAction> getTrace() {
 		return m_NestedWord;
 	}
 	
-	public NestedFormulas(NestedWord<CodeBlock> nestedWord,
+	public NestedFormulas(NestedWord<? extends IAction> nestedWord,
 			SortedMap<Integer, SF> pendingContexts) {
 		m_NestedWord = nestedWord;
 		assert pendingContexts != null;
