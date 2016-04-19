@@ -26,13 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.nwa;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -52,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.DuplicatorWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.IHasVertexDownStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SearchElement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SearchElement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.VertexDownState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
@@ -183,7 +181,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 	/**
 	 * Unsupported operation. Use
-	 * {@link #getDuplicatorVertex(Object, Object, Object, boolean, ETransitionType, Object)}
+	 * {@link #getDuplicatorVertex(Object, Object, Object, boolean, ETransitionType, SummarizeEdge, Sink)}
 	 * instead.
 	 * 
 	 * @throws UnsupportedOperationException
@@ -193,7 +191,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	public DuplicatorVertex<LETTER, STATE> getDuplicatorVertex(final STATE q0, final STATE q1, final LETTER a,
 			final boolean bit) {
 		throw new UnsupportedOperationException(
-				"Use getDuplicatorVertex(q0, q1, a, bit, transType, hierPred) instead.");
+				"Use getDuplicatorVertex(q0, q1, a, bit, transType, summarizeEdge, sink) instead.");
 		// TODO Can later use getDuplicatorVertex(...., null, null) but for now
 		// it should throw an Exception for problem detection.
 	}
@@ -232,14 +230,14 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 	/**
 	 * Unsupported operation. Use
-	 * {@link #getSpoilerVertex(Object, Object, boolean, SummarizeEdge)}
+	 * {@link #getSpoilerVertex(Object, Object, boolean, SummarizeEdge, Sink)}
 	 * instead.
 	 * 
 	 * @throws UnsupportedOperationException
 	 *             Operation is not supported.
 	 */
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {
-		throw new UnsupportedOperationException("Use getSpoilerVertex(q0, q1, a, bit, summarizeEdge) instead.");
+		throw new UnsupportedOperationException("Use getSpoilerVertex(q0, q1, a, bit, summarizeEdge, sink) instead.");
 		// TODO Can later use getSpoilerVertex(...., null, null) but for now
 		// it should throw an Exception for problem detection.
 	}
@@ -258,10 +256,13 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 *            Type of the transition
 	 * @param summarizeEdge
 	 *            Summarize edge the vertex belongs to. Use <tt>null</tt> if the
-	 *            vertex does not belong to one.
+	 *            vertex does not belong to one. This is used for special
+	 *            vertices that are used to represent a summary edge correctly
+	 *            for a valid game graph.
 	 * @param sink
 	 *            Sink the vertex belongs to. Use <tt>null</tt> if the vertex
-	 *            does not belong to one.
+	 *            does not belong to one. This is used for special vertices that
+	 *            are used to represent a sink correctly for a valid game graph.
 	 * @return The spoiler vertex associated to the given signature. See
 	 *         {@link #getSpoilerVertex(Object, Object, boolean)}.
 	 */
@@ -543,11 +544,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			Vertex<LETTER, STATE> searchVertex = searchElement.getVertex();
 			VertexDownState<STATE> searchDownState = searchElement.getDownState();
 
-			// TODO Do something with that information
 			if (searchVertex instanceof IHasVertexDownStates) {
 				@SuppressWarnings("unchecked")
 				IHasVertexDownStates<STATE> searchVertexWithDownStates = (IHasVertexDownStates<STATE>) searchVertex;
 				if (!searchVertexWithDownStates.isVertexDownStateSafe(searchDownState)) {
+					// TODO Do something with that information
 					getLogger().debug("\t\tDownstate is marked unsafe: " + searchElement);
 				}
 			}
@@ -595,9 +596,9 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 							int summarizeEdgePriority = summarizeEdge.getPriority();
 
 							if (summarizeEdgePriority == SummarizeEdge.NO_PRIORITY) {
-								// TODO What to do if summarize edge priority is
-								// unknown, abort and line in again?
-								getLogger().debug("Summarize edge priority is unknown. Don't know what to do, help.");
+								// If summarize edge has no priority yet, use
+								// the neutral element 2.
+								summarizeEdgePriority = 2;
 							}
 
 							int destinationPriority = destination.getPriority();
@@ -687,7 +688,6 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			Integer previousSearchPriorityValue = searchPriorities.put(new Pair<>(searchVertex, searchDownState),
 					searchPriority);
 			boolean continueSearch = false;
-			boolean updateCorrespondingSummarizeEdge = false;
 			// Continue search if a search priority is new for the
 			// vertex or if values have changed.
 			// The search will converge to a fix point since min-method
@@ -698,11 +698,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 				// If search element is a duplicator vertex that uses a call
 				// transition, then update the priority of the corresponding
-				// summarize edge, if existent.
+				// summarize edges, if existent.
 				if (isSearchVertexDuplicatorDD) {
 					ETransitionType transitionType = searchVertexAsDuplicatorDD.getTransitionType();
 					if (transitionType == ETransitionType.CALL) {
-						updateCorrespondingSummarizeEdge = transitionType == ETransitionType.CALL;
+						updateCorrespondingSummarizeEdge(searchElement, searchPriority);
 					}
 				}
 			}
@@ -742,7 +742,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 								// correct double decker.
 								for (VertexDownState<STATE> downState : downStates) {
 									if (downState.getLeftDownState().equals(searchDownState.getLeftDownState())) {
-										searchQueue.add(new SearchElement<LETTER, STATE>(pred, downState));
+										searchQueue.add(
+												new SearchElement<LETTER, STATE>(pred, downState, searchDownState));
 									}
 								}
 							} else if (transitionType == ETransitionType.SUMMARIZE_EXIT) {
@@ -753,14 +754,16 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 								if (source instanceof SpoilerDoubleDeckerVertex) {
 									SpoilerDoubleDeckerVertex<LETTER, STATE> sourceAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) source;
 									if (sourceAsSpoilerDD.hasVertexDownState(searchDownState)) {
-										searchQueue.add(new SearchElement<LETTER, STATE>(source, searchDownState));
+										searchQueue.add(new SearchElement<LETTER, STATE>(source, searchDownState,
+												searchDownState));
 									}
 								}
 							} else {
 								// Only add the vertex if the edge belongs to
 								// the current down state configuration
 								if (predAsDuplicatorDD.hasVertexDownState(searchDownState)) {
-									searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState));
+									searchQueue.add(
+											new SearchElement<LETTER, STATE>(pred, searchDownState, searchDownState));
 								}
 							}
 						} else {
@@ -792,17 +795,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 										for (VertexDownState<STATE> downState : downStates) {
 											if (downState.getRightDownState()
 													.equals(searchDownState.getRightDownState())) {
-												searchQueue.add(new SearchElement<LETTER, STATE>(pred, downState));
-												// If values have changed we
-												// need to update the summarize
-												// edge corresponding to the
-												// current searchVertex.
-												// We find the summarize edges
-												// by using the predecessors.
-												if (updateCorrespondingSummarizeEdge) {
-													updateCorrespondingSummarizeEdge(searchElement, searchPriority,
-															predAsSpoilerDD, downState);
-												}
+												searchQueue.add(new SearchElement<LETTER, STATE>(pred, downState,
+														searchDownState));
 											}
 										}
 									}
@@ -812,7 +806,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 									if (pred instanceof SpoilerDoubleDeckerVertex) {
 										SpoilerDoubleDeckerVertex<LETTER, STATE> predAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pred;
 										if (predAsSpoilerDD.hasVertexDownState(searchDownState)) {
-											searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState));
+											searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState,
+													searchDownState));
 										}
 									}
 								}
@@ -850,7 +845,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	private Iterator<VertexDownState<STATE>> constructAllVertexDownStates(final STATE leftUpState,
 			final STATE rightUpState) {
 		Set<STATE> leftDownStates = m_Nwa.getDownStates(leftUpState);
-		Set<STATE> rightDownStates = m_Nwa.getDownStates(leftUpState);
+		Set<STATE> rightDownStates = m_Nwa.getDownStates(rightUpState);
 		Set<VertexDownState<STATE>> vertexDownStates = new LinkedHashSet<>();
 		for (STATE leftDownState : leftDownStates) {
 			for (STATE rightDownState : rightDownStates) {
@@ -1151,43 +1146,70 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 	/**
 	 * Updates the priority of the summarize edge corresponding to the given
-	 * objects.
+	 * objects, if the current down state is safe.
 	 * 
 	 * @param invoker
 	 *            Element corresponding to the duplicator vertex that uses the
 	 *            call which invoked the summarize edge
 	 * @param priorityToSet
 	 *            Priority to set for the summarize edge
-	 * @param pred
-	 *            The predecessor of the element which is the source of the
-	 *            corresponding summarize edge
-	 * @param predDownState
-	 *            The current down state processing for the predecessor to which
-	 *            the summarize edge needs to correspond to
 	 */
-	private void updateCorrespondingSummarizeEdge(final SearchElement<LETTER, STATE> invoker, int priorityToSet,
-			final SpoilerDoubleDeckerVertex<LETTER, STATE> pred, final VertexDownState<STATE> predDownState) {
-		// Search the corresponding summarize edge. Its source must be a
-		// predecessor of the invoker.
-		// TODO Involve the down state to find the correct corresponding
-		// summarize edge
-		Map<SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> destToSummarizeEdge = m_SrcDestToSummarizeEdges
-				.get(pred);
-		if (destToSummarizeEdge == null || destToSummarizeEdge.isEmpty()) {
-			return;
-		}
-		Collection<SummarizeEdge<LETTER, STATE>> summarizeEdges = destToSummarizeEdge.values();
-		for (SummarizeEdge<LETTER, STATE> summarizeEdge : summarizeEdges) {
-			summarizeEdge.setPriority(priorityToSet);
-			getLogger().debug("\t\tUpdated summarize edge: " + summarizeEdge.hashCode());
-		}
+	private void updateCorrespondingSummarizeEdge(final SearchElement<LETTER, STATE> invoker, int priorityToSet) {
+		// We need to compute which summarize edges correspond to the current
+		// vertex.
+		// We do so by using the to the summarize edge corresponding down state
+		// configuration. This is exactly the down state the current
+		// configuration leads to after using the outgoing call edge.
+		// We access this by using the history element of the search element.
+		Vertex<LETTER, STATE> invokingVertex = invoker.getVertex();
+		VertexDownState<STATE> historyDownState = invoker.getHistory();
+		VertexDownState<STATE> invokingDownState = invoker.getDownState();
+		// The corresponding down state defines the source of the corresponding
+		// edges. If the down state is [q0, q1] then all corresponding summarize
+		// edges have (q0, q1) as source.
+		Vertex<LETTER, STATE> sourceOfSummarizeEdges = getSpoilerVertex(historyDownState.getLeftDownState(),
+				historyDownState.getRightDownState(), false, null, null);
+		if (sourceOfSummarizeEdges != null && sourceOfSummarizeEdges instanceof SpoilerDoubleDeckerVertex<?, ?>) {
+			SpoilerDoubleDeckerVertex<LETTER, STATE> sourceOfSummarizeEdgeAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) sourceOfSummarizeEdges;
+			// First we need to validate if the invoking down state forms a safe
+			// down state.
+			// If the down state is unsafe we do not update summarize edges.
+			// We do so by first assuming that the down state is reversely safe,
+			// that is when following outgoing edges to the search root.
+			// The down state then is safe if the computed source of the
+			// summarize edges is a predecessor of the current vertex.
+			if (!getPredecessors(invokingVertex).contains(sourceOfSummarizeEdges)) {
+				getLogger().debug("\t\tIs no pred: " + sourceOfSummarizeEdges + ", for: " + invokingVertex);
+				return;
+			}
+			// Additionally the down state of the current vertex must be
+			// receivable by using the call transition with any down state of
+			// the summarize edge source vertex.
+			// Search for a corresponding down state to validate safeness of the
+			// invoking down state.
+			boolean foundCorrespondingDownState = false;
+			for (VertexDownState<STATE> sourceDownState : sourceOfSummarizeEdgeAsSpoilerDD.getVertexDownStates()) {
+				// The right down states must be equal, also the left down state
+				// must change to the called state.
+				if (sourceDownState.getRightDownState().equals(invokingDownState.getRightDownState())
+						&& invokingDownState.getLeftDownState().equals(sourceOfSummarizeEdges.getQ0())) {
+					foundCorrespondingDownState = true;
+					break;
+				}
+			}
+			if (!foundCorrespondingDownState) {
+				getLogger().debug(
+						"\t\tFound no state in: " + sourceOfSummarizeEdgeAsSpoilerDD + ", for: " + invokingDownState);
+				return;
+			}
 
-		// XXX Remove debug stuff
-		int amountOfEdgesUpdated = summarizeEdges.size();
-		if (amountOfEdgesUpdated > 1) {
-			// TODO This should not be possible, we need to resolve that
-			// problem.
-			getLogger().debug("\t\tUpdated multiple summarize edges, this indicates a bug: " + amountOfEdgesUpdated);
+			// Down state is safe, now update the priority of all corresponding
+			// summarize edges
+			for (SummarizeEdge<LETTER, STATE> summarizeEdge : m_SrcDestToSummarizeEdges
+					.get(sourceOfSummarizeEdgeAsSpoilerDD).values()) {
+				summarizeEdge.setPriority(priorityToSet);
+				getLogger().debug("\t\tUpdated summarize edge: " + summarizeEdge.hashCode());
+			}
 		}
 	}
 

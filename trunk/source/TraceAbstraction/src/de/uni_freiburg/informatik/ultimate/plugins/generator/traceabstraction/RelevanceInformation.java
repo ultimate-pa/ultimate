@@ -79,9 +79,9 @@ public class RelevanceInformation implements IRelevanceInformation
 
 	@Override
 	public IRelevanceInformation merge(IRelevanceInformation... relevanceInformations) {
-		boolean criterion1uc = false;
-		boolean criterion1gf = false;
-		boolean criterion2 = false;
+		boolean criterion1uc = getCriterion1UC();
+		boolean criterion1gf = getCriterion1GF();
+		boolean criterion2 = getCriterion2();
 		List<IAction> actions = new ArrayList<>();
 		for (IRelevanceInformation iri : relevanceInformations) {
 			RelevanceInformation ri = (RelevanceInformation) iri;
