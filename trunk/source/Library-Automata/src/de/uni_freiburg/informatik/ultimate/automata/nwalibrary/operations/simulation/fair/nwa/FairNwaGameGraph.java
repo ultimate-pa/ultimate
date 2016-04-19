@@ -112,11 +112,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	private final HashMap<SpoilerDoubleDeckerVertex<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>> m_EntryToSink;
 	/**
-	 * Set that contains vertices where both states are initial states of the
-	 * automaton. For example the vertex (q0, q1) if q0 and q1 are initial
-	 * states.
+	 * Set that contains vertices where both states have bottom as possible down
+	 * state. This are, for example, initial states of the automaton or states
+	 * that can be reached from initial states, using internal transitions.
 	 */
-	private final HashSet<Vertex<LETTER, STATE>> m_InitialVertices;
+	private final HashSet<Vertex<LETTER, STATE>> m_BottomVertices;
 	/**
 	 * The underlying nwa automaton, as double decker automaton, from which the
 	 * game graph gets generated.
@@ -145,7 +145,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		m_DuplicatorReturningVertices = new HashSet<>();
 		m_SrcDestToSummarizeEdges = new NestedMap2<>();
 		m_EntryToSink = new HashMap<>();
-		m_InitialVertices = new HashSet<>();
+		m_BottomVertices = new HashSet<>();
 		m_Bottom = m_Nwa.getEmptyStackState();
 	}
 
@@ -166,7 +166,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		generateRegularEdges();
 		logger.debug("Computing which vertex down states are safe.");
 		computeSafeVertexDownStates();
-		m_InitialVertices.clear();
+		m_BottomVertices.clear();
 		logger.debug("Generating summarize edges.");
 		generateSummarizeEdges();
 		logger.debug("Computing priorities of summarize edges.");
@@ -389,8 +389,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 	/**
 	 * Computes which vertex down states are safe and marks them so. It does so
-	 * by using a search starting at vertices containing initial states, they
-	 * start with a down state configuration of [bottom, bottom].
+	 * by using a search starting at vertices which can have a down state
+	 * configuration of [bottom, bottom].
 	 * 
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
@@ -399,7 +399,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	private void computeSafeVertexDownStates() throws OperationCanceledException {
 		// Add roots of search to the queue
 		Queue<SearchElement<LETTER, STATE>> searchQueue = new LinkedList<SearchElement<LETTER, STATE>>();
-		for (Vertex<LETTER, STATE> rootVertex : m_InitialVertices) {
+		for (Vertex<LETTER, STATE> rootVertex : m_BottomVertices) {
 			if (!(rootVertex instanceof IHasVertexDownStates<?>)) {
 				continue;
 			}
@@ -407,6 +407,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			IHasVertexDownStates<STATE> rootVertexWithDownStates = (IHasVertexDownStates<STATE>) rootVertex;
 			VertexDownState<STATE> rootVertexDownState = new VertexDownState<STATE>(m_Bottom, m_Bottom);
 			if (!rootVertexWithDownStates.hasVertexDownState(rootVertexDownState)) {
+				// Confirm that the root vertex has the desired configuration
+				// [bottom, bottom].
 				continue;
 			}
 			searchQueue.add(new SearchElement<>(rootVertex, rootVertexDownState));
@@ -432,7 +434,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			getLogger().debug("\tMarked down state as safe: " + searchElement);
 
 			// Add successors with their corresponding safe down states
-			for (Vertex<LETTER, STATE> succ : getSuccessors(searchVertex)) {
+			Set<Vertex<LETTER, STATE>> successors = getSuccessors(searchVertex);
+			if (successors == null) {
+				continue;
+			}
+			for (Vertex<LETTER, STATE> succ : successors) {
 				if (succ instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
 					// Successor is duplicator
 					DuplicatorDoubleDeckerVertex<LETTER, STATE> succAsDuplicatorDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) succ;
@@ -454,9 +460,18 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 								searchDownState.getRightDownState());
 						// Only use the edge if left state was not already
 						// bottom, else return is not possible.
-						if (!downStateEmpty.equals(searchDownState)
+						if (!searchDownState.getLeftDownState().equals(m_Bottom)
 								&& succAsDuplicatorDD.hasVertexDownState(downStateEmpty)
 								&& succAsDuplicatorDD.hasVertexDownState(searchDownState)) {
+							// TODO Somehow we need to know all possible down
+							// states that can possibly lie under the left down
+							// state. They are a subset of all possible
+							// down states for that state. It is wrong to only
+							// assume the same left down state is there again.
+							// TODO Ensure that unbalanced stack levels of left
+							// and right down states are not possible, i.e. [q0,
+							// bottom] is not possible for the duplicator
+							// successor here.
 							searchQueue.add(new SearchElement<>(succAsDuplicatorDD, downStateEmpty));
 							searchQueue.add(new SearchElement<>(succAsDuplicatorDD, searchDownState));
 						}
@@ -487,9 +502,20 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 								searchDownState.getRightDownState(), m_Bottom);
 						// Only use the edge if right state was not already
 						// bottom, else return is not possible.
-						if (!downStateEmpty.equals(searchDownState)
+						if (!searchDownState.getRightDownState().equals(m_Bottom)
 								&& succAsSpoilerDD.hasVertexDownState(downStateEmpty)
 								&& succAsSpoilerDD.hasVertexDownState(searchDownState)) {
+							// TODO Somehow we need to know all possible down
+							// states that can possibly lie under the right down
+							// state. They are a subset of all possible
+							// down states for that state. It is wrong to only
+							// assume the same right down state is there again.
+							// TODO Ensure that unbalanced stack levels of left
+							// and right down states are not possible, i.e.
+							// [bottom,
+							// q0] or [q0, bottom] is not possible for the
+							// spoiler
+							// successor here.
 							searchQueue.add(new SearchElement<>(succAsSpoilerDD, downStateEmpty));
 							searchQueue.add(new SearchElement<>(succAsSpoilerDD, searchDownState));
 						}
@@ -594,6 +620,18 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 							SummarizeEdge<LETTER, STATE> summarizeEdge = succAsDuplicatorDD.getSummarizeEdge();
 							Vertex<LETTER, STATE> destination = summarizeEdge.getDestination();
 							int summarizeEdgePriority = summarizeEdge.getPriority();
+
+							if (destination instanceof IHasVertexDownStates<?>) {
+								@SuppressWarnings("unchecked")
+								IHasVertexDownStates<STATE> destinationWithDownStates = (IHasVertexDownStates<STATE>) destination;
+								if (!destinationWithDownStates.hasVertexDownState(searchDownState)) {
+									// Reject successor if there is no
+									// corresponding down state.
+									// This should not be possible on correctly
+									// generated game graphs though.
+									continue;
+								}
+							}
 
 							if (summarizeEdgePriority == SummarizeEdge.NO_PRIORITY) {
 								// If summarize edge has no priority yet, use
@@ -1065,6 +1103,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 *             framework.
 	 */
 	private void generateVertices() throws OperationCanceledException {
+		VertexDownState<STATE> bottomBoth = new VertexDownState<STATE>(m_Bottom, m_Bottom);
+
 		for (STATE leftState : m_Nwa.getStates()) {
 			increaseBuechiAmountOfStates();
 
@@ -1077,8 +1117,15 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 				SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerVertex = new SpoilerDoubleDeckerVertex<>(priority,
 						false, leftState, rightState);
 				applyVertexDownStatesToVertex(spoilerVertex);
-				if (m_Nwa.isInitial(spoilerVertex.getQ0()) && m_Nwa.isInitial(spoilerVertex.getQ1())) {
-					m_InitialVertices.add(spoilerVertex);
+				// Memorize vertices that have down state
+				// configurations of [bottom, bottom]
+				if (spoilerVertex.hasVertexDownState(bottomBoth)) {
+					// It is enough to only add spoiler vertices since the goal.
+					// Duplicator vertices that have [bottom, bottom] are always
+					// reachable from a spoiler vertex with [bottom, bottom]
+					// since duplicator vertices with no predecessors do not
+					// exist in our game graphs.
+					m_BottomVertices.add(spoilerVertex);
 				}
 				addSpoilerVertex(spoilerVertex);
 
