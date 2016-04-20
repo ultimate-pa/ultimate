@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.DuplicatorWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.IHasVertexDownStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.LoopDetector;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SearchElement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SpoilerDoubleDeckerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
@@ -89,6 +90,12 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	private final STATE m_Bottom;
 	/**
+	 * Set that contains vertices where both states have bottom as possible down
+	 * state. This are, for example, initial states of the automaton or states
+	 * that can be reached from initial states, using internal transitions.
+	 */
+	private final HashSet<Vertex<LETTER, STATE>> m_BottomVertices;
+	/**
 	 * Data structure that allows a fast access to {@link DuplicatorVertex}
 	 * objects by using their representation:<br/>
 	 * <b>(State of spoiler or q0, Letter spoiler used before, State of
@@ -112,12 +119,6 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	private final HashMap<SpoilerDoubleDeckerVertex<LETTER, STATE>, DuplicatorWinningSink<LETTER, STATE>> m_EntryToSink;
 	/**
-	 * Set that contains vertices where both states have bottom as possible down
-	 * state. This are, for example, initial states of the automaton or states
-	 * that can be reached from initial states, using internal transitions.
-	 */
-	private final HashSet<Vertex<LETTER, STATE>> m_BottomVertices;
-	/**
 	 * The underlying nwa automaton, as double decker automaton, from which the
 	 * game graph gets generated.
 	 */
@@ -128,6 +129,25 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	private final NestedMap2<SpoilerDoubleDeckerVertex<LETTER, STATE>, SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> m_SrcDestToSummarizeEdges;
 
+	/**
+	 * Creates a new fair nwa game graph by using the given nwa automaton.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
+	 * @param nwa
+	 *            The underlying nwa automaton from which the game graph gets
+	 *            generated.
+	 * @param stateFactory
+	 *            State factory used for state creation
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
 	@SuppressWarnings("unchecked")
 	public FairNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> nwa,
@@ -512,10 +532,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 							// assume the same right down state is there again.
 							// TODO Ensure that unbalanced stack levels of left
 							// and right down states are not possible, i.e.
-							// [bottom,
-							// q0] or [q0, bottom] is not possible for the
-							// spoiler
-							// successor here.
+							// [bottom, q0] or [q0, bottom] is not possible
+							// for the spoiler successor here.
 							searchQueue.add(new SearchElement<>(succAsSpoilerDD, downStateEmpty));
 							searchQueue.add(new SearchElement<>(succAsSpoilerDD, searchDownState));
 						}
@@ -549,6 +567,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	private void computeSummarizeEdgePriorities() throws OperationCanceledException {
 		Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
 		HashMap<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, Integer> searchPriorities = new HashMap<>();
+		LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(this, getLogger(), getProgressTimer());
+		HashMap<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, SummarizeEdge<LETTER, STATE>> invokerToSummarizeEdge = new HashMap<>();
 
 		// Every vertex can maximal be added '3 * out-degree' times to the queue
 		int maxAmountOfSearches = getSize() * getSize() * 3;
@@ -558,9 +578,17 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		for (Triple<SpoilerDoubleDeckerVertex<LETTER, STATE>, SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : m_SrcDestToSummarizeEdges
 				.entrySet()) {
 			SummarizeEdge<LETTER, STATE> summarizeEdge = summarizeEdgeEntry.getThird();
-			SearchElement<LETTER, STATE> searchElement = SearchElement
-					.createRootSearchElement(summarizeEdge.getSpoilerInvoker(), summarizeEdge.getSource());
+			Vertex<LETTER, STATE> spoilerInvoker = summarizeEdge.getSpoilerInvoker();
+			Vertex<LETTER, STATE> edgeSource = summarizeEdge.getSource();
+			VertexDownState<STATE> invokingState = new VertexDownState<>(edgeSource.getQ0(), edgeSource.getQ1());
+
+			SearchElement<LETTER, STATE> searchElement = new SearchElement<LETTER, STATE>(spoilerInvoker, invokingState,
+					null, summarizeEdge);
 			searchQueue.add(searchElement);
+
+			// Memorize invoker element for detection of corresponding summarize
+			// edges
+			invokerToSummarizeEdge.put(new Pair<>(spoilerInvoker, invokingState), summarizeEdge);
 		}
 
 		// Start the search
@@ -569,6 +597,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			SearchElement<LETTER, STATE> searchElement = searchQueue.poll();
 			Vertex<LETTER, STATE> searchVertex = searchElement.getVertex();
 			VertexDownState<STATE> searchDownState = searchElement.getDownState();
+			SummarizeEdge<LETTER, STATE> searchSummarizeEdge = searchElement.getSummarizeEdge();
 
 			if (searchVertex instanceof IHasVertexDownStates) {
 				@SuppressWarnings("unchecked")
@@ -589,13 +618,21 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			// Calculate search priority of element by using the priorities of
 			// successors
 			int optimalSuccPriority = SummarizeEdge.NO_PRIORITY;
+			int optimalNonLoopSuccPriority = SummarizeEdge.NO_PRIORITY;
+			int optimalLoopSuccPriority = SummarizeEdge.NO_PRIORITY;
 			boolean isSpoiler = searchVertex.isSpoilerVertex();
 			int optimalValue;
+			int worstValue;
 			if (isSpoiler) {
 				optimalValue = 1;
+				worstValue = 0;
 			} else {
 				optimalValue = 0;
+				worstValue = 1;
 			}
+			// We first use priorities of non-loop successors. If the computed
+			// search priority is not the worst value, we also take loop
+			// successors into account.
 			Set<Vertex<LETTER, STATE>> successors = getSuccessors(searchVertex);
 			if (successors != null) {
 				for (Vertex<LETTER, STATE> succ : successors) {
@@ -609,6 +646,16 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 						// Successor is duplicator vertex
 						DuplicatorDoubleDeckerVertex<LETTER, STATE> succAsDuplicatorDD = (DuplicatorDoubleDeckerVertex<LETTER, STATE>) succ;
 						ETransitionType transitionType = succAsDuplicatorDD.getTransitionType();
+
+						// We will reject successor if it has no search priority
+						// yet. This may indicate that the successor is
+						// not capable of reaching the destination of
+						// the summarize edge, which priority currently
+						// shall be computed. If it, however, is capable
+						// of that, he may force an update on the
+						// current vertex later anyway. At this time the
+						// successor will also have a search priority.
+
 						if (transitionType == ETransitionType.RETURN || transitionType == ETransitionType.SINK
 								|| transitionType == ETransitionType.SUMMARIZE_EXIT) {
 							// Ignore return and special edges
@@ -639,30 +686,34 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 								summarizeEdgePriority = 2;
 							}
 
-							int destinationPriority = destination.getPriority();
 							Integer destinationSearchPriority = searchPriorities
 									.get(new Pair<>(destination, searchDownState));
-							if (destinationSearchPriority != null
-									&& destinationSearchPriority != SummarizeEdge.NO_PRIORITY) {
-								destinationPriority = destinationSearchPriority;
+							if (destinationSearchPriority == null
+									|| destinationSearchPriority == SummarizeEdge.NO_PRIORITY) {
+								continue;
 							}
-							succPriority = Math.min(summarizeEdgePriority, destinationPriority);
+							succPriority = Math.min(summarizeEdgePriority, destinationSearchPriority);
+							// Change successor to destination. This
+							// represents following the summarize edge instead
+							// of using the fake vertices, which are used to
+							// model the summarize edge.
+							succ = destination;
 						} else if (transitionType == ETransitionType.CALL) {
-							succPriority = succ.getPriority();
 							// Left down state changes by using
 							// 'spoiler -call-> duplicator'
 							VertexDownState<STATE> downState = new VertexDownState<>(searchVertex.getQ0(),
 									searchDownState.getRightDownState());
 							Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, downState));
-							if (succSearchPriority != null && succSearchPriority != SummarizeEdge.NO_PRIORITY) {
-								succPriority = succSearchPriority;
+							if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
+								continue;
 							}
+							succPriority = succSearchPriority;
 						} else {
-							succPriority = succ.getPriority();
 							Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, searchDownState));
-							if (succSearchPriority != null && succSearchPriority != SummarizeEdge.NO_PRIORITY) {
-								succPriority = succSearchPriority;
+							if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
+								continue;
 							}
+							succPriority = succSearchPriority;
 						}
 					} else {
 						// Successor is spoiler vertex
@@ -674,33 +725,56 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 								// Ignore return and special edges
 								break;
 							} else if (transitionType == ETransitionType.CALL) {
-								succPriority = succ.getPriority();
 								// Right down state changes by using
 								// 'duplicator -call-> spoiler'
 								VertexDownState<STATE> downState = new VertexDownState<>(
 										searchDownState.getLeftDownState(), searchVertex.getQ1());
 								Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, downState));
-								if (succSearchPriority != null && succSearchPriority != SummarizeEdge.NO_PRIORITY) {
-									succPriority = succSearchPriority;
+								if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
+									continue;
 								}
+								succPriority = succSearchPriority;
 							} else {
-								succPriority = succ.getPriority();
 								Integer succSearchPriority = searchPriorities.get(new Pair<>(succ, searchDownState));
-								if (succSearchPriority != null && succSearchPriority != SummarizeEdge.NO_PRIORITY) {
-									succPriority = succSearchPriority;
+								if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
+									continue;
 								}
+								succPriority = succSearchPriority;
 							}
 						}
 					}
-					// Search for the optimal value under all successors.
-					// If that is not present try to increase to 2 until optimal
-					// value is reached.
-					if (succPriority > optimalSuccPriority) {
-						optimalSuccPriority = succPriority;
-					}
-					if (succPriority == optimalValue) {
-						optimalSuccPriority = succPriority;
-						break;
+					// Evaluate the priority of the current successor
+					// Differentiate between non-loop and loop vertices
+					if (!loopDetector.isLoopVertex(succ, searchSummarizeEdge.getSpoilerInvoker(), searchVertex)) {
+						// Search for the optimal value under all successors.
+						// If that is not present try to increase to 2 until
+						// optimal
+						// value is reached.
+						if (optimalNonLoopSuccPriority != optimalValue) {
+							if (succPriority > optimalNonLoopSuccPriority) {
+								optimalNonLoopSuccPriority = succPriority;
+							}
+							if (succPriority == optimalValue) {
+								optimalNonLoopSuccPriority = succPriority;
+								// Break since the optimal value is found, it
+								// can
+								// not get better anymore.
+								break;
+							}
+						}
+					} else {
+						getLogger().debug("\t\tSuccessor is loop vertex: " + succ);
+						if (optimalLoopSuccPriority != optimalValue) {
+							if (succPriority > optimalLoopSuccPriority) {
+								optimalLoopSuccPriority = succPriority;
+							}
+							if (succPriority == optimalValue) {
+								optimalLoopSuccPriority = succPriority;
+								// Do not break, it may be possible that loop
+								// priorities get not involved in priority
+								// computation.
+							}
+						}
 					}
 
 					// If operation was canceled, for example from the
@@ -710,15 +784,40 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 						throw new OperationCanceledException(this.getClass());
 					}
 				}
+				// If the current optimal non-loop successor priority not the
+				// worst
+				// value, also take loop vertices into account.
+				if (optimalNonLoopSuccPriority == worstValue) {
+					// If non-loop vertices all have the worst value, we must
+					// not take loop vertices into account.
+					optimalSuccPriority = worstValue;
+					getLogger().debug("\t\tWe do not use loop succesors for priority computation.");
+				} else if (optimalNonLoopSuccPriority == SummarizeEdge.NO_PRIORITY) {
+					// If value unknown, take the other value.
+					optimalSuccPriority = optimalLoopSuccPriority;
+				} else if (optimalLoopSuccPriority == SummarizeEdge.NO_PRIORITY) {
+					// If value unknown, take the other value.
+					optimalSuccPriority = optimalNonLoopSuccPriority;
+				} else if (optimalLoopSuccPriority == worstValue) {
+					// If value is the worst, take the other value.
+					optimalSuccPriority = optimalNonLoopSuccPriority;
+				} else if (optimalNonLoopSuccPriority == optimalValue || optimalLoopSuccPriority == optimalValue) {
+					// If one has the optimal value, take it.
+					optimalSuccPriority = optimalValue;
+				} else {
+					// In this case both values are 2.
+					optimalSuccPriority = 2;
+				}
 			}
 
 			// Vertex is forced to select the minimum from the optimal
 			// successor priority and its own priority
 			int searchPriority;
+			int searchVertexPriority = searchVertex.getPriority();
 			if (optimalSuccPriority != SummarizeEdge.NO_PRIORITY) {
-				searchPriority = Math.min(optimalSuccPriority, searchVertex.getPriority());
+				searchPriority = Math.min(optimalSuccPriority, searchVertexPriority);
 			} else {
-				searchPriority = searchVertex.getPriority();
+				searchPriority = searchVertexPriority;
 			}
 
 			// Put the search priority for the vertex and decide whether to
@@ -780,8 +879,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 								// correct double decker.
 								for (VertexDownState<STATE> downState : downStates) {
 									if (downState.getLeftDownState().equals(searchDownState.getLeftDownState())) {
-										searchQueue.add(
-												new SearchElement<LETTER, STATE>(pred, downState, searchDownState));
+										SummarizeEdge<LETTER, STATE> correspondingEdge = SearchElement
+												.computeSummarizeEdge(pred, downState, searchSummarizeEdge,
+														invokerToSummarizeEdge);
+										searchQueue.add(new SearchElement<LETTER, STATE>(pred, downState,
+												searchDownState, correspondingEdge));
 									}
 								}
 							} else if (transitionType == ETransitionType.SUMMARIZE_EXIT) {
@@ -793,15 +895,15 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 									SpoilerDoubleDeckerVertex<LETTER, STATE> sourceAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) source;
 									if (sourceAsSpoilerDD.hasVertexDownState(searchDownState)) {
 										searchQueue.add(new SearchElement<LETTER, STATE>(source, searchDownState,
-												searchDownState));
+												searchDownState, searchSummarizeEdge));
 									}
 								}
 							} else {
 								// Only add the vertex if the edge belongs to
 								// the current down state configuration
 								if (predAsDuplicatorDD.hasVertexDownState(searchDownState)) {
-									searchQueue.add(
-											new SearchElement<LETTER, STATE>(pred, searchDownState, searchDownState));
+									searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState,
+											searchDownState, searchSummarizeEdge));
 								}
 							}
 						} else {
@@ -833,8 +935,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 										for (VertexDownState<STATE> downState : downStates) {
 											if (downState.getRightDownState()
 													.equals(searchDownState.getRightDownState())) {
+												SummarizeEdge<LETTER, STATE> correspondingEdge = SearchElement
+														.computeSummarizeEdge(pred, downState, searchSummarizeEdge,
+																invokerToSummarizeEdge);
 												searchQueue.add(new SearchElement<LETTER, STATE>(pred, downState,
-														searchDownState));
+														searchDownState, correspondingEdge));
 											}
 										}
 									}
@@ -845,7 +950,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 										SpoilerDoubleDeckerVertex<LETTER, STATE> predAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pred;
 										if (predAsSpoilerDD.hasVertexDownState(searchDownState)) {
 											searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchDownState,
-													searchDownState));
+													searchDownState, searchSummarizeEdge));
 										}
 									}
 								}
