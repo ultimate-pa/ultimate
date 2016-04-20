@@ -29,12 +29,37 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 
+/**
+ * Interval representation used inside the octagon abstract domain.
+ * The intervals have nothing to do with octagons.
+ * <p>
+ * All interval bounds are inclusive.
+ * Unbounded intervals can be represented using the special value {@link OctValue#INFINITY} ({@code \inf}).
+ * There is no constant for {@code -\inf}, therefore a lower bound of {@code \inf} represents {@code -\inf}.
+ * Empty intervals have have a lower bound that is strictly greater than the upper bound.
+ * There is no unique representation for the empty interval.
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class OctInterval {
 
+	/**
+	 * Lower bound (inclusive) of this interval.
+	 * A lower bound of {@link OctValue#INFINITY} represents the lower bound {@code -\inf}.
+	 */
 	private final OctValue mMin;
+	
+	/**
+	 * Upper bound (inclusive) of this interval. 
+	 */
 	private final OctValue mMax;
 
-	public OctInterval(IntervalDomainValue ivlInterval) {
+	/**
+	 * Creates a new interval from the given {@link IntervalDomainValue}.
+	 * 
+	 * @param ivlInterval Interval to be represented.
+	 */
+	public OctInterval(final IntervalDomainValue ivlInterval) {
 		if (ivlInterval.isBottom()) {
 			mMin = OctValue.ONE;
 			mMax = OctValue.ZERO;
@@ -44,21 +69,42 @@ public class OctInterval {
 		}
 	}
 
-	public OctInterval(OctValue min, OctValue max) {
+	/**
+	 * Creates a new interval from the given bounds.
+	 * 
+	 * @param min Lower bound (inclusive). {@link OctValue#INFINITY} represents {@code -\inf}.
+	 * @param max Upper bound (inclusive).
+	 */
+	public OctInterval(final OctValue min, final OctValue max) {
 		mMin = min;
 		mMax = max;
 	}
 
-	public static OctInterval fromMatrix(OctMatrix m, int variableIndex) {
-		int i2 = variableIndex * 2;
-		int i21 = i2 + 1;
-		return new OctInterval(m.get(i2, i21).half().negateIfNotInfinity(), m.get(i21, i2).half());
+	/**
+	 * Creates the interval of allowed values for an variable from an octagon matrix.
+	 * 
+	 * @param octMat Octagon matrix
+	 * @param varIdx
+	 *            Index of the variable in the octagon matrix.
+	 *            Index i corresponds to columns/rows 2i and 2i+1.
+	 * @return Interval constraint for the given variable from the octagon
+	 */
+	public static OctInterval fromMatrix(final OctMatrix octMat, final int varIdx) {
+		final int idx2 = varIdx * 2;
+		final int idx21 = idx2 + 1;
+		return new OctInterval(octMat.get(idx2, idx21).half().negateIfNotInfinity(), octMat.get(idx21, idx2).half());
 	}
 
+	/** Creates a new, unbounded interval {@code [-\inf, \inf]}. */
 	public OctInterval() {
 		mMin = mMax = OctValue.INFINITY;
 	}
 
+	/**
+	 * Convert this interval to an {@link IntervalDomainValue}.
+	 * 
+	 * @return Converted interval
+	 */
 	public IntervalDomainValue toIvlInterval() {
 		if (isBottom()) {
 			return new IntervalDomainValue(true);
@@ -66,14 +112,17 @@ public class OctInterval {
 		return new IntervalDomainValue(mMin.toIvlValue(), mMax.toIvlValue());
 	}
 
+	/** @return Lower bound (inclusive) of this interval. {@link OctValue#INFINITY} represents {@code -\inf}. */
 	public OctValue getMin() {
 		return mMin;
 	}
 
+	/** @return Upper bound (inclusive) of this interval. */
 	public OctValue getMax() {
 		return mMax;
 	}
 	
+	/** @return This interval contains no values. */
 	public boolean isBottom() {
 		if (mMin.isInfinity()) { // [-inf, inf] is represeted as [inf, inf]
 			return false;
@@ -81,18 +130,19 @@ public class OctInterval {
 		return mMin.compareTo(mMax) > 0;
 	}
 	
+	/** @return This interval contains all values (that is, the interval has no bounds). */
 	public boolean isTop() {
 		return mMin.isInfinity() && mMax.isInfinity();
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append('[');
+		final StringBuilder strBuilder = new StringBuilder();
+		strBuilder.append('[');
 		if (mMin.isInfinity()) {
-			sb.append('-');
+			strBuilder.append('-');
 		}
-		sb.append(mMin).append("; ").append(mMax).append(']');
-		return sb.toString();
+		strBuilder.append(mMin).append("; ").append(mMax).append(']');
+		return strBuilder.toString();
 	}
 }
