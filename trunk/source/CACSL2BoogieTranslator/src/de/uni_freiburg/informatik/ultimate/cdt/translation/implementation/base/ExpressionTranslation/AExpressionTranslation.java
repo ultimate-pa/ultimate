@@ -431,7 +431,7 @@ public abstract class AExpressionTranslation {
 	}
 
 	
-	private String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType) {
+	protected String declareConversionFunctionOverApprox(ILocation loc, CPrimitive oldType, CPrimitive newType) {
 		String functionName = "convert" + oldType.toString() +"To" + newType.toString();
 		String prefixedFunctionName = "~" + functionName;
 		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
@@ -443,6 +443,8 @@ public abstract class AExpressionTranslation {
 		}
 		return prefixedFunctionName;
 	}
+	
+	abstract protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType);
 	
 	protected String declareBinaryFloatComparisonOperation(ILocation loc, CPrimitive type) {
 		String functionName = "someBinary" + type.toString() +"ComparisonOperation";

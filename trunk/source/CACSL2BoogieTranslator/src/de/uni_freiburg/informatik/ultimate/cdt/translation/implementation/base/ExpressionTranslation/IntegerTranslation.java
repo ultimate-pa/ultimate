@@ -772,4 +772,8 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 	}
 
+	@Override
+	protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType) {
+		return declareConversionFunctionOverApprox(loc, oldType, newType);
+	}
 }

@@ -592,4 +592,18 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				throw new IllegalArgumentException("operator is neither equals nor not equals");
 			}
 	}
+
+	@Override
+	protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType) {
+		String functionName = "convert" + oldType.toString() +"To" + newType.toString();
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, "to_fp" ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, newType);
+			ASTType paramASTType = m_TypeHandler.ctype2asttype(loc, oldType);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
+		}
+		return prefixedFunctionName;
+	}
 }
