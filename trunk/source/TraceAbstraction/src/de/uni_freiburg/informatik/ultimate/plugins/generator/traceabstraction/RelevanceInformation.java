@@ -74,6 +74,8 @@ public class RelevanceInformation implements IRelevanceInformation
 	public boolean getCriterion2() {
 		return m_Criterion2;
 	}
+	
+
 
 
 
