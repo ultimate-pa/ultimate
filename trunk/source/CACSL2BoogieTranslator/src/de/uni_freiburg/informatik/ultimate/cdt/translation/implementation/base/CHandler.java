@@ -1040,26 +1040,9 @@ public class CHandler implements ICHandler {
 		if (cId.equals("NULL")) {
 			return new ExpressionResult(new RValue(m_ExpressionTranslation.constructNullPointer(loc), 
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
-		} else if (cId.equals("NAN")) {
-			
-			Expression[] indices = new Expression[]{new IntegerLiteral(loc, "11"), new IntegerLiteral(loc, "53")};
-			Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "NaN")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-			ASTType asttype = new NamedType(loc, "C_DOUBLE", new ASTType[0]);
-			ASTType paramType = new PrimitiveType(loc, SFO.INT);
-			m_ExpressionTranslation.getFunctionDeclarations().declareFunction(loc, "~NaN", attributes, asttype, paramType, paramType);
-			
-			de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication func = 
-					new de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication(loc,  SFO.AUXILIARY_FUNCTION_PREFIX +"NaN", indices);
-			return new ExpressionResult(new RValue(func, new CPrimitive(PRIMITIVE.FLOAT)));
-		} else if (cId.equals("INFINITY")) {
-			Expression[] indices = new Expression[]{new IntegerLiteral(loc, "11"), new IntegerLiteral(loc, "53")};
-			Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
-			ASTType asttype = new NamedType(loc, "C_DOUBLE", new ASTType[0]);
-			ASTType paramType = new PrimitiveType(loc, SFO.INT);
-			m_ExpressionTranslation.getFunctionDeclarations().declareFunction(loc, "~+oo", attributes, asttype, paramType, paramType);
-			de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication func = 
-					new de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "+oo", indices);
-			return new ExpressionResult(new RValue(func, new CPrimitive(PRIMITIVE.FLOAT)));
+		} else if (cId.equals("NAN") || cId.equals("INFINITY") || cId.equals("inf") || cId.equals("nanl")) {			
+			ExpressionResult result = m_ExpressionTranslation.createNanOrInfinity(loc, cId);
+			return result;
 		} else if (node.getName().toString().equals("__func__")){
 			CType cType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
 			String tId = mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
