@@ -32,6 +32,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -199,10 +200,10 @@ public final class ISOIEC9899TC3 {
 			int exponentLength = 0;
 			int significantLength = 0;
 			int exponentValue = 0;
-			final Expression sign;
+			final Expression sign = new BitvecLiteral(loc, Integer.toString(0), 1);
 			final Expression significant;
 			final Expression exponent;			
-			double floatVal = Double.valueOf(value);
+			BigDecimal floatVal = new BigDecimal(value);
 
 			// if there is a float-suffix: throw it away
 			for (String s : SUFFIXES_FLOAT) {
@@ -210,14 +211,6 @@ public final class ISOIEC9899TC3 {
 					value = val.substring(0, val.length() - s.length());
 					floatType = s;
 				}
-			}
-			
-			// set sign bit if value is negative make it positive
-			if (floatVal < 0) {
-				sign = new BitvecLiteral(loc, Integer.toString(1) , 1);
-				floatVal = floatVal * -1.0;
-			} else {
-				sign = new BitvecLiteral(loc, Integer.toString(0) , 1);
 			}
 			
 			// Set floatIndices depending on the value of the val
@@ -239,16 +232,33 @@ public final class ISOIEC9899TC3 {
 				throw new IllegalArgumentException("not a float type");
 			}
 			
-			// TODO find out how to work this with NaN
-			
-			// calculate exponent value and value of the significant
-			while (floatVal > 2.0) {
-				floatVal = floatVal / 2.0;
-				exponentValue++;
+			final Expression[] arguments;
+			final String functionName;
+			final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(exponentLength));
+			final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(significantLength));
+			if (value.equals("NAN") || value.equals("nan")) {
+				functionName = "NaN";
+				arguments = new Expression[]{eb, sb};
+			} else if (value.equals("INFINITY")) {
+				functionName = "+oo";
+				arguments = new Expression[]{eb, sb};
+			} else if (floatVal.compareTo(BigDecimal.ZERO) == 0) {
+				functionName = "+zero";
+				arguments = new Expression[] {eb, sb};
+			} else {
+				final BigDecimal twoPointZero = new BigDecimal("2.0");
+				// calculate exponent value and value of the significant
+				while (floatVal.compareTo(twoPointZero) == 1) {
+					floatVal = floatVal.divide(twoPointZero);
+					exponentValue++;
+				}
+				functionName = "fp";
+				exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
+				significant = new BitvecLiteral(loc, floatVal.toString(), significantLength);
+				arguments = new Expression[]{sign, exponent, significant};
 			}
-			exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
-			significant = new BitvecLiteral(loc, Double.toString(floatVal), significantLength);
-			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "fp", new Expression[]{sign, exponent, significant});
+			
+			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
 			return new RValue(func, resultType);
 			
 		} else {

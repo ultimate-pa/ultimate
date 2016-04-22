@@ -323,7 +323,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, resultCType);
 			int counter = 1;
 			// TODO Handling of alternative rounding modes
-			paramASTTypes[0] = new NamedType(loc,"RNE", null);
+			paramASTTypes[0] = new NamedType(loc,"RNE", new ASTType[0]);
 			for (CPrimitive cType : paramCType) {
 				paramASTTypes[counter] = m_TypeHandler.ctype2asttype(loc, cType);
 				counter += 1;
