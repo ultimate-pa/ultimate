@@ -31,7 +31,6 @@ import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.cdt.core.dom.ast.ASTTypeMatcher;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
@@ -52,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -71,10 +69,13 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION;
 
 public class BitvectorTranslation extends AExpressionTranslation {
+	
+	private final boolean m_OverapproximateFloatingPointOperations;
 
 	public BitvectorTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, 
-			POINTER_INTEGER_CONVERSION pointerIntegerConversion) {
+			POINTER_INTEGER_CONVERSION pointerIntegerConversion, boolean overapproximateFloatingPointOperations) {
 		super(m_TypeSizeConstants, typeHandler, pointerIntegerConversion);
+		m_OverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 	}
 
 	@Override
@@ -84,9 +85,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_char_constant:
 		{
-			String val = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
-			CPrimitive cprimitive = new CPrimitive(PRIMITIVE.CHAR);
-			int bitlength = 8 * m_TypeSizes.getSize(PRIMITIVE.CHAR);
+			final String val = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
+			final CPrimitive cprimitive = new CPrimitive(PRIMITIVE.CHAR);
+			final int bitlength = 8 * m_TypeSizes.getSize(PRIMITIVE.CHAR);
 			return new ExpressionResult(new RValue(new BitvecLiteral(loc, val, bitlength), cprimitive));
 		}
 		default:

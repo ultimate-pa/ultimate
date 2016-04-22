@@ -26,13 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.eclipse.cdt.core.dom.ast.IASTInitializer;
-
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-
 /**
  * A Result that contain one CDeclaration.
  * It should be used when a declarator is dispatched.

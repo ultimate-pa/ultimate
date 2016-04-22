@@ -166,9 +166,10 @@ public class PRDispatcher extends Dispatcher {
 	@Override
 	protected void init() {
 		boolean bitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
+		boolean overapproximateFloatingPointOperations = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		nameHandler = new NameHandler(backtranslator);
 		typeHandler = new SVCompTypeHandler(!bitvectorTranslation);
-		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, bitvectorTranslation, nameHandler);
+		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, bitvectorTranslation, overapproximateFloatingPointOperations, nameHandler);
 	}
 
 	@Override

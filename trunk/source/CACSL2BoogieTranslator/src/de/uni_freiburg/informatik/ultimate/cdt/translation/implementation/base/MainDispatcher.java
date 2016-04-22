@@ -41,8 +41,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
@@ -214,9 +214,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BeforeAfterWitnessInvariantsMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.WitnessInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BeforeAfterWitnessInvariantsMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 /**
@@ -256,6 +256,7 @@ public class MainDispatcher extends Dispatcher {
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
 	private LinkedHashMap<Integer, String> indexToFunction;
 	protected boolean m_BitvectorTranslation;
+	protected boolean m_OverapproximateFloatingPointOperations;
 	protected BeforeAfterWitnessInvariantsMapping m_WitnessInvariants;
 
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
@@ -284,6 +285,7 @@ public class MainDispatcher extends Dispatcher {
 			IUltimateServiceProvider services, Logger logger) {
 		super(backtranslator, services, logger);
 		m_BitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
+		m_OverapproximateFloatingPointOperations = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		m_WitnessInvariants = witnessInvariants;
 	}
 
@@ -364,7 +366,8 @@ public class MainDispatcher extends Dispatcher {
 		typeHandler = new TypeHandler(!m_BitvectorTranslation);
 		acslHandler = new ACSLHandler(m_WitnessInvariants != null);
 		nameHandler = new NameHandler(backtranslator);
-		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler, m_BitvectorTranslation, nameHandler);
+		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler, 
+				m_BitvectorTranslation, m_OverapproximateFloatingPointOperations, nameHandler);
 		this.backtranslator.setExpressionTranslation(((CHandler) cHandler).getExpressionTranslation());
 		preprocessorHandler = new PreprocessorHandler();
 		REPORT_WARNINGS = true;

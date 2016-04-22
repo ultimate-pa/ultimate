@@ -161,7 +161,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
@@ -343,10 +342,12 @@ public class CHandler implements ICHandler {
 	 *            a reference to the main dispatcher.
 	 * @param backtranslator
 	 *            a reference to the Backtranslator object.
+	 * @param overapproximateFloatingPointOperations 
 	 * @param nameHandler 
 	 */
 	public CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, boolean errorLabelWarning,
-			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, INameHandler nameHandler) {
+			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, 
+			boolean overapproximateFloatingPointOperations, INameHandler nameHandler) {
 
 		mLogger = logger;
 		this.mTypeHandler = typeHandler;
@@ -376,7 +377,8 @@ public class CHandler implements ICHandler {
 		POINTER_INTEGER_CONVERSION pointerIntegerConversion = main.mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION, 
 				CACSLPreferenceInitializer.POINTER_INTEGER_CONVERSION.class);
 		if (bitvectorTranslation) {
-			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler, pointerIntegerConversion);
+			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), 
+					typeHandler, pointerIntegerConversion, overapproximateFloatingPointOperations);
 		} else {
 			boolean inRange = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
 			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment, inRange, pointerIntegerConversion);

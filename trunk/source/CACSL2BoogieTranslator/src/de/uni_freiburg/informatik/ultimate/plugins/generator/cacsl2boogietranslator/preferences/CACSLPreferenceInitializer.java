@@ -105,6 +105,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						LABEL_BITVECTOR_TRANSLATION,
 						false,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_OVERAPPROXIMATE_FLOATS,
+						false,
+						PreferenceType.Boolean),
 
 				// typesize stuff
 				new UltimatePreferenceItem<Boolean>(
@@ -196,6 +200,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
 	public static final String LABEL_ASSUME_NONDET_VALUES_IN_RANGE = "Assume nondeterminstic values are in range";
 	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
+	public static final String LABEL_OVERAPPROXIMATE_FLOATS = "Overapproximate operations of floating types";
 						
 
 	// typesize stuff

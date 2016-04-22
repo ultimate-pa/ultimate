@@ -124,10 +124,11 @@ public class SvComp14CHandler extends CHandler {
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @param bitvectorTranslation 
+	 * @param overapproximateFloatingPointOperations 
 	 */
 	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, 
-			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, INameHandler nameHandler) {
-		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation, nameHandler);
+			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, boolean overapproximateFloatingPointOperations, INameHandler nameHandler) {
+		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation, overapproximateFloatingPointOperations, nameHandler);
 	}
 
 	//
