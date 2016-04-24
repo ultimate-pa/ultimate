@@ -621,6 +621,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	@Override
 	protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType) {
+		
+		if (m_OverapproximateFloatingPointOperations) {
+			return declareConversionFunctionOverApprox(loc, oldType, newType);
+		}
+		
 		String functionName = "convert" + oldType.toString() +"To" + newType.toString();
 		String prefixedFunctionName = "~" + functionName;
 		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
