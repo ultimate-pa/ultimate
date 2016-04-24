@@ -103,6 +103,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	@Override
 	public RValue translateFloatingLiteral(ILocation loc, String val) {
+		declareFloatingPointFunction(loc, "fp", null, false, false, null, null);
 		RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, m_TypeSizes, m_FunctionDeclarations);
 		return rVal;
 	}
@@ -331,6 +332,30 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			}
 			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, resultASTType, paramASTTypes);
+		} else if (smtlibFunctionName == "fp") {
+			ASTType[] paramASTTypes = new ASTType[3];
+			
+			CPrimitive result = new CPrimitive(PRIMITIVE.FLOAT);
+			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, result);
+			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
+			paramASTTypes[0] = new NamedType(loc, "bv1", new ASTType[0]);
+			paramASTTypes[1] = new NamedType(loc, "bv8", new ASTType[0]);
+			paramASTTypes[2] = new NamedType(loc, "bv23", new ASTType[0]);
+			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareFloat", attributes, resultASTType, paramASTTypes);
+			
+			result = new CPrimitive(PRIMITIVE.DOUBLE);
+			resultASTType = m_TypeHandler.ctype2asttype(loc, result);
+			paramASTTypes[1] = new NamedType(loc, "bv11", new ASTType[0]);
+			paramASTTypes[2] = new NamedType(loc, "bv52", new ASTType[0]);
+			resultASTType = new NamedType(loc, "C_DOUBLE", new ASTType[0]);
+			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareDouble", attributes, resultASTType, paramASTTypes);
+			
+			result = new CPrimitive(PRIMITIVE.LONGDOUBLE);
+			resultASTType = m_TypeHandler.ctype2asttype(loc, result);
+			paramASTTypes[1] = new NamedType(loc, "bv15", new ASTType[0]);
+			paramASTTypes[2] = new NamedType(loc, "bv112", new ASTType[0]);
+			resultASTType = new NamedType(loc, "C_LONGDOUBLE", new ASTType[0]);
+			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareLongDouble", attributes, resultASTType, paramASTTypes);
 		} else {
 			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
