@@ -173,11 +173,11 @@ public class AffineExpression {
 		if (mCoefficients.size() != 1) {
 			return null;
 		}
-		final OneVarForm oneVarForm = new OneVarForm();
 		final Map.Entry<String, BigDecimal> entry = mCoefficients.entrySet().iterator().next();
 		if (entry.getValue().abs().compareTo(BigDecimal.ONE) != 0) {
 			return null;
 		}
+		final OneVarForm oneVarForm = new OneVarForm();
 		oneVarForm.var = entry.getKey();
 		oneVarForm.negVar = entry.getValue().signum() < 0;
 		oneVarForm.constant = new OctValue(mConstant);
@@ -201,12 +201,12 @@ public class AffineExpression {
 			vars.add(entry.getKey());
 			coefficients.add(entry.getValue());
 		});
-		final TwoVarForm twoVarForm = new TwoVarForm();
 		for (final BigDecimal d : coefficients) {
 			if (d.abs().compareTo(BigDecimal.ONE) != 0) {
 				return null;
 			}
 		}
+		final TwoVarForm twoVarForm = new TwoVarForm();
 		twoVarForm.var1 = vars.get(0);
 		twoVarForm.var2 = vars.get(1);
 		twoVarForm.negVar1 = coefficients.get(0).signum() < 0;

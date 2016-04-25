@@ -24,7 +24,7 @@ public class ClosureCacheTest {
 			m.cachedTightClosure().negateVar(0);
 			
 			OctMatrix updatedCachedClosure = m.cachedTightClosure();
-			OctMatrix newlyComputedClosure = m.tightClosurePrimitiveSparse();
+			OctMatrix newlyComputedClosure = m.tightClosure(OctMatrix::shortestPathClosurePrimitiveSparse);
 			if (!updatedCachedClosure.isEqualTo(newlyComputedClosure)) {
 				System.out.println("CLOSURES DIFFER");
 				System.out.println(updatedCachedClosure);
@@ -34,7 +34,7 @@ public class ClosureCacheTest {
 			++tests;
 		}
 		System.out.println();
-		System.out.println("FAILS: " + fails + "/ " + tests);
+		System.out.println("FAILS: " + fails + " / " + tests);
 	}
 	
 }

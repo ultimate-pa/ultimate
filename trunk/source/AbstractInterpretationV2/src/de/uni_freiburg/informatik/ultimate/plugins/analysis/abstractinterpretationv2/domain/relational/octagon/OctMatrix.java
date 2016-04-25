@@ -39,8 +39,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-import org.ojalgo.access.Access1D.IndexOf;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
@@ -189,7 +187,7 @@ public class OctMatrix {
 	 * @return Copy of this matrix
 	 */
 	public OctMatrix copy() {
-		OctMatrix copy = new OctMatrix(mSize);
+		final OctMatrix copy = new OctMatrix(mSize);
 		System.arraycopy(this.mElements, 0, copy.mElements, 0, mElements.length);
 		copy.mStrongClosure = (mStrongClosure == this) ? copy : mStrongClosure;
 		copy.mTightClosure = (mTightClosure == this) ? copy : mTightClosure;
@@ -217,13 +215,13 @@ public class OctMatrix {
 	 */
 	public static OctMatrix parseBlockLowerTriangular(String m) {
 		m = m.trim();
-		String[] elements = m.length() > 0 ? m.split("\\s+") : new String[0];
+		final String[] elements = m.length() > 0 ? m.split("\\s+") : new String[0];
 		int size = (int) (Math.sqrt(2 * elements.length + 1) - 1);
 		if (size % 2 != 0) {
 			throw new IllegalArgumentException(
 					"Number of elements does not match any 2x2 block lower triangular matrix.");
 		}
-		OctMatrix oct = new OctMatrix(size);
+		final OctMatrix oct = new OctMatrix(size);
 		for (int i = 0; i < elements.length; ++i) {
 			oct.mElements[i] = OctValue.parse(elements[i]);
 		}
@@ -237,7 +235,7 @@ public class OctMatrix {
 	 * @param variables Number of variables in the octagon
 	 * @return Random matrix
 	 */
-	public static OctMatrix random(int variables) {
+	public static OctMatrix random(final int variables) {
 		return random(variables, Math.random());
 	}
 
@@ -250,7 +248,7 @@ public class OctMatrix {
 	 * @param infProbability Probability that an element will be infinity (0 = never, 1 = always)
 	 */
 	public static OctMatrix random(final int variables, final double infProbability) {
-		OctMatrix m = new OctMatrix(variables * 2);
+		final OctMatrix m = new OctMatrix(variables * 2);
 		for (int i = 0; i < m.mSize; ++i) {
 			int maxCol = i | 1;
 			for (int j = 0; j <= maxCol; ++j) {
@@ -378,8 +376,8 @@ public class OctMatrix {
 	 * @param rowCol Row (= column) of the diagonal entry
 	 */
 	private void minimizeDiagonalElement(final int rowCol) {
-		int idx = indexOfLower(rowCol, rowCol);
-		int sig = mElements[idx].signum();
+		final int idx = indexOfLower(rowCol, rowCol);
+		final int sig = mElements[idx].signum();
 		if (sig > 0) {
 			mElements[idx] = OctValue.ZERO;
 			// no need to reset cached closures -- diagonal is always minimized on closure computation
@@ -428,7 +426,7 @@ public class OctMatrix {
 	public OctMatrix elementwiseOperation(
 			final OctMatrix other, final BiFunction<OctValue, OctValue, OctValue> operator) {
 		checkCompatibility(other);
-		OctMatrix result = new OctMatrix(mSize);
+		final OctMatrix result = new OctMatrix(mSize);
 		for (int i = 0; i < mElements.length; ++i) {
 			result.mElements[i] = operator.apply(mElements[i], other.mElements[i]);
 		}
@@ -542,8 +540,8 @@ public class OctMatrix {
 		for (int bRow = 0; bRow < variables(); ++bRow) {
 			// compare only block lower triangular part (upper part is coherent)
 			for (int bCol = 0; bCol <= bRow; ++bCol) {
-				int permBRow = mapThisVarIndexToPermVarIndex[bRow];
-				int permBCol = mapThisVarIndexToPermVarIndex[bCol];
+				final int permBRow = mapThisVarIndexToPermVarIndex[bRow];
+				final int permBCol = mapThisVarIndexToPermVarIndex[bCol];
 				if (!isBlockEqualTo(bRow, bCol, permutation, permBRow, permBCol)) {
 					return false;
 				}
@@ -578,12 +576,26 @@ public class OctMatrix {
 		return true;
 	}
 
-	// note: "not less-equal than" does not necessarily mean "greater than". OctMatrices are only partial ordered!
+	/**
+	 * Checks whether this octagon matrix is element-wise less or equal than another octagon matrix.
+	 * <p>
+	 * Note: <i>"not less-equal than"</i> does not necessarily mean <i>"greater than"</i>.
+	 * OctMatrices are only partially ordered!
+	 * 
+	 * @param other Other octagon matrix
+	 * @return This matrix is element-wise less than or equal to the other matrix
+	 */
 	public boolean isLessEqualThan(final OctMatrix other) {
 		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);
 	}
 
-	// TODO document: cached closure is the original object. Do not modify!
+	/**
+	 * Returns the strong closure of this octagon matrix.
+	 * The strong closure is only computed, if it is not already cached.
+	 * The original cache is returned. Do not modify!
+	 * 
+	 * @return Strong closure
+	 */
 	public OctMatrix cachedStrongClosure() {
 		if (mStrongClosure != null) {
 			return mStrongClosure;
@@ -591,10 +603,23 @@ public class OctMatrix {
 		return strongClosure(sDefaultShortestPathClosure);
 	}
 
+	/** @return The strong closure of this matrix was already computed and cached */
+	public boolean hasCachedStrongClosure() {
+		return mStrongClosure != null;
+	}
+
+	/**
+	 * Computes the strong closure of this octagon matrix.
+	 * The strong closure is a normal form for non-bottom octagon matrices over real-valued variables.
+	 * 
+	 * @param shortestPathClosureAlgorithm
+	 *            Algorithm to be used for the computation of the shortest path closure
+	 * @return Strong closure
+	 */
 	public OctMatrix strongClosure(final Consumer<OctMatrix> shortestPathClosureAlgorithm) {
-		OctMatrix sc = copy();
-		boolean isObviouslyBottom = sc.minimizeDiagonal();
-		if (!isObviouslyBottom) {
+		final OctMatrix sc = copy();
+		final boolean obviouslyBottom = sc.minimizeDiagonal();
+		if (!obviouslyBottom) {
 			shortestPathClosureAlgorithm.accept(sc);
 			sc.strengtheningInPlace();
 		}
@@ -603,7 +628,13 @@ public class OctMatrix {
 		return sc;
 	}
 
-	// TODO document: cached closure is the original object. Do not modify!
+	/**
+	 * Returns the tight closure of this octagon matrix.
+	 * The tight closure is only computed, if it is not already cached.
+	 * The original cache is returned. Do not modify!
+	 * 
+	 * @return Tight closure
+	 */
 	public OctMatrix cachedTightClosure() {
 		if (mTightClosure != null) {
 			return mTightClosure;
@@ -611,18 +642,19 @@ public class OctMatrix {
 		return tightClosure(sDefaultShortestPathClosure);
 	}
 
-	public boolean hasCachedStrongClosure() {
-		return mStrongClosure != null;
-	}
-
+	/** @return The tight closure of this matrix was already computed and cached */
 	public boolean hasCachedTightClosure() {
 		return mTightClosure != null;
 	}
-
-	public OctMatrix tightClosurePrimitiveSparse() {
-		return tightClosure(OctMatrix::shortestPathClosurePrimitiveSparse);
-	}
-
+	
+	/**
+	 * Computes the tight closure of this octagon matrix.
+	 * The tight closure is a normal form for non-bottom octagon matrices over integer variables.
+	 * 
+	 * @param shortestPathClosureAlgorithm
+	 *            Algorithm to be used for the computation of the shortest path closure
+	 * @return Tight closure
+	 */
 	public OctMatrix tightClosure(final Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix tc;
 		tc = copy();
@@ -637,6 +669,7 @@ public class OctMatrix {
 		return tc;
 	}
 
+	/** Compute the shortest path closure in-place, using the naive Floyd-Warshall algorithm. */
 	protected void shortestPathClosureNaiv() {
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
@@ -651,6 +684,13 @@ public class OctMatrix {
 		}
 	}
 
+	/**
+	 * Compute the shortest path closure in-place, using Singh's "Sparse Closure" algorithm
+	 * (http://e-collection.library.ethz.ch/eserv/eth:8628/eth-8628-01.pdf).
+	 * <p>
+	 * This algorithm is based on Floyd-Warshall and runs on the full matrix.
+	 * Finite matrix entries are indexed. Updates are computed using only the indexed entries.
+	 */
 	protected void shortestPathClosureFullSparse() {
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
@@ -670,7 +710,12 @@ public class OctMatrix {
 		}
 	}
 
-	// incoming edges of k
+	/**
+	 * Indexes the the finite entries in a matrix column.
+	 * 
+	 * @param k Column index
+	 * @return Index of finite elements in column k (incoming edges of k)
+	 */
 	private List<Integer> indexFiniteElementsInColumn(int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		for (int i = 0; i < mSize; ++i) {
@@ -681,7 +726,12 @@ public class OctMatrix {
 		return index;
 	}
 
-	// outgoing edges of k
+	/**
+	 * Indexes the the finite entries in a matrix row.
+	 * 
+	 * @param k Row index
+	 * @return Index of finite elements in row k (outgoing edges of k)
+	 */
 	private List<Integer> indexFiniteElementsInRow(int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		for (int j = 0; j < mSize; ++j) {
@@ -692,6 +742,12 @@ public class OctMatrix {
 		return index;
 	}
 
+	/**
+	 * Compute the shortest path closure in-place, using a sparse algorithm
+	 * that iterates only the block lower triangular matrix.
+	 * <p>
+	 * This is a modification of {@link #shortestPathClosureFullSparse()}.
+	 */
 	protected void shortestPathClosureSparse() {
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
@@ -720,6 +776,14 @@ public class OctMatrix {
 		}
 	}
 
+	/**
+	 * Indexes the the finite entries in a matrix block column.
+	 * The index contains only the row indices of finite entries in the block column k/2.
+	 * The index can not be used to determine whether the finite entry is in column k or column k+1.
+	 * 
+	 * @param k First column index of the block column (always an even number)
+	 * @return Index of finite elements in block column k/2 (incoming edges of k and k+1)
+	 */
 	private List<Integer> indexFiniteElementsInBlockColumn(final int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		int kk = k ^ 1;
@@ -731,6 +795,14 @@ public class OctMatrix {
 		return index;
 	}
 
+	/**
+	 * Indexes the the finite entries in a matrix block row.
+	 * The index contains only the column indices of finite entries in the block row k/2.
+	 * The index can not be used to determine whether the finite entry is in row k or row k+1.
+	 * 
+	 * @param k First column index of the block row (always an even number)
+	 * @return Index of finite elements in block row k/2 (outgoing edges of k and k+1)
+	 */
 	private List<Integer> indexFiniteElementsInBlockRow(final int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		int kk = k ^ 1;
@@ -742,6 +814,10 @@ public class OctMatrix {
 		return index;
 	}
 
+	/**
+	 * Computes the shortest path closure in-place, as in {@link #shortestPathClosureSparse()},
+	 * while using only one primitive array instead of two java collections to represent the index.
+	 */
 	protected void shortestPathClosurePrimitiveSparse() {
 		int[] rk = null; // indices of finite elements in rows k and k^1
 		int[] ck = null; // indices of finite elements in columns k and k^1
@@ -774,7 +850,24 @@ public class OctMatrix {
 		}
 	}
 
-	// note: rowIndex is not sorted. Block elements are swapped.
+	/**
+	 * Indexes the the finite entries in block row k/2 and a block column k/2 at the same time.
+	 * If the computed row index contains the value i, then there is a finite matrix entry at
+	 * matrix index (i,k) or (i,k+1). If the computed column index contains the value i, then
+	 * there is a finite matrix entry at matrix index (k,i), or (k+1,i).
+	 * <p>
+	 * The returned array has always the length {@link #getSize()}, but only the first n index entries are used.
+	 * The length n of the index is the return value of this method.
+	 * The row and column index always have the same length.
+	 * 
+	 * @param k First row/column index of the block row/column (always an even number)
+	 * @param rowIndex
+	 *            Index of finite elements in block row k/2 (outgoing edges of k and k+1).
+	 *            This index is not completely sorted! The values 2i and 2i+1 are swapped.
+	 * @param colIndex
+	 *            Index of finite elements in block column k/2 (incoming edges of k and k+1)
+	 * @return Actual length of the row/column indix
+	 */
 	private int primitiveIndexFiniteElementsInBlockRowAndColumn(
 			final int k, final int[] rowIndex, final int[] colIndex) {
 		int indexLength = 0;
@@ -789,6 +882,12 @@ public class OctMatrix {
 		return indexLength;
 	}
 
+	/**
+	 * Compute the shortest path closure in-place, using the closure algorithm of APRON (a library)
+	 * as recalled by Singh (http://e-collection.library.ethz.ch/eserv/eth:8628/eth-8628-01.pdf).
+	 * <p>
+	 * This algorithm is based on Floyd-Warshall and iterates only the block lower triangular matrix.
+	 */
 	protected void shortestPathClosureApron() {
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
@@ -807,6 +906,12 @@ public class OctMatrix {
 		}
 	}
 
+	/**
+	 * Computes the strong closure from this matrix in-place, as presented by
+	 * Bagnara, Hill, and Zaffanella (https://arxiv.org/pdf/0705.4618v2).
+	 * <p>
+	 * This matrix has to be in shortest-path-closure form.
+	 */
 	private void strengtheningInPlace() {
 		// blocks on the diagonal (upper, lower bounds) won't change by strengthening
 		// => iterate only 2x2 blocks that are _strictly_ below the main diagonal
@@ -823,6 +928,12 @@ public class OctMatrix {
 		}
 	}
 
+	/**
+	 * Computes the tight closure of this matrix in-place, as presented by
+	 * Bagnara, Hill, and Zaffanella (https://arxiv.org/pdf/0705.4618v2).
+	 * <p>
+	 * This matrix has to be in shortest-path-closure form.
+	 */
 	private void tighteningInPlace() {
 		for (int i = 0; i < mSize; ++i) {
 			OctValue ib = get(i, i ^ 1).half().floor();
@@ -855,11 +966,29 @@ public class OctMatrix {
 		return false;
 	}
 
+	/**
+	 * Widens this octagon by another one.
+	 * Constraints that would be loosened by a normal join are immediately removed by this widening operator.
+	 * <p>
+	 * This widening operator was presented by Mine (http://www-apr.lip6.fr/~mine/publi/article-mine-ast01.pdf).
+	 * 
+	 * @param n Other octagon
+	 * @return This octagon, widened with {@code n}
+	 */
 	public OctMatrix widenSimple(final OctMatrix n) {
 		return elementwiseOperation(n, (mij, nij) -> mij.compareTo(nij) >= 0 ? mij : OctValue.INFINITY);
 	}
 
 	// TODO document: stabilization depends on user-given threshold (stabilizes for threshold < inf)
+	/**
+	 * Widens this octagon by another one.
+	 * Constraints that would be loosened by a normal join are loosened even more, using a binary exponential backoff.
+	 * Constraints are removed, once the backoff reaches a given limit.
+	 * 
+	 * @param n Other octagon
+	 * @param threshold TODO
+	 * @return This octagon, widened with {@code n}
+	 */
 	public OctMatrix widenExponential(final OctMatrix n, final OctValue threshold) {
 		final OctValue epsilon = new OctValue(1);
 		final OctValue minusTwoEpsilon = epsilon.add(epsilon).negate();

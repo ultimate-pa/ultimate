@@ -73,7 +73,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 		mSymbolTable = symbolTable;
 		mLiteralCollectorFactory = literalCollectorFactory;
 
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mOctDomainStateFactory = makeDomainStateFactory(ups);
 		mWideningOperatorFactory = makeWideningOperatorFactory(ups);
 		mPostOperatorFactory = makePostOperatorFactory(ups);
@@ -126,15 +126,15 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 		case SIMPLE:
 			return () -> new OctSimpleWideningOperator();
 		case EXPONENTIAL:
-			String thresholdString = ups.getString(OctPreferences.EXP_WIDENING_THRESHOLD);
+			final String thresholdString = ups.getString(OctPreferences.EXP_WIDENING_THRESHOLD);
 			try {
-				BigDecimal threshold = new BigDecimal(thresholdString);
+				final BigDecimal threshold = new BigDecimal(thresholdString);
 				return () -> new OctExponentialWideningOperator(threshold);
 			} catch (NumberFormatException nfe) {
 				throw makeIllegalSettingException(settingLabel, settingValue);
 			} 
 		case LITERAL:
-			Collection<BigDecimal> literals = mLiteralCollectorFactory.create().getNumberLiterals();
+			final Collection<BigDecimal> literals = mLiteralCollectorFactory.create().getNumberLiterals();
 			return () -> new OctLiteralWideningOperator(literals);
 		default:
 			throw makeIllegalSettingException(OctPreferences.WIDENING_OPERATOR, settingValue);
@@ -183,7 +183,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	public IAbstractStateBinaryOperator<OctDomainState> getMergeOperator() {
 		return new IAbstractStateBinaryOperator<OctDomainState>() {
 			@Override
-			public OctDomainState apply(OctDomainState first, OctDomainState second) {
+			public OctDomainState apply(final OctDomainState first, final OctDomainState second) {
 				return first.join(second);
 			}
 		};

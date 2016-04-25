@@ -82,7 +82,7 @@ public class OctLiteralWideningOperator implements IAbstractStateBinaryOperator<
 
 	@Override
 	public OctValue nextWideningStep(final OctValue val) {
-		OctValue ceil = wideningSteps.ceiling(val); // TODO some programs only terminate with "higher(val)"
+		final OctValue ceil = wideningSteps.ceiling(val);
 		return (ceil == null) ? OctValue.INFINITY : ceil;
 	}
 	

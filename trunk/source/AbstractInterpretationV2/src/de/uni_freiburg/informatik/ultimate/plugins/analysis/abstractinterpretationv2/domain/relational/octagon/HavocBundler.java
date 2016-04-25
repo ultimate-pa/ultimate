@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
@@ -66,12 +65,12 @@ public class HavocBundler {
 	/**
 	 * Extracts statements from a code block and groups subsequent havoc statements into a single havoc statement.
 	 * <p>
-	 * The result of the transformation is cached
+	 * The result of the transformation is cached.
 	 *
 	 * @param block Code block to be transformed.
 	 * @return Extracted statements from the code block with grouped havoc statements
 	 */
-	public List<Statement> bundleHavocsCached(CodeBlock block) {
+	public List<Statement> bundleHavocsCached(final CodeBlock block) {
 		// CodeBlock is used as parameter, because CodeBlock does not overwrite equals => faster map access
 		List<Statement> cachedResult = mCache.get(block);
 		if (cachedResult == null) {
@@ -110,7 +109,7 @@ public class HavocBundler {
 	 */
 	private HavocStatement joinHavocs(final List<HavocStatement> successiveHavocs) {
 		if (successiveHavocs.size() == 1) {
-			return successiveHavocs.get(0);
+			return successiveHavocs.get(0); // avoid unnecessary creation of an equal statement object
 		}
 		final List<VariableLHS> vars = new ArrayList<>();
 		for (final HavocStatement havocStmt : successiveHavocs) {

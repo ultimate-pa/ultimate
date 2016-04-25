@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -113,8 +112,8 @@ public final class IfExpressionTree {
 		final IfExpressionTree rightTree = buildTree(binExpr.getRight(), exprTransformer);
 
 		final ILocation location = binExpr.getLocation();
-		IType type = binExpr.getType();
-		BinaryExpression.Operator operator = binExpr.getOperator();
+		final IType type = binExpr.getType();
+		final BinaryExpression.Operator operator = binExpr.getOperator();
 
 		leftTree.append(rightTree, (left, right) -> new BinaryExpression(location, type, operator, left, right));
 		return leftTree;
