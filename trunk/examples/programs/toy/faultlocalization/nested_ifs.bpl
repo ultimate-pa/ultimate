@@ -1,3 +1,4 @@
+//#Unsafe
 procedure foo()
 {
   var y: int;

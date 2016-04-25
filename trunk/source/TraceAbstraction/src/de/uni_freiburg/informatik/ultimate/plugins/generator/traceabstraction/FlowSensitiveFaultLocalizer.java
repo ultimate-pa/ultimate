@@ -325,8 +325,8 @@ public class FlowSensitiveFaultLocalizer {
 		final TransFormula markhor = computeMarkhorFormula(a, b, counterexampleWord,informationFromCFG, smtManager);
 		final IPredicate weakestPreconditionNew = pt.weakestPrecondition(weakestPreconditionOld, markhor);
 		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
-		final String preceeding = counterexampleWord.getSymbolAt(a-1).getPreceedingProcedure();
-		final String succeeding = counterexampleWord.getSymbolAt(b+1).getSucceedingProcedure();
+		final String preceeding = counterexampleWord.getSymbolAt(a).getPreceedingProcedure();
+		final String succeeding = counterexampleWord.getSymbolAt(b).getSucceedingProcedure();
 		counterexampleWord.getSubWord(a, b);
 		final BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, markhor); // [[ IS THIS OK ? Check with Matthias. ]] Because this action is for the whole markhor formula
 
