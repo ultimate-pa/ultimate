@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -62,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
@@ -636,5 +638,49 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
 		}
 		return prefixedFunctionName;
+	}
+	@Override
+	public ExpressionResult createNanOrInfinity(ILocation loc, String name) {
+		final String functionName;
+		final String suffixedFunctionName;
+		final String typeName;
+		final String exponent;
+		final String significant;
+		if (name.equals("NAN") || name.equals("nan")) {
+			functionName = "NaN";
+			suffixedFunctionName = "NaN_d";
+			typeName = "C_DOUBLE";
+			exponent = "11";
+			significant = "53";
+		} else if (name.equals("INFINITY") || name.equals("inf") || name.equals("inff")) {
+			functionName = "+oo";
+			suffixedFunctionName = "+oo_d";
+			typeName = "C_DOUBLE";
+			exponent = "11";
+			significant = "53";
+		} else if (name.equals("nanl")){
+			functionName = "NaN";
+			suffixedFunctionName = "NaN_l";
+			typeName = "C_LONGDOUBLE";
+			exponent = "15";
+			significant = "113";
+		} else if (name.equals("nanf")){
+			functionName = "NaN";
+			suffixedFunctionName = "NaN_f";
+			typeName = "C_FLOAT";
+			exponent = "5";
+			significant = "11";
+		} else {
+			throw new IllegalArgumentException("not a nan or infinity type");
+		}
+		Expression[] indices = new Expression[]{new IntegerLiteral(loc, exponent), new IntegerLiteral(loc, significant)};
+		Attribute[] attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+				new Expression[]{new StringLiteral(loc, functionName)}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+		ASTType asttype = new NamedType(loc, typeName, new ASTType[0]);
+		ASTType paramType = new PrimitiveType(loc, SFO.INT);
+		getFunctionDeclarations().declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, attributes, asttype, paramType, paramType);
+		
+		FunctionApplication func = 	new FunctionApplication(loc,  SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, indices);
+		return new ExpressionResult(new RValue(func, new CPrimitive(PRIMITIVE.FLOAT)));
 	}
 }

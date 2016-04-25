@@ -603,5 +603,7 @@ public abstract class AExpressionTranslation {
 	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
 	
 	public abstract Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter);
+	
+	public abstract ExpressionResult createNanOrInfinity(ILocation loc, String name);
 
 }

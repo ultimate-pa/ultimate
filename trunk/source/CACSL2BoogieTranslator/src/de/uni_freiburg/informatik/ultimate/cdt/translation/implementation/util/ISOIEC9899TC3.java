@@ -224,7 +224,6 @@ public final class ISOIEC9899TC3 {
 				significantLength = 112;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
 			} else {
-				// TODO evaluate exception type
 				throw new IllegalArgumentException("not a float type");
 			}
 			
@@ -248,7 +247,15 @@ public final class ISOIEC9899TC3 {
 					floatVal = floatVal.divide(twoPointZero);
 					exponentValue++;
 				}
-				functionName = "fp";
+				if (resultType.toString().equals("FLOAT")){
+					functionName = "declareFloat";
+				} else if (resultType.toString().equals("DOUBLE")) {
+					functionName = "declareDouble";
+				} else if (resultType.toString().equals("LONGDOUBLE")) {
+					functionName = "declareLongDouble";
+				} else {
+					throw new IllegalArgumentException();
+				}
 				exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
 				significant = new BitvecLiteral(loc, floatVal.toString(), significantLength);
 				arguments = new Expression[]{sign, exponent, significant};

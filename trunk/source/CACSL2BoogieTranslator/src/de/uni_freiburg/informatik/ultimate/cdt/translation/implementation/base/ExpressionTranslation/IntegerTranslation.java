@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -775,5 +776,10 @@ public class IntegerTranslation extends AExpressionTranslation {
 	@Override
 	protected String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType) {
 		return declareConversionFunctionOverApprox(loc, oldType, newType);
+	}
+	
+	@Override
+	public ExpressionResult createNanOrInfinity(ILocation loc, String name) {
+		throw new UnsupportedOperationException();
 	}
 }

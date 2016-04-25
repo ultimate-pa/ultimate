@@ -329,7 +329,18 @@ public class SvComp14CHandler extends CHandler {
 			Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
 			return new ExpressionResult(new RValue(zero, cType));
 		}
-
+		
+		if (methodName.equals("nan") || methodName.equals("nanf") || methodName.equals("nanl")) {
+			
+			return m_ExpressionTranslation.createNanOrInfinity(loc, methodName);
+		}
+		
+		if (methodName.equals("__builtin_nan") || methodName.equals("__builtin_nanf") || methodName.equals("__builtin_nanl")
+				|| methodName.equals("__builtin_inff")) {
+			final String functionName = methodName.substring(methodName.length() - 4);
+			return m_ExpressionTranslation.createNanOrInfinity(loc, functionName);
+		}
+		
 		/*
 		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state: 5.6.2015)
 		 * triggers the processor to load something into cache, does nothing else
