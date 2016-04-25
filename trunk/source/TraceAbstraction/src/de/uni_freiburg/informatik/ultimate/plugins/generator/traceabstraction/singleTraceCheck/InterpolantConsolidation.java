@@ -101,8 +101,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final CachingHoareTripleChecker m_HoareTripleChecker;
 
 	protected final InterpolantConsolidationBenchmarkGenerator m_InterpolantConsolidationBenchmarkGenerator;
-	private boolean m_printDebugInformation = false;
-	private boolean m_printAutomataOfDifference = false;
+	private boolean m_printDebugInformation = !false;
+	private boolean m_printAutomataOfDifference = !false;
 	private boolean m_InterpolantsConsolidationSuccessful = false;
 	private boolean useConsolidationInNonEmptyCase = false;
 
@@ -250,7 +250,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				m_InterpolatingTraceChecker.getInterpolants(),
 				interpolantsAfterConsolidation, m_HoareTripleChecker);
 
-		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(m_ConsolidatedInterpolants), 
+		assert TraceCheckerUtils.checkInterpolantsInductivityBackward(Arrays.asList(m_ConsolidatedInterpolants), 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in consolidated interpolants";
 		int numOfDisjunctionsGreaterOne = (int) m_InterpolantConsolidationBenchmarkGenerator.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
@@ -391,7 +391,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					locationsToConsolidatedInterpolants.put(loc, m_ConsolidatedInterpolants[i]);
 
 				} else {
-					m_ConsolidatedInterpolants[i] = interpolantsBeforeConsolidationAsArray[i];
+					m_ConsolidatedInterpolants[i] = predicatesForThisLocationAsArray[0];
 				}
 				if (interpolantsBeforeConsolidation.contains(m_ConsolidatedInterpolants[i]))  {
 					// If current interpolant is contained in the interpolants before consolidation, then the number of
