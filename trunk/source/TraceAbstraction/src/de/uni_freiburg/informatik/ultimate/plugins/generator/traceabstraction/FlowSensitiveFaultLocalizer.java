@@ -97,7 +97,7 @@ public class FlowSensitiveFaultLocalizer {
 	private void makeRelevanceObjects(IRun<CodeBlock, IPredicate> counterexampleRun){
 		NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
 		for(int i = 0; i<counterexampleWord.length(); i++){
-			IRelevanceInformation relevancy_of_statement = new RelevanceInformation(Collections.singletonList(counterexampleWord.getSymbolAt(i)),false,false,false);
+			IRelevanceInformation relevancy_of_statement = new RelevanceInformation(Collections.singletonList(counterexampleWord.getSymbolAt(i)),false,false,false,false);
 			Relevance_of_statements[i] = relevancy_of_statement;
 		}
 		
@@ -201,7 +201,7 @@ public class FlowSensitiveFaultLocalizer {
 		// any other statement.
 		IRelevanceInformation relevancy_of_statement = new RelevanceInformation(
 				Collections.singletonList(counterexampleWord.getSymbolAt(backward_counter-1)), 
-				false, false, false);
+				false, false, false, false);
 		Relevance_of_statements[Relevance_of_statements.length - 1] = relevancy_of_statement;
 		// Calculating the WP-List
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
@@ -266,7 +266,7 @@ public class FlowSensitiveFaultLocalizer {
 				RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
 						relevanceCriterion1uc, 
-						relevanceCriterion1gf, false);
+						relevanceCriterion1gf, false, false);
 						
 				Relevance_of_statements[i] = ri;
 		}
@@ -417,25 +417,29 @@ public class FlowSensitiveFaultLocalizer {
 							action.getClass().getSimpleName());
 				}
 				
-				final boolean relevanceCriterion2;
+				final boolean relevanceCriterion2uc;
+				final boolean relevanceCriterion2gf;
 				
 				if(relevance == ERelevanceStatus.InUnsatCore)
 				{
-					relevanceCriterion2 = true; // relevant with respect to the flow sensitive analysis
+					relevanceCriterion2uc = true; // relevant with respect to the flow sensitive analysis
+					relevanceCriterion2gf = false;
 				}
 				else if(relevance == ERelevanceStatus.Sat)
 				{
-					relevanceCriterion2 = true; // relevant with respect to the flow sensitive analysis
+					relevanceCriterion2uc = false;
+					relevanceCriterion2gf = true; // relevant with respect to the flow sensitive analysis
 				}
 				else
 				{
-					relevanceCriterion2 = false; // not relevant with respect to the flow sensitive analysis.
+					relevanceCriterion2uc = false; // not relevant with respect to the flow sensitive analysis.
+					relevanceCriterion2gf = false;
 				}
 				
 				RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
 						((RelevanceInformation) Relevance_of_statements[backwardcounter]).getCriterion1UC() , 
-						((RelevanceInformation) Relevance_of_statements[backwardcounter]).getCriterion1GF(), relevanceCriterion2);
+						((RelevanceInformation) Relevance_of_statements[backwardcounter]).getCriterion1GF(), relevanceCriterion2uc, relevanceCriterion2gf);
 						
 				Relevance_of_statements[backwardcounter] = ri;
 				

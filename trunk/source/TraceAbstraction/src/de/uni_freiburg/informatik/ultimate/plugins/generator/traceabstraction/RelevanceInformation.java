@@ -46,17 +46,18 @@ public class RelevanceInformation implements IRelevanceInformation
 	private final List<IAction> m_Actions;
 	private final boolean m_Criterion1UC;
 	private final boolean m_Criterion1GF;
-	private final boolean m_Criterion2;
-	
+	private final boolean m_Criterion2UC;
+	private final boolean m_Criterion2GF;	
 	
 	
 	public RelevanceInformation(List<IAction> actions, boolean criterion1uc, 
-			boolean criterion1gf, boolean criterion2) {
+			boolean criterion1gf, boolean criterion2uc, boolean criterion2gf) {
 		super();
 		m_Actions = actions;
 		m_Criterion1UC = criterion1uc;
 		m_Criterion1GF = criterion1gf;
-		m_Criterion2 = criterion2;
+		m_Criterion2UC = criterion2uc;
+		m_Criterion2GF = criterion2gf;
 	}
 	
 	public List<IAction> getActions() {
@@ -71,8 +72,11 @@ public class RelevanceInformation implements IRelevanceInformation
 		return m_Criterion1GF;
 	}
 
-	public boolean getCriterion2() {
-		return m_Criterion2;
+	public boolean getCriterion2UC() {
+		return m_Criterion2UC;
+	}
+	public boolean getCriterion2GF(){
+		return m_Criterion2GF;
 	}
 	
 
@@ -83,22 +87,24 @@ public class RelevanceInformation implements IRelevanceInformation
 	public IRelevanceInformation merge(IRelevanceInformation... relevanceInformations) {
 		boolean criterion1uc = getCriterion1UC();
 		boolean criterion1gf = getCriterion1GF();
-		boolean criterion2 = getCriterion2();
+		boolean criterion2uc = getCriterion2UC();
+		boolean criterion2gf = getCriterion1GF();
 		List<IAction> actions = new ArrayList<>();
 		for (IRelevanceInformation iri : relevanceInformations) {
 			RelevanceInformation ri = (RelevanceInformation) iri;
 			criterion1uc |= ri.getCriterion1UC();
 			criterion1gf |= ri.getCriterion1GF();
-			criterion2 |= ri.getCriterion2();
+			criterion1uc |= ri.getCriterion2UC();
+			criterion1gf |= ri.getCriterion1GF();
 			actions.addAll(ri.getActions());
 		}
-		return new RelevanceInformation(actions, criterion1uc, criterion1gf, criterion2);
+		return new RelevanceInformation(actions, criterion1uc, criterion1gf, criterion2uc, criterion1gf);
 	}
 
 	@Override
 	public String getShortString() {
 		
-		if (!getCriterion1UC() && !getCriterion1GF() && !getCriterion2()) {
+		if (!getCriterion1UC() && !getCriterion1GF() && !getCriterion2UC() && !getCriterion2GF()) {
 			return "-";
 		} else {
 			final StringBuilder sb = new StringBuilder();
@@ -108,8 +114,11 @@ public class RelevanceInformation implements IRelevanceInformation
 			if (getCriterion1GF()) {
 				sb.append("@");
 			}
-			if (getCriterion2()) {
+			if (getCriterion2UC()) {
 				sb.append("#");
+			}
+			if (getCriterion2GF()) {
+				sb.append("%");
 			}
 			return sb.toString();
 		}
