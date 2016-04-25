@@ -285,19 +285,51 @@ public class FlowSensitiveFaultLocalizer {
 	}
 	
 	
+	
+	private TransFormula computeMarkhorFormula(int a, int b, NestedWord<CodeBlock> counterexampleWord, ArrayList<int[]> informationFromCFG, SmtManager smtManager){
+		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(a).getTransitionFormula();
+		for(int i = a+1; i<=b; i++){
+			int flag = 0;
+			int branchOut = 0;
+			int branchIn = 0;
+			for(int j =0; j< informationFromCFG.size() ; j++){
+				if(i == informationFromCFG.get(j)[0] & informationFromCFG.get(j)[1]-1 <= b ){
+					flag = 1;
+					branchOut = informationFromCFG.get(j)[0];
+					branchIn = informationFromCFG.get(j)[1]-1;
+					i = informationFromCFG.get(j)[1] -1 ;
+					break;
+				}
+			}
+			
+			if(flag == 1){ // The current statement is a branch out and it's branch-in is with in the current branch. 
+				TransFormula sub_markhor = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,informationFromCFG,smtManager);
+				combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,sub_markhor);
+			}
+			else{ // It is a normal statement.
+				final CodeBlock Statement = counterexampleWord.getSymbol(i);
+				final TransFormula TransitionFormula = Statement.getTransitionFormula();
+				combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,TransitionFormula);
+			}
+		}
+		final TransFormula markhor = TransFormula.computeMarkhorTransFormula(combinedTransitionFormula, smtManager.getBoogie2Smt(), m_Services, m_Logger);
+		return markhor;
+	}
+	
 	private ArrayList<TransFormula> BranchRelevanceChecker(int a, int b, IPredicate weakestPreconditionOld, NestedWord<CodeBlock> counterexampleWord, 
-			SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager){
+			ArrayList<int[]> informationFromCFG, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager){
 		
 		
 		final PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
-		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(a).getTransitionFormula();
+//		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(a).getTransitionFormula();
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
-		for(int i = a+1; i<=b; i++){
-			final CodeBlock Statement = counterexampleWord.getSymbol(i);
-			final TransFormula TransitionFormula = Statement.getTransitionFormula();
-			combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,TransitionFormula);
-		}
-		final TransFormula markhor = TransFormula.computeMarkhorTransFormula(combinedTransitionFormula, smtManager.getBoogie2Smt(), m_Services, m_Logger);
+//		for(int i = a+1; i<=b; i++){
+//			final CodeBlock Statement = counterexampleWord.getSymbol(i);
+//			final TransFormula TransitionFormula = Statement.getTransitionFormula();
+//			combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,TransitionFormula);
+//		}
+//		final TransFormula markhor = TransFormula.computeMarkhorTransFormula(combinedTransitionFormula, smtManager.getBoogie2Smt(), m_Services, m_Logger);
+		final TransFormula markhor = computeMarkhorFormula(a, b, counterexampleWord,informationFromCFG, smtManager);
 		final IPredicate weakestPreconditionNew = pt.weakestPrecondition(weakestPreconditionOld, markhor);
 		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
 		final String preceeding = counterexampleWord.getSymbolAt(a-1).getPreceedingProcedure();
@@ -342,7 +374,7 @@ public class FlowSensitiveFaultLocalizer {
 			if(flag == 1){ // The current statement is a BRANCH-IN Statement.
 				
 				// Check the relevancy of the branch ?
-				final ArrayList<TransFormula> markhor_formula =  BranchRelevanceChecker(branch_out,branch_in,weakestPreconditionNew,counterexampleWord,smtManager,modGlobVarManager);
+				final ArrayList<TransFormula> markhor_formula =  BranchRelevanceChecker(branch_out,branch_in,weakestPreconditionNew,counterexampleWord,informationFromCFG,smtManager,modGlobVarManager);
 				if(markhor_formula.get(1) != null){ // If the branch is Relevant.
 					//Recursion
 					ArrayList<CodeBlock> relevantSubStatements = relevantFlowSensitiveStatements(counterexampleWord, branch_out,branch_in,weakestPreconditionNew,weakestPreconditionNew,weakestPreconditionSequence,pt,rc,smtManager,modGlobVarManager,informationFromCFG);
