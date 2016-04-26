@@ -130,19 +130,20 @@ public class OctMatrixTest {
 
 	@Test
 	public void testClosureByComparingRandom() {
-		for (int i = 0; i < 1000; ++i) {
+		for (int i = 0; i < 2000; ++i) {
 			int variables = (int) (Math.random() * 10) + 1;
 			OctMatrix m = OctMatrix.random(variables);
 			OctMatrix cNaiv = m.strongClosure(OctMatrix::shortestPathClosureNaiv);
-			OctMatrix cOther = m.cachedStrongClosure();
-			if (cNaiv.hasNegativeSelfLoop() != cOther.hasNegativeSelfLoop() || !cNaiv.isEqualTo(cOther)) {
+			OctMatrix cOther = m.strongClosure(OctMatrix::shortestPathClosureFullSparse);
+			if ((cNaiv.hasNegativeSelfLoop() && cOther.hasNegativeSelfLoop()) || cNaiv.isEqualTo(cOther)) {
+				// passed test case -- nothing to do
+			} else {
 				String msg = String.format("%s%n%s%n%s%n%s%n%s%n%s%n",
 						"original matrix", m,
 						"strong closure (naiv)", cNaiv,
 						"strong closure (other)", cOther);
 				Assert.fail(msg);
 			}
-			// else: test passed
 		}
 	}
 
