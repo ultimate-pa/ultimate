@@ -504,7 +504,7 @@ public class FlowSensitiveFaultLocalizer {
 		try 
 		{
 			return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), cfg, 
-					Collections.singleton(startPoint), possibleEndPoints)).getNestedRun();
+					Collections.singleton(startPoint), Collections.emptySet(), possibleEndPoints)).getNestedRun();
 		} 
 		
 		catch (OperationCanceledException e) 

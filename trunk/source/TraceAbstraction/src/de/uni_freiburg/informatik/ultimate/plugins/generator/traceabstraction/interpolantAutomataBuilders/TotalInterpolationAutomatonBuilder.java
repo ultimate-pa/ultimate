@@ -392,8 +392,8 @@ public class TotalInterpolationAutomatonBuilder {
 
 	private NestedRun<CodeBlock, IPredicate> findRun(IPredicate p, Set<IPredicate> annotated)
 			throws OperationCanceledException {
-		return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_Abstraction, Collections.singleton(p), m_Annotated))
-				.getNestedRun();
+		return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_Abstraction, 
+				Collections.singleton(p), Collections.emptySet(), m_Annotated)).getNestedRun();
 	}
 
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {

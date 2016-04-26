@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -112,6 +113,11 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * state is a goal state.
 	 */
 	private final boolean m_GoalStateIsAcceptingState;
+	
+	/**
+	 * Set of states in which the run we are searching must not visit.
+	 */
+	private final Collection<STATE> m_ForbiddenStates;
 	
 	/**
 	 * INestedWordAutomaton for which we check emptiness.
@@ -253,6 +259,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_StartStates = Utils.constructHashSet(m_nwa.getInitialStates());
 		m_GoalStateIsAcceptingState = true;
 		m_GoalStates = null;
+		m_ForbiddenStates = Collections.emptySet();
 		m_Logger.info(startMessage());
 		m_acceptingRun = getAcceptingRun();
 		m_Logger.info(exitMessage());
@@ -260,13 +267,15 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 
 	/**
-	 * Constructor that is not restricted to emptiness checks. The set of
-	 * startStates defines where the run that we search has to start. The set
-	 * of goalStates defines where the run that we search has to end.
+	 * Constructor that is not restricted to emptiness checks. 
+	 * The set of startStates defines where the run that we search has to start. 
+	 * The set of forbiddenStates defines states that the run must not visit.
+	 * The set of goalStates defines where the run that we search has to end.
 	 */
 	public IsEmpty(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER,STATE> nwa, 
-			Set<STATE> startStates, Set<STATE> goalStates) {
+			Set<STATE> startStates, Set<STATE> forbiddenStates, 
+			Set<STATE> goalStates) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_nwa = nwa;
@@ -276,6 +285,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_StartStates = startStates;
 		m_GoalStateIsAcceptingState = false;
 		m_GoalStates = goalStates;
+		m_ForbiddenStates = forbiddenStates;
 		m_Logger.info(startMessage());
 		m_acceptingRun = getAcceptingRun();
 		m_Logger.info(exitMessage());
@@ -416,10 +426,12 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 											m_nwa.internalSuccessors(state)) {
 				LETTER symbol = internalTransition.getLetter();
 				STATE succ = internalTransition.getSucc();
-				if(!wasVisited(succ, stateK)) {
-					addRunInformationInternal(
-										succ,stateK,symbol,state,stateK);
-					enqueueAndMarkVisited(succ, stateK);
+				if (!m_ForbiddenStates.contains(succ)) {
+					if(!wasVisited(succ, stateK)) {
+						addRunInformationInternal(
+								succ,stateK,symbol,state,stateK);
+						enqueueAndMarkVisited(succ, stateK);
+					}
 				}
 			}
 
@@ -427,12 +439,13 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 												m_nwa.callSuccessors(state)) {
 				LETTER symbol = callTransition.getLetter();
 				STATE succ = callTransition.getSucc();
-				//add these information even in already visited
-//remove this line					addCallStatesOfCallState(state, stateK);
-				addRunInformationCall(succ, state, symbol, state, stateK);
-				if(!wasVisited(succ, state)) {
-					enqueueAndMarkVisitedCall(succ, state);
-				}				
+				if (!m_ForbiddenStates.contains(succ)) {
+					//add these information even in already visited
+					addRunInformationCall(succ, state, symbol, state, stateK);
+					if(!wasVisited(succ, state)) {
+						enqueueAndMarkVisitedCall(succ, state);
+					}
+				}
 			}
 			
 			if (stateK == m_nwa.getEmptyStackState()) {
@@ -444,13 +457,14 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 							m_nwa.returnSuccessorsGivenHier(state, stateK)) {
 				LETTER symbol = returnTransition.getLetter();
 				STATE succ = returnTransition.getSucc();
-				for (STATE stateKK : getCallStatesOfCallState(stateK) ) {
-					addSummary(stateK, succ, state, symbol);
-					if(!wasVisited(succ, stateKK)) {
-						enqueueAndMarkVisited(succ, stateKK);
-						addRunInformationReturn(succ, stateKK, symbol, state, stateK);
+				if (!m_ForbiddenStates.contains(succ)) {
+					for (STATE stateKK : getCallStatesOfCallState(stateK) ) {
+						addSummary(stateK, succ, state, symbol);
+						if(!wasVisited(succ, stateKK)) {
+							enqueueAndMarkVisited(succ, stateKK);
+							addRunInformationReturn(succ, stateKK, symbol, state, stateK);
+						}
 					}
-
 				}
 			}
 		}
