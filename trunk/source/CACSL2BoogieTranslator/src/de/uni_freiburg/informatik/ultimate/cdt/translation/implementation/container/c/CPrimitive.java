@@ -250,10 +250,19 @@ public class CPrimitive extends CType {
 //                    this.type = PRIMITIVE.CHAR32;
 //                    break;
                 case IASTSimpleDeclSpecifier.t_double:
-                	if (sds.isComplex())
-                		this.type = PRIMITIVE.COMPLEX_DOUBLE;
-                	else
-                		this.type = PRIMITIVE.DOUBLE;
+                	if (sds.isComplex()) {
+                		if (sds.isLong()) {
+                			this.type = PRIMITIVE.COMPLEX_LONGDOUBLE;
+                		} else {
+                			this.type = PRIMITIVE.COMPLEX_DOUBLE;
+                		}
+                	} else {
+                		if (sds.isLong()) {
+                			this.type = PRIMITIVE.LONGDOUBLE;
+                		} else {
+                			this.type = PRIMITIVE.DOUBLE;
+                		}
+                	}
                     break;
                 case IASTSimpleDeclSpecifier.t_float:
                  	if (sds.isComplex())
