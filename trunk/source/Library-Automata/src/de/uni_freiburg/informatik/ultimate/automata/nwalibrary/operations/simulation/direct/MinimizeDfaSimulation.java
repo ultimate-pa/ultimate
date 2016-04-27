@@ -100,25 +100,49 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public MinimizeDfaSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+	public MinimizeDfaSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+		this(services, stateFactory, operand,
+				new DirectSimulation<>(services.getProgressMonitorService(),
+						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), true, stateFactory,
+						new DirectGameGraph<>(services, services.getProgressMonitorService(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
+								stateFactory)));
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton using a given simulation.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param simulation
+	 *            Simulation to use for reduction
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected MinimizeDfaSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final DirectSimulation<LETTER, STATE> simulation)
+					throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 
-		DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(m_Services, m_Services.getProgressMonitorService(),
-				m_Logger, m_Operand, stateFactory);
-		graph.generateGameGraphFromAutomaton();
-		DirectSimulation<LETTER, STATE> sim = new DirectSimulation<>(m_Services.getProgressMonitorService(), m_Logger,
-				true, stateFactory, graph);
-		sim.doSimulation();
-		m_Result = sim.getResult();
+		simulation.getGameGraph().generateGameGraphFromAutomaton();
+		simulation.doSimulation();
+		m_Result = simulation.getResult();
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			graph = new DirectGameGraph<>(m_Services, m_Services.getProgressMonitorService(), m_Logger, m_Operand,
-					stateFactory);
+			DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(m_Services,
+					m_Services.getProgressMonitorService(), m_Logger, m_Operand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
 			DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
 					m_Services.getProgressMonitorService(), m_Logger, false, stateFactory, graph);

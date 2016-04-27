@@ -39,21 +39,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 
 /**
- * Simulation that realizes <b>fair simulation</b> for reduction of a given
- * nwa automaton.<br/>
- * Once created it starts the simulation, results can then be get by using
- * {@link #getResult()}.<br/>
+ * Simulation that realizes <b>fair simulation</b> for reduction of a given nwa
+ * automaton.<br/>
+ * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
  * 
  * For more information on the type of simulation see {@link FairNwaGameGraph}.
- * <br/>
- * <br/>
- * 
- * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
- * where n is the amount of states and k the amount of transitions from the
- * inputed automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation minimization<i> by
- * <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner
  * 
@@ -102,10 +93,10 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 
 	/**
 	 * Creates a new fair simulation that tries to reduce the given nwa
-	 * automaton using <b>fair simulation</b>. Uses a given
-	 * collection of equivalence classes to optimize the simulation.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
+	 * automaton using <b>fair simulation</b>. Uses a given collection of
+	 * equivalence classes to optimize the simulation.<br/>
+	 * After construction the simulation can be started and results can be get
+	 * by using {@link #getResult()}.<br/>
 	 * <br/>
 	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
@@ -141,7 +132,7 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 			final FairNwaGameGraph<LETTER, STATE> game) throws OperationCanceledException {
 		super(progressTimer, logger, buechi, useSCCs, stateFactory, possibleEquivalentClasses, game);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -150,7 +141,7 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 */
 	@Override
 	public void doSimulation() throws OperationCanceledException {
-//		super.doSimulation();
+		// super.doSimulation();
 		getLogger().debug(getGameGraph().toAtsFormat());
 		setResult(getGameGraph().generateAutomatonFromGraph());
 		// TODO Implement some different stuff

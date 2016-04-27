@@ -251,7 +251,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	private static <LETTER, STATE> boolean checkOperationDeep(ReduceBuchiFairSimulation<LETTER, STATE> operation,
+	private static <LETTER, STATE> boolean checkOperationDeep(final ReduceBuchiFairSimulation<LETTER, STATE> operation,
 			final boolean logNoErrorDebug, final boolean useLogger) throws OperationCanceledException {
 		ReduceBuchiFairSimulation<LETTER, STATE> operationSCC;
 		FairSimulation<LETTER, STATE> simulationSCC;

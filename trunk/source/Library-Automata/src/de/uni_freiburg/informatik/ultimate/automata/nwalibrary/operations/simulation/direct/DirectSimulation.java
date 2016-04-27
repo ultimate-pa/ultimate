@@ -49,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
 /**
  * Simulation that realizes <b>direct simulation</b> for reduction of a given
  * buechi automaton.<br/>
- * Once created it starts the simulation, results can then be get by using
- * {@link #getResult()}.<br/>
+ * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
  * 
  * For more information on the type of simulation see {@link DirectGameGraph}.
@@ -71,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
  * @param <STATE>
  *            State class of buechi automaton
  */
-public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
+public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/**
 	 * Game graph that is used for simulation calculation.
@@ -81,8 +80,8 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	/**
 	 * Creates a new direct simulation with a given graph that tries to reduce
 	 * the given buechi automaton using <b>direct simulation</b>.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
+	 * After construction the simulation can be started and results can be get
+	 * by using {@link #getResult()}.<br/>
 	 * <br/>
 	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead

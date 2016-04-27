@@ -63,8 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 /**
  * Simulation that realizes <b>fair simulation</b> for reduction of a given
  * buechi automaton.<br/>
- * Once created it starts the simulation, results can then be get by using
- * {@link #getResult()}.<br/>
+ * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
  * 
  * For more information on the type of simulation see {@link FairGameGraph}.
@@ -216,8 +215,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * Creates a new fair simulation that tries to reduce the given buechi
 	 * automaton using <b>fair simulation</b>.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
+	 * After construction the simulation can be started and results can be get
+	 * by using {@link #getResult()}.<br/>
 	 * <br/>
 	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
@@ -252,8 +251,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * Creates a new fair simulation with a given fair game graph that tries to
 	 * reduce the given buechi automaton using <b>fair simulation</b>.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
+	 * After construction the simulation can be started and results can be get
+	 * by using {@link #getResult()}.<br/>
 	 * <br/>
 	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
@@ -699,7 +698,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	public void doSimulation() throws OperationCanceledException {
 		m_Logger.debug("Fair Game Graph has " + m_Game.getSize() + " vertices.");
 		m_GlobalInfinity = m_Game.getGlobalInfinity();
-		
+
 		SimulationPerformance performance = super.getSimulationPerformance();
 		performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
 		performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);

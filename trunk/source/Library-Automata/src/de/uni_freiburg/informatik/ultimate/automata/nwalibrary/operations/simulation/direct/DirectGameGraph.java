@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
+public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * The underlying buechi automaton from which the game graph gets generated.
@@ -127,7 +127,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(progressTimer, logger, stateFactory);
 		verifyAutomatonValidity(buechi);
-		
+
 		m_Services = services;
 		m_Buechi = buechi;
 		m_StateFactory = stateFactory;
@@ -161,8 +161,9 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 			if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
 				STATE state1 = v.getQ0();
 				STATE state2 = v.getQ1();
-				similarStates.addPair(state1, state2);
-
+				if (state1 != null && state2 != null) {
+					similarStates.addPair(state1, state2);
+				}
 			}
 		}
 		// Merge states if they simulate each other
@@ -315,7 +316,46 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 			logger.debug("Number of edges in game graph: " + m_GraphAmountOfEdges);
 		}
 
-		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
+		setGraphBuildTime(System.currentTimeMillis() - graphBuildTimeStart);
 	}
 
+	/**
+	 * Sets the internal counter of the amount of buechi states.
+	 * 
+	 * @param amount
+	 *            Amount of buechi states.
+	 */
+	protected void setBuechiAmountOfStates(final int amount) {
+		m_BuechiAmountOfStates = amount;
+	}
+
+	/**
+	 * Sets the internal counter of the amount of buechi transitions.
+	 * 
+	 * @param amount
+	 *            Amount of buechi transitions.
+	 */
+	protected void setBuechiAmountOfTransitions(final int amount) {
+		m_BuechiAmountOfTransitions = amount;
+	}
+
+	/**
+	 * Sets the internal counter of the amount of graph edges.
+	 * 
+	 * @param amount
+	 *            Amount of graph edges.
+	 */
+	protected void setGraphAmountOfEdges(final int amount) {
+		m_GraphAmountOfEdges = amount;
+	}
+
+	/**
+	 * Sets the internal field of the graphBuildTime.
+	 * 
+	 * @param graphBuildTime
+	 *            The graphBuildTime to set
+	 */
+	protected void setGraphBuildTime(final long graphBuildTime) {
+		m_GraphBuildTime = graphBuildTime;
+	}
 }

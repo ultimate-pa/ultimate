@@ -34,6 +34,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.nwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.old.vertex,

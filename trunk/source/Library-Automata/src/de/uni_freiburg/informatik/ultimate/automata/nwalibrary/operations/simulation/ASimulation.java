@@ -87,8 +87,8 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * underlying language.<br/>
  * <br/>
  * 
- * The simulation automatically starts after construction and its result can be
- * accessed by using {@link #getResult()}.<br/>
+ * After starting the simulation, its result can be accessed by using
+ * {@link #getResult()}.<br/>
  * <br/>
  * 
  * For game graphs see {@link AGameGraph}, for information on the magic infinity
@@ -718,13 +718,14 @@ public abstract class ASimulation<LETTER, STATE> {
 	protected void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
 		boolean isDeadEnd = !getGameGraph().hasSuccessors(vertex);
-		
+
 		// check if an update would change progress measure
-		// this happens if 
-		// * a successor (from a possibly different SCC) has progress measure (global) infinity,
+		// this happens if
+		// * a successor (from a possibly different SCC) has progress measure
+		// (global) infinity,
 		// * this vertex is a dead end duplicator vertex, or
 		// * this vertex has priority 1.
-		// 
+		//
 		boolean doesChangeWithUpdate = vertex.getPM(scc, getGameGraph().getGlobalInfinity()) != update(vertex,
 				localInfinity, scc);
 
