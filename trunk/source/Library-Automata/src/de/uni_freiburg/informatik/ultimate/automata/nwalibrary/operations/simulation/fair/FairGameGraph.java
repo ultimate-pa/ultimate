@@ -159,7 +159,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(progressTimer, logger, stateFactory);
 		verifyAutomatonValidity(buechi);
-		
+
 		m_Services = services;
 		m_Buechi = buechi;
 		m_ChangedBuechiTransitionsInverse = new NestedMap3<>();
@@ -182,8 +182,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
-			throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws OperationCanceledException {
 		SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
@@ -319,7 +318,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
 	@Override
-	public void generateGameGraphFromBuechi() throws OperationCanceledException {
+	public void generateGameGraphFromAutomaton() throws OperationCanceledException {
 		long graphBuildTimeStart = System.currentTimeMillis();
 
 		INestedWordAutomatonOldApi<LETTER, STATE> buechi = m_Buechi;
@@ -396,6 +395,24 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 
 		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
+	}
+
+	/**
+	 * Gets the internal field of all transitions the used buechi has.
+	 * 
+	 * @return The internal field of all transitions the used buechi has
+	 */
+	public Set<Triple<STATE, LETTER, STATE>> getBuechiTransitions() {
+		return m_BuechiTransitions;
+	}
+
+	/**
+	 * Gets the equivalence classes.
+	 * 
+	 * @return The equivalence classes
+	 */
+	public UnionFind<STATE> getEquivalenceClasses() {
+		return m_EquivalenceClasses;
 	}
 
 	/*
@@ -660,6 +677,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		return equivalenceClass != null && equivalenceClass.contains(secondState);
 	}
+
 	/**
 	 * Calculates the priority of a given {@link SpoilerVertex} by its
 	 * representation <i>(state spoiler is at, state duplicator is at)</i>.<br/>
@@ -682,7 +700,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			return 2;
 		}
 	}
-	
+
 	/**
 	 * Equalizes two given states to each other by adding transitions so that
 	 * both have the same out- and in-going transitions.
@@ -728,22 +746,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			return null;
 		}
 	}
-	/**
-	 * Gets the internal field of all transitions the used buechi has.
-	 * 
-	 * @return The internal field of all transitions the used buechi has
-	 */
-	protected Set<Triple<STATE, LETTER, STATE>> getBuechiTransitions() {
-		return m_BuechiTransitions;
-	}
-	/**
-	 * Gets the equivalence classes.
-	 * 
-	 * @return The equivalence classes
-	 */
-	protected UnionFind<STATE> getEquivalenceClasses() {
-		return m_EquivalenceClasses;
-	}
+
 	/**
 	 * Returns if the underlying buechi automaton has a given transition.
 	 * 
@@ -762,9 +765,10 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	protected void increaseBuechiAmountOfStates() {
 		m_BuechiAmountOfStates++;
 	}
-	
+
 	/**
-	 * Increases the internal counter of the amount of buechi transitions by one.
+	 * Increases the internal counter of the amount of buechi transitions by
+	 * one.
 	 */
 	protected void increaseBuechiAmountOfTransitions() {
 		m_BuechiAmountOfTransitions++;
@@ -887,9 +891,40 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
+	 * Sets the internal counter of the amount of buechi states.
+	 * 
+	 * @param amount
+	 *            Amount of buechi states.
+	 */
+	protected void setBuechiAmountOfStates(final int amount) {
+		m_BuechiAmountOfStates = amount;
+	}
+
+	/**
+	 * Sets the internal counter of the amount of buechi transitions.
+	 * 
+	 * @param amount
+	 *            Amount of buechi transitions.
+	 */
+	protected void setBuechiAmountOfTransitions(final int amount) {
+		m_BuechiAmountOfTransitions = amount;
+	}
+
+	/**
+	 * Sets the internal counter of the amount of graph edges.
+	 * 
+	 * @param amount
+	 *            Amount of graph edges.
+	 */
+	protected void setGraphAmountOfEdges(final int amount) {
+		m_GraphAmountOfEdges = amount;
+	}
+
+	/**
 	 * Sets the internal field of the graphBuildTime.
 	 * 
-	 * @param graphBuildTime The graphBuildTime to set
+	 * @param graphBuildTime
+	 *            The graphBuildTime to set
 	 */
 	protected void setGraphBuildTime(final long graphBuildTime) {
 		m_GraphBuildTime = graphBuildTime;

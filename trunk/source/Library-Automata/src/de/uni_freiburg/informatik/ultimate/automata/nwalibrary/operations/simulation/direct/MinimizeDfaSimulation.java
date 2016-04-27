@@ -109,7 +109,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 
 		DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(m_Services, m_Services.getProgressMonitorService(),
 				m_Logger, m_Operand, stateFactory);
-		graph.generateGameGraphFromBuechi();
+		graph.generateGameGraphFromAutomaton();
 		DirectSimulation<LETTER, STATE> sim = new DirectSimulation<>(m_Services.getProgressMonitorService(), m_Logger,
 				true, stateFactory, graph);
 		sim.doSimulation();
@@ -119,7 +119,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 		if (compareWithNonSccResult) {
 			graph = new DirectGameGraph<>(m_Services, m_Services.getProgressMonitorService(), m_Logger, m_Operand,
 					stateFactory);
-			graph.generateGameGraphFromBuechi();
+			graph.generateGameGraphFromAutomaton();
 			DirectSimulation<LETTER, STATE> nonSccSim = new DirectSimulation<LETTER, STATE>(
 					m_Services.getProgressMonitorService(), m_Logger, false, stateFactory, graph);
 			nonSccSim.doSimulation();

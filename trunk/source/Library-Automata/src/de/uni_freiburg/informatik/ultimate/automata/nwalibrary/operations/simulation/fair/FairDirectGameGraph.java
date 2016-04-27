@@ -126,7 +126,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * buchiReduction.fair.FairGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
 			throws OperationCanceledException {
 		if (m_IsCurrentlyDirectGameGraph) {
 			// For the direct simulation we won't generate an expensive unused
@@ -135,7 +135,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 			return null;
 		} else {
 			// Use the original fair generation
-			return super.generateBuchiAutomatonFromGraph();
+			return super.generateAutomatonFromGraph();
 		}
 	}
 
@@ -146,8 +146,8 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
 	@Override
-	public void generateGameGraphFromBuechi() throws OperationCanceledException {
-		super.generateGameGraphFromBuechi();
+	public void generateGameGraphFromAutomaton() throws OperationCanceledException {
+		super.generateGameGraphFromAutomaton();
 		calculateTransformationChanges();
 	}
 

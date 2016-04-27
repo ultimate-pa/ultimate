@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation;
 
 /**
  * Different types of simulation.

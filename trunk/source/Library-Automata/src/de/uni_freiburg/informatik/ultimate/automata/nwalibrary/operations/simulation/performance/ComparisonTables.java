@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**

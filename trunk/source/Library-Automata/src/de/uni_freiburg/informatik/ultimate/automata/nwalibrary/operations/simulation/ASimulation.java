@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.EMultipleDataOption;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
@@ -502,7 +501,7 @@ public abstract class ASimulation<LETTER, STATE> {
 			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
-		m_Result = getGameGraph().generateBuchiAutomatonFromGraph();
+		m_Result = getGameGraph().generateAutomatonFromGraph();
 
 		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL_TIME);
 		// Add time building of the graph took to the overall time since this

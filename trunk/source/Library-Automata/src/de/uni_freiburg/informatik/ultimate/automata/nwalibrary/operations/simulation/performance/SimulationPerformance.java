@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 
 /**
  * Class that is used by {@link ASimulation} to measure its performance. Has

@@ -172,7 +172,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public abstract INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
+	public abstract INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
 			throws OperationCanceledException;
 
 	/**
@@ -183,7 +183,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public abstract void generateGameGraphFromBuechi() throws OperationCanceledException;
+	public abstract void generateGameGraphFromAutomaton() throws OperationCanceledException;
 
 	/**
 	 * Gets the {@link DuplicatorVertex} object of the game graph by its
@@ -571,7 +571,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param vertex
 	 *            Vertex to add
 	 */
-	protected void addDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
+	public void addDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
 		m_DuplicatorVertices.add(vertex);
 		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
 				vertex);
@@ -586,7 +586,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param dest
 	 *            Destination of the edge
 	 */
-	protected void addEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
+	public void addEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
 		// Update successor information
 		if (!m_Successors.containsKey(src)) {
 			m_Successors.put(src, new HashSet<>());
@@ -606,7 +606,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param vertex
 	 *            Vertex to add
 	 */
-	protected void addSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
+	public void addSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
 		m_SpoilerVertices.add(vertex);
 		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), vertex);
 	}
@@ -617,7 +617,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * 
 	 * @return The internal used field for duplicator vertices.
 	 */
-	protected HashSet<DuplicatorVertex<LETTER, STATE>> getInternalDuplicatorVerticesField() {
+	public HashSet<DuplicatorVertex<LETTER, STATE>> getInternalDuplicatorVerticesField() {
 		return m_DuplicatorVertices;
 	}
 
@@ -627,7 +627,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * 
 	 * @return The internal used field for spoiler vertices.
 	 */
-	protected HashSet<SpoilerVertex<LETTER, STATE>> getInternalSpoilerVerticesField() {
+	public HashSet<SpoilerVertex<LETTER, STATE>> getInternalSpoilerVerticesField() {
 		return m_SpoilerVertices;
 	}
 
@@ -673,7 +673,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * Increases the current global infinity bound by one.<br/>
 	 * For more information see {@link #getGlobalInfinity()}.
 	 */
-	protected void increaseGlobalInfinity() {
+	public void increaseGlobalInfinity() {
 		m_GlobalInfinity++;
 	}
 
@@ -683,7 +683,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param vertex
 	 *            The vertex to remove
 	 */
-	protected void removeDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
+	public void removeDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
 		m_DuplicatorVertices.remove(vertex);
 		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
 				null);
@@ -698,7 +698,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param dest
 	 *            Destination of the edge
 	 */
-	protected void removeEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
+	public void removeEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
 		// Update successor information
 		if (m_Successors.get(src) != null) {
 			m_Successors.get(src).remove(dest);
@@ -722,7 +722,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param vertex
 	 *            The vertex to remove
 	 */
-	protected void removeSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
+	public void removeSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
 		m_SpoilerVertices.remove(vertex);
 		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), null);
 	}

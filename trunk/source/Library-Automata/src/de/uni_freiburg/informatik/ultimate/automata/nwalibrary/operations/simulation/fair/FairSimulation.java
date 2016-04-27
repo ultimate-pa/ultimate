@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.GameGraphSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.EMultipleDataOption;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
@@ -823,7 +823,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// Generate the resulting automata
 		m_Logger.debug("Generating the result automaton...");
-		setResult(m_Game.generateBuchiAutomatonFromGraph());
+		setResult(m_Game.generateAutomatonFromGraph());
 
 		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL_TIME);
 		// Add time building of the graph took to the overall time since this

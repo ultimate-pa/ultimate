@@ -152,7 +152,7 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	public void doSimulation() throws OperationCanceledException {
 //		super.doSimulation();
 		getLogger().debug(getGameGraph().toAtsFormat());
-		setResult(getGameGraph().generateBuchiAutomatonFromGraph());
+		setResult(getGameGraph().generateAutomatonFromGraph());
 		// TODO Implement some different stuff
 	}
 }

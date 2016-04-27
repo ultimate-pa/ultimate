@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.DirectGameGraph;
@@ -812,7 +813,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			if (type.equals(ESimulationType.DIRECT)) {
 				DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(services, progressTimer, m_Logger, operand,
 						stateFactory);
-				graph.generateGameGraphFromBuechi();
+				graph.generateGameGraphFromAutomaton();
 				DirectSimulation<LETTER, STATE> sim = new DirectSimulation<>(progressTimer, m_Logger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
@@ -820,7 +821,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			} else if (type.equals(ESimulationType.DELAYED)) {
 				DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(services, progressTimer, m_Logger,
 						operand, stateFactory);
-				graph.generateGameGraphFromBuechi();
+				graph.generateGameGraphFromAutomaton();
 				DelayedSimulation<LETTER, STATE> sim = new DelayedSimulation<>(progressTimer, m_Logger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
@@ -828,7 +829,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			} else if (type.equals(ESimulationType.FAIR)) {
 				FairGameGraph<LETTER, STATE> graph = new FairGameGraph<>(services, progressTimer, m_Logger, operand,
 						stateFactory);
-				graph.generateGameGraphFromBuechi();
+				graph.generateGameGraphFromAutomaton();
 				FairSimulation<LETTER, STATE> sim = new FairSimulation<>(progressTimer, m_Logger, operand, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
@@ -836,7 +837,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			} else if (type.equals(ESimulationType.FAIRDIRECT)) {
 				FairDirectGameGraph<LETTER, STATE> graph = new FairDirectGameGraph<>(services, progressTimer, m_Logger,
 						operand, stateFactory);
-				graph.generateGameGraphFromBuechi();
+				graph.generateGameGraphFromAutomaton();
 				FairDirectSimulation<LETTER, STATE> sim = new FairDirectSimulation<>(progressTimer, m_Logger, operand,
 						useSCCs, stateFactory, graph);
 				sim.doSimulation();

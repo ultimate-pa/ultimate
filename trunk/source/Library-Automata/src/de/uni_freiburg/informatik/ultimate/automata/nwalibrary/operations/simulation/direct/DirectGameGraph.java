@@ -144,7 +144,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	public NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() throws OperationCanceledException {
+	public NestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph() throws OperationCanceledException {
 		SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
@@ -243,7 +243,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
 	@Override
-	public void generateGameGraphFromBuechi() throws OperationCanceledException {
+	public void generateGameGraphFromAutomaton() throws OperationCanceledException {
 		long graphBuildTimeStart = System.currentTimeMillis();
 
 		// Calculate v1 [paper ref 10]

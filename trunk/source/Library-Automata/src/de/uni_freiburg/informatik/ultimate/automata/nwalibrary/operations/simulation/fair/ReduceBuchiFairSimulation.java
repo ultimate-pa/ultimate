@@ -578,7 +578,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		m_UseSCCs = useSCCs;
 		m_Logger.info(startMessage());
 		m_Logger.debug("Starting generation of Fair Game Graph...");
-		simulation.getGameGraph().generateGameGraphFromBuechi();
+		simulation.getGameGraph().generateGameGraphFromAutomaton();
 		m_Simulation = simulation;
 		simulation.doSimulation();
 		m_Result = m_Simulation.getResult();

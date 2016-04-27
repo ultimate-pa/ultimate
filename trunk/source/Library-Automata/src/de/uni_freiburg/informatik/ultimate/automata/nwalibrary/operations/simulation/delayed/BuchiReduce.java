@@ -115,7 +115,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 		DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(m_Services,
 				m_Services.getProgressMonitorService(), m_Logger, m_Operand, stateFactory);
-		graph.generateGameGraphFromBuechi();
+		graph.generateGameGraphFromAutomaton();
 		DelayedSimulation<LETTER, STATE> sim = new DelayedSimulation<>(m_Services.getProgressMonitorService(), m_Logger,
 				true, stateFactory, graph);
 		sim.doSimulation();
@@ -125,7 +125,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		if (compareWithNonSccResult) {
 			graph = new DelayedGameGraph<>(m_Services, m_Services.getProgressMonitorService(), m_Logger, m_Operand,
 					stateFactory);
-			graph.generateGameGraphFromBuechi();
+			graph.generateGameGraphFromAutomaton();
 			DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(m_Services.getProgressMonitorService(),
 					m_Logger, false, stateFactory, graph);
 			nonSccSim.doSimulation();
