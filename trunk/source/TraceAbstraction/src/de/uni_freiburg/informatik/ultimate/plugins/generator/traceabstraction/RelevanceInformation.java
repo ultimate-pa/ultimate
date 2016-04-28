@@ -94,11 +94,11 @@ public class RelevanceInformation implements IRelevanceInformation
 			RelevanceInformation ri = (RelevanceInformation) iri;
 			criterion1uc |= ri.getCriterion1UC();
 			criterion1gf |= ri.getCriterion1GF();
-			criterion1uc |= ri.getCriterion2UC();
-			criterion1gf |= ri.getCriterion1GF();
+			criterion2uc |= ri.getCriterion2UC();
+			criterion2gf |= ri.getCriterion2GF();
 			actions.addAll(ri.getActions());
 		}
-		return new RelevanceInformation(actions, criterion1uc, criterion1gf, criterion2uc, criterion1gf);
+		return new RelevanceInformation(actions, criterion1uc, criterion1gf, criterion2uc, criterion2gf);
 	}
 
 	@Override
