@@ -144,7 +144,7 @@ public class FlowSensitiveFaultLocalizer {
 			Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> succesors = cfg.internalSuccessors(hashmap.get(programpoint)); //Immediate successors of of the state in CFG
 			Set<IPredicate> possibleEndPoints =  new HashSet<IPredicate>();  // all the successive states of the current state in the counter example
 			Set<ProgramPoint> possibleEndPoints_programpoints = new HashSet<ProgramPoint>();
-			for(int j=counter+1; j< size; j++)
+			for(int j=counter+1; j< size-1; j++)
 			{
 				possibleEndPoints.add( hashmap.get(((ISLPredicate)counterexample.getStateAtPosition(j)).getProgramPoint()) ); // Pushing all the successive states from the counter example
 				possibleEndPoints_programpoints.add(((ISLPredicate) counterexample.getStateAtPosition(j)).getProgramPoint());
