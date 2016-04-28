@@ -149,6 +149,7 @@ public class FlowSensitiveFaultLocalizer {
 				possibleEndPoints.add( hashmap.get(((ISLPredicate)counterexample.getStateAtPosition(j)).getProgramPoint()) ); // Pushing all the successive states from the counter example
 				possibleEndPoints_programpoints.add(((ISLPredicate) counterexample.getStateAtPosition(j)).getProgramPoint());
 			}
+			IPredicate parent_state = hashmap.get(((ISLPredicate)counterexample.getStateAtPosition(counter)).getProgramPoint()); // FORBIDDEN STATE BUG
 			for( OutgoingInternalTransition<CodeBlock, IPredicate> test:succesors) // For all the immediate successor states of the state in focus
 			{
 				IPredicate succesor2 = test.getSucc(); // One of the successors of the the state in focus.
@@ -156,7 +157,7 @@ public class FlowSensitiveFaultLocalizer {
 				{	
 					int[] tuple = new int[2]; // Initialize tuple
 					//m_Logger.warn("Found a state not in the counter example -->>" + succesor2);
-					NestedRun<CodeBlock, IPredicate> path = findPathInCFG(succesor2, possibleEndPoints, cfg); // Path from the successor state not in the counter example till one of the states in the possible end points.
+					NestedRun<CodeBlock, IPredicate> path = findPathInCFG(succesor2,parent_state, possibleEndPoints, cfg); // Path from the successor state not in the counter example till one of the states in the possible end points.
 					//m_Logger.warn("Path -->  "+ path);
 					if(path != null) // If such a path exists. Then that means that there is a path from the successor state that comes back to the counter example
 					{ // THAT MEANS WE HAVE FOUND AN IF BRANCH AT POSITION "COUNTER" !!
@@ -491,12 +492,13 @@ public class FlowSensitiveFaultLocalizer {
 	 * Check if there is a path from startPoint so some element of the 
 	 * possibleEndPoints set.
 	 * If yes, a NestedRun is returned, otherwise null is returned.
+	 * @param parent_state 
 	 * 
 	 * @throws ToolchainCanceledException if toolchain was cancelled (e.g., 
 	 * because of a timeout)
 	 */
 	private NestedRun<CodeBlock, IPredicate> findPathInCFG(IPredicate startPoint, 
-			Set<IPredicate> possibleEndPoints, INestedWordAutomaton<CodeBlock, 
+			IPredicate parent_state, Set<IPredicate> possibleEndPoints, INestedWordAutomaton<CodeBlock, 
 			IPredicate> cfg) 
 	{
 
@@ -504,7 +506,7 @@ public class FlowSensitiveFaultLocalizer {
 		try 
 		{
 			return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), cfg, 
-					Collections.singleton(startPoint), Collections.emptySet(), possibleEndPoints)).getNestedRun();
+					Collections.singleton(startPoint), Collections.singleton(parent_state), possibleEndPoints)).getNestedRun();
 		} 
 		
 		catch (OperationCanceledException e) 
