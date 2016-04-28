@@ -6,41 +6,29 @@
 // 
 // Output of relevance analysis
 //
-// [L11]             *   size := 1;
+// [L25]             *   size := 1;
 //        VAL            [size=1]
-// [L12]             %   havoc a;
+// [L26]             %   havoc a;
 //        VAL            [size=1]
-// [L13]             *#  m := nondet0;
-//        VAL            [m=0, nondet0=0, size=1]
-// [L14]             *#  j := 0;
-//        VAL            [j=0, m=0, nondet0=0, size=1]
-// [L15]  COND TRUE  -   j < size
-//        VAL            [j=0, m=0, nondet0=0, size=1]
-// [L17]             *#  a[j] := nondet2;
-//        VAL            [j=0, m=0, nondet0=0, nondet2=0, size=1]
-// [L18]             -   j := j + 1;
-//        VAL            [j=1, m=0, nondet0=0, nondet2=0, size=1]
-// [L20]             -   assert a[0] > m;
-//        VAL            [j=1, m=0, nondet0=0, nondet2=0, size=1]
+// [L27]  COND TRUE  -   0 < size
+//        VAL            [size=1]
+// [L29]             *#  a := nondet;
+//        VAL            [a=0, nondet=0, size=1]
+// [L31]             -   assert a > 23;
+//        VAL            [a=0, nondet=0, size=1]
 
 procedure main() returns (){
-    var nondet0 : int;
-    var nondet2 : int;
+    var nondet : int;
     var size : int;
-    var j : int;
-    var a : [int]int;
-    var m : int;
+    var a : int;
 
     size := 1;
     havoc a;
-    m := nondet0;
-    j := 0;
-    if (j < size)
+    if (0 < size)
     {
-        a[j] := nondet2;
-        j :=  j + 1;
+        a := nondet;
     }
-    assert (a[0] > m);
+    assert (a > 23);
 }
 
 
