@@ -58,8 +58,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class SmtUtils {
@@ -529,14 +531,42 @@ public class SmtUtils {
 	 * @return term that is equivalent to lhs <= rhs
 	 */
 	public static Term leq(Script script, Term lhs, Term rhs) {
-		return script.term("<=", lhs, rhs);
+		return comparison(script, "<=", lhs, rhs);
+	}
+	
+	/**
+	 * @return term that is equivalent to lhs >= rhs
+	 */
+	public static Term geq(Script script, Term lhs, Term rhs) {
+		return comparison(script, ">=", lhs, rhs);
 	}
 
 	/**
 	 * @return term that is equivalent to lhs < rhs
 	 */
 	public static Term less(Script script, Term lhs, Term rhs) {
-		return script.term("<", lhs, rhs);
+		return comparison(script, "<", lhs, rhs);
+	}
+	
+	/**
+	 * @return term that is equivalent to lhs > rhs
+	 */
+	public static Term greater(Script script, Term lhs, Term rhs) {
+		return comparison(script, ">", lhs, rhs);
+	}
+
+	/**
+	 * @return term that is equivalent to lhs X rhs
+	 * where X is either leq, less, geq, or greater.
+	 */
+	private static Term comparison(Script script, String functionSymbol, Term lhs, Term rhs) {
+		Term rawTerm = script.term(functionSymbol, lhs, rhs);
+		try {
+			AffineRelation ar = new AffineRelation(script, rawTerm);
+			return ar.positiveNormalForm(script);
+		} catch (NotAffineException e) {
+			throw new AssertionError("no supported comarison " + rawTerm);
+		}
 	}
 
 	/**
@@ -665,6 +695,17 @@ public class SmtUtils {
 				result = mod(script, params[0], params[1]);
 			}
 			break;
+		case ">=":
+		case "<=":
+		case ">":
+		case "<": {
+			if (params.length != 2) {
+				throw new IllegalArgumentException("no comparison");
+			} else {
+				result = comparison(script, funcname, params[0], params[1]);
+			}
+			break;
+		}
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
