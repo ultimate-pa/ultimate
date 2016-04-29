@@ -175,6 +175,16 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		m_GraphAmountOfEdges = 0;
 	}
 
+	/**
+	 * Returns whether there are merge-able states in the game graph.
+	 * 
+	 * @return <tt>True</tt> if there are merge-able states in the graph,
+	 *         <tt>false</tt> if not.
+	 */
+	public boolean areThereMergeableStates() {
+		return m_AreThereMergeableStates;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -413,6 +423,17 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	public UnionFind<STATE> getEquivalenceClasses() {
 		return m_EquivalenceClasses;
+	}
+
+	/**
+	 * Gets the list of transitions that should be removed from the input
+	 * automaton.
+	 * 
+	 * @return List of transitions that should be removed from the input
+	 *         automaton.
+	 */
+	public List<Triple<STATE, LETTER, STATE>> getTransitionsToRemove() {
+		return m_TransitionsToRemove;
 	}
 
 	/*

@@ -36,6 +36,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
@@ -105,6 +108,38 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		}
 		m_Generation = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), m_Nwa, this,
 				ESimulationType.FAIR);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * simulation.fair.FairGameGraph#generateAutomatonFromGraph()
+	 */
+	@Override
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws OperationCanceledException {
+		SimulationPerformance performance = getSimulationPerformance();
+		if (performance != null) {
+			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
+		}
+
+		INestedWordAutomatonOldApi<LETTER, STATE> result = m_Generation.generateAutomatonFromGraph();
+
+		// Log performance
+		if (performance != null) {
+			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
+			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH_TIME, m_Generation.getGraphBuildTime());
+			performance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
+					m_Generation.getAutomatonAmountOfStates() - m_Generation.getResultAmountOfStates());
+			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
+					m_Generation.getAutomatonAmountOfTransitions() - m_Generation.getResultAmountOfTransitions());
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS,
+					m_Generation.getAutomatonAmountOfTransitions());
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, m_Generation.getAutomatonAmountOfStates());
+			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, m_Generation.getGraphAmountOfEdges());
+		}
+
+		return result;
 	}
 
 	/*

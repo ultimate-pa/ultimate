@@ -31,6 +31,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -39,16 +41,27 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.UniqueQueue;
 import de.uni_freiburg.informatik.ultimate.util.relation.Hep;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
@@ -135,6 +148,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final IProgressAwareTimer m_ProgressTimer;
 	/**
+	 * Amount of states the result automaton has.
+	 */
+	private int m_ResultAmountOfStates;
+	/**
+	 * Amount of transitions the result automaton has.
+	 */
+	private int m_ResultAmountOfTransitions;
+	/**
+	 * Service provider of Ultimate framework.
+	 */
+	private final AutomataLibraryServices m_Services;
+	/**
 	 * Type of the simulation to use.
 	 */
 	private final ESimulationType m_SimulationType;
@@ -172,6 +197,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final Logger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
 			final AGameGraph<LETTER, STATE> gameGraph, final ESimulationType simulationType)
 					throws OperationCanceledException {
+		m_Services = services;
 		m_Nwa = nwa;
 		m_AutomatonStatesToGraphDuplicatorVertex = new HashMap<>();
 		m_AutomatonStatesToGraphSpoilerVertex = new HashMap<>();
@@ -189,6 +215,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		m_AutomatonAmountOfTransitions = 0;
 		m_GraphBuildTime = 0;
 		m_GraphAmountOfEdges = 0;
+		m_ResultAmountOfStates = 0;
+		m_ResultAmountOfTransitions = 0;
 	}
 
 	/**
@@ -782,6 +810,245 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
+	 * Generates a possible reduced nwa automaton by using the current state of
+	 * the game graph that may hold information, usable for reduction, generated
+	 * by an {@link ASimulation}.
+	 * 
+	 * @return A possible reduced nwa automaton
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws OperationCanceledException {
+		FairGameGraph<LETTER, STATE> fairGraph = castGraphToFairGameGraph();
+
+		// By default, we assume that there are merge-able states.
+		boolean areThereMergeableStates = true;
+		if (fairGraph != null) {
+			// For fair simulation, we know if there are such states.
+			areThereMergeableStates = fairGraph.areThereMergeableStates();
+		}
+		// By default, we assume that there are no remove-able transitions.
+		// Since only fair simulation is capable of such.
+		boolean areThereRemoveableTransitions = false;
+		List<Triple<STATE, LETTER, STATE>> transitionsToRemove = null;
+		if (fairGraph != null) {
+			// For fair simulation, we know which transitions
+			// need to be removed.
+			transitionsToRemove = fairGraph.getTransitionsToRemove();
+			areThereRemoveableTransitions = transitionsToRemove != null && !transitionsToRemove.isEmpty();
+		}
+
+		Map<STATE, STATE> input2result = null;
+
+		StateFactory<STATE> stateFactory = m_Nwa.getStateFactory();
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(m_Services, m_Nwa.getInternalAlphabet(),
+				m_Nwa.getCallAlphabet(), m_Nwa.getReturnAlphabet(), stateFactory);
+
+		// Merge states
+		if (areThereMergeableStates) {
+			// Equivalence class that holds all state classes
+			// with their representatives
+			UnionFind<STATE> equivalenceClasses;
+
+			if (fairGraph != null) {
+				// For fair simulation, this was already set up.
+				equivalenceClasses = fairGraph.getEquivalenceClasses();
+			} else {
+				// For other simulation types, we set it up now.
+				// Determine which states to merge
+				equivalenceClasses = new UnionFind<>();
+				for (STATE state : m_Nwa.getStates()) {
+					equivalenceClasses.makeEquivalenceClass(state);
+				}
+				HashRelation<STATE, STATE> similarStates = new HashRelation<>();
+				for (SpoilerVertex<LETTER, STATE> v : m_GameGraph.getSpoilerVertices()) {
+					// All the states we need are from Spoiler
+					if (v.getPM(null, m_GameGraph.getGlobalInfinity()) < m_GameGraph.getGlobalInfinity()) {
+						STATE state1 = v.getQ0();
+						STATE state2 = v.getQ1();
+						if (state1 != null && state2 != null) {
+							similarStates.addPair(state1, state2);
+						}
+					}
+				}
+				// Mark states for merge if they simulate each other
+				for (STATE state1 : similarStates.getDomain()) {
+					for (STATE state2 : similarStates.getImage(state1)) {
+						// Only merge if simulation holds in both directions
+						if (similarStates.containsPair(state2, state1)) {
+							equivalenceClasses.union(state1, state2);
+						}
+					}
+				}
+
+				if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
+					m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/equivalenceClasses");
+					throw new OperationCanceledException(this.getClass());
+				}
+			}
+
+			// Calculate initial states
+			Set<STATE> representativesOfInitials = new HashSet<>();
+			for (STATE initialState : m_Nwa.getInitialStates()) {
+				representativesOfInitials.add(equivalenceClasses.find(initialState));
+			}
+			// Calculate final states
+			Set<STATE> representativesOfFinals = new HashSet<>();
+			for (STATE finalState : m_Nwa.getFinalStates()) {
+				representativesOfFinals.add(equivalenceClasses.find(finalState));
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
+				m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
+				throw new OperationCanceledException(this.getClass());
+			}
+
+			// Add states
+			input2result = new HashMap<>(m_Nwa.size());
+			for (STATE representative : equivalenceClasses.getAllRepresentatives()) {
+				boolean isInitial = representativesOfInitials.contains(representative);
+				boolean isFinal = representativesOfFinals.contains(representative);
+				Set<STATE> eqClass = equivalenceClasses.getEquivalenceClassMembers(representative);
+				STATE mergedState = stateFactory.minimize(eqClass);
+				result.addState(isInitial, isFinal, mergedState);
+				increaseResultAmountOfStates();
+				for (STATE eqClassMember : eqClass) {
+					input2result.put(eqClassMember, mergedState);
+				}
+			}
+		} else {
+			// If there is no merge-able state simply
+			// copy the inputed automaton
+			for (STATE state : m_Nwa.getStates()) {
+				boolean isInitial = m_Nwa.isInitial(state);
+				boolean isFinal = m_Nwa.isFinal(state);
+				result.addState(isInitial, isFinal, state);
+				increaseResultAmountOfStates();
+			}
+		}
+
+		// Add transitions
+		for (STATE inputSrc : m_Nwa.getStates()) {
+			STATE resultSrc;
+			if (areThereMergeableStates) {
+				// Only access field if it was initialized
+				resultSrc = input2result.get(inputSrc);
+			} else {
+				resultSrc = inputSrc;
+			}
+			// Internal transitions
+			for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Nwa.internalSuccessors(inputSrc)) {
+				LETTER a = outTrans.getLetter();
+				STATE inputDest = outTrans.getSucc();
+				STATE resultDest;
+				if (areThereMergeableStates) {
+					// Only access field if it was initialized
+					resultDest = input2result.get(inputDest);
+				} else {
+					resultDest = inputDest;
+				}
+
+				if (areThereRemoveableTransitions) {
+					// Skip edges that should get removed
+					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
+					if (transitionsToRemove != null && !transitionsToRemove.contains(transAsTriple)) {
+						result.addInternalTransition(resultSrc, a, resultDest);
+						increaseResultAmountOfTransitions();
+					}
+				} else {
+					// If there is no removable transition simply copy the
+					// inputed automaton
+					result.addInternalTransition(resultSrc, a, resultDest);
+					increaseResultAmountOfTransitions();
+				}
+			}
+			// Call transitions
+			for (OutgoingCallTransition<LETTER, STATE> outTrans : m_Nwa.callSuccessors(inputSrc)) {
+				LETTER a = outTrans.getLetter();
+				STATE inputDest = outTrans.getSucc();
+				STATE resultDest;
+				if (areThereMergeableStates) {
+					// Only access field if it was initialized
+					resultDest = input2result.get(inputDest);
+				} else {
+					resultDest = inputDest;
+				}
+
+				if (areThereRemoveableTransitions) {
+					// Skip edges that should get removed
+					// TODO This data structure needs information about
+					// transition types, or it may not be able to differentiate
+					// between initial and call edge if they share
+					// the same alphabet.
+					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
+					if (transitionsToRemove != null && !transitionsToRemove.contains(transAsTriple)) {
+						result.addCallTransition(resultSrc, a, resultDest);
+						increaseResultAmountOfTransitions();
+					}
+				} else {
+					// If there is no removable transition simply copy the
+					// inputed automaton
+					result.addCallTransition(resultSrc, a, resultDest);
+					increaseResultAmountOfTransitions();
+				}
+			}
+			// Return transitions
+			for (OutgoingReturnTransition<LETTER, STATE> outTrans : m_Nwa.returnSuccessors(inputSrc)) {
+				LETTER a = outTrans.getLetter();
+				STATE inputDest = outTrans.getSucc();
+				STATE inputHierPred = outTrans.getHierPred();
+				STATE resultDest;
+				STATE resultHierPred;
+				if (areThereMergeableStates) {
+					// Only access field if it was initialized
+					resultDest = input2result.get(inputDest);
+					resultHierPred = input2result.get(inputHierPred);
+				} else {
+					resultDest = inputDest;
+					resultHierPred = inputHierPred;
+				}
+
+				if (areThereRemoveableTransitions) {
+					// Skip edges that should get removed
+					// TODO This data structure needs information about
+					// transition types and hierPred, or it may not be able to
+					// differentiate between initial and return edge if
+					// they share the same alphabet.
+					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
+					if (transitionsToRemove != null && !transitionsToRemove.contains(transAsTriple)) {
+						result.addReturnTransition(resultSrc, resultHierPred, a, resultDest);
+						increaseResultAmountOfTransitions();
+					}
+				} else {
+					// If there is no removable transition simply copy the
+					// inputed automaton
+					result.addReturnTransition(resultSrc, resultHierPred, a, resultDest);
+					increaseResultAmountOfTransitions();
+				}
+			}
+		}
+
+		// If operation was canceled, for example from the
+		// Ultimate framework
+		if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
+			m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/states and transitions added");
+			throw new OperationCanceledException(this.getClass());
+		}
+
+		// Remove unreachable states which can occur due to transition removal
+		if (areThereRemoveableTransitions) {
+			NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates = new RemoveUnreachable<LETTER, STATE>(
+					m_Services, result).getResult();
+			return nwaReachableStates;
+		} else {
+			return result;
+		}
+	}
+
+	/**
 	 * Generates the game graph out of an original nwa automaton. The graph
 	 * represents a game, see {@link AGameGraph}.
 	 * 
@@ -983,7 +1250,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Return edges (q', q1 [q5, q6]) -> (q0, q1, r/q2) -> (q0, q3) lead
 		// to creation of summarize edge (q5, q6) -> (q0, q3)
 		for (DuplicatorDoubleDeckerVertex<LETTER, STATE> returnInvoker : m_DuplicatorReturningVertices) {
-			for (Vertex<LETTER, STATE> summarizeDest : m_GameGraph.getSuccessors(returnInvoker)) {
+			Set<Vertex<LETTER, STATE>> summarizeDestinations = m_GameGraph.getSuccessors(returnInvoker);
+			if (summarizeDestinations == null) {
+				// Ignore this summarize edges if they have no destinations.
+				// This can happen in direct simulation, where connections to
+				// destinations get deleted if they represent a move where
+				// Duplicator would directly loose.
+				continue;
+			}
+			for (Vertex<LETTER, STATE> summarizeDest : summarizeDestinations) {
 				if (!(summarizeDest instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
 					continue;
 				}
@@ -1008,9 +1283,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							continue;
 						}
 						SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
-						// TODO Think about not adding summarize edges in direct
-						// simulation if source or destination
-						// are directly loosing
+						// Do not add the edge if the source or destination is a
+						// Spoiler vertex where Duplicator directly looses in
+						// direct simulation, if he uses the edge.
+						if (m_SimulationType == ESimulationType.DIRECT
+								&& (doesLooseInDirectSim(summarizeSrcAsDD.getQ0(), summarizeSrcAsDD.getQ1())
+										|| doesLooseInDirectSim(summarizeDestAsDD.getQ0(),
+												summarizeDestAsDD.getQ1()))) {
+							continue;
+						}
 						addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD, preInvokerAsDD);
 					}
 				}
@@ -1027,17 +1308,23 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Delete all incoming and outgoing edges of the invoker since they are
 		// covered by summarize edges
 		for (DuplicatorDoubleDeckerVertex<LETTER, STATE> returnInvoker : m_DuplicatorReturningVertices) {
-			for (Vertex<LETTER, STATE> succ : m_GameGraph.getSuccessors(returnInvoker)) {
-				m_GameGraph.removeEdge(returnInvoker, succ);
+			Set<Vertex<LETTER, STATE>> successors = m_GameGraph.getSuccessors(returnInvoker);
+			if (successors != null) {
+				for (Vertex<LETTER, STATE> succ : successors) {
+					m_GameGraph.removeEdge(returnInvoker, succ);
+				}
 			}
-			for (Vertex<LETTER, STATE> pred : m_GameGraph.getPredecessors(returnInvoker)) {
-				m_GameGraph.removeEdge(pred, returnInvoker);
-				// Care for dead end spoiler vertices because they are not
-				// allowed in a legal game graph.
-				// They need to form a legal instant win for Duplicator.
-				if (!m_GameGraph.hasSuccessors(pred) && pred instanceof SpoilerDoubleDeckerVertex<?, ?>) {
-					SpoilerDoubleDeckerVertex<LETTER, STATE> preAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pred;
-					addDuplicatorWinningSink(preAsDD);
+			Set<Vertex<LETTER, STATE>> predecessors = m_GameGraph.getPredecessors(returnInvoker);
+			if (predecessors != null) {
+				for (Vertex<LETTER, STATE> pred : predecessors) {
+					m_GameGraph.removeEdge(pred, returnInvoker);
+					// Care for dead end spoiler vertices because they are not
+					// allowed in a legal game graph.
+					// They need to form a legal instant win for Duplicator.
+					if (!m_GameGraph.hasSuccessors(pred) && pred instanceof SpoilerDoubleDeckerVertex<?, ?>) {
+						SpoilerDoubleDeckerVertex<LETTER, STATE> preAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) pred;
+						addDuplicatorWinningSink(preAsDD);
+					}
 				}
 			}
 			// Remove not reachable vertex
@@ -1202,6 +1489,24 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	public long getGraphBuildTime() {
 		return m_GraphBuildTime;
+	}
+
+	/**
+	 * Gets the amount of states the result has.
+	 * 
+	 * @return The amount of states the result has.
+	 */
+	public int getResultAmountOfStates() {
+		return m_ResultAmountOfStates;
+	}
+
+	/**
+	 * Gets the amount of transitions the result has.
+	 * 
+	 * @return The amount of transitions the result has.
+	 */
+	public int getResultAmountOfTransitions() {
+		return m_ResultAmountOfTransitions;
 	}
 
 	/**
@@ -1616,6 +1921,21 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	protected void increaseGraphAmountOfEdges() {
 		m_GraphAmountOfEdges++;
+	}
+
+	/**
+	 * Increases the internal counter of the amount of result states by one.
+	 */
+	protected void increaseResultAmountOfStates() {
+		m_ResultAmountOfStates++;
+	}
+
+	/**
+	 * Increases the internal counter of the amount of result transitions by
+	 * one.
+	 */
+	protected void increaseResultAmountOfTransitions() {
+		m_ResultAmountOfTransitions++;
 	}
 
 	/**

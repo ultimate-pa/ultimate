@@ -95,8 +95,8 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 		super.doSimulation();
 		// getLogger().debug(getGameGraph().toAtsFormat());
 		// setResult(getGameGraph().generateAutomatonFromGraph());
-		// TODO Implement some different stuff or get the old stuff going
-		
+
+		// TODO Remove debug stuff when finished
 		// Print some debug stuff
 		getLogger().debug("Simulation results:");
 		for (Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {

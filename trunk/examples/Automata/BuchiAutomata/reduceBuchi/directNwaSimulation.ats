@@ -34,34 +34,6 @@ NestedWordAutomaton nwa = (
   }
 );
 */
-// Generated corresponding game graph
-/*
-NestedWordAutomaton nwa = (
-	callAlphabet = { },
-	internalAlphabet = {a},
-	returnAlphabet = { },
-	states = {"null,null[SMiddle/946982986]<0>{}" "q1,q0,a<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0,c<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "null,null,SExit/946982986<0>{}" "q1,q1,a<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "null,null,SEntry/946982986<0>{}" "null,null[Sink/1733979786]<0>{}" "q1,q0,r<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1,c<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "null,null,Sink/1733979786<0>{}"},
-	initialStates = {"null,null[SMiddle/946982986]<0>{}" "q1,q0,a<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0,c<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "null,null,SExit/946982986<0>{}" "q1,q1,a<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "null,null,SEntry/946982986<0>{}" "null,null[Sink/1733979786]<0>{}" "q1,q0,r<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1,c<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q0<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q1<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q0,q1<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "q1,q0<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "null,null,Sink/1733979786<0>{}"},
-	finalStates = { },
-	callTransitions = { },
-	internalTransitions = {
-		("null,null[SMiddle/946982986]<0>{}" "a" "null,null,SExit/946982986<0>{}")
-		("q1,q0,a<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "q1,q1<0>{[€,q0],[q0,q0],[€,€],[q0,€]}")
-		("q0,q0,c<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "q0,q0<0>{[€,q0],[q0,q0],[€,€],[q0,€]}")
-		("null,null,SExit/946982986<0>{}" "a" "q1,q1<0>{[€,q0],[q0,q0],[€,€],[q0,€]}")
-		("null,null,SEntry/946982986<0>{}" "a" "null,null[SMiddle/946982986]<0>{}")
-		("null,null[Sink/1733979786]<0>{}" "a" "null,null,Sink/1733979786<0>{}")
-		("q0,q0<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "q1,q0,a<0>{[€,q0],[q0,q0],[€,€],[q0,€]}")
-		("q0,q0<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "null,null,SEntry/946982986<0>{}")
-		("q0,q0<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "q0,q0,c<0>{[€,q0],[q0,q0],[€,€],[q0,€]}")
-		("q1,q1<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "null,null,Sink/1733979786<0>{}")
-		("q0,q1<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "q1,q1,a<0>{[€,q0],[q0,q0],[€,€],[q0,€]}")
-		("q0,q1<0>{[€,q0],[q0,q0],[€,€],[q0,€]}" "a" "q0,q1,c<0>{[€,q0],[q0,q0],[€,€],[q0,€]}")
-		("null,null,Sink/1733979786<0>{}" "a" "null,null[Sink/1733979786]<0>{}")
-	},
-	returnTransitions = {}
-);
-*/
 // Another small nwa example from whiteboard
 /*
 NestedWordAutomaton nwa = (
@@ -80,33 +52,8 @@ NestedWordAutomaton nwa = (
   }
 );
 */
-// Generated corresponding game graph
-/*
-NestedWordAutomaton nwa = (
-	callAlphabet = { },
-	internalAlphabet = {a},
-	returnAlphabet = { },
-	states = {"q1,q0,c<0>{[q0,€]}" "null,null,SExit/1522612069<0>{}" "null,null,Sink/889897957<0>{}" "null,null[SMiddle/1522612069]<0>{}" "null,null,SEntry/1522612069<0>{}" "null,null[Sink/889897957]<0>{}" "q1,q1,c<0>{[q0,q0]}" "q0,q0<0>{[€,€]}" "q1,q1<0>{[q0,q0]}" "q0,q1<0>{[€,q0]}" "q1,q0<0>{[q0,€]}" "q0,q0,r<0>{[€,€]}"},
-	initialStates = {"q1,q0,c<0>{[q0,€]}" "null,null,SExit/1522612069<0>{}" "null,null,Sink/889897957<0>{}" "null,null[SMiddle/1522612069]<0>{}" "null,null,SEntry/1522612069<0>{}" "null,null[Sink/889897957]<0>{}" "q1,q1,c<0>{[q0,q0]}" "q0,q0<0>{[€,€]}" "q1,q1<0>{[q0,q0]}" "q0,q1<0>{[€,q0]}" "q1,q0<0>{[q0,€]}" "q0,q0,r<0>{[€,€]}"},
-	finalStates = { },
-	callTransitions = { },
-	internalTransitions = {
-		("q1,q0,c<0>{[q0,€]}" "a" "q1,q1<0>{[q0,q0]}")
-		("null,null,SExit/1522612069<0>{}" "a" "q0,q0<0>{[€,€]}")
-		("null,null,Sink/889897957<0>{}" "a" "null,null[Sink/889897957]<0>{}")
-		("null,null[SMiddle/1522612069]<0>{}" "a" "null,null,SExit/1522612069<0>{}")
-		("null,null,SEntry/1522612069<0>{}" "a" "null,null[SMiddle/1522612069]<0>{}")
-		("null,null[Sink/889897957]<0>{}" "a" "null,null,Sink/889897957<0>{}")
-		("q0,q0<0>{[€,€]}" "a" "q1,q0,c<0>{[q0,€]}")
-		("q0,q0<0>{[€,€]}" "a" "null,null,SEntry/1522612069<0>{}")
-		("q1,q1<0>{[q0,q0]}" "a" "null,null,Sink/889897957<0>{}")
-		("q0,q1<0>{[€,q0]}" "a" "q1,q1,c<0>{[q0,q0]}")
-	},
-	returnTransitions = {}
-);
-*/
 // Example with cyclic dependent summarize edges
-
+/*
 NestedWordAutomaton nwa = (
   callAlphabet = {c},
   internalAlphabet = {a},
@@ -129,65 +76,48 @@ NestedWordAutomaton nwa = (
 	  (q3 q2 r q4)
   }
 );
+*/
+// Small circle example with two direct simulations in both directions
 
-// Generated corresponding game graph
+NestedWordAutomaton nwa = (
+  callAlphabet = {c},
+  internalAlphabet = {a},
+  returnAlphabet = {r},
+  states = {q0 q1 q2 q3},
+  initialStates = {q0},
+  finalStates = {q0 q2},
+  callTransitions = {
+	  (q0 c q1)
+	  (q2 c q3)
+  },
+  internalTransitions = {
+      
+  }, 
+  returnTransitions = {
+	  (q1 q0 r q2)
+	  (q3 q2 r q0)
+  }
+);
+
+// Small circle example with direct simulation in one direction and one in both directions
 /*
 NestedWordAutomaton nwa = (
-	callAlphabet = { },
-	internalAlphabet = {a},
-	returnAlphabet = { },
-	states = {"q3,q4,c<0>{[q1,€],[q2,€]}" "q4,q1<0>{[€,€]}" "q4,q4,r<0>{[€,€]}" "q4,q2<0>{[€,€]}" "q4,q3<0>{[€,q1],[€,q2]}" "null,null[SMiddle/2047887339]<0>{}" "q4,q4<0>{[€,€]}" "q2,q3,a<0>{[€,q1],[€,q2]}" "null,null,SEntry/2047887339<0>{}" "q2,q4,a<0>{[€,€]}" "null,null[Sink/525082757]<0>{}" "q2,q2,a<0>{[€,€]}" "q3,q3,c<0>{[q1,q1],[q2,q2],[q2,q1],[q1,q2]}" "q2,q4<0>{[€,€]}" "q2,q3<0>{[€,q1],[€,q2]}" "q2,q2<0>{[€,€]}" "q2,q1<0>{[€,€]}" "null,null,SEntry/1457340820<0>{}" "null,null[SMiddle/1457340820]<0>{}" "null,null[SMiddle/1729830034]<0>{}" "q3,q1<0>{[q1,€],[q2,€]}" "q2,q1,a<0>{[€,€]}" "q3,q2<0>{[q1,€],[q2,€]}" "q3,q3<0>{[q1,q1],[q2,q2],[q2,q1],[q1,q2]}" "null,null,SExit/1457340820<0>{}" "q3,q4<0>{[q1,€],[q2,€]}" "q1,q3,a<0>{[€,q1],[€,q2]}" "null,null,Sink/525082757<0>{}" "q1,q2,a<0>{[€,€]}" "null,null,SExit/1362988078<0>{}" "null,null,SExit/1729830034<0>{}" "q3,q2,c<0>{[q1,€],[q2,€]}" "null,null[SMiddle/1362988078]<0>{}" "null,null,SEntry/1362988078<0>{}" "q4,q1,r<0>{[€,€]}" "q1,q1,a<0>{[€,€]}" "q1,q4,a<0>{[€,€]}" "q1,q4<0>{[€,€]}" "q1,q3<0>{[€,q1],[€,q2]}" "q3,q1,c<0>{[q1,€],[q2,€]}" "q1,q2<0>{[€,€]}" "q1,q1<0>{[€,€]}" "null,null,SEntry/1729830034<0>{}" "q4,q2,r<0>{[€,€]}" "null,null,SExit/2047887339<0>{}"},
-	initialStates = {"q3,q4,c<0>{[q1,€],[q2,€]}" "q4,q1<0>{[€,€]}" "q4,q4,r<0>{[€,€]}" "q4,q2<0>{[€,€]}" "q4,q3<0>{[€,q1],[€,q2]}" "null,null[SMiddle/2047887339]<0>{}" "q4,q4<0>{[€,€]}" "q2,q3,a<0>{[€,q1],[€,q2]}" "null,null,SEntry/2047887339<0>{}" "q2,q4,a<0>{[€,€]}" "null,null[Sink/525082757]<0>{}" "q2,q2,a<0>{[€,€]}" "q3,q3,c<0>{[q1,q1],[q2,q2],[q2,q1],[q1,q2]}" "q2,q4<0>{[€,€]}" "q2,q3<0>{[€,q1],[€,q2]}" "q2,q2<0>{[€,€]}" "q2,q1<0>{[€,€]}" "null,null,SEntry/1457340820<0>{}" "null,null[SMiddle/1457340820]<0>{}" "null,null[SMiddle/1729830034]<0>{}" "q3,q1<0>{[q1,€],[q2,€]}" "q2,q1,a<0>{[€,€]}" "q3,q2<0>{[q1,€],[q2,€]}" "q3,q3<0>{[q1,q1],[q2,q2],[q2,q1],[q1,q2]}" "null,null,SExit/1457340820<0>{}" "q3,q4<0>{[q1,€],[q2,€]}" "q1,q3,a<0>{[€,q1],[€,q2]}" "null,null,Sink/525082757<0>{}" "q1,q2,a<0>{[€,€]}" "null,null,SExit/1362988078<0>{}" "null,null,SExit/1729830034<0>{}" "q3,q2,c<0>{[q1,€],[q2,€]}" "null,null[SMiddle/1362988078]<0>{}" "null,null,SEntry/1362988078<0>{}" "q4,q1,r<0>{[€,€]}" "q1,q1,a<0>{[€,€]}" "q1,q4,a<0>{[€,€]}" "q1,q4<0>{[€,€]}" "q1,q3<0>{[€,q1],[€,q2]}" "q3,q1,c<0>{[q1,€],[q2,€]}" "q1,q2<0>{[€,€]}" "q1,q1<0>{[€,€]}" "null,null,SEntry/1729830034<0>{}" "q4,q2,r<0>{[€,€]}" "null,null,SExit/2047887339<0>{}"},
-	finalStates = { },
-	callTransitions = { },
-	internalTransitions = {
-		("q4,q2<0>{[€,€]}" "a" "q2,q2,a<0>{[€,€]}")
-		("q4,q2<0>{[€,€]}" "a" "q1,q2,a<0>{[€,€]}")
-		("null,null[SMiddle/2047887339]<0>{}" "a" "null,null,SExit/2047887339<0>{}")
-		("q4,q4<0>{[€,€]}" "a" "q1,q4,a<0>{[€,€]}")
-		("q4,q4<0>{[€,€]}" "a" "q2,q4,a<0>{[€,€]}")
-		("null,null,SEntry/2047887339<0>{}" "a" "null,null[SMiddle/2047887339]<0>{}")
-		("q2,q4,a<0>{[€,€]}" "a" "q2,q2<0>{[€,€]}")
-		("null,null[Sink/525082757]<0>{}" "a" "null,null,Sink/525082757<0>{}")
-		("q2,q4<0>{[€,€]}" "a" "q3,q4,c<0>{[q1,€],[q2,€]}")
-		("q2,q4<0>{[€,€]}" "a" "q1,q4,a<0>{[€,€]}")
-		("q2,q2<0>{[€,€]}" "a" "null,null,SEntry/1457340820<0>{}")
-		("q2,q2<0>{[€,€]}" "a" "q1,q2,a<0>{[€,€]}")
-		("q2,q2<0>{[€,€]}" "a" "q3,q2,c<0>{[q1,€],[q2,€]}")
-		("q2,q1<0>{[€,€]}" "a" "null,null,SEntry/1362988078<0>{}")
-		("null,null,SEntry/1457340820<0>{}" "a" "null,null[SMiddle/1457340820]<0>{}")
-		("null,null[SMiddle/1457340820]<0>{}" "a" "null,null,SExit/1457340820<0>{}")
-		("null,null[SMiddle/1729830034]<0>{}" "a" "null,null,SExit/1729830034<0>{}")
-		("q3,q1<0>{[q1,€],[q2,€]}" "a" "q4,q1,r<0>{[€,€]}")
-		("q2,q1,a<0>{[€,€]}" "a" "q2,q2<0>{[€,€]}")
-		("q3,q2<0>{[q1,€],[q2,€]}" "a" "q4,q2,r<0>{[€,€]}")
-		("q3,q3<0>{[q1,q1],[q2,q2],[q2,q1],[q1,q2]}" "a" "null,null,Sink/525082757<0>{}")
-		("null,null,SExit/1457340820<0>{}" "a" "q4,q4<0>{[€,€]}")
-		("q3,q4<0>{[q1,€],[q2,€]}" "a" "q4,q4,r<0>{[€,€]}")
-		("null,null,Sink/525082757<0>{}" "a" "null,null[Sink/525082757]<0>{}")
-		("q1,q2,a<0>{[€,€]}" "a" "q1,q1<0>{[€,€]}")
-		("null,null,SExit/1362988078<0>{}" "a" "q4,q4<0>{[€,€]}")
-		("null,null,SExit/1729830034<0>{}" "a" "q4,q4<0>{[€,€]}")
-		("q3,q2,c<0>{[q1,€],[q2,€]}" "a" "q3,q3<0>{[q1,q1],[q2,q2],[q2,q1],[q1,q2]}")
-		("null,null[SMiddle/1362988078]<0>{}" "a" "null,null,SExit/1362988078<0>{}")
-		("null,null,SEntry/1362988078<0>{}" "a" "null,null[SMiddle/1362988078]<0>{}")
-		("q1,q1,a<0>{[€,€]}" "a" "q1,q2<0>{[€,€]}")
-		("q1,q4,a<0>{[€,€]}" "a" "q1,q2<0>{[€,€]}")
-		("q1,q4,a<0>{[€,€]}" "a" "q1,q1<0>{[€,€]}")
-		("q1,q4<0>{[€,€]}" "a" "q3,q4,c<0>{[q1,€],[q2,€]}")
-		("q1,q4<0>{[€,€]}" "a" "q2,q4,a<0>{[€,€]}")
-		("q1,q3<0>{[€,q1],[€,q2]}" "a" "q3,q3,c<0>{[q1,q1],[q2,q2],[q2,q1],[q1,q2]}")
-		("q1,q3<0>{[€,q1],[€,q2]}" "a" "q2,q3,a<0>{[€,q1],[€,q2]}")
-		("q3,q1,c<0>{[q1,€],[q2,€]}" "a" "q3,q3<0>{[q1,q1],[q2,q2],[q2,q1],[q1,q2]}")
-		("q1,q2<0>{[€,€]}" "a" "q2,q2,a<0>{[€,€]}")
-		("q1,q2<0>{[€,€]}" "a" "q3,q2,c<0>{[q1,€],[q2,€]}")
-		("q1,q2<0>{[€,€]}" "a" "null,null,SEntry/1729830034<0>{}")
-		("q1,q1<0>{[€,€]}" "a" "q2,q1,a<0>{[€,€]}")
-		("q1,q1<0>{[€,€]}" "a" "null,null,SEntry/2047887339<0>{}")
-		("q1,q1<0>{[€,€]}" "a" "q3,q1,c<0>{[q1,€],[q2,€]}")
-		("null,null,SEntry/1729830034<0>{}" "a" "null,null[SMiddle/1729830034]<0>{}")
-		("null,null,SExit/2047887339<0>{}" "a" "q4,q4<0>{[€,€]}")
-	},
-	returnTransitions = {}
+  callAlphabet = {c},
+  internalAlphabet = {a},
+  returnAlphabet = {r},
+  states = {q0 q1 q2 q3},
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {
+	  (q0 c q1)
+	  (q2 c q3)
+  },
+  internalTransitions = {
+      
+  }, 
+  returnTransitions = {
+	  (q1 q0 r q2)
+	  (q3 q2 r q0)
+  }
 );
 */
