@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
@@ -49,8 +49,8 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand1;
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand2;
+	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand1;
+	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand2;
 	
 	private final Boolean m_Result;
 	private final NestedRun<LETTER, STATE> m_Counterexample;
@@ -58,8 +58,8 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	public IsIncluded(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> nwa1, 
-			INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws AutomataLibraryException {
+			INestedWordAutomatonSimple<LETTER, STATE> nwa1, 
+			INestedWordAutomatonSimple<LETTER, STATE> nwa2) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand1 = nwa1;

@@ -86,7 +86,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	
 	public Difference(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
+			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		m_Services = services;
@@ -102,7 +102,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	
 	
 	public Difference(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
+			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			StateFactory<STATE> sf,
