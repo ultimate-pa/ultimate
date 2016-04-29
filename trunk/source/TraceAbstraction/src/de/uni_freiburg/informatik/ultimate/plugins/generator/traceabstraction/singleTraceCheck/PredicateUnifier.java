@@ -193,7 +193,7 @@ public class PredicateUnifier {
 	 * construction by (resp. declared in) this PredicateUnifier. 
 	 */
 	public IPredicate getOrConstructPredicateForConjunction(Collection<IPredicate> conjunction) {
-		Set<IPredicate> minimalSubset = computeMinimalEquivalentSubset(conjunction);
+		Set<IPredicate> minimalSubset = computeMinimalEquivalentSubset_Conjunction(conjunction);
 		if (minimalSubset.size() == 1) {
 			return minimalSubset.iterator().next();
 		} else {
@@ -210,7 +210,7 @@ public class PredicateUnifier {
 						}
 					}
 					{
-						// if !(knownPredicate == conjunct) then knownPredicate
+						// if !(knownPredicate ==> conjunct) then knownPredicate
 						// will also not imply the conjunction
 						Validity validity = getCoverageRelation().isCovered(knownPredicate, conjunct);
 						if (validity == Validity.INVALID) {
@@ -222,9 +222,44 @@ public class PredicateUnifier {
 			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(minimalSubset.toArray(new IPredicate[minimalSubset.size()]));
 			return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures(), 
 					impliedPredicates, expliedPredicates);
-//			return null;
 		}
-
+	}
+	
+	/**
+	 * GetOrConstruct a predicate that is a disjunction of IPredicates that were
+	 * constructed by (resp. declared in) this PredicateUnifier. 
+	 */
+	public IPredicate getOrConstructPredicateForDisjunction(Collection<IPredicate> disjunction) {
+		Set<IPredicate> minimalSubset = computeMinimalEquivalentSubset_Disjunction(disjunction);
+		if (minimalSubset.size() == 1) {
+			return minimalSubset.iterator().next();
+		} else {
+			HashMap<IPredicate, Validity> impliedPredicates = new HashMap<IPredicate, Validity>();
+			HashMap<IPredicate, Validity> expliedPredicates = new HashMap<IPredicate, Validity>();
+			for (IPredicate disjunct : minimalSubset) {
+				for (IPredicate knownPredicate : m_KnownPredicates) {
+					{
+						// if (knownPredicate ==> disjunct) then the knownPredicate
+						// will also imply the disjunction
+						Validity validity = getCoverageRelation().isCovered(knownPredicate, disjunct);
+						if (validity == Validity.VALID) {
+							expliedPredicates.put(knownPredicate, Validity.VALID);
+						}
+					}
+					{
+						// if !(disjunct ==> knownPredicate) then disjunction
+						// will also not imply the knownPredicate
+						Validity validity = getCoverageRelation().isCovered(disjunct, knownPredicate);
+						if (validity == Validity.INVALID) {
+							impliedPredicates.put(knownPredicate, Validity.INVALID);
+						}
+					}
+				}
+			}
+			TermVarsProc tvp = m_SmtManager.getPredicateFactory().or(minimalSubset.toArray(new IPredicate[minimalSubset.size()]));
+			return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures(), 
+					impliedPredicates, expliedPredicates);
+		}
 	}
 
 	
@@ -237,7 +272,7 @@ public class PredicateUnifier {
 	 * @param conjunction of predicates that was constructed by this predicate unifier. 
 	 * @return
 	 */
-	private Set<IPredicate> computeMinimalEquivalentSubset(Collection<IPredicate> conjunction) {
+	private Set<IPredicate> computeMinimalEquivalentSubset_Conjunction(Collection<IPredicate> conjunction) {
 		List<IPredicate> list = new ArrayList<IPredicate>(conjunction);
 		Set<IPredicate> minimalSubset = new HashSet<IPredicate>(conjunction);
 		for (int i=0; i<list.size(); i++) {
@@ -249,6 +284,35 @@ public class PredicateUnifier {
 			for (int j=i+1; j<list.size(); j++) {
 				IPredicate predj= list.get(j);
 				if (coveredByPredi.contains(predj)) {
+					minimalSubset.remove(predi);
+					continue;
+				}
+			}
+		}
+		return minimalSubset;
+	}
+	
+	/**
+	 * Compute a minimal subset of IPredicates for a given disjunction in the
+	 * following sense. The disjunction of the subset is equivalent to the
+	 * input disjunction and no two elements in the subset imply each other.
+	 * I.e., if a predicate of in input disjunction is implies another 
+	 * predicate it is removed.
+	 * @param disjunction of predicates that was constructed by this predicate unifier. 
+	 * @return
+	 */
+	private Set<IPredicate> computeMinimalEquivalentSubset_Disjunction(Collection<IPredicate> disjunction) {
+		List<IPredicate> list = new ArrayList<IPredicate>(disjunction);
+		Set<IPredicate> minimalSubset = new HashSet<IPredicate>(disjunction);
+		for (int i=0; i<list.size(); i++) {
+			IPredicate predi = list.get(i);
+			if (!m_KnownPredicates.contains(predi)) {
+				throw new IllegalArgumentException(predi + " not constructed by this predicate unifier");
+			}
+			Set<IPredicate> coveringPredi = getCoverageRelation().getCoveringPredicates(predi);
+			for (int j=i+1; j<list.size(); j++) {
+				IPredicate predj= list.get(j);
+				if (coveringPredi.contains(predj)) {
 					minimalSubset.remove(predi);
 					continue;
 				}
