@@ -378,9 +378,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					// Update benchmarks
 					disjunctionsGreaterOneCounter++;
 
-					TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.getPredicateFactory().or(predicatesForThisLocationAsArray);
-					// Store the consolidated (the disjunction of the predicates for the current location)
-					m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated);
+//					TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.getPredicateFactory().or(predicatesForThisLocationAsArray);
+//					// Store the consolidated (the disjunction of the predicates for the current location)
+//					m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated);
+					m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicateForDisjunction(predicatesForThisLocation);
 
 					if (!interpolantsBeforeConsolidation.contains(m_ConsolidatedInterpolants[i])) {
 
