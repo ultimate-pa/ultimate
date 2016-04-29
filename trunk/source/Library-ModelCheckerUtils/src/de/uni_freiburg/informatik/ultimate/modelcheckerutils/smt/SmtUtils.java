@@ -565,7 +565,7 @@ public class SmtUtils {
 			AffineRelation ar = new AffineRelation(script, rawTerm);
 			return ar.positiveNormalForm(script);
 		} catch (NotAffineException e) {
-			throw new AssertionError("no supported comarison " + rawTerm);
+			return rawTerm;
 		}
 	}
 
