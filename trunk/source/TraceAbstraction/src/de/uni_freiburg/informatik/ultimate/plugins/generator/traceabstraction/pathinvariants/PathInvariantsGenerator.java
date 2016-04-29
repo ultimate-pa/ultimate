@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -92,11 +93,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
-			final PredicateUnifier predicateUnifier, final SmtManager smtManager) {
+			final PredicateUnifier predicateUnifier, final SmtManager smtManager, 
+			final boolean useNonlinerConstraints, final Settings solverSettings) {
 		final ILinearInequalityInvariantPatternStrategy strategy = new LocationIndependentLinearInequalityInvariantPatternStrategy(
 				1, 1, 1, 2, 5);
 		return new LinearInequalityInvariantPatternProcessorFactory(services,
-				storage, predicateUnifier, smtManager, strategy);
+				storage, predicateUnifier, smtManager, strategy, useNonlinerConstraints, solverSettings);
 	}
 
 	/**
@@ -127,10 +129,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			IToolchainStorage storage, NestedRun<? extends IAction, IPredicate> run,
 			IPredicate precondition, IPredicate postcondition,
 			PredicateUnifier predicateUnifier, SmtManager smtManager,
-			ModifiableGlobalVariableManager modGlobVarManager) {
+			ModifiableGlobalVariableManager modGlobVarManager, 
+			boolean useNonlinerConstraints, Settings solverSettings) {
 		this(services, run, precondition, postcondition, predicateUnifier,
 				modGlobVarManager, createDefaultFactory(services, storage, 
-						predicateUnifier, smtManager));
+						predicateUnifier, smtManager, useNonlinerConstraints, solverSettings));
 	}
 
 	/**

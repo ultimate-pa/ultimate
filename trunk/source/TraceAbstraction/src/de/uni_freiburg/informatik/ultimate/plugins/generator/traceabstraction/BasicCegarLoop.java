@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -306,7 +307,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			Script tcSolver = SolverBuilder.buildAndInitializeSolver(m_Services, m_ToolchainStorage,
 					m_RootNode.getFilename() + "_TraceCheck_Iteration" + m_Iteration, m_Pref.solverMode(),
 					m_Pref.dumpSmtScriptToFile(), m_Pref.pathOfDumpedScript(), m_Pref.commandExternalSolver(), false,
-					false, m_Pref.logicForExternalSolver(), "TraceCheck_Iteration" + m_Iteration);
+					!false, m_Pref.logicForExternalSolver(), "TraceCheck_Iteration" + m_Iteration);
 			smtMangerTracechecks = new SmtManager(tcSolver, m_RootNode.getRootAnnot().getBoogie2SMT(),
 					m_RootNode.getRootAnnot().getModGlobVarManager(), m_Services, false,
 					m_RootNode.getRootAnnot().getManagedScript());
@@ -337,11 +338,25 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					m_UseLiveVariables, m_Services, true, predicateUnifier, m_Interpolation, smtMangerTracechecks);
 
 			break;
-		case PathInvariants:
+		case PathInvariants: {
+			boolean useNonlinerConstraints = true;
+			boolean dumpSmtScriptToFile = m_Pref.dumpSmtScriptToFile() || true;
+			String pathOfDumpedScript = m_Pref.pathOfDumpedScript();
+			String baseNameOfDumpedScript = "InVarSynth_" + m_RootNode.getFilename() + "_Iteration" + m_Iteration;
+			final String solverCommand;
+			if (useNonlinerConstraints) {
+				solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
+			} else {
+				solverCommand = "yices-smt2 --incremental";
+			}
+			Settings settings = new Settings(true,
+					solverCommand, -1, null,
+					dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 			interpolatingTraceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate,
 					falsePredicate, new TreeMap<Integer, IPredicate>(),
 					(NestedRun<CodeBlock, IPredicate>) m_Counterexample, m_SmtManager, m_ModGlobVarManager,
-					m_AssertCodeBlocksIncrementally, m_Services, m_ToolchainStorage, true, predicateUnifier);
+					m_AssertCodeBlocksIncrementally, m_Services, m_ToolchainStorage, true, predicateUnifier, useNonlinerConstraints, settings);
+			}
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

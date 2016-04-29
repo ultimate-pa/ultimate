@@ -51,7 +51,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	protected final PredicateUnifier predUnifier;
 	protected final SmtManager smtManager;
 	protected final ILinearInequalityInvariantPatternStrategy strategy;
-	private final boolean m_UseNonlinearConstraints = true;
+	private final boolean m_UseNonlinearConstraints;
+	private final Settings m_SolverSettings;
 
 	/**
 	 * Constructs a new factory for
@@ -72,12 +73,14 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predUnifier, final SmtManager smtManager,
-			final ILinearInequalityInvariantPatternStrategy strategy) {
+			final ILinearInequalityInvariantPatternStrategy strategy, boolean useNonlinerConstraints, Settings solverSettings) {
 		this.services = services;
 		this.storage = storage;
 		this.predUnifier = predUnifier;
 		this.smtManager = smtManager;
 		this.strategy = strategy;
+		this.m_UseNonlinearConstraints = useNonlinerConstraints;
+		this.m_SolverSettings = solverSettings;
 	}
 
 	/**
@@ -99,7 +102,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 */
 	protected Script produceSmtSolver() {
 		Script script = SolverBuilder.buildScript(services, storage,
-				produceSolverSettings());
+				m_SolverSettings);
 		script = new ScriptWithTermConstructionChecks(script);
 		return script;
 	}
@@ -110,7 +113,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * 
 	 * @return SMT solver settings to use
 	 */
-	protected Settings produceSolverSettings() {
+	@Deprecated
+	private Settings produceSolverSettings() {
 		boolean dumpSmtScriptToFile = false;
 		String pathOfDumpedScript = ".";
 		String baseNameOfDumpedScript = "contraintSolving";
