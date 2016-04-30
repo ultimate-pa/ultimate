@@ -190,7 +190,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print("(set-option ");
 		mPw.print(opt);
 		mPw.print(' ');
-		mPw.print(value);
+		mPw.print(PrintTerm.quoteObjectIfString(value));
 		mPw.println(")");
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setOption(opt, value);
@@ -203,7 +203,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print("(set-info ");
 		mPw.print(info);
 		mPw.print(' ');
-		mPw.print(value);
+		mPw.print(PrintTerm.quoteObjectIfString(value));
 		mPw.println(")");
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setInfo(info, value);
