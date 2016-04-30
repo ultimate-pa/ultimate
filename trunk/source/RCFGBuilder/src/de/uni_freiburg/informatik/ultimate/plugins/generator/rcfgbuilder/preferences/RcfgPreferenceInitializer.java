@@ -92,7 +92,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ASSUME_FOR_ASSERT = "Add additional assume for each assert";
 	public static final boolean DEF_ASSUME_FOR_ASSERT = !false;
 	public static final String LABEL_Solver = "SMT solver";
-	public static final SolverMode DEF_Solver = SolverMode.External_DefaultMode;
+	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
 //	public static final Solver DEF_Solver = Solver.Internal_SMTInterpol;
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
 	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;

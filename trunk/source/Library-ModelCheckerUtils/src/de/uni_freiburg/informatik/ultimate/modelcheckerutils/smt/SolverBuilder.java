@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInt
 public class SolverBuilder {
 
 	public enum SolverMode {
-		Internal_SMTInterpol, External_PrincessInterpolationMode, External_SMTInterpolInterpolationMode, External_Z3InterpolationMode, External_DefaultMode
+		Internal_SMTInterpol, External_PrincessInterpolationMode, External_SMTInterpolInterpolationMode, External_Z3InterpolationMode, External_ModelsAndUnsatCoreMode
 	};
 
 	private static final String sSolverLoggerName = "SolverLogger";
@@ -245,7 +245,7 @@ public class SolverBuilder {
 		final int timeoutSmtInterpol;
 		final ExternalInterpolator externalInterpolator;
 		switch (solverMode) {
-		case External_DefaultMode: {
+		case External_ModelsAndUnsatCoreMode: {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = null;
@@ -304,7 +304,7 @@ public class SolverBuilder {
 
 		result.setOption(":produce-models", true);
 		switch (solverMode) {
-		case External_DefaultMode:
+		case External_ModelsAndUnsatCoreMode:
 			result.setOption(":produce-unsat-cores", true);
 			result.setLogic(logicForExternalSolver);
 			break;
