@@ -79,8 +79,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -304,10 +305,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		InterpolatingTraceChecker interpolatingTraceChecker = null;
 		final SmtManager smtMangerTracechecks;
 		if (m_Pref.useSeparateSolverForTracechecks()) {
+			final String filename = m_RootNode.getFilename() + "_TraceCheck_Iteration" + m_Iteration;
+			final SolverMode solverMode = m_Pref.solverMode();
+			final String commandExternalSolver = m_Pref.commandExternalSolver();
+			final boolean dumpSmtScriptToFile = m_Pref.dumpSmtScriptToFile();
+			final String pathOfDumpedScript = m_Pref.pathOfDumpedScript();
+			final Settings solverSettings = SolverBuilder.constructSolverSettings(
+					filename, solverMode, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 			Script tcSolver = SolverBuilder.buildAndInitializeSolver(m_Services, m_ToolchainStorage,
-					m_RootNode.getFilename() + "_TraceCheck_Iteration" + m_Iteration, m_Pref.solverMode(),
-					m_Pref.dumpSmtScriptToFile(), m_Pref.pathOfDumpedScript(), m_Pref.commandExternalSolver(), false,
-					!false, m_Pref.logicForExternalSolver(), "TraceCheck_Iteration" + m_Iteration);
+					m_Pref.solverMode(), solverSettings, false,
+					false, m_Pref.logicForExternalSolver(), "TraceCheck_Iteration" + m_Iteration);
 			smtMangerTracechecks = new SmtManager(tcSolver, m_RootNode.getRootAnnot().getBoogie2SMT(),
 					m_RootNode.getRootAnnot().getModGlobVarManager(), m_Services, false,
 					m_RootNode.getRootAnnot().getManagedScript());

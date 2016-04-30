@@ -237,7 +237,7 @@ public class SolverBuilder {
 		}
 	}
 
-	private static Settings constructSolverSettings(final String filename, final SolverMode solverMode,
+	public static Settings constructSolverSettings(final String filename, final SolverMode solverMode,
 			final String commandExternalSolver, final boolean dumpSmtScriptToFile, final String pathOfDumpedScript)
 					throws AssertionError {
 		final boolean useExternalSolver;
@@ -284,12 +284,9 @@ public class SolverBuilder {
 	}
 
 	public static Script buildAndInitializeSolver(IUltimateServiceProvider services, IToolchainStorage storage,
-			String filename, SolverMode solverMode, final boolean dumpSmtScriptToFile, final String pathOfDumpedScript,
-			final String commandExternalSolver, final boolean dumpUsatCoreTrackBenchmark,
+			SolverMode solverMode, Settings solverSettings, final boolean dumpUsatCoreTrackBenchmark,
 			final boolean dumpMainTrackBenchmark, String logicForExternalSolver, String solverId)
 					throws AssertionError {
-		final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
-				commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
 		Script script = SolverBuilder.buildScript(services, storage, solverSettings);
 		if (dumpUsatCoreTrackBenchmark) {

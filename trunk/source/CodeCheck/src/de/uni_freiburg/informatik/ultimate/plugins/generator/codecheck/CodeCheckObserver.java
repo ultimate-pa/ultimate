@@ -53,12 +53,13 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -425,13 +426,16 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					SmtManager smtManagerTracechecks;
 //					if (noArrayOrNIRAsofar && GlobalSettings._instance.useSeparateSolverForTracechecks) {
 					if (GlobalSettings._instance.useSeparateSolverForTracechecks) {
-						Script tcSolver = SolverBuilder.buildAndInitializeSolver(m_services, m_toolchainStorage,
-								m_originalRoot.getFilename() + "_TraceCheck_Iteration" + iterationsCount,
-								GlobalSettings._instance.chooseSeparateSolverForTracechecks, 
-								false, // m_taPrefs.dumpSmtScriptToFile(),
-								"", // m_taPrefs.pathOfDumpedScript(),
-								GlobalSettings._instance.separateSolverForTracechecksCommand,
-								false, 
+						final String filename = m_originalRoot.getFilename() + "_TraceCheck_Iteration" + iterationsCount;
+						final SolverMode solverMode = GlobalSettings._instance.chooseSeparateSolverForTracechecks;
+						final String commandExternalSolver = GlobalSettings._instance.separateSolverForTracechecksCommand;
+						final boolean dumpSmtScriptToFile = false;
+						final String pathOfDumpedScript = "";
+						final Settings solverSettings = SolverBuilder.constructSolverSettings(
+								filename, solverMode, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
+						final Script tcSolver = SolverBuilder.buildAndInitializeSolver(m_services, m_toolchainStorage,
+								GlobalSettings._instance.chooseSeparateSolverForTracechecks,
+								solverSettings, false, 
 								false, 
 								GlobalSettings._instance.separateSolverForTracechecksTheory,
 								"TraceCheck_Iteration" + iterationsCount);

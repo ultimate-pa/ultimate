@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
@@ -163,7 +164,7 @@ public class CfgBuilder {
 	 */
 	private Script constructAndInitializeSolver(IUltimateServiceProvider services, IToolchainStorage storage,
 			String filename) {
-		SolverMode solverMode = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		final SolverMode solverMode = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
 		final boolean dumpSmtScriptToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
@@ -180,11 +181,13 @@ public class CfgBuilder {
 		final boolean dumpMainTrackBenchmark = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
 
-		String logicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		final String logicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		final Settings solverSettings = SolverBuilder.constructSolverSettings(
+				filename, solverMode, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
-		return SolverBuilder.buildAndInitializeSolver(services, storage, filename, solverMode, dumpSmtScriptToFile,
-				pathOfDumpedScript, commandExternalSolver, dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark,
+		return SolverBuilder.buildAndInitializeSolver(services, storage, solverMode, solverSettings, 
+				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark,
 				logicForExternalSolver, "CfgBuilderScript");
 	}
 
