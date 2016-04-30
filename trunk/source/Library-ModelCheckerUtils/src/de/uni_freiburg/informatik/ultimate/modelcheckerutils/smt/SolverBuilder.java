@@ -58,7 +58,12 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInt
 public class SolverBuilder {
 
 	public enum SolverMode {
-		Internal_SMTInterpol, External_PrincessInterpolationMode, External_SMTInterpolInterpolationMode, External_Z3InterpolationMode, External_ModelsAndUnsatCoreMode
+		Internal_SMTInterpol, 
+		External_PrincessInterpolationMode, 
+		External_SMTInterpolInterpolationMode, 
+		External_Z3InterpolationMode, 
+		External_ModelsAndUnsatCoreMode,
+		External_DefaultMode,
 	};
 
 	private static final String sSolverLoggerName = "SolverLogger";
@@ -299,18 +304,23 @@ public class SolverBuilder {
 		}
 		final Script result = script;
 
-		result.setOption(":produce-models", true);
 		switch (solverMode) {
+		case External_DefaultMode:
+			result.setLogic(logicForExternalSolver);
+			break;
 		case External_ModelsAndUnsatCoreMode:
+			result.setOption(":produce-models", true);
 			result.setOption(":produce-unsat-cores", true);
 			result.setLogic(logicForExternalSolver);
 			break;
 		case External_PrincessInterpolationMode:
 		case External_SMTInterpolInterpolationMode:
+			result.setOption(":produce-models", true);
 			result.setOption(":produce-interpolants", true);
 			result.setLogic(logicForExternalSolver);
 			break;
 		case External_Z3InterpolationMode:
+			result.setOption(":produce-models", true);
 			result.setOption(":produce-interpolants", true);
 			result.setLogic(logicForExternalSolver);
 			// add array-ext function
@@ -325,6 +335,7 @@ public class SolverBuilder {
 			}
 			break;
 		case Internal_SMTInterpol:
+			result.setOption(":produce-models", true);
 			result.setOption(":produce-unsat-cores", true);
 			result.setOption(":produce-interpolants", true);
 			result.setOption(":interpolant-check-mode", true);
