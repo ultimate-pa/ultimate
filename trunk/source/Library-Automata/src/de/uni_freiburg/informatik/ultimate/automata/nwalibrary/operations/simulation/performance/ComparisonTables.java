@@ -92,7 +92,7 @@ public final class ComparisonTables {
 		// Work measure
 		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_VERTICES
 				+ "(&Oslash;)";
-		header += separator + ETimeMeasure.OVERALL_TIME + "(&Oslash;)";
+		header += separator + ETimeMeasure.OVERALL + "(&Oslash;)";
 		header += separator + ECountingMeasure.SIMULATION_STEPS + "(&Oslash;)";
 		header += separator + ECountingMeasure.GAMEGRAPH_VERTICES + "(&Oslash;)";
 		header += separator + ECountingMeasure.REMOVED_STATES + "(&Oslash;)";
@@ -155,7 +155,7 @@ public final class ComparisonTables {
 			long sumOfAllValuesForOverallTime = 0;
 			int amountOfValuesForOverallTime = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				long value = performance.getTimeMeasureResult(ETimeMeasure.OVERALL_TIME, EMultipleDataOption.ADDITIVE);
+				long value = performance.getTimeMeasureResult(ETimeMeasure.OVERALL, EMultipleDataOption.ADDITIVE);
 				if (value != SimulationPerformance.NO_TIME_RESULT) {
 					sumOfAllValuesForOverallTime += value;
 				}
@@ -323,12 +323,12 @@ public final class ComparisonTables {
 		// Amount of Buechi states
 		header += separator + ECountingMeasure.BUCHI_STATES + "(&Oslash;)";
 		// Overall time first
-		header += separator + ETimeMeasure.OVERALL_TIME + "(&Oslash;)";
+		header += separator + ETimeMeasure.OVERALL + "(&Oslash;)";
 		// Other time measures
 		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
 		Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
 		for (ETimeMeasure measure : timeMeasures) {
-			if (!measure.equals(ETimeMeasure.OVERALL_TIME)) {
+			if (!measure.equals(ETimeMeasure.OVERALL)) {
 				header += separator + measure + "(%)(&Oslash;)";
 			}
 		}
@@ -361,7 +361,7 @@ public final class ComparisonTables {
 			long sumOfAllValuesForOverallTime = 0;
 			int amountOfValuesForOverallTime = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				long value = performance.getTimeMeasureResult(ETimeMeasure.OVERALL_TIME, EMultipleDataOption.ADDITIVE);
+				long value = performance.getTimeMeasureResult(ETimeMeasure.OVERALL, EMultipleDataOption.ADDITIVE);
 				if (value != SimulationPerformance.NO_TIME_RESULT) {
 					sumOfAllValuesForOverallTime += value;
 				}
@@ -380,7 +380,7 @@ public final class ComparisonTables {
 
 			// Other time measures
 			for (ETimeMeasure measure : timeMeasures) {
-				if (measure.equals(ETimeMeasure.OVERALL_TIME)) {
+				if (measure.equals(ETimeMeasure.OVERALL)) {
 					continue;
 				}
 
@@ -439,7 +439,7 @@ public final class ComparisonTables {
 		header += separator + ECountingMeasure.BUCHI_STATES;
 		// Work measure
 		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_VERTICES;
-		header += separator + ETimeMeasure.OVERALL_TIME;
+		header += separator + ETimeMeasure.OVERALL;
 		header += separator + ECountingMeasure.SIMULATION_STEPS;
 		header += separator + ECountingMeasure.GAMEGRAPH_VERTICES;
 		header += separator + ECountingMeasure.REMOVED_STATES;
@@ -479,7 +479,7 @@ public final class ComparisonTables {
 				row += separator + workMeasureAsString;
 
 				// Overall time
-				long value = performanceOfSimulation.getTimeMeasureResult(ETimeMeasure.OVERALL_TIME,
+				long value = performanceOfSimulation.getTimeMeasureResult(ETimeMeasure.OVERALL,
 						EMultipleDataOption.ADDITIVE);
 
 				String valueAsString = "";
@@ -619,12 +619,12 @@ public final class ComparisonTables {
 		// Amount of Buechi states
 		header += separator + ECountingMeasure.BUCHI_STATES;
 		// Overall time first
-		header += separator + ETimeMeasure.OVERALL_TIME;
+		header += separator + ETimeMeasure.OVERALL;
 		// Other time measures
 		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
 		Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
 		for (ETimeMeasure measure : timeMeasures) {
-			if (!measure.equals(ETimeMeasure.OVERALL_TIME)) {
+			if (!measure.equals(ETimeMeasure.OVERALL)) {
 				header += separator + measure + "(%)";
 			}
 		}
@@ -651,7 +651,7 @@ public final class ComparisonTables {
 				row += separator + buechiStatesAsString;
 
 				// Overall time first
-				long value = performanceOfSimulation.getTimeMeasureResult(ETimeMeasure.OVERALL_TIME,
+				long value = performanceOfSimulation.getTimeMeasureResult(ETimeMeasure.OVERALL,
 						EMultipleDataOption.ADDITIVE);
 
 				String valueAsString = "";
@@ -667,7 +667,7 @@ public final class ComparisonTables {
 
 				// Other time measures
 				for (ETimeMeasure measure : timeMeasures) {
-					if (measure.equals(ETimeMeasure.OVERALL_TIME)) {
+					if (measure.equals(ETimeMeasure.OVERALL)) {
 						continue;
 					}
 

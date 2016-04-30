@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	/**
 	 * Amount of fix fields in the log format. Currently this is name, type,
@@ -416,10 +416,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 */
 	public CompareReduceBuchiSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
-		if (!operand.getCallAlphabet().isEmpty() || !operand.getReturnAlphabet().isEmpty()) {
-			throw new IllegalArgumentException(
-					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
-		}
+		verifyAutomatonValidity(operand);
 
 		m_LoggedLines = new LinkedList<String>();
 		m_Services = services;
@@ -460,36 +457,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 //			}
 //		}
 
-		// Direct simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, m_Services, simulationTimeoutMillis,
-				stateFactory, operandReachable);
-		// Direct simulation with SCC
-		measureMethodPerformance(automatonName, ESimulationType.DIRECT, true, m_Services, simulationTimeoutMillis,
-				stateFactory, operandReachable);
-		// Delayed simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, m_Services, simulationTimeoutMillis,
-				stateFactory, operandReachable);
-		// Delayed simulation with SCC
-		measureMethodPerformance(automatonName, ESimulationType.DELAYED, true, m_Services, simulationTimeoutMillis,
-				stateFactory, operandReachable);
-		// Fair simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.FAIR, false, m_Services, simulationTimeoutMillis,
-				stateFactory, operandReachable);
-		// Fair simulation with SCC
-		measureMethodPerformance(automatonName, ESimulationType.FAIR, true, m_Services, simulationTimeoutMillis,
-				stateFactory, operandReachable);
-		// Fair direct simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.FAIRDIRECT, false, m_Services, simulationTimeoutMillis,
-				stateFactory, operandReachable);
-		// Fair direct simulation with SCC
-		measureMethodPerformance(automatonName, ESimulationType.FAIRDIRECT, true, m_Services, simulationTimeoutMillis,
-				stateFactory, operandReachable);
-
-		// Other minimization methods
-		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, true, m_Services,
-				simulationTimeoutMillis, stateFactory, operandReachable);
-		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, m_Services,
-				simulationTimeoutMillis, stateFactory, operandReachable);
+		measurePerformances(automatonName, simulationTimeoutMillis, stateFactory, operandReachable);
 
 		// flushLogToLogger();
 		flushLogToFile();
@@ -552,6 +520,22 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	}
 
 	/**
+	 * Verifies the validity of a given automaton. If the automaton is not valid
+	 * it throws an {@link IllegalArgumentException}.
+	 * 
+	 * @param automaton
+	 *            Automaton to verify validity
+	 * @throws IllegalArgumentException
+	 *             If the given automaton is not valid
+	 */
+	public void verifyAutomatonValidity(final INestedWordAutomatonOldApi<LETTER, STATE> automaton) {
+		if (!automaton.getCallAlphabet().isEmpty() || !automaton.getReturnAlphabet().isEmpty()) {
+			throw new IllegalArgumentException(
+					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
+		}
+	}
+
+	/**
 	 * Appends the current saved state of the performance as an entry to the
 	 * log.
 	 *
@@ -579,80 +563,6 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			message += LOG_SEPARATOR + measureValue;
 		}
 		logLine(message);
-	}
-
-	/**
-	 * Measures the effectiveness of a given method for buechi reduction and
-	 * logs it.
-	 * 
-	 * @param method
-	 *            Used method
-	 * @param name
-	 *            Name of the automaton used for the method
-	 * @param type
-	 *            The type of the used simulation
-	 * @param usedSCCs
-	 *            If the method used SCCs
-	 * @param timedOut
-	 *            If the method timed out or not
-	 * @param outOfMemory
-	 *            If the method has thrown an out of memory error
-	 * @param operand
-	 *            The automaton the method processed
-	 * @throws AutomataLibraryException
-	 *             If a automata library exception occurred.
-	 */
-	@SuppressWarnings("unchecked")
-	private void appendMethodPerformanceToLog(final Object method, final String name, final ESimulationType type,
-			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
-		createAndResetPerformanceHead();
-
-		if (method instanceof ASimulation) {
-			ASimulation<LETTER, STATE> simulation = (ASimulation<LETTER, STATE>) method;
-			SimulationPerformance performance = simulation.getSimulationPerformance();
-
-			if (timedOut) {
-				performance.timeOut();
-			}
-			if (outOfMemory) {
-				performance.outOfMemory();
-			}
-			performance.setName(name);
-			saveStateOfPerformance(performance);
-		} else if (method instanceof MinimizeSevpa) {
-			MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
-			INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeSevpa.getResult();
-			// Removed states
-			if (methodResult != null) {
-				int removedStates = m_Operand.size() - methodResult.size();
-				m_CountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
-			}
-			// Buechi states
-			m_CountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
-			// Overall time
-			m_TimeMeasures.put(ETimeMeasure.OVERALL_TIME, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
-		} else if (method instanceof ShrinkNwa) {
-			ShrinkNwa<LETTER, STATE> shrinkNwa = (ShrinkNwa<LETTER, STATE>) method;
-			INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
-			// Removed states
-			if (methodResult != null) {
-				int removedStates = m_Operand.size() - methodResult.size();
-				m_CountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
-			}
-			// Buechi states
-			m_CountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
-			// Overall time
-			m_TimeMeasures.put(ETimeMeasure.OVERALL_TIME, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
-		}
-
-		if (timedOut && method == null) {
-			saveStateOfPerformance(createTimedOutPerformance(name, type, usedSCCs, operand));
-		} else if (outOfMemory && method == null) {
-			saveStateOfPerformance(createOutOfMemoryPerformance(name, type, usedSCCs, operand));
-		}
-
-		appendCurrentPerformanceEntryToLog(name, type, usedSCCs, timedOut, outOfMemory);
 	}
 
 	/**
@@ -782,6 +692,119 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	}
 
 	/**
+	 * Saves the state of a given performance in internal fields.
+	 * 
+	 * @param performance
+	 *            Performance to save
+	 */
+	private void saveStateOfPerformance(final SimulationPerformance performance) {
+		for (ETimeMeasure measure : m_TimeMeasures.keySet()) {
+			long durationInMillis = performance.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
+			if (durationInMillis == SimulationPerformance.NO_TIME_RESULT) {
+				m_TimeMeasures.put(measure, (float) SimulationPerformance.NO_TIME_RESULT);
+			} else {
+				m_TimeMeasures.put(measure, ComparisonTables.millisToSeconds(durationInMillis));
+			}
+		}
+		for (ECountingMeasure measure : m_CountingMeasures.keySet()) {
+			int counter = performance.getCountingMeasureResult(measure);
+			m_CountingMeasures.put(measure, counter);
+		}
+	}
+
+	/**
+	 * Measures the effectiveness of a given method for buechi reduction and
+	 * logs it.
+	 * 
+	 * @param method
+	 *            Used method
+	 * @param name
+	 *            Name of the automaton used for the method
+	 * @param type
+	 *            The type of the used simulation
+	 * @param usedSCCs
+	 *            If the method used SCCs
+	 * @param timedOut
+	 *            If the method timed out or not
+	 * @param outOfMemory
+	 *            If the method has thrown an out of memory error
+	 * @param operand
+	 *            The automaton the method processed
+	 * @throws AutomataLibraryException
+	 *             If a automata library exception occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	protected void appendMethodPerformanceToLog(final Object method, final String name, final ESimulationType type,
+			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+		createAndResetPerformanceHead();
+
+		if (method instanceof ASimulation) {
+			ASimulation<LETTER, STATE> simulation = (ASimulation<LETTER, STATE>) method;
+			SimulationPerformance performance = simulation.getSimulationPerformance();
+
+			if (timedOut) {
+				performance.timeOut();
+			}
+			if (outOfMemory) {
+				performance.outOfMemory();
+			}
+			performance.setName(name);
+			saveStateOfPerformance(performance);
+		} else if (method instanceof MinimizeSevpa) {
+			MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
+			INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeSevpa.getResult();
+			// Removed states
+			if (methodResult != null) {
+				int removedStates = m_Operand.size() - methodResult.size();
+				m_CountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
+			}
+			// Buechi states
+			m_CountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
+			// Overall time
+			m_TimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
+		} else if (method instanceof ShrinkNwa) {
+			ShrinkNwa<LETTER, STATE> shrinkNwa = (ShrinkNwa<LETTER, STATE>) method;
+			INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
+			// Removed states
+			if (methodResult != null) {
+				int removedStates = m_Operand.size() - methodResult.size();
+				m_CountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
+			}
+			// Buechi states
+			m_CountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
+			// Overall time
+			m_TimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
+		}
+
+		if (timedOut && method == null) {
+			saveStateOfPerformance(createTimedOutPerformance(name, type, usedSCCs, operand));
+		} else if (outOfMemory && method == null) {
+			saveStateOfPerformance(createOutOfMemoryPerformance(name, type, usedSCCs, operand));
+		}
+
+		appendCurrentPerformanceEntryToLog(name, type, usedSCCs, timedOut, outOfMemory);
+	}
+
+	/**
+	 * Gets the logger object used by this operation.
+	 * 
+	 * @return The logger object used by this operation.
+	 */
+	protected Logger getLogger() {
+		return m_Logger;
+	}
+
+	/**
+	 * Gets the service object used by this operation.
+	 * 
+	 * @return The service object used by this operation.
+	 */
+	protected AutomataLibraryServices getServices() {
+		return m_Services;
+	}
+
+	/**
 	 * Measures the performance of a simulation, represented by a given type, on
 	 * a given automaton and appends its performance to the log.
 	 * 
@@ -801,7 +824,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 */
-	private void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
+	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
@@ -868,23 +891,49 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	}
 
 	/**
-	 * Saves the state of a given performance in internal fields.
+	 * Starts measuring performances for all simulation methods to compare.
 	 * 
-	 * @param performance
-	 *            Performance to save
+	 * @param automatonName
+	 *            Name of the operand automaton to measure performance for
+	 * @param timeOutMillis
+	 *            Time out in milliseconds each method has
+	 * @param stateFactory
+	 *            Factory used to create states
+	 * @param reachableOperand
+	 *            Operand where non reachable states are removed
 	 */
-	private void saveStateOfPerformance(final SimulationPerformance performance) {
-		for (ETimeMeasure measure : m_TimeMeasures.keySet()) {
-			long durationInMillis = performance.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
-			if (durationInMillis == SimulationPerformance.NO_TIME_RESULT) {
-				m_TimeMeasures.put(measure, (float) SimulationPerformance.NO_TIME_RESULT);
-			} else {
-				m_TimeMeasures.put(measure, ComparisonTables.millisToSeconds(durationInMillis));
-			}
-		}
-		for (ECountingMeasure measure : m_CountingMeasures.keySet()) {
-			int counter = performance.getCountingMeasureResult(measure);
-			m_CountingMeasures.put(measure, counter);
-		}
+	protected void measurePerformances(final String automatonName, final long timeOutMillis,
+			final StateFactory<STATE> stateFactory,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
+		// Direct simulation without SCC
+		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, m_Services, timeOutMillis, stateFactory,
+				reachableOperand);
+		// Direct simulation with SCC
+		measureMethodPerformance(automatonName, ESimulationType.DIRECT, true, m_Services, timeOutMillis, stateFactory,
+				reachableOperand);
+		// Delayed simulation without SCC
+		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, m_Services, timeOutMillis, stateFactory,
+				reachableOperand);
+		// Delayed simulation with SCC
+		measureMethodPerformance(automatonName, ESimulationType.DELAYED, true, m_Services, timeOutMillis, stateFactory,
+				reachableOperand);
+		// Fair simulation without SCC
+		measureMethodPerformance(automatonName, ESimulationType.FAIR, false, m_Services, timeOutMillis, stateFactory,
+				reachableOperand);
+		// Fair simulation with SCC
+		measureMethodPerformance(automatonName, ESimulationType.FAIR, true, m_Services, timeOutMillis, stateFactory,
+				reachableOperand);
+		// Fair direct simulation without SCC
+		measureMethodPerformance(automatonName, ESimulationType.FAIRDIRECT, false, m_Services, timeOutMillis,
+				stateFactory, reachableOperand);
+		// Fair direct simulation with SCC
+		measureMethodPerformance(automatonName, ESimulationType.FAIRDIRECT, true, m_Services, timeOutMillis,
+				stateFactory, reachableOperand);
+
+		// Other minimization methods
+		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, true, m_Services, timeOutMillis,
+				stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, m_Services, timeOutMillis,
+				stateFactory, reachableOperand);
 	}
 }

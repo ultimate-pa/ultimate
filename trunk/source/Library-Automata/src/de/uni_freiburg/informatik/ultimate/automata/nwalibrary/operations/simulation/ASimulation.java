@@ -474,8 +474,8 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             framework.
 	 */
 	public void doSimulation() throws OperationCanceledException {
-		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
-		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
+		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL);
+		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
 		if (m_UseSCCs) { // calculate reduction with SCC
 			m_Performance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
@@ -500,17 +500,17 @@ public abstract class ASimulation<LETTER, STATE> {
 			m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
 			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
-		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
+		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 		m_Result = getGameGraph().generateAutomatonFromGraph();
 
-		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL_TIME);
+		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = m_Performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH_TIME,
+		long durationGraph = m_Performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
 				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
-			m_Performance.addTimeMeasureValue(ETimeMeasure.OVERALL_TIME, durationGraph);
+			m_Performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
 		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
 		m_Performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());

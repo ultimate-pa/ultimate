@@ -700,8 +700,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		m_GlobalInfinity = m_Game.getGlobalInfinity();
 
 		SimulationPerformance performance = super.getSimulationPerformance();
-		performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
-		performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
+		performance.startTimeMeasure(ETimeMeasure.OVERALL);
+		performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
 		// First simulation
 		m_Logger.debug("Starting first simulation...");
@@ -818,20 +818,20 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			setUseSCCs(true);
 		}
 
-		performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
+		performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
 		// Generate the resulting automata
 		m_Logger.debug("Generating the result automaton...");
 		setResult(m_Game.generateAutomatonFromGraph());
 
-		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL_TIME);
+		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH_TIME,
+		long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
 				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
-			performance.addTimeMeasureValue(ETimeMeasure.OVERALL_TIME, durationGraph);
+			performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
 		performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, m_Game.getSize());
 

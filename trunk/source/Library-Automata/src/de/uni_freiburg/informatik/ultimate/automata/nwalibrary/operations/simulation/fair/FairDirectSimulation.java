@@ -266,8 +266,8 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	@Override
 	public void doSimulation() throws OperationCanceledException {
 		m_Performance = new SimulationPerformance(ESimulationType.FAIRDIRECT, isUsingSCCs());
-		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
-		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
+		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL);
+		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
 		int directSimSimulationSteps = 0;
 		long directSimSCCBuildTime = 0;
@@ -302,27 +302,27 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			getLogger().debug("Starting fair simulation...");
 		}
 
-		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
+		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
 		// After that do the normal fair simulation process that will use the
 		// overridden methods which profit from the direct simulation.
 		super.doSimulation();
 
 		SimulationPerformance fairPerformance = super.getSimulationPerformance();
-		long durationFairSimOnly = fairPerformance.getTimeMeasureResult(ETimeMeasure.SIMULATION_ONLY_TIME,
+		long durationFairSimOnly = fairPerformance.getTimeMeasureResult(ETimeMeasure.SIMULATION_ONLY,
 				EMultipleDataOption.ADDITIVE);
 		if (durationFairSimOnly != SimulationPerformance.NO_TIME_RESULT) {
-			m_Performance.addTimeMeasureValue(ETimeMeasure.SIMULATION_ONLY_TIME, durationFairSimOnly);
+			m_Performance.addTimeMeasureValue(ETimeMeasure.SIMULATION_ONLY, durationFairSimOnly);
 		}
 
-		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL_TIME);
+		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH_TIME,
+		long durationGraph = fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
 				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
-			m_Performance.addTimeMeasureValue(ETimeMeasure.OVERALL_TIME, duration);
+			m_Performance.addTimeMeasureValue(ETimeMeasure.OVERALL, duration);
 		}
 
 		getLogger().info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " of fairdirect simulation took "
@@ -341,10 +341,10 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 						+ directSimSCCBuildTime);
 		m_Performance.setCountingMeasure(ECountingMeasure.SIMULATION_STEPS,
 				fairPerformance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS) + directSimSimulationSteps);
-		m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH_TIME,
-				fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH_TIME, EMultipleDataOption.ADDITIVE));
-		m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_RESULT_TIME,
-				fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_RESULT_TIME, EMultipleDataOption.ADDITIVE));
+		m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH,
+				fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE));
+		m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_RESULT,
+				fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_RESULT, EMultipleDataOption.ADDITIVE));
 		m_Performance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
 				fairPerformance.getCountingMeasureResult(ECountingMeasure.REMOVED_STATES));
 		m_Performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,

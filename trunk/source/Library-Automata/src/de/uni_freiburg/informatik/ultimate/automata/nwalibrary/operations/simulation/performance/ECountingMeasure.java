@@ -76,5 +76,9 @@ public enum ECountingMeasure {
 	/**
 	 * Amount of steps a simulation needed.
 	 */
-	SIMULATION_STEPS
+	SIMULATION_STEPS,
+	/**
+	 * Amount of summarize edges a nwa game graph has.
+	 */
+	SUMMARIZE_EDGES
 }

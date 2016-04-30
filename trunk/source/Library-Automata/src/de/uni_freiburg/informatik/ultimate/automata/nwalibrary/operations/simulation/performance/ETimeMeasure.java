@@ -34,24 +34,38 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
  */
 public enum ETimeMeasure {
 	/**
-	 * The overall time an operation took.
-	 */
-	OVERALL_TIME,
-	/**
 	 * The time building the game graph took.
 	 */
-	BUILD_GRAPH_TIME,
+	BUILD_GRAPH,
+	/**
+	 * The time building the result automaton took.
+	 */
+	BUILD_RESULT,
+	/**
+	 * The time building the SCC took.
+	 */
+	BUILD_SCC,
+	/**
+	 * The time computing which vertex down states are safe, took in nwa game
+	 * graph generation.
+	 */
+	COMPUTE_SAFE_VERTEX_DOWN_STATES,
+	/**
+	 * The time computing priorities for summarize edges took in nwa game graph
+	 * generation.
+	 */
+	COMPUTE_SUMMARIZE_EDGE_PRIORITIES,
+	/**
+	 * The time generating summarize edges took in nwa game graph generation.
+	 */
+	GENERATE_SUMMARIZE_EDGES,
+	/**
+	 * The overall time an operation took.
+	 */
+	OVERALL,
 	/**
 	 * The time the simulation only took, this is the overall time minus the
 	 * time to build the graph and the result.
 	 */
-	SIMULATION_ONLY_TIME,
-	/**
-	 * The time building the result automaton took.
-	 */
-	BUILD_RESULT_TIME,
-	/**
-	 * The time building the SCC took.
-	 */
-	BUILD_SCC
+	SIMULATION_ONLY
 }

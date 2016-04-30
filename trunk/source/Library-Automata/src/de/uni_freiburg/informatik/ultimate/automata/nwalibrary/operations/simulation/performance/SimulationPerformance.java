@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
@@ -60,7 +61,8 @@ public final class SimulationPerformance {
 	 *            If the simulation usesSCCs
 	 * @return The out of memory simulation performance object
 	 */
-	public static SimulationPerformance createOutOfMemoryPerformance(final ESimulationType type, final boolean useSCCs) {
+	public static SimulationPerformance createOutOfMemoryPerformance(final ESimulationType type,
+			final boolean useSCCs) {
 		SimulationPerformance performance = new SimulationPerformance(type, useSCCs);
 		performance.outOfMemory();
 		return performance;
@@ -134,6 +136,36 @@ public final class SimulationPerformance {
 		m_TimedOut = false;
 		m_OutOfMemory = false;
 		m_Name = "";
+	}
+
+	/**
+	 * Adds all counting and time measures of the other object to this given
+	 * object. Counting measures will get merged additive.
+	 * 
+	 * @param other
+	 *            Simulation object to add measures from
+	 */
+	public void addAllMeasures(final SimulationPerformance other) {
+		LinkedHashMap<ECountingMeasure, Integer> countingMeasuresToAdd = other.getCountingMeasures();
+		LinkedHashMap<ETimeMeasure, List<Long>> timeMeasuresToAdd = other.getTimeMeasures();
+
+		for (Entry<ETimeMeasure, List<Long>> timeMeasure : timeMeasuresToAdd.entrySet()) {
+			for (Long duration : timeMeasure.getValue()) {
+				addTimeMeasureValue(timeMeasure.getKey(), duration);
+			}
+		}
+		for (Entry<ECountingMeasure, Integer> countingMeasure : countingMeasuresToAdd.entrySet()) {
+			int current = getCountingMeasureResult(countingMeasure.getKey());
+			int valueToSet = current;
+			if (current != NO_COUNTING_RESULT) {
+				valueToSet += countingMeasure.getValue();
+			} else {
+				valueToSet = countingMeasure.getValue();
+			}
+			if (valueToSet != NO_COUNTING_RESULT && valueToSet != current) {
+				setCountingMeasure(countingMeasure.getKey(), valueToSet);
+			}
+		}
 	}
 
 	/**
@@ -349,8 +381,8 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Stops the timer for a given time measure and returns the duration of the
-	 * measure.
+	 * Stops and saves the timer for a given time measure and returns the
+	 * duration of the measure.
 	 * 
 	 * @param type
 	 *            Type of the time measure to stop
