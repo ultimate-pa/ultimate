@@ -340,23 +340,23 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			CPrimitive result = new CPrimitive(PRIMITIVE.FLOAT);
 			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, result);
 			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
-			paramASTTypes[0] = new NamedType(loc, "bv1", new ASTType[0]);
-			paramASTTypes[1] = new NamedType(loc, "bv8", new ASTType[0]);
-			paramASTTypes[2] = new NamedType(loc, "bv23", new ASTType[0]);
+			paramASTTypes[0] = new PrimitiveType(loc, "bv1");
+			paramASTTypes[1] = new PrimitiveType(loc, "bv8");
+			paramASTTypes[2] = new PrimitiveType(loc, "bv23");
 			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareFloat", attributes, resultASTType, paramASTTypes);
 			
 			result = new CPrimitive(PRIMITIVE.DOUBLE);
 			resultASTType = m_TypeHandler.ctype2asttype(loc, result);
-			paramASTTypes[1] = new NamedType(loc, "bv11", new ASTType[0]);
-			paramASTTypes[2] = new NamedType(loc, "bv52", new ASTType[0]);
-			resultASTType = new NamedType(loc, "C_DOUBLE", new ASTType[0]);
+			paramASTTypes[1] = new PrimitiveType(loc, "bv11");
+			paramASTTypes[2] = new PrimitiveType(loc, "bv52");
+			resultASTType = m_TypeHandler.ctype2asttype(loc, result);
 			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareDouble", attributes, resultASTType, paramASTTypes);
 			
 			result = new CPrimitive(PRIMITIVE.LONGDOUBLE);
 			resultASTType = m_TypeHandler.ctype2asttype(loc, result);
-			paramASTTypes[1] = new NamedType(loc, "bv15", new ASTType[0]);
-			paramASTTypes[2] = new NamedType(loc, "bv112", new ASTType[0]);
-			resultASTType = new NamedType(loc, "C_LONGDOUBLE", new ASTType[0]);
+			paramASTTypes[1] = new PrimitiveType(loc, "bv15");
+			paramASTTypes[2] = new PrimitiveType(loc, "bv112");
+			resultASTType = m_TypeHandler.ctype2asttype(loc, result);
 			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareLongDouble", attributes, resultASTType, paramASTTypes);
 		} else {
 			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
