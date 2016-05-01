@@ -40,4 +40,4 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ the\ following\ directory=/home/matthias/ultimate/dump/auto
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Command\ for\ external\ solver\ (GNTA\ synthesis)=/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 12
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Dump\ SMT\ script\ to\ file=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/To\ the\ following\ directory=dump/
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/To\ the\ following\ directory=/home/matthias/abstuv/video/barcelogic
