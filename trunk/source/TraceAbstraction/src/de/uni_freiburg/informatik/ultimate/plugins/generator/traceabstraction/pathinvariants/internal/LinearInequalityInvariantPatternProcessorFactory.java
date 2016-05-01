@@ -31,10 +31,12 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -101,8 +103,15 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver instance to use
 	 */
 	protected Script produceSmtSolver() {
-		Script script = SolverBuilder.buildScript(services, storage,
-				m_SolverSettings);
+		final Logics logic;
+		if (m_UseNonlinearConstraints) {
+			logic = Logics.QF_NRA;
+		} else {
+			logic = Logics.QF_LRA;
+		}
+		Script script = SolverBuilder.buildAndInitializeSolver(services, storage, 
+				SolverMode.External_DefaultMode, m_SolverSettings, 
+				false, false, logic.toString(), "InvariantSynthesis"); 
 		script = new ScriptWithTermConstructionChecks(script);
 		return script;
 	}
