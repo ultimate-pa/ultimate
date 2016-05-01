@@ -1268,7 +1268,16 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					continue;
 				}
 				SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeDestAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeDest;
-				for (Vertex<LETTER, STATE> preInvoker : m_GameGraph.getPredecessors(returnInvoker)) {
+				Set<Vertex<LETTER, STATE>> preInvokers = m_GameGraph.getPredecessors(returnInvoker);
+				if (preInvokers == null) {
+					// Ignore this summarize edge destination if it has no pre
+					// invokers.
+					// This can happen in direct simulation, where connections
+					// to pre invokers get deleted if they represent a move
+					// where Duplicator would directly loose.
+					continue;
+				}
+				for (Vertex<LETTER, STATE> preInvoker : preInvokers) {
 					if (!(preInvoker instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
 						continue;
 					}
@@ -1315,13 +1324,17 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		for (DuplicatorDoubleDeckerVertex<LETTER, STATE> returnInvoker : m_DuplicatorReturningVertices) {
 			Set<Vertex<LETTER, STATE>> successors = m_GameGraph.getSuccessors(returnInvoker);
 			if (successors != null) {
-				for (Vertex<LETTER, STATE> succ : successors) {
+				// Care for concurrentModifcationException
+				List<Vertex<LETTER, STATE>> successorsToProcess = new LinkedList<>(successors);
+				for (Vertex<LETTER, STATE> succ : successorsToProcess) {
 					m_GameGraph.removeEdge(returnInvoker, succ);
 				}
 			}
 			Set<Vertex<LETTER, STATE>> predecessors = m_GameGraph.getPredecessors(returnInvoker);
 			if (predecessors != null) {
-				for (Vertex<LETTER, STATE> pred : predecessors) {
+				// Care for concurrentModifcationException
+				List<Vertex<LETTER, STATE>> predecessorsToProcess = new LinkedList<>(predecessors);
+				for (Vertex<LETTER, STATE> pred : predecessorsToProcess) {
 					m_GameGraph.removeEdge(pred, returnInvoker);
 					// Care for dead end spoiler vertices because they are not
 					// allowed in a legal game graph.
