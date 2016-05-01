@@ -54,11 +54,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 
@@ -166,6 +170,26 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		assert !m_analysis_type.isDisabled();
 	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected Script constructScript(LassoRankerPreferences preferences, String constraintsName) {
+		Settings settings = preferences.getSolverConstructionSettings(
+				preferences.baseNameOfDumpedScript + "+" + constraintsName);
+		final SolverMode solverMode;
+		if (preferences.annotate_terms) {
+			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+		} else {
+			solverMode = SolverMode.External_ModelsMode;
+		}
+		final String solverId = "NonTerminationArgumentSynthesis solver ";
+		return SolverBuilder.buildAndInitializeSolver(m_services, m_storage, 
+				solverMode, settings, 
+				false, false, null, solverId);
+	}
+	
 	
 	@Override
 	protected LBool do_synthesis() {

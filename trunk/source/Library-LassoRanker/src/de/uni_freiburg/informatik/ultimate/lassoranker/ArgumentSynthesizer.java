@@ -111,11 +111,18 @@ public abstract class ArgumentSynthesizer implements Closeable {
 			IToolchainStorage storage) throws IOException {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_preferences = preferences;
-		m_script = SMTSolver.newScript(preferences, constaintsName, services, storage);
 		m_lasso = lasso;
 		m_services = services;
 		m_storage = storage;
+		m_script = constructScript(m_preferences, constaintsName);
 	}
+	
+	/**
+	 * @param constaintsName Identifier for this script.
+	 * @return SMT script that will be used for the argument synthesis
+	 */
+	protected abstract Script constructScript(
+			LassoRankerPreferences preferences, String constaintsName);
 
 	/**
 	 * @return the SMT script to be used for the argument synthesis
