@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -63,6 +64,7 @@ public class SolverBuilder {
 		External_SMTInterpolInterpolationMode, 
 		External_Z3InterpolationMode, 
 		External_ModelsAndUnsatCoreMode,
+		External_ModelsMode,
 		External_DefaultMode,
 	};
 
@@ -306,12 +308,22 @@ public class SolverBuilder {
 
 		switch (solverMode) {
 		case External_DefaultMode:
-			result.setLogic(logicForExternalSolver);
+			if (logicForExternalSolver != null) {
+				result.setLogic(logicForExternalSolver);
+			}
+			break;
+		case External_ModelsMode:
+			result.setOption(":produce-models", true);
+			if (logicForExternalSolver != null) {
+				result.setLogic(logicForExternalSolver);
+			}
 			break;
 		case External_ModelsAndUnsatCoreMode:
 			result.setOption(":produce-models", true);
 			result.setOption(":produce-unsat-cores", true);
-			result.setLogic(logicForExternalSolver);
+			if (logicForExternalSolver != null) {
+				result.setLogic(logicForExternalSolver);
+			}
 			break;
 		case External_PrincessInterpolationMode:
 		case External_SMTInterpolInterpolationMode:
@@ -354,7 +366,7 @@ public class SolverBuilder {
 				+ (new SimpleDateFormat("yyyy/MM/dd")).format(new Date())
 				+ " by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + System.lineSeparator();
 		result.setInfo(":source", advertising);
-		result.setInfo(":smt-lib-version", "2.0");
+		result.setInfo(":smt-lib-version", new BigDecimal(2.0));
 		result.setInfo(":category", new QuotedObject("industrial"));
 
 		storage.putStorable(solverId, new IStorable() {
