@@ -347,12 +347,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 		case PathInvariants: {
 			boolean useNonlinerConstraints = true;
-			boolean dumpSmtScriptToFile = m_Pref.dumpSmtScriptToFile() || true;
+			boolean dumpSmtScriptToFile = m_Pref.dumpSmtScriptToFile();
 			String pathOfDumpedScript = m_Pref.pathOfDumpedScript();
 			String baseNameOfDumpedScript = "InVarSynth_" + m_RootNode.getFilename() + "_Iteration" + m_Iteration;
 			final String solverCommand;
 			if (useNonlinerConstraints) {
+				// solverCommand = "yices-smt2 --incremental";
+				// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
 				solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
+				// solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:1000";
 			} else {
 				solverCommand = "yices-smt2 --incremental";
 			}
