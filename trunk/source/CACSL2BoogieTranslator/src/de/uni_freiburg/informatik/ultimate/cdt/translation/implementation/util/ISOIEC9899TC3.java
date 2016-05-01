@@ -199,7 +199,7 @@ public final class ISOIEC9899TC3 {
 			final Expression sign = new BitvecLiteral(loc, Integer.toString(0), 1);
 			final Expression significant;
 			final Expression exponent;			
-			BigDecimal floatVal = new BigDecimal(value);
+			
 
 			// if there is a float-suffix: throw it away
 			for (String s : SUFFIXES_FLOAT) {
@@ -208,6 +208,7 @@ public final class ISOIEC9899TC3 {
 					floatType = s;
 				}
 			}
+			BigDecimal floatVal = new BigDecimal(value);
 			
 			// Set floatIndices depending on the value of the val
 			final CType resultType;
