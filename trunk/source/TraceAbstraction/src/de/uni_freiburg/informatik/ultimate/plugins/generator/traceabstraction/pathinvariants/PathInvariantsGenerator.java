@@ -96,7 +96,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final PredicateUnifier predicateUnifier, final SmtManager smtManager, 
 			final boolean useNonlinerConstraints, final Settings solverSettings) {
 		final ILinearInequalityInvariantPatternStrategy strategy = new LocationIndependentLinearInequalityInvariantPatternStrategy(
-				1, 1, 1, 2, 5);
+				1, 1, 1, 1, 5);
 		return new LinearInequalityInvariantPatternProcessorFactory(services,
 				storage, predicateUnifier, smtManager, strategy, useNonlinerConstraints, solverSettings);
 	}
