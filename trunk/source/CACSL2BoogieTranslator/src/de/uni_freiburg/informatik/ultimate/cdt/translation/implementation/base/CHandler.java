@@ -386,8 +386,10 @@ public class CHandler implements ICHandler {
 		this.mPostProcessor = new PostProcessor(main, mLogger, m_ExpressionTranslation);
 		this.mTypeSizeComputer = new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, m_ExpressionTranslation, main.getTypeSizes());
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation, mTypeSizeComputer);
+		boolean smtBoolArraysWorkaround = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		this.mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, 
-				mTypeSizeComputer, main.getTypeSizes(), m_ExpressionTranslation, bitvectorTranslation, nameHandler);
+				mTypeSizeComputer, main.getTypeSizes(), m_ExpressionTranslation, bitvectorTranslation, 
+				nameHandler, smtBoolArraysWorkaround);
 		this.mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, m_ExpressionTranslation);
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler, m_ExpressionTranslation);
 	}

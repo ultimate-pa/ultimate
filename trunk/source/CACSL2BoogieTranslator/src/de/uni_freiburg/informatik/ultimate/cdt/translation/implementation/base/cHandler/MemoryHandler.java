@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -90,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
@@ -163,6 +165,7 @@ public class MemoryHandler {
 	private final AMemoryModel m_MemoryModel;
 	private final INameHandler m_NameHandler;
 	private final MEMORY_MODEL m_MemoryModelPreference;
+	private final IBooleanArrayHelper m_BooleanArrayHelper;
 	
 	
 	/**
@@ -175,13 +178,24 @@ public class MemoryHandler {
      */
     public MemoryHandler(ITypeHandler typeHandler, FunctionHandler functionHandler, boolean checkPointerValidity, 
     		TypeSizeAndOffsetComputer typeSizeComputer, TypeSizes typeSizes, 
-    		AExpressionTranslation expressionTranslation, boolean bitvectorTranslation, INameHandler nameHandler) {
+    		AExpressionTranslation expressionTranslation, boolean bitvectorTranslation, 
+    		INameHandler nameHandler, boolean smtBoolArrayWorkaround) {
     	m_TypeHandler = typeHandler;
     	m_TypeSizes = typeSizes;
     	m_FunctionHandler = functionHandler;
     	m_ExpressionTranslation = expressionTranslation;
     	m_NameHandler = nameHandler;
     	m_RequiredMemoryModelFeatures = new RequiredMemoryModelFeatures();
+    	if (smtBoolArrayWorkaround) {
+    		if (bitvectorTranslation) {
+    			m_BooleanArrayHelper = new BooleanArrayHelper_Bitvector();
+    		} else {
+    			m_BooleanArrayHelper = new BooleanArrayHelper_Integer();
+    		}
+    	} else {
+    		m_BooleanArrayHelper = new BooleanArrayHelper_Bool();
+    	}
+    	
 
 		//read preferences from settings
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
@@ -395,7 +409,7 @@ public class MemoryHandler {
         ASTType pointerComponentType = m_TypeHandler.ctype2asttype(ignoreLoc, 
         		m_ExpressionTranslation.getCTypeOfPointerComponents());
         ASTType validType = new ArrayType(ignoreLoc, new String[0],
-                new ASTType[] { pointerComponentType }, new PrimitiveType(ignoreLoc, "bool"));
+                new ASTType[] { pointerComponentType }, m_BooleanArrayHelper.constructBoolReplacementType());
         VarList vlV = new VarList(ignoreLoc, new String[] { SFO.VALID }, validType);
         return new VariableDeclaration(ignoreLoc, new Attribute[0],
                 new VarList[] { vlV });
@@ -1157,8 +1171,9 @@ public class MemoryHandler {
 	 * @param ptrName name of pointer whose base address is checked
 	 * @param specList list to which the specification is added
 	 */
-	private void addPointerBaseValidityCheck(final ILocation loc, String ptrName,
-			ArrayList<Specification> specList) {
+	private void addPointerBaseValidityCheck(final ILocation loc, 
+			final String ptrName,
+			final ArrayList<Specification> specList) {
 		if (m_PointerBaseValidity == POINTER_CHECKMODE.IGNORE) {
 			// add nothing
 			return;
@@ -1167,6 +1182,7 @@ public class MemoryHandler {
 			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
 			final ArrayAccessExpression aae = new ArrayAccessExpression(loc, 
 					getValidArray(loc), new Expression[]{ ptrBase });
+			final Expression isValid = m_BooleanArrayHelper.compareWithTrue(aae);
 			final boolean isFreeRequires;
 			if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
 		    	isFreeRequires = false;
@@ -1174,8 +1190,9 @@ public class MemoryHandler {
 				assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
 				isFreeRequires = true;
 			}
-			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, aae);
-			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			final RequiresSpecification spec = 
+					new RequiresSpecification(loc, isFreeRequires, isValid);
+			final Check check = new Check(Spec.MEMORY_DEREFERENCE);
 			check.addToNodeAnnot(spec);
 			specList.add(spec);
 		}
@@ -1232,7 +1249,6 @@ public class MemoryHandler {
         // modifies #valid;
         Expression nr0 = m_ExpressionTranslation.constructLiteralForIntegerType(
         		tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-        Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
         Expression valid = getValidArray(tuLoc);
         Expression addrOffset = new StructAccessExpression(tuLoc, addr,
@@ -1265,15 +1281,17 @@ public class MemoryHandler {
         Expression isNullPtr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrBase, ptrBaseZero);
 
         //requires ~addr!base == 0 || #valid[~addr!base];
+        final Expression addrIsValid = m_BooleanArrayHelper.compareWithTrue(
+        		new ArrayAccessExpression(tuLoc, valid, idcFree));
         RequiresSpecification baseValid = new RequiresSpecification(tuLoc, free,
         		ExpressionFactory.newBinaryExpression(tuLoc, Operator.LOGICOR,
-        				isNullPtr,
-        				new ArrayAccessExpression(tuLoc, valid, idcFree)));
+        				isNullPtr, addrIsValid));
 
         check.addToNodeAnnot(baseValid);
         specFree.add(baseValid);
 
         //ensures (if ~addr!base == 0 then #valid == old(#valid) else #valid == old(#valid)[~addr!base := false])
+        Expression bLFalse = m_BooleanArrayHelper.constructFalse();
         Expression updateValidArray = 
         		ExpressionFactory.newIfThenElseExpression(tuLoc, isNullPtr, 
         				ExpressionFactory.newBinaryExpression(
@@ -1331,7 +1349,7 @@ public class MemoryHandler {
     private ArrayList<Declaration> declareDeallocation(Dispatcher main, final ILocation tuLoc) {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         // ensures #valid = old(valid)[~addr!base := false];
-        Expression bLFalse = new BooleanLiteral(tuLoc, false);
+        Expression bLFalse = m_BooleanArrayHelper.constructFalse();
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
         Expression valid = getValidArray(tuLoc);
         Expression addrBase = new StructAccessExpression(tuLoc, addr,
@@ -1373,7 +1391,6 @@ public class MemoryHandler {
         ASTType intType = typeHandler.ctype2asttype(tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents());
         Expression nr0 = m_ExpressionTranslation.constructLiteralForIntegerType(
         		tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-        Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
         Expression valid = getValidArray(tuLoc);
         Expression addrOffset = new StructAccessExpression(tuLoc, addr,
@@ -1394,7 +1411,8 @@ public class MemoryHandler {
         Expression base = new StructAccessExpression(
                 tuLoc, res, SFO.POINTER_BASE);
         Expression[] idcMalloc = new Expression[] { base };
-        Expression bLTrue = new BooleanLiteral(tuLoc, true);
+        Expression bLTrue = m_BooleanArrayHelper.constructTrue();
+        Expression bLFalse = m_BooleanArrayHelper.constructFalse();
         IdentifierExpression size = new IdentifierExpression(tuLoc, SIZE);
         List<Specification> specMalloc = new ArrayList<Specification>();
 
@@ -1940,11 +1958,14 @@ public class MemoryHandler {
 	}
 	
 
-
 	public TypeSizeAndOffsetComputer getTypeSizeAndOffsetComputer() {
 		return m_TypeSizeAndOffsetComputer;
 	}
 	
+	public IBooleanArrayHelper getBooleanArrayHelper() {
+		return m_BooleanArrayHelper;
+	}
+
 	/**
 	 * Add or subtract a Pointer and an integer.
 	 * Use this method only if you are sure that the type of the integer
@@ -1991,5 +2012,101 @@ public class MemoryHandler {
 				integerExpresionType, calculateSizeOf(loc, valueType), integerExpresionType);
 		return timesSizeOf;
 	}
+	
+	
+	
+	public interface IBooleanArrayHelper {
+		public ASTType constructBoolReplacementType();
+		public Expression constructTrue();
+		public Expression constructFalse();
+		public Expression compareWithTrue(Expression expr);
+	}
+	
+	public class BooleanArrayHelper_Bool implements IBooleanArrayHelper {
+
+		@Override
+		public ASTType constructBoolReplacementType() {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return new PrimitiveType(ignoreLoc, "bool");
+		}
+
+		@Override
+		public Expression constructTrue() {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return new BooleanLiteral(ignoreLoc, true);
+		}
+
+		@Override
+		public Expression constructFalse() {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return new BooleanLiteral(ignoreLoc, false);
+		}
+
+		@Override
+		public Expression compareWithTrue(Expression expr) {
+			return expr;
+		}
+		
+	}
+	
+	public class BooleanArrayHelper_Integer implements IBooleanArrayHelper {
+
+		@Override
+		public ASTType constructBoolReplacementType() {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return new PrimitiveType(ignoreLoc, "int");
+		}
+
+		@Override
+		public Expression constructTrue() {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return new IntegerLiteral(ignoreLoc, "1");
+		}
+
+		@Override
+		public Expression constructFalse() {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return new IntegerLiteral(ignoreLoc, "0");
+		}
+
+		@Override
+		public Expression compareWithTrue(Expression expr) {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return ExpressionFactory.newBinaryExpression(
+					ignoreLoc, Operator.COMPEQ, expr, constructTrue());
+		}
+		
+	}
+	
+	public class BooleanArrayHelper_Bitvector implements IBooleanArrayHelper {
+
+		@Override
+		public ASTType constructBoolReplacementType() {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return new PrimitiveType(ignoreLoc, "bv1");
+		}
+
+		@Override
+		public Expression constructTrue() {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return new BitvecLiteral(ignoreLoc, "1", 1);
+		}
+
+		@Override
+		public Expression constructFalse() {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return new BitvecLiteral(ignoreLoc, "0", 1);
+		}
+
+		@Override
+		public Expression compareWithTrue(Expression expr) {
+			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+			return ExpressionFactory.newBinaryExpression(
+					ignoreLoc, Operator.COMPEQ, expr, constructTrue());
+		}
+		
+	}
+	
+	
 
 }

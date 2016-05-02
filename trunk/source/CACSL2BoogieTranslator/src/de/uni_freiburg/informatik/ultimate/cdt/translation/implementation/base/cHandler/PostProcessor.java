@@ -289,7 +289,7 @@ public class PostProcessor {
 				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(translationUnitLoc,
 						new VariableLHS(translationUnitLoc, SFO.VALID),
 						new Expression[] { zero }) };
-				Expression[] rhs = new Expression[] { new BooleanLiteral(translationUnitLoc, false) };
+				Expression[] rhs = new Expression[] { memoryHandler.getBooleanArrayHelper().constructFalse() };
 				initStatements.add(0, new AssignmentStatement(translationUnitLoc, lhs, rhs));
 				mInitializedGlobals.add(SFO.VALID);
 			}
