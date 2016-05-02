@@ -99,10 +99,10 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 		int k = 3;
 		int acceptanceInPerc = 100;
 		int totalityInternalInPerc = 5;
-		int totalityCallInPerc = 5;
-		int totalityReturnInPerc = 5;
+		int totalityCallInPerc = 2;
+		int totalityReturnInPerc = 1;
 		int logEvery = 50;
-		int amount = 1000;
+		int amount = 1;
 		NestedWordAutomaton<String, String> nwa;
 
 		for (int i = 1; i <= amount; i++) {
@@ -113,14 +113,12 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 			nwa = new GetRandomNwa(services, k, n, (totalityInternalInPerc + 0.0f) / 100,
 					(totalityCallInPerc + 0.0f) / 100, (totalityReturnInPerc + 0.0f) / 100,
 					(acceptanceInPerc + 0.0f) / 100).getResult();
-
 			try {
 				new CompareReduceNwaSimulation<String, String>(services, snf, nwa);
 			} catch (OperationCanceledException e) {
 				e.printStackTrace();
 			}
 		}
-
 		m_Logger.info(exitMessage());
 	}
 

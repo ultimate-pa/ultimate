@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -384,8 +385,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		HashMap<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, SummarizeEdge<LETTER, STATE>> invokerToSummarizeEdge = new HashMap<>();
 
 		// Every vertex can maximal be added '3 * out-degree' times to the queue
-		int maxAmountOfSearches = m_GameGraph.getSize() * m_GameGraph.getSize() * 3;
-		int searchCounter = 0;
+		// TODO Performance impact of BigInteger is to high for a safety check.
+		// This event may not even be possible for correct game graphs. In this
+		// case, remove it after verification.
+		BigInteger maxAmountOfSearches = BigInteger.valueOf(m_GameGraph.getSize()).pow(2)
+				.multiply(BigInteger.valueOf(3));
+		BigInteger searchCounter = BigInteger.ZERO;
 
 		// Add starting elements
 		for (Triple<SpoilerDoubleDeckerVertex<LETTER, STATE>, SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> summarizeEdgeEntry : m_SrcDestToSummarizeEdges
@@ -415,8 +420,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 
 		// Start the search
-		while (!searchQueue.isEmpty() && searchCounter <= maxAmountOfSearches) {
-			searchCounter++;
+		while (!searchQueue.isEmpty() && searchCounter.compareTo(maxAmountOfSearches) <= 0) {
+			searchCounter.add(BigInteger.ONE);
 			SearchElement<LETTER, STATE> searchElement = searchQueue.poll();
 			Vertex<LETTER, STATE> searchVertex = searchElement.getVertex();
 			VertexDownState<STATE> searchDownState = searchElement.getDownState();
@@ -791,7 +796,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 		}
 
-		if (searchCounter > maxAmountOfSearches) {
+		if (searchCounter.compareTo(maxAmountOfSearches) > 0) {
 			throw new IllegalStateException(
 					"Computing summarize edge priorities could not be done. The process detected a live lock and aborted.");
 		}
