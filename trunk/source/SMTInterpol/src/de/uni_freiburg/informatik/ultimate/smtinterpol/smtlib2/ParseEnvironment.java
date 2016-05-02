@@ -97,6 +97,7 @@ public class ParseEnvironment {
 	public void parseScript(String filename) throws SMTLIBException {
 		File oldcwd = mCwd;
 		Reader reader = null;
+		boolean closeReader = false;
 		try {
 			if (filename.equals("<stdin>")) {
 				reader = new InputStreamReader(System.in);
@@ -107,6 +108,7 @@ public class ParseEnvironment {
 				mCwd = script.getParentFile();
 				try {
 					reader = new FileReader(script);
+					closeReader = true;
 				} catch (FileNotFoundException ex) {
 					throw new SMTLIBException("File not found: " + filename);
 				}
@@ -114,7 +116,7 @@ public class ParseEnvironment {
 			parseStream(reader, filename);
 		} finally {
 			mCwd = oldcwd;
-			if (reader != null) {
+			if (closeReader) {
 				try {
 					reader.close();
 				} catch (IOException ex) {

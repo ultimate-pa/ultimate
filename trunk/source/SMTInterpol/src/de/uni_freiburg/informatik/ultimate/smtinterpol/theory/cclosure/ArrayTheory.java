@@ -972,8 +972,12 @@ public class ArrayTheory implements ITheory {
 		if (ep == EqualityProxy.getFalseProxy())
 				return null;
 		Literal res = ep.getLiteral();
-		if (res instanceof CCEquality)
-			return (CCEquality) res;
+		if (res instanceof CCEquality) {
+			CCEquality eq = (CCEquality) res;
+			if ((eq.getLhs() == t1 && eq.getRhs() == t2)
+					|| (eq.getLhs() == t2 && eq.getRhs() == t1))
+				return eq;
+		}
 		return ep.createCCEquality(t1.getFlatTerm(), t2.getFlatTerm());
 	}
 

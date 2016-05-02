@@ -117,8 +117,6 @@ public class Theory {
 	 */
 	private UnifyHash<FunctionSymbol> mBitVecConstCache;
 	
-	private UnifyHash<FunctionSymbol> mFloatingPointCache;
-	
 	public final ApplicationTerm mTrue, mFalse;
 	public final FunctionSymbol mAnd, mOr, mNot, mImplies, mXor;
 	public final PolymorphicFunctionSymbol mEquals, mDistinct, mIte;
@@ -598,7 +596,7 @@ public class Theory {
 			public int getFlags(
 					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
 				return mFlags;
-			} 
+			}
 
 			public Sort getResultSort(
 					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
@@ -688,11 +686,21 @@ public class Theory {
 		declareInternalPolymorphicFunction(
 				"store", generic2,
 				new Sort[] { array, generic2[0], generic2[1] },	array, 0);
+		defineFunction(new FunctionSymbolFactory("const") {
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				if (indices != null
+					|| paramSorts.length != 1 || resultSort == null
+					|| resultSort.getName() != "Array"
+					|| ! paramSorts[0].equalsSort(resultSort.getArguments()[1]))
+					return null;
+				return resultSort;
+			}
+		});
 	}
-	
-	private void createBitVecOperators() {
-		
-		
+
+	private void createBitVecSort() {
 		mBitVecSort = new SortSymbol(this, "BitVec", 0, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			public void checkArity(BigInteger[] indices, int arity) {
@@ -708,6 +716,9 @@ public class Theory {
 			}
 		};
 		mDeclaredSorts.put("BitVec", mBitVecSort);
+	}
+
+	private void createBitVecOperators() {
 		class RegularBitVecFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			int mFlags;
@@ -825,7 +836,7 @@ public class Theory {
 		defineFunction(new RegularBitVecFunction("bvurem", 2, null));
 		defineFunction(new RegularBitVecFunction("bvshl", 2, null));
 		defineFunction(new RegularBitVecFunction("bvlshr", 2, null));
-		
+
 		defineFunction(new RegularBitVecFunction("bvnand", 2, null));
 		defineFunction(new RegularBitVecFunction("bvnor", 2, null));
 		defineFunction(new RegularBitVecFunction("bvxor", 2, null,
@@ -837,7 +848,7 @@ public class Theory {
 		defineFunction(new RegularBitVecFunction("bvsrem", 2, null));
 		defineFunction(new RegularBitVecFunction("bvsmod", 2, null));
 		defineFunction(new RegularBitVecFunction("bvashr", 2, null));
-		
+
 		defineFunction(new FunctionSymbolFactory("repeat") {
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
@@ -874,32 +885,30 @@ public class Theory {
 		defineFunction(new RegularBitVecFunction("bvsge", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 	}
-	
+
 	private void createFloatingPointOperators() {
-		
+
 		mFloatingPointSort = new SortSymbol(this, "FloatingPoint", 0, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			public void checkArity(BigInteger[] indices, int arity) {
 				if (indices == null || indices.length != 2)
 					throw new IllegalArgumentException(
 							"Floating Point needs two indices");
-				
+
 				if (indices[0].signum() <= 0 || indices[1].signum() <= 0)
 					throw new IllegalArgumentException(
 							"FloatingPoint indices must be greater 0");
-				
+
 				if (arity != 0)
 					throw new IllegalArgumentException(
 							"FloatingPoint has no parameters");
 			}
 		};
-		
-				mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
-		mRealSort = declareInternalSort("Real", 0,
-				SortSymbol.INTERNAL).getSort(null, new Sort[0]);
+
+		mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
 		mRoundingModeSort = declareInternalSort("RoundingMode", 0, 0)
 				.getSort(null, new Sort[0]);
-		
+
 		/*
 		 * Used to create Functions of the Floating Point theory
 		 */
@@ -911,7 +920,7 @@ public class Theory {
 			public RegularFloatingPointFunction(
 					String name, int numArgs, Sort result, int flags) {
 				super(name);
-				mNumArgs = numArgs;				
+				mNumArgs = numArgs;
 				mResult = result;
 				mFlags = flags;
 			}
@@ -919,7 +928,7 @@ public class Theory {
 			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
 					Sort resultSort) {
 				return mFlags;
-			}	
+			}
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
 					Sort resultSort) {
@@ -940,9 +949,7 @@ public class Theory {
 				return mResult == null ? paramSorts[mFirstFloat] : mResult;
 			}
 		}
-		
-		
-		
+
 		defineFunction(new FunctionSymbolFactory("fp") {
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
@@ -950,6 +957,7 @@ public class Theory {
 				if (indices != null
 					|| paramSorts.length != 3 || resultSort != null
 					|| paramSorts[0].getName() != "BitVec"
+					|| !paramSorts[0].getIndices()[0].equals(BigInteger.ONE)
 					|| paramSorts[1].getName() != "BitVec"
 					|| paramSorts[2].getName() != "BitVec")
 					return null;
@@ -959,58 +967,58 @@ public class Theory {
 				return mFloatingPointSort.getSort(fpIndices, new Sort[0] );
 			}
 		});
-		
+
 		// from BitVec to FP
 		defineFunction(new FunctionSymbolFactory("to_fp") {
-		    @Override
-		    public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
-		    		Sort resultSort) {
-		    	if (indices == null || indices.length != 2
-		    		|| paramSorts == null) {
-		    		return null;
-		    }
-		    //from BitVec to FP
-		   	if (paramSorts.length == 1 && paramSorts[0].getName() == "BitVec") {
-		   		if (!((indices[0].add(indices[1]).equals( paramSorts[0].getIndices()[0])))) {
-		   			return null;
-		   		}
-		   	return mFloatingPointSort.getSort(indices, new Sort[0]);
-		    }
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				if (indices == null || indices.length != 2
+					|| paramSorts == null) {
+					return null;
+				}
+				//from BitVec to FP
+				if (paramSorts.length == 1 && paramSorts[0].getName() == "BitVec") {
+					if (!((indices[0].add(indices[1]).equals( paramSorts[0].getIndices()[0])))) {
+						return null;
+					}
+					return mFloatingPointSort.getSort(indices, new Sort[0]);
+				}
 
-		    // from FP to FP
-		    if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
-		    		&& (paramSorts[1].getName() == "FloatingPoint")) {
-		    	return mFloatingPointSort.getSort(indices, new Sort[0]);
-		    }
+				// from FP to FP
+				if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
+					&& (paramSorts[1].getName() == "FloatingPoint")) {
+					return mFloatingPointSort.getSort(indices, new Sort[0]);
+				}
 
-		    // from real to FP
-		    if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
-		    		&& paramSorts[1].getName() == "Real") {
-		      return mFloatingPointSort.getSort(indices, new Sort[0]);
-		    }
+				// from real to FP
+				if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
+					&& paramSorts[1].getName() == "Real") {
+					return mFloatingPointSort.getSort(indices, new Sort[0]);
+				}
 
-		    // from signed machine integer, represented as a 2's complement bit vector to FP
-		    if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
-		    		&& paramSorts[1].getName() == "BitVec") {
-		      return mFloatingPointSort.getSort(indices, new Sort[0]);
-		    }
-		    return null;
-		    }
+				// from signed machine integer, represented as a 2's complement bit vector to FP
+				if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
+					&& paramSorts[1].getName() == "BitVec") {
+					return mFloatingPointSort.getSort(indices, new Sort[0]);
+				}
+				return null;
+			}
 		});
 
 		defineFunction(new FunctionSymbolFactory("to_fp_unsigned") {
-		    @Override
-		    public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
-		    		Sort resultSort) {
-		    	if (indices == null || indices.length != 2
-		    		|| paramSorts.length != 2 || resultSort != null
-		    		|| paramSorts[0].getName() != "RoundingMode"
-		    		|| paramSorts[1].getName() != "BitVec")
-		    		return null;
-		    	return mFloatingPointSort.getSort(indices, new Sort[0] );
-		    	}
-		    });
-		
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				if (indices == null || indices.length != 2
+					|| paramSorts.length != 2 || resultSort != null
+					|| paramSorts[0].getName() != "RoundingMode"
+					|| paramSorts[1].getName() != "BitVec")
+					return null;
+				return mFloatingPointSort.getSort(indices, new Sort[0] );
+			}
+		});
+
 		defineFunction(new FunctionSymbolFactory("fp.to_ubv") {
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
@@ -1024,7 +1032,7 @@ public class Theory {
 						new BigInteger[] { indices[0] }, new Sort[0]);
 			}
 		});
-		
+
 		defineFunction(new FunctionSymbolFactory("fp.to_sbv") {
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
@@ -1036,70 +1044,58 @@ public class Theory {
 					return null;
 				return mBitVecSort.getSort(
 						new BigInteger[] { indices[0] }, new Sort[0]);
-				
-			}
-		});
-		
-		// +/- infinity
-		defineFunction(new FunctionSymbolFactory("+oo") {
-			@Override
-			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
-					Sort resultSort) {
-				return mFloatingPointSort.getSort(indices, new Sort[0] );
-			}
-		});
-		
-		defineFunction(new FunctionSymbolFactory("-oo") {
-			@Override
-			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
-					Sort resultSort) {
-				return mFloatingPointSort.getSort(indices, new Sort[0] );
-			}
-		});
-		
-		// +/- zero
-		defineFunction(new FunctionSymbolFactory("+zero") {
-			@Override
-			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
-					Sort resultSort) {
-				return mFloatingPointSort.getSort(indices, new Sort[0] );
 			}
 		});
 
-		defineFunction(new FunctionSymbolFactory("-zero") {
+		/*
+		 * Used to create Constants of the Floating Point theory
+		 */
+		class FloatingPointConstant extends FunctionSymbolFactory {
+			public FloatingPointConstant(String name) {
+				super(name);
+			}
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
 					Sort resultSort) {
+				if (indices.length != 2 || 
+					paramSorts.length != 0 || resultSort != null){
+					return null;
+				}
 				return mFloatingPointSort.getSort(indices, new Sort[0] );
 			}
-		});
-		
-		defineFunction(new FunctionSymbolFactory("NaN") {
-			@Override
-			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
-					Sort resultSort) {
-				return mFloatingPointSort.getSort(indices, new Sort[0] );
-			}
-		});
+		}
+		// +/- infinity
+		defineFunction(new FloatingPointConstant("+oo"));
+		defineFunction(new FloatingPointConstant("-oo"));
+		// +/- zero
+		defineFunction(new FloatingPointConstant("+zero"));
+		defineFunction(new FloatingPointConstant("-zero"));
+
+		defineFunction(new FloatingPointConstant("NaN"));
 
 		//short forms of common floats
 		defineSort("Float16", 0, mFloatingPointSort.getSort(new BigInteger[]{new BigInteger("5"), new BigInteger("11")}));
 		defineSort("Float32", 0, mFloatingPointSort.getSort(new BigInteger[]{new BigInteger("8"), new BigInteger("24")}));
 		defineSort("Float64", 0, mFloatingPointSort.getSort(new BigInteger[]{new BigInteger("11"), new BigInteger("53")}));
 		defineSort("Float128", 0, mFloatingPointSort.getSort(new BigInteger[]{new BigInteger("15"), new BigInteger("113")}));
-		
+
 		//RoundingModes
 		declareInternalFunction("roundNearestTiesToEven", new Sort[0], mRoundingModeSort, 0);
-		declareInternalFunction("RNE", new Sort[0], mRoundingModeSort, 0);
 		declareInternalFunction("roundNearestTiesToAway", new Sort[0], mRoundingModeSort, 0);
-		declareInternalFunction("RNA", new Sort[0], mRoundingModeSort, 0);
 		declareInternalFunction("roundTowardPositive", new Sort[0], mRoundingModeSort, 0);
-		declareInternalFunction("RTP", new Sort[0], mRoundingModeSort, 0);
 		declareInternalFunction("roundTowardNegative", new Sort[0], mRoundingModeSort, 0);
-		declareInternalFunction("RTN", new Sort[0], mRoundingModeSort, 0);
 		declareInternalFunction("roundTowardZero", new Sort[0], mRoundingModeSort, 0);
-		declareInternalFunction("RTZ", new Sort[0], mRoundingModeSort, 0);
-		
+		defineFunction("RNE", new Sort[0], mRoundingModeSort, new TermVariable[0],
+				term("roundNearestTiesToEven"), FunctionSymbol.INTERNAL);
+		defineFunction("RNA", new Sort[0], mRoundingModeSort, new TermVariable[0],
+				term("roundNearestTiesToAway"), FunctionSymbol.INTERNAL);
+		defineFunction("RTP", new Sort[0], mRoundingModeSort, new TermVariable[0],
+				term("roundTowardPositive"), FunctionSymbol.INTERNAL);
+		defineFunction("RTN", new Sort[0], mRoundingModeSort, new TermVariable[0],
+				term("roundTowardNegative"), FunctionSymbol.INTERNAL);
+		defineFunction("RTZ", new Sort[0], mRoundingModeSort, new TermVariable[0],
+				term("roundTowardZero"), FunctionSymbol.INTERNAL);
+
 		// Operators
 		defineFunction(new RegularFloatingPointFunction("fp.abs", 1, null, FunctionSymbol.INTERNAL));
 		defineFunction(new RegularFloatingPointFunction("fp.neg", 1, null, FunctionSymbol.INTERNAL));
@@ -1114,14 +1110,14 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fp.fma", 4, null, FunctionSymbol.INTERNAL));
 		defineFunction(new RegularFloatingPointFunction("fp.sqrt", 2, null, FunctionSymbol.INTERNAL));
 		defineFunction(new RegularFloatingPointFunction("fp.roundToIntegral", 2, null, FunctionSymbol.INTERNAL));
-		
+
 		// Comparison Operators
 		defineFunction(new RegularFloatingPointFunction("fp.leq", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 		defineFunction(new RegularFloatingPointFunction("fp.lt", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 		defineFunction(new RegularFloatingPointFunction("fp.geq", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 		defineFunction(new RegularFloatingPointFunction("fp.gt", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 		defineFunction(new RegularFloatingPointFunction("fp.eq", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
-		
+
 		// Classification of numbers
 		defineFunction(new RegularFloatingPointFunction("fp.isNormal", 1, mBooleanSort, FunctionSymbol.INTERNAL));
 		defineFunction(new RegularFloatingPointFunction("fp.isSubnormal", 1, mBooleanSort, FunctionSymbol.INTERNAL));
@@ -1130,22 +1126,22 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fp.isNaN", 1, mBooleanSort, FunctionSymbol.INTERNAL));
 		defineFunction(new RegularFloatingPointFunction("fp.isNegative", 1, mBooleanSort, FunctionSymbol.INTERNAL));
 		defineFunction(new RegularFloatingPointFunction("fp.isPositive", 1, mBooleanSort, FunctionSymbol.INTERNAL));
-		
+
 		// Conversion from FP
 		defineFunction(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort, FunctionSymbol.INTERNAL));
 	}
-	
+
 	private void setLogic(Logics logic) {
 		this.mLogic = logic;
 
 		if (logic.isArray())
 			createArrayOperators();
 
+		if (logic.hasReals() || logic.isFloatingPoint())
+			mRealSort = declareInternalSort("Real", 0,
+					SortSymbol.NUMERIC).getSort(null, new Sort[0]);
+		
 		if (logic.isArithmetic()) {
-
-			if (logic.hasReals())
-				mRealSort = declareInternalSort("Real", 0,
-						SortSymbol.NUMERIC).getSort(null, new Sort[0]);
 
 			if (logic.hasIntegers())
 				mNumericSort = declareInternalSort("Int", 0,
@@ -1160,11 +1156,15 @@ public class Theory {
 			}
 		}
 
-		if (logic.isBitVector())
+		if (logic.isBitVector() || logic.isFloatingPoint()) {
+			createBitVecSort();
+		}
+
+		if (logic.isBitVector()) {
 			createBitVecOperators();
-		
+		}
+
 		if (logic.isFloatingPoint()) {
-			createBitVecOperators();
 			createFloatingPointOperators();
 		}
 		if (mSolverSetup != null)
@@ -1389,10 +1389,6 @@ public class Theory {
 			/* Create bitvector constants */
 			return getBitVecConstant(name, indices);
 		}
-		if (mFloatingPointSort != null && indices != null 
-			&& indices.length == 1 && resultType == null) {
-			return getFloatingPointConstant(name, indices);
-		}
 		return null;
 	}
 	
@@ -1409,25 +1405,6 @@ public class Theory {
 				name, indices, EMPTY_SORT_ARRAY, sort, null, null,
 				FunctionSymbol.INTERNAL);
 		mBitVecConstCache.put(hash,symb);
-		return symb;
-	}
-	
-	private FunctionSymbol getFloatingPointConstant(String name, BigInteger[] indices) {
-		if (mFloatingPointCache == null) {
-			mFloatingPointCache = new UnifyHash<FunctionSymbol>();
-		}
-		int hash = HashUtils.hashJenkins(name.hashCode(), (Object[]) indices);
-		for (FunctionSymbol symb : mFloatingPointCache.iterateHashCode(hash)) {
-			if (symb.getName().equals(name) && symb.getIndices()[0].equals(indices[0])) {
-				return symb;
-			}
-		}
-		Sort sort = mFloatingPointSort.getSort(indices);
-		FunctionSymbol symb = new FunctionSymbol(
-				name, indices, EMPTY_SORT_ARRAY, sort, null, null,
-				FunctionSymbol.INTERNAL);
-		mFloatingPointCache.put(hash, symb);	
-		
 		return symb;
 	}
 

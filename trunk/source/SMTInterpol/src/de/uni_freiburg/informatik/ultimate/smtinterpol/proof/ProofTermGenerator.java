@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
@@ -36,22 +37,16 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Ante
  * overflow by using an explicit stack that contains different visitors. 
  * @author Juergen Christ
  */
-public class ProofTermGenerator {
-	/**
-	 * A very abstract base interface used for non-recursive operations.
-	 * @author Juergen Christ
-	 */
-	private static interface Visitor {
-		public void visit(ProofTermGenerator engine);
-	}
+public class ProofTermGenerator extends NonRecursive {
 	
-	private static class GenerateTerm implements Visitor {
+	private static class GenerateTerm implements Walker {
 		private final Clause mCls;
 		public GenerateTerm(Clause cls) {
 			assert cls.getProof() instanceof ResolutionNode;
 			mCls = cls;
 		}
-		public void visit(ProofTermGenerator engine) {
+		public void walk(NonRecursive nr) {
+			ProofTermGenerator engine = (ProofTermGenerator) nr;
 			Theory t = engine.getTheory();
 			Antecedent[] antes = ((ResolutionNode) mCls.getProof()).
 					getAntecedents();
@@ -69,12 +64,13 @@ public class ProofTermGenerator {
 		}
 	}
 	
-	private static class Expander implements Visitor {
+	private static class Expander implements Walker {
 		private final Clause mCls;
 		public Expander(Clause cls) {
 			mCls = cls;
 		}
-		public void visit(ProofTermGenerator engine) {
+		public void walk(NonRecursive nr) {
+			ProofTermGenerator engine = (ProofTermGenerator) nr;
 			Term known = engine.getTerm(mCls);
 			if (known != null) {
 				engine.pushConverted(known);
@@ -91,31 +87,13 @@ public class ProofTermGenerator {
 				engine.pushConverted(res);
 			} else {
 				ResolutionNode rn = (ResolutionNode) pn;
-				engine.enqueue(new GenerateTerm(mCls));
-				engine.enqueue(new Expander(rn.getPrimary()));
+				engine.enqueueWalker(new GenerateTerm(mCls));
+				engine.enqueueWalker(new Expander(rn.getPrimary()));
 				Antecedent[] antes = rn.getAntecedents();
 				for (Antecedent ante : antes)
-					engine.enqueue(new Expander(ante.mAntecedent));
+					engine.enqueueWalker(new Expander(ante.mAntecedent));
 			}
 		}
-	}
-	/**
-	 * The stack of pending visitors.
-	 */
-	private final Deque<Visitor> mTodo = new ArrayDeque<Visitor>();
-	/**
-	 * Enqueue a new visitor.
-	 * @param visitor Visitor to enqueue.
-	 */
-	void enqueue(Visitor visitor) {
-		mTodo.push(visitor);
-	}
-	/**
-	 * Process visitors until all are processed.
-	 */
-	private void run() {
-		while (!mTodo.isEmpty())
-			mTodo.pop().visit(this);
 	}
 	/**
 	 * Stack of recently produced antecedent names.
@@ -160,10 +138,8 @@ public class ProofTermGenerator {
 	public Term convert(Clause cls) {
 		assert cls.getSize() == 0;
 		assert cls.getProof() != null;
-		enqueue(new Expander(cls));
-		run();
+		run(new Expander(cls));
 		Term res = mConverted.pop();
 		return SMTAffineTerm.cleanup(res);
 	}
-	
 }

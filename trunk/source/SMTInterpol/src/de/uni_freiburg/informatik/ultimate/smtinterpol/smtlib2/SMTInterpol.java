@@ -1215,7 +1215,7 @@ public class SMTInterpol extends NoopScript {
 			usedParts = null;
 		}
 		Interpolator interpolator =
-			new Interpolator(mLogger, tmpBench, getTheory(), parts, startOfSubtree);
+			new Interpolator(mLogger, this, tmpBench, getTheory(), parts, startOfSubtree);
 		Clause refutation = retrieveProof();
 		Term[] ipls = interpolator.getInterpolants(refutation);
 		

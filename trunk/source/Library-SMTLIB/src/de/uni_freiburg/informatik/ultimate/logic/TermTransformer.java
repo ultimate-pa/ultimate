@@ -245,7 +245,7 @@ public class TermTransformer extends NonRecursive {
 
 	/**
 	 * Get the converted terms from the converted stack.  This is the
-	 * dual of pushTerm() that is called after the term were removed
+	 * dual of pushTerms() that is called after the term were removed
 	 * from the todo stack and pushed to the converted stack.  It takes
 	 * the old terms as argument and checks for changes.
 	 * @param oldArgs the original arguments.
@@ -270,9 +270,9 @@ public class TermTransformer extends NonRecursive {
 	 * and finish the conversion of appTerm.  This is called after the arguments
 	 * of appTerm have been converted.  It will put the converted term on
 	 * the converted stack and store it in the cache.
-	 * @param mAppTerm the application term to convert.
 	 */
 	protected static class BuildApplicationTerm implements Walker {
+		/** the application term to convert. */
 		private final ApplicationTerm mAppTerm;
 		
 		public BuildApplicationTerm(ApplicationTerm term) {
@@ -297,6 +297,7 @@ public class TermTransformer extends NonRecursive {
 	 * and before the let body starts.
 	 */
 	protected static class StartLetTerm implements Walker {
+		/** the let term to convert. */
 		private final LetTerm mLetTerm;
 		
 		public StartLetTerm(LetTerm term) {
@@ -317,10 +318,11 @@ public class TermTransformer extends NonRecursive {
 	/**
 	 * Collect the sub term and the values of a let term from the 
 	 * converted stack and finish the conversion of let term.  
-	 * @param mAppTerm the let term to convert.
 	 */
 	protected static class BuildLetTerm implements Walker {
+		/** the let term to convert. */
 		private final LetTerm mLetTerm;
+		/** the converted values that are letted to the variables. */
 		private final Term[] mNewValues;
 		
 		public BuildLetTerm(LetTerm term, Term[] newValues) {
@@ -346,9 +348,9 @@ public class TermTransformer extends NonRecursive {
 	 * converted stack. 
 	 * It stores the converted quantifier on the converted stack and in the
 	 * cache.
-	 * @param mAnnotatedTerm the quantifier to convert.
 	 */
 	protected static class BuildQuantifier implements Walker {
+		/** the quantifier to convert. */
 		private final QuantifiedFormula mQuant;
 		
 		public BuildQuantifier(QuantifiedFormula term) {
@@ -374,9 +376,9 @@ public class TermTransformer extends NonRecursive {
 	 * result in the cache and on the converted stack.
 	 * Note that only Annotations that are of type Term or Term[] are 
 	 * converted.
-	 * @param mAnnotatedTerm the annotated term.
 	 */
 	protected static class BuildAnnotation implements Walker {
+		/** the annotated term. */
 		private final AnnotatedTerm mAnnotatedTerm;
 		
 		public BuildAnnotation(AnnotatedTerm term) {
