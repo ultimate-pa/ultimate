@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -326,7 +325,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			ASTType[] paramASTTypes = new ASTType[paramCType.length + 1];
 			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, resultCType);
 			int counter = 1;
-			// TODO Handling of alternative rounding modes
 			paramASTTypes[0] = new NamedType(loc,"RNE", new ASTType[0]);
 			for (CPrimitive cType : paramCType) {
 				paramASTTypes[counter] = m_TypeHandler.ctype2asttype(loc, cType);

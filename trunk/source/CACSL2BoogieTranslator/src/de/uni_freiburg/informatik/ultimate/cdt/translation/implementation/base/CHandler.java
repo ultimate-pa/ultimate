@@ -1040,7 +1040,7 @@ public class CHandler implements ICHandler {
 		if (cId.equals("NULL")) {
 			return new ExpressionResult(new RValue(m_ExpressionTranslation.constructNullPointer(loc), 
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
-		} else if (cId.equals("NAN") || cId.equals("INFINITY") || cId.equals("inf") || cId.equals("nanl")) {			
+		} else if (cId.equals("NAN") || cId.equals("INFINITY") || cId.equals("inf")) {			
 			ExpressionResult result = m_ExpressionTranslation.createNanOrInfinity(loc, cId);
 			return result;
 		} else if (node.getName().toString().equals("__func__")){

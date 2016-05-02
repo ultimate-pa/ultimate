@@ -190,7 +190,6 @@ public final class ISOIEC9899TC3 {
 			TypeSizes typeSizeConstants,
 			FunctionDeclarations functionDeclarations) {
 		if (bitvectorTranslation) {
-			//TODO bitprecise Float translation
 			String value = val;
 			String floatType = null;
 			int exponentLength = 0;
