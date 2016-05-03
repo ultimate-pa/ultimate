@@ -77,92 +77,108 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class FlowSensitiveFaultLocalizer {
 
-	private IUltimateServiceProvider m_Services;
+	private final  IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
-	private final IRelevanceInformation[] Relevance_of_statements; 
+	private final IRelevanceInformation[] m_RelevanceOfTrace; 
 
 	public FlowSensitiveFaultLocalizer(IRun<CodeBlock, IPredicate> counterexample,
 			INestedWordAutomaton<CodeBlock, IPredicate> cfg, IUltimateServiceProvider services, SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		Relevance_of_statements = new IRelevanceInformation[counterexample.getLength() - 1];
-		makeRelevanceObjects(counterexample); // Make relevance Objects for the statements in error trace
-		ArrayList<int[]> informationFromCFG = computeInformationFromCFG( (NestedRun<CodeBlock, IPredicate>) counterexample, cfg); //Get branch information. in the form of an array list
+		m_RelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
+		List<int[]> informationFromCFG = computeInformationFromCFG( (NestedRun<CodeBlock, IPredicate>) counterexample, cfg); 
 		computeNONFlowSensitiveTraceFormula(counterexample, predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager);
 		computeFlowSensitiveTraceFormula(counterexample, predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager,informationFromCFG);
 	}
 	
-	private void makeRelevanceObjects(IRun<CodeBlock, IPredicate> counterexampleRun){
-		NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
+	/**
+	 * Construct RelevanceInformation array for trace.
+	 * @return array with empty IRelevanceInformation for each IAction in the trace.
+	 */
+	private IRelevanceInformation[] initializeRelevanceOfTrace(final IRun<CodeBlock, IPredicate> counterexampleRun){
+		final IRelevanceInformation[] result = new IRelevanceInformation[counterexampleRun.getLength() - 1];
+		final NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
 		for(int i = 0; i<counterexampleWord.length(); i++){
-			IRelevanceInformation relevancy_of_statement = new RelevanceInformation(Collections.singletonList(counterexampleWord.getSymbolAt(i)),false,false,false,false);
-			Relevance_of_statements[i] = relevancy_of_statement;
+			final IRelevanceInformation relevancyOfAction = new RelevanceInformation(
+					Collections.singletonList(counterexampleWord.getSymbolAt(i)), false, false, false, false);
+			result[i] = relevancyOfAction;
 		}
-		
+		return result;
 	}
 	
-	private ArrayList<int[]> computeInformationFromCFG(NestedRun<CodeBlock, IPredicate> counterexample,
-			INestedWordAutomaton<CodeBlock, IPredicate> cfg){
-		int size = counterexample.getStateSequence().size();
-		ArrayList<int[]> result = new ArrayList<>();
-		ArrayList<IPredicate> cfg_states = new ArrayList<IPredicate>(cfg.getStates());
+	
+	/**
+	 * Compute branch-in and branch-out information from cfg.
+	 *  @param counterexample
+	 * @param cfg
+	 * @return List of pairs, where each pair encodes an alternative path
+	 * (a path of cfg that is not part of the trace). If the pair (k,j) is
+	 * in the list this means that there is an alternative path from
+	 * position k to position j in the trace.
+	 */
+	private List<int[]> computeInformationFromCFG(final NestedRun<CodeBlock, IPredicate> counterexample,
+			final INestedWordAutomaton<CodeBlock, IPredicate> cfg){
+		final List<int[]> result = new ArrayList<>();
+		
 		// Create a Map of Program_points in the CFG to States of the CFG.
-		Map <ProgramPoint,IPredicate> hashmap = new HashMap<>();
-		for(int i=0; i < cfg_states.size(); i++)
-		{
-			IPredicate state = cfg_states.get(i);
-			ISLPredicate Isl_state  =(ISLPredicate) state;
-			ProgramPoint program_point = Isl_state.getProgramPoint();
-			hashmap.put(program_point,state);
+		final Map <ProgramPoint,IPredicate> programPoint_StateMap = new HashMap<>();
+		for (IPredicate cfgState : cfg.getStates()) {
+			final ISLPredicate islState  = (ISLPredicate) cfgState;
+			final ProgramPoint program_point = islState.getProgramPoint();
+			programPoint_StateMap.put(program_point, cfgState);
 		}
-		IPredicate start_state = null;
-		ProgramPoint programpoint = null;
+		
 		// For each state find out if it's a branch or not.
 		// For each state, find out if there is an outgoing branch from that state
 		// that transitions to a state which is not in the counter example.
 		// if you find such a state, then from that state. run the FINDPATHINCFG() method
 		// and find out if that path returns to a state which IS in the counterexample.
 		// If you find such a path, then that state is a branching state then you save this information for future use.
-		for(int counter = 0; counter < counterexample.getLength(); counter++) // For all States LOOP WILL NEVER RUN
-		{
-			start_state = counterexample.getStateAtPosition(counter); // State in consideration at the moment.
-			programpoint = ((ISLPredicate) start_state).getProgramPoint(); // Program point of the state under consideration.
+		for(int posOfStartState = 0; posOfStartState < counterexample.getLength() - 1; posOfStartState++) {
+			// State in consideration at the moment.
+			final IPredicate startStateInTrace = counterexample.getStateAtPosition(posOfStartState); 
+			// Program point of the state under consideration.final
+			final ProgramPoint programpointOfStartStateInTrace = 
+					((ISLPredicate) startStateInTrace).getProgramPoint();  
 			
-			Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> succesors = cfg.internalSuccessors(hashmap.get(programpoint)); //Immediate successors of of the state in CFG
-			Set<IPredicate> possibleEndPoints =  new HashSet<IPredicate>();  // all the successive states of the current state in the counter example
-			Set<ProgramPoint> possibleEndPoints_programpoints = new HashSet<ProgramPoint>();
-			for(int j=counter+1; j< size-1; j++) //Not including the last state (2 Assertion Bug)
-			{
-				possibleEndPoints.add( hashmap.get(((ISLPredicate)counterexample.getStateAtPosition(j)).getProgramPoint()) ); // Pushing all the successive states from the counter example
-				possibleEndPoints_programpoints.add(((ISLPredicate) counterexample.getStateAtPosition(j)).getProgramPoint());
-			}
-			IPredicate parent_state = hashmap.get(((ISLPredicate)counterexample.getStateAtPosition(counter)).getProgramPoint()); // FORBIDDEN STATE BUG
-			for( OutgoingInternalTransition<CodeBlock, IPredicate> test:succesors) // For all the immediate successor states of the state in focus
-			{
-				IPredicate succesor = test.getSucc(); // One of the successors of the the state in focus.
-				if(((ISLPredicate)succesor).getProgramPoint() != ((ISLPredicate)counterexample.getStateAtPosition(counter+1)).getProgramPoint()) // If this successor state is NOT the next state of the current state in the counter example
-				{	
-					int[] tuple = new int[2]; //For Branch in Branch Out information.
-					NestedRun<CodeBlock, IPredicate> path = findPathInCFG(succesor,parent_state, possibleEndPoints, cfg); // Path from the successor state not in the counter example till one of the states in the possible end points.
-					if(path != null) // If such a path exists. Then that means that there is a path from the successor state that comes back to the counter example
-					{ // THAT MEANS WE HAVE FOUND AN IF BRANCH AT POSITION "COUNTER"
-						// Found an IF branch at position 1 of the counter example.
-						int length = path.getLength();
-						IPredicate last_state_of_the_path = path.getStateAtPosition(length-1);
-						tuple[0] = counter; //Location of the OUT BRANCH in the counterexample.
-						//// Computing the location of the IN-BRANCH				
-						for(int j = 0; j<counterexample.getLength();j++)
-						{
-							IPredicate counter_example_state = counterexample.getStateAtPosition(j);
-							ProgramPoint coun_ex_prog_point = ((ISLPredicate) counter_example_state).getProgramPoint();
-							if((((ISLPredicate)last_state_of_the_path).getProgramPoint()).equals(coun_ex_prog_point))
-							{
-								tuple[1] = j; // Location of the state in the counter example where the branch ends
-							}
-						}
+			// the startStateInCfg will be forbidden in the alternative path (FORBIDDEN STATE BUG)
+			final IPredicate startStateInCfg = programPoint_StateMap.get(programpointOfStartStateInTrace);
+
+			final Set<IPredicate> possibleEndPoints = computePossibleEndpoints(
+					counterexample, programPoint_StateMap, posOfStartState);
+
+			final ProgramPoint programPointOfSuccInCounterexample = 
+					((ISLPredicate)counterexample.getStateAtPosition(posOfStartState+1)).getProgramPoint();
+			//Immediate successors of of the state in CFG
+			final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> immediateSuccesors = 
+					cfg.internalSuccessors(startStateInCfg);
+			for(OutgoingInternalTransition<CodeBlock, IPredicate> transition : immediateSuccesors) {
+				final IPredicate immediateSuccesor = transition.getSucc();
+				final ProgramPoint programPointOfImmediateSucc = 
+						((ISLPredicate)immediateSuccesor).getProgramPoint();
+				if (programPointOfImmediateSucc == programPointOfSuccInCounterexample) {
+					// do nothing, because we want to find an alternative path
+					// (i.e., path that is not in counterexample
+				} else {
+					final int[] pair = new int[2]; //For Branch in Branch Out information.
+					// Path from the successor state not in the counter example 
+					// to one of the states in possibleEndPoints.
+					final NestedRun<CodeBlock, IPredicate> alternativePath = 
+							findPathInCFG(immediateSuccesor,startStateInCfg, possibleEndPoints, cfg);
+					if(alternativePath != null) {
+						// If such a path exists. Then that means that there is a path from the successor state 
+						// that comes back to the counter example
+						// THAT MEANS WE HAVE FOUND AN out-BRANCH AT POSITION "COUNTER"
+						final IPredicate lastStateOfAlternativePath = 
+								alternativePath.getStateAtPosition(alternativePath.getLength()-1);
+						pair[0] = posOfStartState; //position OUT-BRANCH in the counterexample.
+						
+						final int endPosition = computeEndpointOfAlternativePath(
+								counterexample, posOfStartState, lastStateOfAlternativePath);
+						pair[1] = endPosition;
 						//// In-Branch Location computed.
-						result.add(tuple);
+						result.add(pair);
 						m_Logger.warn(" ");
 					}
 				}
@@ -170,6 +186,45 @@ public class FlowSensitiveFaultLocalizer {
 		}
 		m_Logger.warn(" ");
 		return result;
+	}
+
+	/**
+	 * Computing the end point (position of the IN-BRANCH) an alternative path. 
+	 * Search for the last state in the trace that satisfies
+	 * the following properties.
+	 * - position in trace is larger than posOfStartState
+	 * - program point of the state coincides with 
+	 *    program point of lastStateOfAlternativePath
+	 */
+	private int computeEndpointOfAlternativePath(final NestedRun<CodeBlock, IPredicate> counterexample,
+			final int posOfStartState, final IPredicate lastStateOfAlternativePath) {
+
+		for(int j = counterexample.getLength() - 1; j > posOfStartState; j--) {
+			final IPredicate stateAtPosJ = counterexample.getStateAtPosition(j);
+			final ProgramPoint programpointAtPosJ = ((ISLPredicate) stateAtPosJ).getProgramPoint();
+			final ProgramPoint programpointOfLastState = ((ISLPredicate)lastStateOfAlternativePath).getProgramPoint();
+			if(programpointOfLastState.equals(programpointAtPosJ)) {
+				// position of state in the counter example where the branch ends
+				return j; 
+			}
+		}
+		throw new AssertionError("endpoint not in trace");
+	}
+
+	/**
+	 * End points are the cfg states (resp. program points) of all successive 
+	 * states (successors of currentPosition) in the trace excluding the last 
+	 * state (which corresponds to the error location).
+	 * @param programPoint_StateMap map from program points to states in cfg
+	 */
+	private Set<IPredicate> computePossibleEndpoints(final NestedRun<CodeBlock, IPredicate> counterexample,
+			final Map<ProgramPoint, IPredicate> programPoint_StateMap, int currentPosition) {
+		final Set<IPredicate> possibleEndPoints = new HashSet<IPredicate>();  
+		for(int j=currentPosition+1; j< counterexample.getStateSequence().size()-1; j++) {
+			//runs only up to size-1 because we do not include the last state (2 Assertion Bug)
+			possibleEndPoints.add(programPoint_StateMap.get(((ISLPredicate)counterexample.getStateAtPosition(j)).getProgramPoint()) ); 
+		}
+		return possibleEndPoints;
 	}
 
 	private void computeNONFlowSensitiveTraceFormula(IRun<CodeBlock, IPredicate> counterexampleRun,
@@ -244,17 +299,17 @@ public class FlowSensitiveFaultLocalizer {
 				RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
 						relevanceCriterion1uc, 
-						relevanceCriterion1gf, ((RelevanceInformation) Relevance_of_statements[i]).getCriterion2UC(),
-						((RelevanceInformation) Relevance_of_statements[i]).getCriterion2GF());
+						relevanceCriterion1gf, ((RelevanceInformation) m_RelevanceOfTrace[i]).getCriterion2UC(),
+						((RelevanceInformation) m_RelevanceOfTrace[i]).getCriterion2GF());
 						
-				Relevance_of_statements[i] = ri;
+				m_RelevanceOfTrace[i] = ri;
 		}
 		
 		m_Logger.info("- - - - - - [Non-Flow Sensitive Analysis with statments + pre/wp information]- - - - - -");
 		if (m_Logger.isInfoEnabled()) {
 			for (int i=0; i<counterexampleRun.getLength()-1; i++) {
 				m_Logger.info(weakestPreconditionSequence.getInterpolant(i));
-				m_Logger.info(Relevance_of_statements[i]);
+				m_Logger.info(m_RelevanceOfTrace[i]);
 			}
 			m_Logger.info(weakestPreconditionSequence.getInterpolant(counterexampleRun.getLength()-1));
 		}
@@ -265,7 +320,7 @@ public class FlowSensitiveFaultLocalizer {
 	
 	
 	
-	private TransFormula computeMarkhorFormula(int a, int b, NestedWord<CodeBlock> counterexampleWord, ArrayList<int[]> informationFromCFG, SmtManager smtManager){
+	private TransFormula computeMarkhorFormula(int a, int b, NestedWord<CodeBlock> counterexampleWord, List<int[]> informationFromCFG, SmtManager smtManager){
 		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(a).getTransitionFormula();
 		for(int i = a+1; i<=b; i++){
 			int flag = 0;
@@ -296,7 +351,7 @@ public class FlowSensitiveFaultLocalizer {
 	}
 	
 	private ArrayList<TransFormula> BranchRelevanceChecker(int a, int b, IPredicate weakestPreconditionOld, NestedWord<CodeBlock> counterexampleWord, 
-			ArrayList<int[]> informationFromCFG, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager){
+			List<int[]> informationFromCFG, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager){
 		
 		
 		final PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
@@ -322,7 +377,7 @@ public class FlowSensitiveFaultLocalizer {
 	private ArrayList<CodeBlock> relevantFlowSensitiveStatements(NestedWord<CodeBlock> counterexampleWord,
 			int start_location, int end_location, IPredicate weakestPreconditionOld, IPredicate weakestPreconditionNew,
 			PredicateTransformer pt, FaultLocalizationRelevanceChecker rc, SmtManager smtManager,
-			ModifiableGlobalVariableManager modGlobVarManager, ArrayList<int[]> informationFromCFG) {
+			ModifiableGlobalVariableManager modGlobVarManager, List<int[]> informationFromCFG) {
 		ArrayList <CodeBlock> relevantStatements = new ArrayList<CodeBlock>();
 		IPredicate pre = null;
 		ERelevanceStatus relevance;
@@ -415,10 +470,10 @@ public class FlowSensitiveFaultLocalizer {
 				
 				RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
-						((RelevanceInformation) Relevance_of_statements[backwardcounter]).getCriterion1UC() , 
-						((RelevanceInformation) Relevance_of_statements[backwardcounter]).getCriterion1GF(), relevanceCriterion2uc, relevanceCriterion2gf);
+						((RelevanceInformation) m_RelevanceOfTrace[backwardcounter]).getCriterion1UC() , 
+						((RelevanceInformation) m_RelevanceOfTrace[backwardcounter]).getCriterion1GF(), relevanceCriterion2uc, relevanceCriterion2gf);
 						
-				Relevance_of_statements[backwardcounter] = ri;
+				m_RelevanceOfTrace[backwardcounter] = ri;
 				
 			}
 
@@ -431,7 +486,7 @@ public class FlowSensitiveFaultLocalizer {
 	
 	private void computeFlowSensitiveTraceFormula(IRun<CodeBlock, IPredicate> counterexampleRun,
 			IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager 
-			, ArrayList<int[]> informationFromCFG ){
+			, List<int[]> informationFromCFG ){
 	
 	
 	m_Logger.warn("Initializing Flow Sensitive Fault Localization");
@@ -486,11 +541,11 @@ public class FlowSensitiveFaultLocalizer {
 	public List<IRelevanceInformation> getRelevanceInformation() 
 	{
 		m_Logger.warn("- - - - - - - -");
-		for(int i= 0;i <Relevance_of_statements.length;i++)
+		for(int i= 0;i <m_RelevanceOfTrace.length;i++)
 		{
-			m_Logger.warn(((RelevanceInformation) Relevance_of_statements[i]).getActions() +" | " +Relevance_of_statements[i].getShortString());
+			m_Logger.warn(((RelevanceInformation) m_RelevanceOfTrace[i]).getActions() +" | " +m_RelevanceOfTrace[i].getShortString());
 		}
-		return Arrays.asList(Relevance_of_statements);
+		return Arrays.asList(m_RelevanceOfTrace);
 	}
 	
 }
