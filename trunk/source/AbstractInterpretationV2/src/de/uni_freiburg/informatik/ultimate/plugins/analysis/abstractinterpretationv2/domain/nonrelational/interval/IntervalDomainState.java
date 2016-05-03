@@ -117,7 +117,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *            The values of all boolean variables.
 	 */
 	protected IntervalDomainState(final Logger logger, final Map<String, IBoogieVar> variablesMap,
-			final Map<String, IntervalDomainValue> valuesMap, final Map<String, BooleanValue> booleanValuesMap) {
+	        final Map<String, IntervalDomainValue> valuesMap, final Map<String, BooleanValue> booleanValuesMap) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
@@ -158,7 +158,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	protected BooleanValue getBooleanValue(final String booleanVariableName) {
 		if (!mBooleanValuesMap.containsKey(booleanVariableName)) {
 			throw new UnsupportedOperationException(
-					"There is no boolean variable with name " + booleanVariableName + ".");
+			        "There is no boolean variable with name " + booleanVariableName + ".");
 		}
 
 		return new BooleanValue(mBooleanValuesMap.get(booleanVariableName));
@@ -200,7 +200,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert vars.length == values.length;
 
 		return setMixedValues(vars, values, new String[0], new BooleanValue.Value[0], new String[0],
-				new IntervalDomainValue[0]);
+		        new IntervalDomainValue[0]);
 	}
 
 	/**
@@ -273,7 +273,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert vars.length == values.length;
 
 		return setMixedValues(new String[0], new IntervalDomainValue[0], vars, values, new String[0],
-				new IntervalDomainValue[0]);
+		        new IntervalDomainValue[0]);
 	}
 
 	/**
@@ -302,7 +302,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert arrays.length == values.length;
 
 		return setMixedValues(new String[0], new IntervalDomainValue[0], new String[0], new BooleanValue.Value[0],
-				arrays, values);
+		        arrays, values);
 	}
 
 	/**
@@ -321,8 +321,8 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> but with the updated values.
 	 */
 	protected IntervalDomainState setMixedValues(final String[] vars, final IntervalDomainValue[] values,
-			final String[] booleanVars, final BooleanValue.Value[] booleanValues, final String[] arrays,
-			final IntervalDomainValue[] arrayValues) {
+	        final String[] booleanVars, final BooleanValue.Value[] booleanValues, final String[] arrays,
+	        final IntervalDomainValue[] arrayValues) {
 		assert vars != null;
 		assert values != null;
 		assert booleanVars != null;
@@ -357,7 +357,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *            The value to set.
 	 */
 	private static void setValueInternally(final IntervalDomainState state, final String name,
-			final IntervalDomainValue value) {
+	        final IntervalDomainValue value) {
 		assert state != null;
 		assert name != null;
 		assert value != null;
@@ -377,7 +377,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *            The value to set.
 	 */
 	private static void setValueInternally(final IntervalDomainState state, final String name,
-			final BooleanValue value) {
+	        final BooleanValue value) {
 		assert state != null;
 		assert name != null;
 		assert state.mVariablesMap.get(name) != null : "Variable unknown";
@@ -417,7 +417,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 		// TODO: Implement proper handling of arrays.
 		throw new UnsupportedOperationException(
-				"The variable " + var + " exists but was not found in the variable sets.");
+		        "The variable " + var + " exists but was not found in the variable sets.");
 	}
 
 	/**
@@ -429,7 +429,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *            The type of the variable.
 	 */
 	private static void addVariableInternally(final IntervalDomainState state, final String name,
-			final IBoogieVar variable) {
+	        final IBoogieVar variable) {
 		assert state != null;
 		assert name != null;
 		assert variable != null;
@@ -438,7 +438,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 		if (old != null) {
 			throw new UnsupportedOperationException(
-					"Variable names must be disjoint. Variable " + name + " is already present.");
+			        "Variable names must be disjoint. Variable " + name + " is already present.");
 		}
 
 		if (variable.getIType() instanceof PrimitiveType) {
@@ -455,7 +455,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			state.mValuesMap.put(name, new IntervalDomainValue());
 		} else {
 			state.mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString() + " of variable "
-					+ name + " is not implemented. Assuming top.");
+			        + name + " is not implemented. Assuming top.");
 			state.mValuesMap.put(name, new IntervalDomainValue());
 		}
 	}
@@ -493,7 +493,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			final IBoogieVar old = newVarMap.put(id, var);
 			if (old != null) {
 				throw new UnsupportedOperationException(
-						"Variable names must be disjoint. The variable " + id + " is already present.");
+				        "Variable names must be disjoint. The variable " + id + " is already present.");
 			}
 			if (var.getIType() instanceof PrimitiveType) {
 				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
@@ -510,7 +510,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 				newValMap.put(id, new IntervalDomainValue());
 			} else {
 				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString() + " of variable " + id
-						+ " is not implemented. Assuming top.");
+				        + " is not implemented. Assuming top.");
 				newValMap.put(id, new IntervalDomainValue());
 			}
 		}
@@ -618,6 +618,9 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		return true;
 	}
 
+	/**
+	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code>.
+	 */
 	public IntervalDomainState copy() {
 		return new IntervalDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap);
 	}
@@ -686,12 +689,12 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
-					entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
+			        entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
 		}
 
 		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
-					new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
+			        new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
 		}
 
 		return returnState;
@@ -778,7 +781,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *         booleans, and arrays given in the parameters are set to &top;.
 	 */
 	protected IntervalDomainState setVarsToTop(final List<String> vars, final List<String> bools,
-			final List<String> arrays) {
+	        final List<String> arrays) {
 		final IntervalDomainState returnState = copy();
 
 		for (final String var : vars) {
@@ -808,7 +811,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 *         booleans, and arrays given as parameters are set to &bot;.
 	 */
 	protected IntervalDomainState setVarsToBottom(final List<String> vars, final List<String> bools,
-			final List<String> arrays) {
+	        final List<String> arrays) {
 		final IntervalDomainState returnState = copy();
 
 		for (final String var : vars) {
@@ -877,7 +880,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 		if (!hasSameVariables(other)) {
 			throw new UnsupportedOperationException(
-					"Cannot merge the two states as their sets of variables in the states are disjoint.");
+			        "Cannot merge the two states as their sets of variables in the states are disjoint.");
 		}
 
 		final IntervalDomainState returnState = copy();
@@ -890,7 +893,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 					setValueInternally(returnState, var,
-							mBooleanValuesMap.get(var).merge(other.mBooleanValuesMap.get(var)));
+					        mBooleanValuesMap.get(var).merge(other.mBooleanValuesMap.get(var)));
 				} else {
 					setValueInternally(returnState, var, mValuesMap.get(var).merge(other.mValuesMap.get(var)));
 				}
