@@ -1,5 +1,5 @@
 //#Unsafe
-//author: numair
+//author: Numair Mansur (numair.mansur@gmail.com)
 procedure foo()
 {
   var y: int;
