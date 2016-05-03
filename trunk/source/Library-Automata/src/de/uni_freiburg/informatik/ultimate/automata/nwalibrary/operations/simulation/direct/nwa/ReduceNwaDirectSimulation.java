@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.MinimizeDfaSimulation;
 
 /**
@@ -125,6 +126,8 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 		// exists for checking the result needs very long and we do not want to
 		// slow progress.
 		boolean correct = true;
+//		correct &= (new IsIncluded(m_Services, stateFactory, input, minimized)).getResult();
+//		correct &= (new IsIncluded(m_Services, stateFactory, minimized, input)).getResult();
 		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
