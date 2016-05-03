@@ -247,6 +247,10 @@ public final class ISOIEC9899TC3 {
 					floatVal = floatVal.divide(twoPointZero);
 					exponentValue++;
 				}
+				String floatValString = floatVal.toString();
+				if (floatValString.contains(".")) {
+					floatValString = floatValString.substring(0, 1) + floatValString.substring(2, floatValString.length());
+				}
 				if (resultType.toString().equals("FLOAT")){
 					functionName = "declareFloat";
 				} else if (resultType.toString().equals("DOUBLE")) {
@@ -257,7 +261,7 @@ public final class ISOIEC9899TC3 {
 					throw new IllegalArgumentException();
 				}
 				exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
-				significant = new BitvecLiteral(loc, floatVal.toString(), significantLength);
+				significant = new BitvecLiteral(loc, floatValString, significantLength);
 				arguments = new Expression[]{sign, exponent, significant};
 			}
 			
