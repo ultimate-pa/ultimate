@@ -61,6 +61,11 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
  * <i>Duplicator</i> can not fulfill its condition we say <b>q1 delayed
  * simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
  * <i>Duplicator</i>.
+ *
+ * The implementation is based on the following paper.
+ * Kousha Etessami, Thomas Wilke, Rebecca A. Schuller:
+ * Fair Simulation Relations, Parity Games, and State Space Reduction for 
+ * Bu"chi Automata. SIAM J. Comput. 34(5): 1159-1175 (2005)
  * 
  * @author Daniel Tischner
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -153,13 +158,34 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		boolean[][] table = new boolean[states.size()][states.size()];
 		for (SpoilerVertex<LETTER, STATE> v : getSpoilerVertices()) {
 			// All the states we need are in spoiler vertices
-			if ((m_Buechi.isFinal(v.getQ0()) && m_Buechi.isFinal(v.getQ1())) ^ v.isB() ^ m_Buechi.isFinal(v.getQ0())) {
-				// Skip all elements that not fulfill:
-				// Letting b=1 if q0 in F and q1 not in F, and b=0 else
-				continue;
+			
+			// Which node do we have to consider in order to obtain the
+			// simulation information for the state pair (q0,q1) ?
+			// According to Lemma 4 (page 1166) of the above mentioned paper
+			// We consider (q0, q1, true) if q0 is final and q1 is not final
+			// and we consider (q0, q1, false) if q0 is not final or q1 is 
+			// final.
+			final boolean considerVertex;
+			if (v.isB()) {
+				considerVertex = m_Buechi.isFinal(v.getQ0()) && !m_Buechi.isFinal(v.getQ0());
+			} else {
+				considerVertex = !m_Buechi.isFinal(v.getQ0()) || m_Buechi.isFinal(v.getQ0());
 			}
-			if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
-				table[states.indexOf(v.getQ0())][states.indexOf(v.getQ1())] = true;
+			
+			final boolean skip = (m_Buechi.isFinal(v.getQ0()) && 
+					(m_Buechi.isFinal(v.getQ1()) ^ m_Buechi.isFinal(v.getQ0()) ^ v.isB()));
+			{
+				// 2016-05-03 Matthias: I had some doubts about operator precedence
+				// added assert, remove if tested well enough.
+				boolean skipOld = (m_Buechi.isFinal(v.getQ0()) && m_Buechi.isFinal(v.getQ1())) ^ v.isB() ^ m_Buechi.isFinal(v.getQ0());
+				assert skipOld == skip : "unexpected operator precedence";
+			}
+			assert considerVertex != skip : "old implementation incorrect";
+			
+			if (considerVertex) {
+				if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
+					table[states.indexOf(v.getQ0())][states.indexOf(v.getQ1())] = true;
+				}
 			}
 		}
 
