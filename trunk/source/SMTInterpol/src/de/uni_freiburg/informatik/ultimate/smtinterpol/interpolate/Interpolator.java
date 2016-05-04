@@ -331,38 +331,39 @@ public class Interpolator extends NonRecursive {
 		LitInfo pivInfo = mLiteralInfos.get(pivot.getAtom());
 
 		Interpolant[] assInterp = collectInterpolated();
-		Interpolant[] interp = collectInterpolated();
+		Interpolant[] primInterp = collectInterpolated();
+		Interpolant[] interp = new Interpolant[mNumInterpolants];
 
 		for (int i = 0; i < mNumInterpolants; i++) {
 			mLogger.debug(new DebugMessage(
 			        "Pivot {2}{3} on interpolants {0} and {1} gives...",
-							interp[i], assInterp[i], 
+							primInterp[i], assInterp[i],
 							pivot.getSMTFormula(mTheory), pivInfo));
 			if (pivInfo.isALocal(i)) {
-				interp[i].mTerm = mTheory.or(
-				        interp[i].mTerm, assInterp[i].mTerm);
+				interp[i] = new Interpolant(mTheory.or(
+				        primInterp[i].mTerm, assInterp[i].mTerm));
 			} else if (pivInfo.isBLocal(i)) {
-				interp[i].mTerm = mTheory.and(
-				        interp[i].mTerm, assInterp[i].mTerm);
+				interp[i] = new Interpolant(mTheory.and(
+				        primInterp[i].mTerm, assInterp[i].mTerm));
 			} else if (pivInfo.isAB(i)) {
-				interp[i].mTerm = 
+				interp[i] = new Interpolant(
 						mTheory.ifthenelse(pivot.getSMTFormula(mTheory),
-						     interp[i].mTerm, assInterp[i].mTerm);
+						     primInterp[i].mTerm, assInterp[i].mTerm));
 			} else {
 				if (pivot.getAtom() instanceof CCEquality
 						|| pivot.getAtom() instanceof LAEquality) {
 					Interpolant eqIpol, neqIpol;
 					if (pivot.getSign() > 0) {
 						eqIpol = assInterp[i];
-						neqIpol = interp[i];
+						neqIpol = primInterp[i];
 					} else {
-						eqIpol = interp[i];
+						eqIpol = primInterp[i];
 						neqIpol = assInterp[i];
 					}
 					interp[i] = mixedEqInterpolate(
 							eqIpol, neqIpol, pivInfo.mMixedVar);
 				} else if (pivot.getAtom() instanceof BoundConstraint) {
-					interp[i] = mixedPivotLA(assInterp[i], interp[i], pivInfo.mMixedVar);
+					interp[i] = mixedPivotLA(assInterp[i], primInterp[i], pivInfo.mMixedVar);
 				} else {
 					throw new UnsupportedOperationException(
 					        "Cannot handle mixed literal " + pivot);
