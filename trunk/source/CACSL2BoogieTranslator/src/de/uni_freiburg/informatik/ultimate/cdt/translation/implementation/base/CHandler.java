@@ -1853,12 +1853,15 @@ public class CHandler implements ICHandler {
 		final CPrimitive divisorType = (CPrimitive) divisorExpRes.lrVal.getCType();
 		if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.IGNORE) {
 			return;
+		} else if (divisorType.isRealFloatingType()) {
+			// division by zero is defined for real floating types
+			return;
 		} else {
 			final Expression zero;
 			if (divisorType.isIntegerType()) {
 				zero = m_ExpressionTranslation.constructLiteralForIntegerType(loc, divisorType, BigInteger.ZERO);
 			} else if (divisorType.isRealFloatingType()) {
-				zero = m_ExpressionTranslation.constructLiteralForFloatingType(loc, divisorType, BigInteger.ZERO);
+				throw new AssertionError("case should have been handled before");
 			} else {
 				throw new UnsupportedOperationException("unsupported " + divisorType);
 			}
