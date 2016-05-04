@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Pre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -584,7 +585,8 @@ public class NestedInterpolantsBuilder {
 	 * it for each occurrence.
 	 */
 	private Term instantiateArrayExt(Term interpolantWithoutIndices) {
-		Term nnf = (new Nnf(m_SmtManagerPredicates.getScript(), m_Services, m_SmtManagerPredicates.getVariableManager())).transform(interpolantWithoutIndices);
+		Term nnf = (new Nnf(m_SmtManagerPredicates.getScript(), m_Services, 
+				m_SmtManagerPredicates.getVariableManager(), QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
 //		not needed, at the moment our NNF transformation also produces 		
 //		Term prenex = (new PrenexNormalForm(m_SmtManagerPredicates.getScript(), m_SmtManagerPredicates.getVariableManager())).transform(nnf);
 		QuantifierSequence qs = new QuantifierSequence(m_SmtManagerPredicates.getScript());

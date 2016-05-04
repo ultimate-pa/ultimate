@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -187,7 +188,7 @@ public class HoareAnnotation extends SPredicate {
 			invariant = SmtUtils.simplify(m_Script, invariant, m_Services); 
 			Term precondTerm = Util.implies(m_Script, precond, invariant);
 			if (s_AvoidImplications) {
-				precondTerm = (new Nnf(m_Script, m_Services, m_Boogie2Smt.getVariableManager())).transform(precondTerm);
+				precondTerm = (new Nnf(m_Script, m_Services, m_Boogie2Smt.getVariableManager(), QuantifierHandling.KEEP)).transform(precondTerm);
 			}
 			mLogger.debug("In " + this + " holds " + invariant + " for precond " + precond);
 			m_Formula = Util.and(m_Script, m_Formula, precondTerm);

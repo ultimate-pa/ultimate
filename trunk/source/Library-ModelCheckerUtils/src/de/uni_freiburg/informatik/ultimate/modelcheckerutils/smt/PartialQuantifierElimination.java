@@ -44,10 +44,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfIrd;
@@ -203,11 +205,12 @@ public class PartialQuantifierElimination {
 			IUltimateServiceProvider services, Logger logger, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		final Term withoutIte = (new IteRemover(script)).transform(term);
-		final Term nnf = new Nnf(script, services, freshTermVariableConstructor).transform(withoutIte); 
+		final Term nnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.KEEP).transform(withoutIte); 
 		final Term quantified = script.quantifier(quantifier, eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
 		final Term pushed = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(quantified);
 		final Term commu = new CommuhashNormalForm(services, script).transform(pushed);
-		final Term pnf = new Nnf(script, services, freshTermVariableConstructor).transform(pushed);
+		final Term pnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.PULL).transform(pushed);
+//		final Term pnf = new PrenexNormalForm(script, freshTermVariableConstructor).transform(pushed);
 		return pnf;
 	}
 

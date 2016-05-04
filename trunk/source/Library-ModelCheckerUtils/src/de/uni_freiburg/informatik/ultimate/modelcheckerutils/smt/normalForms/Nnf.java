@@ -64,9 +64,14 @@ public class Nnf {
 	private final NnfTransformerHelper m_NnfTransformerHelper;
 	private List<List<TermVariable>> m_QuantifiedVariables;
 	
+	public enum QuantifierHandling { CRASH, PULL, KEEP }
+	protected final QuantifierHandling m_QuantifierHandling;
+	
 	public Nnf(Script script, IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
+			IFreshTermVariableConstructor freshTermVariableConstructor,
+			QuantifierHandling quantifierHandling) {
 		super();
+		m_QuantifierHandling = quantifierHandling;
 		m_Script = script;
 		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 		m_Logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -78,22 +83,26 @@ public class Nnf {
 	}
 	
 	public Term transform(Term term) {
-//		assert m_QuantifiedVariables == null;
-		m_QuantifiedVariables = new ArrayList<List<TermVariable>>();
-		List<TermVariable> firstQuantifierBlock = new ArrayList<TermVariable>();
-		m_QuantifiedVariables.add(firstQuantifierBlock);
+		assert m_QuantifiedVariables == null;
+		if (m_QuantifierHandling == QuantifierHandling.PULL) {
+			m_QuantifiedVariables = new ArrayList<List<TermVariable>>();
+			List<TermVariable> firstQuantifierBlock = new ArrayList<TermVariable>();
+			m_QuantifiedVariables.add(firstQuantifierBlock);
+		}
 		Term result = m_NnfTransformerHelper.transform(term);
-		for (int i=0; i<m_QuantifiedVariables.size(); i++) {
-			TermVariable[] variables = m_QuantifiedVariables.get(i).toArray(new TermVariable[m_QuantifiedVariables.get(i).size()]);
-			if (variables.length > 0) {
-				int quantor = i%2;
-				assert QuantifiedFormula.EXISTS == 0;
-				assert QuantifiedFormula.FORALL == 1;
-				result = m_Script.quantifier(quantor, variables, result);
+		if (m_QuantifierHandling == QuantifierHandling.PULL) {
+			for (int i=0; i<m_QuantifiedVariables.size(); i++) {
+				TermVariable[] variables = m_QuantifiedVariables.get(i).toArray(new TermVariable[m_QuantifiedVariables.get(i).size()]);
+				if (variables.length > 0) {
+					int quantor = i%2;
+					assert QuantifiedFormula.EXISTS == 0;
+					assert QuantifiedFormula.FORALL == 1;
+					result = m_Script.quantifier(quantor, variables, result);
+				}
 			}
+			m_QuantifiedVariables = null;
 		}
 		assert (Util.checkSat(m_Script, m_Script.term("distinct", term, result)) != LBool.SAT) : "Nnf transformation unsound";
-		m_QuantifiedVariables = null;
 		return result;
 	}
 
@@ -187,29 +196,43 @@ public class Nnf {
 				//consider term as atom
 				setResult(term);
 			}else if (term instanceof QuantifiedFormula) {
-				QuantifiedFormula qf = (QuantifiedFormula) term;
-				List<TermVariable> variables;
-				if (m_QuantifiedVariables.size()-1 == qf.getQuantifier()) {
-					assert QuantifiedFormula.EXISTS == 0;
-					assert QuantifiedFormula.FORALL == 1;
-					variables = m_QuantifiedVariables.get(m_QuantifiedVariables.size()-1);
-				} else {
-					variables = new ArrayList<TermVariable>();
-					m_QuantifiedVariables.add(variables);
+				switch (m_QuantifierHandling) {
+				case CRASH: {
+					throw new UnsupportedOperationException(
+							"quantifier handling set to " + m_QuantifierHandling);
 				}
-				Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-				for (TermVariable oldTv : qf.getVariables()) {
-					TermVariable freshTv = m_FreshTermVariableConstructor.
-							constructFreshTermVariable(s_FreshVariableString, oldTv.getSort()); 
-					substitutionMapping.put(oldTv, freshTv);
-					variables.add(freshTv);
+				case KEEP: {
+					super.convert(term);
+					return;
 				}
-				Term newBody = (new SafeSubstitution(m_Script, substitutionMapping)).transform(qf.getSubformula());
-				// we deliberately call convert() instead of super.convert()
-				// the argument of this call might have been simplified
-				// to a term whose function symbol is neither "and" nor "or"
-				convert(newBody);
-				return;
+				case PULL: {
+					final QuantifiedFormula qf = (QuantifiedFormula) term;
+					final List<TermVariable> variables;
+					if (m_QuantifiedVariables.size()-1 == qf.getQuantifier()) {
+						assert QuantifiedFormula.EXISTS == 0;
+						assert QuantifiedFormula.FORALL == 1;
+						variables = m_QuantifiedVariables.get(m_QuantifiedVariables.size()-1);
+					} else {
+						variables = new ArrayList<TermVariable>();
+						m_QuantifiedVariables.add(variables);
+					}
+					final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+					for (TermVariable oldTv : qf.getVariables()) {
+						final TermVariable freshTv = m_FreshTermVariableConstructor.
+								constructFreshTermVariable(s_FreshVariableString, oldTv.getSort()); 
+						substitutionMapping.put(oldTv, freshTv);
+						variables.add(freshTv);
+					}
+					Term newBody = (new SafeSubstitution(m_Script, substitutionMapping)).transform(qf.getSubformula());
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
+					convert(newBody);
+					return;
+				}
+				default:
+					throw new AssertionError("unknown case");
+				}
 			} else if (term instanceof AnnotatedTerm) {
 				m_Logger.warn("thrown away annotations " + 
 						Arrays.toString(((AnnotatedTerm) term).getAnnotations()));
