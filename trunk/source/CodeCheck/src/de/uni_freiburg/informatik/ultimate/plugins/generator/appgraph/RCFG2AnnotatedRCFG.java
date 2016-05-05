@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -136,7 +137,8 @@ public class RCFG2AnnotatedRCFG {
 			Term aiTerm = m_initialPredicates.get(pp);
 			IPredicate aiPredicate;
 			if (aiTerm != null) {
-				aiPredicate = m_smtManager.getPredicateFactory().constructPredicate(aiTerm, 0, Collections.<TermVariable>emptySet());
+				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(aiTerm, m_smtManager.getBoogie2Smt()); 
+				aiPredicate = m_smtManager.getPredicateFactory().newPredicate(tvp);
 			} else {
 				aiPredicate = m_truePredicate;
 			}
