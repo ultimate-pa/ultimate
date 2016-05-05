@@ -330,8 +330,27 @@ public class Nnf {
 				//consider term as atom
 				setResult(notTerm);
 			} else if (notParam instanceof QuantifiedFormula) {
-				throw new UnsupportedOperationException(
-						"NNF transformation does not support QuantifiedFormula");
+				switch (m_QuantifierHandling) {
+				case CRASH: {
+					throw new UnsupportedOperationException(
+							"quantifier handling set to " + m_QuantifierHandling);
+				}
+				case KEEP: {
+					final QuantifiedFormula qf = (QuantifiedFormula) notParam;
+					final int quantor = (qf.getQuantifier() + 1) % 2;
+					final TermVariable[] vars = qf.getVariables();
+					final Term body = Util.not(m_Script, qf.getSubformula());
+					final Term negated = m_Script.quantifier(quantor, vars, body);
+					super.convert(negated);
+					return;
+				}
+				case PULL: {
+					throw new UnsupportedOperationException(
+							"cannot pull quantifier from negated formula");
+				}
+				default:
+					throw new AssertionError("unknown quantifier handling");
+				}
 			} else {
 				throw new UnsupportedOperationException("Unsupported " + notParam.getClass());
 			}
