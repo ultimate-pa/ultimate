@@ -33,9 +33,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -46,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -933,13 +936,19 @@ public class SmtUtils {
 	}
 
 	/**
-	 * Returns quantified formula. Drops quantifiers for variables that do not occur in formula.
+	 * Returns quantified formula. 
+	 * Drops quantifiers for variables that do not occur in formula.
+	 * If subformula is quantified formula with same quantifier both are
+	 * merged, variables of outer quantified formula are renamed if necessary
+	 * (necessary if same variable occurs in inner and outer formula).
 	 */
-	public static Term quantifier(Script script, int quantifier, Collection<TermVariable> vars, Term body) {
+	public static Term quantifier(final Script script, final int quantifier, 
+			final Collection<TermVariable> vars, final Term body, 
+			final IFreshTermVariableConstructor freshTermVariableConstructor) {
 		if (vars.size() == 0) {
 			return body;
 		}
-		ArrayList<TermVariable> resultVars = new ArrayList<>();
+		final Collection<TermVariable> resultVars = new ArrayList<>();
 		for (TermVariable tv : Arrays.asList(body.getFreeVars())) {
 			if (vars.contains(tv)) {
 				resultVars.add(tv);
@@ -948,8 +957,53 @@ public class SmtUtils {
 		if (resultVars.isEmpty()) {
 			return body;
 		} else {
-			return script.quantifier(quantifier, resultVars.toArray(new TermVariable[resultVars.size()]), body);
+			final QuantifiedFormula innerQuantifiedFormula = 
+					isQuantifiedFormulaWithSameQuantifier(quantifier, body);
+			if (innerQuantifiedFormula == null) {
+				return script.quantifier(quantifier, resultVars.toArray(
+						new TermVariable[resultVars.size()]), body);
+			} else {
+				final Set<TermVariable> innerQuantifiedVars = 
+						new HashSet<>(Arrays.asList(innerQuantifiedFormula.getVariables()));
+				final Map<Term, Term> substitutionMapping = new HashMap<>();
+				final Collection<TermVariable> renamedResultVars = new ArrayList<>();
+				for (TermVariable resultVar : resultVars) {
+					if (innerQuantifiedVars.contains(resultVar)) {
+						final TermVariable replacement = freshTermVariableConstructor.
+								constructFreshTermVariable("quantifierMerge", resultVar.getSort());
+						substitutionMapping.put(resultVar, replacement);
+						renamedResultVars.add(replacement);
+					} else {
+						renamedResultVars.add(resultVar);
+					}
+					renamedResultVars.addAll(innerQuantifiedVars);
+				}
+				final Term resultBody;
+				if (substitutionMapping.isEmpty()) {
+					resultBody = innerQuantifiedFormula.getSubformula();
+				} else {
+					resultBody = (new SafeSubstitution(script, substitutionMapping)).
+							transform(innerQuantifiedFormula.getSubformula());
+				}
+				return script.quantifier(quantifier, renamedResultVars.toArray(
+						new TermVariable[renamedResultVars.size()]), resultBody);
+			}
 		}
+	}
+	
+	/**
+	 * If term is QuantifiedFormula whose quantifier is quant we return term as
+	 * QuantifiedFormula otherwise we return null;
+	 */
+	public static QuantifiedFormula isQuantifiedFormulaWithSameQuantifier(
+			final int quant, final Term term) {
+		if (term instanceof QuantifiedFormula) {
+			final QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
+			if (quant == quantifiedFormula.getQuantifier()) {
+				return quantifiedFormula;
+			}
+		}
+		return null;
 	}
 
 }

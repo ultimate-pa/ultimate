@@ -26,15 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
+import java.util.Arrays;
+
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonCoreBooleanSubTermTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Transform a Term into prenex normal form (quantifiers outside).
@@ -43,14 +47,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonCoreBooleanS
  * 
  */
 public class PrenexNormalForm extends TermTransformer {
-	private final Script mScript;
 	
-	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final Script m_Script;
+	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 
 	public PrenexNormalForm(Script script, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
-		mScript = script;
-		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		m_Script = script;
+		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 	}
 
 	@Override
@@ -82,13 +86,13 @@ public class PrenexNormalForm extends TermTransformer {
 	}
 
 	private Term pullQuantifiers(ApplicationTerm appTerm, Term[] newArgs) {
-		QuantifierSequence quantifierSequence = new QuantifierSequence(mScript);
+		QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script);
 		Term[] resultArgs = new Term[newArgs.length];
 		for (int i=0; i<newArgs.length; i++) {
 			Term resultArg = newArgs[i];
-			resultArgs[i] = quantifierSequence.extractQuantifiers(resultArg, true, mFreshTermVariableConstructor);
+			resultArgs[i] = quantifierSequence.extractQuantifiers(resultArg, true, m_FreshTermVariableConstructor);
 		}
-		Term resultBody = mScript.term(appTerm.getFunction().getName(), resultArgs);
+		Term resultBody = m_Script.term(appTerm.getFunction().getName(), resultArgs);
 		Term result = quantifierSequence.prependQuantifierSequence(resultBody);
 		return result;
 	}
@@ -96,6 +100,19 @@ public class PrenexNormalForm extends TermTransformer {
 	@Override
 	public void postConvertLet(LetTerm oldLet, Term[] newValues, Term newBody) {
 		throw new UnsupportedOperationException("not yet implemented, we need term without let");
+	}
+	
+	
+
+	@Override
+	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
+		if (SmtUtils.isQuantifiedFormulaWithSameQuantifier(old.getQuantifier(), newBody) != null) {
+			final Term result = SmtUtils.quantifier(m_Script, old.getQuantifier(), 
+					Arrays.asList(old.getVariables()), newBody, m_FreshTermVariableConstructor);
+			setResult(result);
+		} else {
+			super.postConvertQuantifier(old, newBody);
+		}
 	}
 
 	@Override
