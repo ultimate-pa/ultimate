@@ -60,6 +60,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -86,7 +87,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	/**
 	 * The actual script.
 	 */
-	private final Script mScript;
+	protected final Script mScript;
 
 	/**
 	 * The auxiliary class to print terms and sorts.
@@ -125,11 +126,16 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		m_CommandStack.getLast().add(new SmtCommandInStringRepresentation(string));
 	}
 	
-	private void addToCurrentAssertionStack(ISmtCommand smtCommand) {
+	protected void addToCurrentAssertionStack(ISmtCommand smtCommand) {
 		m_CommandStack.getLast().add(smtCommand);
 	}
 	
-	private void printCommandStack(PrintWriter pw, LinkedList<ArrayList<ISmtCommand>> commandStack) {
+	private void resetAssertionStack() {
+		m_CommandStack.clear();
+		m_CommandStack.add(new ArrayList<>());
+	}
+	
+	private void printCommandStack(PrintWriter pw, List<ArrayList<ISmtCommand>> commandStack) {
 		for (ArrayList<ISmtCommand> al : commandStack) {
 			for (ISmtCommand command : al) {
 				pw.print(command.toString());
@@ -137,7 +143,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		}
 	}
 	
-	protected void writeCommandStackToFile(File file, LinkedList<ArrayList<ISmtCommand>> commandStack) {
+	protected void writeCommandStackToFile(File file, List<ArrayList<ISmtCommand>> commandStack) {
 		FileWriter fw = null;
 		try {
 			fw = new FileWriter(file);
@@ -420,9 +426,10 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		StringWriter sw = new StringWriter();
 		PrintWriter mPw = new PrintWriter(sw);
 		mPw.println("(reset)");
-		addToCurrentAssertionStack(sw.toString());
+		resetAssertionStack();
 		mScript.reset();
 	}
+
 
 	@Override
 	public Term[] getInterpolants(Term[] partition) throws SMTLIBException,
