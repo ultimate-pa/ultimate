@@ -34,6 +34,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa.DirectNwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa.DirectNwaSimulation;
@@ -141,10 +143,20 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
+			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
+				long startTime = System.currentTimeMillis();
+				method = new MinimizeSevpa<LETTER, STATE>(getServices(), operand);
+				setExternalOverallTime(System.currentTimeMillis() - startTime);
+			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
+				long startTime = System.currentTimeMillis();
+				method = new ShrinkNwa<>(getServices(), stateFactory, operand);
+				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (OperationCanceledException e) {
 			logger.info("Method timed out.");
 			timedOut = true;
+		} catch (AutomataLibraryException e) {
+			e.printStackTrace();
 		} catch (OutOfMemoryError e) {
 			logger.info("Method has thrown an out of memory error.");
 			outOfMemory = true;
@@ -172,6 +184,12 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
 		// Direct nwa simulation without SCC
 		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, getServices(), timeOutMillis,
+				stateFactory, reachableOperand);
+
+		// Other minimization methods
+		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, true, getServices(), timeOutMillis,
+				stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, getServices(), timeOutMillis,
 				stateFactory, reachableOperand);
 	}
 }

@@ -936,4 +936,14 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, m_Services, timeOutMillis,
 				stateFactory, reachableOperand);
 	}
+
+	/**
+	 * Sets the value for the overall time an external method needed.
+	 * 
+	 * @param time
+	 *            Time to set
+	 */
+	protected void setExternalOverallTime(final long time) {
+		m_ExternalOverallTime = time;
+	}
 }

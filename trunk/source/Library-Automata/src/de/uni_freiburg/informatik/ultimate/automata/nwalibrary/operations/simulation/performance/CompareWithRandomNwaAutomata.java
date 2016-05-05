@@ -102,7 +102,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 		int totalityCallInPerc = 2;
 		int totalityReturnInPerc = 1;
 		int logEvery = 50;
-		int amount = 1;
+		int amount = 1000;
 		NestedWordAutomaton<String, String> nwa;
 
 		for (int i = 1; i <= amount; i++) {

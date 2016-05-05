@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -57,10 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
  */
 public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaSimulation<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-	/**
-	 * The logger used by the Ultimate framework.
-	 */
-	private final Logger m_Logger;
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
@@ -109,7 +103,6 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 						new DirectNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
 								stateFactory)));
-		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 	}
 
 	/*
@@ -121,14 +114,11 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 */
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
-		// Simply returns true in any case. The only method that currently
-		// exists for checking the result needs very long and we do not want to
-		// slow progress.
+		getLogger().info("Start testing correctness of " + operationName());
 		boolean correct = true;
-//		correct &= (new IsIncluded(m_Services, stateFactory, input, minimized)).getResult();
-//		correct &= (new IsIncluded(m_Services, stateFactory, minimized, input)).getResult();
-		m_Logger.info("Finished testing correctness of " + operationName());
+		correct &= (new IsIncluded<LETTER, STATE>(getServices(), stateFactory, getOperand(), getResult())).getResult();
+		correct &= (new IsIncluded<LETTER, STATE>(getServices(), stateFactory, getResult(), getOperand())).getResult();
+		getLogger().info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 

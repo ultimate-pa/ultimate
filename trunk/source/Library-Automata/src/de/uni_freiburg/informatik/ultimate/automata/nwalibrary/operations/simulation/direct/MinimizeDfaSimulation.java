@@ -218,4 +218,31 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand has " + m_Operand.sizeInformation();
 	}
+
+	/**
+	 * Gets the logger used by the Ultimate framework.
+	 * 
+	 * @return The logger used by the Ultimate framework.
+	 */
+	protected Logger getLogger() {
+		return m_Logger;
+	}
+
+	/**
+	 * Gets the inputed automaton.
+	 * 
+	 * @return The inputed automaton.
+	 */
+	protected INestedWordAutomatonOldApi<LETTER, STATE> getOperand() {
+		return m_Operand;
+	}
+
+	/**
+	 * Gets the service provider of the Ultimate framework.
+	 * 
+	 * @return The service provider of the Ultimate framework.
+	 */
+	protected AutomataLibraryServices getServices() {
+		return m_Services;
+	}
 }
