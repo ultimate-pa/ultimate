@@ -625,7 +625,7 @@ public class Statements2TransFormula {
 	 * @return
 	 */
 	private Term eliminateAuxVars(Term input, Set<TermVariable> auxVars) {
-		XnfDer xnfDer = new XnfDer(m_Script, mServices);
+		XnfDer xnfDer = new XnfDer(m_Script, mServices, m_VariableManager);
 		Term result = Util.and(m_Script, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(input), auxVars));
 		return result;
 	}

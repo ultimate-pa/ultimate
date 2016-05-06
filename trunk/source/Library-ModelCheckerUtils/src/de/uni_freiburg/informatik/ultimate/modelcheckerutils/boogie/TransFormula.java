@@ -603,7 +603,7 @@ public class TransFormula implements Serializable {
 					new DagSizePrinter(formula), new DagSizePrinter(eliminated)));
 			formula = eliminated;
 		} else {
-			XnfDer xnfDer = new XnfDer(script, services);
+			XnfDer xnfDer = new XnfDer(script, services, boogie2smt.getVariableManager());
 			formula = Util.and(script, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(formula), auxVars));
 		}
 		if (simplify) {

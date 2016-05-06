@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -53,8 +54,12 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class XnfDer extends XjunctPartialQuantifierElimination {
 
-	public XnfDer(Script script, IUltimateServiceProvider services) {
+	private final IFreshTermVariableConstructor m_FreshVarConstructor;
+
+	public XnfDer(Script script, IUltimateServiceProvider services, 
+			IFreshTermVariableConstructor freshVarConstructor) {
 		super(script, services);
+		m_FreshVarConstructor = freshVarConstructor;
 	}
 
 	@Override
@@ -126,7 +131,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
 			resultAtoms = new Term[inputAtoms.length - 1];
 			Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
-			SafeSubstitution substitution = new SafeSubstitutionWithLocalSimplification(script, substitutionMapping);
+			SafeSubstitution substitution = new SafeSubstitutionWithLocalSimplification(
+					script, m_FreshVarConstructor, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
 			}

@@ -137,7 +137,7 @@ public class QuantifierPusher extends TermTransformer {
 		final Term[] derResult;
 		Set<TermVariable> eliminatees = new HashSet<TermVariable>(Arrays.asList(quantifiedFormula.getVariables()));
 		{
-			XnfDer xnfDer = new XnfDer(m_Script, m_Services);
+			XnfDer xnfDer = new XnfDer(m_Script, m_Services, m_FreshTermVariableConstructor);
 			Term[] xjuncts = PartialQuantifierElimination.getXjunctsInner(quantifiedFormula.getQuantifier(), appTerm);
 			derResult = xnfDer.tryToEliminate(quantifiedFormula.getQuantifier(), xjuncts, eliminatees);
 			if (eliminatees.isEmpty()) {
