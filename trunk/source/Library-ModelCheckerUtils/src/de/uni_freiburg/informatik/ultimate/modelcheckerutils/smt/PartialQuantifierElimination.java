@@ -166,6 +166,7 @@ public class PartialQuantifierElimination {
 			int quantBefore = varSet.size();
 			//		Set<TermVariable> varSet = new HashSet<TermVariable>(Arrays.asList(vars));
 			elim = elimPushPull(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
+//			return elim;
 			if (elim instanceof QuantifiedFormula) {
 				QuantifiedFormula qf = (QuantifiedFormula) elim;
 				varSet = new HashSet<TermVariable>(Arrays.asList(qf.getVariables()));
@@ -209,8 +210,8 @@ public class PartialQuantifierElimination {
 		final Term quantified = script.quantifier(quantifier, eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
 		final Term pushed = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(quantified);
 		final Term commu = new CommuhashNormalForm(services, script).transform(pushed);
-		final Term pnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.PULL).transform(pushed);
-//		final Term pnf = new PrenexNormalForm(script, freshTermVariableConstructor).transform(pushed);
+//		final Term pnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.PULL).transform(pushed);
+		final Term pnf = new PrenexNormalForm(script, freshTermVariableConstructor).transform(pushed);
 		return pnf;
 	}
 
@@ -247,7 +248,7 @@ public class PartialQuantifierElimination {
 		// apply Destructive Equality Resolution
 		Term termAfterDER;
 		{
-			XnfDer xnfDer = new XnfDer(script, services);
+			XnfDer xnfDer = new XnfDer(script, services, freshTermVariableConstructor);
 			Term[] oldParams = getXjunctsOuter(quantifier, result);
 			Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
