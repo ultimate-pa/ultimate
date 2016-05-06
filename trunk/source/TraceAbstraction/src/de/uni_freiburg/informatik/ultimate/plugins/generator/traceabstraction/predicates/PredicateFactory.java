@@ -109,7 +109,16 @@ public class PredicateFactory {
 	 *            a BasicPredicate, otherwise it constructs a
 	 *            BasicPredicateExplicitQuantifier.
 	 */
-	public IPredicate constructPredicate(Term term, int quantifier, Set<TermVariable> quantifiedVariables) {
+	public IPredicate constructPredicate(Term term) {
+		final int quantifier;
+		Set<TermVariable> quantifiedVariables;
+		if (term instanceof QuantifiedFormula) {
+			quantifier = ((QuantifiedFormula) term).getQuantifier();
+			quantifiedVariables = new HashSet<>(Arrays.asList(((QuantifiedFormula) term).getVariables()));
+		} else {
+			quantifier = -1;
+			quantifiedVariables = null;
+		}
 		assert checkIfValidPredicate(term, quantifiedVariables);
 		if (quantifiedVariables == null || quantifiedVariables.isEmpty()) {
 			// Compute the set of BoogieVars, the procedures and the term

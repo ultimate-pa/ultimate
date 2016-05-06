@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -66,8 +67,8 @@ public class HoareAnnotationWriter {
 		this.m_SmtManager = smtManager;
 		this.m_HoareAnnotationFragments = hoareAnnotationFragments;
 		this.m_UseEntry = true;
-		m_PredicateTransformer = new PredicateTransformer(smtManager.getPredicateFactory(), 
-				smtManager.getVariableManager(), smtManager.getScript(), null, services);
+		m_PredicateTransformer = new PredicateTransformer(smtManager.getVariableManager(), 
+				smtManager.getScript(), null, services);
 	}
 
 	public void addHoareAnnotationToCFG() {
@@ -79,8 +80,9 @@ public class HoareAnnotationWriter {
 			if (true || m_UseEntry || containsAnOldVar(context)) {
 				precondForContext = m_HoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				precondForContext = m_PredicateTransformer.strongestPostcondition(context,
+				final Term spTerm = m_PredicateTransformer.strongestPostcondition(context,
 						getCall((ISLPredicate) context), true);
+				precondForContext = m_SmtManager.getPredicateFactory().constructPredicate(spTerm);
 			}
 			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
 			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments
@@ -92,8 +94,9 @@ public class HoareAnnotationWriter {
 			if (true || m_UseEntry || containsAnOldVar(context)) {
 				precondForContext = m_HoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				precondForContext = m_PredicateTransformer.strongestPostcondition(context,
+				final Term spTerm = m_PredicateTransformer.strongestPostcondition(context,
 						getCall((ISLPredicate) context), true);
+				precondForContext = m_SmtManager.getPredicateFactory().constructPredicate(spTerm);
 			}
 			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
 			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments

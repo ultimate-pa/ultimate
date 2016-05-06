@@ -65,20 +65,17 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
  * 
  */
 public class PredicateTransformer {
-	private final PredicateFactory m_PredicateFactory;
 	private final Script m_Script;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	private final VariableManager m_VariableManager;
 	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
 
-	public PredicateTransformer(PredicateFactory predicateFactory, 
-			VariableManager variableManager, Script script, 
+	public PredicateTransformer(VariableManager variableManager, Script script, 
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
 			IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_PredicateFactory = predicateFactory;
 		m_Script = script;
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		m_VariableManager = variableManager;
@@ -95,9 +92,9 @@ public class PredicateTransformer {
 	 * its occurrence in the given predicate is substituted by a fresh variable.
 	 * All fresh variables are existentially quantified.
 	 */
-	public IPredicate strongestPostcondition(IPredicate p, TransFormula tf) {
+	public Term strongestPostcondition(IPredicate p, TransFormula tf) {
 		if (SmtUtils.isFalse(p.getFormula())) {
-			return p;
+			return p.getFormula();
 		}
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
@@ -143,7 +140,7 @@ public class PredicateTransformer {
 
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
-		return m_PredicateFactory.constructPredicate(result, Script.EXISTS, varsToQuantify);
+		return SmtUtils.quantifier(m_Script, Script.EXISTS, varsToQuantify, result, m_VariableManager);
 	}
 
 	/**
@@ -151,7 +148,7 @@ public class PredicateTransformer {
 	 * Call statements must be treated in a special way.
 	 */
 	@Deprecated
-	public IPredicate strongestPostcondition(IPredicate p, Call call, boolean isPendingCall) {
+	public Term strongestPostcondition(IPredicate p, Call call, boolean isPendingCall) {
 		return strongestPostcondition(p, call.getTransitionFormula(),
 				m_ModifiableGlobalVariableManager.getGlobalVarsAssignment(call.getCallStatement().getMethodName()),
 				m_ModifiableGlobalVariableManager.getOldVarsAssignment(call.getCallStatement().getMethodName()),
@@ -159,7 +156,7 @@ public class PredicateTransformer {
 	}
 	
 	
-	public IPredicate weakLocalPostconditionCall(IPredicate p, TransFormula globalVarAssignments, final Set<BoogieVar> modifiableGlobals) {
+	public Term weakLocalPostconditionCall(IPredicate p, TransFormula globalVarAssignments, final Set<BoogieVar> modifiableGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		
 		final Term renamedOldVarsAssignment;
@@ -204,11 +201,11 @@ public class PredicateTransformer {
 			renamedPredicate = new SafeSubstitutionWithLocalSimplification(m_Script, m_VariableManager, substitutionMapping).transform(p.getFormula());
 		}
 		Term sucessorTerm = Util.and(m_Script, renamedPredicate, renamedOldVarsAssignment);
-		return m_PredicateFactory.constructPredicate(sucessorTerm, Script.EXISTS, varsToQuantify);
+		return SmtUtils.quantifier(m_Script, Script.EXISTS, varsToQuantify, sucessorTerm, m_VariableManager);
 	}
 	
 	
-	public IPredicate strongestPostconditionCall(IPredicate p, TransFormula localVarAssignments,
+	public Term strongestPostconditionCall(IPredicate p, TransFormula localVarAssignments,
 			TransFormula globalVarAssignments, TransFormula oldVarAssignments, final Set<BoogieVar> modifiableGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
@@ -289,7 +286,7 @@ public class PredicateTransformer {
 		}
 		Term sucessorTerm = Util.and(m_Script, renamedPredicate, renamedLocalVarsAssignment, renamedOldVarsAssignment,
 				renamedGlobalVarAssignment);
-		return m_PredicateFactory.constructPredicate(sucessorTerm, Script.EXISTS, varsToQuantify);
+		return SmtUtils.quantifier(m_Script, Script.EXISTS, varsToQuantify, sucessorTerm, m_VariableManager);
 	}
 
 	/**
@@ -298,7 +295,7 @@ public class PredicateTransformer {
 	 * the SP of a Call Statement?
 	 */
 	@Deprecated
-	private IPredicate strongestPostcondition(IPredicate p, TransFormula localVarAssignments,
+	private Term strongestPostcondition(IPredicate p, TransFormula localVarAssignments,
 			TransFormula globalVarAssignments, TransFormula oldVarAssignments, boolean isPendingCall) {
 
 		// VarsToQuantify contains the local Vars and the global vars of the
@@ -433,15 +430,15 @@ public class PredicateTransformer {
 			varsToQuantifyPendingCall.addAll(varsToQuantifyNonModOldVars);
 			varsToQuantifyPendingCall.addAll(allAuxVars);
 
-			return m_PredicateFactory.constructPredicate(predANDCallANDGlobalVars, Script.EXISTS, varsToQuantifyPendingCall);
+			return SmtUtils.quantifier(m_Script, Script.EXISTS, varsToQuantifyNonPendingCall, predANDCallANDGlobalVars, m_VariableManager);
 		} else {
 			Term predRenamed = new SafeSubstitutionWithLocalSimplification(m_Script, varsToRenameInPredNonPendingCall)
 					.transform(predNonModOldVarsRenamed);
 			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
 			varsToQuantifyNonPendingCall.addAll(allAuxVars);
-			return m_PredicateFactory.constructPredicate(
-					Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed), Script.EXISTS,
-					varsToQuantifyNonPendingCall);
+			
+			Term result = Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed);
+			return SmtUtils.quantifier(m_Script, Script.EXISTS, varsToQuantifyNonPendingCall, result, m_VariableManager);
 		}
 	}
 
@@ -451,7 +448,7 @@ public class PredicateTransformer {
 	 * statement and callerPred is the predicate that held in the calling
 	 * procedure before the corresponding call. TODO: How is it computed?
 	 */
-	public IPredicate strongestPostcondition(IPredicate calleePred, IPredicate callerPred, TransFormula ret_TF,
+	public Term strongestPostcondition(IPredicate calleePred, IPredicate callerPred, TransFormula ret_TF,
 			TransFormula callTF, TransFormula globalVarsAssignment, TransFormula oldVarsAssignment) {
 		// VarsToQuantify contains local vars of called procedure, and it may
 		// contain
@@ -618,15 +615,14 @@ public class PredicateTransformer {
 		// 3. Result
 		varsToQuantifyOverAll.addAll(allAuxVars);
 
-		return m_PredicateFactory.constructPredicate(
-				Util.and(m_Script, calleePredRenamedQuantified, retTermRenamed, calleRPredANDCallTFRenamedQuantified),
-				Script.EXISTS, varsToQuantifyOverAll);
+		final Term result = Util.and(m_Script, calleePredRenamedQuantified, retTermRenamed, calleRPredANDCallTFRenamedQuantified);
+		return SmtUtils.quantifier(m_Script, Script.EXISTS, varsToQuantifyOverAll, result, m_VariableManager);
 	}
 	
 
-	public IPredicate weakestPrecondition(IPredicate p, TransFormula tf) {
+	public Term weakestPrecondition(IPredicate p, TransFormula tf) {
 		if (SmtUtils.isTrue(p.getFormula())) {
-			return p;
+			return p.getFormula();
 		}
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
@@ -672,14 +668,14 @@ public class PredicateTransformer {
 		final Term result = Util.or(m_Script, Util.not(m_Script, renamedTransFormula), renamedSuccessor);
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
-		return m_PredicateFactory.constructPredicate(result, Script.FORALL, varsToQuantify);
+		return SmtUtils.quantifier(m_Script, Script.FORALL, varsToQuantify, result, m_VariableManager);
 	}
 
 	/**
 	 * Responsible for computing WP of a Call statement.
 	 * 
 	 */
-	public IPredicate weakestPrecondition(IPredicate calleePred, TransFormula call_TF,
+	public Term weakestPrecondition(IPredicate calleePred, TransFormula call_TF,
 			TransFormula globalVarsAssignments, TransFormula oldVarsAssignments, 
 			Set<BoogieVar> modifiableGlobals) {
 		
@@ -752,7 +748,7 @@ public class PredicateTransformer {
 				Util.not(m_Script, Util.and(m_Script, call_TFrenamed, globalVarsAssignmentsRenamed, oldVarsAssignmentsRenamed)),
 				calleePredRenamed);
 		varsToQuantify.addAll(call_TF.getAuxVars());
-		return m_PredicateFactory.constructPredicate(result, Script.FORALL, varsToQuantify);
+		return SmtUtils.quantifier(m_Script, Script.FORALL, varsToQuantify, result, m_VariableManager);
 	}
 
 	/**
@@ -766,7 +762,7 @@ public class PredicateTransformer {
 	 * @param varsOccurringBetweenCallAndReturn 
 	 * 
 	 */
-	public IPredicate weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, TransFormula returnTF,
+	public Term weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, TransFormula returnTF,
 			TransFormula callTF, TransFormula globalVarsAssignments, TransFormula oldVarAssignments,
 			Set<BoogieVar> modifiableGlobals, Set<BoogieVar> varsOccurringBetweenCallAndReturn) {
 		InstanceProviderWpReturn ir = new InstanceProviderWpReturn(modifiableGlobals, varsOccurringBetweenCallAndReturn, returnTF.getAssignedVars());
@@ -884,7 +880,7 @@ public class PredicateTransformer {
 				callTermRenamed, globalVarsRenamed);
 
 		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturnAndGlobalVars), returnPredRenamed);
-		return m_PredicateFactory.constructPredicate(result, Script.FORALL, varsToQuantify);
+		return SmtUtils.quantifier(m_Script, Script.FORALL, varsToQuantify, result, m_VariableManager);
 	}
 	
 

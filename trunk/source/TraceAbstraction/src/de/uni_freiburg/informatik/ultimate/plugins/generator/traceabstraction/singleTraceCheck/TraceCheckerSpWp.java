@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -448,8 +449,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		public IPredicate postprocess(IPredicate pred, int i) {
 			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
-			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(
-					pred.getFormula(), QuantifiedFormula.EXISTS, nonLiveVars);
+			final Term projectedT = SmtUtils.quantifier(m_SmtManager.getScript(), 
+					QuantifiedFormula.EXISTS, nonLiveVars, pred.getFormula(), 
+					m_SmtManager.getBoogie2Smt().getVariableManager());
+			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(projectedT);
 			m_NonLiveVariablesFp += nonLiveVars.size();
 			return projected;
 		}
@@ -475,8 +478,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		public IPredicate postprocess(IPredicate pred, int i) {
 			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
-			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(
-					pred.getFormula(), QuantifiedFormula.FORALL, nonLiveVars);
+			final Term projectedT = SmtUtils.quantifier(m_SmtManager.getScript(), 
+					QuantifiedFormula.FORALL, nonLiveVars, pred.getFormula(), 
+					m_SmtManager.getBoogie2Smt().getVariableManager());
+			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(projectedT);
 			m_NonLiveVariablesBp += nonLiveVars.size();
 			return projected;
 		}

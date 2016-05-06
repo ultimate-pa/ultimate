@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicInternalAction;
@@ -354,10 +355,12 @@ public class FlowSensitiveFaultLocalizer {
 			List<int[]> informationFromCFG, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager){
 		
 		
-		final PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
+		final PredicateTransformer pt = new PredicateTransformer(smtManager.getVariableManager(), 
+				smtManager.getScript(), modGlobVarManager, m_Services);
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		final TransFormula markhor = computeMarkhorFormula(a, b, counterexampleWord,informationFromCFG, smtManager);
-		final IPredicate weakestPreconditionNew = pt.weakestPrecondition(weakestPreconditionOld, markhor);
+		final Term wpTerm = pt.weakestPrecondition(weakestPreconditionOld, markhor);
+		final IPredicate weakestPreconditionNew = smtManager.getPredicateFactory().constructPredicate(wpTerm);
 		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
 		final String preceeding = counterexampleWord.getSymbolAt(a).getPreceedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(b).getSucceedingProcedure();
@@ -405,12 +408,13 @@ public class FlowSensitiveFaultLocalizer {
 					//Recursion
 					ArrayList<CodeBlock> relevantSubStatements = relevantFlowSensitiveStatements(counterexampleWord, branch_out,branch_in,weakestPreconditionNew,weakestPreconditionNew,pt,rc,smtManager,modGlobVarManager,informationFromCFG);
 					relevantStatements.addAll(relevantSubStatements);
-					weakestPreconditionNew = pt.weakestPrecondition(weakestPreconditionNew, markhor_formula.get(0)); 
+					final Term wpTerm = pt.weakestPrecondition(weakestPreconditionNew, markhor_formula.get(0));
+					weakestPreconditionNew = smtManager.getPredicateFactory().constructPredicate(wpTerm);
 																								
 				}
 				else{
-					
-					weakestPreconditionNew = pt.weakestPrecondition(weakestPreconditionNew, markhor_formula.get(0));
+					final Term wpTerm = pt.weakestPrecondition(weakestPreconditionNew, markhor_formula.get(0));
+					weakestPreconditionNew = smtManager.getPredicateFactory().constructPredicate(wpTerm);
 					m_Logger.info(" - - Irrelevant Branch - - - [MarkhorFormula:"+ markhor_formula + " ]");
 				}
 				// If the branch is relevant, then recursively call the same function on it self with the updated parameters.
@@ -420,7 +424,8 @@ public class FlowSensitiveFaultLocalizer {
 			}
 			else{ // The statement under consideration is NOT a BRANCH-IN Statement.
 				weakestPreconditionOld = weakestPreconditionNew;
-				weakestPreconditionNew = pt.weakestPrecondition(weakestPreconditionOld, counterexampleWord.getSymbolAt(backwardcounter).getTransitionFormula());
+				final Term wpTerm = pt.weakestPrecondition(weakestPreconditionOld, counterexampleWord.getSymbolAt(backwardcounter).getTransitionFormula());
+				weakestPreconditionNew = smtManager.getPredicateFactory().constructPredicate(wpTerm);
 				pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
 				m_Logger.info(" ");
 				m_Logger.info("WP -- > " + weakestPreconditionOld);
@@ -492,7 +497,7 @@ public class FlowSensitiveFaultLocalizer {
 	m_Logger.warn("Initializing Flow Sensitive Fault Localization");
 	// You should send the counter example, the CFG information and the the start of the branch and the end of the branch.
 	NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
-	PredicateTransformer pt = new PredicateTransformer(smtManager.getPredicateFactory(), smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
+	PredicateTransformer pt = new PredicateTransformer(smtManager.getVariableManager(), smtManager.getScript(), modGlobVarManager, m_Services);
 	FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 	int start_location = 0;
 	int end_location = counterexampleWord.length()-1;

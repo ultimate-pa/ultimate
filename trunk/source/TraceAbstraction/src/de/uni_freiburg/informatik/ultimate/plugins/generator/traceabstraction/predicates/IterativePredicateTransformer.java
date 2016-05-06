@@ -41,6 +41,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -67,6 +68,7 @@ public class IterativePredicateTransformer {
 	private final Boogie2SMT m_Boogie2SMT;
 	
 	private final PredicateTransformer m_PredicateTransformer;
+	private final PredicateFactory m_PredicateFactory;
 	private final NestedWord<? extends IAction> m_Trace;
 	private final IPredicate m_Precondition;
 	private final IPredicate m_Postcondition;
@@ -87,8 +89,9 @@ public class IterativePredicateTransformer {
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_Boogie2SMT = boogie2smt;
 		m_ModifiedGlobals = modifiableGlobalVariableManager;
-		m_PredicateTransformer = new PredicateTransformer(predicateFactory, 
-				variableManager, script, modifiableGlobalVariableManager, services);
+		m_PredicateTransformer = new PredicateTransformer(variableManager, 
+				script, modifiableGlobalVariableManager, services);
+		m_PredicateFactory = predicateFactory;
 		m_Trace = trace;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
@@ -129,18 +132,18 @@ public class IterativePredicateTransformer {
 
 		for (int i = 0; i < m_Trace.length() - 1; i++) {
 			final IPredicate predecessor = ipp.getInterpolant(i); 
-			final IPredicate sp;
+			final Term spTerm;
 			if (m_Trace.getSymbol(i) instanceof Call) {
 				final Call call = (Call) m_Trace.getSymbol(i); 
 				final String calledMethod = call.getCallStatement().getMethodName();
 				final Set<BoogieVar> modifiedGlobals = m_ModifiedGlobals.getModifiedBoogieVars(calledMethod);
 				if (m_Trace.isPendingCall(i)) {
-					sp = m_PredicateTransformer.strongestPostconditionCall(
+					spTerm = m_PredicateTransformer.strongestPostconditionCall(
 							predecessor, nf.getLocalVarAssignment(i),
 							nf.getGlobalVarAssignment(i), nf.getOldVarAssignment(i),
 							modifiedGlobals);
 				} else {
-					sp = m_PredicateTransformer.weakLocalPostconditionCall(
+					spTerm = m_PredicateTransformer.weakLocalPostconditionCall(
 							predecessor,
 							nf.getGlobalVarAssignment(i),
 							modifiedGlobals);
@@ -164,15 +167,16 @@ public class IterativePredicateTransformer {
 					callLocalVarsAssignment = nf.getLocalVarAssignment(callPos);
 				}
 				final TransFormula returnTransFormula = nf.getFormulaFromNonCallPos(i);
-				sp = m_PredicateTransformer.strongestPostcondition(
+				spTerm = m_PredicateTransformer.strongestPostcondition(
 						predecessor, callerPred,
 						returnTransFormula, callLocalVarsAssignment, 
 						callGlobalVarsAssignment, callOldVarsAssignment);
 			} else {
-				sp = m_PredicateTransformer.strongestPostcondition(
+				spTerm = m_PredicateTransformer.strongestPostcondition(
 						predecessor,
 						nf.getFormulaFromNonCallPos(i));
 			}
+			final IPredicate sp = m_PredicateFactory.constructPredicate(spTerm);
 			spSequence[i] = applyPostprocessors(postprocs, i+1, sp);
 		}
 		return ipp;
@@ -203,27 +207,27 @@ public class IterativePredicateTransformer {
 		 * the second method, where the callerPred
 		 * is computed as wp(returnerPred, summaryOfCalledProcedure).
 		 */
-		final Map<Integer, IPredicate> callerPredicatesComputed = new HashMap<Integer, IPredicate>();
+		final Map<Integer, Term> callerPredicatesComputed = new HashMap<Integer, Term>();
 		
 		final boolean computePrecondition = (m_Precondition == null);
 		final int positionOfFirstPredicate = (computePrecondition ? 0 : 1);
 		IPredicate computedPrecondition = null;
 		
 		for (int i = m_Trace.length()-1; i >= positionOfFirstPredicate; i--) {
-			final IPredicate wp;
+			final Term wpTerm;
 			final IPredicate successor = ipp.getInterpolant(i+1);
 			if (m_Trace.getSymbol(i) instanceof Call) {
 				if (m_Trace.isPendingCall(i)) {
 					final Call call = (Call) m_Trace.getSymbol(i); 
 					final String calledMethod = call.getCallStatement().getMethodName();
 					final Set<BoogieVar> modifiedGlobals = m_ModifiedGlobals.getModifiedBoogieVars(calledMethod);
-					wp = m_PredicateTransformer.weakestPrecondition(
+					wpTerm = m_PredicateTransformer.weakestPrecondition(
 							successor,
 							nf.getLocalVarAssignment(i), nf.getGlobalVarAssignment(i),
 							nf.getOldVarAssignment(i), modifiedGlobals);
 				} else {
-					wp = callerPredicatesComputed.get(i);
-					assert wp != null : "must have already been computed";
+					wpTerm = callerPredicatesComputed.get(i);
+					assert wpTerm != null : "must have already been computed";
 				}
 			} else if (m_Trace.getSymbol(i) instanceof Return) {
 				final IPredicate callerPred;
@@ -261,24 +265,25 @@ public class IterativePredicateTransformer {
 							m_Trace, callLocalVarsAssignment, returnTf, 
 							oldVarAssignments, globalVarsAssignments, nf, callPos, i);
 					varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
-					IPredicate wpOfSummary = m_PredicateTransformer.weakestPrecondition(
+					final Term wpOfSummary = m_PredicateTransformer.weakestPrecondition(
 							successor,
 							summary.getWithCallAndReturn());
 					callerPredicatesComputed.put(callPos, wpOfSummary);
 					if (callPredecessorIsAlwaysFalse) {
 						callerPred = m_FalsePredicate;
 					} else {
-						callerPred = wpOfSummary;
+						callerPred = m_PredicateFactory.constructPredicate(wpOfSummary);
 					}
 				}
-				wp = m_PredicateTransformer.weakestPrecondition(
+				wpTerm = m_PredicateTransformer.weakestPrecondition(
 						successor, callerPred, returnTf, callLocalVarsAssignment,
 						globalVarsAssignments, oldVarAssignments, modifiableGlobals,
 						varsOccurringBetweenCallAndReturn);
 			} else {
-				wp = m_PredicateTransformer.weakestPrecondition(
+				wpTerm = m_PredicateTransformer.weakestPrecondition(
 						successor, nf.getFormulaFromNonCallPos(i));
 			}
+			final IPredicate wp = m_PredicateFactory.constructPredicate(wpTerm);
 			final IPredicate postprocessed = applyPostprocessors(postprocs, i, wp);
 			if (i == 0) {
 				computedPrecondition = postprocessed;
