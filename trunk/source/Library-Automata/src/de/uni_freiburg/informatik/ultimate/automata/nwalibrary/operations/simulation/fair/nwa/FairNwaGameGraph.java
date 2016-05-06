@@ -178,6 +178,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * @throws UnsupportedOperationException
 	 *             Operation is not supported.
 	 */
+	@Override
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {
 		throw new UnsupportedOperationException("Use getSpoilerVertex(q0, q1, a, bit, summarizeEdge, sink) instead.");
 		// TODO Can later be removed but for now

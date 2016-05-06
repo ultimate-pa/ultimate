@@ -33,6 +33,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.parallel,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair,

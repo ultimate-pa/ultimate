@@ -62,10 +62,10 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
  * simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
  * <i>Duplicator</i>.
  *
- * The implementation is based on the following paper.
- * Kousha Etessami, Thomas Wilke, Rebecca A. Schuller:
- * Fair Simulation Relations, Parity Games, and State Space Reduction for 
- * Bu"chi Automata. SIAM J. Comput. 34(5): 1159-1175 (2005)
+ * The implementation is based on the following paper. Kousha Etessami, Thomas
+ * Wilke, Rebecca A. Schuller: Fair Simulation Relations, Parity Games, and
+ * State Space Reduction for Bu"chi Automata. SIAM J. Comput. 34(5): 1159-1175
+ * (2005)
  * 
  * @author Daniel Tischner
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
  * @param <STATE>
  *            State class of buechi automaton
  */
-public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
+public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * The underlying buechi automaton from which the game graph gets generated.
@@ -130,7 +130,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(progressTimer, logger, stateFactory);
 		verifyAutomatonValidity(buechi);
-		
+
 		m_Services = services;
 		m_Buechi = buechi;
 		m_BuechiAmountOfStates = 0;
@@ -158,12 +158,12 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		boolean[][] table = new boolean[states.size()][states.size()];
 		for (SpoilerVertex<LETTER, STATE> v : getSpoilerVertices()) {
 			// All the states we need are in spoiler vertices
-			
+
 			// Which node do we have to consider in order to obtain the
 			// simulation information for the state pair (q0,q1) ?
 			// According to Lemma 4 (page 1166) of the above mentioned paper
 			// We consider (q0, q1, true) if q0 is final and q1 is not final
-			// and we consider (q0, q1, false) if q0 is not final or q1 is 
+			// and we consider (q0, q1, false) if q0 is not final or q1 is
 			// final.
 			final boolean considerVertex;
 			if (v.isB()) {
@@ -171,17 +171,19 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 			} else {
 				considerVertex = !m_Buechi.isFinal(v.getQ0()) || m_Buechi.isFinal(v.getQ0());
 			}
-			
-			final boolean skip = (m_Buechi.isFinal(v.getQ0()) && 
-					(m_Buechi.isFinal(v.getQ1()) ^ m_Buechi.isFinal(v.getQ0()) ^ v.isB()));
+
+			final boolean skip = (m_Buechi.isFinal(v.getQ0())
+					&& (m_Buechi.isFinal(v.getQ1()) ^ m_Buechi.isFinal(v.getQ0()) ^ v.isB()));
 			{
-				// 2016-05-03 Matthias: I had some doubts about operator precedence
+				// 2016-05-03 Matthias: I had some doubts about operator
+				// precedence
 				// added assert, remove if tested well enough.
-				boolean skipOld = (m_Buechi.isFinal(v.getQ0()) && m_Buechi.isFinal(v.getQ1())) ^ v.isB() ^ m_Buechi.isFinal(v.getQ0());
+				boolean skipOld = (m_Buechi.isFinal(v.getQ0()) && m_Buechi.isFinal(v.getQ1())) ^ v.isB()
+						^ m_Buechi.isFinal(v.getQ0());
 				assert skipOld == skip : "unexpected operator precedence";
 			}
 			assert considerVertex != skip : "old implementation incorrect";
-			
+
 			if (considerVertex) {
 				if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
 					table[states.indexOf(v.getQ0())][states.indexOf(v.getQ1())] = true;
@@ -315,7 +317,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 						addDuplicatorVertex(v0e);
 						// V0 -> V1 edges [paper ref 11]
 						for (STATE q2 : m_Buechi.succInternal(q1, s)) {
-							if (!m_Buechi.isFinal(q2) && getAmountOfBitsForSpoilerVertix(q0, q2) > 1) {
+							if (!m_Buechi.isFinal(q2) && getAmountOfBitsForSpoilerVertices(q0, q2) > 1) {
 								addEdge(v0e, getSpoilerVertex(q0, q2, true));
 								m_GraphAmountOfEdges++;
 							} else {
@@ -325,7 +327,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 						}
 						// V1 -> V0 edges [paper ref 11]
 						for (STATE q2 : m_Buechi.predInternal(q0, s)) {
-							if (getAmountOfBitsForSpoilerVertix(q2, q1) > 1) {
+							if (getAmountOfBitsForSpoilerVertices(q2, q1) > 1) {
 								addEdge(getSpoilerVertex(q2, q1, true), v0e);
 								m_GraphAmountOfEdges++;
 							}
@@ -378,7 +380,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 *         vertices with the extra bit false and true the returned value is
 	 *         between zero and two.
 	 */
-	private int getAmountOfBitsForSpoilerVertix(final STATE q0, final STATE q1) {
+	private int getAmountOfBitsForSpoilerVertices(final STATE q0, final STATE q1) {
 		int amount = 0;
 
 		if (getSpoilerVertex(q0, q1, false) != null) {
@@ -390,5 +392,45 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		}
 
 		return amount;
+	}
+
+	/**
+	 * Sets the internal counter of the amount of buechi states.
+	 * 
+	 * @param amount
+	 *            Amount of buechi states.
+	 */
+	protected void setBuechiAmountOfStates(final int amount) {
+		m_BuechiAmountOfStates = amount;
+	}
+
+	/**
+	 * Sets the internal counter of the amount of buechi transitions.
+	 * 
+	 * @param amount
+	 *            Amount of buechi transitions.
+	 */
+	protected void setBuechiAmountOfTransitions(final int amount) {
+		m_BuechiAmountOfTransitions = amount;
+	}
+
+	/**
+	 * Sets the internal counter of the amount of graph edges.
+	 * 
+	 * @param amount
+	 *            Amount of graph edges.
+	 */
+	protected void setGraphAmountOfEdges(final int amount) {
+		m_GraphAmountOfEdges = amount;
+	}
+
+	/**
+	 * Sets the internal field of the graphBuildTime.
+	 * 
+	 * @param graphBuildTime
+	 *            The graphBuildTime to set
+	 */
+	protected void setGraphBuildTime(final long graphBuildTime) {
+		m_GraphBuildTime = graphBuildTime;
 	}
 }

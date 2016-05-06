@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa;
 
 import org.apache.log4j.Logger;
 
@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.DirectGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ETimeMeasure;
@@ -46,14 +46,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 
 /**
- * Game graph that realizes <b>direct simulation</b> for NWA automata.<br/>
- * In direct simulation each time <i>Spoiler</i> visits a final state
- * <i>Duplicator</i> must also visit one at his next turn.<br/>
+ * Game graph that realizes <b>delayed simulation</b> for NWA automata.<br/>
+ * In delayed simulation each time <i>Spoiler</i> visits a final state
+ * <i>Duplicator</i> must at least visit one in the future for coverage.<br/>
+ * To reflect <i>Duplicator</i>s coverage the delayed game graph uses vertices
+ * that have an extra bit.<br/>
  * <br/>
  * 
  * If its impossible for <i>Spoiler</i> to build a word such that
- * <i>Duplicator</i> can not fulfill its condition we say <b>q1 direct simulates
- * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
+ * <i>Duplicator</i> can not fulfill its condition we say <b>q1 delayed
+ * simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
  * <i>Duplicator</i>.
  * 
  * @author Daniel Tischner
@@ -63,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LETTER, STATE> {
+public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<LETTER, STATE> {
 	/**
 	 * Utility object for generating game graphs based on nwa automata.
 	 */
@@ -75,7 +77,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	private final IDoubleDeckerAutomaton<LETTER, STATE> m_Nwa;
 
 	/**
-	 * Creates a new direct nwa game graph by using the given nwa automaton.
+	 * Creates a new delayed nwa game graph by using the given nwa automaton.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
@@ -94,7 +96,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	 *             framework.
 	 */
 	@SuppressWarnings("unchecked")
-	public DirectNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
+	public DelayedNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> nwa,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
@@ -106,14 +108,14 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 			m_Nwa = new RemoveUnreachable<LETTER, STATE>(services, nwa).getResult();
 		}
 		m_Generation = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), m_Nwa, this,
-				ESimulationType.DIRECT);
+				ESimulationType.DELAYED);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.direct.DirectGameGraph#generateAutomatonFromGraph()
+	 * simulation.delayed.DelayedGameGraph#generateAutomatonFromGraph()
 	 */
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws OperationCanceledException {
@@ -137,7 +139,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
+	 * simulation.delayed.DelayedGameGraph#generateGameGraphFromAutomaton()
 	 */
 	@Override
 	public void generateGameGraphFromAutomaton() throws OperationCanceledException {

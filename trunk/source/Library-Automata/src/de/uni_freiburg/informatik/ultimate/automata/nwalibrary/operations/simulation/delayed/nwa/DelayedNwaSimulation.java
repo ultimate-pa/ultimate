@@ -1,9 +1,6 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
- * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2009-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -27,61 +24,37 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-/**
- * Buchi automata state space reduction algorithm based on the following paper:
- * "Fair simulation relations, parity games and state space reduction for
- * Buchi automata" - Etessami, Wilke and Schuller.
- * 
- * Algorithm optimized to work using strongly connected components.
- */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 
 /**
  * Simulation that realizes <b>delayed simulation</b> for reduction of a given
- * buechi automaton.<br/>
+ * nwa automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
  * 
- * For more information on the type of simulation see {@link DelayedGameGraph}.
- * <br/>
- * <br/>
- * 
- * The algorithm runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b> space where
- * n is the amount of states and k the amount of transitions from the inputed
- * automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation relations, parity
- * games, and state space reduction for büchi automata<i> by <i>Etessami, Wilke
- * and Schuller</i>.
+ * For more information on the type of simulation see
+ * {@link DelayedNwaGameGraph}.
  * 
  * @author Daniel Tischner
- * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
- * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
- * @date 16.01.2012
- * 
+ *
  * @param <LETTER>
- *            Letter class of buechi automaton
+ *            Letter class of nwa automaton
  * @param <STATE>
- *            State class of buechi automaton
+ *            State class of nwa automaton
  */
-public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
+public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation<LETTER, STATE> {
 
 	/**
-	 * Game graph that is used for simulation calculation.
-	 */
-	private final DelayedGameGraph<LETTER, STATE> m_Game;
-
-	/**
-	 * Creates a new delayed simulation that tries to reduce the given buechi
-	 * automaton using <b>delayed simulation</b>.<br/>
+	 * Creates a new delayed nwa simulation with a given graph that tries to
+	 * reduce the given nwa automaton using <b>delayed simulation</b>.<br/>
 	 * After construction the simulation can be started and results can be get
 	 * by using {@link #getResult()}.<br/>
 	 * <br/>
@@ -105,23 +78,35 @@ public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE>
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DelayedSimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final DelayedGameGraph<LETTER, STATE> game)
+	public DelayedNwaSimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory, final DelayedNwaGameGraph<LETTER, STATE> game)
 					throws OperationCanceledException {
-		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DELAYED);
-
-		m_Game = game;
-		m_Game.setSimulationPerformance(getSimulationPerformance());
+		super(progressTimer, logger, useSCCs, stateFactory, game);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * buchiReduction.ASimulation#getGameGraph()
+	 * simulation.ASimulation#doSimulation()
 	 */
 	@Override
-	protected AGameGraph<LETTER, STATE> getGameGraph() {
-		return m_Game;
+	public void doSimulation() throws OperationCanceledException {
+		super.doSimulation();
+		// getLogger().debug(getGameGraph().toAtsFormat());
+		// setResult(getGameGraph().generateAutomatonFromGraph());
+
+		// TODO Remove debug stuff when finished
+		// Print some debug stuff
+		getLogger().debug("Simulation results:");
+		for (Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+			int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
+			String progressMeasureText = progressMeasure + "";
+			if (progressMeasure >= getGameGraph().getGlobalInfinity()) {
+				progressMeasureText = "inf";
+			}
+			getLogger().debug(
+					"\t(" + vertex.getQ0() + "," + vertex.getQ1() + ", " + vertex.isB() + ") = " + progressMeasureText);
+		}
 	}
 }

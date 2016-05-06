@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 
 /**
  * Operation that reduces a given buechi automaton by using
@@ -96,35 +95,49 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public BuchiReduce(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+	public BuchiReduce(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+		this(services, stateFactory, operand,
+				new DelayedSimulation<>(services.getProgressMonitorService(),
+						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), true, stateFactory,
+						new DelayedGameGraph<>(services, services.getProgressMonitorService(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
+								stateFactory)));
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton with a given simulation.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param simulation
+	 *            Simulation to use for reduction
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected BuchiReduce(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)
+					throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 
-		// Remove dead ends.
-		// Removal of dead ends is no optimization but a requirement for
-		// correctness of the algorithm
-		m_Operand = new ReachableStatesCopy<LETTER, STATE>(m_Services, operand, false, false, true, false).getResult();
-		if (m_Logger.isDebugEnabled()) {
-			StringBuilder msg = new StringBuilder();
-			msg.append(" W/O dead ends ").append(m_Operand.sizeInformation());
-			m_Logger.debug(msg.toString());
-		}
-
-		DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(m_Services,
-				m_Services.getProgressMonitorService(), m_Logger, m_Operand, stateFactory);
-		graph.generateGameGraphFromAutomaton();
-		DelayedSimulation<LETTER, STATE> sim = new DelayedSimulation<>(m_Services.getProgressMonitorService(), m_Logger,
-				true, stateFactory, graph);
-		sim.doSimulation();
-		m_Result = sim.getResult();
+		simulation.getGameGraph().generateGameGraphFromAutomaton();
+		simulation.doSimulation();
+		m_Result = simulation.getResult();
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			graph = new DelayedGameGraph<>(m_Services, m_Services.getProgressMonitorService(), m_Logger, m_Operand,
-					stateFactory);
+			DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(m_Services,
+					m_Services.getProgressMonitorService(), m_Logger, m_Operand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
 			DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(m_Services.getProgressMonitorService(),
 					m_Logger, false, stateFactory, graph);
@@ -191,5 +204,32 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand has " + m_Operand.sizeInformation();
+	}
+
+	/**
+	 * Gets the logger used by the Ultimate framework.
+	 * 
+	 * @return The logger used by the Ultimate framework.
+	 */
+	protected Logger getLogger() {
+		return m_Logger;
+	}
+
+	/**
+	 * Gets the inputed automaton.
+	 * 
+	 * @return The inputed automaton.
+	 */
+	protected INestedWordAutomatonOldApi<LETTER, STATE> getOperand() {
+		return m_Operand;
+	}
+
+	/**
+	 * Gets the service provider of the Ultimate framework.
+	 * 
+	 * @return The service provider of the Ultimate framework.
+	 */
+	protected AutomataLibraryServices getServices() {
+		return m_Services;
 	}
 }

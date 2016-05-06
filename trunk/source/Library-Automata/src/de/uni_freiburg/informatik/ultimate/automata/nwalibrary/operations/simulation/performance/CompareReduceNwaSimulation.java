@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa.DelayedNwaGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa.DelayedNwaSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa.DirectNwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa.DirectNwaSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.nwa.FairNwaGameGraph;
@@ -135,6 +137,14 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
+			} else if (type.equals(ESimulationType.DELAYED)) {
+				DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, progressTimer, logger,
+						operand, stateFactory);
+				graph.generateGameGraphFromAutomaton();
+				DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger, useSCCs,
+						stateFactory, graph);
+				sim.doSimulation();
+				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
 				FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, progressTimer, logger, operand,
 						stateFactory);
@@ -184,6 +194,9 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
 		// Direct nwa simulation without SCC
 		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, getServices(), timeOutMillis,
+				stateFactory, reachableOperand);
+		// Delayed nwa simulation without SCC
+		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
 				stateFactory, reachableOperand);
 
 		// Other minimization methods

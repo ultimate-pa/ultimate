@@ -412,9 +412,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						invokingState, null, summarizeEdge);
 				searchQueue.add(searchElement);
 
-				// Memorize invoker element for detection of corresponding
-				// summarize
-				// edges
+				// Memorize invoker element for detection of
+				// corresponding summarize edges
 				invokerToSummarizeEdge.put(new Pair<>(spoilerInvoker, invokingState), summarizeEdge);
 			}
 		}
@@ -858,10 +857,22 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				for (SpoilerVertex<LETTER, STATE> v : m_GameGraph.getSpoilerVertices()) {
 					// All the states we need are from Spoiler
 					if (v.getPM(null, m_GameGraph.getGlobalInfinity()) < m_GameGraph.getGlobalInfinity()) {
-						STATE state1 = v.getQ0();
-						STATE state2 = v.getQ1();
-						if (state1 != null && state2 != null) {
-							similarStates.addPair(state1, state2);
+						boolean considerVertex = true;
+						// For delayed simulation we need to choose between the
+						// vertex with bit set to true or false
+						if (m_SimulationType == ESimulationType.DELAYED) {
+							if (v.isB()) {
+								considerVertex = m_Nwa.isFinal(v.getQ0()) && !m_Nwa.isFinal(v.getQ0());
+							} else {
+								considerVertex = !m_Nwa.isFinal(v.getQ0()) || m_Nwa.isFinal(v.getQ0());
+							}
+						}
+						if (considerVertex) {
+							STATE state1 = v.getQ0();
+							STATE state2 = v.getQ1();
+							if (state1 != null && state2 != null) {
+								similarStates.addPair(state1, state2);
+							}
 						}
 					}
 				}
@@ -1108,6 +1119,21 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 						}
 					}
+					// For delayed simulation we also need to account for
+					// vertices with the bit set to true
+					if (m_SimulationType == ESimulationType.DELAYED) {
+						src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), true,
+								ETransitionType.INTERNAL, null, null);
+						if (!m_Nwa.isFinal(edgeDest) && getAmountOfBitsForSpoilerVertices(fixState, edgeDest) > 1) {
+							dest = getSpoilerVertex(fixState, edgeDest, true, null, null);
+						} else {
+							dest = getSpoilerVertex(fixState, edgeDest, false, null, null);
+						}
+						if (src != null && dest != null) {
+							m_GameGraph.addEdge(src, dest);
+							m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						}
+					}
 
 					// Spoiler edges q1 -a-> q2 : (q1, x) -> (q2, x, a)
 					src = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
@@ -1121,6 +1147,26 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								|| !doesLooseInDirectSim(trans.getPred(), fixState)) {
 							m_GameGraph.addEdge(src, dest);
 							m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						}
+					}
+					// For delayed simulation we also need to account for
+					// vertices with the bit set to true
+					if (m_SimulationType == ESimulationType.DELAYED) {
+						dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), true,
+								ETransitionType.INTERNAL, null, null);
+						if (getAmountOfBitsForSpoilerVertices(trans.getPred(), fixState) > 1) {
+							src = getSpoilerVertex(trans.getPred(), fixState, true, null, null);
+							if (src != null && dest != null) {
+								m_GameGraph.addEdge(src, dest);
+								m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+							}
+						}
+						if (m_Nwa.isFinal(edgeDest)) {
+							src = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
+							if (src != null && dest != null) {
+								m_GameGraph.addEdge(src, dest);
+								m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+							}
 						}
 					}
 
@@ -1156,6 +1202,21 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
 						}
 					}
+					// For delayed simulation we also need to account for
+					// vertices with the bit set to true
+					if (m_SimulationType == ESimulationType.DELAYED) {
+						src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), true,
+								ETransitionType.CALL, null, null);
+						if (!m_Nwa.isFinal(edgeDest) && getAmountOfBitsForSpoilerVertices(fixState, edgeDest) > 1) {
+							dest = getSpoilerVertex(fixState, edgeDest, true, null, null);
+						} else {
+							dest = getSpoilerVertex(fixState, edgeDest, false, null, null);
+						}
+						if (src != null && dest != null) {
+							m_GameGraph.addEdge(src, dest);
+							m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						}
+					}
 
 					// Spoiler edges q1 -c-> q2 : (q1, x) -> (q2, x, c)
 					src = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
@@ -1169,6 +1230,26 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								|| !doesLooseInDirectSim(trans.getPred(), fixState)) {
 							m_GameGraph.addEdge(src, dest);
 							m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						}
+					}
+					// For delayed simulation we also need to account for
+					// vertices with the bit set to true
+					if (m_SimulationType == ESimulationType.DELAYED) {
+						dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), true, ETransitionType.CALL,
+								null, null);
+						if (getAmountOfBitsForSpoilerVertices(trans.getPred(), fixState) > 1) {
+							src = getSpoilerVertex(trans.getPred(), fixState, true, null, null);
+							if (src != null && dest != null) {
+								m_GameGraph.addEdge(src, dest);
+								m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+							}
+						}
+						if (m_Nwa.isFinal(edgeDest)) {
+							src = getSpoilerVertex(trans.getPred(), fixState, false, null, null);
+							if (src != null && dest != null) {
+								m_GameGraph.addEdge(src, dest);
+								m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+							}
 						}
 					}
 
@@ -1198,7 +1279,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// Ensure that the edge represents a possible move.
 					// This is when the hierPred state is a down state of q1
 					boolean isEdgePossible = hasDownState(trans.getLinPred(), trans.getHierPred());
-					if (src != null && dest != null) {
+					if (src != null && dest != null && isEdgePossible) {
 						// Do not add if using direct simulation and the
 						// destination represents a vertex where Duplicator
 						// directly looses.
@@ -1211,6 +1292,27 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						// edge generation
 						if (src instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
 							m_DuplicatorReturningVertices.add((DuplicatorDoubleDeckerVertex<LETTER, STATE>) src);
+						}
+					}
+					// For delayed simulation we also need to account for
+					// vertices with the bit set to true
+					if (m_SimulationType == ESimulationType.DELAYED) {
+						src = getDuplicatorVertex(fixState, trans.getLinPred(), trans.getLetter(), true,
+								ETransitionType.RETURN, null, null);
+						if (!m_Nwa.isFinal(edgeDest) && getAmountOfBitsForSpoilerVertices(fixState, edgeDest) > 1) {
+							dest = getSpoilerVertex(fixState, edgeDest, true, null, null);
+						} else {
+							dest = getSpoilerVertex(fixState, edgeDest, false, null, null);
+						}
+						if (src != null && dest != null && isEdgePossible) {
+							m_GameGraph.addEdge(src, dest);
+							m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+							// Remember vertex since we need it later for
+							// summarize
+							// edge generation
+							if (src instanceof DuplicatorDoubleDeckerVertex<?, ?>) {
+								m_DuplicatorReturningVertices.add((DuplicatorDoubleDeckerVertex<LETTER, STATE>) src);
+							}
 						}
 					}
 
@@ -1229,6 +1331,26 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								|| !doesLooseInDirectSim(trans.getLinPred(), fixState)) {
 							m_GameGraph.addEdge(src, dest);
 							m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+						}
+					}
+					// For delayed simulation we also need to account for
+					// vertices with the bit set to true
+					if (m_SimulationType == ESimulationType.DELAYED) {
+						dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), true, ETransitionType.RETURN,
+								null, null);
+						if (getAmountOfBitsForSpoilerVertices(trans.getLinPred(), fixState) > 1) {
+							src = getSpoilerVertex(trans.getLinPred(), fixState, true, null, null);
+							if (src != null && dest != null && isEdgePossible) {
+								m_GameGraph.addEdge(src, dest);
+								m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+							}
+						}
+						if (m_Nwa.isFinal(edgeDest)) {
+							src = getSpoilerVertex(trans.getLinPred(), fixState, false, null, null);
+							if (src != null && dest != null && isEdgePossible) {
+								m_GameGraph.addEdge(src, dest);
+								m_SimulationPerformance.increaseCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES);
+							}
 						}
 					}
 
@@ -1296,6 +1418,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (leftDownState.equals(m_Bottom) || rightDownState.equals(m_Bottom)) {
 							continue;
 						}
+						// TODO How to determine which bits are sources in
+						// delayed simulation
 						SpoilerVertex<LETTER, STATE> summarizeSrc = getSpoilerVertex(leftDownState, rightDownState,
 								false, null, null);
 						if (summarizeSrc == null || !(summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
@@ -1380,8 +1504,17 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				if (priority == 1) {
 					m_GameGraph.increaseGlobalInfinity();
 				}
-				SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerVertex = new SpoilerDoubleDeckerVertex<>(priority,
-						false, leftState, rightState);
+
+				SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerVertex = null;
+				// In delayed simulation we always generate the vertex with
+				// priority zero. Conditionally we also add a vertex with
+				// priority one.
+				if (m_SimulationType == ESimulationType.DELAYED) {
+					spoilerVertex = new SpoilerDoubleDeckerVertex<>(0, false, leftState, rightState);
+				} else {
+					spoilerVertex = new SpoilerDoubleDeckerVertex<>(priority, false, leftState, rightState);
+				}
+
 				applyVertexDownStatesToVertex(spoilerVertex);
 				// Memorize vertices that have down state
 				// configurations of [bottom, bottom]
@@ -1394,6 +1527,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					m_BottomVertices.add(spoilerVertex);
 				}
 				addSpoilerVertex(spoilerVertex);
+				// In delayed simulation we may also add a vertex with
+				// priority one that has the bit set to true.
+				if (m_SimulationType == ESimulationType.DELAYED) {
+					if (priority == 1) {
+						spoilerVertex = new SpoilerDoubleDeckerVertex<>(priority, true, leftState, rightState);
+						applyVertexDownStatesToVertex(spoilerVertex);
+						if (spoilerVertex.hasVertexDownState(bottomBoth)) {
+							m_BottomVertices.add(spoilerVertex);
+						}
+						addSpoilerVertex(spoilerVertex);
+					}
+				}
 
 				// Generate Duplicator vertices (leftState, rightState, letter)
 				// Vertices generated by internal transitions
@@ -1402,6 +1547,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							duplicatorPriority, false, leftState, rightState, letter, ETransitionType.INTERNAL);
 					applyVertexDownStatesToVertex(duplicatorVertex);
 					addDuplicatorVertex(duplicatorVertex);
+					if (m_SimulationType == ESimulationType.DELAYED) {
+						duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(duplicatorPriority, true, leftState,
+								rightState, letter, ETransitionType.INTERNAL);
+						applyVertexDownStatesToVertex(duplicatorVertex);
+						addDuplicatorVertex(duplicatorVertex);
+					}
 				}
 				// Vertices generated by call transitions
 				for (LETTER letter : m_Nwa.lettersCallIncoming(leftState)) {
@@ -1409,6 +1560,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							duplicatorPriority, false, leftState, rightState, letter, ETransitionType.CALL);
 					applyVertexDownStatesToVertex(duplicatorVertex);
 					addDuplicatorVertex(duplicatorVertex);
+					if (m_SimulationType == ESimulationType.DELAYED) {
+						duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(duplicatorPriority, true, leftState,
+								rightState, letter, ETransitionType.CALL);
+						applyVertexDownStatesToVertex(duplicatorVertex);
+						addDuplicatorVertex(duplicatorVertex);
+					}
 				}
 				// Vertices generated by return transitions
 				for (IncomingReturnTransition<LETTER, STATE> transition : m_Nwa.returnPredecessors(leftState)) {
@@ -1425,6 +1582,17 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 									ETransitionType.RETURN);
 							applyVertexDownStatesToVertex(duplicatorVertex);
 							addDuplicatorVertex(duplicatorVertex);
+						}
+						if (m_SimulationType == ESimulationType.DELAYED) {
+							// Only add if not already existent
+							if (getDuplicatorVertex(leftState, rightState, transition.getLetter(), true,
+									ETransitionType.RETURN, null, null) == null) {
+								DuplicatorDoubleDeckerVertex<LETTER, STATE> duplicatorVertex = new DuplicatorDoubleDeckerVertex<>(
+										duplicatorPriority, true, leftState, rightState, transition.getLetter(),
+										ETransitionType.RETURN);
+								applyVertexDownStatesToVertex(duplicatorVertex);
+								addDuplicatorVertex(duplicatorVertex);
+							}
 						}
 					}
 				}
@@ -1655,6 +1823,17 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			return 0;
 		}
 
+		// In delayed simulation priority zero is always possible, only priority
+		// one is conditional. In this case, this method should only return one
+		// if possible, else zero.
+		if (m_SimulationType == ESimulationType.DELAYED) {
+			if (!m_Nwa.isFinal(rightState)) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+
 		if (m_Nwa.isFinal(rightState)) {
 			return 0;
 		} else if (m_Nwa.isFinal(leftState)) {
@@ -1726,6 +1905,34 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the amount of {@link SpoilerVertex} objects that exist in the game
+	 * graph with representation (q0, q1). Since there can be such vertices with
+	 * the extra bit false and true the returned value is between zero and two.
+	 * 
+	 * @param q0
+	 *            The state spoiler is at
+	 * @param q1
+	 *            The state duplicator is at
+	 * @return The amount of {@link SpoilerVertex} objects that exist in the
+	 *         game graph with representation (q0, q1). Since there can be such
+	 *         vertices with the extra bit false and true the returned value is
+	 *         between zero and two.
+	 */
+	private int getAmountOfBitsForSpoilerVertices(final STATE q0, final STATE q1) {
+		int amount = 0;
+
+		if (getSpoilerVertex(q0, q1, false, null, null) != null) {
+			amount++;
+		}
+
+		if (getSpoilerVertex(q0, q1, true, null, null) != null) {
+			amount++;
+		}
+
+		return amount;
+	}
+
+	/**
 	 * Returns if a given up state has a given down state.
 	 * 
 	 * @param upState
@@ -1790,6 +1997,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// The corresponding down state defines the source of the corresponding
 		// edges. If the down state is [q0, q1] then all corresponding summarize
 		// edges have (q0, q1) as source.
+		// TODO How to determine which bits are sources in delayed simulation
 		Vertex<LETTER, STATE> sourceOfSummarizeEdges = getSpoilerVertex(historyDownState.getLeftDownState(),
 				historyDownState.getRightDownState(), false, null, null);
 		if (sourceOfSummarizeEdges != null && sourceOfSummarizeEdges instanceof SpoilerDoubleDeckerVertex<?, ?>) {
