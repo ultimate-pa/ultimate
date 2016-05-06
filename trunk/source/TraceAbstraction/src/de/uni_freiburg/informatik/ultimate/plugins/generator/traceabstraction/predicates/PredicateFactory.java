@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BuchiPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -129,16 +128,7 @@ public class PredicateFactory {
 					quantifiedVariables, term, (Term[][]) null);
 			// Compute the set of BoogieVars, the procedures and the term
 			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(result, m_Boogie2Smt);
-			// Check whether the result has still quantifiers
-			if (result instanceof QuantifiedFormula) {
-				quantifiedVariables = new HashSet<TermVariable>(Arrays.asList(((QuantifiedFormula) result)
-						.getVariables()));
-				return new BasicPredicateExplicitQuantifier(m_SerialNumber++, tvp.getProcedures(), result,
-						tvp.getVars(), tvp.getClosedFormula(), quantifier, quantifiedVariables);
-			} else {
-				return newPredicate(tvp);
-			}
-
+			return newPredicate(tvp);
 		}
 	}
 	

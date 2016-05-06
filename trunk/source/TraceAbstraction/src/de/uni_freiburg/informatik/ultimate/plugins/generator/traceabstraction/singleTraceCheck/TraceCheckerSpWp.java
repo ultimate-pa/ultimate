@@ -47,13 +47,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -355,25 +355,30 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		int i = 0; // position of predicate computed by strongest post-condition
 		int j = m_InterpolantsBp.size(); // position of predicate computed by
 		// weakest precondition
+		final ContainsQuantifier containsQuantifier = new ContainsQuantifier();
 		while (i != j) {
-			if (!(m_InterpolantsBp.get(j - 1) instanceof BasicPredicateExplicitQuantifier)) {
+			if (!containsQuantifier.containsQuantifier(m_InterpolantsBp.get(j - 1).getFormula())) {
 				m_Interpolants[j - 1] = m_InterpolantsBp.get(j - 1);
 				j--;
-			} else if (!(m_InterpolantsFp.get(i) instanceof BasicPredicateExplicitQuantifier)) {
+			} else if (!containsQuantifier.containsQuantifier(m_InterpolantsFp.get(i).getFormula())) {
 				m_Interpolants[i] = m_InterpolantsFp.get(i);
 				i++;
 			} else {
-				int numOfQuantifiedVarsInFp = ((BasicPredicateExplicitQuantifier) m_InterpolantsFp.get(i))
-						.getQuantifiedVariables().size();
-				int numOfQuantifiedVarsInBp = ((BasicPredicateExplicitQuantifier) m_InterpolantsBp.get(j - 1))
-						.getQuantifiedVariables().size();
-				if (numOfQuantifiedVarsInFp < numOfQuantifiedVarsInBp) {
-					m_Interpolants[i] = m_InterpolantsFp.get(i);
-					i++;
-				} else {
-					m_Interpolants[j - 1] = m_InterpolantsBp.get(j - 1);
-					j--;
-				}
+				throw new UnsupportedOperationException("removed in refactoring");
+				// 2016-05-05 Matthias: I deleted BasicPredicateExplicitQuantifier, hence
+				// the following code does not compile any more
+				// fix: Count quantified variables
+//				int numOfQuantifiedVarsInFp = ((BasicPredicateExplicitQuantifier) m_InterpolantsFp.get(i))
+//						.getQuantifiedVariables().size();
+//				int numOfQuantifiedVarsInBp = ((BasicPredicateExplicitQuantifier) m_InterpolantsBp.get(j - 1))
+//						.getQuantifiedVariables().size();
+//				if (numOfQuantifiedVarsInFp < numOfQuantifiedVarsInBp) {
+//					m_Interpolants[i] = m_InterpolantsFp.get(i);
+//					i++;
+//				} else {
+//					m_Interpolants[j - 1] = m_InterpolantsBp.get(j - 1);
+//					j--;
+//				}
 			}
 		}
 	}
