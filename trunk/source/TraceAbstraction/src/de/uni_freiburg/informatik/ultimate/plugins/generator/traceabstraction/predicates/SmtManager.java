@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -1174,7 +1175,7 @@ public class SmtManager {
 				varsOfRenamed.remove(var);
 			}
 		}
-		Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
+		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (BoogieVar globalBoogieVar : globalVars) {
 			if (!globalBoogieVar.isOldvar()) {
 				BoogieVar oldBoogieVar = ((BoogieNonOldVar) globalBoogieVar).getOldVar();
@@ -1182,7 +1183,7 @@ public class SmtManager {
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = (new Substitution(substitutionMapping, m_Script)).transform(ps.getFormula());
+		Term renamedFormula = (new SafeSubstitution(m_Script, getVariableManager(), substitutionMapping)).transform(ps.getFormula());
 		renamedFormula = SmtUtils.simplify(m_Script, renamedFormula, mServices);
 		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(renamedFormula, m_Boogie2Smt);
 		IPredicate result = this.getPredicateFactory().newPredicate(tvp);
