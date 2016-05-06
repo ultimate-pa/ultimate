@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -88,7 +89,7 @@ public class SafeSubstitution extends TermTransformer {
 				m_ScopedSubstitutionMapping.beginScope();
 				QuantifiedFormula qFormula = (QuantifiedFormula) term;
 				removeQuantifiedVarContainingKeys(qFormula);
-				renameQuantifiedVarsThatOccurInValues(qFormula);
+				term = renameQuantifiedVarsThatOccurInValues(qFormula);
 			} else if (term instanceof LetTerm) {
 				throw new UnsupportedOperationException("LetTerm not supported");
 			}
@@ -102,23 +103,30 @@ public class SafeSubstitution extends TermTransformer {
 	 * We use fresh names that never occurred before.
 	 * This avoids that after the substitution a variables in a substituted
 	 * subterm is "accidently" captured by a quantifier.
+	 * @return 
 	 */
-	private void renameQuantifiedVarsThatOccurInValues(QuantifiedFormula qFormula) {
+	private Term renameQuantifiedVarsThatOccurInValues(QuantifiedFormula qFormula) {
 		Set<TermVariable> toRename = 
 				varsOccuringInValues(qFormula.getVariables(), m_ScopedSubstitutionMapping);
-		if (!toRename.isEmpty() && m_FreshTermVariableConstructor != null) {
-			throw new UnsupportedOperationException(
-					"Substitution in quantified formula such that substitute "
-					+ "containes quantified variable. This (rare) case is "
-					+ "only supported if you call substitution with fresh "
-					+ "variable construction.");
+		if (toRename.isEmpty()) {
+			return qFormula;
+		} else {
+			if (m_FreshTermVariableConstructor == null) {
+				throw new UnsupportedOperationException(
+						"Substitution in quantified formula such that substitute "
+						+ "containes quantified variable. This (rare) case is "
+						+ "only supported if you call substitution with fresh "
+						+ "variable construction.");
+			} else {
+				final Term result = SmtUtils.renameQuantifiedVariables(m_Script, 
+						m_FreshTermVariableConstructor, qFormula, toRename, "subst");
+				return result;
+			}
 		}
-		for (TermVariable var : toRename) {
-				TermVariable freshVariable = m_FreshTermVariableConstructor.
-						constructFreshTermVariable("subst", var.getSort());
-				m_ScopedSubstitutionMapping.put(var, freshVariable);
-		}
+			
 	}
+
+
 
 
 	/**

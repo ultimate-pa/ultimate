@@ -1005,5 +1005,37 @@ public class SmtUtils {
 		}
 		return null;
 	}
+	
+	
+	/**
+	 * Given a quantified formula, rename all variables that are bound by
+	 * the quantifier and occur in the set toRename to fresh variables.
+	 * @param freshVarPrefix prefix of the fresh variables
+	 */
+	public static Term renameQuantifiedVariables(Script script, 
+			IFreshTermVariableConstructor freshVarConstructor, 
+			QuantifiedFormula qFormula, Set<TermVariable> toRename, 
+			String freshVarPrefix) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (TermVariable var : toRename) {
+			final TermVariable freshVariable = freshVarConstructor.
+					constructFreshTermVariable(freshVarPrefix, var.getSort());
+			substitutionMapping.put(var, freshVariable);
+		}
+		final Term newBody = (new SafeSubstitution(script, freshVarConstructor, 
+					substitutionMapping)).transform(qFormula.getSubformula());
+		
+		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
+		for (int i=0; i<vars.length; i++) {
+			TermVariable renamed = (TermVariable) substitutionMapping.get(qFormula.getVariables()[i]);
+			if (renamed != null) {
+				vars[i] = renamed;
+			} else {
+				vars[i] = qFormula.getVariables()[i];
+			}
+		}
+		final Term result = script.quantifier(qFormula.getQuantifier(), vars, newBody);
+		return result;
+	}
 
 }
