@@ -125,7 +125,7 @@ public class PredicateFactory {
 			return newPredicate(tvp);
 		} else {
 			Term result = PartialQuantifierElimination.quantifier(m_Services, m_Logger, m_Script, m_Boogie2Smt.getVariableManager(), quantifier,
-					quantifiedVariables, term, (Term[][]) null);
+					quantifiedVariables, ((QuantifiedFormula) term).getSubformula(), (Term[][]) null);
 			// Compute the set of BoogieVars, the procedures and the term
 			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(result, m_Boogie2Smt);
 			return newPredicate(tvp);
