@@ -48,7 +48,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -176,7 +178,11 @@ public class IterativePredicateTransformer {
 						predecessor,
 						nf.getFormulaFromNonCallPos(i));
 			}
-			final IPredicate sp = m_PredicateFactory.constructPredicate(spTerm);
+			final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
+					m_Services, m_Logger, m_Boogie2SMT.getScript(), 
+					m_Boogie2SMT.getVariableManager(), spTerm);
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(lessQuantifier, m_Boogie2SMT);
+			final IPredicate sp = m_PredicateFactory.newPredicate(tvp);
 			spSequence[i] = applyPostprocessors(postprocs, i+1, sp);
 		}
 		return ipp;
@@ -268,11 +274,15 @@ public class IterativePredicateTransformer {
 					final Term wpOfSummary = m_PredicateTransformer.weakestPrecondition(
 							successor,
 							summary.getWithCallAndReturn());
-					callerPredicatesComputed.put(callPos, wpOfSummary);
+					final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
+							m_Services, m_Logger, m_Boogie2SMT.getScript(), 
+							m_Boogie2SMT.getVariableManager(), wpOfSummary);
+					callerPredicatesComputed.put(callPos, lessQuantifier);
 					if (callPredecessorIsAlwaysFalse) {
 						callerPred = m_FalsePredicate;
 					} else {
-						callerPred = m_PredicateFactory.constructPredicate(wpOfSummary);
+						final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(lessQuantifier, m_Boogie2SMT);
+						callerPred = m_PredicateFactory.newPredicate(tvp);
 					}
 				}
 				wpTerm = m_PredicateTransformer.weakestPrecondition(
@@ -283,7 +293,11 @@ public class IterativePredicateTransformer {
 				wpTerm = m_PredicateTransformer.weakestPrecondition(
 						successor, nf.getFormulaFromNonCallPos(i));
 			}
-			final IPredicate wp = m_PredicateFactory.constructPredicate(wpTerm);
+			final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
+					m_Services, m_Logger, m_Boogie2SMT.getScript(), 
+					m_Boogie2SMT.getVariableManager(), wpTerm);
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(lessQuantifier, m_Boogie2SMT);
+			final IPredicate wp = m_PredicateFactory.newPredicate(tvp); 
 			final IPredicate postprocessed = applyPostprocessors(postprocs, i, wp);
 			if (i == 0) {
 				computedPrecondition = postprocessed;
