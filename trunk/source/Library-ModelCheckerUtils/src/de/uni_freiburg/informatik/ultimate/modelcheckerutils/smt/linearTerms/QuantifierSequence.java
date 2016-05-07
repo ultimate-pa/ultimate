@@ -27,10 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -100,6 +102,35 @@ public class QuantifierSequence {
 			}
 		}
 		return result;
+	}
+	
+	public List<QuantifiedVariables> getQuantifiedVariableSequence() {
+		final List<QuantifiedVariables> result = new ArrayList<>();
+		for (int i=0; i < m_List.size(); i++) {
+			final int quantifier = i % 2;
+			final Set<TermVariable> vars = m_List.get(i);
+			if (vars.size() > 0) {
+				result.add(new QuantifiedVariables(quantifier, vars));
+			}
+		}
+		return result;
+	}
+	
+	public class QuantifiedVariables {
+		private final int m_Quantifier;
+		private final Set<TermVariable> m_Variables;
+		public QuantifiedVariables(int quantifier, Set<TermVariable> variables) {
+			super();
+			m_Quantifier = quantifier;
+			m_Variables = variables;
+		}
+		public int getQuantifier() {
+			return m_Quantifier;
+		}
+		public Set<TermVariable> getVariables() {
+			return m_Variables;
+		}
+		
 	}
 
 
