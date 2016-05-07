@@ -862,18 +862,19 @@ public class PredicateTransformer {
 			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) callerPredRenamed;
 			if (quantifiedFormula.getQuantifier() != QuantifiedFormula.EXISTS) {
 //			if (quantifiedFormula.getQuantifier() != QuantifiedFormula.FORALL) {
-				throw new UnsupportedOperationException("only existentially quantified callerPred supported, but obtained " + callerPred);
+				mLogger.warn("universally quantified caller pred");
+//				throw new UnsupportedOperationException("only existentially quantified callerPred supported, but obtained " + callerPred);
 			}
-			varsToQuantify.addAll(Arrays.asList(quantifiedFormula.getVariables()));
-			callerPredRenamed = ((QuantifiedFormula) callerPredRenamed).getSubformula();
+//			varsToQuantify.addAll(Arrays.asList(quantifiedFormula.getVariables()));
+//			callerPredRenamed = ((QuantifiedFormula) callerPredRenamed).getSubformula();
 		}
 		if (returnPredRenamed instanceof QuantifiedFormula) {
 			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) returnPredRenamed;
 			if (quantifiedFormula.getQuantifier() != QuantifiedFormula.FORALL) {
 				throw new UnsupportedOperationException("only universally quantified returnPred supported, but obtained " + returnerPred);
 			}
-			varsToQuantify.addAll(Arrays.asList(quantifiedFormula.getVariables()));
-			returnPredRenamed = ((QuantifiedFormula) returnPredRenamed).getSubformula();
+//			varsToQuantify.addAll(Arrays.asList(quantifiedFormula.getVariables()));
+//			returnPredRenamed = ((QuantifiedFormula) returnPredRenamed).getSubformula();
 		}
 
 		Term callerPredANDCallANDReturnAndGlobalVars = Util.and(m_Script, callerPredRenamed, returnTermRenamed,
