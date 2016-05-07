@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -46,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
@@ -73,6 +76,26 @@ public class PartialQuantifierElimination {
 	static final boolean USE_USR = !true;
 	private static boolean m_PushPull = true;
 	
+	
+	public static Term tryToEliminate(IUltimateServiceProvider services, Logger logger, Script script, 
+			IFreshTermVariableConstructor freshTermVariableConstructor, final Term term) {
+		final Term withoutIte = (new IteRemover(script)).transform(term);
+		final Term nnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.KEEP).transform(withoutIte); 
+		final Term pushed = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(nnf);
+		final Term pnf = new PrenexNormalForm(script, freshTermVariableConstructor).transform(pushed);
+		final QuantifierSequence qs = new QuantifierSequence(script);
+		final Term matrix = qs.extractQuantifiers(pnf, true, freshTermVariableConstructor);
+		final List<QuantifiedVariables> qvs = qs.getQuantifiedVariableSequence();
+		Term result = matrix;
+		for (int i=qvs.size()-1; i >= 0; i--) {
+			final QuantifiedVariables qv = qvs.get(i);
+			final Set<TermVariable> eliminatees = new HashSet<>(qv.getVariables());
+			result = elim(script, qv.getQuantifier(), eliminatees, result, services, logger, freshTermVariableConstructor);
+			result = SmtUtils.quantifier(script, qv.getQuantifier(), eliminatees, result, freshTermVariableConstructor);
+			result = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(result);
+		}
+		return result;
+	}
 	
 	/**
 	 * Compose term with outer operation of a XNF.
@@ -179,7 +202,7 @@ public class PartialQuantifierElimination {
 			}
 		}
 		try {
-		 elim = elim(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
+			elim = elim(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
 		} catch (ToolchainCanceledException tce) {
 			throw new ToolchainCanceledException(PartialQuantifierElimination.class,
 						tce.getRunningTaskInfo() + " during partial quantifier elimination");
