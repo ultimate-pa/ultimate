@@ -252,6 +252,8 @@ public class SolverBuilder {
 		final int timeoutSmtInterpol;
 		final ExternalInterpolator externalInterpolator;
 		switch (solverMode) {
+		case External_DefaultMode:
+		case External_ModelsMode:
 		case External_ModelsAndUnsatCoreMode: {
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
