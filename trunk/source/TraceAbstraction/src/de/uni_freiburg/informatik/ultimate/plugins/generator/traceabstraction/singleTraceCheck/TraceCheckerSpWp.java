@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
@@ -461,7 +462,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final Term projectedT = SmtUtils.quantifier(m_SmtManager.getScript(), 
 					QuantifiedFormula.EXISTS, nonLiveVars, pred.getFormula(), 
 					m_SmtManager.getBoogie2Smt().getVariableManager());
-			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(projectedT);
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(projectedT, m_SmtManager.getBoogie2Smt());
+			final IPredicate projected = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 			m_NonLiveVariablesFp += nonLiveVars.size();
 			return projected;
 		}
@@ -490,7 +492,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final Term projectedT = SmtUtils.quantifier(m_SmtManager.getScript(), 
 					QuantifiedFormula.FORALL, nonLiveVars, pred.getFormula(), 
 					m_SmtManager.getBoogie2Smt().getVariableManager());
-			final IPredicate projected = m_SmtManager.getPredicateFactory().constructPredicate(projectedT);
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(projectedT, m_SmtManager.getBoogie2Smt());
+			final IPredicate projected = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 			m_NonLiveVariablesBp += nonLiveVars.size();
 			return projected;
 		}
