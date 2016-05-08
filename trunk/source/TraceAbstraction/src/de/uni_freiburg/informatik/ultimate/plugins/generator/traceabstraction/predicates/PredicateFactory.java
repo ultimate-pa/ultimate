@@ -92,47 +92,6 @@ public class PredicateFactory {
 	}
 	
 	/**
-	 * Constructs a predicate from the given term. If the given term is
-	 * quantifier-free, a BasicPredicate will be constructed, otherwise it
-	 * constructs a BasicPredicateExplicitQuantifier.
-	 * 
-	 * @param term
-	 *            - resulting predicate is constructed using this term
-	 * @param quantifier
-	 *            - describes how the given variables in the set
-	 *            "quantifiedVariables" are quantified (only two possibilities
-	 *            here: 0 or 1)
-	 * @param quantifiedVariables
-	 *            - the variables in the given term, which should be quantified.
-	 *            If this set is empty, nothing is quantified, and the result is
-	 *            a BasicPredicate, otherwise it constructs a
-	 *            BasicPredicateExplicitQuantifier.
-	 */
-	public IPredicate constructPredicate(Term term) {
-		final int quantifier;
-		Set<TermVariable> quantifiedVariables;
-		if (term instanceof QuantifiedFormula) {
-			quantifier = ((QuantifiedFormula) term).getQuantifier();
-			quantifiedVariables = new HashSet<>(Arrays.asList(((QuantifiedFormula) term).getVariables()));
-		} else {
-			quantifier = -1;
-			quantifiedVariables = null;
-		}
-		assert checkIfValidPredicate(term, quantifiedVariables);
-		if (quantifiedVariables == null || quantifiedVariables.isEmpty()) {
-			// Compute the set of BoogieVars, the procedures and the term
-			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_Boogie2Smt);
-			return newPredicate(tvp);
-		} else {
-			Term result = PartialQuantifierElimination.quantifier(m_Services, m_Logger, m_Script, m_Boogie2Smt.getVariableManager(), quantifier,
-					quantifiedVariables, ((QuantifiedFormula) term).getSubformula(), (Term[][]) null);
-			// Compute the set of BoogieVars, the procedures and the term
-			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(result, m_Boogie2Smt);
-			return newPredicate(tvp);
-		}
-	}
-	
-	/**
 	 * Returns true iff each free variables corresponds to a BoogieVar or will
 	 * be quantified. Throws an Exception otherwise.
 	 */

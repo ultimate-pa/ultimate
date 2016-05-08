@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
@@ -374,7 +375,8 @@ public class FlowSensitiveFaultLocalizer {
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		final TransFormula markhor = computeMarkhorFormula(a, b, counterexampleWord,informationFromCFG, smtManager);
 		final Term wpTerm = pt.weakestPrecondition(weakestPreconditionOld, markhor);
-		final IPredicate weakestPreconditionNew = smtManager.getPredicateFactory().constructPredicate(wpTerm);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
+		final IPredicate weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
 		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
 		final String preceeding = counterexampleWord.getSymbolAt(a).getPreceedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(b).getSucceedingProcedure();
@@ -432,7 +434,8 @@ public class FlowSensitiveFaultLocalizer {
 					m_Logger.info(" - - Irrelevant Branch - - - [MarkhorFormula:"+ markhor_formula + " ]");
 				}
 				final Term wpTerm = pt.weakestPrecondition(weakestPreconditionNew, markhor_formula.get(0));
-				weakestPreconditionNew = smtManager.getPredicateFactory().constructPredicate(wpTerm);
+				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
+				weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
 				// If the branch is relevant, then recursively call the same function on it self with the updated parameters.
 				// If the branch is not relevant, then just ignore the branch and update the backward counter and also take a look what should you do with the pre and wp.
 				

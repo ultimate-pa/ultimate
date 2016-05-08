@@ -82,7 +82,8 @@ public class HoareAnnotationWriter {
 			} else {
 				final Term spTerm = m_PredicateTransformer.strongestPostcondition(context,
 						getCall((ISLPredicate) context), true);
-				precondForContext = m_SmtManager.getPredicateFactory().constructPredicate(spTerm);
+				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(spTerm, m_SmtManager.getBoogie2Smt());
+				precondForContext = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 			}
 			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
 			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments
@@ -96,7 +97,8 @@ public class HoareAnnotationWriter {
 			} else {
 				final Term spTerm = m_PredicateTransformer.strongestPostcondition(context,
 						getCall((ISLPredicate) context), true);
-				precondForContext = m_SmtManager.getPredicateFactory().constructPredicate(spTerm);
+				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(spTerm, m_SmtManager.getBoogie2Smt());
+				precondForContext = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 			}
 			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
 			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments
