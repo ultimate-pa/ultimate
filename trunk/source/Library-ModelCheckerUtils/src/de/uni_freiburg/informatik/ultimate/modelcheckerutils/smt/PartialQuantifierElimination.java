@@ -87,6 +87,9 @@ public class PartialQuantifierElimination {
 		final Term matrix = qs.extractQuantifiers(pnf, true, freshTermVariableConstructor);
 		final List<QuantifiedVariables> qvs = qs.getQuantifiedVariableSequence();
 		Term result = matrix;
+//		if (qvs.size() > 1) {
+//			throw new AssertionError("Attention!!! quantifier alternation " + qvs.size());
+//		}
 		for (int i=qvs.size()-1; i >= 0; i--) {
 			final QuantifiedVariables qv = qvs.get(i);
 			final Set<TermVariable> eliminatees = new HashSet<>(qv.getVariables());
@@ -259,14 +262,14 @@ public class PartialQuantifierElimination {
 		// transform to DNF (resp. CNF)
 		result = (new IteRemover(script)).transform(term);
 		result = transformToXnf(services, script, quantifier, freshTermVariableConstructor, result);
-		if (result instanceof QuantifiedFormula) {
-			QuantifiedFormula qf = (QuantifiedFormula) result;
-			if (qf.getQuantifier() != quantifier) {
-				throw new UnsupportedOperationException("quantifier alternation unsupported! input: " + result);
-			}
-			eliminatees.addAll(Arrays.asList(qf.getVariables()));
-			result = qf.getSubformula();
-		}
+//		if (result instanceof QuantifiedFormula) {
+//			QuantifiedFormula qf = (QuantifiedFormula) result;
+//			if (qf.getQuantifier() != quantifier) {
+//				throw new UnsupportedOperationException("quantifier alternation unsupported! input: " + result);
+//			}
+//			eliminatees.addAll(Arrays.asList(qf.getVariables()));
+//			result = qf.getSubformula();
+//		}
 
 		// apply Destructive Equality Resolution
 		Term termAfterDER;
