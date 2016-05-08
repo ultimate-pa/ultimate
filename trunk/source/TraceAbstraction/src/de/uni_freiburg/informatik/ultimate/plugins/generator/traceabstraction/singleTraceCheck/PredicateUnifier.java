@@ -55,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormal
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
@@ -682,7 +684,7 @@ public class PredicateUnifier {
 					m_ExpliedPredicates.put(other, Validity.NOT_CHECKED);
 					continue;
 				}
-				checkTimeout();
+				checkTimeout(m_closedTerm);
 				Term otherClosedTerm = other.getClosedFormula();
 				Validity implies = m_ImpliedPredicates.get(other);
 				if (implies == null) {
@@ -778,12 +780,27 @@ public class PredicateUnifier {
 			return null;
 		}
 
-		private void checkTimeout() {
+		private void checkTimeout(Term closedTerm) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				String quantifierInformation = generateQuantifierInformation(closedTerm);
 				throw new ToolchainCanceledException(this.getClass(),
-						"PredicateUnifier was comparing new predicate to " + 
+						"PredicateUnifier was comparing new predicate (" + 
+						quantifierInformation + ") to " + 
 						m_KnownPredicates.size() + " known predicates");
 			}
+		}
+
+		private String generateQuantifierInformation(Term closedTerm) {
+			final String result;
+			final Term pnf = new PrenexNormalForm(m_SmtManager.getScript(), m_SmtManager.getVariableManager()).transform(closedTerm);
+			if (pnf instanceof QuantifiedFormula) {
+				final QuantifierSequence qs = new QuantifierSequence(m_SmtManager.getScript());
+				qs.extractQuantifiers(pnf, true, m_SmtManager.getVariableManager());
+				result = "quantified with " + (qs.getQuantifiedVariableSequence().size()-1) + "quantifier alternations";
+			} else {
+				result = "quantifier-free";
+			}
+			return result;
 		}
 	}
 	
