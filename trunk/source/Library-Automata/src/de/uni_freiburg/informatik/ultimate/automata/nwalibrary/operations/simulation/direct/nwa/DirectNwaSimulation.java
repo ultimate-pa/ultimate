@@ -101,11 +101,10 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 		getLogger().debug("Simulation results:");
 		for (Vertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
 			int progressMeasure = vertex.getPM(null, getGameGraph().getGlobalInfinity());
-			String progressMeasureText = progressMeasure + "";
-			if (progressMeasure >= getGameGraph().getGlobalInfinity()) {
-				progressMeasureText = "inf";
+			if (progressMeasure >= getGameGraph().getGlobalInfinity() || (vertex.getQ0() == vertex.getQ1())) {
+				continue;
 			}
-			getLogger().debug("\t(" + vertex.getQ0() + "," + vertex.getQ1() + ") = " + progressMeasureText);
+			getLogger().debug("\t(" + vertex.getQ0() + "," + vertex.getQ1() + ") = " + progressMeasure);
 		}
 	}
 }
