@@ -191,17 +191,43 @@ public class IterativePredicateTransformer {
 	 * Eliminate quantifiers and construct predicate.
 	 */
 	private IPredicate constructPredicate(final Term term) {
-		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
-				m_Services, m_Logger, m_Boogie2SMT.getScript(), 
-				m_Boogie2SMT.getVariableManager(), term);
-		final Term pnf = new PrenexNormalForm(m_Boogie2SMT.getScript(), 
-				m_Boogie2SMT.getVariableManager()).transform(lessQuantifier);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(pnf, m_Boogie2SMT);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_Boogie2SMT);
 		final IPredicate pred = m_PredicateFactory.newPredicate(tvp);
 		return pred;
 	}
 	
 	
+	public static class QuantifierEliminationPostprocessor implements PredicatePostprocessor {
+		
+		private final IUltimateServiceProvider m_Services; 
+		private final Logger m_Logger; 
+		private final Boogie2SMT m_Boogie2SMT;
+		private final PredicateFactory m_PredicateFactory;
+		
+
+		public QuantifierEliminationPostprocessor(
+				IUltimateServiceProvider services, 
+				Logger logger, Boogie2SMT boogie2smt, 
+				PredicateFactory predicateFactory) {
+			super();
+			m_Services = services;
+			m_Logger = logger;
+			m_Boogie2SMT = boogie2smt;
+			m_PredicateFactory = predicateFactory;
+		}
+
+		@Override
+		public IPredicate postprocess(IPredicate pred, int i) {
+			final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
+					m_Services, m_Logger, m_Boogie2SMT.getScript(), 
+					m_Boogie2SMT.getVariableManager(), pred.getFormula());
+			final Term pnf = new PrenexNormalForm(m_Boogie2SMT.getScript(), 
+					m_Boogie2SMT.getVariableManager()).transform(lessQuantifier);
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(pnf, m_Boogie2SMT);
+			final IPredicate result = m_PredicateFactory.newPredicate(tvp);
+			return result;
+		}
+	}
 
 	
 	/**

@@ -237,6 +237,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				if (m_LiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
 				}
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
+						m_Services, m_Logger, m_SmtManager.getBoogie2Smt(), m_SmtManager.getPredicateFactory()));
 				postprocs.add(new UnifyPostprocessor());
 				IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
@@ -262,6 +264,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				if (m_LiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
 				}
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
+						m_Services, m_Logger, m_SmtManager.getBoogie2Smt(), m_SmtManager.getPredicateFactory()));
 				postprocs.add(new UnifyPostprocessor());
 				IterativePredicateTransformer spt = new IterativePredicateTransformer(
 						m_SmtManager.getPredicateFactory(), m_SmtManager.getVariableManager(), 
