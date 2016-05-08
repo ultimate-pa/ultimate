@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -178,14 +179,26 @@ public class IterativePredicateTransformer {
 						predecessor,
 						nf.getFormulaFromNonCallPos(i));
 			}
-			final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
-					m_Services, m_Logger, m_Boogie2SMT.getScript(), 
-					m_Boogie2SMT.getVariableManager(), spTerm);
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(lessQuantifier, m_Boogie2SMT);
-			final IPredicate sp = m_PredicateFactory.newPredicate(tvp);
+			final IPredicate sp = constructPredicate(spTerm);
 			spSequence[i] = applyPostprocessors(postprocs, i+1, sp);
 		}
 		return ipp;
+	}
+
+
+
+	/**
+	 * Eliminate quantifiers and construct predicate.
+	 */
+	private IPredicate constructPredicate(final Term term) {
+		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
+				m_Services, m_Logger, m_Boogie2SMT.getScript(), 
+				m_Boogie2SMT.getVariableManager(), term);
+		final Term pnf = new PrenexNormalForm(m_Boogie2SMT.getScript(), 
+				m_Boogie2SMT.getVariableManager()).transform(lessQuantifier);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(pnf, m_Boogie2SMT);
+		final IPredicate pred = m_PredicateFactory.newPredicate(tvp);
+		return pred;
 	}
 	
 	
@@ -213,7 +226,7 @@ public class IterativePredicateTransformer {
 		 * the second method, where the callerPred
 		 * is computed as wp(returnerPred, summaryOfCalledProcedure).
 		 */
-		final Map<Integer, Term> callerPredicatesComputed = new HashMap<Integer, Term>();
+		final Map<Integer, IPredicate> callerPredicatesComputed = new HashMap<Integer, IPredicate>();
 		
 		final boolean computePrecondition = (m_Precondition == null);
 		final int positionOfFirstPredicate = (computePrecondition ? 0 : 1);
@@ -221,6 +234,7 @@ public class IterativePredicateTransformer {
 		
 		for (int i = m_Trace.length()-1; i >= positionOfFirstPredicate; i--) {
 			final Term wpTerm;
+			
 			final IPredicate successor = ipp.getInterpolant(i+1);
 			if (m_Trace.getSymbol(i) instanceof Call) {
 				if (m_Trace.isPendingCall(i)) {
@@ -232,8 +246,10 @@ public class IterativePredicateTransformer {
 							nf.getLocalVarAssignment(i), nf.getGlobalVarAssignment(i),
 							nf.getOldVarAssignment(i), modifiedGlobals);
 				} else {
-					wpTerm = callerPredicatesComputed.get(i);
-					assert wpTerm != null : "must have already been computed";
+					// Call predecessor of non-pending calls are computed at
+					// while processing the return
+					assert callerPredicatesComputed.get(i) != null : "must have already been computed";
+					wpTerm = null;
 				}
 			} else if (m_Trace.getSymbol(i) instanceof Return) {
 				final IPredicate callerPred;
@@ -274,15 +290,12 @@ public class IterativePredicateTransformer {
 					final Term wpOfSummary = m_PredicateTransformer.weakestPrecondition(
 							successor,
 							summary.getWithCallAndReturn());
-					final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
-							m_Services, m_Logger, m_Boogie2SMT.getScript(), 
-							m_Boogie2SMT.getVariableManager(), wpOfSummary);
-					callerPredicatesComputed.put(callPos, lessQuantifier);
+					final IPredicate wpOfSummaryPredicate = constructPredicate(wpOfSummary);
+					callerPredicatesComputed.put(callPos, wpOfSummaryPredicate);
 					if (callPredecessorIsAlwaysFalse) {
 						callerPred = m_FalsePredicate;
 					} else {
-						final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(lessQuantifier, m_Boogie2SMT);
-						callerPred = m_PredicateFactory.newPredicate(tvp);
+						callerPred = wpOfSummaryPredicate;
 					}
 				}
 				wpTerm = m_PredicateTransformer.weakestPrecondition(
@@ -293,11 +306,14 @@ public class IterativePredicateTransformer {
 				wpTerm = m_PredicateTransformer.weakestPrecondition(
 						successor, nf.getFormulaFromNonCallPos(i));
 			}
-			final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
-					m_Services, m_Logger, m_Boogie2SMT.getScript(), 
-					m_Boogie2SMT.getVariableManager(), wpTerm);
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(lessQuantifier, m_Boogie2SMT);
-			final IPredicate wp = m_PredicateFactory.newPredicate(tvp); 
+			final IPredicate wp;
+			if ((m_Trace.getSymbol(i) instanceof Call) && !m_Trace.isPendingCall(i)) {
+				// predicate was already constructed while processing the 
+				// corresponding return
+				wp = callerPredicatesComputed.get(i);
+			} else {
+				wp = constructPredicate(wpTerm);
+			}
 			final IPredicate postprocessed = applyPostprocessors(postprocs, i, wp);
 			if (i == 0) {
 				computedPrecondition = postprocessed;
