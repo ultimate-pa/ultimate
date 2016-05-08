@@ -444,7 +444,8 @@ public class FlowSensitiveFaultLocalizer {
 			else{ // The statement under consideration is NOT a BRANCH-IN Statement.
 				weakestPreconditionOld = weakestPreconditionNew;
 				final Term wpTerm = pt.weakestPrecondition(weakestPreconditionOld, counterexampleWord.getSymbolAt(position).getTransitionFormula());
-				weakestPreconditionNew = smtManager.getPredicateFactory().constructPredicate(wpTerm);
+				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
+				weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
 				pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
 				m_Logger.info(" ");
 				m_Logger.info("WP -- > " + weakestPreconditionOld);
