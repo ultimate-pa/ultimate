@@ -64,7 +64,7 @@ public class Nnf {
 	private final NnfTransformerHelper m_NnfTransformerHelper;
 	private List<List<TermVariable>> m_QuantifiedVariables;
 	
-	public enum QuantifierHandling { CRASH, PULL, KEEP }
+	public enum QuantifierHandling { CRASH, PULL, KEEP, IS_ATOM }
 	protected final QuantifierHandling m_QuantifierHandling;
 	
 	public Nnf(Script script, IUltimateServiceProvider services, 
@@ -201,6 +201,11 @@ public class Nnf {
 					throw new UnsupportedOperationException(
 							"quantifier handling set to " + m_QuantifierHandling);
 				}
+				case IS_ATOM: {
+					// consider quantified formula as atom
+					setResult(term);
+					return;
+				}
 				case KEEP: {
 					super.convert(term);
 					return;
@@ -334,6 +339,11 @@ public class Nnf {
 				case CRASH: {
 					throw new UnsupportedOperationException(
 							"quantifier handling set to " + m_QuantifierHandling);
+				}
+				case IS_ATOM: {
+					// consider quantified formula as atom
+					setResult(notParam);
+					return;
 				}
 				case KEEP: {
 					final QuantifiedFormula qf = (QuantifiedFormula) notParam;

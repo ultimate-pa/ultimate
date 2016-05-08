@@ -60,7 +60,7 @@ public abstract class Xnf extends Nnf {
 	
 	public Xnf(Script script, IUltimateServiceProvider services, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
-		super(script, services, freshTermVariableConstructor, QuantifierHandling.CRASH);
+		super(script, services, freshTermVariableConstructor, QuantifierHandling.IS_ATOM);
 	}
 	
 	protected abstract class XnfTransformerHelper extends NnfTransformerHelper {
