@@ -1,0 +1,29 @@
+// Author: Christian Schilling
+// Date: 2016-05-09
+//
+// Small automaton where direct nwa simulation merges two states which are not mergeable.
+
+
+print(reduceNwaDirectSimulation(nwa, false));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a1" "a2" "a3"},
+	returnAlphabet = {"r"},
+	states = {"q0" "q1" "q2" "q3" "q4" "qf"},
+	initialStates = {"q0"},
+	finalStates = {"qf"},
+	callTransitions = {
+		 ("q1" "c" "qf")
+	},
+	internalTransitions = {
+		 ("q0" "a1" "q1")
+		 ("qf" "a2" "q2")
+		 ("qf" "a3" "q3")
+	},
+	returnTransitions = {
+		 ("q2" "q1" "r" "q4")
+		 ("q3" "q1" "r" "qf")
+	}
+);
