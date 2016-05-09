@@ -21,4 +21,5 @@ Require-Bundle: UltimateCore,
  Library-UltimateUtil,
  BoogiePreprocessor,
  SMTInterpol,
- SMTSolverBridge
+ SMTSolverBridge,
+ Library-JavaBDD;bundle-version="0.6.0"
