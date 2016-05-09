@@ -1048,6 +1048,19 @@ public class OctMatrix {
 		});
 	}
 
+	/**
+	 * Appends new block rows and block columns at the lower and right side of this matrix.
+	 * New entries are initialized with {@link OctValue#INFINITY}. This matrix remains unchanged.
+	 * <pre>
+	 * # # . .     Result of this method
+	 * # # . .     
+	 * . . . .     # entries of this matrix
+	 * . . . .     . appended entries  
+	 * </pre>
+	 * 
+	 * @param count Number of block rows/columns to be appended
+	 * @return New matrix with appended block rows and columns
+	 */
 	public OctMatrix addVariables(int count) {
 		if (count < 0) {
 			throw new IllegalArgumentException("Cannot add " + count + " variables.");
@@ -1061,20 +1074,51 @@ public class OctMatrix {
 		return n;
 	}
 
-	public OctMatrix removeVariable(int v) {
-		return removeVariables(Collections.singleton(v));
+	/**
+	 * Removes a single block row and block column from this matrix.
+	 * This matrix remains unchanged.
+	 * 
+	 * @param varIndex Index of the block row/column to be removed
+	 * @return New matrix without the specified block row/column
+	 * 
+	 * @see #removeVariables(Set)
+	 */
+	public OctMatrix removeVariable(int varIndex) {
+		return removeVariables(Collections.singleton(varIndex));
 	}
 
-	public OctMatrix removeVariables(final Set<Integer> vars) {
-		if (areVariablesLast(vars)) {
-			return removeLastVariables(vars.size()); // note: sets cannot contain duplicates
+	/**
+	 * Removes multiple block rows and block columns.
+	 * This matrix remains unchanged.
+	 * 
+	 * @param varIndices Indices of the block rows/columns to be removed
+	 * @return New matrix without the specified block rows/columns
+	 */
+	public OctMatrix removeVariables(final Set<Integer> varIndices) {
+		if (areVariablesLast(varIndices)) {
+			return removeLastVariables(varIndices.size()); // note: sets cannot contain duplicates
 		} else {
-			return removeArbitraryVariables(vars);
+			return removeArbitraryVariables(varIndices);
 		}
 	}
 
-	private boolean areVariablesLast(final Set<Integer> vars) {
-		List<Integer> varsDescending = new ArrayList<>(vars);
+	/**
+	 * Determines, whether a set of variables corresponds to the last block rows/columns in this matrix.
+	 * A set of n variables is last, if the variables correspond to the n last block rows/columns.
+	 * <pre>
+	 *      # # . #                  # # # .
+	 *      # # . #                  # # # .
+	 *      . . . .                  # # # .
+	 *      # # . #                  . . . .
+	 * Selected variables       Selected variables
+	 * (.) are NOT last         (.) are last
+	 * </pre>
+	 * 
+	 * @param varIndices Block row/column indices
+	 * @return The variables are last
+	 */
+	private boolean areVariablesLast(final Set<Integer> varIndices) {
+		List<Integer> varsDescending = new ArrayList<>(varIndices);
 		Collections.sort(varsDescending);
 		int vPrev = variables();
 		for (final int v : varsDescending) {
@@ -1089,7 +1133,14 @@ public class OctMatrix {
 		return true;
 	}
 
-	public OctMatrix removeLastVariables(final int count) {
+	/**
+	 * Removes multiple block rows and block columns from the end (bottom and right side) of this matrix.
+	 * This matrix remains unchanged.
+	 * 
+	 * @param varIndices Number of block rows/columns to be removed
+	 * @return New matrix without the specified block rows/columns
+	 */
+	private OctMatrix removeLastVariables(final int count) {
 		if (count > variables()) {
 			throw new IllegalArgumentException("Cannot remove more variables than exist.");
 		}
@@ -1099,7 +1150,17 @@ public class OctMatrix {
 		return n;
 	}
 
-	public OctMatrix removeArbitraryVariables(final Set<Integer> vars) {
+	/**
+	 * Removes multiple block rows and block columns from this matrix.
+	 * This matrix remains unchanged.
+	 * <p>
+	 * This method is meant to cut out block rows/columns from the middle of
+	 * a matrix. There are more efficient methods for special cases.
+	 * 
+	 * @param varIndices Indices of block rows/columns to be removed
+	 * @return New matrix without the specified block rows/columns
+	 */
+	private OctMatrix removeArbitraryVariables(final Set<Integer> vars) {
 		OctMatrix n = new OctMatrix(mSize - (2 * vars.size())); // note: sets cannot contain duplicates
 		int in = 0;
 		for (int i = 0; i < mSize; ++i) {
@@ -1125,8 +1186,19 @@ public class OctMatrix {
 	// TODO document
 	// - note that information is lost. Strong Closure on this and source in advance can reduce loss.
 	// - source must be different from target (= this)
-	protected void copySelection(
-			final OctMatrix source, final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar) {
+	/**
+	 * Copies selected block rows/columns of any matrix to this matrix.
+	 * The matrices can be of different size.
+	 * 
+	 * @param source
+	 *            Matrix to copy values from
+	 * @param mapTargetVarToSourceVar
+	 *            Indices of block rows/columns to be copied.
+	 *            The keys are indices in the source matrix.
+	 *            The values are indices in the target (this) matrix.
+	 */
+	protected void copySelection(final OctMatrix source,
+			final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar) {
 
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = mapTargetVarToSourceVar.inverse();
 

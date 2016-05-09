@@ -191,5 +191,4 @@ public class OctValue implements Comparable<OctValue> {
 		return a.compareTo(b) >= 0 ? a : b;
 	}
 
-
 }
