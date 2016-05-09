@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
@@ -61,45 +60,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 /**
  * Ultimate interface to the automaton delta debugger.
  * 
- * NOTE: A user must change the code at three places: - the tester (which
- * specifies which operation is run) - the list of rules to be applied
- * iteratively - the list of rules to be applied only once in the end The class
- * provides some default values here.
+ * NOTE: A user may change the code at three places: <br>
+ * - the tester (which specifies which operation is run, mandatory change)
+ * {@link #getGeneralTester()} or
+ * {@link #getIOperation(INestedWordAutomaton, StateFactory)} <br>
+ * - the list of rules to be applied iteratively (optional change)
+ * {@link #getShrinkersLoop()} <br>
+ * - the list of rules to be applied only once in the end (optional change)
+ * {@link #getShrinkersEnd()} <br>
+ * The class provides some default values here.
  * 
- * @see getTester
- * @see getShrinkersLoop
- * @see getShrinkersEnd
- * 		
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
-	
 	protected Logger mLogger;
 	protected final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
 	
 	public AutomatonDeltaDebugger() {
 		mObservers = new LinkedList<IObserver>();
-	}
-	
-	@Override
-	public ModelType getOutputDefinition() {
-		return null;
-	}
-	
-	@Override
-	public boolean isGuiRequired() {
-		return false;
-	}
-	
-	@Override
-	public ModelQuery getModelQuery() {
-		return ModelQuery.LAST;
-	}
-	
-	@Override
-	public List<String> getDesiredToolID() {
-		return null;
 	}
 	
 	@Override
@@ -121,6 +100,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		}
 	}
 	
+	/* --- change the following methods accordingly --- */
+	
 	/**
 	 * example tester for debugging general problems
 	 * 
@@ -129,6 +110,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * 
 	 * @return tester which listens for the specified throwable
 	 */
+	@SuppressWarnings("unused")
 	private ATester<LETTER, STATE> getGeneralTester() {
 		// example, use your own throwable here
 		final Throwable throwable = new Exception();
@@ -148,9 +130,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * example tester for debugging problems with the <code>checkResult()</code>
 	 * method of <code>IOperation</code>
 	 * 
-	 * NOTE: Insert one of the automaton library methods here.
-	 * 
-	 * @return tester which listens for checkResult problems
+	 * @return tester which debugs the checkResult method
 	 */
 	private ATester<LETTER, STATE> getCheckResultTester() {
 		// example, use your own thrower class here (not important)
@@ -165,20 +145,34 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 					throws Throwable {
 				final StateFactory<STATE> factory = automaton.getStateFactory();
 				
-				// example, use your own IOperation here
+				// change the following method for a different IOperation
 				final IOperation<LETTER, STATE> op =
-						new MinimizeNwaMaxSAT<LETTER, STATE>(
-								new AutomataLibraryServices(mServices), factory,
-								new RemoveUnreachable<LETTER, STATE>(
-										new AutomataLibraryServices(mServices),
-										automaton).getResult());
-										
+						getIOperation(automaton, factory);
+				
 				// throws a fresh exception iff checkResult() fails
 				if (!op.checkResult(factory)) {
 					throw new DebuggerException(thrower, message);
 				}
 			}
 		};
+	}
+	
+	/**
+	 * NOTE: Call your own method here.
+	 * 
+	 * @param automaton automaton
+	 * @param factory state factory
+	 * @return IOperation instance
+	 * @throws Throwable when error occurs
+	 */
+	private IOperation<LETTER, STATE> getIOperation(
+			final INestedWordAutomaton<LETTER, STATE> automaton,
+			final StateFactory<STATE> factory) throws Throwable {
+		final AutomatonDebuggerExamples<LETTER, STATE> examples =
+				new AutomatonDebuggerExamples<LETTER, STATE>(mServices);
+		
+		// example code, use your own method here
+		return examples.MinimizeNwaMaxSAT(automaton, factory);
 	}
 	
 	/**
@@ -190,7 +184,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	private List<AShrinker<?, LETTER, STATE>> getShrinkersLoop() {
 		final List<AShrinker<?, LETTER, STATE>> shrinkersLoop =
 				new ArrayList<AShrinker<?, LETTER, STATE>>();
-				
+		
 		// examples, use your own shrinkers here
 		shrinkersLoop.add(new StateShrinker<LETTER, STATE>());
 		shrinkersLoop.add(new InternalTransitionShrinker<LETTER, STATE>());
@@ -209,12 +203,34 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	private List<AShrinker<?, LETTER, STATE>> getShrinkersEnd() {
 		final List<AShrinker<?, LETTER, STATE>> shrinkersEnd =
 				new ArrayList<AShrinker<?, LETTER, STATE>>();
-				
+		
 		// examples, use your own shrinkers here
 		shrinkersEnd.add(new UnusedLetterShrinker<LETTER, STATE>());
 		shrinkersEnd.add(new NormalizeStateShrinker<LETTER, STATE>());
 		
 		return shrinkersEnd;
+	}
+	
+	/* --- Ultimate related stuff --- */
+	
+	@Override
+	public ModelType getOutputDefinition() {
+		return null;
+	}
+	
+	@Override
+	public boolean isGuiRequired() {
+		return false;
+	}
+	
+	@Override
+	public ModelQuery getModelQuery() {
+		return ModelQuery.LAST;
+	}
+	
+	@Override
+	public List<String> getDesiredToolID() {
+		return null;
 	}
 	
 	@Override
@@ -243,7 +259,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	
 	@Override
 	public void setToolchainStorage(IToolchainStorage services) {
-	
+		;
 	}
 	
 	@Override
@@ -254,6 +270,6 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	
 	@Override
 	public void finish() {
-	
+		;
 	}
 }
