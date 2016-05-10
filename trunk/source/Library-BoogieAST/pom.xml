@@ -41,9 +41,10 @@
 						<phase>generate-sources</phase>
 						<configuration>
 							<tasks>
-								<echo>CoreRCP: workspaceDir is ${workspaceDir}</echo>
-								<echo>CoreRCP: cupDir is ${cupDir}</echo>
-								<echo>CoreRCP: astbuilderBinaries is ${astbuilderBinaries}</echo>
+								<echo>Library-BoogieAST: workspaceDir is ${workspaceDir}</echo>
+								<echo>Library-BoogieAST: cupDir is ${cupDir}</echo>
+								<echo>Library-BoogieAST: astbuilderBinaries is
+									${astbuilderBinaries}</echo>
 
 								<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main"
 									classpath="${astbuilderBinaries}:${cupDir}" fork="true"
