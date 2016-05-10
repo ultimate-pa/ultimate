@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantif
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -46,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
@@ -119,7 +118,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			currentDisjuncts = nextDisjuncts;
 		}
 		final Term[] resultDisjuncts = currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
-		final Term resultDisjunction =  PartialQuantifierElimination.composeXjunctsOuter(m_Script, 0, resultDisjuncts);
+		final Term resultDisjunction =  PartialQuantifierElimination.composeXjunctsOuter(m_Script, quantifier, resultDisjuncts);
 		return new Term[] { resultDisjunction };
 	}
 
@@ -224,11 +223,6 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				lowerBounds, 
 				antiDer);
 		List<Term> resultAtoms = new ArrayList<Term>();
-		for (Bound lowerBound : lowerBounds) {
-			for (Bound upperBound : upperBounds) {
-				resultAtoms.add(buildInequality(quantifier, lowerBound, upperBound));
-			}
-		}
 		for (Bound lowerBound : lowerBounds) {
 			for (Bound upperBound : upperBounds) {
 				resultAtoms.add(buildInequality(quantifier, lowerBound, upperBound));
