@@ -32,13 +32,13 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.models.IType;
 
 /**
  * Assists in the translation process in Expression2Term by covering the cases 

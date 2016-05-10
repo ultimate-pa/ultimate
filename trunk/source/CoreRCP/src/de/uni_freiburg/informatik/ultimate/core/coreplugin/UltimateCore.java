@@ -39,14 +39,14 @@ import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 
 /**
  * This class controls all aspects of the application's execution.
@@ -61,11 +61,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	private Logger mLogger;
 
 	private IController mCurrentController;
-
-	/**
-	 * What arguments were passed to the Ultimate RCP product before start-up?
-	 */
-	private CommandLineParser mCmdLineArgs;
 
 	private ToolchainWalker mToolchainWalker;
 
@@ -102,11 +97,11 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mLogger.info("Initializing controller ...");
 		if (getCurrentController() == null) {
 			mLogger.fatal("No controller present! Ultimate will exit.");
-			throw new NullPointerException("No controller present!");
+			throw new IllegalArgumentException("No controller present!");
 		}
 		// TODO: Find better way than this cast
 		mLoggingService.setCurrentControllerID(getCurrentControllerID());
-		int returnCode = getCurrentController().init(this, mLoggingService);
+		final int returnCode = getCurrentController().init(this, mLoggingService);
 		mLogger.info("Preparing to exit Ultimate with return code " + returnCode);
 		return returnCode;
 	}
@@ -130,11 +125,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	public String[] getRegisteredUltimatePluginIDs() {
 		List<String> rtr = mPluginFactory.getPluginIds();
 		return rtr.toArray(new String[rtr.size()]);
-	}
-
-	@Override
-	public CommandLineParser getCommandLineArguments() {
-		return mCmdLineArgs;
 	}
 
 	@Override
@@ -178,7 +168,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new CorePreferenceInitializer();
 	}
 
@@ -198,16 +188,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	 */
 	@Override
 	public final Object start(IApplicationContext context) throws Exception {
-		// parse command line parameters and select ultimate mode
-		mCmdLineArgs = new CommandLineParser();
-		mCmdLineArgs.parse(Platform.getCommandLineArgs());
-
-		// determine Ultimate's mode
-		if (mCmdLineArgs.getExitSwitch()) {
-			mCmdLineArgs.printUsage();
-			return IApplication.EXIT_OK;
-		}
-
 		// initializing variables, loggers,...
 		mCoreStorage = new ToolchainStorage();
 		mLoggingService = (LoggingService) mCoreStorage.getLoggingService();
@@ -240,14 +220,6 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		setCurrentController(mPluginFactory.getController());
 
 		mToolchainManager = new ToolchainManager(mLoggingService, mPluginFactory, getCurrentController());
-
-		String settingsfile = mCmdLineArgs.getSettings();
-		if (settingsfile != null) {
-			mSettingsManager.loadPreferencesFromFile(this, settingsfile);
-			mLoggingService.refreshLoggingService();
-		} else {
-			mLogger.info("No settings file supplied");
-		}
 
 		try {
 			// at this point a controller is already selected. We delegate

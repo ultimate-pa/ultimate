@@ -30,18 +30,18 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.models.IType;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**

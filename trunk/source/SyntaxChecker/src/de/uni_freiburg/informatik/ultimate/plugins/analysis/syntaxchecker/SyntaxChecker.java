@@ -35,17 +35,17 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
@@ -214,7 +214,7 @@ public class SyntaxChecker implements IAnalysis {
 		return getClass().getPackage().getName();
 	}
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 	

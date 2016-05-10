@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
 
 /**
  * A placeholder type represents a type bounded by some outer type parameters, 
@@ -198,7 +198,7 @@ public class PlaceholderType extends BoogieType {
 	
 	@Override
 	protected ASTType toASTType(ILocation loc, int depth) {
-		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			NamedType(loc, this, toString(depth, false), new ASTType[0]);
 	}
 	

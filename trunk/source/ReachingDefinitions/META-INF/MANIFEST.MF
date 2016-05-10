@@ -5,6 +5,7 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachi
 Bundle-Version: 0.0.1
 Require-Bundle: UltimateCore,
  Library-ModelCheckerUtils,
+ Library-BoogieAST,
  Library-log4j,
  BoogiePreprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder

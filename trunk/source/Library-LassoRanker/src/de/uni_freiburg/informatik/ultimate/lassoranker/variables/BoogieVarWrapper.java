@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 
 /**

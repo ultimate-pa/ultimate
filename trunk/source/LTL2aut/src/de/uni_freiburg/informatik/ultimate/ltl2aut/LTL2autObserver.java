@@ -40,6 +40,10 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
+import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -49,14 +53,10 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.Never2Automaton;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
-import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 
 /**
  * This class reads a definition of a property in LTL and returns the AST of the description of the LTL formula as a
@@ -269,11 +269,6 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			throw e;
 		}
 		return nwa;
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override

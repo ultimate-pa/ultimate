@@ -31,22 +31,19 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.access.walker.CFGWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.DFSTreeWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.IWalker;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin;
-import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IModelManager;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 
 //@formatter:off
 /**
@@ -164,7 +161,7 @@ public class PluginConnector {
 	private void runObserver(IObserver observer, ModelType currentModel, IElement entryNode, int currentModelIndex,
 			int numberOfModels) throws Throwable {
 		logObserverRun(observer, currentModel);
-		IWalker walker = selectWalker(currentModel, observer.getWalkerOptions());
+		IWalker walker = selectWalker(currentModel);
 		walker.addObserver(observer);
 		observer.init(currentModel, currentModelIndex, numberOfModels);
 		walker.run(entryNode);
@@ -265,8 +262,7 @@ public class PluginConnector {
 		return models;
 	}
 
-	private IWalker selectWalker(ModelType currentModel, WalkerOptions options) {
-		// TODO implement walker selection logics
+	private IWalker selectWalker(ModelType currentModel) {
 		if (currentModel.getType().name().equals("CFG")) {
 			return new CFGWalker(mLogger);
 		}

@@ -29,13 +29,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.ModelType.Type;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -131,12 +130,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	 */
 	public IElement getRootOfNewModel() {
 		return m_RootOfNewModel;
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

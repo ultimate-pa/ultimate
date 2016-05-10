@@ -27,13 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.actions;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
+
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 
 public class SaveSettingsAction extends Action implements IWorkbenchAction {
 

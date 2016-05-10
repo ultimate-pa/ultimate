@@ -35,15 +35,17 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.RcpProgressMonitorWrapper;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
 import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 
 /**
- * This class implements an Eclipse Job processing a Ultimate toolchain using
- * the methods publicly available from ICore.
+ * This class implements an Eclipse Job processing a Ultimate toolchain using the methods publicly available from ICore.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
@@ -61,13 +63,11 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param core
 	 *            The currently active Ultimate Core.
 	 * @param logger
-	 *            The logger that is used to print information about the
-	 *            toolchain execution.
+	 *            The logger that is used to print information about the toolchain execution.
 	 * @param input
 	 *            The files on which the toolchain should run.
 	 * @param preludefile
-	 *            A {@link PreludeProvider} describing the prelude the parser
-	 *            should use.
+	 *            A {@link PreludeProvider} describing the prelude the parser should use.
 	 */
 	public DefaultToolchainJob(String name, ICore core, IController controller, Logger logger, File[] input,
 			PreludeProvider preludefile) {
@@ -75,7 +75,6 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		setUser(true);
 		setSystem(false);
 		setInputFiles(input);
-		mPreludeFile = preludefile;
 		mJobMode = ChainMode.DEFAULT;
 	}
 
@@ -97,8 +96,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	}
 
 	/**
-	 * Use this constructor to run a toolchain based on the given
-	 * {@link ToolchainData} definition.
+	 * Use this constructor to run a toolchain based on the given {@link ToolchainData} definition.
 	 * 
 	 * @param name
 	 * @param core
@@ -114,7 +112,6 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		setUser(true);
 		setSystem(false);
 		setInputFiles(input);
-		mPreludeFile = prelude;
 		mChain = data;
 		mJobMode = ChainMode.DEFAULT;
 	}
@@ -132,8 +129,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	}
 
 	/**
-	 * This method releases the active toolchain back to the core. Overwrite
-	 * this method if you want to delay the release of the toolchain.
+	 * This method releases the active toolchain back to the core. Overwrite this method if you want to delay the
+	 * release of the toolchain.
 	 * 
 	 * @param currentToolchain
 	 */
@@ -152,25 +149,27 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	}
 
 	@Override
-	protected IStatus rerunToolchain(IProgressMonitor monitor) {
+	protected IStatus rerunToolchain(final IProgressMonitor monitor) {
+		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
 		IStatus returnstatus = Status.OK_STATUS;
-		monitor.beginTask(getName(), IProgressMonitor.UNKNOWN);
+
+		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
 
 		try {
-			mToolchain.init(monitor);
-			monitor.worked(1);
+			mToolchain.init(tpm);
+			tpm.worked(1);
 
-			ToolchainData data = mToolchain.getCurrentToolchainData();
+			IToolchainData data = mToolchain.getCurrentToolchainData();
 			if (data == null) {
 				return Status.CANCEL_STATUS;
 			}
 			setServices(data.getServices());
-			monitor.worked(1);
+			tpm.worked(1);
 
 			mToolchain.runParsers();
-			monitor.worked(1);
+			tpm.worked(1);
 
-			returnstatus = mToolchain.processToolchain(monitor);
+			returnstatus = convert(mToolchain.processToolchain(tpm));
 
 		} catch (final Throwable e) {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
@@ -182,7 +181,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 				mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 			}
 		} finally {
-			monitor.done();
+			tpm.done();
 			logResults();
 			releaseToolchain();
 		}
@@ -191,34 +190,35 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	}
 
 	@Override
-	protected IStatus runToolchainDefault(IProgressMonitor monitor) {
+	protected IStatus runToolchainDefault(final IProgressMonitor monitor) {
+		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
 		IStatus returnstatus = Status.OK_STATUS;
-		monitor.beginTask(getName(), IProgressMonitor.UNKNOWN);
+		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
 
 		try {
 			boolean retval;
 
 			setToolchain(mCore.requestToolchain());
-			monitor.worked(1);
+			tpm.worked(1);
 
-			mToolchain.init(monitor);
-			monitor.worked(1);
+			mToolchain.init(tpm);
+			tpm.worked(1);
 
 			mToolchain.setInputFiles(mInputFiles);
-			monitor.worked(1);
+			tpm.worked(1);
 
-			retval = mToolchain.initializeParsers(mPreludeFile);
+			retval = mToolchain.initializeParsers();
 			if (!retval) {
 				throw new RuntimeException("Parser initialization failed");
 			}
-			monitor.worked(1);
+			tpm.worked(1);
 
 			if (mChain == null) {
-				mChain = mToolchain.makeToolSelection(monitor);
+				mChain = mToolchain.makeToolSelection(tpm);
 			} else {
 				// this may happen if someone provided us with a preselected
 				// toolchain
-				mChain = mToolchain.setToolSelection(monitor, mChain);
+				mChain = mToolchain.setToolSelection(tpm, mChain);
 			}
 			if (mChain == null) {
 				mLogger.fatal("Toolchain selection failed, aborting...");
@@ -226,25 +226,25 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 						null);
 			}
 			setServices(mChain.getServices());
-			monitor.worked(1);
+			tpm.worked(1);
 
 			mToolchain.runParsers();
-			monitor.worked(1);
+			tpm.worked(1);
 
-			returnstatus = mToolchain.processToolchain(monitor);
+			returnstatus = convert(mToolchain.processToolchain(tpm));
 
 		} catch (final Throwable e) {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
 			mLogger.fatal(e);
 			mController.displayException("The toolchain threw an exception", e);
-			returnstatus = new Status(Status.CANCEL, Activator.PLUGIN_ID, Status.ERROR,
-					"Toolchain threw an exception", null);
+			returnstatus = new Status(Status.CANCEL, Activator.PLUGIN_ID, Status.ERROR, "Toolchain threw an exception",
+					null);
 			String idOfCore = Activator.PLUGIN_ID;
 			if (mServices != null) {
 				mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 			}
 		} finally {
-			monitor.done();
+			tpm.done();
 			logResults();
 			releaseToolchain();
 		}

@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE Util Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.AbstractMap;

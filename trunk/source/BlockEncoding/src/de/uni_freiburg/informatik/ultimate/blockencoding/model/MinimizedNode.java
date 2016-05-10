@@ -37,11 +37,11 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.Payload;
-import de.uni_freiburg.informatik.ultimate.model.structure.IModifiableExplicitEdgesMultigraph;
-import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.models.Payload;
+import de.uni_freiburg.informatik.ultimate.models.structure.IModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
+import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**

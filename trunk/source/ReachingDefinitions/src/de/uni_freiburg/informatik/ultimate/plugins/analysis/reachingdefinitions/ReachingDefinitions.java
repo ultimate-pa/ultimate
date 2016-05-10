@@ -30,14 +30,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.apache.log4j.Logger;
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
+
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefGraphAnnotationProvider;
@@ -116,7 +117,7 @@ public class ReachingDefinitions implements IAnalysis {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
 

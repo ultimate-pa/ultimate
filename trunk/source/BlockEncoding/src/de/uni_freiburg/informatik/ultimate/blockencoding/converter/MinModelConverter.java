@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFa
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;

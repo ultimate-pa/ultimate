@@ -28,12 +28,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;

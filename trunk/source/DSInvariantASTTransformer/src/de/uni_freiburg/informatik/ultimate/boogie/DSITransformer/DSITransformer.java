@@ -30,13 +30,13 @@ package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 
 /**
  * This Class transforms a Boogie AST into a new one to generate data structure
@@ -108,7 +108,7 @@ public class DSITransformer implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		// TODO Auto-generated method stub
 		return null;
 	}

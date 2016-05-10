@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.annotation.AbstractAnnotations;
 
 /**
  * 

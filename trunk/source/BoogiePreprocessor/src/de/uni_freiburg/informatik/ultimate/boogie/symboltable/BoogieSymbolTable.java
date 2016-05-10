@@ -34,17 +34,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.models.IType;
 
 /**
  * BoogieSymbolTable is a symbol table for all scopes of a Boogie program.

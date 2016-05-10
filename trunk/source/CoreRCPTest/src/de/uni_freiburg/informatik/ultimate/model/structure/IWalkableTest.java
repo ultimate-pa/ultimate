@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.model.IElementTest;
+import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
 
 public abstract class IWalkableTest<T extends IWalkable> extends IElementTest<T> {
 	

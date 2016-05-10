@@ -34,34 +34,33 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 
 public class ModSetWriter implements IUnmanagedObserver {
-	private boolean m_PerformedChanges = false;
-	private Logger logger;
-	private Map<String, Set<String>> m_Modifies;
-	private ModSetAnalyzer m_Analyzer;
+	private boolean mPerformedChanges = false;
+	private Logger mLogger;
+	private Map<String, Set<String>> mModifies;
+	private ModSetAnalyzer mAnalyzer;
 
 	public ModSetWriter(ModSetAnalyzer analyzer,
 			IUltimateServiceProvider services) {
-		logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_Analyzer = analyzer;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mAnalyzer = analyzer;
 	}
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex,
 			int numberOfModels) throws Throwable {
-		m_Modifies = m_Analyzer.getModifiedGlobals();
+		mModifies = mAnalyzer.getModifiedGlobals();
 	}
 
 	@Override
@@ -69,14 +68,8 @@ public class ModSetWriter implements IUnmanagedObserver {
 	}
 
 	@Override
-	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public boolean performedChanges() {
-		return m_PerformedChanges;
+		return mPerformedChanges;
 	}
 
 	@Override
@@ -107,7 +100,7 @@ public class ModSetWriter implements IUnmanagedObserver {
 	 * @return
 	 */
 	protected Procedure processProcedure(Procedure proc) {
-		Set<String> modifiesSet = m_Modifies.get(proc.getIdentifier());
+		Set<String> modifiesSet = mModifies.get(proc.getIdentifier());
 		// Only process if there is work to do and it is a procedure declaration
 		if (modifiesSet != null && proc.getSpecification() != null) {
 			// Look for the modifies clause if it exists
@@ -135,7 +128,7 @@ public class ModSetWriter implements IUnmanagedObserver {
 
 			if (!modifiesSet.isEmpty()) {
 				// New variables will be added to the modify clause
-				m_PerformedChanges = true;
+				mPerformedChanges = true;
 
 				for (String var : modifiesSet) {
 					VariableLHS newModVar = new VariableLHS(null, var);

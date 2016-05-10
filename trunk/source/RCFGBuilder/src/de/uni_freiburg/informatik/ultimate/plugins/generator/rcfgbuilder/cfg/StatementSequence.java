@@ -32,11 +32,11 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 

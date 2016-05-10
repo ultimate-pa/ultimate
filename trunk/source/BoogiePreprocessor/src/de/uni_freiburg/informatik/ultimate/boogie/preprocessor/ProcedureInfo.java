@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 
 public class ProcedureInfo {
 	private final Procedure declaration;

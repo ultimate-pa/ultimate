@@ -35,11 +35,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;

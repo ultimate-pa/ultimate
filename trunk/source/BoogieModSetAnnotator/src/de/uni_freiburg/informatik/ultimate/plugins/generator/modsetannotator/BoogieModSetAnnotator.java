@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 
 /**
  * 
@@ -95,7 +95,7 @@ public class BoogieModSetAnnotator implements IAnalysis {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 

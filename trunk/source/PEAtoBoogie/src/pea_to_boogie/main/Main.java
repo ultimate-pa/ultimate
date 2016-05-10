@@ -28,9 +28,9 @@ package pea_to_boogie.main;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieOutput;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import pea.PhaseEventAutomata;
 import pea.modelchecking.PEAXML2JConverter;
 import pea_to_boogie.translator.Translator;

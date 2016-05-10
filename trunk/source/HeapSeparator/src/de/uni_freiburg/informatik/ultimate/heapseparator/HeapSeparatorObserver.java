@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
 import java.util.HashMap;
@@ -32,14 +33,13 @@ import java.util.HashMap;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcher;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerBreadthFirst;
@@ -49,29 +49,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class HeapSeparatorObserver implements IUnmanagedObserver {
 
-	private final IUltimateServiceProvider mServices;
-	private final Logger m_logger;
+	private final Logger mLogger;
 	
 	/**
 	 *  arrayId before separation --> pointerId --> arrayId after separation
 	 */
-	HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> m_oldArrayToPointerToNewArray;
+	HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> mOldArrayToPointerToNewArray;
 	
-	private Script m_script;
+	private Script mScript;
 
 	public HeapSeparatorObserver(IUltimateServiceProvider services) {
-		mServices = services;
-		m_logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public void finish() throws Throwable {
 		return;
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override
@@ -92,16 +85,16 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		
-		m_script = ((RootNode) root).getRootAnnot().getScript();
+		mScript = ((RootNode) root).getRootAnnot().getScript();
 //		testSetup(((RootNode) root).getOutgoingEdges().get(0).getTarget());
 		testSetup(((RootNode) root).getRootAnnot());
 		
 		
-		ObserverDispatcher od = new ObserverDispatcherSequential(m_logger);
-		RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, m_logger);
+		ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
+		RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 		od.setWalker(walker);
 
-		HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(m_logger, m_oldArrayToPointerToNewArray, m_script);
+		HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
 		walker.addObserver(hsv);
 		walker.run((RCFGNode) root);
 		
@@ -165,10 +158,10 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 ////				(ApplicationTerm) m_script.term("m2_pc")
 //				);
 	
-		m_oldArrayToPointerToNewArray = new HashMap<>();
-		m_oldArrayToPointerToNewArray.put(m, new HashMap<BoogieVar, BoogieVar>());
-		m_oldArrayToPointerToNewArray.get(m).put(p, m1);
-		m_oldArrayToPointerToNewArray.get(m).put(q, m2);
+		mOldArrayToPointerToNewArray = new HashMap<>();
+		mOldArrayToPointerToNewArray.put(m, new HashMap<BoogieVar, BoogieVar>());
+		mOldArrayToPointerToNewArray.get(m).put(p, m1);
+		mOldArrayToPointerToNewArray.get(m).put(q, m2);
 		
 	}
 }

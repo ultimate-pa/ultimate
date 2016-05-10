@@ -67,7 +67,7 @@ import org.osgi.framework.Bundle;
 import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 

@@ -28,6 +28,12 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -36,13 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
 
 public class OverapproximationUF implements IPointerIntegerConversion {
 	

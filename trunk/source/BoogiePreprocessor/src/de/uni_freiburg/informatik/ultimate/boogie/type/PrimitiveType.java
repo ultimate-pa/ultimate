@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
 
 public class PrimitiveType extends BoogieType {
 	/**
@@ -100,7 +100,7 @@ public class PrimitiveType extends BoogieType {
 	
 	@Override
 	protected ASTType toASTType(ILocation loc, int depth) {
-		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			PrimitiveType(loc, this, toString(depth, false));
 	}
 	

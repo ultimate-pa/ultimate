@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 
 public class IndexedStatement {
 

@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableMultigraphEdge;
 
 /**
  * Ultimate model of an automaton transition.

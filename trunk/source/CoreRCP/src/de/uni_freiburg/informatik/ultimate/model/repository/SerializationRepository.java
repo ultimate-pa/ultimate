@@ -46,7 +46,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.model.ModelContainer;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.ModelContainer;
 
 /**
  * SerializationRepository

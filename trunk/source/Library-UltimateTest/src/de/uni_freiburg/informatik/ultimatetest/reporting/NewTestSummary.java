@@ -244,28 +244,28 @@ public abstract class NewTestSummary implements ITestSummary {
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			sb.append("Safe: ").append(Safe.size());
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Unsafe: ").append(Unsafe.size());
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Timeout: ").append(Timeout.size());
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Error: ").append(Error.size());
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Expected Safe: ").append(ExpectedSafe);
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Expected Unsafe: ").append(ExpectedUnsafe);
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Total: ").append(All.size());
 			return sb.toString();
 		}
 	}
 
 	protected interface IMyReduce<T> extends
-			de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<T, Entry<UltimateRunDefinition, ExtendedResult>> {
+			de.uni_freiburg.informatik.ultimate.util.CoreUtil.IReduce<T, Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
 	protected interface ITestSummaryResultPredicate extends
-			de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
+			de.uni_freiburg.informatik.ultimate.util.CoreUtil.IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
 }

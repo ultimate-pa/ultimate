@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.models.IType;
 
 
 /**

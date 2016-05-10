@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 
 /**
  * Wrapper class for IdentifierExpression to be used, when equals() and hashCode() are needed.

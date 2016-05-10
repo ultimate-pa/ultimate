@@ -48,6 +48,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -220,7 +221,7 @@ public final class TestUtil {
 	 */
 	public static String generateLogfilename(ITestLogfile testSummary) {
 		String filename = testSummary.getDescriptiveLogName() + " "
-				+ de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString()
+				+ de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString()
 				+ testSummary.getFilenameExtension();
 		return filename;
 	}
@@ -243,7 +244,7 @@ public final class TestUtil {
 			dir = f.getParent() + File.separator;
 		}
 		String name = "UltimateTest Summary " + description
-				+ de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString() + ".log";
+				+ de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString() + ".log";
 
 		return dir + name;
 	}
@@ -579,8 +580,7 @@ public final class TestUtil {
 	@SuppressWarnings("rawtypes")
 	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
 			Map<String, List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
-		Collection<BenchmarkResult> benchmarks = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
-				.filterResults(ultimateIResults, BenchmarkResult.class);
+		Collection<BenchmarkResult> benchmarks = ResultUtil.filterResults(ultimateIResults, BenchmarkResult.class);
 		return getCsvProviderProviderFromBenchmarkResults(benchmarks, benchmarkClass);
 	}
 

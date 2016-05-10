@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.ILabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.models.structure.ILabeledEdgesMultigraph;
 
 /**
  * Filter for labeled edges.

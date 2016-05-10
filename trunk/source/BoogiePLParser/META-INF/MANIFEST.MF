@@ -6,6 +6,7 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.parser.Activator
 Bundle-Vendor: Ultimate@Uni
 Require-Bundle: UltimateCore,
+ Library-BoogieAST,
  Library-log4j,
  JavaCup
 Bundle-ActivationPolicy: lazy

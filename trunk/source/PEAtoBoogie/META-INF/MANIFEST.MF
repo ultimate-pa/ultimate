@@ -6,6 +6,7 @@ Bundle-Version: 0.0.1
 Bundle-Activator: pea_to_boogie.Activator
 Require-Bundle: UltimateCore,
  Library-log4j,
+ Library-BoogieAST,
  Library-PEA,
  Library-srParse,
  JavaCup

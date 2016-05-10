@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimatetest.summaries;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;

@@ -29,10 +29,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 /**
  * Extract filename of input from C AST.
@@ -52,12 +51,6 @@ public class FilenameExtractionObserver implements IUnmanagedObserver {
 	public void finish() throws Throwable {
 		// TODO Auto-generated method stub
 
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

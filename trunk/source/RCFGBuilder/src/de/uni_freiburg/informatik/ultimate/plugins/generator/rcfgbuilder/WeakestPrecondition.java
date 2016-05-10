@@ -29,23 +29,23 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
 
 public class WeakestPrecondition extends BoogieTransformer {
 	

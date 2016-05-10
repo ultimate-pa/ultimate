@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 
 /**
  * Value for the map from old to new variable identifiers, used while creating an inline version of a Boogie procedure.

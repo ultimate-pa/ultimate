@@ -8,6 +8,7 @@ Require-Bundle: UltimateCore,
  Library-log4j,
  Library-ModelCheckerUtils,
  Library-UltimateUtil,
+ Library-BoogieAST,
  BoogieParser,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.automata

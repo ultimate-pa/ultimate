@@ -32,16 +32,18 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimate.result.model.IResultWithLocation;
 
@@ -66,16 +68,14 @@ public abstract class BasicToolchainJob extends Job {
 		/**
 		 * Run old toolchain on new input files
 		 */
-		@Deprecated
-		KEEP_Toolchain,
+		@Deprecated KEEP_Toolchain,
 	}
 
 	protected ChainMode mJobMode;
 	protected ICore mCore;
 	protected IController mController;
 	protected Logger mLogger;
-	protected ToolchainData mChain;
-	protected PreludeProvider mPreludeFile;
+	protected IToolchainData mChain;
 	protected IUltimateServiceProvider mServices;
 	private long mDeadline;
 
@@ -157,8 +157,8 @@ public abstract class BasicToolchainJob extends Job {
 	}
 
 	/**
-	 * Set a deadline in ms after which the toolchain should stop. All values
-	 * smaller than 0 will be ignored. 0 disables all timeouts.
+	 * Set a deadline in ms after which the toolchain should stop. All values smaller than 0 will be ignored. 0 disables
+	 * all timeouts.
 	 * 
 	 * @param deadline
 	 *            The deadline in ms
@@ -192,5 +192,16 @@ public abstract class BasicToolchainJob extends Job {
 	protected abstract IStatus rerunToolchain(IProgressMonitor monitor);
 
 	protected abstract IStatus runToolchainDefault(IProgressMonitor monitor);
-	
+
+	protected IStatus convert(final ReturnCode result) {
+		switch (result) {
+		case Ok:
+			return Status.OK_STATUS;
+		case Cancel:
+			return Status.CANCEL_STATUS;
+		case Error:
+		default:
+			return new Status(IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR, result.toString(), null);
+		}
+	}
 }

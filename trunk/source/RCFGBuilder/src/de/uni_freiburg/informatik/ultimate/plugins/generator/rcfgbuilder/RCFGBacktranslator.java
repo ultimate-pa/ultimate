@@ -36,19 +36,16 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
-import de.uni_freiburg.informatik.ultimate.core.util.IToString;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
-import de.uni_freiburg.informatik.ultimate.model.structure.Multigraph;
-import de.uni_freiburg.informatik.ultimate.model.structure.MultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.models.structure.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.models.structure.Multigraph;
+import de.uni_freiburg.informatik.ultimate.models.structure.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
@@ -63,11 +60,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.translation.IBacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.util.IToString;
 import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 
 public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNode, Expression, Expression> {
 

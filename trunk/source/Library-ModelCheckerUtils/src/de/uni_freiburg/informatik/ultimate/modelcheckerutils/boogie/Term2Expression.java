@@ -35,6 +35,28 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -47,31 +69,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.IType;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -190,11 +190,11 @@ public class Term2Expression implements Serializable {
 			} else if (symb.getParameterSorts().length == 1) {
 				if (symb.getName().equals("not")) {
 					Expression param = translate(term.getParameters()[0]);
-					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator.LOGICNEG,
+					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG,
 							param);
 				} else if (symb.getName().equals("-")) {
 					Expression param = translate(term.getParameters()[0]);
-					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator.ARITHNEGATIVE,
+					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.ARITHNEGATIVE,
 							param);
 				}else {
 					throw new IllegalArgumentException("unknown symbol " + symb);

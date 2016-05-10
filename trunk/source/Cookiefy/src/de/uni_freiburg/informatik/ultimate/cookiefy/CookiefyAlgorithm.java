@@ -35,35 +35,34 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathNode;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ReturnStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 /**
  * Implementation of the Cookiefy Algorithm
@@ -102,11 +101,6 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 		// cleanup
 		InputProgram = null;
 		TemplateStore = null;
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override

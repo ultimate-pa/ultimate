@@ -32,10 +32,10 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
 
 public class GuiToolchainJob extends DefaultToolchainJob {
 

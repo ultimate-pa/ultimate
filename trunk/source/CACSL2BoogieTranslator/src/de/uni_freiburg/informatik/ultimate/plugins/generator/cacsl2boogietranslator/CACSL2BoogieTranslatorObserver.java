@@ -45,6 +45,9 @@ import org.eclipse.cdt.core.parser.util.ASTPrinter;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieAstCopier;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
 import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
@@ -56,16 +59,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieAstCopier;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
@@ -267,11 +267,6 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			mLogger.warn(result.getShortDescription() + " " + result.getLongDescription());
 			mService.getProgressMonitorService().cancelToolchain();
 		}
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override

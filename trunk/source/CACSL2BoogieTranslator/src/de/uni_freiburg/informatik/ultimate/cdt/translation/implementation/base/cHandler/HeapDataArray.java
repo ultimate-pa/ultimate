@@ -29,8 +29,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

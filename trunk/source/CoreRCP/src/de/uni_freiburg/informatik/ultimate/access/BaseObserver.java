@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.access;
 
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 
 /**
  * Simple construct to implement {@link IUnmanagedObserver}s and ignore extended
@@ -47,11 +47,6 @@ public abstract class BaseObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override

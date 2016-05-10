@@ -106,9 +106,9 @@ public class TranslationTestResultDecider extends TestResultDecider {
 			if (actualBplFile != null) {
 
 				try {
-					String desiredContent = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+					String desiredContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil
 							.readFile(desiredBplFile);
-					String actualContent = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+					String actualContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil
 							.readFile(actualBplFile);
 
 					if (!desiredContent.equals(actualContent)) {

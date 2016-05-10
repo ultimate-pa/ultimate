@@ -34,14 +34,14 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
-import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation.LoopEntryType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 
 /**

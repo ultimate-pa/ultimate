@@ -36,31 +36,26 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainWalker.CompleteToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.PluginType;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.SubchainType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.GenericServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.ProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IModelManager;
-import de.uni_freiburg.informatik.ultimate.model.PersistenceAwareModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
@@ -139,7 +134,7 @@ public class ToolchainManager {
 		private final IModelManager mModelManager;
 		private final Benchmark mBenchmark;
 
-		private ToolchainData mToolchainData;
+		private IToolchainData mToolchainData;
 		private Map<File, ISource> mParsers;
 		private File[] mInputFiles;
 		private ToolchainWalker mToolchainWalker;
@@ -154,7 +149,7 @@ public class ToolchainManager {
 		/*************************** IToolchain Implementation ****************************/
 
 		@Override
-		public void init(IProgressMonitor monitor) {
+		public void init(IToolchainProgressMonitor monitor) {
 			if (mToolchainData == null) {
 				return;
 			}
@@ -182,7 +177,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public ToolchainData makeToolSelection(IProgressMonitor monitor) {
+		public IToolchainData makeToolSelection(final IToolchainProgressMonitor monitor) {
 			List<ITool> tools = mPluginFactory.getAllAvailableTools();
 
 			if (tools.isEmpty()) {
@@ -191,11 +186,12 @@ public class ToolchainManager {
 			}
 
 			// present selection dialog
-			ToolchainData rtr = mCurrentController.selectTools(tools);
+			IToolchainData rtr = mCurrentController.selectTools(tools);
 			return setToolSelection(monitor, rtr);
 		}
 
-		public ToolchainData setToolSelection(IProgressMonitor monitor, ToolchainData data) {
+		@Override
+		public IToolchainData setToolSelection(final IToolchainProgressMonitor monitor, final IToolchainData data) {
 			if (data == null) {
 				/* dialog was aborted */
 				mLogger.warn(getLogPrefix() + ": Dialog was aborted, returning null tools.");
@@ -212,7 +208,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public boolean initializeParsers(PreludeProvider preludefile) {
+		public boolean initializeParsers() {
 			if (mInputFiles == null || mInputFiles.length == 0) {
 				mLogger.fatal(getLogPrefix() + ": No input files specified");
 				return false;
@@ -226,12 +222,8 @@ public class ToolchainManager {
 					return false;
 				}
 
-				// set prelude file if present
-				if (preludefile != null) {
-					parser.setPreludeFile(preludefile.getPreludeFile());
-				} else {
-					parser.setPreludeFile(null);
-				}
+				// TODO: remove preludes from parser interface
+				parser.setPreludeFile(null);
 				mParsers.put(inputFile, parser);
 			}
 			mLogger.info(getLogPrefix() + ": Parser(s) successfully initiated...");
@@ -257,7 +249,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public IStatus processToolchain(IProgressMonitor monitor) throws Throwable {
+		public ReturnCode processToolchain(IToolchainProgressMonitor monitor) throws Throwable {
 			mLogger.info("####################### " + getLogPrefix() + " #######################");
 			UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 			boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
@@ -304,7 +296,7 @@ public class ToolchainManager {
 				mLogger.info("#######################  End " + getLogPrefix() + " #######################");
 			}
 
-			return Status.OK_STATUS;
+			return ReturnCode.Ok;
 		}
 
 		@Override
@@ -447,7 +439,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public ToolchainData getCurrentToolchainData() {
+		public IToolchainData getCurrentToolchainData() {
 			return mToolchainData;
 		}
 

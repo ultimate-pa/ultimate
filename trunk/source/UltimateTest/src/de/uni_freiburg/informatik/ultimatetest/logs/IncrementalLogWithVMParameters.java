@@ -55,21 +55,21 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 		StringBuilder sb = new StringBuilder();
 		String indent = "\t";
 		if (mFirstRun) {
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString());
+			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 			sb.append(" First run of ");
 			sb.append(getDescriptiveLogName());
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			// add more stats here
 			sb.append(indent)
 					.append(String.format("Parameters: heapMaxSize=%s",
 							Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true)))
-					.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+					.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append(indent).append(String.format("Test Suite Parameters: Timeout=%s s", mDeadline / 1000))
-					.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+					.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 
 			mFirstRun = false;
 		}
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString());
+		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 		sb.append(" ### ");
 		sb.append(mCountCurrent);
 		if (mCountTotal != 0) {
@@ -78,7 +78,7 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 		}
 		sb.append(" ### Starting test for ");
 		sb.append(urd);
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 		writeToFile(sb.toString());
 	}
 

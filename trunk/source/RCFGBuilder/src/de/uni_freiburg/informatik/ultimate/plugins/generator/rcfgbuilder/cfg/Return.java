@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 

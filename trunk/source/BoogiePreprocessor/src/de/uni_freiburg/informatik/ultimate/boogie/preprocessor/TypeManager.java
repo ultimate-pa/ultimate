@@ -34,15 +34,15 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 
 public class TypeManager {
 

@@ -40,10 +40,10 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * This class handles the communication of with the external tool for

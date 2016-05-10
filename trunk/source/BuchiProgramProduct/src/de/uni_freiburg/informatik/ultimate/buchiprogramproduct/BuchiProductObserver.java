@@ -32,6 +32,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.AssumeMerger;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.BaseProductOptimizer;
@@ -48,12 +49,11 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 
 public class BuchiProductObserver implements IUnmanagedObserver {
@@ -215,11 +215,6 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		mLogger.info(message + " " + bench);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new BenchmarkResult<>(Activator.PLUGIN_ID, message, bench));
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override

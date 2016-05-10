@@ -28,7 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSettingsAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSourceFilesAction;

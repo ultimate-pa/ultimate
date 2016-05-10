@@ -43,13 +43,13 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 

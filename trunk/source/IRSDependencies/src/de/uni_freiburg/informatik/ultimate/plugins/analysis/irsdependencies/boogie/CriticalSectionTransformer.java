@@ -28,13 +28,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boo
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 public class CriticalSectionTransformer extends BoogieTransformer {
 	

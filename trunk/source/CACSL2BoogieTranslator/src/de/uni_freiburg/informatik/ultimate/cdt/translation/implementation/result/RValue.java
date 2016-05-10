@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 
 public class RValue extends LRValue {
 

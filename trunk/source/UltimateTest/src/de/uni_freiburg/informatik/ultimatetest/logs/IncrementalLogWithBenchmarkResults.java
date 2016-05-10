@@ -33,6 +33,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -53,7 +54,7 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 
 	@Override
 	public void addEntryPreStart(UltimateRunDefinition runDef) {
-		writeToFile(runDef.getInputFileNames() + de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+		writeToFile(runDef.getInputFileNames() + de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 	}
 
 	@Override
@@ -68,7 +69,7 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 			sum = new Entry(result, resultMessage, runDef, null);
 		}
 
-		writeToFile(sum.toLogString(indent, lineSeparator).append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator()).toString());
+		writeToFile(sum.toLogString(indent, lineSeparator).append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator()).toString());
 	}
 
 	private class Entry {
@@ -92,10 +93,10 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 
 		private void interpretUltimateResults(IResultService resultService) {
 
-			for (IResult result : de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.filterResults(resultService.getResults(), BenchmarkResult.class)) {
+			for (IResult result : ResultUtil.filterResults(resultService.getResults(), BenchmarkResult.class)) {
 				StringBuilder sb = new StringBuilder();
 				sb.append(result.getPlugin()).append(": ").append(result.getShortDescription()).append(": ")
-						.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.flatten(result.getLongDescription(), " # "));
+						.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.flatten(result.getLongDescription(), " # "));
 				mFlattenedBenchmarkResults.add(sb.toString());
 			}
 		}
@@ -105,7 +106,7 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 
 			sb.append(indent).append(mUltimateRunDefinition.getSettings()).append(",").append(mUltimateRunDefinition.getToolchain()).append(lineSeparator);
 			sb.append(indent).append("Test result: ").append(mThreeValuedResult).append(lineSeparator);
-			sb.append(indent).append("Message:     ").append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.flatten(mMessage, " # ")).append(lineSeparator);
+			sb.append(indent).append("Message:     ").append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.flatten(mMessage, " # ")).append(lineSeparator);
 			if (mFlattenedBenchmarkResults.size() > 0) {
 				sb.append(indent).append("Benchmarks:").append(lineSeparator);
 				for (String s : mFlattenedBenchmarkResults) {

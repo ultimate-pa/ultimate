@@ -29,7 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection;
 
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IElementSelection;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
 
 /**
  * Provides access to nodes.

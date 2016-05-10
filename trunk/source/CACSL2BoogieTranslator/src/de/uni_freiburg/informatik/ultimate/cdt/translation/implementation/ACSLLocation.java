@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
 
 public class ACSLLocation extends CACSLLocation {
 

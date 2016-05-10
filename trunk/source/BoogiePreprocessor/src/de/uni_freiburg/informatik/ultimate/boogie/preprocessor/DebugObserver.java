@@ -35,12 +35,12 @@ import java.util.Queue;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 public class DebugObserver extends BaseObserver {
 

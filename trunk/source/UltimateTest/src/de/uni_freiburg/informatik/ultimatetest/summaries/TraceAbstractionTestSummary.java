@@ -34,8 +34,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
@@ -78,7 +79,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 
 		if (resultService != null) {
 			addTraceAbstractionBenchmarks(ultimateRunDefinition,
-					CoreUtil.filterResults(resultService.getResults(), BenchmarkResult.class));
+					ResultUtil.filterResults(resultService.getResults(), BenchmarkResult.class));
 		}
 
 	}

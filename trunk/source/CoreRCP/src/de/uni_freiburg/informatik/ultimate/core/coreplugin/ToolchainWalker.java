@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.util.ArrayList;
@@ -34,22 +35,22 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DropmodelType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ModelIdOnlyType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SerializeType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
+import de.uni_freiburg.informatik.ultimate.core.model.exceptions.ToolchainExceptionWrapper;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.DropmodelType;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ModelIdOnlyType;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.PluginType;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.SerializeType;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.SubchainType;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainModelType;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainCancel;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
@@ -57,8 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 final class ToolchainWalker implements IToolchainCancel {
 
 	/**
-	 * Is a running toolchain supposed to be canceled at the next possible
-	 * moment?
+	 * Is a running toolchain supposed to be canceled at the next possible moment?
 	 */
 	private boolean mToolchainCancelRequest = false;
 
@@ -77,13 +77,14 @@ final class ToolchainWalker implements IToolchainCancel {
 		mOpenPlugins = new HashMap<String, PluginConnector>();
 	}
 
-	public void walk(CompleteToolchainData data, IProgressMonitorService service, IProgressMonitor monitor)
-			throws Throwable {
-		ToolchainData chain = data.getToolchain();
+	public void walk(final CompleteToolchainData data, final IProgressMonitorService service,
+			final IToolchainProgressMonitor monitor) throws Throwable {
+		IToolchainData chain = data.getToolchain();
 
 		// convert monitor to submonitor
 		int work_remain = chain.getToolchain().getPluginOrSubchain().size();
-		SubMonitor progress = SubMonitor.convert(monitor, work_remain);
+
+		final SubMonitor progress = SubMonitor.convert(RcpProgressMonitorWrapper.create(monitor), work_remain);
 
 		mLogger.info("Walking toolchain with " + String.valueOf(work_remain) + " elements.");
 
@@ -125,25 +126,22 @@ final class ToolchainWalker implements IToolchainCancel {
 
 	}
 
-	private boolean shouldCancel(CompleteToolchainData data, IProgressMonitorService service, IProgressMonitor monitor,
-			String pluginId) {
+	private boolean shouldCancel(CompleteToolchainData data, IProgressMonitorService service,
+			IToolchainProgressMonitor monitor, String pluginId) {
 		// If a cancel-request occurred during the loop, honor it
-		if(mToolchainCancelRequest  || monitor.isCanceled()){
+		if (mToolchainCancelRequest || monitor.isCanceled()) {
 			mLogger.info("Toolchain execution was canceled (user or tool) before executing " + pluginId);
 			return true;
-			
+
 		}
-		
+
 		if (!service.continueProcessing()) {
-			data.getToolchain()
-					.getServices()
-					.getResultService()
-					.reportResult(Activator.PLUGIN_ID,
-							new TimeoutResult(Activator.PLUGIN_ID, "Timeout occured before executing " + pluginId));
+			data.getToolchain().getServices().getResultService().reportResult(Activator.PLUGIN_ID,
+					new TimeoutResult(Activator.PLUGIN_ID, "Timeout occured before executing " + pluginId));
 			mLogger.info("Toolchain execution was canceled (Timeout) before executing " + pluginId);
 			return true;
 		}
-		
+
 		return false;
 	}
 
@@ -151,8 +149,7 @@ final class ToolchainWalker implements IToolchainCancel {
 	 * Process the specified plug-in.
 	 * 
 	 * @param plugin
-	 * @return true/false, depending on whether plugin could be successfully
-	 *         processed
+	 * @return true/false, depending on whether plugin could be successfully processed
 	 * @throws Exception
 	 */
 	private final void processPlugin(CompleteToolchainData data, PluginType plugin) throws Throwable {
@@ -167,8 +164,8 @@ final class ToolchainWalker implements IToolchainCancel {
 
 		PluginConnector pc;
 		if (!mOpenPlugins.containsKey(plugin.getId())) {
-			pc = new PluginConnector(mModelManager, tool, data.getController(), data.getToolchain().getStorage(), data
-					.getToolchain().getServices());
+			pc = new PluginConnector(mModelManager, tool, data.getController(), data.getToolchain().getStorage(),
+					data.getToolchain().getServices());
 			mOpenPlugins.put(plugin.getId(), pc);
 		} else {
 			pc = mOpenPlugins.get(plugin.getId());
@@ -181,15 +178,15 @@ final class ToolchainWalker implements IToolchainCancel {
 		try {
 			pc.run();
 		} catch (ToolchainCanceledException e) {
-			String longDescription = ToolchainCanceledException.s_Message + 
-					" while executing " + e.getClassOfThrower().getSimpleName();
-				if (e.getRunningTaskInfo() != null) {
-					longDescription += " during the following task: " + e.getRunningTaskInfo();
-				}
-				TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), longDescription);
-				data.getToolchain().getServices().getResultService().reportResult(plugin.getId(), timeoutResult);
-				mLogger.info("Toolchain cancelled while executing plugin " + plugin.getId() + ". Reason: "
-						+ e.getMessage());
+			String longDescription = ToolchainCanceledException.s_Message + " while executing "
+					+ e.getClassOfThrower().getSimpleName();
+			if (e.getRunningTaskInfo() != null) {
+				longDescription += " during the following task: " + e.getRunningTaskInfo();
+			}
+			TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), longDescription);
+			data.getToolchain().getServices().getResultService().reportResult(plugin.getId(), timeoutResult);
+			mLogger.info(
+					"Toolchain cancelled while executing plugin " + plugin.getId() + ". Reason: " + e.getMessage());
 		} catch (Throwable e) {
 			mLogger.error("The Plugin " + plugin.getId() + " has thrown an Exception!", e);
 			throw new ToolchainExceptionWrapper(plugin.getId(), e);
@@ -217,8 +214,7 @@ final class ToolchainWalker implements IToolchainCancel {
 	 * 
 	 * @param chain
 	 * @param monitor
-	 * @return true/false, depending on whether subchain could be successfully
-	 *         processed
+	 * @return true/false, depending on whether subchain could be successfully processed
 	 * @throws Exception
 	 */
 	private final boolean processSubchain(CompleteToolchainData data, SubchainType chain, IProgressMonitor monitor)
@@ -426,17 +422,17 @@ final class ToolchainWalker implements IToolchainCancel {
 
 	final class CompleteToolchainData {
 
-		private ToolchainData mToolchain;
-		private ISource[] mParsers;
-		private IController mController;
+		private final IToolchainData mToolchain;
+		private final ISource[] mParsers;
+		private final IController mController;
 
-		CompleteToolchainData(ToolchainData toolchain, ISource[] parsers, IController controller) {
+		CompleteToolchainData(IToolchainData toolchain, ISource[] parsers, IController controller) {
 			mToolchain = toolchain;
 			mParsers = parsers;
 			mController = controller;
 		}
 
-		final ToolchainData getToolchain() {
+		final IToolchainData getToolchain() {
 			return mToolchain;
 		}
 

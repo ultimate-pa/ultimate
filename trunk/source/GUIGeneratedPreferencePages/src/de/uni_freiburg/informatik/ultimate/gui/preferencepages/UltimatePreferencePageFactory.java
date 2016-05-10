@@ -37,14 +37,14 @@ import org.eclipse.jface.preference.PreferenceManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 
 /**
  * 

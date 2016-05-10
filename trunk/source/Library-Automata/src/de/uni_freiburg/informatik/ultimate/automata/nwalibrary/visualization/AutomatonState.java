@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableExplicitEdgesMultigraph;
 
 /**
  * Ultimate model of an automaton state.

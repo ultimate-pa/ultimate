@@ -37,22 +37,22 @@ import java.util.function.Supplier;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.BacktranslatedCFG;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.translation.BacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
@@ -130,10 +130,10 @@ public class WitnessPrinter implements IOutput {
 
 		// determine if there are true or false witnesses
 		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
-		if (CoreUtil.filterResults(results, CounterExampleResult.class).size() > 0) {
+		if (ResultUtil.filterResults(results, CounterExampleResult.class).size() > 0) {
 			mLogger.info("Generating witness for counterexample");
 			mMode = Mode.FALSE_WITNESS;
-		} else if (CoreUtil.filterResults(results, AllSpecificationsHoldResult.class).size() > 0) {
+		} else if (ResultUtil.filterResults(results, AllSpecificationsHoldResult.class).size() > 0) {
 			mLogger.info("Generating witness for proof");
 			mMode = Mode.TRUE_WITNESS;
 		}
@@ -164,7 +164,7 @@ public class WitnessPrinter implements IOutput {
 	}
 
 	private Collection<Supplier<Triple<IResult, String, String>>> generateTrueWitnessSupplier() {
-		final Collection<AllSpecificationsHoldResult> validResults = CoreUtil
+		final Collection<AllSpecificationsHoldResult> validResults = ResultUtil
 				.filterResults(mServices.getResultService().getResults(), AllSpecificationsHoldResult.class);
 
 		// we take only one AllSpecificationsHold result
@@ -181,7 +181,7 @@ public class WitnessPrinter implements IOutput {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Collection<Supplier<Triple<IResult, String, String>>> generateFalseWitnessSupplier() {
 		final Collection<Supplier<Triple<IResult, String, String>>> supplier = new ArrayList<>();
-		final Collection<CounterExampleResult> cexResults = CoreUtil
+		final Collection<CounterExampleResult> cexResults = ResultUtil
 				.filterResults(mServices.getResultService().getResults(), CounterExampleResult.class);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		for (final CounterExampleResult cex : cexResults) {
@@ -202,7 +202,7 @@ public class WitnessPrinter implements IOutput {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 }

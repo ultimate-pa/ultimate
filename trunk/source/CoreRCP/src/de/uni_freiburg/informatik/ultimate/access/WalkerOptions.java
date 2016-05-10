@@ -30,8 +30,8 @@ import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IPayload;
 
 
 

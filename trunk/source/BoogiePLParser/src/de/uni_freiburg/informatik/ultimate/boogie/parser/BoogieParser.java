@@ -36,18 +36,18 @@ import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.Payload;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.Payload;
+import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 /**
  * This is the main Boogie 2 parser class that creates the lexer and parser to
@@ -74,7 +74,7 @@ public class BoogieParser implements ISource {
 	/**
 	 * This method is required by IUltimatePlugin
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin#getPluginID()
+	 * @see de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin#getPluginID()
 	 */
 	public String getPluginID() {
 		return getClass().getPackage().getName();
@@ -87,7 +87,7 @@ public class BoogieParser implements ISource {
 	 * @param param
 	 *            is ignored
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin#init()
+	 * @see de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin#init()
 	 */
 	public void init() {
 		mFileNames = new ArrayList<String>();
@@ -285,7 +285,7 @@ public class BoogieParser implements ISource {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
 

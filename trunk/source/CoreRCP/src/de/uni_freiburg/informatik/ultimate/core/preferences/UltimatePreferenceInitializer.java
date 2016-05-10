@@ -30,6 +30,8 @@ import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.osgi.service.prefs.BackingStoreException;
 
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
+
 /**
  * UltimatePreferenceInitializer implements an AbstractPreferenceInitializer for Ultimate. It initializes the default
  * values for preferences and provides access to the preferences for Ultimate.
@@ -40,7 +42,7 @@ import org.osgi.service.prefs.BackingStoreException;
  * @author dietsch
  * 
  */
-public abstract class UltimatePreferenceInitializer extends AbstractPreferenceInitializer {
+public abstract class UltimatePreferenceInitializer extends AbstractPreferenceInitializer implements IPreferenceInitializer {
 
 	private final BaseUltimatePreferenceItem[] mPreferenceDescriptors;
 	private final UltimatePreferenceStore mPreferenceStore;
@@ -50,18 +52,13 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 		mPreferenceStore = new UltimatePreferenceStore(getPlugID());
 	}
 
-	/***
-	 * This method is called by the preference initializer to initialize default preference values.
-	 * 
-	 * Note: Clients should not call this method. It will be called automatically by the preference initializer when the
-	 * appropriate default preference node is accessed.
-	 */
 	@Override
 	public void initializeDefaultPreferences() {
 		IEclipsePreferences defaults = mPreferenceStore.getDefaultEclipsePreferences();
 		initializePreferences(defaults);
 	}
 
+	@Override
 	public void resetDefaults() {
 		initializePreferences(mPreferenceStore.getEclipsePreferences());
 	}
@@ -117,6 +114,7 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 		}
 	}
 
+	@Override
 	public BaseUltimatePreferenceItem[] getDefaultPreferences() {
 		return mPreferenceDescriptors;
 	}
@@ -140,11 +138,7 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 	 */
 	protected abstract String getPlugID();
 
-	/**
-	 * Should return the title of the preference page node
-	 * 
-	 * @return
-	 */
+	@Override
 	public abstract String getPreferencePageTitle();
 
 }

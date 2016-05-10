@@ -40,13 +40,13 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Path;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
@@ -181,7 +181,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			} else {
 
 				// compare linewise
-				final String platformLineSeparator = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+				final String platformLineSeparator = de.uni_freiburg.informatik.ultimate.util.CoreUtil
 						.getPlatformLineSeparator();
 				final String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 				final String[] actualLines = actualCounterExample.split(platformLineSeparator);

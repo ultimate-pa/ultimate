@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.model.structure.BasePayloadContainer;
-import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.models.structure.BasePayloadContainer;
+import de.uni_freiburg.informatik.ultimate.models.structure.IVisualizable;
+import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class NWAContainer extends BasePayloadContainer implements IVisualizable {

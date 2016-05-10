@@ -31,11 +31,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 
 /**
  * Provides the names of Ultimate's OSGi extension points.

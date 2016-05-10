@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.ILabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.models.structure.ILabeledEdgesMultigraph;
 
 /**
  * Utility class for topological sorting of DAGs.

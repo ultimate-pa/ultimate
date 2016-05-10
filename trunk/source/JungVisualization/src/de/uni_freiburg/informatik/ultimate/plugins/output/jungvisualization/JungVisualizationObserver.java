@@ -46,20 +46,19 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.structure.IVisualizable;
+import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditor;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphProperties;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
 import edu.uci.ics.jung.algorithms.layout.FRLayout2;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
@@ -117,9 +116,9 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 
 	@SuppressWarnings("rawtypes")
 	private ArrayList<LinkedHashSet<Object>> getCounterExampleTraces(IUltimateServiceProvider services) {
-		Collection<CounterExampleResult> finiteCounterExamples = CoreUtil.filterResults(services.getResultService()
+		Collection<CounterExampleResult> finiteCounterExamples = ResultUtil.filterResults(services.getResultService()
 				.getResults(), CounterExampleResult.class);
-		Collection<NonterminatingLassoResult> infiniteCounterExamples = CoreUtil.filterResults(services
+		Collection<NonterminatingLassoResult> infiniteCounterExamples = ResultUtil.filterResults(services
 				.getResultService().getResults(), NonterminatingLassoResult.class);
 
 		ArrayList<LinkedHashSet<Object>> traces = new ArrayList<>();
@@ -197,11 +196,6 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 		}
 
 		return sb.toString();
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	private void dfstraverse(VisualizationNode node, String numbering) {

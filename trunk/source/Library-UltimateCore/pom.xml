@@ -41,4 +41,54 @@
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>CoreRCP: workspaceDir is ${workspaceDir}</echo>
+
+								<exec executable="xjc">
+									<arg
+										line="-d '${workspaceDir}/Library-UltimateCore/src' -p de.uni_freiburg.informatik.ultimate.core.model.toolchain '${toolchainDir}/toolchain.xsd'" />
+								</exec>
+
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain</directory>
+							<includes>
+								<include>ModelType.java</include>
+								<include>ObjectFactory.java</include>
+								<include>PluginType.java</include>
+								<include>SerializeType.java</include>
+								<include>SubchainType.java</include>
+								<include>ToolchainListType.java</include>
+								<include>DropmodelType.java</include>
+								<include>ModelIdOnlyType.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 </project>

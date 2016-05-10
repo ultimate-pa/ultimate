@@ -34,9 +34,9 @@ import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.ViolationWitnessGenerator;
 
 /**

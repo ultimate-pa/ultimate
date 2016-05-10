@@ -39,11 +39,11 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieOutput;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 
 /**
  * @author hoenicke
@@ -121,11 +121,6 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		// not required
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
 	}
 
 	@Override

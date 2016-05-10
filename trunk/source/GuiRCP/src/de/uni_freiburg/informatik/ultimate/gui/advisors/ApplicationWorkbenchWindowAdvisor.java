@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;

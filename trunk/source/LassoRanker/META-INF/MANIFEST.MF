@@ -7,6 +7,7 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassorank
 Require-Bundle: Library-log4j,
  Library-SMTLIB,
  Library-ModelCheckerUtils,
+ Library-BoogieAST,
  Library-LassoRanker,
  UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,

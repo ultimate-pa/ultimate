@@ -39,18 +39,18 @@ import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ExternalParserToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
 import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.ModelType.Type;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.ModelType.Type;
+import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 /**
  * {@link CDTController} is one of the distinct controllers of Ultimate. It
@@ -183,7 +183,7 @@ public class CDTController implements IController {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		// cdt uses the codan preference handling
 		return null;
 	}

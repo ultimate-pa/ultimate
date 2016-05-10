@@ -32,8 +32,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;

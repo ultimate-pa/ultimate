@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 
 public class FunctionInfo {
 	private final FunctionDeclaration declaration;

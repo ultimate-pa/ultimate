@@ -1,18 +1,21 @@
 /* CUP specification for BoogiePL */
 
 package de.uni_freiburg.informatik.ultimate.boogie.parser;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java_cup.runtime.Symbol;
+
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.BoogieSymbol;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
+
 
 parser Parser;
 option symbols = LexerSymbols;

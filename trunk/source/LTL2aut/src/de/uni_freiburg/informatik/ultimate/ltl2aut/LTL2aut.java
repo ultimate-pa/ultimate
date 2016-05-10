@@ -31,16 +31,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 
 public class LTL2aut implements IGenerator {
 
@@ -129,7 +129,7 @@ public class LTL2aut implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 
@@ -142,7 +142,7 @@ public class LTL2aut implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
+		Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mSkip = !cex.isEmpty();
 	}

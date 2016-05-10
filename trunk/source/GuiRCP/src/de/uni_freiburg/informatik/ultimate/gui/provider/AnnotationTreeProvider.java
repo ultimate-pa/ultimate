@@ -46,15 +46,15 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.structure.ITree;
-import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.models.structure.ITree;
+import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
+import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
 
 /**
  * @author dietsch

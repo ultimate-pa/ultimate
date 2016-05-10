@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.annotation.ModernAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.annotation.ModernAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Visualizable;
 
 public class WitnessEdgeAnnotation extends ModernAnnotations {
 

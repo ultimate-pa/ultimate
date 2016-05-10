@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.core.services;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.IProgressMonitor;
 
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
@@ -44,13 +44,13 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 
 	private static final String sKey = "CancelNotificationService";
 
-	private IProgressMonitor mMonitor;
+	private IToolchainProgressMonitor mMonitor;
 	private IDeadlineProvider mTimer;
 	private Logger mLogger;
 	private IToolchainCancel mToolchainCancel;
 	private boolean mCancelRequest;
 
-	public ProgressMonitorService(final IProgressMonitor monitor, final Logger logger, final IToolchainCancel cancel) {
+	public ProgressMonitorService(final IToolchainProgressMonitor monitor, final Logger logger, final IToolchainCancel cancel) {
 		assert monitor != null;
 		mMonitor = monitor;
 		mLogger = logger;

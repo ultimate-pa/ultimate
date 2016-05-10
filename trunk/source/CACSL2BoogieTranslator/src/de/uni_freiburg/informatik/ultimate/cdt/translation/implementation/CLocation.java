@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
 
 public class CLocation extends CACSLLocation {
 

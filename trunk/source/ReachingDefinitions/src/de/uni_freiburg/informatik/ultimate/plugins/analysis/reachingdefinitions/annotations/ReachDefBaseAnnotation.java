@@ -28,8 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.HashMap;
 import java.util.HashSet;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.models.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
 public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {

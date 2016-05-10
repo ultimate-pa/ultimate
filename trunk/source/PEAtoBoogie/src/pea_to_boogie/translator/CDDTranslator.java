@@ -26,8 +26,8 @@
  */
 package pea_to_boogie.translator;
 import pea.*;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
 public class CDDTranslator {
 
 	 public Expression CDD_To_Boogie(CDD cdd,String fileName, BoogieLocation bl) {

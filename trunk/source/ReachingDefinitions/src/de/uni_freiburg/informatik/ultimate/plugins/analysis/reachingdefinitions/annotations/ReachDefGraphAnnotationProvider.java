@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
 
 public class ReachDefGraphAnnotationProvider<T extends ReachDefBaseAnnotation> implements IAnnotationProvider<T> {
 

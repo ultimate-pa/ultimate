@@ -44,10 +44,10 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChang
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.osgi.service.prefs.BackingStoreException;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 
 class SettingsManager {
 
@@ -145,7 +145,7 @@ class SettingsManager {
 	void resetPreferences(ICore core) {
 		mLogger.info("Resetting all preferences to default values...");
 		for (IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
-			UltimatePreferenceInitializer preferences = plugin.getPreferences();
+			IPreferenceInitializer preferences = plugin.getPreferences();
 			if (preferences != null) {
 				mLogger.info("Resetting " + plugin.getPluginName() + " preferences to default values");
 				preferences.resetDefaults();

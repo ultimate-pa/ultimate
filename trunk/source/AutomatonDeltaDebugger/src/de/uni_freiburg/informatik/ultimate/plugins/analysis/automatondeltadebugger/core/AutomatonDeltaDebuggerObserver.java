@@ -35,7 +35,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.NestedWordAutomatonFactory;

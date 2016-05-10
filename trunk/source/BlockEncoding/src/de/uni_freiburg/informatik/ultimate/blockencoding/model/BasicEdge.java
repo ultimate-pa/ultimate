@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinim
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;

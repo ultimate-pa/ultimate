@@ -37,23 +37,23 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersionTransformer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.IToString;
-import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.util.IToString;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 
 /**

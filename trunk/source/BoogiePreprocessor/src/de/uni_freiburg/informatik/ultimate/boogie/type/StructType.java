@@ -33,9 +33,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
 
 /**
  * Class representing a struct type.
@@ -254,7 +254,7 @@ public class StructType extends BoogieType {
 		for (int i = 0; i < fNames.length; i++)
 			varlist[i] = new VarList(loc, new String[] { fNames[i] }, 
 					fTypes[i].toASTType(loc, depth));
-		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			StructType(loc, this, varlist);
 	}
 	

@@ -52,6 +52,17 @@ import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
@@ -82,18 +93,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 
 /**

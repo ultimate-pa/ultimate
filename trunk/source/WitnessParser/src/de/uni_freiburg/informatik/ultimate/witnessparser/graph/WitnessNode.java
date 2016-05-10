@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableExplicitEdgesMultigraph;
 
 public class WitnessNode extends ModifiableExplicitEdgesMultigraph<WitnessNode, WitnessEdge,WitnessNode, WitnessEdge>{
 

@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.parser;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 
 /**
  * Temporary class to represent a pair of a named and an expression. This

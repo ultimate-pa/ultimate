@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.boogie.type;
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
 
 public class ArrayType extends BoogieType {
 	/**
@@ -237,7 +237,7 @@ public class ArrayType extends BoogieType {
 		for (int i = 0; i < indexTypes.length; i++)
 			astIndexTypes[i] = indexTypes[i].toASTType(loc, depth + numPlaceholders);
 		ASTType astValueType = valueType.toASTType(loc, depth + numPlaceholders);
-		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			ArrayType(loc, this, typeParams, astIndexTypes, astValueType);
 	}
 	

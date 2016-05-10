@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.gui.dialogs;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -40,6 +38,8 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 
 public class ParserChooseDialog extends Dialog {
 

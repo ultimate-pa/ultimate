@@ -34,7 +34,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
-import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.translation.IBacktranslationValueProvider;
 
 /**
  * 

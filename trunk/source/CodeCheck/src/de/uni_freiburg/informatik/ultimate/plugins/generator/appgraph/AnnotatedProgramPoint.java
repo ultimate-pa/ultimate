@@ -31,8 +31,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
+
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;

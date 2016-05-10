@@ -34,9 +34,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 
 /**
  * @author Markus Lindenmann

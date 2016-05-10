@@ -46,6 +46,26 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
@@ -69,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.B
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
-import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
@@ -94,30 +113,11 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.IType;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Overapprox;
 
 /**
  * @author Markus Lindenmann
@@ -548,7 +548,7 @@ public class ACSLHandler implements IACSLHandler {
                 new de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral(
                         LocationFactory.createACSLLocation(node), node.getValue()));
         */
-     	return new ExpressionResult(new RValue(new de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral(
+     	return new ExpressionResult(new RValue(new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(
                 LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(PRIMITIVE.BOOL), true));
     }
 
@@ -559,7 +559,7 @@ public class ACSLHandler implements IACSLHandler {
                 new de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral(
                         LocationFactory.createACSLLocation(node), node.getValue()));
         */
-     	return new ExpressionResult(new RValue(new de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral(
+     	return new ExpressionResult(new RValue(new de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral(
                 LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(PRIMITIVE.DOUBLE)));
     }
 
@@ -854,7 +854,7 @@ public class ACSLHandler implements IACSLHandler {
 //        CArray arrayType = new CArray(dimensions, idExprRes.lrVal.cType); --> wrong, i think (alex)
 //        arrayType.getDimensions().length == args.size()
             
-        de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression expr;
+        de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expr;
         if (subExpr instanceof IdentifierExpression) {
             IdentifierExpression idEx = (IdentifierExpression) subExpr;
             String bId = idEx.getIdentifier();
@@ -863,7 +863,7 @@ public class ACSLHandler implements IACSLHandler {
             assert main.cHandler.getSymbolTable().containsKey(cId);
             InferredType it = new InferredType(main.cHandler.getSymbolTable()
                     .getTypeOfVariable(cId, loc));
-            expr = new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression(
+            expr = new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(
                     loc, it, idEx, idx);
         } else if (subExpr instanceof StructAccessExpression) {
             StructAccessExpression sae = (StructAccessExpression) subExpr;
@@ -874,7 +874,7 @@ public class ACSLHandler implements IACSLHandler {
                 String msg = "Type mismatch - cannot take index on a not-array element!";
                 throw new IncorrectSyntaxException(loc, msg);
             }
-            expr = new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression(
+            expr = new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(
                     loc, sae, idx);
         } else {
             String msg = "Unexpected result type on left side of array!";
@@ -929,7 +929,7 @@ public class ACSLHandler implements IACSLHandler {
         idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
         Expression[] idc = new Expression[] { idx };
         Expression arr = new IdentifierExpression(loc, SFO.VALID);
-        Expression e = new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression(
+        Expression e = new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(
                 loc, it, arr, idc);
         // TODO: CType
         return new ExpressionResult(stmt, new RValue(e, new CPrimitive(PRIMITIVE.BOOL)), decl, auxVars, overappr);
@@ -957,12 +957,12 @@ public class ACSLHandler implements IACSLHandler {
         idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
         Expression[] idc = new Expression[] { idx };
         Expression arr = new IdentifierExpression(loc, SFO.VALID);
-        Expression valid = new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression(
+        Expression valid = new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(
                 loc, it, arr, idc);
         Expression e = ExpressionFactory.newUnaryExpression(
                 loc,
 //                it,
-                de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator.LOGICNEG,
+                de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG,
                 valid);
         
         // TODO: CType
@@ -991,7 +991,7 @@ public class ACSLHandler implements IACSLHandler {
         idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
         Expression[] idc = new Expression[] { idx };
         Expression arr = new IdentifierExpression(loc, SFO.VALID);
-        Expression e = new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression(
+        Expression e = new de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression(
                 loc, it, arr, idc);
         
         // TODO: CType

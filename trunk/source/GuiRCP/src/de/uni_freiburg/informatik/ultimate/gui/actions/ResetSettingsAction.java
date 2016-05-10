@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.gui.actions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 
 /**
  * 

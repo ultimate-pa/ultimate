@@ -6,8 +6,8 @@ import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.core.services.BacktranslatedCFG;
-import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.models.structure.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.CorrectnessWitnessGenerator;
 
 /**

@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
 
 /**
  * 

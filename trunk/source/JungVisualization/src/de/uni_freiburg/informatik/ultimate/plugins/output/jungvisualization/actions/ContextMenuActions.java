@@ -31,8 +31,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.act
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import edu.uci.ics.jung.visualization.VisualizationViewer;

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 
 
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 public class BreakStatementAST extends AtsASTNode {

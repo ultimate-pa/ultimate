@@ -2,7 +2,8 @@ package de.uni_freiburg.informatik.ultimate.website;
 
 import javax.servlet.http.HttpServlet;
 
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+
 
 public class ServletLogger {
 

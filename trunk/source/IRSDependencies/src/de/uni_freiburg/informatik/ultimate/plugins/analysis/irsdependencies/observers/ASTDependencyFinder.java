@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.obs
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie.CriticalSectionTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie.SymbolTable;
 

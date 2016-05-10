@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
-import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.translation.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
 
 public class GeneratedWitnessNodeEdgeFactory<TE, E> {
 

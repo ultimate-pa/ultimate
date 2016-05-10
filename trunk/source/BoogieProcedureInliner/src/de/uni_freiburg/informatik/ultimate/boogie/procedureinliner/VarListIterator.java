@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 import java.util.NoSuchElementException;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 
 /**
  * Iterates over multiple groups of VarLists at the same time.

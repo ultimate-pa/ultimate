@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableDirectedGraph;
+import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableDirectedGraph;
 
 public abstract class PetriNetVisualizationNode extends ModifiableDirectedGraph<PetriNetVisualizationNode> {
 

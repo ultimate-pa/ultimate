@@ -6,7 +6,9 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker.Activator
 Require-Bundle: UltimateCore,
  Library-log4j,
- org.eclipse.cdt.core
+ Library-BoogieAST,
+ org.eclipse.cdt.core,
+ Library-UltimateCore
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 

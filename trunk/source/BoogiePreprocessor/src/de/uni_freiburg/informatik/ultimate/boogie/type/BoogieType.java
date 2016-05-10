@@ -30,9 +30,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.IType;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**

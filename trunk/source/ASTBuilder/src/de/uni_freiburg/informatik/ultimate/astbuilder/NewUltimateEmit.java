@@ -100,7 +100,7 @@ public class NewUltimateEmit extends Emit {
 	public void emitPreamble(Node node) throws IOException {
 		super.emitPreamble(node);
 		mWriter.println("import java.util.List;");
-		mWriter.println("import de.uni_freiburg.informatik.ultimate.model.location.ILocation;");
+		mWriter.println("import de.uni_freiburg.informatik.ultimate.models.ILocation;");
 		mWriter.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;");
 		if (needsArraysPackage(node)) {
 			mWriter.println("import java.util.Arrays;");

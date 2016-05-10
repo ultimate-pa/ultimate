@@ -34,13 +34,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.IInlineSelector;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.ILabeledEdgesFilter;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 
 /**
  * Selector using the preferences from the BoogieProcedureInliner.

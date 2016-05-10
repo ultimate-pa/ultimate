@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
 
 public class WitnessLocation implements ILocation {
 

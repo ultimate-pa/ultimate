@@ -31,9 +31,9 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
 
 /**
  * Ultimate model of a PetriNet place.

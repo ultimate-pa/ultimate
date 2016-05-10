@@ -5,6 +5,7 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.printer;singleto
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.printer.Activator
 Require-Bundle: Library-log4j,
+ Library-BoogieAST,
  UltimateCore,
  BoogieParser
 Bundle-ActivationPolicy: lazy

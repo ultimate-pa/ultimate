@@ -33,20 +33,20 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg.SmallBlockEncoder;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 
 /**
  * This plugin implements the product algorithm described in the Masterthesis
@@ -161,7 +161,7 @@ public class BuchiProgramProduct implements IGenerator {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 
@@ -175,7 +175,7 @@ public class BuchiProgramProduct implements IGenerator {
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
+		Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mPreviousToolFoundErrors = !cex.isEmpty();
 		mBacktranslator = new ProductBacktranslator(RCFGEdge.class, Expression.class);

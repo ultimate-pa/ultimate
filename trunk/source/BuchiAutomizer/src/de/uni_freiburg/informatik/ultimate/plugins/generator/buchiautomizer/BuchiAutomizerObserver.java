@@ -38,8 +38,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
@@ -48,11 +49,10 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.model.ModelType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
@@ -69,14 +69,13 @@ import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.LTLFiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.LTLInfiniteCounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult.TERMINATION;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -108,7 +107,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		TAPreferences taPrefs = new TAPreferences();
 		mGraphRoot = root;
 
-		mSmtManager = new SmtManager(mRootAnnot.getScript(), mRootAnnot.getBoogie2SMT(), 
+		mSmtManager = new SmtManager(mRootAnnot.getScript(), mRootAnnot.getBoogie2SMT(),
 				mRootAnnot.getModGlobVarManager(), mServices, false, mRootAnnot.getManagedScript());
 
 		mPref = taPrefs;
@@ -118,8 +117,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(BuchiCegarLoopBenchmark.s_OverallTime);
 
-		IResult benchDecomp = new BenchmarkResult<String>(Activator.s_PLUGIN_ID,
-				"Constructed decomposition of program", bcl.getMDBenchmark());
+		IResult benchDecomp = new BenchmarkResult<String>(Activator.s_PLUGIN_ID, "Constructed decomposition of program",
+				bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 
 		boolean constructTermcompProof = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID))
@@ -144,27 +143,21 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private void reportNonTerminationResult(ProgramPoint honda, NonTerminationArgument nta) {
 		// TODO: translate also the rational coefficients to Expressions?
 		// m_RootAnnot.getBoogie2Smt().translate(term)
-		Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
-		
-		List<Map<RankVar, Rational>> states =
-				new ArrayList<Map<RankVar, Rational>>();
+		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
+
+		final List<Map<RankVar, Rational>> states = new ArrayList<Map<RankVar, Rational>>();
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());
-		List<Map<Expression, Rational>> initHondaRays =
-				BacktranslationUtil.rank2Boogie(term2expression, states);
-		
-		NonTerminationArgumentResult<RcfgElement> result =
-				new NonTerminationArgumentResult<RcfgElement>(honda,
-				Activator.s_PLUGIN_NAME, initHondaRays.get(0),
-				initHondaRays.get(1),
-				initHondaRays.subList(2, initHondaRays.size()),
-				nta.getLambdas(),
-				nta.getNus(),
-				getBacktranslationService());
+		final List<Map<Expression, Rational>> initHondaRays = BacktranslationUtil.rank2Boogie(term2expression, states);
+
+		final NonTerminationArgumentResult<RcfgElement, Expression> result = new NonTerminationArgumentResult<RcfgElement, Expression>(
+				honda, Activator.s_PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
+				initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(), nta.getNus(),
+				getBacktranslationService(), Expression.class);
 		reportResult(result);
 	}
-	
+
 	private void interpretAndReportResult(BuchiCegarLoop bcl, Result result) throws AssertionError {
 		String whatToProve = "termination";
 
@@ -191,7 +184,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		if (result == Result.TERMINATING) {
 			String longDescr = "Buchi Automizer proved that your program is terminating";
-			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.TERMINATING, longDescr);
+			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.TERMINATING,
+					longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.UNKNOWN) {
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
@@ -208,8 +202,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
 			ProgramPoint position = mRootAnnot.getEntryNodes().values().iterator().next();
-			String longDescr = "Timeout while trying to prove " + whatToProve 
-					+ ". " + bcl.getToolchainCancelledException().prettyPrint();
+			String longDescr = "Timeout while trying to prove " + whatToProve + ". "
+					+ bcl.getToolchainCancelledException().prettyPrint();
 			IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.s_PLUGIN_ID,
 					mServices.getBacktranslationService(), longDescr);
 			reportResult(reportRes);
@@ -224,7 +218,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(honda, nta);
-			reportResult(new BenchmarkResult<String>(Activator.s_PLUGIN_NAME, "NonterminationBenchmark", new NonterminationBenchmark(nta)));
+			reportResult(new BenchmarkResult<String>(Activator.s_PLUGIN_NAME, "NonterminationBenchmark",
+					new NonterminationBenchmark(nta)));
 
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
@@ -234,8 +229,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().lettersAsList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
 			IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, RCFGEdge, Expression>(honda,
-					Activator.s_PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE, honda.getPayload()
-							.getLocation());
+					Activator.s_PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
+					honda.getPayload().getLocation());
 			reportResult(ntreportRes);
 		} else {
 			throw new AssertionError();
@@ -325,11 +320,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
-	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
 
 	}
@@ -352,12 +342,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	// }
 	// return result;
 	// }
-	
+
 	private class NonterminationBenchmark implements ICsvProviderProvider<String> {
 		private final String m_Ntar;
 		private final boolean m_LambdaZero;
 		private final boolean m_GEVZero;
-		
+
 		public NonterminationBenchmark(NonTerminationArgument nta) {
 			boolean lambdaZero = true;
 			boolean gevZero = true;
@@ -366,14 +356,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				lambdaZero &= (nta.getLambdas().get(i).numerator().equals(BigInteger.ZERO));
 				gevZero &= isZero(nta.getGEVs().get(i));
 			}
-			
+
 			m_LambdaZero = lambdaZero;
 			m_GEVZero = gevZero;
-			m_Ntar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") +
-					"Lambdas: " + lambdas + 
-					" GEVs: " + (m_GEVZero ? "is zero" : "is not zero");
+			m_Ntar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " GEVs: "
+					+ (m_GEVZero ? "is zero" : "is not zero");
 		}
-		
+
 		private boolean isFixpoint() {
 			return m_LambdaZero || m_GEVZero;
 		}
@@ -392,14 +381,14 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		@Override
 		public ICsvProvider<String> createCvsProvider() {
-			return new SimpleCsvProvider<>(Arrays.asList(new String[] {"nta"}));
+			return new SimpleCsvProvider<>(Arrays.asList(new String[] { "nta" }));
 		}
 
 		@Override
 		public String toString() {
 			return m_Ntar;
 		}
-		
+
 	}
 
 }

@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableLabeledEdgesMultigraph;
 
 /**
  * Node of a Boogie call graph.

@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.controllers;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
 
 /**
  * Use this exception to signal that Ultimate encountered a serious error before

@@ -40,21 +40,21 @@ import java.util.List;
 import javax.xml.bind.JAXBException;
 
 import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.CommandLineParser;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IController;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 
 /**
  * Implements standard fallback controller for the command-line.
@@ -100,33 +100,49 @@ public class CommandlineController implements IController {
 		mLogger = loggingService.getLogger(sPLUGIN_ID);
 		mLogger.info("Initializing CommandlineController...");
 
-		CommandLineParser p = core.getCommandLineArguments();
+		// parse command line parameters and select ultimate mode
+		final CommandLineParser cmdParser = new CommandLineParser();
+		cmdParser.parse(Platform.getCommandLineArgs());
+
+		// determine Ultimate's mode
+		if (cmdParser.getExitSwitch()) {
+			cmdParser.printUsage();
+			return IApplication.EXIT_OK;
+		}
+
+		final String settingsfile = cmdParser.getSettings();
+		if (settingsfile != null) {
+			core.loadPreferences(settingsfile);
+		} else {
+			mLogger.info("No settings file supplied");
+		}
+
 		try {
-			mToolchain = parseToolFile(p.getToolFile());
+			mToolchain = parseToolFile(cmdParser.getToolFile());
 		} catch (FileNotFoundException e1) {
-			mLogger.fatal("Toolchain file not found. Path was: " + p.getToolFile());
+			mLogger.fatal("Toolchain file not found. Path was: " + cmdParser.getToolFile());
 			return -1;
 		} catch (JAXBException e1) {
-			mLogger.fatal("Toolchain file maformed. Path was: " + p.getToolFile());
+			mLogger.fatal("Toolchain file maformed. Path was: " + cmdParser.getToolFile());
 			mLogger.fatal(e1);
 			return -1;
 		} catch (SAXException e1) {
-			mLogger.fatal("Toolchain file maformed. Path was: " + p.getToolFile());
+			mLogger.fatal("Toolchain file maformed. Path was: " + cmdParser.getToolFile());
 			mLogger.fatal(e1);
 			return -1;
 		}
 		ArrayList<File> inputFiles = new ArrayList<>();
-		for (String inputfilePath : p.getInputFile()) {
+		for (String inputfilePath : cmdParser.getInputFile()) {
 			File inputFile = new File(inputfilePath);
 			if (!inputFile.exists() || !inputFile.canRead()) {
-				mLogger.fatal("Input file not found. Paths were: " + String.join(",", p.getInputFile()));
+				mLogger.fatal("Input file not found. Paths were: " + String.join(",", cmdParser.getInputFile()));
 				return -1;
 			}
 			inputFiles.add(inputFile);
 		}
 
 		// handle prelude file
-		PreludeProvider preludeFile = new PreludeProvider(p.getPreludeFile(), mLogger);
+		PreludeProvider preludeFile = new PreludeProvider(cmdParser.getPreludeFile(), mLogger);
 
 		try {
 			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger,
@@ -243,7 +259,7 @@ public class CommandlineController implements IController {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
 }

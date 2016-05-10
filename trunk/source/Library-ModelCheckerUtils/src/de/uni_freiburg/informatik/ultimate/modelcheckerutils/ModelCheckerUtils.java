@@ -27,8 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 
 public final class ModelCheckerUtils implements IUltimatePlugin {
 
@@ -45,7 +45,7 @@ public final class ModelCheckerUtils implements IUltimatePlugin {
 	}
 
 	@Override
-	public UltimatePreferenceInitializer getPreferences() {
+	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
 

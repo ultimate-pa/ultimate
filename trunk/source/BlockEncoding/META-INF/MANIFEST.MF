@@ -7,6 +7,7 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.blockenc
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-UltimateUtil,
+ Library-BoogieAST,
  Library-ModelCheckerUtils,
  BoogiePreprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder 

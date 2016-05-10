@@ -34,7 +34,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Event;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
 
 public class BranchingProcessToUltimateModel<S, C> {
 	

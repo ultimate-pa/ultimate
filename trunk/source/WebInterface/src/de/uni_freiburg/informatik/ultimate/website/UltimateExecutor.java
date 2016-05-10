@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.website.Setting.SettingType;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 

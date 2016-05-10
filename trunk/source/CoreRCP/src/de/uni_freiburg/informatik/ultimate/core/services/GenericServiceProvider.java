@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.core.services;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.IServiceFactoryFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IServiceFactory;
 
 public class GenericServiceProvider implements IStorable {
 

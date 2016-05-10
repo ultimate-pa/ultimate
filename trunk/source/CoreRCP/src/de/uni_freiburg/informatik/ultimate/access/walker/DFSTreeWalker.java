@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.access.IManagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions.Command;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
-import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
+import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 /**
  * This is a basic tree walker. it does breadth first search. For a depth first search you might want to implement your

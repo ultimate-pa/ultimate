@@ -49,6 +49,11 @@ import org.osgi.framework.Bundle;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ObjectFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.PluginType;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.SubchainType;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -62,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @author Christian Simon
  * 
  */
-public class ToolchainData {
+public class ToolchainData implements IToolchainData {
 
 	private ObjectFactory mObjectFactory;
 	private ToolchainListType mToolchain;

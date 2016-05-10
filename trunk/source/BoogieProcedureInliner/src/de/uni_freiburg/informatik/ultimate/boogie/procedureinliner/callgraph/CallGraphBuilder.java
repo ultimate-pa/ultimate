@@ -37,12 +37,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.MultipleImplementationsException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.ProcedureAlreadyDeclaredException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
 /**
  * Builds a call graph of a boogie program.

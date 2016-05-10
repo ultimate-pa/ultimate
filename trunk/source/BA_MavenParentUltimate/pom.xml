@@ -32,8 +32,8 @@
 		<acslastDir>${workspaceDir}/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast</acslastDir>
 		<astbuilderDir>${workspaceDir}/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder</astbuilderDir>
 		<boogieparserDir>${workspaceDir}/BoogiePLParser/src/de/uni_freiburg/informatik/ultimate/boogie/parser</boogieparserDir>
-		<boogieastDir>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/model/boogie/ast</boogieastDir>
-		<toolchainDir>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain</toolchainDir>
+		<boogieastDir>${workspaceDir}/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/model/boogie/ast</boogieastDir>
+		<toolchainDir>${workspaceDir}/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/model/toolchain</toolchainDir>
 		<interactiveconsoledir>${workspaceDir}/InteractiveConsole/src/de/uni_freiburg/informatik/ultimate/interactiveconsole</interactiveconsoledir>
 		<smtlibDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib</smtlibDir>
 		<smtlib2Dir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2</smtlib2Dir>
@@ -250,7 +250,9 @@
 		<module>../AbstractInterpretationV2</module>
 		<module>../AutomatonDeltaDebugger</module>
 		<module>../WitnessPrinter</module>
+		<module>../Library-BoogieAST</module>
 		<module>../Library-JavaBDD</module>
+		<module>../Library-UltimateCore</module>
 	</modules>
 
 	<profiles>

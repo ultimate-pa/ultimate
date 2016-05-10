@@ -39,7 +39,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import java_cup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
@@ -49,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
+import java_cup.runtime.Symbol;
 
 /**
  * This class runs an external SMT solver. The main methods are <code>input</code>, which gives an input to the SMT

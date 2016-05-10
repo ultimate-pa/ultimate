@@ -6,6 +6,7 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.heapseparator.Activator
 Require-Bundle: Library-log4j,
  Library-UltimateUtil,
+ Library-BoogieAST,
  UltimateCore,
  Library-SMTLIB,
  Library-ModelCheckerUtils,

@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
 public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {

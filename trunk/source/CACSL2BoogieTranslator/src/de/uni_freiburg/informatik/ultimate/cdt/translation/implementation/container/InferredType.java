@@ -33,12 +33,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
+import de.uni_freiburg.informatik.ultimate.models.IType;
 
 /**
  * @author Markus Lindenmann

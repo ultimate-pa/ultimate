@@ -26,7 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.access;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
+import de.uni_freiburg.informatik.ultimate.models.IElement;
 
 /**
  * 

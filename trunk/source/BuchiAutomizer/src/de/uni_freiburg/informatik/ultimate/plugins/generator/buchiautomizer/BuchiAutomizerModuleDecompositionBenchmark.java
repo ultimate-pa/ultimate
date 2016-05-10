@@ -31,8 +31,8 @@ import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
@@ -47,8 +47,8 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	private final TreeMap<Integer, Integer> m_ModuleSizeNondeterministic = new TreeMap<Integer, Integer>();
 	private final TreeMap<Integer, String> m_RankingFunction = new TreeMap<Integer, String>();
 	/**
-	 * Is there a remainder module? A remainder module contains remaining traces
-	 * if decomposition into modules failed. Null if yet unknown.
+	 * Is there a remainder module? A remainder module contains remaining traces if decomposition into modules failed.
+	 * Null if yet unknown.
 	 */
 	private Boolean m_HasRemainderModule;
 	private int m_RemainderModuleLocations;
@@ -71,7 +71,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		m_ModuleSizeNondeterministic.put(iteration, size);
 	}
 
-	void reportRankingFunction(Integer iteration, TerminationArgumentResult<RcfgElement> tar) {
+	void reportRankingFunction(Integer iteration, TerminationArgumentResult<RcfgElement, Expression> tar) {
 		m_RankingFunction.put(iteration, prettyPrintRankingFunction(tar));
 	}
 
@@ -87,11 +87,9 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		m_HasRemainderModule = false;
 	}
 
-	private String prettyPrintRankingFunction(TerminationArgumentResult<RcfgElement> tar) {
-		return tar.getRankingFunctionDescription()
-				+ " ranking function "
-				+ ResultUtil.translateExpressionToString(mBacktranslationService, Expression.class,
-						tar.getRankingFunction());
+	private String prettyPrintRankingFunction(TerminationArgumentResult<RcfgElement, Expression> tar) {
+		return tar.getRankingFunctionDescription() + " ranking function " + ResultUtil
+				.translateExpressionToString(mBacktranslationService, Expression.class, tar.getRankingFunction());
 	}
 
 	@Override

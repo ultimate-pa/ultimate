@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import de.uni_freiburg.informatik.ultimate.model.Payload;
+import de.uni_freiburg.informatik.ultimate.models.Payload;
 
 /**
  * Auxiliary edge from the Root node to the initial LocNodes of a program.
