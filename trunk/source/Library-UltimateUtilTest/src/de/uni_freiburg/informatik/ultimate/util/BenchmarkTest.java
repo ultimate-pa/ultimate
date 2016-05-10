@@ -31,7 +31,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /***
  * 

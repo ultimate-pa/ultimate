@@ -21,7 +21,7 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
  * Factory for overloaded and/or polymorphic function symbols.

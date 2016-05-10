@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Util Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util;
+package de.uni_freiburg.informatik.ultimate.util.relation;
 
 import java.util.Collections;
 import java.util.Map;

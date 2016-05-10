@@ -26,8 +26,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
-import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 
 /**

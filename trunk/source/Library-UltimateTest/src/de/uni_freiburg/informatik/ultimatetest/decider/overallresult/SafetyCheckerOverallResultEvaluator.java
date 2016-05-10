@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimate.result.model.ITimeoutResult;
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
 
 /**
  * Evaluate the overall result of a safety checker.

@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
 
 /**
  * Class to check if a term is closed.  It is closed if it does not contain

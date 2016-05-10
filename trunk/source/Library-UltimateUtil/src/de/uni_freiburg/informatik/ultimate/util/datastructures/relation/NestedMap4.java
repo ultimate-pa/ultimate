@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2012-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Util Library.
  * 
@@ -24,31 +25,44 @@
  * licensors of the ULTIMATE Util Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util;
+package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
-import java.util.HashSet;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Implementation of the AbstractRelation that uses a TreeMap.
+ * TODO: comment
  * @author Matthias Heizmann
+ *
+ * @param <K1>
+ * @param <K2>
+ * @param <K3>
+ * @param <V>
  */
-public class TreeRelation<D,R> extends AbstractRelation<D, R, TreeMap<D,Set<R>>> {
+public class NestedMap4<K1, K2, K3, K4, V> {
 	
-	@Override
-	public TreeMap<D, Set<R>> newMap() {
-		return new TreeMap<D, Set<R>>();
-	}
-
-	@Override
-	public HashSet<R> newSet() {
-		return new HashSet<R>();
+	private final Map<K1, NestedMap3<K2, K3, K4, V>> m_K1ToK2ToK3ToK4V = 
+			new HashMap<K1, NestedMap3<K2, K3, K4, V>>();
+	
+	public V put(K1 key1, K2 key2, K3 key3, K4 key4, V value) {
+		NestedMap3<K2, K3, K4, V> k2tok3tok4toV = m_K1ToK2ToK3ToK4V.get(key1);
+		if (k2tok3tok4toV == null) {
+			k2tok3tok4toV = new NestedMap3<>();
+			m_K1ToK2ToK3ToK4V.put(key1, k2tok3tok4toV);
+		}
+		return k2tok3tok4toV.put(key2, key3, key4, value);
 	}
 	
-	public NavigableSet<D> descendingDomain() {
-		return super.m_Map.descendingKeySet();
+	public V get(K1 key1, K2 key2, K3 key3, K4 key4) {
+		NestedMap3<K2, K3, K4, V> k2tok3tok4toV = m_K1ToK2ToK3ToK4V.get(key1);
+		if (k2tok3tok4toV == null) {
+			return null;
+		} else {
+			return k2tok3tok4toV.get(key2, key3, key4);
+		}
 	}
-
+	
+	public void clear() {
+		m_K1ToK2ToK3ToK4V.clear();
+	}
 }

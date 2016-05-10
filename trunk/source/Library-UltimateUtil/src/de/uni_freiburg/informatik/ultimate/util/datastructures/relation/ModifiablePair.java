@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Util Library.
  * 
@@ -24,27 +24,32 @@
  * licensors of the ULTIMATE Util Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
 /**
- * Implementation of the AbstractRelation that uses a HashMap.
- * @author Matthias Heizmann
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ * @param <E1>
+ *            Any type.
+ * @param <E2>
+ *            Any type.
  */
-public class HashRelation<D,R> extends AbstractRelation<D, R, HashMap<D,Set<R>>> {
+public class ModifiablePair<E1, E2> extends Pair<E1, E2> {
 
-	@Override
-	public HashMap<D, Set<R>> newMap() {
-		return new HashMap<D, Set<R>>();
+	public ModifiablePair(E1 first, E2 second) {
+		super(first, second);
 	}
 
-	@Override
-	public HashSet<R> newSet() {
-		return new HashSet<R>();
+	public E1 setFirst(E1 first) {
+		final E1 tmp = mFirstElement;
+		mFirstElement = first;
+		return tmp;
 	}
 
-
+	public E2 setSecond(E2 second) {
+		final E2 tmp = mSecondElement;
+		mSecondElement = second;
+		return tmp;
+	}
 }

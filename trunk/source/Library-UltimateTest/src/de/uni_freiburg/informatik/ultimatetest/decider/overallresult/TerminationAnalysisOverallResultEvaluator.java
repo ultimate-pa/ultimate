@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult.TERMINATION;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimate.result.model.ITimeoutResult;
+import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 
 /**

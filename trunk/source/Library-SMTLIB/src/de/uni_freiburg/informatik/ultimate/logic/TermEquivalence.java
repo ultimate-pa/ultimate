@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
  * This class checks if two terms are syntactically equivalent modulo

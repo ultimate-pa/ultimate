@@ -30,8 +30,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
-
 /**
  * Superclass for benchmark generators that use stopwatches. Takes care that
  * <li>no unregistered stopwatches are used

@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
-import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 public final class CongruenceBlockPair {
 	private static UnifyHash<CongruenceBlockPair> g_unifier;// NOCHECKSTYLE since unused.  Should be in QuantifierTheory

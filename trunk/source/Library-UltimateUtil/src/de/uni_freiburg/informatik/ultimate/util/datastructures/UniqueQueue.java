@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util;
+package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.Collection;
 import java.util.HashSet;

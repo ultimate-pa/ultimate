@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix.WideningStepSupplier;
-import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 public class OctMatrixTest {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Util Library.
@@ -24,50 +24,27 @@
  * licensors of the ULTIMATE Util Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util;
+package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
-import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Returns an Iterator that iterates over the powerset of a given set.
- * @author heizmann@informatik.uni-freiburg.de
+ * Implementation of the AbstractRelation that uses a HashMap.
+ * @author Matthias Heizmann
  */
-public class PowersetIterator<E> implements Iterator<Set<E>> {
-	
-	private final E[] array;
-	private final int powersetSize;
-	private int currentElement;
-	
-	public PowersetIterator(Set<E> set) {
-		array = set.toArray((E[]) new Object[set.size()]);
-		powersetSize = (int) Math.pow(2, set.size());
-		currentElement = 0;
-	}
-		
+public class HashRelation<D,R> extends AbstractRelation<D, R, HashMap<D,Set<R>>> {
+
 	@Override
-	public boolean hasNext() {
-		return currentElement < powersetSize;
+	public HashMap<D, Set<R>> newMap() {
+		return new HashMap<D, Set<R>>();
 	}
 
 	@Override
-	public Set<E> next() {
-		Set<E> result = new HashSet<E>();
-		for (int i=0; i<array.length; i++) {
-			boolean bitSet = BigInteger.valueOf(currentElement).testBit(i); 
-			if (bitSet) {
-				result.add(array[i]);
-			}
-		}
-		currentElement++;
-		return result;
+	public HashSet<R> newSet() {
+		return new HashSet<R>();
 	}
 
-	@Override
-	public void remove() {
-		throw new UnsupportedOperationException("modification not supported");
-	}
 
 }

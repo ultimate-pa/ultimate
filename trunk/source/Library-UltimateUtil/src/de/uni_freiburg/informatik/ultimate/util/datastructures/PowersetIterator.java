@@ -24,70 +24,50 @@
  * licensors of the ULTIMATE Util Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util;
+package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
- * Filter a given Iterable. Iterator returns only elements on which a given
- * predicate evaluates to true.
- * @author Matthias Heizmann
- *
- * @param <T>
+ * Returns an Iterator that iterates over the powerset of a given set.
+ * @author heizmann@informatik.uni-freiburg.de
  */
-public class FilteredIterable<T> implements Iterable<T> {
-	final Iterable<T> m_Iterable;
-	final IPredicate<T> m_Predicate;
+public class PowersetIterator<E> implements Iterator<Set<E>> {
 	
-	public FilteredIterable(Iterable<T> iterable, IPredicate<T> remainingElements) {
-		m_Iterable = iterable;
-		m_Predicate = remainingElements;
+	private final E[] array;
+	private final int powersetSize;
+	private int currentElement;
+	
+	public PowersetIterator(Set<E> set) {
+		array = set.toArray((E[]) new Object[set.size()]);
+		powersetSize = (int) Math.pow(2, set.size());
+		currentElement = 0;
 	}
-	
+		
 	@Override
-	public Iterator<T> iterator() {
-		return new Iterator<T>() {
-			final Iterator<T> m_Iterator;
-			T m_next = null;
-			{
-				m_Iterator = m_Iterable.iterator();
-				if (m_Iterator.hasNext()) {
-					getNextThatSatisfiesPredicate();
-				}
-			}
-			private void getNextThatSatisfiesPredicate() {
-				if (m_Iterator.hasNext()) {
-					m_next = m_Iterator.next();
-					while (m_next != null && !m_Predicate.evaluate(m_next)) {
-						if (m_Iterator.hasNext()) {
-							m_next = m_Iterator.next();
-						} else {
-							m_next = null;
-						}
-					}
-				} else {
-					m_next = null;
-				}
-			}
+	public boolean hasNext() {
+		return currentElement < powersetSize;
+	}
 
-			@Override
-			public boolean hasNext() {
-				return m_next != null;
+	@Override
+	public Set<E> next() {
+		Set<E> result = new HashSet<E>();
+		for (int i=0; i<array.length; i++) {
+			boolean bitSet = BigInteger.valueOf(currentElement).testBit(i); 
+			if (bitSet) {
+				result.add(array[i]);
 			}
+		}
+		currentElement++;
+		return result;
+	}
 
-			@Override
-			public T next() {
-				T result = m_next;
-				getNextThatSatisfiesPredicate();
-				return result;
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-
-		};
+	@Override
+	public void remove() {
+		throw new UnsupportedOperationException("modification not supported");
 	}
 
 }

@@ -37,7 +37,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
-import de.uni_freiburg.informatik.ultimate.util.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
  * Partition set of terms into equivalence classes. 

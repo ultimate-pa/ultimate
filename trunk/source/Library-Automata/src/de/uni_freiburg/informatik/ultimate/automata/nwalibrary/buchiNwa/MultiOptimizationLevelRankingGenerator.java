@@ -39,7 +39,7 @@ import java.util.TreeSet;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.util.TreeRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 
 /**

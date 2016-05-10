@@ -11,7 +11,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.util.PowersetIterator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.PowersetIterator;
 
 public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRankingGenerator<LETTER, STATE, LevelRankingConstraintDrdCheck<LETTER, STATE>> {
 	

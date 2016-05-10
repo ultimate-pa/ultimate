@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Betim Musa (musab@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Util Library.
@@ -24,36 +24,11 @@
  * licensors of the ULTIMATE Util Library grant you additional permission 
  * to convey the resulting work.
  */
-/**
- * 
- */
-package de.uni_freiburg.informatik.ultimate.util;
-
-import java.util.HashMap;
-import java.util.Set;
-import java.util.TreeSet;
+package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
 /**
- * @author musab@informatik.uni-freiburg.de
- *
+ * One-valued enum (can be used for representing a Set<T> as a Map<T,IsContained>)
  */
-public class RelationWithTreeSet<D, R> extends AbstractRelation<D, R, HashMap<D, Set<R>>> {
-
-	@Override
-	public HashMap<D, Set<R>> newMap() {
-		return new HashMap<D, Set<R>>();
-	}
-
-	@Override
-	public TreeSet<R> newSet() {
-		return new TreeSet<R>();
-	}
-
-	@Override
-	public Set<R> getImage(D domainElem) {
-		return m_Map.get(domainElem);
-	}
-
-
-	
+public enum IsContained {
+ IsContained;
 }
