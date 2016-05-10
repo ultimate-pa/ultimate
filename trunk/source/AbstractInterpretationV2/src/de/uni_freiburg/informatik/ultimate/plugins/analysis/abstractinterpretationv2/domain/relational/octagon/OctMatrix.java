@@ -1183,15 +1183,31 @@ public class OctMatrix {
 		return n;
 	}
 
-	// TODO document
-	// - note that information is lost. Strong Closure on this and source in advance can reduce loss.
-	// - source must be different from target (= this)
 	/**
 	 * Copies selected block rows/columns of any matrix to this matrix.
-	 * The matrices can be of different size.
+	 * The matrices can be of different size. The source and target (this) matrix have to be different objects.
+	 * <p>
+	 * This method can also be used to permute the order of variables (that is, the order of block/rows columns).
+	 * The following ASCII art shows what this method does.
+	 * Each symbol from <code>· A B C D | -- ∞</code> depicts a 2x2 block.
+	 * The ∞-blocks are filled with {@link OctValue#INFINITY}.
+	 * <pre>
+	 * target (this)     source           result
+	 *                       x y            y   x
+	 * · · · · · ·       · · | | ·        · ∞ · ∞ · ·
+	 * · · · · · ·       · · | | ·        · ∞ · ∞ · ·
+	 * · · · · · ·     x ----A-B--      y ∞ D ∞ C ∞ ∞
+	 * · · · · · ·     y ----C-D--        · ∞ · ∞ · ·
+	 * · · · · · ·       · · | | ·      x ∞ B ∞ A ∞ ∞
+	 * · · · · · ·                        · ∞ · ∞ · ·
+	 *   1 ------------------> 3
+	 *       3 ------------> 2
+	 *   mapTargetVarToSourceVar
+	 * </pre>
+	 * Computing the closure in advance, can reduce information loss.
 	 * 
 	 * @param source
-	 *            Matrix to copy values from
+	 *            Matrix to copy values from. Must be a different object than this matrix.
 	 * @param mapTargetVarToSourceVar
 	 *            Indices of block rows/columns to be copied.
 	 *            The keys are indices in the source matrix.
@@ -1451,6 +1467,12 @@ public class OctMatrix {
 		// cached closures were already reset by "set"
 	}
 
+	/**
+	 * Computes the percentage of infinity-entries in the block lower half of this matrix.
+	 * Empty matrices have a infinity percentage of {@link Double#NaN}.
+	 * 
+	 * @return Percentage of infinity-entries in the block lower half of this matrix.
+	 */
 	public double infinityPercentageInBlockLowerHalf() {
 		if (mEntries.length == 0) {
 			return Double.NaN;
@@ -1520,6 +1542,7 @@ public class OctMatrix {
 		return toStringHalf();
 	}
 
+	/** @return Multi-line string representation of this matrix (including the coherent, block upper triangular part) */
 	public String toStringFull() {
 		final StringBuilder sb = new StringBuilder();
 		for (int row = 0; row < mSize; ++row) {
@@ -1534,6 +1557,7 @@ public class OctMatrix {
 		return sb.toString();
 	}
 
+	/** @return Multi-line string representation of this block lower triangular matrix */
 	public String toStringHalf() {
 		final StringBuilder sb = new StringBuilder();
 		int n = 2; // input of integer sequence floor(n^2 / 2 -1)

@@ -35,6 +35,11 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferen
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 
+/**
+ * Preferences and default values for the Octagon abstract domain.
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class OctPreferences {
 
 	public static enum WideningOperator {
