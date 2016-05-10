@@ -101,7 +101,7 @@ public class NewUltimateEmit extends Emit {
 		super.emitPreamble(node);
 		mWriter.println("import java.util.List;");
 		mWriter.println("import de.uni_freiburg.informatik.ultimate.models.ILocation;");
-		mWriter.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;");
+		mWriter.println("import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;");
 		if (needsArraysPackage(node)) {
 			mWriter.println("import java.util.Arrays;");
 		}

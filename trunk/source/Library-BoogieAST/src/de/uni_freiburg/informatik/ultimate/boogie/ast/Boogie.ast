@@ -1,10 +1,10 @@
-package de.uni_freiburg.informatik.ultimate.model.boogie.ast;
+package de.uni_freiburg.informatik.ultimate.boogie.ast;
 /* TODO: This should be BoogieType, but that package is not visible here */
 import de.uni_freiburg.informatik.ultimate.models.IType;
 import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.FailureType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 
 Project ::= units: Unit[];
  
