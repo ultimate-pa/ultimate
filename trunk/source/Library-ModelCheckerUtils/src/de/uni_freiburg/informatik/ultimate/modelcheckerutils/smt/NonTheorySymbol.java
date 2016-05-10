@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann
  *
  */
-public class NonTheorySymbol<SYMBOL> {
+public abstract class NonTheorySymbol<SYMBOL> {
 	private final SYMBOL m_Symbol;
 
 	private NonTheorySymbol(SYMBOL symbol) {
