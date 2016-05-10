@@ -976,8 +976,8 @@ public class SmtUtils {
 					} else {
 						renamedResultVars.add(resultVar);
 					}
-					renamedResultVars.addAll(innerQuantifiedVars);
 				}
+				renamedResultVars.addAll(innerQuantifiedVars);
 				final Term resultBody;
 				if (substitutionMapping.isEmpty()) {
 					resultBody = innerQuantifiedFormula.getSubformula();
