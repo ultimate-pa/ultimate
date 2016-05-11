@@ -339,11 +339,19 @@ public final class ISOIEC9899TC3 {
 				long maxValue = (long) Math.pow(2, bitlength);
 				value = value.add(BigInteger.valueOf(maxValue));
 			}
-			resultLiteral = new BitvecLiteral(loc, value.toString(), bitlength);
+			final BigInteger valueInRange = constructBitvectorInRange(value, bitlength);
+			resultLiteral = new BitvecLiteral(loc, valueInRange.toString(), bitlength);
 		} else {
 			resultLiteral = new IntegerLiteral(loc, value.toString());
 		}
 		return resultLiteral;
+	}
+	
+	/**
+	 * @return the result of value % 2^bitlength
+	 */
+	public static BigInteger constructBitvectorInRange(BigInteger value, int bitlength) {
+		return value.mod(new BigInteger("2").pow(bitlength));
 	}
 	
 	private static class IntegerConstant {
