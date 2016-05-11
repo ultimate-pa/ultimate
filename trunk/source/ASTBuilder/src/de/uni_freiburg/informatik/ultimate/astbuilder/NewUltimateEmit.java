@@ -24,19 +24,14 @@
  * licensors of the ULTIMATE ASTBuilder plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.astbuilder;
 
 import java.io.IOException;
 
 public class NewUltimateEmit extends Emit {
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.astbuilder.Emit#emitClassDeclaration
-	 * (de.uni_freiburg.informatik.ultimate.astbuilder.Node)
-	 */
-	// @Override
+	
+	@Override
 	public void emitClassDeclaration(Node node) throws IOException {
 		mWriter.println("public " + (node.isAbstract() ? "abstract " : "") + "class " + node.getName()
 				+ (node.getParent() != null ? " extends " + node.getParent().getName() : " extends BoogieASTNode")
@@ -90,13 +85,7 @@ public class NewUltimateEmit extends Emit {
 			emitConstructor(node, true);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.astbuilder.Emit#emitPreamble(de.
-	 * uni_freiburg.informatik.ultimate.astbuilder.Node)
-	 */
-	// @Override
+	@Override
 	public void emitPreamble(Node node) throws IOException {
 		super.emitPreamble(node);
 		mWriter.println("import java.util.List;");
@@ -119,10 +108,11 @@ public class NewUltimateEmit extends Emit {
 				continue;
 			}
 			System.out.println(parameters[i].getName() + " is an array? " + isArray(parameters[i].getType()));
-			
+
 			if (isArray(parameters[i].getType())) {
 				mWriter.println(String.format("        if(%s!=null){", parameters[i].getName()));
-				mWriter.println(String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
+				mWriter.println(
+						String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
 				mWriter.println("        }");
 			} else {
 				mWriter.println("        children.add(" + parameters[i].getName() + ");");
@@ -140,11 +130,11 @@ public class NewUltimateEmit extends Emit {
 
 	private boolean needsArraysPackage(Node node) {
 		for (Parameter s : node.getParameters()) {
-			
-			if(isNoRegularChild(s.getType())){
+
+			if (isNoRegularChild(s.getType())) {
 				continue;
 			}
-			
+
 			if (isArray(s.getType())) {
 				return true;
 			}
