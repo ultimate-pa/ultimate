@@ -3,7 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: CFGConsoleOut Plug-in
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.output.cfgconsoleout;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
  Library-log4j,
  Library-SMTLIB
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

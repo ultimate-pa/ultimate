@@ -4,7 +4,8 @@ Bundle-Name: AbstractInterpretation
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator
-Require-Bundle: Library-log4j,
+Require-Bundle: Library-UltimateCore,
+ Library-log4j,
  Library-SMTLIB,
  Library-ModelCheckerUtils,
  Library-UltimateUtil,

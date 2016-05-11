@@ -5,6 +5,7 @@ Bundle-SymbolicName: DSITransformer;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.Activator
 Require-Bundle: UltimateCore,
+ Library-UltimateCore,
  Library-BoogieAST,
  BoogieParser,
  Library-log4j

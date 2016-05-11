@@ -4,7 +4,8 @@ Bundle-Name: IRSDependencies
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
  Library-log4j,
  Library-ModelCheckerUtils,
  Library-UltimateUtil,

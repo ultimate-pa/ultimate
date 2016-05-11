@@ -5,7 +5,8 @@ Bundle-SymbolicName: UltimateTest;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Require-Bundle: Library-log4j,
+Require-Bundle: Library-UltimateCore,
+ Library-log4j,
  org.junit,
  Library-UltimateUtil,
  UltimateCore,

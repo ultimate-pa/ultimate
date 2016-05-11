@@ -4,7 +4,8 @@ Bundle-Name: WebInterface
 Bundle-SymbolicName: WebInterface;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: webinterface.Activator
-Require-Bundle: Library-UltimateUtil,
+Require-Bundle: Library-UltimateCore, 
+ Library-UltimateUtil,
  UltimateCore,
  WebUltimateBridge,
  Library-log4j

@@ -4,7 +4,8 @@ Bundle-Name: CDTParser
 Bundle-SymbolicName: CDTParser;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.cdt.parser.Activator
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-UltimateCore, 
+ UltimateCore,
  org.eclipse.cdt.core;bundle-version="5.6.0",
  Library-log4j
 Bundle-ActivationPolicy: lazy

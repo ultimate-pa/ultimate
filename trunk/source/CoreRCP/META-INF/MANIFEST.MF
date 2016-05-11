@@ -6,7 +6,7 @@ Bundle-SymbolicName: UltimateCore;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator
 Require-Bundle: org.eclipse.core.runtime;visibility:=reexport,
- Library-UltimateCore;visibility:=reexport,
+ Library-UltimateCore,
  Library-SMTLIB,
  Library-UltimateUtil,
  Library-log4j,

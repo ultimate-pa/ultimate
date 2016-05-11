@@ -4,7 +4,8 @@ Bundle-Name: PEAtoBoogie
 Bundle-SymbolicName: PEAtoBoogie;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: pea_to_boogie.Activator
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
  Library-log4j,
  Library-BoogieAST,
  Library-PEA,
