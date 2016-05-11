@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.models.IElement;
 public class LoopEntryAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String KEY = ConditionAnnotation.class.getName();
+	private static final String KEY = LoopEntryAnnotation.class.getName();
 
 	@Visualizable
 	private final LoopEntryType mType;
