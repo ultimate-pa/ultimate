@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -121,10 +122,24 @@ public class Nnf {
 				ApplicationTerm appTerm = (ApplicationTerm) term; 
 				String functionName = appTerm.getFunction().getName();
 				if (functionName.equals("and")) {
-					super.convert(term);
+					final Term flattened = Util.and(m_Script, appTerm.getParameters());
+					if (SmtUtils.isFunctionApplication(flattened, "and")) {
+						super.convert(flattened);
+					} else {
+						// term was simplified by flattening, top function 
+						// symbol changed, call convert again
+						convert(flattened);
+					}
 					return;
 				} else if (functionName.equals("or")) {
-					super.convert(term);
+					final Term flattened = Util.or(m_Script, appTerm.getParameters());
+					if (SmtUtils.isFunctionApplication(flattened, "or")) {
+						super.convert(flattened);
+					} else {
+						// term was simplified by flattening, top function 
+						// symbol changed, call convert again
+						convert(flattened);
+					}
 					return;
 				} else if (functionName.equals("not")) {
 					assert appTerm.getParameters().length == 1;
@@ -257,6 +272,7 @@ public class Nnf {
 			return functionName.equals("xor") || 
 					(functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm));
 		}
+		
 		
 		private void convertNot(Term notParam, Term notTerm) {
 			assert notParam.getSort().getName().equals("Bool") : "Input is not Bool";

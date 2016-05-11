@@ -1037,5 +1037,19 @@ public class SmtUtils {
 		final Term result = script.quantifier(qFormula.getQuantifier(), vars, newBody);
 		return result;
 	}
+	
+	
+	/**
+	 * @return true iff term is {@link ApplicationTerm} with functionName.
+	 */
+	public static boolean isFunctionApplication(Term term, String functionName) {
+		if (term instanceof ApplicationTerm) {
+			FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
+			if (fun.getName().equals(functionName)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 }
