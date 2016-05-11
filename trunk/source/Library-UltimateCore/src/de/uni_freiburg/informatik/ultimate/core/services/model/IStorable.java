@@ -24,12 +24,6 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-/*
- * Project:	CoreRCP
- * Package:	de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain
- * File:	IStorable.java created on Mar 8, 2010 by Björn Buchhold
- *
- */
 package de.uni_freiburg.informatik.ultimate.core.services.model;
 
 /**

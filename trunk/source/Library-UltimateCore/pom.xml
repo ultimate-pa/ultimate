@@ -73,7 +73,7 @@
 				<configuration>
 					<filesets>
 						<fileset>
-							<directory>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain</directory>
+							<directory>${workspaceDir}/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/model/toolchain</directory>
 							<includes>
 								<include>ModelType.java</include>
 								<include>ObjectFactory.java</include>

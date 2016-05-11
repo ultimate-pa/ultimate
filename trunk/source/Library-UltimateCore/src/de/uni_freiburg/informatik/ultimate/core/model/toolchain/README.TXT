@@ -1,5 +1,5 @@
 The java files were automatically generated from toolchain.xsd with the following command:
-xjc -d ../../../../.. -p de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain toolchain.xsd
+xjc -d ../../../../../../.. -p de.uni_freiburg.informatik.ultimate.core.model.toolchain toolchain.xsd
 
 xjc should be distributed with any variety of Java JDK 6.0. 
 Mac users might have to look for it under /System/Library/Frameworks/JavaVM.framework/Commands.
