@@ -28,63 +28,41 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
 
-import javax.xml.XMLConstants;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.validation.SchemaFactory;
 
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
-import org.osgi.framework.Bundle;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.model.toolchain.SubchainType;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainFileValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
- * This implements the datastructure representing a Ultimate toolchain. It can
- * be used for constructing a Ultimate toolchain manually or from an XML
- * specification file.
+ * This implements the datastructure representing a Ultimate toolchain. It can be used for constructing a Ultimate
+ * toolchain manually or from an XML specification file.
  * 
- * @author Björn Buchhold 
+ * @author Björn Buchhold
  * @author Christian Simon
  * 
  */
 public class ToolchainData implements IToolchainData {
-
-	private ObjectFactory mObjectFactory;
-	private ToolchainListType mToolchain;
-	private ToolchainStorage mStorage;
+	
+	private final ToolchainListType mToolchain;
+	private final ToolchainStorage mStorage;
 
 	/**
 	 * This constructor creates an empty toolchain.
 	 */
 	public ToolchainData() {
-		mObjectFactory = new ObjectFactory();
-		mToolchain = mObjectFactory.createToolchainListType();
+		mToolchain = new ToolchainFileValidator().createEmptyToolchain();
 		mStorage = new ToolchainStorage();
-	}
-
-	private boolean isReady(Bundle bundle) {
-		return bundle != null
-				&& (bundle.getState() & (Bundle.RESOLVED | Bundle.STARTING | Bundle.ACTIVE | Bundle.STOPPING)) != 0;
 	}
 
 	/**
@@ -97,55 +75,14 @@ public class ToolchainData implements IToolchainData {
 	 * @throws SAXException
 	 * @throws MalformedURLException
 	 */
-	@SuppressWarnings({ "unchecked" })
-	public ToolchainData(String xmlfile) throws JAXBException, FileNotFoundException, SAXException {
-		mObjectFactory = new ObjectFactory();
-		JAXBContext jc = JAXBContext.newInstance("de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain");
-
-		// all this effort just for validating the input XML file...
-		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
-
-		if (!isReady(bundle)) {
-			System.err.println("Bundle not ready");
-		}
-
-		URL fullPathString = FileLocator.find(bundle, new Path(
-				"src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain/toolchain.xsd"), null);
-		if (fullPathString == null) {
-			try {
-				fullPathString = new URL(
-						"src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain/toolchain.xsd");
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			}
-		}
-
-		Unmarshaller u = jc.createUnmarshaller();
-		u.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(fullPathString));
-
-		JAXBElement<ToolchainListType> doc = (JAXBElement<ToolchainListType>) u.unmarshal(new FileInputStream(xmlfile));
-
-		mToolchain = doc.getValue();
+	public ToolchainData(final String xmlfile) throws JAXBException, FileNotFoundException, SAXException {
+		mToolchain = new ToolchainFileValidator().loadValidatedToolchain(xmlfile);
 		mStorage = new ToolchainStorage();
 	}
 
 	/**
-	 * This method marshals a toolchain into an xml file.
-	 * 
-	 * @param xmlfile
-	 * @throws JAXBException
-	 * @throws FileNotFoundException
-	 */
-	public void writeToFile(String xmlfile) throws JAXBException, FileNotFoundException {
-		JAXBContext jc = JAXBContext.newInstance("de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain");
-		JAXBElement<ToolchainListType> newdoc = mObjectFactory.createToolchain(this.mToolchain);
-		Marshaller m = jc.createMarshaller();
-		m.marshal(newdoc, new FileOutputStream(xmlfile));
-	}
-
-	/**
-	 * This method adds a Plugin to the Toolchain. The plugin object must have
-	 * been previously instantiated using ObjectFactory.
+	 * This method adds a Plugin to the Toolchain. The plugin object must have been previously instantiated using
+	 * ObjectFactory.
 	 * 
 	 * @param plugin
 	 *            object of type PluginType
@@ -155,8 +92,7 @@ public class ToolchainData implements IToolchainData {
 	}
 
 	/**
-	 * This method adds a plugin / tool to the toolchain by creating a new
-	 * plugin object from a plugin name first.
+	 * This method adds a plugin / tool to the toolchain by creating a new plugin object from a plugin name first.
 	 * 
 	 * @param name
 	 *            of the desired plugin
@@ -168,8 +104,8 @@ public class ToolchainData implements IToolchainData {
 	}
 
 	/**
-	 * This method adds a Subchain to the Toolchain. The subchain object must
-	 * have been previously instantiated using ObjectFactory.
+	 * This method adds a Subchain to the Toolchain. The subchain object must have been previously instantiated using
+	 * ObjectFactory.
 	 * 
 	 * @param subchain
 	 *            object of type SubchainType
@@ -179,8 +115,7 @@ public class ToolchainData implements IToolchainData {
 	}
 
 	/**
-	 * This method appends an already existing object of type Toolchain to the
-	 * end of this toolchain.
+	 * This method appends an already existing object of type Toolchain to the end of this toolchain.
 	 * 
 	 * @param tc
 	 *            the Toolchain object to be appended to this Toolchain object
@@ -189,15 +124,18 @@ public class ToolchainData implements IToolchainData {
 		mToolchain.getPluginOrSubchain().addAll(tc.getToolchain().getPluginOrSubchain());
 	}
 
+	@Override
 	public ToolchainListType getToolchain() {
 		return mToolchain;
 	}
-	
-	public IToolchainStorage getStorage(){
+
+	@Override
+	public IToolchainStorage getStorage() {
 		return mStorage;
 	}
-	
-	public IUltimateServiceProvider getServices(){
+
+	@Override
+	public IUltimateServiceProvider getServices() {
 		return mStorage;
 	}
 }

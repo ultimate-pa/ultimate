@@ -59,6 +59,7 @@ import org.xml.sax.SAXException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainFileValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
@@ -109,7 +110,7 @@ public class AnalysisChooseDialog extends Dialog {
 	 * @throws SAXException
 	 */
 	public ToolchainData open() throws FileNotFoundException, JAXBException, SAXException {
-		ToolchainData result_chain;
+		final ToolchainData resultChain;
 		createContents();
 		mShell.layout();
 		mShell.setSize(mShell.computeSize(SWT.DEFAULT, SWT.DEFAULT));
@@ -122,26 +123,26 @@ public class AnalysisChooseDialog extends Dialog {
 
 		if (mToolchainFile != null) {
 			mLogger.info("Reading toolchain file from " + mToolchainFile);
-			result_chain = new ToolchainData(mToolchainFile);
+			resultChain = new ToolchainData(mToolchainFile);
 		} else if (mResult != null) {
 			// convert selection into a toolchain
-			result_chain = new ToolchainData();
+			resultChain = new ToolchainData();
 			for (ITool t : mResult) {
-				result_chain.addPlugin(t.getPluginID());
+				resultChain.addPlugin(t.getPluginID());
 			}
-			//save this toolchain in a tempfile for redo actions 
+			// save this toolchain in a tempfile for redo actions
 			String tDir = System.getProperty("java.io.tmpdir");
 			File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
-			result_chain.writeToFile(tmpToolchain.getAbsolutePath());
+			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), resultChain.getToolchain());
 			new UltimatePreferenceStore(GuiController.sPLUGINID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
 					tmpToolchain.getAbsolutePath());
 			mLogger.info("Saved custom toolchain to " + tmpToolchain.getAbsolutePath());
 
 		} else {
-			result_chain = null;
+			resultChain = null;
 		}
 
-		return result_chain;
+		return resultChain;
 	}
 
 	/**
@@ -323,10 +324,9 @@ public class AnalysisChooseDialog extends Dialog {
 	 * function for the listeners... will move the items appropriate
 	 * 
 	 * @param swtDirection
-	 *            the SWT.Direction constant SWT.UP will move an item up in the
-	 *            resulttable SWT.DOWN will move an item down in the resulttable
-	 *            SWT.LEFT will remove an item from the resulttable SWT.RIGHT
-	 *            will add an item to the resulttable
+	 *            the SWT.Direction constant SWT.UP will move an item up in the resulttable SWT.DOWN will move an item
+	 *            down in the resulttable SWT.LEFT will remove an item from the resulttable SWT.RIGHT will add an item
+	 *            to the resulttable
 	 */
 	private void moveItem(int swtDirection) {
 		// get currently selected items
