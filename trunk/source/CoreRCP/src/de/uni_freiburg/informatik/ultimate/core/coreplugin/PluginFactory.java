@@ -319,17 +319,17 @@ final class PluginFactory implements IServiceFactoryFactory {
 	private String getExtensionPointFromClass(Class<?> clazz) {
 		String qualifiedName = clazz.getName();
 		switch (qualifiedName) {
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IController":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IController":
 			return ExtensionPoints.EP_CONTROLLER;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource":
+		case "de.uni_freiburg.informatik.ultimate.core.model.ISource":
 			return ExtensionPoints.EP_SOURCE;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IOutput":
 			return ExtensionPoints.EP_OUTPUT;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IGenerator":
 			return ExtensionPoints.EP_GENERATOR;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IAnalysis":
 			return ExtensionPoints.EP_ANALYSIS;
-		case "de.uni_freiburg.informatik.ultimate.ep.interfaces.IServiceFactory":
+		case "de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory":
 			return ExtensionPoints.EP_SERVICE;
 		default:
 			throw new IllegalArgumentException();
