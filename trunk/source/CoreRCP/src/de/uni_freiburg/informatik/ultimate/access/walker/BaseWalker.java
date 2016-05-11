@@ -50,7 +50,7 @@ public abstract class BaseWalker implements IWalker {
 	public boolean addObserver(IObserver v) {
 		return mObservers.add(v);
 	}
-
+ 
 	@Override
 	public boolean removeObserver(IObserver observer) {
 		return mObservers.remove(observer);
@@ -75,6 +75,7 @@ public abstract class BaseWalker implements IWalker {
 	 *            usually the starting point
 	 * @throws Throwable iff an error occurs during plugin execution and the toolchain should be aborted. 
 	 */
+	@Override
 	public void run(IElement inode) throws Throwable {
 		if (inode != null) {
 			for (IObserver v : mObservers) {

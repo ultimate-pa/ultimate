@@ -7,6 +7,7 @@
     </description>
 
     <target name="generate_ast">
+    	<echo>Classpath will be set to ${astbuilderDir}:${cupDir}</echo>
         <java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main" classpath="${astbuilderDir}:${cupDir}" fork="true">
         	<arg value="-ultimatenew" />
             <arg value="Boogie.ast" />
