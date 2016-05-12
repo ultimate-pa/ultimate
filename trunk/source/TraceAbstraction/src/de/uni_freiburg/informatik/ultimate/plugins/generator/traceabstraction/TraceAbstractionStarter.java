@@ -35,7 +35,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
 
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	private final IUltimateServiceProvider m_Services;
 	private final IToolchainStorage m_ToolchainStorage;
 

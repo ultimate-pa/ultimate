@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.observers;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
@@ -36,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boog
 public class ASTDependencyFinder extends BaseObserver{
 
 	protected final SymbolTable mSymbolTable;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
-	public ASTDependencyFinder(SymbolTable symbolTable, Logger logger) {
+	public ASTDependencyFinder(SymbolTable symbolTable, ILogger logger) {
 		super();
 		mSymbolTable = symbolTable;
 		mLogger = logger;

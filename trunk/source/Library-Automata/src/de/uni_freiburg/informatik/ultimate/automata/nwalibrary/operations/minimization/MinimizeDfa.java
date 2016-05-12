@@ -39,7 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -65,7 +65,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     /**
      * The jLogger instance.
      */
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
     /**
      * The resulting automaton.
      */

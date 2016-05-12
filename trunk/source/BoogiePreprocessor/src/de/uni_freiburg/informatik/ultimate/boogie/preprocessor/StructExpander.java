@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
@@ -189,7 +189,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
-	protected StructExpander(BoogiePreprocessorBacktranslator translator, Logger logger) {
+	protected StructExpander(BoogiePreprocessorBacktranslator translator, ILogger logger) {
 		mTranslator = translator;
 		mFlattenCache = new HashMap<BoogieType, BoogieType>();
 		mStructTypes = new HashMap<String, TypeConstructor>();

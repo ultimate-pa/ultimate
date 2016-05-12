@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -78,9 +78,9 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	private NestedWordAutomaton<CodeBlock, IPredicate> m_LassoAutomaton;
 	private final StateFactory<IPredicate> m_PredicateFactory;
 	private final SmtManager m_SmtManager;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
-	public LassoExtractorBuchi(IUltimateServiceProvider services, RootNode rootNode, SmtManager smtManager, Logger logger) 
+	public LassoExtractorBuchi(IUltimateServiceProvider services, RootNode rootNode, SmtManager smtManager, ILogger logger) 
 			throws AutomataLibraryException {
 		m_Services = services;
 		mLogger = logger;

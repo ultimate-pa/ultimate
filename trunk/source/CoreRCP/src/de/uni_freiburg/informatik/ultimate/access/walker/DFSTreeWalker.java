@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.access.walker;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IManagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
  */
 public class DFSTreeWalker extends BaseWalker {
 
-	public DFSTreeWalker(Logger logger) {
+	public DFSTreeWalker(ILogger logger) {
 		super(logger);
 	}
 

@@ -28,7 +28,7 @@ package pea.modelchecking;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -56,7 +56,7 @@ public class FormulaXML2JConverter {
 
     private static final String DEFAULT_LOGGER = "FormulaXML2JConverter";
 
-    private Logger logger = null;
+    private ILogger logger = null;
     
     // Flag to choose whether booleanDecision or ZDecision should be generated from a formula 
     protected boolean useZDecision = false;
@@ -70,15 +70,15 @@ public class FormulaXML2JConverter {
      * <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public FormulaXML2JConverter(String loggerName, boolean useZDecision) {
         if (loggerName.equals("")) {
-            this.logger = Logger
+            this.logger = ILogger
                     .getLogger(FormulaXML2JConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
         this.useZDecision = useZDecision;
     }

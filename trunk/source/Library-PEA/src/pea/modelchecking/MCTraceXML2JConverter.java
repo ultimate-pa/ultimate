@@ -26,7 +26,7 @@
  */
 package pea.modelchecking;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
@@ -58,7 +58,7 @@ public class MCTraceXML2JConverter {
 
     private static final String DEFAULT_LOGGER = "MCTraceXML2JConverter";
 
-    private Logger logger = null;
+    private ILogger logger = null;
 
     private DOMParser parser = null;
 
@@ -73,15 +73,15 @@ public class MCTraceXML2JConverter {
      * <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public MCTraceXML2JConverter(String loggerName, boolean useZDecision) throws Exception {
         if (loggerName.equals("")) {
-            this.logger = Logger
+            this.logger = ILogger
                     .getLogger(MCTraceXML2JConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
 
         this.formulaConverter = new FormulaXML2JConverter(useZDecision);

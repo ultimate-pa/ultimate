@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -106,7 +106,7 @@ public class Compiler {
     private String peaNetPrefix = "peaNet";
     private String peaPrefix = "pea";
 
-    private Logger logger = null;
+    private ILogger logger = null;
 
     private boolean parallel = false;
     
@@ -130,14 +130,14 @@ public class Compiler {
      * <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public Compiler(String loggerName, boolean useZDecision) throws Exception {
         if (loggerName.equals("")) {
-            this.logger = Logger.getLogger(Compiler.DEFAULT_LOGGER);
+            this.logger = ILogger.getLogger(Compiler.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
 
         this.mcFormCompiler = new TestForm2MCFormCompiler();

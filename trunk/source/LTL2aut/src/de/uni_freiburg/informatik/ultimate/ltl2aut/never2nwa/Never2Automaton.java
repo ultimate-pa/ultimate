@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -81,7 +81,7 @@ public class Never2Automaton {
 
 	private final IUltimateServiceProvider mServices;
 	private final AstNode mNeverClaim;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final Map<String, CheckableExpression> mIRS;
 	private final CodeBlockFactory mCodeblockFactory;
 
@@ -100,7 +100,7 @@ public class Never2Automaton {
 	 * @throws Exception
 	 */
 	public Never2Automaton(AstNode ast, BoogieSymbolTable boogieSymbolTable, Map<String, CheckableExpression> irs,
-			Logger logger, IUltimateServiceProvider services, CodeBlockFactory cbf) throws Exception {
+			ILogger logger, IUltimateServiceProvider services, CodeBlockFactory cbf) throws Exception {
 		mServices = services;
 		mLogger = logger;
 		mNeverClaim = ast;

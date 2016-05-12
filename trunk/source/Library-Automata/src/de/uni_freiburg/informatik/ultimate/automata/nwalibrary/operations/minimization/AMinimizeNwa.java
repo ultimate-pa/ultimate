@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -59,7 +59,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	/**
 	 * The logger.
 	 */
-	protected final Logger s_logger;
+	protected final ILogger s_logger;
 	
 	/**
 	 * The operation name.

@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigInteger;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -56,10 +56,10 @@ public class CongruenceEvaluatorFactory
 	private static final int ARITY_MAX = 2;
 	private static final int BUFFER_MAX = 100;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final String mSettingsEvaluatorType;
 
-	public CongruenceEvaluatorFactory(final Logger logger) {
+	public CongruenceEvaluatorFactory(final ILogger logger) {
 		mLogger = logger;
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mSettingsEvaluatorType = ups.getString(CongruenceDomainPreferences.LABEL_EVALUATOR_TYPE);

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -41,11 +40,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 
 /**
- * This class implements an Eclipse Job processing a Ultimate toolchain using the methods publicly available from ICore.
+ * This class implements an Eclipse Job processing a Ultimate toolchain using the methods publicly available from ICore<ToolchainListType>.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 public class DefaultToolchainJob extends BasicToolchainJob {
 
 	private File[] mInputFiles;
-	protected IToolchain mToolchain;
+	protected IToolchain<ToolchainListType> mToolchain;
 
 	/**
 	 * Use this constructor to run a new toolchain
@@ -66,11 +66,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 *            The logger that is used to print information about the toolchain execution.
 	 * @param input
 	 *            The files on which the toolchain should run.
-	 * @param preludefile
-	 *            A {@link PreludeProvider} describing the prelude the parser should use.
 	 */
-	public DefaultToolchainJob(String name, ICore core, IController controller, Logger logger, File[] input,
-			PreludeProvider preludefile) {
+	public DefaultToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller, ILogger logger, File[] input) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
@@ -87,7 +84,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param logger
 	 * @param toolchain
 	 */
-	public DefaultToolchainJob(String name, ICore core, IController controller, Logger logger, IToolchain toolchain) {
+	public DefaultToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller, ILogger logger, IToolchain<ToolchainListType> toolchain) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
@@ -104,10 +101,9 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param logger
 	 * @param data
 	 * @param input
-	 * @param prelude
 	 */
-	public DefaultToolchainJob(String name, ICore core, IController controller, Logger logger, ToolchainData data,
-			File[] input, PreludeProvider prelude) {
+	public DefaultToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller, ILogger logger, ToolchainData data,
+			File[] input) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
@@ -116,7 +112,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		mJobMode = ChainMode.DEFAULT;
 	}
 
-	private void setToolchain(IToolchain toolchain) {
+	private void setToolchain(IToolchain<ToolchainListType> toolchain) {
 		assert toolchain != null;
 		mToolchain = toolchain;
 	}
@@ -159,7 +155,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mToolchain.init(tpm);
 			tpm.worked(1);
 
-			IToolchainData data = mToolchain.getCurrentToolchainData();
+			IToolchainData<ToolchainListType> data = mToolchain.getCurrentToolchainData();
 			if (data == null) {
 				return Status.CANCEL_STATUS;
 			}

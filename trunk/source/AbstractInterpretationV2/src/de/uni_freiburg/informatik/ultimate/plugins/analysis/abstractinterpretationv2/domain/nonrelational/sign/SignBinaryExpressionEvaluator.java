@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -58,7 +58,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	protected IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
 	protected BinaryExpression.Operator mOperator;
 	protected final Set<String> mVariableSet;
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 	protected final EvaluatorType mEvaluatorType;
 
 	/**

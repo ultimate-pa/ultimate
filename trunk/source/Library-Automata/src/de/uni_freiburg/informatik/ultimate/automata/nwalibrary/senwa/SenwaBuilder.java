@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -54,7 +54,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	Map<STATE,Map<STATE,STATE>> m_Entry2Operand2Result = new HashMap<STATE,Map<STATE,STATE>>();
 	
 	
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	
 	@Override

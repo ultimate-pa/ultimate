@@ -30,7 +30,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
@@ -104,9 +104,9 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 		try {
 			FileWriter fw = new FileWriter(mLogFile, true);
 
-			Logger log = Logger.getLogger(getUltimateTestSuiteClass());
+			ILogger log = ILogger.getLogger(getUltimateTestSuiteClass());
 			if (log.getAllAppenders().hasMoreElements()) {
-				Logger.getLogger(getUltimateTestSuiteClass()).info(
+				ILogger.getLogger(getUltimateTestSuiteClass()).info(
 						"Writing " + getDescriptiveLogName() + " for " + getUltimateTestSuiteClass().getCanonicalName()
 								+ " to " + mLogFile.getAbsolutePath());
 			}

@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.Lasso;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
@@ -89,7 +89,7 @@ public class LassoBuilder {
 
 	private PreprocessingBenchmark m_PreprocessingBenchmark;
 
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 
 	private final NlaHandling m_NlaHandling;
 	
@@ -101,7 +101,7 @@ public class LassoBuilder {
 	 * @param stem the stem transition
 	 * @param loop the loop transition
 	 */
-	public LassoBuilder(Logger logger, Script script, Boogie2SMT boogie2smt, TransFormula stem,
+	public LassoBuilder(ILogger logger, Script script, Boogie2SMT boogie2smt, TransFormula stem,
 			TransFormula loop, NlaHandling nlaHandling) {
 		assert script != null;
 		assert boogie2smt != null;

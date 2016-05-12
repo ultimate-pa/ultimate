@@ -63,7 +63,7 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 		Object currentInstance = null;
 		try {
 			currentInstance = classUnderTest.getOnlyConstructor().newInstance();
-		} catch (Exception e1) {
+		} catch (Throwable e1) {
 			e1.printStackTrace();
 			return tests;
 		}

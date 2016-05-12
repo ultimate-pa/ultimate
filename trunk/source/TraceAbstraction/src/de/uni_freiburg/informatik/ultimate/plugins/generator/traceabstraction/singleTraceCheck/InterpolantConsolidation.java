@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -97,7 +97,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final SmtManager m_SmtManager;
 	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	private final PredicateUnifier m_PredicateUnifier;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	private final CachingHoareTripleChecker m_HoareTripleChecker;
 
 	protected final InterpolantConsolidationBenchmarkGenerator m_InterpolantConsolidationBenchmarkGenerator;
@@ -112,7 +112,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
 			IUltimateServiceProvider services,
-			Logger logger, 
+			ILogger logger, 
 			PredicateUnifier predicateUnifier,
 			InterpolatingTraceChecker tc,
 			TAPreferences taPrefs) throws OperationCanceledException {

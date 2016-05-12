@@ -33,7 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -53,10 +53,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
  */
 public class AssumeFinder extends BaseObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final LinkedHashMap<RCFGEdge, List<AssumeStatement>> mEdgesWithAssumes;
 
-	public AssumeFinder(Logger logger) {
+	public AssumeFinder(ILogger logger) {
 		mLogger = logger;
 		mEdgesWithAssumes = new LinkedHashMap<>();
 	}

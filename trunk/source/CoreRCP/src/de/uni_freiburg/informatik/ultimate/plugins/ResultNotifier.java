@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -69,7 +69,7 @@ public class ResultNotifier {
 	}
 
 	private final IController mController;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
 	public ResultNotifier(IController controller, IUltimateServiceProvider services) {

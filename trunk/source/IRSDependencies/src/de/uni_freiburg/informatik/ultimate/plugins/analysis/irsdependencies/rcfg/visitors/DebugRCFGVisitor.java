@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -42,7 +42,7 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 	private StringBuilder mStringBuilder;
 	public final int mLimit;
 
-	public DebugRCFGVisitor(Logger logger, int limit) {
+	public DebugRCFGVisitor(ILogger logger, int limit) {
 		super(logger);
 		mPathCount = 0;
 		mNodeCount = 0;

@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
@@ -65,13 +65,13 @@ public class NoTimeoutTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IResultService resultService) {
-
+	public TestResult getTestResult(IUltimateServiceProvider services) {
 		setResultCategory("");
 		setResultMessage("");
 
-		Logger log = Logger.getLogger(NoTimeoutTestResultDecider.class);
-		Collection<String> customMessages = new LinkedList<String>();
+		final IResultService resultService = services.getResultService();
+		final ILogger log = services.getLoggingService().getLogger(NoTimeoutTestResultDecider.class);
+		final Collection<String> customMessages = new LinkedList<String>();
 		customMessages.add("Expecting results to not contain TimeoutResult or ExceptionOrErrorResult");
 		boolean fail = false;
 		Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
@@ -103,11 +103,10 @@ public class NoTimeoutTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IResultService resultService, Throwable e) {
+	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
 		setResultCategory("Unexpected exception");
 		setResultMessage("Unexpected exception: " + e.getMessage());
-		TestUtil.logResults(Logger.getLogger(NoTimeoutTestResultDecider.class), mInputFileNames, true,
-				new ArrayList<String>(), resultService);
+		TestUtil.logResults(NoTimeoutTestResultDecider.class, mInputFileNames, true, new ArrayList<String>(), services);
 		return TestResult.FAIL;
 	}
 

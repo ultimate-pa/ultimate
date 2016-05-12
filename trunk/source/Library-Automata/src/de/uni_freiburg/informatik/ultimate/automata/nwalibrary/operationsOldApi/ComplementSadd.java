@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpt
 public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 
 	protected INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	protected INestedWordAutomatonOldApi<LETTER, STATE> m_DeterminizedOperand;

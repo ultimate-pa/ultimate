@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AnnotateAndAssertCodeBlocks {
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	protected final Script m_Script;
 	protected final SmtManager m_SmtManager;
@@ -66,7 +66,7 @@ public class AnnotateAndAssertCodeBlocks {
 	protected static final String LOCVARASSIGN_PENDINGCONTEXT = "_LocVarAssignPendingContext";
 	protected static final String OLDVARASSIGN_PENDINGCONTEXT = "_OldVarAssignPendingContext";
 
-	public AnnotateAndAssertCodeBlocks(SmtManager smtManager, NestedFormulas<Term, Term> nestedSSA, Logger logger) {
+	public AnnotateAndAssertCodeBlocks(SmtManager smtManager, NestedFormulas<Term, Term> nestedSSA, ILogger logger) {
 		mLogger = logger;
 		m_SmtManager = smtManager;
 		m_Script = smtManager.getScript();

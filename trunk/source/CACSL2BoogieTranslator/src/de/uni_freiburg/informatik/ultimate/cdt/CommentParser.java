@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.IASTComment;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
@@ -77,7 +77,7 @@ public class CommentParser {
 	 * The compiled pattern to use.
 	 */
 	private Pattern pattern;
-	private Logger mLogger;
+	private ILogger mLogger;
 	private Dispatcher mDispatcher;
 
 	/**
@@ -89,7 +89,7 @@ public class CommentParser {
 	 *            Map with line ranges of functions. Can be determined with
 	 *            FunctionLineVisitor.
 	 */
-	public CommentParser(IASTComment[] comments, HashMap<Integer, Integer> lineRange, Logger logger,
+	public CommentParser(IASTComment[] comments, HashMap<Integer, Integer> lineRange, ILogger logger,
 			Dispatcher dispatch) {
 		this.commentList = comments;
 		this.functionLineRange = lineRange;

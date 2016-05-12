@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 public class CriticalSectionTransformer extends BoogieTransformer {
 	
 	protected SymbolTable mSymbolTable;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
-	public CriticalSectionTransformer(SymbolTable symbolTable, Logger logger) {
+	public CriticalSectionTransformer(SymbolTable symbolTable, ILogger logger) {
 		mSymbolTable = symbolTable;
 		mLogger = logger;
 	}

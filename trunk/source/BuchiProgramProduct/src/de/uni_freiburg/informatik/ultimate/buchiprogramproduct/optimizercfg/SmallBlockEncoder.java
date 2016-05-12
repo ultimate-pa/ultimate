@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -69,12 +69,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  */
 public class SmallBlockEncoder extends BaseObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final ProductBacktranslator mBacktranslator;
 	private final boolean mRewriteAssumes;
 	private final CodeBlockFactory mCbf;
 
-	public SmallBlockEncoder(Logger logger, ProductBacktranslator backtranslator, IToolchainStorage mStorage) {
+	public SmallBlockEncoder(ILogger logger, ProductBacktranslator backtranslator, IToolchainStorage mStorage) {
 		mLogger = logger;
 		mCbf = (CodeBlockFactory) mStorage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
 		mBacktranslator = backtranslator;

@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.observers;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 public class DependencyFinder extends BaseObserver {
 
 	private final int mUnrollings;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
-	public DependencyFinder(Logger logger) {
+	public DependencyFinder(ILogger logger) {
 		super();
 		mUnrollings = 1;
 		mLogger = logger;

@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class RefineBuchi {
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
@@ -111,7 +111,7 @@ public class RefineBuchi {
 	public RefineBuchi(RootNode rootNode, SmtManager smtManager, boolean dumpAutomata, boolean difference,
 			PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom, PredicateFactoryRefinement stateFactoryForRefinement,
 			boolean useDoubleDeckers, String dumpPath, Format format, INTERPOLATION interpolation, IUltimateServiceProvider services,
-			Logger logger) {
+			ILogger logger) {
 		super();
 		m_Services = services;
 		mLogger = logger;

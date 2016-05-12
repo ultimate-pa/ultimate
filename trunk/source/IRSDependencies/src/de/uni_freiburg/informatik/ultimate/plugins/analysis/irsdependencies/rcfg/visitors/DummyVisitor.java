@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 public class DummyVisitor extends SimpleRCFGVisitor {
 
-	public DummyVisitor(Logger logger) {
+	public DummyVisitor(ILogger logger) {
 		super(logger);
 	}
 

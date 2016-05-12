@@ -73,7 +73,7 @@ public class ResultUtil {
 					// if (res.getClass().isAssignableFrom(resClass)) {
 					@SuppressWarnings("unchecked")
 					E benchmarkResult = (E) res;
-					filteredList.add((E) benchmarkResult);
+					filteredList.add(benchmarkResult);
 				}
 			}
 		}
@@ -96,11 +96,27 @@ public class ResultUtil {
 	 * Return the checked specification that is checked at the error location.
 	 */
 	public static <ELEM extends IElement> Check getCheckedSpecification(ELEM element) {
+		final IAnnotations check;
 		if (element.getPayload().hasAnnotation()) {
-			IAnnotations check = element.getPayload().getAnnotations().get(Check.getIdentifier());
-			return (Check) check;
-		} else {
-			return element.getPayload().getLocation().getOrigin().getCheck();
+			check = element.getPayload().getAnnotations().get(Check.getIdentifier());
+			if (check instanceof Check) {
+				return (Check) check;
+			} else {
+				return null;
+			}
 		}
+		final ILocation loc = element.getPayload().getLocation();
+		if (loc == null) {
+			return null;
+		}
+		ILocation origin = loc.getOrigin();
+		if (origin == null) {
+			return null;
+		}
+		check = origin.getCheck();
+		if (check instanceof Check) {
+			return (Check) check;
+		}
+		return null;
 	}
 }

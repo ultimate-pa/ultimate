@@ -34,7 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -84,11 +84,11 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		Collection<LETTER> letter1,letter2,newLetterSet;
 		private final AutomataLibraryServices m_Services;
 		public StateFactory<STATE> stateFactory;
-		private Logger s_Logger;
+		private ILogger s_Logger;
 		public NfaUnion(AutomataLibraryServices services,StateFactory<STATE> sf,INestedWordAutomatonSimple<LETTER,STATE> in1,INestedWordAutomatonSimple<LETTER,STATE> in2){
 			m_Services=services;
 			stateFactory =sf;
-			//s_Logger = (Logger) m_Services.getLoggingService();
+			//s_Logger = (ILogger) m_Services.getLoggingService();
 			s_Logger = m_Logger;
 			s_Logger.info(startMessage());
 			orgin = in1;

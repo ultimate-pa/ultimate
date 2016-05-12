@@ -31,7 +31,7 @@ import java.io.StringWriter;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.translation.IBacktranslationValueProvider;
@@ -55,10 +55,10 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 
 	private final IProgramExecution<TE, E> mProgramExecution;
 	private final IBacktranslationValueProvider<TE, E> mStringProvider;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public ViolationWitnessGenerator(final IProgramExecution<TE, E> translatedProgramExecution,
-			final IBacktranslationValueProvider<TE, E> stringProvider, final Logger logger) {
+			final IBacktranslationValueProvider<TE, E> stringProvider, final ILogger logger) {
 		super();
 		assert translatedProgramExecution != null;
 		assert translatedProgramExecution.getLength() > 0;

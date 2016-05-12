@@ -33,7 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathNode;
  */
 public class TemplateStore {
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	private String filename = "Cook Annotation";
 
@@ -185,7 +185,7 @@ public class TemplateStore {
 	 * @param u
 	 *            unit generated for
 	 */
-	public TemplateStore(Program program, Logger logger) {
+	public TemplateStore(Program program, ILogger logger) {
 		mLogger = logger;
 		InputProgram = program;
 		this.setGlobalStateVars();

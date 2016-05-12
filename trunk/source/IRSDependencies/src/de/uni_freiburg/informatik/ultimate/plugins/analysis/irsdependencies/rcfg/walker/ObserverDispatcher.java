@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcf
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 public abstract class ObserverDispatcher {
 	protected List<SimpleRCFGVisitor> mObservers;
 	
-	protected final Logger mLogger ;
+	protected final ILogger mLogger ;
 	protected IRCFGWalker mWalker;
 
-	public ObserverDispatcher(Logger logger) {
+	public ObserverDispatcher(ILogger logger) {
 		mObservers = new LinkedList<>();
 		mLogger = logger;
 	}

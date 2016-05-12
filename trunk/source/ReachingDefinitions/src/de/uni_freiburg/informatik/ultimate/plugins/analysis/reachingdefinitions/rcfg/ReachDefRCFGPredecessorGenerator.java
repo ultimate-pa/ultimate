@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 
 public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mProvider;
 
-	public ReachDefRCFGPredecessorGenerator(IAnnotationProvider<ReachDefStatementAnnotation> provider, Logger logger) {
+	public ReachDefRCFGPredecessorGenerator(IAnnotationProvider<ReachDefStatementAnnotation> provider, ILogger logger) {
 		mLogger = logger;
 		mProvider = provider;
 	}

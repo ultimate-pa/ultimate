@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.models.IPayload;
  * @see IExplicitEdgesMultigraph
  * @see IMultigraphEdge
  */
-public abstract class BaseExplicitEdgesMultigraph<V extends IExplicitEdgesMultigraph<V, E, VL, EL>, E extends IMultigraphEdge<V, E, VL, EL>, VL, EL>
-		extends BasePayloadContainer implements IExplicitEdgesMultigraph<V, E, VL, EL> {
+public abstract class BaseExplicitEdgesMultigraph<V extends IExplicitEdgesMultigraph<V, E, VL, EL, VisualizationNode>, E extends IMultigraphEdge<V, E, VL, EL, VisualizationNode>, VL, EL>
+		extends BasePayloadContainer implements IExplicitEdgesMultigraph<V, E, VL, EL, VisualizationNode> {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be

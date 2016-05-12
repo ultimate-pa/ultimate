@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.IMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
@@ -89,7 +89,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class ConversionVisitor implements IMinimizationVisitor {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private ProgramPoint mStartNode;
 

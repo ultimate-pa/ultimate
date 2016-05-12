@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
@@ -72,7 +72,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	private final int m_Serialnumber;
 
@@ -83,7 +83,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 
 	int m_OccurenceInCounterexamples = 0;
 
-	CodeBlock(int serialNumber, ProgramPoint source, ProgramPoint target, Logger logger) {
+	CodeBlock(int serialNumber, ProgramPoint source, ProgramPoint target, ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		m_Serialnumber = serialNumber;
 		mLogger = logger;
@@ -111,7 +111,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * have serial number "-1" and hence they will have the same hash code.
 	 */
 	@Deprecated
-	public CodeBlock(ProgramPoint source, ProgramPoint target, Logger logger) {
+	public CodeBlock(ProgramPoint source, ProgramPoint target, ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		m_Serialnumber = -1;
 		mLogger = logger;

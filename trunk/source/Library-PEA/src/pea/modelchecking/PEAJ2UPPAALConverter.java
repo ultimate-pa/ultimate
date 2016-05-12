@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.xerces.dom.DocumentImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -58,7 +58,7 @@ public class PEAJ2UPPAALConverter {
     protected static final String DEFAULT_LOGGER = "PEAJ2XMLConverter";
     protected static final String FINAL_REGEX = "(.*)FINAL(.*)";
 
-    protected Logger logger = null;
+    protected ILogger logger = null;
 
     protected Document document = null;
 
@@ -69,9 +69,9 @@ public class PEAJ2UPPAALConverter {
 
     public PEAJ2UPPAALConverter(String loggerName) {
         if (loggerName.equals("")) {
-            this.logger = Logger.getLogger(PEAJ2XMLConverter.DEFAULT_LOGGER);
+            this.logger = ILogger.getLogger(PEAJ2XMLConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
 
         this.clocks = new ArrayList();

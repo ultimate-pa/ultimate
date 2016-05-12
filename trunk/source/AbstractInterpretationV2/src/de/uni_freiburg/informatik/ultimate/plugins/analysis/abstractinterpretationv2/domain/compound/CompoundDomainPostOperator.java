@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -72,7 +72,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	private final boolean mUseSmtSolverChecks;
 	private final boolean mSimplifyAssumption;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final Boogie2SMT mBoogie2Smt;
 	private final Script mScript;
 	private final CodeBlockFactory mCodeBlockFactory;

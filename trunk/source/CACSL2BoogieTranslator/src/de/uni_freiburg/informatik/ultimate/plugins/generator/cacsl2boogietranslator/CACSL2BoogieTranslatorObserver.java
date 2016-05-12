@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.parser.util.ASTPrinter;
@@ -87,7 +87,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	/**
 	 * The logger instance.
 	 */
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	/**
 	 * A Wrapper holding the root node of the resulting Boogie AST.
 	 */

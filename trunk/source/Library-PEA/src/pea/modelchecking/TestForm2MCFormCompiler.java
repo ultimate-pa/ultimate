@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
@@ -82,7 +82,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
      * <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public TestForm2MCFormCompiler(String loggerName) throws Exception {
@@ -90,10 +90,10 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
         PropertyConfigurator.configure(url);
 
         if (loggerName.equals("")) {
-            this.logger = Logger
+            this.logger = ILogger
                     .getLogger(TestForm2MCFormCompiler.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
 
         this.initialiseParser();

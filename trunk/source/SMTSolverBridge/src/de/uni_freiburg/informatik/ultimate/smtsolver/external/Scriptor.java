@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -71,7 +71,7 @@ public class Scriptor extends NoopScript {
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
 	 */
-	public Scriptor(String command, Logger logger, IUltimateServiceProvider services, IToolchainStorage storage,
+	public Scriptor(String command, ILogger logger, IUltimateServiceProvider services, IToolchainStorage storage,
 			String solverName) throws IOException {
 		mExecutor = new Executor(command, this, logger, services, storage, solverName);
 		super.setOption(":print-success", true);

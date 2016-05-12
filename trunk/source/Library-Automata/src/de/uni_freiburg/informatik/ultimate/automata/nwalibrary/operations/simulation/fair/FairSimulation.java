@@ -35,7 +35,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -181,7 +181,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	/**
 	 * Stores all currently known {@link SpoilerVertex} objects that indicate
 	 * simulation is not possible and are non trivial. This are vertices with a
@@ -226,7 +226,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -241,7 +241,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
+	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final FairGameGraph<LETTER, STATE> game)
 					throws OperationCanceledException {
@@ -262,7 +262,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -282,7 +282,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
+	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {

@@ -34,7 +34,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.LoggerInitializer;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class LpSolverTest {
 
 	private LoggerInitializer loggerInit = new LoggerInitializer();
-	final Logger logger = loggerInit.getLogger(this.getClass().toGenericString());
+	final ILogger logger = loggerInit.getLogger(this.getClass().toGenericString());
 	
 	@Test
 	public void testojAlgoLpSolver() {

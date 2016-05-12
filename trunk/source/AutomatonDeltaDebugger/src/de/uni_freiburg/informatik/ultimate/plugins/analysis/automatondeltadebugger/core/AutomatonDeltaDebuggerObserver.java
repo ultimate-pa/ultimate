@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -56,7 +56,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 	private final ATester<LETTER, STATE> mTester;
 	private final List<AShrinker<?, LETTER, STATE>> mShrinkersLoop;
 	private final List<AShrinker<?, LETTER, STATE>> mShrinkersEnd;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
 	public AutomatonDeltaDebuggerObserver(
 			final IUltimateServiceProvider services,

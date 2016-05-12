@@ -29,7 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinim
  */
 public class PrintEdgeVisitor extends AbstractMinimizationVisitor {
 
-	public PrintEdgeVisitor(Logger logger) {
+	public PrintEdgeVisitor(ILogger logger) {
 		super(logger);
 	}
 

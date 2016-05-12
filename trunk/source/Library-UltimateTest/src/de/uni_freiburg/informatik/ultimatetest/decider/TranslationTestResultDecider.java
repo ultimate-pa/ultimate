@@ -31,13 +31,14 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Path;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
@@ -62,16 +63,18 @@ public class TranslationTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IResultService resultService) {
+	public TestResult getTestResult(IUltimateServiceProvider services) {
 
 		setResultCategory("");
 		setResultMessage("");
 
-		Logger log = Logger.getLogger(TranslationTestResultDecider.class);
-		Collection<String> customMessages = new LinkedList<String>();
+		final IResultService resultService = services.getResultService();
+		final ILogger log = services.getLoggingService().getLogger(TranslationTestResultDecider.class);
+		final Collection<String> customMessages = new LinkedList<String>();
 		customMessages.add("Expecting results to have a counterexample that matches the .bpl file, "
 				+ "and no generic result \"Unhandled Backtranslation\"");
 		boolean fail = false;
+
 		Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
 		if (resultSet.size() == 0) {
 			setResultCategory("No results");
@@ -101,15 +104,15 @@ public class TranslationTestResultDecider extends TestResultDecider {
 			String inputFileNameWithoutEnding = inputFile.getName().replaceAll("\\.c", "");
 			File desiredBplFile = new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(),
 					Path.SEPARATOR, inputFileNameWithoutEnding, ".bpl"));
-			File actualBplFile = TestUtil.getFilesRegex(inputFile.getParentFile(),
-					new String[] { String.format(".*%s\\.bpl", inputFileNameWithoutEnding) }).toArray(new File[1])[0];
+			File actualBplFile = TestUtil
+					.getFilesRegex(inputFile.getParentFile(),
+							new String[] { String.format(".*%s\\.bpl", inputFileNameWithoutEnding) })
+					.toArray(new File[1])[0];
 			if (actualBplFile != null) {
 
 				try {
-					String desiredContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil
-							.readFile(desiredBplFile);
-					String actualContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil
-							.readFile(actualBplFile);
+					String desiredContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil.readFile(desiredBplFile);
+					String actualContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil.readFile(actualBplFile);
 
 					if (!desiredContent.equals(actualContent)) {
 						String message = "Desired content does not match actual content.";
@@ -149,7 +152,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IResultService resultService, Throwable e) {
+	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
 		return TestResult.FAIL;
 	}
 

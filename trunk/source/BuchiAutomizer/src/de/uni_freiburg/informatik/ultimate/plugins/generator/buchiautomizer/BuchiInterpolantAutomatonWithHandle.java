@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -59,7 +59,7 @@ public class BuchiInterpolantAutomatonWithHandle extends
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			boolean scroogeNondeterminismStem,
 			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem,
-			boolean hondaBouncerLoop, PredicateFactoryForInterpolantAutomata predicateFactory, Logger logger, IUltimateServiceProvider  services) {
+			boolean hondaBouncerLoop, PredicateFactoryForInterpolantAutomata predicateFactory, ILogger logger, IUltimateServiceProvider  services) {
 		super(smtManager, edgeChecker, emptyStem, precondition, stemInterpolants,
 				hondaPredicate, loopInterpolants, hondaEntererStem,
 				hondaEntererLoop, abstraction, scroogeNondeterminismStem,

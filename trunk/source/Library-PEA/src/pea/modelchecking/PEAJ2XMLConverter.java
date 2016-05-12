@@ -37,7 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 
 import pea.CDD;
@@ -62,7 +62,7 @@ public class PEAJ2XMLConverter {
 
     protected static final String DEFAULT_LOGGER = "PEAJ2XMLConverter";
 
-    protected Logger logger = null;
+    protected ILogger logger = null;
 
     protected FormulaJ2XMLConverter formulaConverter = null;
 
@@ -98,15 +98,15 @@ public class PEAJ2XMLConverter {
      * logger is initialised via <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public PEAJ2XMLConverter(String loggerName) throws Exception {
         if (loggerName.equals("")) {
-            this.logger = Logger
+            this.logger = ILogger
                     .getLogger(PEAJ2XMLConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
 
         this.formulaConverter = new FormulaJ2XMLConverter();

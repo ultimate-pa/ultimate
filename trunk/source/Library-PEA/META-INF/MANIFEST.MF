@@ -14,7 +14,8 @@ Export-Package: pea,
  pea.test,
  pea.util,
  pea.util.z
-Require-Bundle: Library-log4j,
+Require-Bundle: Library-UltimateCore,
+ Library-log4j,
  Library-jdom,
  Library-xerces,
  Library-CZT

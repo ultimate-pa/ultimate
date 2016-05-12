@@ -40,7 +40,7 @@ import java.util.Map.Entry;
 import java.util.stream.Stream;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -74,7 +74,7 @@ public class SmtUtils {
 	}
 
 	public static Term simplify(Script script, Term formula, IUltimateServiceProvider services) {
-		final Logger logger = services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
+		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
 		}

@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
@@ -93,7 +93,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class NestedSsaBuilder {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private final static String s_GotosUnsupportedMessage = "TraceChecker is only applicable to RCFGs whose auxilliary goto edges have been removed";
 
@@ -168,7 +168,7 @@ public class NestedSsaBuilder {
 
 	public NestedSsaBuilder(NestedWord<? extends IAction> trace, SmtManager smtManager,
 			NestedFormulas<TransFormula, IPredicate> nestedTransFormulas, 
-			ModifiableGlobalVariableManager globModVarManager, Logger logger,
+			ModifiableGlobalVariableManager globModVarManager, ILogger logger,
 			boolean transferToScriptNeeded) {
 		mLogger = logger;
 		m_Script = smtManager.getScript();

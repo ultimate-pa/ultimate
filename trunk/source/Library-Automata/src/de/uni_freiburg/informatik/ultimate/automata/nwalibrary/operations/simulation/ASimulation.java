@@ -41,7 +41,7 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -116,7 +116,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	/**
 	 * Holds information about the performance of the simulation after usage.
 	 */
@@ -167,7 +167,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -179,7 +179,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ASimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
+	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final ESimulationType simType) throws OperationCanceledException {
 		m_ProgressTimer = progressTimer;
 		m_Logger = logger;
@@ -630,7 +630,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * 
 	 * @return The logger used by the Ultimate framework.
 	 */
-	protected Logger getLogger() {
+	protected ILogger getLogger() {
 		return m_Logger;
 	}
 

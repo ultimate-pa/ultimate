@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.test.unit;
 
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.MinimizeBranchVisitor;
@@ -73,7 +73,7 @@ public class TestMinimizeBranchVisitor extends TestCase {
 	 */
 	private RCFGNode rcfgNode;
 
-	private Logger logger;
+	private ILogger logger;
 
 	private HashSet<IMinimizedEdge> visitedEdges;
 

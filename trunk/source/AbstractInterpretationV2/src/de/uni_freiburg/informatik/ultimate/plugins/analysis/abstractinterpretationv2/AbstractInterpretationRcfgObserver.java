@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -54,7 +54,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public AbstractInterpretationRcfgObserver(final IUltimateServiceProvider services) {
 		mServices = services;

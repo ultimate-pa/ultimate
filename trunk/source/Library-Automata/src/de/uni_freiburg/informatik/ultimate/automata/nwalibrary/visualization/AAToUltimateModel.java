@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.models.IElement;
 
 
 public class AAToUltimateModel<LETTER,STATE> {
-//	private static Logger m_Logger = 
+//	private static ILogger m_Logger = 
 //		NestedWordAutomata.getLogger();
 //	
 	public IElement getUltimateModelOfAA(AlternatingAutomaton<LETTER,STATE> aaSimple) throws OperationCanceledException {

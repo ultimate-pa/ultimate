@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
@@ -96,7 +96,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	public enum Mode { ON_DEMAND_CONSTRUCTION, READ_ONLY }
 
 	protected final IUltimateServiceProvider m_Services;
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	protected final SmtManager m_SmtManager;
 	protected final IHoareTripleChecker m_IHoareTripleChecker;
@@ -121,7 +121,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			SmtManager smtManager, IHoareTripleChecker hoareTripleChecker,
 			boolean useEfficientTotalAutomatonBookkeeping,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, IPredicate falseState,
-			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, Logger logger) {
+			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, ILogger logger) {
 		super();
 		m_Services = services;
 		mLogger = logger;

@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.models.ModelType;
 public class Inliner implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;
-	private Logger mLogger;
+	private ILogger mLogger;
 	private IProgressMonitorService mProgressMonitorService;
 
 	private IInlineSelector mInlineSelector;

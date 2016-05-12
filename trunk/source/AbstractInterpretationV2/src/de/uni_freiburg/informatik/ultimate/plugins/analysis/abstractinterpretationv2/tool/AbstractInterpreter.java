@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -105,7 +105,7 @@ public final class AbstractInterpreter {
 	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> runSilently(final RootNode root,
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 			final IUltimateServiceProvider services) {
-		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
 			return run(root, initials, timer, services, true);
 		} catch (OutOfMemoryError oom) {
@@ -135,7 +135,7 @@ public final class AbstractInterpreter {
 		assert services != null;
 		assert timer != null;
 
-		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
 			final NWAPathProgramTransitionProvider transProvider = new NWAPathProgramTransitionProvider(counterexample,
 					services, root.getRootAnnot());
@@ -220,7 +220,7 @@ public final class AbstractInterpreter {
 
 		final FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC> fxpe = new FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC>(
 				services, timer, params);
-		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
 			final AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, LOC> result = fxpe.run(initial, script,
 					bpl2smt);
@@ -255,7 +255,7 @@ public final class AbstractInterpreter {
 			return null;
 		}
 
-		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final boolean isLib = filteredInitialElements.size() > 1;
 
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
@@ -306,7 +306,7 @@ public final class AbstractInterpreter {
 			final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String selectedDomain = ups.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
-		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// use the literal collector result if you need it
 		// new LiteralCollector(root).getResult();
 
@@ -352,7 +352,7 @@ public final class AbstractInterpreter {
 				+ AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
 	}
 
-	private static void printVPDomainDebug(final Logger logger, final RCFGArrayIndexCollector arrayIndexCollector) {
+	private static void printVPDomainDebug(final ILogger logger, final RCFGArrayIndexCollector arrayIndexCollector) {
 		for (final Entry<BoogieVar, Set<PointerExpression>> bv : arrayIndexCollector.getPointerMap().entrySet()) {
 			logger.debug("PointerMap Key: " + bv.getKey());
 			for (final PointerExpression val : bv.getValue()) {

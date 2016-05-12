@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
@@ -62,7 +62,7 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 	private Map<String, Set<String>> m_ModifiedGlobals;
 	private Set<String> m_Globals;
 	private IUltimateServiceProvider m_Services;
-	private Logger logger;
+	private ILogger logger;
 	private String m_CurrentProcedure;
 	private Map<String, Set<String>> m_CallGraph;
 

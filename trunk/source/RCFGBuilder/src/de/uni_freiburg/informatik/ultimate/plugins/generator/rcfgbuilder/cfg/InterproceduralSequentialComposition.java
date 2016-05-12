@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -42,7 +42,7 @@ public class InterproceduralSequentialComposition extends SequentialComposition 
 	InterproceduralSequentialComposition(int serialNumber, ProgramPoint source,
 			ProgramPoint target, Boogie2SMT boogie2smt, 
 			ModifiableGlobalVariableManager modGlobVarManager, 
-			boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks, Logger logger, IUltimateServiceProvider services) {
+			boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks, ILogger logger, IUltimateServiceProvider services) {
 		super(serialNumber, source, target, boogie2smt, modGlobVarManager, simplify, extPqe, services, codeBlocks);
 	}
 

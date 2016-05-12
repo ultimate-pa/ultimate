@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  */
 public class VariableManager implements IFreshTermVariableConstructor {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	private final MultiElementCounter<String> m_TvForBasenameCounter = 
 			new MultiElementCounter<String>();
 	private final Map<TermVariable, Term> m_TermVariable2Constant = 

@@ -36,9 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -59,11 +57,9 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	private int mCurrentIndex;
 	private HashMap<String, Watch> mWatches;
 
-	private Logger mLogger;
 	private Watch mGlobalWatch;
 
 	public Benchmark() {
-		mLogger = LogManager.getLogger(getClass());
 		reset();
 	}
 
@@ -172,9 +168,9 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		mWatches = new HashMap<String, Watch>();
 	}
 
-	public void printResult() {
+	public void printResult(ILogger logger) {
 		for (Watch s : getSortedWatches()) {
-			mLogger.info(s);
+			logger.info(s);
 		}
 	}
 

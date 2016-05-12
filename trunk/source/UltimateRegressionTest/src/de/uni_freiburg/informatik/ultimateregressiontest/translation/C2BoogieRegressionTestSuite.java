@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE Regression Test Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimateregressiontest.translation;
 
 import java.io.File;
@@ -84,21 +85,22 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 		files = TestUtil.filterFiles(files, TEMPORARY_BOOGIE_FILENAME_PATTERN);
 
 		if (files.isEmpty()) {
-			sLogger.info(String.format("No cleanup of %s necessary, no files matching the pattern %s have been found",
+			System.out.println(String.format("No cleanup of %s necessary, no files matching the pattern %s have been found",
 					sRootFolder, TEMPORARY_BOOGIE_FILENAME_PATTERN));
 			return;
 		}
 
-		sLogger.info(String.format("Begin cleanup of %s", sRootFolder));
+		System.out.println(String.format("Begin cleanup of %s", sRootFolder));
 		for (final File f : files) {
 			try {
 				if (f.delete()) {
-					sLogger.info(String.format("Sucessfully deleted %s", f.getAbsolutePath()));
+					System.out.println(String.format("Sucessfully deleted %s", f.getAbsolutePath()));
 				} else {
-					sLogger.info(String.format("Deleteing %s failed", f.getAbsolutePath()));
+					System.out.println(String.format("Deleteing %s failed", f.getAbsolutePath()));
 				}
 			} catch (SecurityException e) {
-				sLogger.error(String.format("Exception while deleting file %s", f), e);
+				System.err.println(String.format("Exception while deleting file %s", f));
+				e.printStackTrace();
 			}
 		}
 	}

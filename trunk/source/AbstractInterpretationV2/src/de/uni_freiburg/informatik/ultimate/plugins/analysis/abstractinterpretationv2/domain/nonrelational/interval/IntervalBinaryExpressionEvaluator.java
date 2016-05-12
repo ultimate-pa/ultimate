@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -52,7 +52,7 @@ public class IntervalBinaryExpressionEvaluator
         implements INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Set<String> mVariableSet;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final EvaluatorType mEvaluatorType;
 	private final int mMaxParallelStates;
 
@@ -61,7 +61,7 @@ public class IntervalBinaryExpressionEvaluator
 
 	private Operator mOperator;
 
-	protected IntervalBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
+	protected IntervalBinaryExpressionEvaluator(final ILogger logger, final EvaluatorType type) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 		mEvaluatorType = type;

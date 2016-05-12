@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public class AnnotateAndAsserter {
 	
 	protected final IUltimateServiceProvider m_Services;
-	protected final Logger m_Logger;
+	protected final ILogger m_Logger;
 
 	protected final Script m_Script;
 	protected final SmtManager m_SmtManager;

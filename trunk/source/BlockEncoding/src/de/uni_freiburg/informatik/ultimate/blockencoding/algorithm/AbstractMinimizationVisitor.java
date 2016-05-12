@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.IMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BasicEdge;
@@ -66,7 +66,7 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 
 	protected HashSet<MinimizedNode> notReachableNodes;
 
-	protected static Logger s_Logger;
+	protected static ILogger s_Logger;
 
 	private HashMap<ProgramPoint, MinimizedNode> referenceNodeMap;
 
@@ -80,7 +80,7 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 	 * Constructor which is called by the subclasses, to initialize the data
 	 * structures
 	 */
-	protected AbstractMinimizationVisitor(Logger logger) {
+	protected AbstractMinimizationVisitor(ILogger logger) {
 		s_Logger = logger;
 		this.visitedEdges = new HashSet<IMinimizedEdge>();
 		this.notReachableNodes = new HashSet<MinimizedNode>();

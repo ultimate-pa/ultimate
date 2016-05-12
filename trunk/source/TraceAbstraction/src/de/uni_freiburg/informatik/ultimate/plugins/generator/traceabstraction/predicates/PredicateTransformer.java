@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
@@ -70,7 +70,7 @@ public class PredicateTransformer {
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	private final VariableManager m_VariableManager;
 	private final IUltimateServiceProvider m_Services;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public PredicateTransformer(VariableManager variableManager, Script script, 
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager,

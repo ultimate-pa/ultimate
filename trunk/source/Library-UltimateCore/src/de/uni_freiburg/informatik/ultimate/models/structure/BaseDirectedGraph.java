@@ -39,13 +39,12 @@ import de.uni_freiburg.informatik.ultimate.models.IPayload;
  * @see BasePayloadContainer
  * 
  */
-public abstract class BaseDirectedGraph<T extends IDirectedGraph<T>> extends
-		BasePayloadContainer implements IDirectedGraph<T> {
+public abstract class BaseDirectedGraph<T extends IDirectedGraph<T, VisualizationNode>> extends BasePayloadContainer
+		implements IDirectedGraph<T, VisualizationNode> {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -54,16 +53,14 @@ public abstract class BaseDirectedGraph<T extends IDirectedGraph<T>> extends
 	protected List<T> mIncomingNodes;
 
 	/***
-	 * This constructor creates a directed graph node without a predecessor and
-	 * without a payload.
+	 * This constructor creates a directed graph node without a predecessor and without a payload.
 	 */
 	protected BaseDirectedGraph() {
 		this(null, null);
 	}
 
 	/**
-	 * This constructor creates a directed graph node without a predecessor but
-	 * with a given payload.
+	 * This constructor creates a directed graph node without a predecessor but with a given payload.
 	 * 
 	 * @param payload
 	 *            A given payload or null
@@ -74,28 +71,22 @@ public abstract class BaseDirectedGraph<T extends IDirectedGraph<T>> extends
 	}
 
 	/**
-	 * This constructor creates a directed graph node with a given predecessor
-	 * node but without a payload.
+	 * This constructor creates a directed graph node with a given predecessor node but without a payload.
 	 * 
 	 * @param parent
-	 *            A given parent node or null. If the given parent node is not
-	 *            null, this node will be added to the parent's list of outgoing
-	 *            nodes and the parent will be added to this node's list of
-	 *            incoming nodes.
+	 *            A given parent node or null. If the given parent node is not null, this node will be added to the
+	 *            parent's list of outgoing nodes and the parent will be added to this node's list of incoming nodes.
 	 */
 	protected BaseDirectedGraph(T parent) {
 		this(parent, null);
 	}
 
 	/**
-	 * This constructor creates a directed graph node with a given predecessor
-	 * node and a given payload.
+	 * This constructor creates a directed graph node with a given predecessor node and a given payload.
 	 * 
 	 * @param parent
-	 *            A given parent node or null. If the given parent node is not
-	 *            null, this node will be added to the parent's list of outgoing
-	 *            nodes and the parent will be added to this node's list of
-	 *            incoming nodes.
+	 *            A given parent node or null. If the given parent node is not null, this node will be added to the
+	 *            parent's list of outgoing nodes and the parent will be added to this node's list of incoming nodes.
 	 * @param payload
 	 *            A given payload or null
 	 */

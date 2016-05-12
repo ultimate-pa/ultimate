@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.models.ModelType;
 
 public class ModSetWriter implements IUnmanagedObserver {
 	private boolean mPerformedChanges = false;
-	private Logger mLogger;
+	private ILogger mLogger;
 	private Map<String, Set<String>> mModifies;
 	private ModSetAnalyzer mAnalyzer;
 

@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -51,13 +51,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class DataflowDAGGenerator extends BaseObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 //	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 	private final LinkedHashMap<RCFGEdge, List<AssumeStatement>> mEdgesWithAssumes;
 	private List<DataflowDAG<Statement>> mForest;
 
-	public DataflowDAGGenerator(Logger logger, IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
+	public DataflowDAGGenerator(ILogger logger, IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
 			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider,
 			LinkedHashMap<RCFGEdge, List<AssumeStatement>> edgesWithAssumes) {
 		mLogger = logger;

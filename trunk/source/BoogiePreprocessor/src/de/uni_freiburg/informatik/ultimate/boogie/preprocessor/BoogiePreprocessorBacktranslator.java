@@ -32,8 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -50,16 +48,17 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.models.IType;
@@ -71,12 +70,12 @@ import de.uni_freiburg.informatik.ultimate.models.structure.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.util.IToString;
+import de.uni_freiburg.informatik.ultimate.translation.IToString;
 
 /**
  * 
@@ -86,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.util.IToString;
 public class BoogiePreprocessorBacktranslator
 		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	/**
 	 * Mapping from target nodes to source nodes (i.e. output to input)
 	 */
@@ -336,10 +335,10 @@ public class BoogiePreprocessorBacktranslator
 	}
 
 	private <VL> Multigraph<VL, BoogieASTNode> translateCFGEdge(
-			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode>, Multigraph<VL, BoogieASTNode>> cache,
-			final IMultigraphEdge<?, ?, VL, BoogieASTNode> oldEdge, final Multigraph<VL, BoogieASTNode> newSourceNode) {
+			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode,?>, Multigraph<VL, BoogieASTNode>> cache,
+			final IMultigraphEdge<?, ?, VL, BoogieASTNode,?> oldEdge, final Multigraph<VL, BoogieASTNode> newSourceNode) {
 		final BoogieASTNode newLabel = backtranslateTraceElement(oldEdge.getLabel());
-		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode> oldTarget = oldEdge.getTarget();
+		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode,?> oldTarget = oldEdge.getTarget();
 		Multigraph<VL, BoogieASTNode> newTarget = cache.get(oldTarget);
 		if (newTarget == null) {
 			newTarget = createWitnessNode(oldTarget);

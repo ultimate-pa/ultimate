@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IManagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
@@ -45,7 +45,7 @@ public class CFGWalker extends BaseWalker {
 
 	private HashSet<IWalkable> mVisitedNodes = new HashSet<IWalkable>();
 
-	public CFGWalker(Logger logger) {
+	public CFGWalker(ILogger logger) {
 		super(logger);
 	}
 

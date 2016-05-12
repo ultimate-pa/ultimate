@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
  */
 public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final CodeBlock mPredecessor;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
@@ -59,7 +59,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	private final int mKey;
 
 	public ReachDefTraceVisitor(IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
-			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider, CodeBlock predecessor, Logger logger,
+			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider, CodeBlock predecessor, ILogger logger,
 			ScopedBoogieVarBuilder builder, int index) {
 		mLogger = logger;
 		mPredecessor = predecessor;

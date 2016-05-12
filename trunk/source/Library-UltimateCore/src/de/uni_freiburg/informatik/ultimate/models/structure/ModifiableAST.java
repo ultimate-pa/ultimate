@@ -30,27 +30,24 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.models.IPayload;
 
-public class ModifiableAST<T extends IModifiableAST<T>> extends BaseAST<T>
-		implements IModifiableAST<T> {
+public class ModifiableAST<T extends IModifiableAST<T, VisualizationNode>> extends BaseAST<T>
+		implements IModifiableAST<T, VisualizationNode> {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * This constructor creates a {@link ModifiableAST} without a payload and
-	 * without a parent.
+	 * This constructor creates a {@link ModifiableAST} without a payload and without a parent.
 	 */
 	protected ModifiableAST() {
 		this(null, null);
 	}
 
 	/**
-	 * This constructor creates a {@link ModifiableAST} with a given payload and
-	 * without a parent.
+	 * This constructor creates a {@link ModifiableAST} with a given payload and without a parent.
 	 * 
 	 * @param payload
 	 *            A payload for the new {@link ModifiableAST} node or null.
@@ -60,8 +57,7 @@ public class ModifiableAST<T extends IModifiableAST<T>> extends BaseAST<T>
 	}
 
 	/**
-	 * This constructor creates a {@link ModifiableAST} node with a given parent
-	 * but without a payload.
+	 * This constructor creates a {@link ModifiableAST} node with a given parent but without a payload.
 	 * 
 	 * @param parent
 	 */
@@ -70,9 +66,8 @@ public class ModifiableAST<T extends IModifiableAST<T>> extends BaseAST<T>
 	}
 
 	/**
-	 * This construtor creates a {@link ModifiableAST} node with a given parent
-	 * and a given payload. If the parent is not null, this node will be added
-	 * to the parent's list of children.
+	 * This construtor creates a {@link ModifiableAST} node with a given parent and a given payload. If the parent is
+	 * not null, this node will be added to the parent's list of children.
 	 * 
 	 * @param parent
 	 *            A parent node or null.

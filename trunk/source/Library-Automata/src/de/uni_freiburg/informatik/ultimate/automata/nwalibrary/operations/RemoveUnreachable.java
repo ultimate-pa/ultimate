@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -53,7 +53,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Input;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
 
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has

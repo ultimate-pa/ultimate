@@ -35,7 +35,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -50,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.models.ModelType;
  */
 public class BoogiePrinterObserver implements IUnmanagedObserver {
 
-	private Logger mLogger;
+	private ILogger mLogger;
 
-	public BoogiePrinterObserver(Logger logger){
+	public BoogiePrinterObserver(ILogger logger){
 		mLogger = logger;
 	}
 	

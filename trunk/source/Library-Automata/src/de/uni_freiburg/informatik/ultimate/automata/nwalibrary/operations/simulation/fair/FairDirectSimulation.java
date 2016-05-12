@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -101,7 +101,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -116,7 +116,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
+	public FairDirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final FairDirectGameGraph<LETTER, STATE> game)
 					throws OperationCanceledException {
@@ -138,7 +138,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -158,7 +158,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
+	public FairDirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairDirectGameGraph<LETTER, STATE> game) throws OperationCanceledException {

@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Seve
 import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.translation.IToString;
 import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.util.IToString;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 
 /**
@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
 
 	private IUltimateServiceProvider mServices;
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	/**
 	 * Backtranslation mapping for statements, specifications (and expressions, for trace element step). If there is no

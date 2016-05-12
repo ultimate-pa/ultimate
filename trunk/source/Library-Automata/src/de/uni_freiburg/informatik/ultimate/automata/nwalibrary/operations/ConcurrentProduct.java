@@ -32,7 +32,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -53,7 +53,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 	
 	private final AutomataLibraryServices m_Services;
 	
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	private final boolean m_ConcurrentPrefixProduct;
 

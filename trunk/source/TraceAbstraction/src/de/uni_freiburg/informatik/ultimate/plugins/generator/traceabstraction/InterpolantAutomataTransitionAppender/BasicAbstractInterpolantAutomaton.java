@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.I
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -60,7 +60,7 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			PredicateUnifier predicateUnifier,
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
-			Logger logger) {
+			ILogger logger) {
 		super(services, smtManager, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping, abstraction,
 				predicateUnifier.getFalsePredicate(), interpolantAutomaton, logger);
 		m_PredicateUnifier = predicateUnifier;

@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -64,12 +64,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  */
 public class CongruencePostOperator implements IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final CongruenceDomainStatementProcessor mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
 
-	public CongruencePostOperator(final Logger logger, final BoogieSymbolTable symbolTable) {
+	public CongruencePostOperator(final ILogger logger, final BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = new CongruenceDomainStatementProcessor(mLogger, symbolTable);

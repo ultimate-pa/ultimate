@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -61,13 +61,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock, IBoogieVar> {
 
 	private final BoogieSymbolTable mSymbolTable;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final LiteralCollectorFactory mLiteralCollectorFactory;
 	private final Supplier<OctDomainState> mOctDomainStateFactory; 
 	private final Supplier<IAbstractStateBinaryOperator<OctDomainState>> mWideningOperatorFactory; 
 	private final Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> mPostOperatorFactory; 
 	
-	public OctagonDomain(final Logger logger, final BoogieSymbolTable symbolTable,
+	public OctagonDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final LiteralCollectorFactory literalCollectorFactory) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;

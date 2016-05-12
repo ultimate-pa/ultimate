@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
+import de.uni_freiburg.informatik.ultimate.result.model.IRelevanceInformation;
 
 /**
  * 

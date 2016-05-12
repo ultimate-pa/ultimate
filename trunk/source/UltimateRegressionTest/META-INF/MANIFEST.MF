@@ -4,7 +4,8 @@ Bundle-Name: UltimateRegressionTest
 Bundle-SymbolicName: UltimateRegressionTest;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Require-Bundle: UltimateCore,
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
  Library-junit-helper,
  Library-log4j,
  Library-UltimateTest,
@@ -19,7 +20,7 @@ Require-Bundle: UltimateCore,
  de.uni_freiburg.informatik.ultimate.boogie.procedureinliner,
  de.uni_freiburg.informatik.ultimate.ltl2aut,
  org.junit,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;bundle-version="0.0.1"
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

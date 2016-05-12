@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -103,9 +103,9 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public class CfgBuilder {
 
 	/**
-	 * Logger for this plugin.
+	 * ILogger for this plugin.
 	 */
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The

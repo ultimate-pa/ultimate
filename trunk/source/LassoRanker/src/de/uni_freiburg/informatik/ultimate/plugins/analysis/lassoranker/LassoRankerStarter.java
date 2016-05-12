@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -102,7 +102,7 @@ import de.uni_freiburg.informatik.ultimate.result.model.IResult;
  * @author Matthias Heizmann, Jan Leike
  */
 public class LassoRankerStarter {
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private static final String s_LassoError = "This is not a lasso program (a lasso program is a program "
 			+ "consisting of a stem and a loop transition)";
 

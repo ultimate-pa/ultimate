@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
  * @author Stefan Wissert
  * 
  */
-public class MinimizedNode
-		implements IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge, MinimizedNode, IMinimizedEdge> {
+public class MinimizedNode implements
+		IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge, MinimizedNode, IMinimizedEdge, VisualizationNode> {
 
 	/**
 	 * Serial number, do not know if this really needed
@@ -115,21 +115,21 @@ public class MinimizedNode
 				}
 			}
 		}
-		if (this.outgoingEdges == null) {
-			this.outgoingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
+		if (outgoingEdges == null) {
+			outgoingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
 		}
-		this.outgoingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
+		outgoingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
 	}
 
 	/**
 	 * @return
 	 */
 	public List<IMinimizedEdge> getMinimalOutgoingEdgeLevel() {
-		if (this.outgoingEdges == null) {
+		if (outgoingEdges == null) {
 			return null;
 		}
-		if (this.outgoingEdges.size() > 0) {
-			return this.outgoingEdges.get(this.outgoingEdges.size() - 1).getValue();
+		if (outgoingEdges.size() > 0) {
+			return outgoingEdges.get(outgoingEdges.size() - 1).getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
@@ -150,21 +150,21 @@ public class MinimizedNode
 				}
 			}
 		}
-		if (this.incomingEdges == null) {
-			this.incomingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
+		if (incomingEdges == null) {
+			incomingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
 		}
-		this.incomingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
+		incomingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
 	}
 
 	/**
 	 * @return
 	 */
 	public List<IMinimizedEdge> getMinimalIncomingEdgeLevel() {
-		if (this.incomingEdges == null) {
+		if (incomingEdges == null) {
 			return null;
 		}
-		if (this.incomingEdges.size() > 0) {
-			return this.incomingEdges.get(this.incomingEdges.size() - 1).getValue();
+		if (incomingEdges.size() > 0) {
+			return incomingEdges.get(incomingEdges.size() - 1).getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
@@ -185,7 +185,7 @@ public class MinimizedNode
 
 	@Override
 	public List<IMinimizedEdge> getIncomingEdges() {
-		if (this.incomingEdges == null) {
+		if (incomingEdges == null) {
 			return null;
 		}
 		return new ArrayList<IMinimizedEdge>(getMinimalIncomingEdgeLevel());
@@ -193,7 +193,7 @@ public class MinimizedNode
 
 	@Override
 	public List<IMinimizedEdge> getOutgoingEdges() {
-		if (this.outgoingEdges == null) {
+		if (outgoingEdges == null) {
 			return null;
 		}
 		return new ArrayList<IMinimizedEdge>(getMinimalOutgoingEdgeLevel());
@@ -206,12 +206,12 @@ public class MinimizedNode
 	 */
 	@Override
 	public String toString() {
-		return this.mOriginalNode.toString();
+		return mOriginalNode.toString();
 	}
 
 	@Override
 	public IPayload getPayload() {
-		return this.mPayload;
+		return mPayload;
 	}
 
 	@Override
@@ -227,7 +227,7 @@ public class MinimizedNode
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public List<IWalkable> getSuccessors() {
-		return (List<IWalkable>) (List) getOutgoingEdges();
+		return (List) getOutgoingEdges();
 	}
 
 	@Override

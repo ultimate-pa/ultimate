@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class LpSolverFactory {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	// private final Class<? extends Number> mType;
 
 	private enum Type {
@@ -52,7 +52,7 @@ public class LpSolverFactory {
 
 	private final Type mType;
 
-	public LpSolverFactory(Logger logger) {
+	public LpSolverFactory(ILogger logger) {
 		mLogger = logger;
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String type = ups.getString(LpSolverPreferences.LABEL_LPSOLVER_NUMBER_TYPE);

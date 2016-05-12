@@ -40,7 +40,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
@@ -75,7 +75,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> mResult;

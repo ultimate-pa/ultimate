@@ -33,20 +33,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.models.Payload;
 import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 /**
@@ -61,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
  */
 public class BoogieParser implements ISource {
 	protected String[] mFileTypes;
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	protected List<String> mFileNames;
 	protected Unit mPreludeUnit;
 	private IUltimateServiceProvider mServices;
@@ -76,6 +73,7 @@ public class BoogieParser implements ISource {
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin#getPluginID()
 	 */
+	@Override
 	public String getPluginID() {
 		return getClass().getPackage().getName();
 	}
@@ -89,6 +87,7 @@ public class BoogieParser implements ISource {
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin#init()
 	 */
+	@Override
 	public void init() {
 		mFileNames = new ArrayList<String>();
 	}
@@ -99,6 +98,7 @@ public class BoogieParser implements ISource {
 	 * @return the name of the plugin
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#getPluginName()
 	 */
+	@Override
 	public String getPluginName() {
 		return "Boogie PL CUP Parser";
 	}
@@ -140,6 +140,7 @@ public class BoogieParser implements ISource {
 	 * @return the tree
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseAST(java.io.File[])
 	 */
+	@Override
 	public IElement parseAST(File[] files) throws IOException {
 		final WrapperNode dirRoot = new WrapperNode(null, null);
 
@@ -159,6 +160,7 @@ public class BoogieParser implements ISource {
 	 * @return the tree
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseAST(java.io.File)
 	 */
+	@Override
 	public IElement parseAST(File file) throws IOException {
 		if (file.isDirectory()) {
 			return parseAST(file.listFiles());
@@ -182,6 +184,7 @@ public class BoogieParser implements ISource {
 	 * @return true if parseable
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseable(java.io.File[])
 	 */
+	@Override
 	public boolean parseable(File[] files) {
 		for (File f : files) {
 			if (!parseable(f)) {
@@ -199,6 +202,7 @@ public class BoogieParser implements ISource {
 	 * @return true if parseable
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseable(java.io.File)
 	 */
+	@Override
 	public boolean parseable(File file) {
 		for (String s : getFileTypes()) {
 			if (file.getName().endsWith(s))
@@ -210,6 +214,7 @@ public class BoogieParser implements ISource {
 	/**
 	 * get all supported file types of this parser
 	 */
+	@Override
 	public String[] getFileTypes() {
 		return mFileTypes;
 	}
@@ -220,11 +225,12 @@ public class BoogieParser implements ISource {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutputDefinition#
 	 * getOutputDefinition()
 	 */
+	@Override
 	public ModelType getOutputDefinition() {
 		try {
-			return new ModelType(getPluginID(), ModelType.Type.AST, this.mFileNames);
+			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
 		} catch (Exception ex) {
-			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
+			mLogger.fatal("syntax error: " + ex.getMessage());
 			return null;
 		}
 	}

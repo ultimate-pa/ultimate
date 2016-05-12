@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.Collection;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -41,15 +41,15 @@ public class ReachDefBoogieAnnotator {
 
 	private Collection<ReachDefStatementAnnotation> mPredecessors;
 	private ReachDefStatementAnnotation mCurrent;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
-			ReachDefStatementAnnotation current, Logger logger, ScopedBoogieVarBuilder builder) {
+			ReachDefStatementAnnotation current, ILogger logger, ScopedBoogieVarBuilder builder) {
 		this(predecessors, current, logger, builder, null);
 	}
 
 	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
-			ReachDefStatementAnnotation current, Logger logger, ScopedBoogieVarBuilder builder, String key) {
+			ReachDefStatementAnnotation current, ILogger logger, ScopedBoogieVarBuilder builder, String key) {
 		assert current != null;
 		mPredecessors = predecessors;
 		mCurrent = current;

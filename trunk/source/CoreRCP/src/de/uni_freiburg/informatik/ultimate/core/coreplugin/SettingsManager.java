@@ -33,30 +33,31 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.service.prefs.BackingStoreException;
 
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 class SettingsManager {
 
 	// TODO: Check if this works with multiple instances of plugins
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private HashMap<String, LogPreferenceChangeListener> mActivePreferenceListener;
 
-	SettingsManager(Logger logger) {
+	SettingsManager(ILogger logger) {
 		mLogger = logger;
 		mActivePreferenceListener = new HashMap<String, LogPreferenceChangeListener>();
 	}
@@ -66,7 +67,7 @@ class SettingsManager {
 		logDefaultPreferences(pluginId, pluginName);
 	}
 
-	void loadPreferencesFromFile(ICore core, String filename) {
+	void loadPreferencesFromFile(ICore<ToolchainListType> core, String filename) {
 		if (filename != null && !filename.isEmpty()) {
 			mLogger.debug("--------------------------------------------------------------------------------");
 			mLogger.info("Beginning loading settings from " + filename);
@@ -97,7 +98,7 @@ class SettingsManager {
 		}
 	}
 
-	private void logPreferencesDifferentFromDefaults(ICore core) {
+	private void logPreferencesDifferentFromDefaults(ICore<ToolchainListType> core) {
 		boolean isSomePluginDifferent = false;
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final String pluginId = plugin.getPluginID();
@@ -115,7 +116,7 @@ class SettingsManager {
 		}
 	}
 
-	void savePreferences(ICore core, String filename) {
+	void savePreferences(ICore<ToolchainListType> core, String filename) {
 		if (filename == null || filename.isEmpty()) {
 			return;
 		}
@@ -142,7 +143,7 @@ class SettingsManager {
 		}
 	}
 
-	void resetPreferences(ICore core) {
+	void resetPreferences(ICore<ToolchainListType> core) {
 		mLogger.info("Resetting all preferences to default values...");
 		for (IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			IPreferenceInitializer preferences = plugin.getPreferences();

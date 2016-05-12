@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
@@ -133,7 +133,7 @@ public class SmtManager {
 
 	private final IUltimateServiceProvider mServices;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
 	/**
 	 * Switch to produce-interpolants mode before each trace check and leave the

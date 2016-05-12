@@ -35,7 +35,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -46,6 +45,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.models.ModelType;
@@ -75,13 +75,13 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	private Layout<VisualizationNode, VisualizationEdge> mGraphLayout;
 	private VisualizationViewer<VisualizationNode, VisualizationEdge> mVisualizationViewer;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private boolean mOpenWindow;
 	private final ModelType mInputGraphType;
 	private final IUltimateServiceProvider mServices;
 
-	public JungVisualizationObserver(Logger logger, ModelType graphType, IUltimateServiceProvider services) {
+	public JungVisualizationObserver(ILogger logger, ModelType graphType, IUltimateServiceProvider services) {
 		mLogger = logger;
 		mGraph = new DirectedOrderedSparseMultigraph<VisualizationNode, VisualizationEdge>();
 		mGraphLayout = new FRLayout2<VisualizationNode, VisualizationEdge>(mGraph);
@@ -99,27 +99,28 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof IVisualizable) {
-			mUltimateRootNode = ((IVisualizable) root).getVisualizationGraph();
-			mGraph.addVertex(mUltimateRootNode);
-			dfstraverse(mUltimateRootNode, Integer.toString(++mNumberOfRoots));
-//			GraphHandler.getInstance().addVisualizationViewer(mVisualizationViewer);
-
-			GraphProperties.setGraphProperties(mVisualizationViewer, mGraph, mUltimateRootNode,
-					getCounterExampleTraces(mServices));
-			mOpenWindow = true;
-		} else {
-			mLogger.error("Model is not visualizable: " + root);
-			mOpenWindow = false;
+			Object unknownVisualizationGraph = ((IVisualizable<?>) root).getVisualizationGraph();
+			if (unknownVisualizationGraph instanceof VisualizationNode) {
+				mUltimateRootNode = (VisualizationNode) unknownVisualizationGraph;
+				mGraph.addVertex(mUltimateRootNode);
+				dfstraverse(mUltimateRootNode, Integer.toString(++mNumberOfRoots));
+				GraphProperties.setGraphProperties(mVisualizationViewer, mGraph, mUltimateRootNode,
+						getCounterExampleTraces(mServices));
+				mOpenWindow = true;
+				return false;
+			}
 		}
+		mLogger.error("Model is not visualizable: " + root);
+		mOpenWindow = false;
 		return false;
 	}
 
 	@SuppressWarnings("rawtypes")
 	private ArrayList<LinkedHashSet<Object>> getCounterExampleTraces(IUltimateServiceProvider services) {
-		Collection<CounterExampleResult> finiteCounterExamples = ResultUtil.filterResults(services.getResultService()
-				.getResults(), CounterExampleResult.class);
-		Collection<NonterminatingLassoResult> infiniteCounterExamples = ResultUtil.filterResults(services
-				.getResultService().getResults(), NonterminatingLassoResult.class);
+		Collection<CounterExampleResult> finiteCounterExamples = ResultUtil
+				.filterResults(services.getResultService().getResults(), CounterExampleResult.class);
+		Collection<NonterminatingLassoResult> infiniteCounterExamples = ResultUtil
+				.filterResults(services.getResultService().getResults(), NonterminatingLassoResult.class);
 
 		ArrayList<LinkedHashSet<Object>> traces = new ArrayList<>();
 		for (CounterExampleResult cex : finiteCounterExamples) {
@@ -149,6 +150,7 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 		if (mOpenWindow) {
 			// Calls UIJob.
 			UIJob job = new UIJob("Jung Graph View Display") {
+				@Override
 				public IStatus runInUIThread(IProgressMonitor mon) {
 					// here we are in UI-thread so we can call
 					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();

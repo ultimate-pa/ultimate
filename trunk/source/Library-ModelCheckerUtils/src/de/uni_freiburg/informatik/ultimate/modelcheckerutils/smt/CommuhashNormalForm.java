@@ -30,7 +30,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -76,7 +76,7 @@ public class CommuhashNormalForm {
 	}
 	
 	public Term transform(Term term) {
-		Logger logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
+		ILogger logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
 		logger.debug(new DebugMessage(
 				"applying CommuhashNormalForm to formula of DAG size {0}", 
 				new DagSizePrinter(term)));

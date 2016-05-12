@@ -24,11 +24,11 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui.actions;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
@@ -38,10 +38,10 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolch
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
-import de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 
 /**
@@ -54,54 +54,51 @@ public class ResetAndRedoToolChainAction extends RunToolchainAction implements I
 
 	private static final String LABEL = "Reset and re-execute";
 
-	public ResetAndRedoToolChainAction(final IWorkbenchWindow window, final ICore icore,
-			final GuiController controller, Logger logger) {
+	public ResetAndRedoToolChainAction(final IWorkbenchWindow window, final ICore<ToolchainListType> icore,
+			final GuiController controller, ILogger logger) {
 		super(logger, window, icore, controller, ResetAndRedoToolChainAction.class.getName(), LABEL, IImageKeys.REEXEC);
 	}
 
 	/**
-	 * ! This is a generated comment ! The action has been activated. The
-	 * argument of the method represents the 'real' action sitting in the
-	 * workbench UI.
+	 * ! This is a generated comment ! The action has been activated. The argument of the method represents the 'real'
+	 * action sitting in the workbench UI.
 	 * 
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
+	@Override
 	public final void run() {
-		IToolchain tc = mController.getCurrentToolchain();
-
+		final IToolchain<ToolchainListType> tc = mController.getCurrentToolchain();
+		final BasicToolchainJob tcj;
 		if (tc != null) {
 			// we have a toolchain that we can rerun
-			BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, mLogger, tc);
-			tcj.schedule();
+			tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, mLogger, tc);
+
 		} else {
 			// we dont have a toolchain that we can rerun, but perhaps we can
 			// construct one from our preferences
-			BasicToolchainJob tcj = getToolchainJobFromPreferences();
+			tcj = getToolchainJobFromPreferences();
 			if (tcj == null) {
 				// ok, that also didnt work, we give up
 				MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
 						"Please run a toolchain before trying to " + "rerun it.");
 				return;
 			}
-			tcj.schedule();
 		}
+		tcj.schedule();
 	}
 
 	private BasicToolchainJob getToolchainJobFromPreferences() {
-		File[] lastInputFiles = getLastInputFiles();
+		final File[] lastInputFiles = getLastInputFiles();
 		if (lastInputFiles == null) {
 			return null;
 		}
 
-		File prelude = PreludeContribution.getPreludeFile();
-		ToolchainData toolchain = getLastToolchainData();
+		final ToolchainData toolchain = getLastToolchainData();
 
 		if (toolchain == null) {
-			MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
-					"Please run a toolchain before trying to " + "rerun it.");
 			return null;
 		}
 		return new GuiToolchainJob("Re-running toolchain from preferences...", mCore, mController, mLogger, toolchain,
-				lastInputFiles, prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger));
+				lastInputFiles);
 	}
 }

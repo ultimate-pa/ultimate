@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 public class AutomatonEpimorphism<STATE> {
 
 	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 
 	private HashMap<STATE, STATE> m_epimorphism;
 
@@ -78,7 +78,7 @@ public class AutomatonEpimorphism<STATE> {
 			
 			INestedWordAutomatonOldApi<String, String> a1,
 			INestedWordAutomatonOldApi<String, String> a2) {
-		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
 
 		// traversing the states

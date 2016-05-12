@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand1;
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand2;

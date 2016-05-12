@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantif
 
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 public abstract class XjunctPartialQuantifierElimination {
 	protected final Script m_Script;
 	protected final IUltimateServiceProvider m_Services; 
-	protected final Logger m_Logger;
+	protected final ILogger m_Logger;
 	
 	
 	public XjunctPartialQuantifierElimination(Script script,

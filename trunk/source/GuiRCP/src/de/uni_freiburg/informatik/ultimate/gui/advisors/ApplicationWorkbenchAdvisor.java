@@ -26,33 +26,35 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.ICore;
-import de.uni_freiburg.informatik.ultimate.gui.GuiController;
-import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
-import de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective;
-
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.gui.GuiController;
+import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
+import de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective;
+
 /**
  * 
- * @author Ortolf, Dietsch
+ * @author Ortolf
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 
-	private Logger mLogger;
-	private ICore mCore;
+	private ILogger mLogger;
+	private ICore<ToolchainListType> mCore;
 	private ApplicationWorkbenchWindowAdvisor mApplicationWorkbenchWindowAdvisor;
 	private TrayIconNotifier mTrayIconNotifier;
 	private GuiController mController;
 
-	public void init(ICore icc, TrayIconNotifier notifier, GuiController controller, Logger logger) {
+	public void init(ICore<ToolchainListType> icc, TrayIconNotifier notifier, GuiController controller,
+			ILogger logger) {
 		mLogger = logger;
 		mCore = icc;
 		mTrayIconNotifier = notifier;
@@ -60,6 +62,7 @@ public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 
 	}
 
+	@Override
 	public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer) {
 		mLogger.debug("Requesting WorkbenchWindowAdvisor");
 
@@ -75,17 +78,19 @@ public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 		return mApplicationWorkbenchWindowAdvisor;
 	}
 
+	@Override
 	public String getInitialWindowPerspectiveId() {
 		return UltimateDefaultPerspective.ID;
 	}
 
+	@Override
 	public void initialize(IWorkbenchConfigurer configurer) {
 		super.initialize(configurer);
 		configurer.setSaveAndRestore(!Platform.inDevelopmentMode());
 	}
-
-	public TrayItem getTrayItem() {
-		return mApplicationWorkbenchWindowAdvisor.getTrayItem();
-	}
+	
+//	public TrayItem getTrayItem() {
+//		return mApplicationWorkbenchWindowAdvisor.getTrayItem();
+//	}
 
 }

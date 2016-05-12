@@ -955,7 +955,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	// private static Collection<Set<IPredicate>>
 	// computePartitionDistinguishFinalNonFinal(
-	// INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton, Logger
+	// INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton, ILogger
 	// logger) {
 	// logger.info("Start computation of initial partition.");
 	// Collection<IPredicate> states = automaton.getStates();

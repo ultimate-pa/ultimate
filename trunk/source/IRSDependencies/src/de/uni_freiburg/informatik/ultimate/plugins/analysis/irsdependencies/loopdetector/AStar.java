@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -57,7 +57,7 @@ public class AStar<V, E> {
 
 	private static final String INDENT = "   ";
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IHeuristic<V, E> mHeuristic;
 	private final V mStart;
 	private final V mTarget;
@@ -65,16 +65,16 @@ public class AStar<V, E> {
 	private final IGraph<V, E> mGraph;
 	private final IProgressAwareTimer mTimer;
 
-	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph, IProgressAwareTimer timer) {
+	public AStar(ILogger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph, IProgressAwareTimer timer) {
 		this(logger, start, target, heuristic, graph, new NoEdgeDenier<E>(),timer);
 	}
 
-	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
+	public AStar(ILogger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
 			Collection<E> forbiddenEdges, IProgressAwareTimer timer) {
 		this(logger, start, target, heuristic, graph, new CollectionEdgeDenier<>(forbiddenEdges),timer);
 	}
 
-	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
+	public AStar(ILogger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
 			IEdgeDenier<E> edgeDenier, IProgressAwareTimer timer) {
 		mLogger = logger;
 		mHeuristic = heuristic;

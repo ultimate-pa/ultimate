@@ -33,7 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -66,7 +66,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, 
-			NestedFormulas<TransFormula, IPredicate> nestedFormulas, Logger logger,
+			NestedFormulas<TransFormula, IPredicate> nestedFormulas, ILogger logger,
 			SmtManager smtManagerPredicates) {
 		super(smtManager, nestedSSA,logger);
 		m_NestedFormulas = nestedFormulas;

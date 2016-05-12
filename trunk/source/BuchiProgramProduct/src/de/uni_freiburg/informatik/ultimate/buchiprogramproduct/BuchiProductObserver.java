@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 
 public class BuchiProductObserver implements IUnmanagedObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private RootNode mRcfg;
 	private NWAContainer mNeverClaimNWAContainer;
 	private RootNode mProduct;
@@ -66,7 +66,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	private final ProductBacktranslator mBacktranslator;
 	private final IToolchainStorage mStorage;
 
-	public BuchiProductObserver(Logger logger, IUltimateServiceProvider services, ProductBacktranslator backtranslator, IToolchainStorage storage) {
+	public BuchiProductObserver(ILogger logger, IUltimateServiceProvider services, ProductBacktranslator backtranslator, IToolchainStorage storage) {
 		mLogger = logger;
 		mServices = services;
 		mStorage = storage;

@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -66,7 +66,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	
 	private final INestedWordAutomaton<LETTER, STATE> m_NestedWordAutomaton;
 	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	private final DefaultSccComputation<STATE> m_SccComputation;
 	
 	

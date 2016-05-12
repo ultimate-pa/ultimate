@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
-	private static Logger m_Logger;
+	private static ILogger m_Logger;
 	Boolean result1,result2;
 	
 	public Jeffery_Test_2(AutomataLibraryServices services, StateFactory<STATE> sf,

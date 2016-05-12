@@ -40,20 +40,22 @@ import de.uni_freiburg.informatik.ultimate.models.structure.ILabeledEdgesMultigr
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  *
- * @param <N> Type of the graph's nodes.
- * @param <L> Type of the graph's edge labels.
+ * @param <N>
+ *            Type of the graph's nodes.
+ * @param <L>
+ *            Type of the graph's edge labels.
  */
-public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
-	
+public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N, L, ?>, L> {
+
 	private static class GraphCycleException extends Exception {
 		private static final long serialVersionUID = -7189895863479876025L;
 	}
-	
+
 	ILabeledEdgesFilter<N, L> mOutgoingEdgesFilter;
-	
+
 	Set<N> mUnmarkedNodes;
 	Set<N> mTemporarilyMarkedNodes;
-	Set<N> mPermanentlyMarkedNodes; 
+	Set<N> mPermanentlyMarkedNodes;
 	List<N> mTopolicalSorting;
 
 	public TopologicalSorter() {
@@ -64,30 +66,34 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 			}
 		});
 	}
-	
+
 	/**
-	 * Creates a sorter, that ignores some of the graphs edges.
-	 * This can be used to sort an graph with cycles, if the cycle building edges aren't accepted by the filter.
-	 * @param outgoingEdgesFilter Filter to be applied on outgoing edges -- only accepted edges will be used.
+	 * Creates a sorter, that ignores some of the graphs edges. This can be used to sort an graph with cycles, if the
+	 * cycle building edges aren't accepted by the filter.
+	 * 
+	 * @param outgoingEdgesFilter
+	 *            Filter to be applied on outgoing edges -- only accepted edges will be used.
 	 */
 	public TopologicalSorter(ILabeledEdgesFilter<N, L> outgoingEdgesFilter) {
 		mOutgoingEdgesFilter = outgoingEdgesFilter;
 	}
-	
+
 	/** @see #reversedTopologicalOrdering(Collection) */
 	public List<N> topologicalOrdering(Collection<N> graph) {
 		List<N> ordering = reversedTopologicalOrdering(graph);
 		if (ordering != null) {
-			Collections.reverse(ordering);			
+			Collections.reverse(ordering);
 		}
 		return ordering;
 	}
-	
+
 	/**
-	 * Creates a reversed topological ordering of an acyclic directed graph (DAG).
-	 * There are no guarantees, if a node inside <code>graph</code> has a child that isn't part of
-	 * <code>graph</code> (except if the edge from the node to it's child isn't accept by the filter).
-	 * @param graph All nodes of the graph to be sorted. Duplicates will be ignored.
+	 * Creates a reversed topological ordering of an acyclic directed graph (DAG). There are no guarantees, if a node
+	 * inside <code>graph</code> has a child that isn't part of <code>graph</code> (except if the edge from the node to
+	 * it's child isn't accept by the filter).
+	 * 
+	 * @param graph
+	 *            All nodes of the graph to be sorted. Duplicates will be ignored.
 	 * @return Topological ordering of the nodes. null iff the graph contained a circle.
 	 */
 	public List<N> reversedTopologicalOrdering(Collection<N> graph) {
@@ -97,10 +103,10 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 		mTopolicalSorting = new ArrayList<N>(graph.size());
 		while (!mUnmarkedNodes.isEmpty()) {
 			try {
-				visit(mUnmarkedNodes.iterator().next());				
+				visit(mUnmarkedNodes.iterator().next());
 			} catch (GraphCycleException gce) {
 				return null;
-			} 
+			}
 		}
 		return mTopolicalSorting;
 	}
@@ -121,12 +127,12 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 			mTopolicalSorting.add(node);
 		}
 	}
-	
+
 	private void markTemporarily(N unmarkedNode) {
 		mUnmarkedNodes.remove(unmarkedNode);
 		mTemporarilyMarkedNodes.add(unmarkedNode);
 	}
-	
+
 	private void markPermanently(N temporarilyMarkedNode) {
 		mTemporarilyMarkedNodes.remove(temporarilyMarkedNode);
 		mPermanentlyMarkedNodes.add(temporarilyMarkedNode);

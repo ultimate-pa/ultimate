@@ -26,6 +26,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.math.BigInteger;
@@ -38,9 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
@@ -84,7 +83,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static final String PREFIX_SEPARATOR = "_";
 	
 	private final IUltimateServiceProvider services;
-	private final Logger logger;
+	private final ILogger logger;
 	private final Script solver;
 	private final ILinearInequalityInvariantPatternStrategy strategy;
 	private final LinearTransition precondition;
@@ -145,16 +144,16 @@ public final class LinearInequalityInvariantPatternProcessor
 			final boolean useNonlinearConstraints) {
 		super(predicateUnifier, smtManager);
 		this.services = services;
-		this.logger = services.getLoggingService().getLogger(
+		logger = services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID);
 		this.solver = solver;
 		this.strategy = strategy;
 		this.cfg = cfg;
 
-		this.patternVariables = new ArrayList<>();
-		this.patternCoefficients = new HashSet<>();
+		patternVariables = new ArrayList<>();
+		patternCoefficients = new HashSet<>();
 
-		this.linearizer = new CachedTransFormulaLinearizer(services, smtManager, storage);
+		linearizer = new CachedTransFormulaLinearizer(services, smtManager, storage);
 		final Boogie2SMT boogie2smt = smtManager.getBoogie2Smt();
 		this.precondition = linearizer.linearize(new TransFormula(precondition,
 				boogie2smt));
@@ -181,7 +180,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		// In the first round, linearize and populate
 		// {@link #patternCoefficients}.
 		if (round == 0) {
-			logger.log(Level.INFO, "[LIIPP] First round, linearizing...");
+			logger.info( "[LIIPP] First round, linearizing...");
 			patternCoefficients.clear();
 			for (final Transition transition : cfg.getTransitions()) {
 				final LinearTransition lTransition = linearizer
@@ -193,7 +192,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			patternCoefficients.addAll(precondition.getOutVars().keySet());
 			patternCoefficients.addAll(postcondition.getInVars().keySet());
 			patternCoefficients.addAll(postcondition.getOutVars().keySet());
-			logger.log(Level.INFO, "[LIIPP] Linearization complete.");
+			logger.info( "[LIIPP] Linearization complete.");
 		}
 	}
 
@@ -452,9 +451,9 @@ public final class LinearInequalityInvariantPatternProcessor
 	@SafeVarargs
 	private final Term transformNegatedConjunction(
 			final Collection<Collection<LinearInequality>>... dnfs) {
-		this.logger.log(Level.INFO, "[LIIPP] About to invoke motzkin:");
+		logger.info( "[LIIPP] About to invoke motzkin:");
 		for (final Collection<? extends Collection<LinearInequality>> dnf : dnfs) {
-			this.logger.log(Level.INFO, "[LIIPP] DNF to transform: " + dnf);
+			logger.info( "[LIIPP] DNF to transform: " + dnf);
 		}
 		final Collection<Collection<LinearInequality>> conjunctionDNF = expandConjunction(dnfs);
 
@@ -464,7 +463,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		final AnalysisType analysisType = m_UseNonlinearConstraints ? 
 				AnalysisType.Nonlinear : AnalysisType.Linear;
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
-			this.logger.log(Level.INFO, "[LIIPP] Transforming conjunct "
+			logger.info( "[LIIPP] Transforming conjunct "
 					+ conjunct);
 			final MotzkinTransformation transformation = new MotzkinTransformation(
 					solver, analysisType, false);
@@ -556,7 +555,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		for (Collection<LinearInequality> conjunct : negPatternDNF) {
 			numberOfInequalities += conjunct.size();
 		}
-		this.logger.log(Level.INFO, "[LIIPP] Got an implication term with "
+		logger.info( "[LIIPP] Got an implication term with "
 				+ numberOfInequalities + " conjuncts");
 
 		return transformNegatedConjunction(conditionDNF, negPatternDNF);
@@ -602,7 +601,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		for (Collection<LinearInequality> conjunct : PatternDNF) {
 			numberOfInequalities += conjunct.size();
 		}
-		this.logger.log(Level.INFO, "[LIIPP] Got an implication term with "
+		logger.info( "[LIIPP] Got an implication term with "
 				+ numberOfInequalities + " conjuncts");
 
 		return transformNegatedConjunction(newConditionDNF, PatternDNF);
@@ -635,7 +634,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		for (Collection<LinearInequality> conjunct : endInvariantDNF) {
 			numberOfInequalities += conjunct.size();
 		}
-		this.logger.log(Level.INFO, "[LIIPP] Got a predicate term with "
+		logger.info( "[LIIPP] Got a predicate term with "
 				+ numberOfInequalities + " conjuncts");
 		final Collection<List<LinearInequality>> transitionDNF_ = transition
 				.getPolyhedra();
@@ -647,7 +646,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 
 		return transformNegatedConjunction(startInvariantDNF, endInvariantDNF,
-				(Collection<Collection<LinearInequality>>) transitionDNF);
+				transitionDNF);
 	}
 
 	/**
@@ -657,7 +656,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	public boolean hasValidConfiguration(
 			final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates,
 			final int round) {
-		logger.log(Level.INFO, "[LIIPP] Start generating terms.");
+		logger.info( "[LIIPP] Start generating terms.");
 		solver.assertTerm(buildImplicationTerm(precondition,
 				entryInvariantPattern));
 		solver.assertTerm(buildBackwardImplicationTerm(postcondition,
@@ -666,7 +665,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			solver.assertTerm(buildPredicateTerm(predicate));
 		}
 
-		logger.log(Level.INFO, "[LIIPP] Terms generated, checking SAT.");
+		logger.info( "[LIIPP] Terms generated, checking SAT.");
 		final LBool result = solver.checkSat();
 		if (result == LBool.UNKNOWN) {
 			// Prevent additional rounds
@@ -674,11 +673,11 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		if (result != LBool.SAT) {
 			// No configuration found
-			logger.log(Level.INFO, "[LIIPP] No solution found.");
+			logger.info( "[LIIPP] No solution found.");
 			return false;
 		}
 
-		logger.log(Level.INFO, "[LIIPP] Solution found!");
+		logger.info( "[LIIPP] Solution found!");
 		Collection<Term> coefficientsOfAllInvariants = patternVariables;
 		try {
 			if (m_SimplifySatisfyingAssignment) {
@@ -692,7 +691,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			e.printStackTrace();
 			throw new AssertionError("model extraction failed");
 		}
-		logger.log(Level.INFO, "[LIIPP] Valuation: " + valuation);
+		logger.info( "[LIIPP] Valuation: " + valuation);
 
 		return true;
 	}

@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.core.runtime.FileLocator;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
@@ -622,7 +622,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * Our type checker for the automatascript file.
 	 */
 	private AutomataScriptTypeChecker mTypeChecker;
-	private Logger mLogger;
+	private ILogger mLogger;
 	/**
 	 * The automaton, which was lastly printed by a print operation.
 	 */
@@ -694,7 +694,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * done in 4 steps. Step 1: Interpret automata defintions. Step 2: Check the
 	 * automatascript test file for correct types and undeclared variables.
 	 * (Type checking) Step 3: Interpret the automatascript test file. Step 4:
-	 * Report the results to the Logger and to the web interface.
+	 * Report the results to the ILogger and to the web interface.
 	 * 
 	 * @param node
 	 *            the root node of the AST
@@ -1293,7 +1293,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Reports the results of assert statements to the Logger and to Ultimate as
+	 * Reports the results of assert statements to the ILogger and to Ultimate as
 	 * a GenericResult.
 	 * @param errorMessage 
 	 */

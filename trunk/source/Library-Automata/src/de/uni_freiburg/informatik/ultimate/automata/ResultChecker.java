@@ -32,7 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 @Deprecated
 public class ResultChecker<LETTER,STATE> {
 	
-//	private static Logger logger;
+//	private static ILogger logger;
 	
 	private static int resultCheckStackHeight = 0;
 	public static final int maxResultCheckStackHeight = 1;
@@ -77,7 +77,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean reduceBuchi(AutomataLibraryServices services, INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
-		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 
 		StateFactory stateFactory = operand.getStateFactory();
 		if (resultCheckStackHeight >= maxResultCheckStackHeight)
@@ -129,7 +129,7 @@ public class ResultChecker<LETTER,STATE> {
 			INestedWordAutomatonOldApi operand1,
 			INestedWordAutomatonOldApi operand2,
 			INestedWordAutomatonOldApi result) {
-		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -147,7 +147,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean buchiComplement(AutomataLibraryServices services, INestedWordAutomatonOldApi operand,
 										  INestedWordAutomatonOldApi result) throws AutomataLibraryException {
-		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		logger.info("Testing correctness of complementBuchi");
@@ -184,7 +184,7 @@ public class ResultChecker<LETTER,STATE> {
 	public static boolean buchiComplementSVW(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
-		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -233,7 +233,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean petriNetJulian(AutomataLibraryServices services, INestedWordAutomatonOldApi op,
 										 PetriNetJulian result) throws AutomataLibraryException {
-		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -255,7 +255,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 
 	public static boolean petriNetLanguageEquivalence(AutomataLibraryServices services, PetriNetJulian net1, PetriNetJulian net2) throws AutomataLibraryException {
-		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;

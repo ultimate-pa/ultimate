@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript;
 
 import java.math.BigInteger;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -50,7 +50,7 @@ public class ManagedScript {
 	
 	private final IUltimateServiceProvider m_Services;
 	private final Script m_Script;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	private Object m_LockOwner = null;
 	

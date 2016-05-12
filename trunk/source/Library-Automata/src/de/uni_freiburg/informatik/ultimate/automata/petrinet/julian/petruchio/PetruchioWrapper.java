@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -51,7 +51,7 @@ import petruchio.pn.PetriNet;
 
 public class PetruchioWrapper<S,C> {
 	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	
 	

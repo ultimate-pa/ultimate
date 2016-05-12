@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.TestMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class BlockEncoder {
 
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	private MinimizeBranchVisitor mbVisitor;
 
@@ -76,7 +76,7 @@ public class BlockEncoder {
 
 	private IUltimateServiceProvider m_Services;
 
-	public BlockEncoder(Logger logger, IUltimateServiceProvider services) {
+	public BlockEncoder(ILogger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
 		m_Services = services;
 	}

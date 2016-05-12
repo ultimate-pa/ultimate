@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
@@ -55,7 +55,7 @@ public class CellVariableBuilder {
 	private final TransFormulaLRWithArrayInformation tflrwai;
 	private final TransFormulaLRWithArrayCells tflrwac;
 	private final ReplacementVarFactory m_ReplacementVarFactory;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final HashRelation<TermVariable, ArrayIndex> m_FirstGeneration2Indices;
 	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
 	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellOutVars;
@@ -64,7 +64,7 @@ public class CellVariableBuilder {
 	public CellVariableBuilder(TransFormulaLR tf, 
 			TransFormulaLRWithArrayCells tflrwac, 
 			ReplacementVarFactory replacementVarFactory, 
-			Logger logger, 
+			ILogger logger, 
 			HashRelation<TermVariable, ArrayIndex> firstGeneration2Indices, 
 			NestedMap2<TermVariable, ArrayIndex, 
 			ArrayCellReplacementVarInformation> arrayCellInVars, 

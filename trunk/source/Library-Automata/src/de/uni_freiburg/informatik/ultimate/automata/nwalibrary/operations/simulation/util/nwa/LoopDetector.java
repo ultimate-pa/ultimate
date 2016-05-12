@@ -31,7 +31,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
@@ -57,7 +57,7 @@ public final class LoopDetector<LETTER, STATE> {
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	/**
 	 * Timer used for responding to timeouts and operation cancellation.
 	 */
@@ -73,9 +73,9 @@ public final class LoopDetector<LETTER, STATE> {
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 */
-	public LoopDetector(final AGameGraph<LETTER, STATE> gameGraph, final Logger logger,
+	public LoopDetector(final AGameGraph<LETTER, STATE> gameGraph, final ILogger logger,
 			final IProgressAwareTimer progressAwareTimer) {
 		m_GameGraph = gameGraph;
 		m_Logger = logger;

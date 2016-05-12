@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.IMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 
-	private static Logger s_Logger;
+	private static ILogger s_Logger;
 
 	private HashSet<MinimizedNode> actualCallStack;
 
@@ -76,7 +76,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	/**
 	 * 
 	 */
-	public MinimizeCallReturnVisitor(Logger logger, AbstractMinimizationVisitor amVisitor) {
+	public MinimizeCallReturnVisitor(ILogger logger, AbstractMinimizationVisitor amVisitor) {
 		s_Logger = logger;
 		nodesForReVisit = new HashSet<MinimizedNode>();
 		this.amVisitor = amVisitor;

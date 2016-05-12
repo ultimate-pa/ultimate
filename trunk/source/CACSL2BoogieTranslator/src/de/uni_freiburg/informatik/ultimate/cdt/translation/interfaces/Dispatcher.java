@@ -38,7 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
@@ -80,7 +80,7 @@ public abstract class Dispatcher {
 
 	protected LinkedHashMap<String, Integer> mFunctionToIndex;
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	public UltimatePreferenceStore mPreferences;
 
@@ -127,7 +127,7 @@ public abstract class Dispatcher {
 
 	private final TranslationSettings m_TranslationSettings;
 
-	public Dispatcher(CACSL2BoogieBacktranslator backtranslator, IUltimateServiceProvider services, Logger logger) {
+	public Dispatcher(CACSL2BoogieBacktranslator backtranslator, IUltimateServiceProvider services, ILogger logger) {
 		this.backtranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;

@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
@@ -52,12 +52,12 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	 * in this list!
 	 */
 	private ArrayList<RatingStrategy> mSupportedStrategies;
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	/**
 	 * @param strategy
 	 */
-	public StatisticBasedHeuristic(RatingStrategy strategy, Logger logger) {
+	public StatisticBasedHeuristic(RatingStrategy strategy, ILogger logger) {
 		super(strategy);
 		mLogger = logger;
 		mSupportedStrategies = new ArrayList<RatingStrategy>();

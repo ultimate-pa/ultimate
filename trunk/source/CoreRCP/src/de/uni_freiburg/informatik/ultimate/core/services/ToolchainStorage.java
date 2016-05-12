@@ -34,7 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
@@ -92,7 +92,7 @@ public class ToolchainStorage implements IToolchainStorage,
 		// depend on instances created earlier.
 		Collections.reverse(current);
 
-		Logger coreLogger = getLoggingService()
+		ILogger coreLogger = getLoggingService()
 				.getLogger(Activator.PLUGIN_ID);
 		for (IStorable storable : current) {
 			try {
@@ -131,7 +131,7 @@ public class ToolchainStorage implements IToolchainStorage,
 
 	@Override
 	public ILoggingService getLoggingService() {
-		return LoggingService.getService(this);
+		return Log4JLoggingService.getService(this);
 	}
 
 	@Override

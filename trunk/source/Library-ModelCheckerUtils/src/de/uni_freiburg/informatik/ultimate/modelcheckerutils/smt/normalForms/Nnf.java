@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -61,7 +61,7 @@ public class Nnf {
 	protected final Script m_Script;
 	private static final String s_FreshVariableString = "nnf";
 	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
-	protected final Logger m_Logger;
+	protected final ILogger m_Logger;
 	private final NnfTransformerHelper m_NnfTransformerHelper;
 	private List<List<TermVariable>> m_QuantifiedVariables;
 	

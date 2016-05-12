@@ -36,7 +36,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -58,7 +58,7 @@ public class SpaceExParser implements ISource {
 	private final String[] mFileTypes;
 	private List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	/**
 	 * Constructor of the SpaceEx Parser plugin.

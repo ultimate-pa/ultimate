@@ -28,7 +28,7 @@ package pea.modelchecking;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
@@ -46,11 +46,11 @@ public class PEAXML2JConverterWithVarList extends PEAXML2JConverter {
 
 	private static final String DEFAULT_LOGGER = "PEAJ2XMLConverterWithVarList";
 
-	private Logger logger = null;
+	private ILogger logger = null;
 	
 	public PEAXML2JConverterWithVarList(boolean useZ) throws Exception {
 		super(useZ);
-		this.logger = Logger.getLogger(PEAXML2JConverterWithVarList.DEFAULT_LOGGER);
+		this.logger = ILogger.getLogger(PEAXML2JConverterWithVarList.DEFAULT_LOGGER);
 	}
 
 	/**

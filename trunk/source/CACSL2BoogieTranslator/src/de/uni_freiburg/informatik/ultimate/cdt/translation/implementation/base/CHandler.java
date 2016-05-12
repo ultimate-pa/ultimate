@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
@@ -321,7 +321,7 @@ public class CHandler implements ICHandler {
 	 * of a possible continue statement)
 	 */
 	Stack<String> mInnerMostLoopLabel;
-	private Logger mLogger;
+	private ILogger mLogger;
 	
 	CACSLPreferenceInitializer.UNSIGNED_TREATMENT mUnsignedTreatment;
 
@@ -346,7 +346,7 @@ public class CHandler implements ICHandler {
 	 * @param nameHandler 
 	 */
 	public CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, boolean errorLabelWarning,
-			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, 
+			ILogger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, 
 			boolean overapproximateFloatingPointOperations, INameHandler nameHandler) {
 
 		mLogger = logger;

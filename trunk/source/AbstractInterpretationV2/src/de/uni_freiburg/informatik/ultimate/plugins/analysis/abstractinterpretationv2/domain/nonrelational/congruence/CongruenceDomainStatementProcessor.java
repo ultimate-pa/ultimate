@@ -32,7 +32,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
@@ -90,9 +90,9 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
 	private String mLhsVariable;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
-	protected CongruenceDomainStatementProcessor(final Logger logger, final BoogieSymbolTable symbolTable) {
+	protected CongruenceDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable) {
 		mSymbolTable = symbolTable;
 		mLogger = logger;
 		mLhsVariable = null;

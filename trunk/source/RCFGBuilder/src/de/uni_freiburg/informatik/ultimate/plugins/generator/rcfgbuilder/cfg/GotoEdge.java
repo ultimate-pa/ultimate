@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
@@ -43,7 +43,7 @@ public class GotoEdge extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = -2923506946454722306L;
 
-	GotoEdge(int serialNumber, ProgramPoint source, ProgramPoint target, Logger logger) {
+	GotoEdge(int serialNumber, ProgramPoint source, ProgramPoint target, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		assert (target != null);
 	}

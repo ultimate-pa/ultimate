@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.model.repository.DataAccessException;
 import de.uni_freiburg.informatik.ultimate.model.repository.IRepository;
@@ -70,10 +70,10 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	private Map<ModelType, ModelContainer> mModelMap;
 	private IRepository<String, ModelContainer> mRepository;
-	private Logger mLogger;
+	private ILogger mLogger;
 	private ModelType mLastAdded;
 
-	public PersistenceAwareModelManager(File repositoryRoot, Logger logger) {
+	public PersistenceAwareModelManager(File repositoryRoot, ILogger logger) {
 		assert logger != null;
 		mModelMap = new HashMap<ModelType, ModelContainer>();
 		mLogger = logger;
@@ -81,7 +81,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 		this.mRepository = new SerializationRepository(repositoryRoot, mLogger);
 	}
 
-	public PersistenceAwareModelManager(String tmp_dir, Logger logger) {
+	public PersistenceAwareModelManager(String tmp_dir, ILogger logger) {
 		this(new File(tmp_dir), logger);
 	}
 

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
@@ -54,9 +54,9 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	private RootNode mGraphroot;
 
 	/**
-	 * Logger for this plugin.
+	 * ILogger for this plugin.
 	 */
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private final IUltimateServiceProvider mServices;
 

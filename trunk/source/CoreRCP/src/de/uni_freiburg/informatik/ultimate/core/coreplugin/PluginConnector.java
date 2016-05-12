@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.walker.CFGWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.DFSTreeWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.IWalker;
@@ -40,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
@@ -73,10 +73,10 @@ import de.uni_freiburg.informatik.ultimate.models.ModelType;
 // @formatter:on
 public class PluginConnector {
 
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	private IModelManager mModelManager;
-	private IController mController;
+	private IController<ToolchainListType> mController;
 	private ITool mTool;
 
 	private boolean mHasPerformedChanges;
@@ -87,8 +87,8 @@ public class PluginConnector {
 	private IToolchainStorage mStorage;
 	private IUltimateServiceProvider mServices;
 
-	public PluginConnector(IModelManager modelmanager, ITool tool, IController control, IToolchainStorage storage,
-			IUltimateServiceProvider services) {
+	public PluginConnector(IModelManager modelmanager, ITool tool, IController<ToolchainListType> control,
+			IToolchainStorage storage, IUltimateServiceProvider services) {
 		assert storage != null;
 		assert control != null;
 		assert modelmanager != null;
@@ -137,6 +137,7 @@ public class PluginConnector {
 		return mHasPerformedChanges;
 	}
 
+	@Override
 	public String toString() {
 		return mTool.getPluginName();
 	}
@@ -201,9 +202,9 @@ public class PluginConnector {
 		if (element != null && type != null) {
 			mModelManager.addItem(element, type);
 		} else {
-			mLogger.debug(String.format(
-					"%s did return invalid model for observer %s, skipping insertion in model container",
-					tool.getPluginName(), observer));
+			mLogger.debug(
+					String.format("%s did return invalid model for observer %s, skipping insertion in model container",
+							tool.getPluginName(), observer));
 		}
 	}
 
@@ -269,7 +270,7 @@ public class PluginConnector {
 		return new DFSTreeWalker(mLogger);
 	}
 
-	static void initializePlugin(Logger logger, IToolchainPlugin plugin, IUltimateServiceProvider services,
+	static void initializePlugin(ILogger logger, IToolchainPlugin plugin, IUltimateServiceProvider services,
 			IToolchainStorage storage) {
 		logger.info("Initializing " + plugin.getPluginName() + "...");
 		try {

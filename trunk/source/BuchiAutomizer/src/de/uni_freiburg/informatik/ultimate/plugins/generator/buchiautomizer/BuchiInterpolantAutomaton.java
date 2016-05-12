@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
 
 	protected final IUltimateServiceProvider m_Services;
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	private final SmtManager m_SmtManager;
 	private final EdgeChecker m_EdgeChecker;
@@ -107,7 +107,7 @@ public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<Cod
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, boolean scroogeNondeterminismStem,
 			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem, boolean hondaBouncerLoop,
-			PredicateFactoryForInterpolantAutomata predicateFactory, Logger logger, IUltimateServiceProvider services) {
+			PredicateFactoryForInterpolantAutomata predicateFactory, ILogger logger, IUltimateServiceProvider services) {
 		super();
 		mLogger = logger;
 		m_Services = services;

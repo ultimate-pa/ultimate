@@ -37,7 +37,7 @@ import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -97,7 +97,7 @@ public class PostProcessor {
 	private final LinkedHashSet<String> mInitializedGlobals;
 
 	private final Dispatcher mDispatcher;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
 	private final AExpressionTranslation m_ExpressionTranslation;
 
@@ -111,7 +111,7 @@ public class PostProcessor {
 	/**
 	 * Constructor.
 	 */
-	public PostProcessor(Dispatcher dispatcher, Logger logger, AExpressionTranslation expressionTranslation) {
+	public PostProcessor(Dispatcher dispatcher, ILogger logger, AExpressionTranslation expressionTranslation) {
 		mInitializedGlobals = new LinkedHashSet<String>();
 		mDispatcher = dispatcher;
 		mLogger = logger;

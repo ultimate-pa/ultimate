@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -73,7 +73,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private String mInputFile;
 	private NWAContainer mNWAContainer;

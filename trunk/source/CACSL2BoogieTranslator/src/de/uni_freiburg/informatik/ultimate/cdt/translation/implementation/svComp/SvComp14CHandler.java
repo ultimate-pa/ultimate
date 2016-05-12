@@ -40,7 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -127,7 +127,7 @@ public class SvComp14CHandler extends CHandler {
 	 * @param overapproximateFloatingPointOperations 
 	 */
 	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, 
-			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, boolean overapproximateFloatingPointOperations, INameHandler nameHandler) {
+			ILogger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, boolean overapproximateFloatingPointOperations, INameHandler nameHandler) {
 		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation, overapproximateFloatingPointOperations, nameHandler);
 	}
 

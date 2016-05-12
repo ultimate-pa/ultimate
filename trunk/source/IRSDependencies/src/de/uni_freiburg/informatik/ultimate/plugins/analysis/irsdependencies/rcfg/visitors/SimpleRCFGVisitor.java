@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
 import de.uni_freiburg.informatik.ultimate.models.ModelType;
@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  */
 public abstract class SimpleRCFGVisitor implements IObserver {
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
-	public SimpleRCFGVisitor(Logger logger) {
+	public SimpleRCFGVisitor(ILogger logger) {
 		mLogger = logger;
 	}
 

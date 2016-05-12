@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
@@ -63,7 +63,7 @@ public class HelperFunctions {
 	        IntervalDomainValue second, Operator operator, EvaluatorType type) {
 
 		final LoggerInitializer loggerInitializer = new LoggerInitializer();
-		final Logger logger = loggerInitializer.getLogger(HelperFunctions.class.toGenericString());
+		final ILogger logger = loggerInitializer.getLogger(HelperFunctions.class.toGenericString());
 
 		IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        first);

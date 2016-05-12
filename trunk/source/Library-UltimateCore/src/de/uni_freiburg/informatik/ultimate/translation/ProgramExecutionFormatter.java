@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
+import de.uni_freiburg.informatik.ultimate.result.model.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;

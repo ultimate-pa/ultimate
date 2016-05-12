@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -107,7 +107,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	 * 
 	 * @param logger
 	 */
-	public static Term[] irdSimple(Script script, int quantifier, Term[] oldParams, TermVariable tv, Logger logger) {
+	public static Term[] irdSimple(Script script, int quantifier, Term[] oldParams, TermVariable tv, ILogger logger) {
 		assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
 
 		ArrayList<Term> paramsWithoutTv = new ArrayList<Term>();

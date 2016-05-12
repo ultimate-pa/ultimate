@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -44,8 +43,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
-import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.Log4JLoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 
 /**
@@ -53,14 +54,14 @@ import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
  * 
  * @author dietsch
  */
-public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
+public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUltimatePlugin {
 
 	// TODO: Remove de.uni_freiburg.informatik.ultimate.core.coreplugin from
 	// exported packages
 
-	private Logger mLogger;
+	private ILogger mLogger;
 
-	private IController mCurrentController;
+	private IController<ToolchainListType> mCurrentController;
 
 	private ToolchainWalker mToolchainWalker;
 
@@ -72,7 +73,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	private ToolchainManager mToolchainManager;
 
-	private LoggingService mLoggingService;
+	private Log4JLoggingService mLoggingService;
 
 	private JobChangeAdapter mJobChangeAdapter;
 
@@ -83,7 +84,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	}
 
-	public final Object start(IController controller, boolean isGraphical) throws Exception {
+	public final Object start(IController<ToolchainListType> controller, boolean isGraphical) throws Exception {
 		setCurrentController(controller);
 		return start(null);
 	}
@@ -144,12 +145,12 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	}
 
 	@Override
-	public IToolchain requestToolchain() {
+	public IToolchain<ToolchainListType> requestToolchain() {
 		return mToolchainManager.requestToolchain();
 	}
 
 	@Override
-	public void releaseToolchain(IToolchain toolchain) {
+	public void releaseToolchain(IToolchain<ToolchainListType> toolchain) {
 		mToolchainManager.releaseToolchain(toolchain);
 
 	}
@@ -190,11 +191,11 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	public final Object start(IApplicationContext context) throws Exception {
 		// initializing variables, loggers,...
 		mCoreStorage = new ToolchainStorage();
-		mLoggingService = (LoggingService) mCoreStorage.getLoggingService();
+		mLoggingService = (Log4JLoggingService) mCoreStorage.getLoggingService();
 		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
 		mLogger.info("Initializing application");
 
-		final Logger tmpLogger = mLogger;
+		final ILogger tmpLogger = mLogger;
 		mJobChangeAdapter = new JobChangeAdapter() {
 
 			@Override
@@ -247,7 +248,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	/***************************** Getters & Setters *********************/
 
-	private void setCurrentController(IController controller) {
+	private void setCurrentController(IController<ToolchainListType> controller) {
 		if (mCurrentController != null) {
 			if (controller == null) {
 				mLogger.warn("Controller already set! Using " + mCurrentController.getPluginName()
@@ -262,7 +263,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mCurrentController = controller;
 	}
 
-	private IController getCurrentController() {
+	private IController<ToolchainListType> getCurrentController() {
 		return mCurrentController;
 	}
 

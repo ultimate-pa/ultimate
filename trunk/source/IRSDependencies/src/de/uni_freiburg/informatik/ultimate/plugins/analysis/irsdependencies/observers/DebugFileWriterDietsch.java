@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeSet;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -47,12 +47,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class DebugFileWriterDietsch {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private List<List<RCFGEdge>> mPaths;
 	private final int mUnrollingDepth;
 	private final static String sFolderPath = "F:\\repos\\ultimate fresher co\\trunk\\examples\\unrolling-tests\\";
 
-	public DebugFileWriterDietsch(List<List<RCFGEdge>> list, Logger logger, int unrollingDepth) {
+	public DebugFileWriterDietsch(List<List<RCFGEdge>> list, ILogger logger, int unrollingDepth) {
 		mLogger = logger;
 		if (list == null) {
 			throw new IllegalArgumentException("Parameter may not be null");

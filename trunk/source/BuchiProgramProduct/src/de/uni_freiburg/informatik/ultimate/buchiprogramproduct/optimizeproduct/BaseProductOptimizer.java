@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 
 public abstract class BaseProductOptimizer {
 	protected final IUltimateServiceProvider mServices;
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	protected final RootNode mResult;
 	protected int mRemovedEdges;

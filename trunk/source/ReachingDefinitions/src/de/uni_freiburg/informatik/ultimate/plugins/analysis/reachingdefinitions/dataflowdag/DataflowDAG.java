@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -59,7 +59,7 @@ public class DataflowDAG<T> extends ModifiableLabeledEdgesMultigraph<DataflowDAG
 		return "[" + mNodeLabel.hashCode() + "]: " + mNodeLabel.toString();
 	}
 
-	public void printGraphDebug(Logger logger) {
+	public void printGraphDebug(ILogger logger) {
 		for (String s : getDebugString().split("\n"))
 			logger.debug(s);
 	}

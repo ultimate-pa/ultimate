@@ -31,21 +31,19 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.models.IPayload;
 
 /***
- * This class provides a basic implementation for {@link IModifiableSimpleAST}.
- * It uses the standard list operations to provide modifications to the list of
- * successor nodes of {@link ISimpleAST}.
+ * This class provides a basic implementation for {@link IModifiableSimpleAST}. It uses the standard list operations to
+ * provide modifications to the list of successor nodes of {@link ISimpleAST}.
  * 
  * @author dietsch
  * @see IModifiableSimpleAST
  * 
  */
-public abstract class ModifiableSimpleAST<T extends IModifiableSimpleAST<T>> extends
-		BaseSimpleAST<T> implements IModifiableSimpleAST<T> {
+public abstract class ModifiableSimpleAST<T extends IModifiableSimpleAST<T, VisualizationNode>> extends BaseSimpleAST<T>
+		implements IModifiableSimpleAST<T, VisualizationNode> {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -57,12 +55,10 @@ public abstract class ModifiableSimpleAST<T extends IModifiableSimpleAST<T>> ext
 	}
 
 	/**
-	 * This constructor creates a {@link ModifiableSimpleAST} with a given
-	 * payload.
+	 * This constructor creates a {@link ModifiableSimpleAST} with a given payload.
 	 * 
 	 * @param payload
-	 *            A payload for the new {@link ModifiableSimpleAST} node or
-	 *            null.
+	 *            A payload for the new {@link ModifiableSimpleAST} node or null.
 	 */
 	protected ModifiableSimpleAST(IPayload payload) {
 		super(payload);

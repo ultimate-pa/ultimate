@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -49,7 +49,7 @@ public class Return extends CodeBlock implements IReturnAction {
 
 	private final Call m_CorrespondingCall;
 
-	Return(int serialNumber, ProgramPoint source, ProgramPoint target, Call correspondingCall, Logger logger) {
+	Return(int serialNumber, ProgramPoint source, ProgramPoint target, Call correspondingCall, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		m_CorrespondingCall = correspondingCall;
 	}

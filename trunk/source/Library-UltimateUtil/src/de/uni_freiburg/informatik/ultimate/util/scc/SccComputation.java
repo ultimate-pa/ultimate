@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 /**
  * Computes strongly connected components (SCCs) of a graph. 
@@ -50,7 +50,7 @@ import org.apache.log4j.Logger;
  */
 public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>> {
 
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	private final IStronglyConnectedComponentFactory<NODE, COMP> m_SccFactory;
 	protected final ISuccessorProvider<NODE> m_SuccessorProvider;
@@ -81,7 +81,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	
 
 
-	public SccComputation(Logger logger,
+	public SccComputation(ILogger logger,
 			ISuccessorProvider<NODE> successorProvider,
 			IStronglyConnectedComponentFactory<NODE, COMP> sccFac,
 			int numberOfAllNodes,

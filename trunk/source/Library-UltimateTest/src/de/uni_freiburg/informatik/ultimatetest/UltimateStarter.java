@@ -34,9 +34,6 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.eclipse.core.runtime.IStatus;
 import org.xml.sax.SAXException;
 
@@ -47,24 +44,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * 
- * This class wraps the Ultimate application and allows to start it without
- * setting an IController object.
+ * This class wraps the Ultimate application and allows to start it without setting an IController
+ * <ToolchainListType> object.
  * 
- * Call runUltimate() to execute it and complete after processing the results
- * (to release resources).
+ * Call runUltimate() to execute it and complete after processing the results (to release resources).
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class UltimateStarter implements IController {
+public class UltimateStarter implements IController<ToolchainListType> {
 
-	private Logger mLogger;
-	private FileAppender mAppender;
+	private ILogger mLogger;
 
 	private final UltimateRunDefinition mUltimateRunDefinition;
 	private final long mDeadline;
@@ -73,7 +70,8 @@ public class UltimateStarter implements IController {
 	private final ExternalUltimateCore mExternalUltimateCore;
 
 	private IUltimateServiceProvider mCurrentSerivces;
-	
+	private ILoggingService mLoggingService;
+
 	public UltimateStarter(UltimateRunDefinition ultimateRunDefinition, long deadline) {
 		this(ultimateRunDefinition, deadline, null, null);
 	}
@@ -81,7 +79,6 @@ public class UltimateStarter implements IController {
 	public UltimateStarter(UltimateRunDefinition ultimateRunDefintion, long deadline, File logFile, String logPattern) {
 		assert deadline >= 0 : "Deadline has to be positive or zero";
 		mUltimateRunDefinition = ultimateRunDefintion;
-		mLogger = Logger.getLogger(UltimateStarter.class);
 		mExternalUltimateCore = new ExternalUltimateCoreTest(this);
 		mDeadline = deadline;
 		mLogFile = logFile;
@@ -94,10 +91,12 @@ public class UltimateStarter implements IController {
 	}
 
 	@Override
-	public int init(ICore core, ILoggingService loggingService) {
+	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
+		mLoggingService = loggingService;
+		mLogger = loggingService.getControllerLogger();
 		core.resetPreferences();
 		return mExternalUltimateCore.init(core, loggingService, mUltimateRunDefinition.getSettings(), mDeadline,
-				mUltimateRunDefinition.getInput(), null).getCode();
+				mUltimateRunDefinition.getInput()).getCode();
 	}
 
 	public void complete() {
@@ -105,25 +104,22 @@ public class UltimateStarter implements IController {
 	}
 
 	private void attachLogger() {
-		if (mLogFile == null) {
+		if (mLogFile == null || mLoggingService == null) {
 			return;
 		}
 
-		detachLogger();
 		try {
-			mAppender = new FileAppender(new PatternLayout(mLogPattern), mLogFile.getAbsolutePath());
-			mLogger.addAppender(mAppender);
+			mLoggingService.addLogfile(mLogPattern, mLogFile.getAbsolutePath(), true);
 		} catch (IOException e1) {
-			detachLogger();
 			mLogger.fatal("Failed to create logfile " + mLogFile + ". Reason: " + e1);
 		}
 	}
 
 	private void detachLogger() {
-		if (mAppender == null) {
+		if (mLogFile == null || mLoggingService == null) {
 			return;
 		}
-		mLogger.removeAppender(mAppender);
+		mLoggingService.removeLogFile(mLogFile.getAbsolutePath());
 	}
 
 	@Override
@@ -155,8 +151,8 @@ public class UltimateStarter implements IController {
 			mLogger.info("Loaded toolchain from " + mUltimateRunDefinition.getToolchain().getAbsolutePath());
 			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
-			mLogger.fatal("Toolchain could not be created from file " + mUltimateRunDefinition.getToolchain() + ": "
-					+ e);
+			mLogger.fatal(
+					"Toolchain could not be created from file " + mUltimateRunDefinition.getToolchain() + ": " + e);
 			return null;
 		}
 	}
@@ -187,18 +183,22 @@ public class UltimateStarter implements IController {
 
 	}
 
+	/**
+	 * Provides an {@link IUltimateServiceProvider} instance of the last run of this starter (i.e., only after
+	 * {@link #runUltimate()} has been called).
+	 */
 	public IUltimateServiceProvider getServices() {
 		return mCurrentSerivces;
 	}
 
 	private class ExternalUltimateCoreTest extends ExternalUltimateCore {
 
-		public ExternalUltimateCoreTest(IController controller) {
+		public ExternalUltimateCoreTest(IController<ToolchainListType> controller) {
 			super(controller);
 		}
 
 		@Override
-		protected Logger getLogger(ILoggingService loggingService) {
+		protected ILogger getLogger(ILoggingService loggingService) {
 			mLogger = super.getLogger(loggingService);
 			attachLogger();
 			return mLogger;

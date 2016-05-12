@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -50,7 +50,7 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 
 	private Map<IElement, String> mSeenList;
 	private int mNumRoots;
-	private Logger mLogger;
+	private ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PrintWriter mWriter;
 

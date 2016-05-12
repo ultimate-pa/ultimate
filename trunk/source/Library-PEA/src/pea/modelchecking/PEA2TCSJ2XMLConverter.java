@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 
 import pea.Phase;
@@ -45,7 +45,7 @@ public class PEA2TCSJ2XMLConverter {
 
 	protected static final String DEFAULT_LOGGER = "PEA2TCSJ2XMLConverter";
 
-    protected Logger logger = null;
+    protected ILogger logger = null;
 
     protected TCSFormulaJ2XMLConverter formulaConverter = null;
 
@@ -70,14 +70,14 @@ public class PEA2TCSJ2XMLConverter {
      * logger is initialised via <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public PEA2TCSJ2XMLConverter(String loggerName) throws Exception {
         if (loggerName.equals("")) {
-            this.logger = Logger.getLogger(PEAJ2XMLConverter.DEFAULT_LOGGER);
+            this.logger = ILogger.getLogger(PEAJ2XMLConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
 
         this.formulaConverter = new TCSFormulaJ2XMLConverter();

@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 import java.io.Closeable;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * @see NonTerminationArgumentSynthesizer
  */
 public abstract class ArgumentSynthesizer implements Closeable {
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 
 	

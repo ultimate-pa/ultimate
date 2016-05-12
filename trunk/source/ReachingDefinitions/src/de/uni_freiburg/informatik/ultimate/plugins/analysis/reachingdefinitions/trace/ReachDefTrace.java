@@ -35,7 +35,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -58,13 +58,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 
 public class ReachDefTrace {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 	private final BoogieSymbolTable mSymbolTable;
 
 	public ReachDefTrace(IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider,
-			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider, Logger logger, BoogieSymbolTable symboltable) {
+			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider, ILogger logger, BoogieSymbolTable symboltable) {
 		mLogger = logger;
 		mStatementProvider = stmtProvider;
 		mEdgeProvider = edgeProvider;

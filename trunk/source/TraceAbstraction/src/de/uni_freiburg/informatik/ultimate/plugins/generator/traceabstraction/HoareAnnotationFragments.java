@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
  */
 public class HoareAnnotationFragments {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	/**
 	 * States for contexts were the context was already removed (because it was
@@ -104,7 +104,7 @@ public class HoareAnnotationFragments {
 		return m_Context2Entry;
 	}
 
-	public HoareAnnotationFragments(Logger logger, HashSet<ProgramPoint> hoareAnnotationPositions, 
+	public HoareAnnotationFragments(ILogger logger, HashSet<ProgramPoint> hoareAnnotationPositions, 
 			HoareAnnotationPositions hoareAnnotationPos){
 		mLogger = logger;
 		m_HoareAnnotationPositions = hoareAnnotationPositions;

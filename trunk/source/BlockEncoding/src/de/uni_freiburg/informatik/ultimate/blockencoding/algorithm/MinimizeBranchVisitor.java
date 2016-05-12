@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
@@ -62,7 +62,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 	 * Constructor for the MinimizeBranchVisitor
 	 * 
 	 */
-	public MinimizeBranchVisitor(Logger logger) {
+	public MinimizeBranchVisitor(ILogger logger) {
 		super(logger);
 	}
 

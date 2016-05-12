@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.function.Function;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
@@ -62,7 +62,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 			StorageClass.IMPLEMENTATION_INPARAM, StorageClass.IMPLEMENTATION_OUTPARAM };
 	private final BoogieSymbolTable mSymbolTable;
 	private final Boogie2SmtSymbolTable mBoogieVarTable;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public RcfgVariableProvider(final BoogieSymbolTable table, final Boogie2SmtSymbolTable boogieVarTable,
 			final IUltimateServiceProvider services) {

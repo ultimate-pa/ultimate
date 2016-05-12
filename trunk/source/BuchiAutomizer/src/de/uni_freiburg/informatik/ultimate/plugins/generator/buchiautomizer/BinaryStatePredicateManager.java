@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
@@ -106,7 +106,7 @@ public class BinaryStatePredicateManager {
 	 * Is the loop also terminating without the stem?
 	 */
 	private Boolean m_LoopTermination;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
 

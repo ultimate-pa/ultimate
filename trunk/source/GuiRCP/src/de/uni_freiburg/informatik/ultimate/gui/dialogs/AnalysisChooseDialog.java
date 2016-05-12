@@ -36,7 +36,7 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -75,7 +75,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 	private final List<ITool> mTools;
 	private final List<ITool> mPrevious;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	/**
 	 * Create the dialog
@@ -83,7 +83,7 @@ public class AnalysisChooseDialog extends Dialog {
 	 * @param parent
 	 * @param style
 	 */
-	public AnalysisChooseDialog(Logger logger, Shell parent, int style, List<ITool> tools, List<ITool> previous) {
+	public AnalysisChooseDialog(ILogger logger, Shell parent, int style, List<ITool> tools, List<ITool> previous) {
 		super(parent, style);
 		mTools = tools;
 		mPrevious = previous;
@@ -97,7 +97,7 @@ public class AnalysisChooseDialog extends Dialog {
 	 * 
 	 * @param parent
 	 */
-	public AnalysisChooseDialog(Logger logger, Shell parent, List<ITool> tools, List<ITool> previous) {
+	public AnalysisChooseDialog(ILogger logger, Shell parent, List<ITool> tools, List<ITool> previous) {
 		this(logger, parent, SWT.NONE, tools, previous);
 	}
 

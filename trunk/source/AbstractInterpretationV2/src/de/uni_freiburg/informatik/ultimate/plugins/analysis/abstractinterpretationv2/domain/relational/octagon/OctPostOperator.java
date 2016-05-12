@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -122,7 +122,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public Logger getLogger() {
+	public ILogger getLogger() {
 		return mLogger;
 	}
 	
@@ -144,7 +144,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
 	private final int mMaxParallelStates;
 	private final boolean mFallbackAssignIntervalProjection;
@@ -154,7 +154,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	private final OctStatementProcessor mStatementProcessor;
 	private final OctAssumeProcessor mAssumeProcessor;
 
-	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int maxParallelStates,
+	public OctPostOperator(ILogger logger, BoogieSymbolTable symbolTable, int maxParallelStates,
 			boolean fallbackAssignIntervalProjection) {
 
 		if (maxParallelStates < 1) {

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainOldT
 import de.uni_freiburg.informatik.ultimate.gui.actions.ResetSettingsAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.SaveSettingsAction;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -63,7 +63,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
 	private final ICore mCore;
 	private final GuiController mController;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private IWorkbenchAction mExitAction;
 	private IWorkbenchAction mAboutAction;
@@ -79,7 +79,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	private IWorkbenchAction mResetSettings;
 
 	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ICore icc, GuiController controller,
-			Logger logger) {
+			ILogger logger) {
 		super(configurer);
 		mCore = icc;
 		mController = controller;

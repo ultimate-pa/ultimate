@@ -37,7 +37,7 @@ import pea.CDD;
 import pea.Phase;
 import pea.PhaseEventAutomata;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
@@ -62,7 +62,7 @@ public class PEAXML2JConverter {
 
     protected static final String DEFAULT_LOGGER = "PEAXML2JConverter";
 
-    protected Logger logger = null;
+    protected ILogger logger = null;
 
     protected DOMParser parser = null;
 
@@ -79,14 +79,14 @@ public class PEAXML2JConverter {
      * logger is initialised via <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public PEAXML2JConverter(String loggerName, boolean useZ) throws Exception {
         if (loggerName.equals("")) {
-            this.logger = Logger.getLogger(PEAXML2JConverter.DEFAULT_LOGGER);
+            this.logger = ILogger.getLogger(PEAXML2JConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
 
         this.formulaConverter = new FormulaXML2JConverter(useZ);

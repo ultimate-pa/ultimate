@@ -28,7 +28,7 @@ package pea.modelchecking;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -46,7 +46,7 @@ public abstract class Formula2NFCompiler {
 
     protected static final String DEFAULT_LOGGER = "Formula2NFCompiler";
 
-    protected Logger logger;
+    protected ILogger logger;
 
     protected Document document;
 
@@ -58,14 +58,14 @@ public abstract class Formula2NFCompiler {
      * initialised via <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public Formula2NFCompiler(String loggerName) {
         if (loggerName.equals("")) {
-            this.logger = Logger.getLogger(Formula2NFCompiler.DEFAULT_LOGGER);
+            this.logger = ILogger.getLogger(Formula2NFCompiler.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
     }
 

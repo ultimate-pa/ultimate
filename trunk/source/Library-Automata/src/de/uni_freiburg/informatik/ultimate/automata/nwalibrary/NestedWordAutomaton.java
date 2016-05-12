@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -66,7 +66,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		INestedWordAutomaton<LETTER, STATE> {
 
 	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 
 	private Set<LETTER> m_InternalAlphabet;
 	private Set<LETTER> m_CallAlphabet;

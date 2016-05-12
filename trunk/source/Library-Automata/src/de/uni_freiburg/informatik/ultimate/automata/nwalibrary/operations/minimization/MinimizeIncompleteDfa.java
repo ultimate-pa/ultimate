@@ -38,7 +38,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -185,7 +185,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		init(stateAmount, letterAmount);
 		
 		m_result = minimizeICDFA(m_operand, initialPartition);
-		Logger logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		logger.info(exitMessage());
 	}
 

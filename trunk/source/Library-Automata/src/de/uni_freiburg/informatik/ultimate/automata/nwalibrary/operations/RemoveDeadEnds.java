@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.Collection;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -55,7 +55,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Reach;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
 
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a nested word automaton that has

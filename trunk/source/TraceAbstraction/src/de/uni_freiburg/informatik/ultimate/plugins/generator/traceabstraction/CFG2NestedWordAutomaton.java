@@ -33,7 +33,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -62,9 +62,9 @@ public class CFG2NestedWordAutomaton {
 	private boolean m_MainMode;
 	private static final String m_StartProcedure = "ULTIMATE.start";
 	
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
-	public CFG2NestedWordAutomaton(IUltimateServiceProvider services, boolean interprocedural, SmtManager predicateFactory, Logger logger) {
+	public CFG2NestedWordAutomaton(IUltimateServiceProvider services, boolean interprocedural, SmtManager predicateFactory, ILogger logger) {
 		m_Services = services;
 		mLogger = logger;
 		m_SmtManager = predicateFactory;

@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -51,7 +51,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 
 	private final ExternalInterpolator m_ExternalInterpolator;
 
-	public ScriptorWithGetInterpolants(String command, Logger logger, IUltimateServiceProvider services,
+	public ScriptorWithGetInterpolants(String command, ILogger logger, IUltimateServiceProvider services,
 			IToolchainStorage storage, ExternalInterpolator externalInterpolator, String name) throws IOException {
 		super(command, logger, services, storage, name);
 		m_ExternalInterpolator = externalInterpolator;

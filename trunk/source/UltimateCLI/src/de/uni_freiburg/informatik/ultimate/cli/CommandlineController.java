@@ -39,7 +39,6 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.xml.sax.SAXException;
@@ -53,8 +52,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
 
 /**
  * Implements standard fallback controller for the command-line.
@@ -64,14 +64,14 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
  * @author Christian Ortolf
  * @author Christian Simon
  */
-public class CommandlineController implements IController {
+public class CommandlineController implements IController<ToolchainListType> {
 
 	static {
 		sPLUGIN_ID = Activator.PLUGIN_ID;
 		sPLUGIN_NAME = Activator.PLUGIN_NAME;
 	}
 
-	private Logger mLogger;
+	private ILogger mLogger;
 	private ToolchainData mToolchain;
 
 	private static final String sPLUGIN_ID;
@@ -92,7 +92,8 @@ public class CommandlineController implements IController {
 		return new ToolchainData(toolFile);
 	}
 
-	public int init(ICore core, ILoggingService loggingService) {
+	@Override
+	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
 		if (core == null) {
 			return -1;
 		}
@@ -141,12 +142,9 @@ public class CommandlineController implements IController {
 			inputFiles.add(inputFile);
 		}
 
-		// handle prelude file
-		PreludeProvider preludeFile = new PreludeProvider(cmdParser.getPreludeFile(), mLogger);
-
 		try {
 			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger,
-					inputFiles.toArray(new File[0]), preludeFile);
+					inputFiles.toArray(new File[0]));
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
 			tcj.join();
@@ -159,6 +157,7 @@ public class CommandlineController implements IController {
 		return IApplication.EXIT_OK;
 	}
 
+	@Override
 	public ISource selectParser(Collection<ISource> parser) {
 		Object[] parsers = parser.toArray();
 
@@ -189,10 +188,12 @@ public class CommandlineController implements IController {
 		}
 	}
 
+	@Override
 	public String getPluginName() {
 		return sPLUGIN_NAME;
 	}
 
+	@Override
 	public String getPluginID() {
 		return sPLUGIN_ID;
 	}

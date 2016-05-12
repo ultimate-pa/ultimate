@@ -36,7 +36,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public class NestedInterpolantsBuilder {
 
 	private final  IUltimateServiceProvider m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 
 	final Script m_ScriptTc;
 	final SmtManager m_SmtManagerTc;
@@ -668,7 +668,7 @@ public class NestedInterpolantsBuilder {
 	}
 
 	private static void dumpInterpolationInput(int offset, Term[] interpolInput, List<Integer> indexTranslation,
-			NestedRun<CodeBlock, IPredicate> run, Script theory, PrintWriter pW, Logger logger) {
+			NestedRun<CodeBlock, IPredicate> run, Script theory, PrintWriter pW, ILogger logger) {
 		String line;
 		int indentation = 0;
 		int translatedPosition;
@@ -712,7 +712,7 @@ public class NestedInterpolantsBuilder {
 	}
 
 	private static void dumpInterpolationOutput(int offset, Term[] interpolOutput, List<Integer> indexTranslation,
-			Word<CodeBlock> run, PrintWriter pW, Logger logger) {
+			Word<CodeBlock> run, PrintWriter pW, ILogger logger) {
 		@SuppressWarnings("unchecked")
 		NestedWord<CodeBlock> word = NestedWord.nestedWord(run);
 		assert (interpolOutput.length == indexTranslation.size());
@@ -744,7 +744,7 @@ public class NestedInterpolantsBuilder {
 	}
 
 	private static void dumpNestedStateFormulas(IPredicate[] stateFormulas, Word<CodeBlock> word, PrintWriter pW,
-			Logger logger) {
+			ILogger logger) {
 		@SuppressWarnings("unchecked")
 		NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
 		assert (stateFormulas.length == word.length() + 1);

@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.core.services.model;
 
 import java.io.File;
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 /**
  * 
@@ -40,7 +40,7 @@ public class PreludeProvider {
 
 	private File mPrelude;
 
-	public PreludeProvider(String preludefile, Logger logger) {
+	public PreludeProvider(String preludefile, ILogger logger) {
 		// get the logger of the core
 		if (preludefile != null) {
 			File foo = new File(preludefile);

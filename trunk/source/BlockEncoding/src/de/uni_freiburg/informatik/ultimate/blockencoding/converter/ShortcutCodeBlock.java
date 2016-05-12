@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.converter;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -52,7 +52,7 @@ public class ShortcutCodeBlock extends CodeBlock {
 	 * @param logger 
 	 */
 	public ShortcutCodeBlock(ProgramPoint source, ProgramPoint target,
-			CodeBlock[] codeBlocks, Logger logger) {
+			CodeBlock[] codeBlocks, ILogger logger) {
 		super(source, target, logger);
 		this.codeBlocks = codeBlocks;
 	}

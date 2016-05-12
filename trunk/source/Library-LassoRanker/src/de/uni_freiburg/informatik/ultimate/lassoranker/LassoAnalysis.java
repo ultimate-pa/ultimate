@@ -36,7 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
@@ -89,7 +89,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * @author Matthias Heizmann
  */
 public class LassoAnalysis {
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	/**
 	 * Analysis techniques supported by this library.

@@ -28,7 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -44,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class BlockEncodingObserver implements IUnmanagedObserver {
 
 	private IElement mRoot;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	public BlockEncodingObserver(Logger logger, IUltimateServiceProvider services) {
+	public BlockEncodingObserver(ILogger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
 	}

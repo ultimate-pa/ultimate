@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	private ExpressionsBasedModel mModel;
 
@@ -66,7 +66,7 @@ public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 	private Map<String, Integer> mVariableIndexMap;
 	private Map<Integer, String> mVariableNameMap;
 
-	public OjAlgoSolver(Logger logger, Class<T> type) {
+	public OjAlgoSolver(ILogger logger, Class<T> type) {
 		mLogger = logger;
 		mModelIsPresent = false;
 		mType = type;

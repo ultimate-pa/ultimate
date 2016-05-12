@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.equinox.app.IApplication;
 
@@ -45,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
@@ -55,17 +56,17 @@ import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 /**
  * {@link CDTController} is one of the distinct controllers of Ultimate. It
  * starts the Core from a different host (another RCP instance, namely Eclipse
- * CDT), but uses one {@link ICore} instance for multiple executions of
+ * CDT), but uses one {@link ICore<ToolchainListType>} instance for multiple executions of
  * Ultimate.
  * 
  * @author dietsch
  */
-public class CDTController implements IController {
+public class CDTController implements IController<ToolchainListType> {
 
-	private Logger mLogger;
+	private ILogger mLogger;
 	private UltimateCChecker mChecker;
 
-	private ICore mUltimate;
+	private ICore<ToolchainListType> mUltimate;
 	private UltimateThread mUltimateThread;
 	private ManualReleaseToolchainJob mCurrentJob;
 
@@ -81,7 +82,7 @@ public class CDTController implements IController {
 	}
 
 	@Override
-	public int init(ICore core, ILoggingService loggingService) {
+	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
 		// we use init() only to create the preference pages and safe a core
 		// reference
 		mLogger = loggingService.getControllerLogger();
@@ -190,11 +191,11 @@ public class CDTController implements IController {
 
 	private class UltimateThread {
 
-		private final IController mController;
+		private final IController<ToolchainListType> mController;
 		private Exception mUltimateException;
 		private boolean mIsRunning;
 
-		private UltimateThread(IController controller) {
+		private UltimateThread(IController<ToolchainListType> controller) {
 			mController = controller;
 		}
 
@@ -229,15 +230,15 @@ public class CDTController implements IController {
 
 	private class ManualReleaseToolchainJob extends ExternalParserToolchainJob {
 
-		private IToolchain mCurrentChain;
+		private IToolchain<ToolchainListType> mCurrentChain;
 
-		public ManualReleaseToolchainJob(String name, ICore core, IController controller, IElement ast,
-				ModelType outputDefinition, Logger logger) {
+		public ManualReleaseToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller, IElement ast,
+				ModelType outputDefinition, ILogger logger) {
 			super(name, core, controller, ast, outputDefinition, logger);
 		}
 
 		@Override
-		protected void releaseToolchain(IToolchain chain) {
+		protected void releaseToolchain(IToolchain<ToolchainListType> chain) {
 			if (mCurrentChain != null && mCurrentChain != chain) {
 				// ensure that no chain is unreleased
 				super.releaseToolchain(mCurrentChain);

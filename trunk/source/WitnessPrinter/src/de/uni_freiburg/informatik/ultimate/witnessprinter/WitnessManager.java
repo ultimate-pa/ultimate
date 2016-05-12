@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
@@ -68,11 +68,11 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
  */
 public class WitnessManager {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
-	public WitnessManager(final Logger logger, final IUltimateServiceProvider services,
+	public WitnessManager(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
 		mLogger = logger;
 		mServices = services;

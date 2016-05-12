@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -66,7 +66,7 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -78,7 +78,7 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DirectNwaSimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
+	public DirectNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final DirectNwaGameGraph<LETTER, STATE> game)
 					throws OperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, game);

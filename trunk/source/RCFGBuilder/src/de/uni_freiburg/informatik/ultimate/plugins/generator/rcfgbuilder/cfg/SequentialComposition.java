@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -158,14 +158,14 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 	 */
 	public static TransFormula getInterproceduralTransFormula(Boogie2SMT boogie2smt,
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe, boolean tranformToCNF,
-			boolean withBranchEncoders, Logger logger, IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
+			boolean withBranchEncoders, ILogger logger, IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
 		return getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe, tranformToCNF,
 				withBranchEncoders, null, null, null, logger, services, codeBlocks);
 	}
 
 	private static TransFormula getInterproceduralTransFormula(Boogie2SMT boogie2smt,
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe, boolean tranformToCNF,
-			boolean withBranchEncoders, TransFormula[] beforeCall, Call call, Return ret, Logger logger,
+			boolean withBranchEncoders, TransFormula[] beforeCall, Call call, Return ret, ILogger logger,
 			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
 		List<TransFormula> beforeFirstPendingCall = new ArrayList<TransFormula>();
 		Call lastUnmatchedCall = null;

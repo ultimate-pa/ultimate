@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
@@ -107,7 +107,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
  */
 public class TraceChecker {
 
-	protected final Logger m_Logger;
+	protected final ILogger m_Logger;
 	protected final IUltimateServiceProvider m_Services;
 	/**
 	 * After constructing a new TraceChecker satisfiability of the trace was checked. However, the trace check is not

@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
@@ -82,7 +82,7 @@ public class HoareAnnotation extends SPredicate {
 	private static final String KEY = Activator.s_PLUGIN_ID;
 	private static final long serialVersionUID = 72852101509650437L;
 	
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider m_Services;
 
 	private final Script m_Script;

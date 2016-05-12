@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
@@ -68,7 +68,7 @@ public class LoopCannibalizer {
 	private final Set<IPredicate> m_OriginalLoopInterpolants;
 	private NestedWord<CodeBlock> m_Loop;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
 	public LoopCannibalizer(NestedLassoRun<CodeBlock, IPredicate> counterexample, Set<IPredicate> loopInterpolants,

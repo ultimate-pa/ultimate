@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.boogie.symboltable;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.models.ModelType;
  */
 public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnmanagedObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
 	private BoogieSymbolTable mSymbolTable;
 	private Unit mRootNode;
@@ -59,7 +59,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	private Declaration mCurrentDeclaration;
 	private String mCurrentScopeName;
 
-	public BoogieSymbolTableConstructor(Logger logger){
+	public BoogieSymbolTableConstructor(ILogger logger){
 		mLogger = logger;
 		mSymbolTable = new BoogieSymbolTable();	
 	}

@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -62,7 +62,7 @@ public class CoverageAnalysis {
 	
 	protected final IUltimateServiceProvider m_Services;
 
-	protected final Logger mLogger ;
+	protected final ILogger mLogger ;
 	
 	protected final NestedWord<? extends IAction> m_NestedWord;
 	private List<ProgramPoint> m_ProgramPointSequence;
@@ -83,7 +83,7 @@ public class CoverageAnalysis {
 
 	public CoverageAnalysis(IUltimateServiceProvider services, 
 			IInterpolantGenerator interpolantGenerator,
-			List<ProgramPoint> programPointSequence, Logger logger) {
+			List<ProgramPoint> programPointSequence, ILogger logger) {
 		m_Services = services;
 		mLogger = logger;
 		m_Interpolants = interpolantGenerator.getInterpolants();

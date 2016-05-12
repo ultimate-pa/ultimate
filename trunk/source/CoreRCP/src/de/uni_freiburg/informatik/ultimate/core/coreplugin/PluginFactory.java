@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
@@ -45,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
@@ -64,7 +65,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 			ISource.class };
 
 	private final IExtensionRegistry mRegistry;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final SettingsManager mSettingsManager;
 	private final HashMap<Class<?>, List<IConfigurationElement>> mAvailableToolsByClass;
 	private final HashMap<String, IConfigurationElement> mAvailableToolsByClassName;
@@ -72,11 +73,11 @@ final class PluginFactory implements IServiceFactoryFactory {
 	private final HashMap<Class<?>, IServiceFactory<?>> mAvailableServicesByClassName;
 
 	private boolean mGuiMode;
-	private IController mController;
+	private IController<ToolchainListType> mController;
 	private List<IToolchainPlugin> mToolchainPluginCache;
 	private List<ITool> mToolCache;
 
-	PluginFactory(SettingsManager settingsManager, Logger logger) {
+	PluginFactory(SettingsManager settingsManager, ILogger logger) {
 		mLogger = logger;
 		mRegistry = Platform.getExtensionRegistry();
 		mAvailableToolsByClass = new HashMap<>();
@@ -106,7 +107,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	// checkPreferencesForActivePlugins();
 	// mLogger.debug("--------------------------------------------------------------------------------");
 
-	IController getController() {
+	IController<ToolchainListType> getController() {
 		return mController;
 	}
 
@@ -241,7 +242,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	 *            Platform.getExtensionRegistry()
 	 * @throws CoreException
 	 */
-	private IController loadControllerPlugin(IExtensionRegistry reg) {
+	private IController<ToolchainListType> loadControllerPlugin(IExtensionRegistry reg) {
 		List<IConfigurationElement> configElements = mAvailableToolsByClass.get(IController.class);
 
 		if (configElements.size() != 1) {
@@ -258,7 +259,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 			return null;
 		}
 		IConfigurationElement controllerDescriptor = configElements.get(0);
-		IController controller = createInstance(controllerDescriptor);
+		IController<ToolchainListType> controller = createInstance(controllerDescriptor);
 		mGuiMode = new Boolean(controllerDescriptor.getAttribute("isGraphical")).booleanValue();
 		mSettingsManager.checkPreferencesForActivePlugins(controller.getPluginID(), controller.getPluginName());
 
@@ -336,6 +337,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		}
 	}
 
+	@Override
 	public <T, K extends IServiceFactory<T>> T createService(Class<K> service, IUltimateServiceProvider services,
 			IToolchainStorage storage) {
 		IServiceFactory<?> unknownfactory = mAvailableServicesByClassName.get(service);

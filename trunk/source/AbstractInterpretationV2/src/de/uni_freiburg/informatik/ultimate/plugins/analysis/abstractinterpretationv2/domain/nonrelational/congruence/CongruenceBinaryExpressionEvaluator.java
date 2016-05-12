@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -58,7 +58,7 @@ public class CongruenceBinaryExpressionEvaluator
         implements INAryEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> {
 
 	private final Set<String> mVariableSet;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final int mMaxParallelStates;
 
 	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mLeftSubEvaluator;
@@ -66,7 +66,7 @@ public class CongruenceBinaryExpressionEvaluator
 
 	private Operator mOperator;
 
-	protected CongruenceBinaryExpressionEvaluator(final Logger logger) {
+	protected CongruenceBinaryExpressionEvaluator(final ILogger logger) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 		mMaxParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)

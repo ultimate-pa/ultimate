@@ -35,7 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.dom.DocumentImpl;
 import org.w3c.dom.Document;
@@ -75,12 +75,12 @@ public class SimplifyPEAs {
 
     protected static final String DEFAULT_LOGGER = "SimplifyPEAs";
 
-    protected Logger logger;
+    protected ILogger logger;
 
     public SimplifyPEAs() {
         URL url = getClass().getResource(PhaseEventAutomata.LOGCONFIGFILE);
         PropertyConfigurator.configure(url);
-        this.logger = Logger.getLogger(SimplifyPEAs.DEFAULT_LOGGER);
+        this.logger = ILogger.getLogger(SimplifyPEAs.DEFAULT_LOGGER);
     }
 
     /**

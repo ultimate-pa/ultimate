@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -168,7 +168,7 @@ public class TransFormulaUtils {
 		return result;
 	}
 
-	public static LBool implies(IUltimateServiceProvider services, Logger logger, 
+	public static LBool implies(IUltimateServiceProvider services, ILogger logger, 
 			TransFormulaLR antecedent, TransFormulaLR consequent, 
 			Script script, Boogie2SmtSymbolTable symbTab) {
 		Term antecentTerm = renameToConstants(services, logger, script, symbTab, antecedent);
@@ -188,7 +188,7 @@ public class TransFormulaUtils {
 	 * @param services 
 	 * @param logger 
 	 */
-	private static Term renameToConstants(IUltimateServiceProvider services, Logger logger, Script script,
+	private static Term renameToConstants(IUltimateServiceProvider services, ILogger logger, Script script,
 			Boogie2SmtSymbolTable symbTab, 
 			TransFormulaLR tf) {
 		Map<Term, Term> substitutionMapping = new HashMap<>();

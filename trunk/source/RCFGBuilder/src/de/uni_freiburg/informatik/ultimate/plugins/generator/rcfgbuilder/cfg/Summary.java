@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -80,7 +80,7 @@ public class Summary extends CodeBlock implements IInternalAction {
 	}
 
 	Summary(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st,
-			boolean calledProcedureHasImplementation, Logger logger) {
+			boolean calledProcedureHasImplementation, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		m_CallStatement = st;
 		m_CalledProcedureHasImplementation = calledProcedureHasImplementation;

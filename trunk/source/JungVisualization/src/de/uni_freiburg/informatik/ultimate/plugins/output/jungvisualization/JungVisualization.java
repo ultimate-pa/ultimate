@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
@@ -46,7 +46,7 @@ public class JungVisualization implements IOutput {
 
 	public final static String PLUGIN_ID = Activator.PLUGIN_ID;
 
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	private ModelType mGraphType;
 

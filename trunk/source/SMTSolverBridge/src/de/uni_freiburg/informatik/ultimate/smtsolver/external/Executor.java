@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -68,14 +68,14 @@ class Executor {
 
 	private final Script mScript;
 	private final String mSolverCmd;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final String mName;
 
 	private static final String sEofErrorMessage = "Received EOF on stdin.";
 
-	Executor(final String solverCommand, final Script script, final Logger logger,
+	Executor(final String solverCommand, final Script script, final ILogger logger,
 			final IUltimateServiceProvider services, final IToolchainStorage storage, final String solverName)
 					throws IOException {
 		mServices = services;
@@ -88,7 +88,7 @@ class Executor {
 	}
 
 	private void createProcess() throws IOException {
-		// m_Logger = Logger.getRootLogger();
+		// m_Logger = ILogger.getRootLogger();
 		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
 		// TODO:
 		// Let all processes terminate when the toolchain terminates

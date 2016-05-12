@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
@@ -40,11 +40,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 
 	public class StatementExtractor extends RCFGEdgeVisitor {
 
-		private final Logger mLogger;
+		private final ILogger mLogger;
 		private List<Statement> mStatements;
 		private boolean mHasSummary;
 
-		public StatementExtractor(Logger logger){
+		public StatementExtractor(ILogger logger){
 			mLogger = logger;
 		}
 		

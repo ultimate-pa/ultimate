@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.SortedMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -88,7 +88,7 @@ public class TraceCheckerUtils {
 	 */
 	public static BackwardCoveringInformation computeCoverageCapability(
 			IUltimateServiceProvider services, 
-			IInterpolantGenerator traceChecker, Logger logger) {
+			IInterpolantGenerator traceChecker, ILogger logger) {
 		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceChecker.getTrace());
 		List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
 		return computeCoverageCapability(services, traceChecker, programPoints, logger);
@@ -96,7 +96,7 @@ public class TraceCheckerUtils {
 	
 	public static BackwardCoveringInformation computeCoverageCapability(
 			IUltimateServiceProvider services, 
-			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPoints, Logger logger) {
+			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPoints, ILogger logger) {
 		if (interpolantGenerator.getInterpolants() == null) {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for which interpolants were computed");
@@ -172,7 +172,7 @@ public class TraceCheckerUtils {
 			IPredicate precondition, IPredicate postcondition, 
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
 			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
-			Logger logger) {
+			ILogger logger) {
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
 		Validity result;
@@ -196,7 +196,7 @@ public class TraceCheckerUtils {
 			IPredicate precondition, IPredicate postcondition, 
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
 			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
-			Logger logger) {
+			ILogger logger) {
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
 		Validity result;
@@ -215,7 +215,7 @@ public class TraceCheckerUtils {
 			NestedWord<? extends IAction> trace,
 			SortedMap<Integer, IPredicate> pendingContexts,
 			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
-			Logger logger) {
+			ILogger logger) {
 		IHoareTripleChecker htc = new MonolithicHoareTripleChecker(smtManager);
 		IPredicate predecessor = ipp.getInterpolant(i);
 		IPredicate successor = ipp.getInterpolant(i+1);

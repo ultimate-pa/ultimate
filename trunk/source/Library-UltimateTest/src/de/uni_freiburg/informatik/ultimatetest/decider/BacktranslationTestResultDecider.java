@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
 import java.io.File;
@@ -36,10 +37,11 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Path;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
@@ -73,12 +75,12 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(final IResultService resultService) {
+	public TestResult getTestResult(final IUltimateServiceProvider services) {
 
 		setResultCategory("");
 		setResultMessage("");
 
-		final Logger log = Logger.getLogger(BacktranslationTestResultDecider.class);
+		final ILogger log = services.getLoggingService().getLogger(BacktranslationTestResultDecider.class);
 		final Collection<String> customMessages = new LinkedList<String>();
 		customMessages.add("Expecting results to not contain GenericResult \"Unhandled Backtranslation\" "
 				+ "or ExceptionOrErrorResult, "
@@ -87,6 +89,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		boolean fail = false;
 		final List<CounterExampleResult<?, ?, ?>> cex = new ArrayList<>();
 		final List<WitnessResult> witnesses = new ArrayList<>();
+		final IResultService resultService = services.getResultService();
 		final Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
 		for (final Entry<String, List<IResult>> x : resultSet) {
 			for (final IResult result : x.getValue()) {
@@ -295,11 +298,11 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(final IResultService resultService, Throwable e) {
+	public TestResult getTestResult(final IUltimateServiceProvider services, Throwable e) {
 		setResultCategory("Unexpected exception");
 		setResultMessage("Unexpected exception: " + e.getMessage());
-		TestUtil.logResults(Logger.getLogger(BacktranslationTestResultDecider.class), mInputFile, true,
-				new ArrayList<String>(), resultService);
+		TestUtil.logResults(BacktranslationTestResultDecider.class, mInputFile, true, new ArrayList<String>(),
+				services);
 		return TestResult.FAIL;
 	}
 

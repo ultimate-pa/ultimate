@@ -138,7 +138,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean VALUE_LONG_RESULT_DEFAULT = true;
 
 	// Log4j pattern
-	public static final String LABEL_LOG4J_PATTERN = "Logger pattern: ";
+	public static final String LABEL_LOG4J_PATTERN = "ILogger pattern: ";
 	/**
 	 * Note that this log pattern consumes quite some cycles. Replacing it with "%-5p: %m%n" is advised for more
 	 * performance.

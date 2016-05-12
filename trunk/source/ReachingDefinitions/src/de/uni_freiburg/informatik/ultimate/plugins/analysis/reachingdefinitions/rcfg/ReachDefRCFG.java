@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.LinkedHashSet;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
@@ -56,11 +56,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class ReachDefRCFG extends BaseObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 
-	public ReachDefRCFG(Logger logger, IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
+	public ReachDefRCFG(ILogger logger, IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
 			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider) {
 		mLogger = logger;
 		mStatementProvider = stmtProvider;

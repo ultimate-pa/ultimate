@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
 import java.io.BufferedReader;
@@ -36,9 +37,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
@@ -121,9 +122,10 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IResultService resultService) {
-		Logger logger = Logger.getLogger(LassoRankerTestResultDecider.class);
-		Collection<String> customMessages = new LinkedList<String>();
+	public TestResult getTestResult(IUltimateServiceProvider services) {
+		final ILogger logger = services.getLoggingService().getLogger(LassoRankerTestResultDecider.class);
+		final IResultService resultService = services.getResultService();
+		final Collection<String> customMessages = new LinkedList<String>();
 		boolean fail = false;
 
 		String result = "";
@@ -176,7 +178,7 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IResultService resultService, Throwable e) {
+	public TestResult getTestResult(IUltimateServiceProvider service, Throwable e) {
 		return TestResult.FAIL;
 	}
 

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.controllers;
 import java.io.File;
 import java.util.concurrent.Semaphore;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
@@ -38,18 +37,17 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
 
 /**
  * 
- * Note: Not thread-safe (will build another one which is thread-safe and keeps
- * one UltimateCore instance)
+ * Note: Not thread-safe (will build another one which is thread-safe and keeps one UltimateCore instance)
  * 
  * <ol>
  * <li>{@link #runUltimate()}</li>
- * <li>Delegate your callback to
- * {@link IController#init(ICore, ILoggingService)} to
+ * <li>Delegate your callback to {@link IController#init(ICore, ILoggingService)} to
  * {@link #init(ICore, ILoggingService, File)}, which will start a toolchain</li>
  * <li>Get results or whatever you want</li>
  * <li>Call {@link #complete()}</li>
@@ -67,13 +65,13 @@ public class ExternalUltimateCore {
 
 	private final Semaphore mUltimateExit;
 	private final Semaphore mStarterContinue;
-	private final IController mController;
+	private final IController<ToolchainListType> mController;
 
 	protected ManualReleaseToolchainJob mJob;
 
 	private volatile IStatus mReturnStatus;
 
-	public ExternalUltimateCore(IController controller) {
+	public ExternalUltimateCore(IController<ToolchainListType> controller) {
 		mUltimateExit = new Semaphore(0);
 		mStarterContinue = new Semaphore(0);
 		mController = controller;
@@ -99,17 +97,17 @@ public class ExternalUltimateCore {
 		return mReturnStatus;
 	}
 
-	public IStatus init(ICore core, ILoggingService loggingService) {
-		return init(core, loggingService, null, 0, null, null);
+	public IStatus init(ICore<ToolchainListType> core, ILoggingService loggingService) {
+		return init(core, loggingService, null, 0, null);
 	}
 
-	public IStatus init(ICore core, ILoggingService loggingService, File[] inputFiles) {
-		return init(core, loggingService, null, 0, inputFiles, null);
+	public IStatus init(ICore<ToolchainListType> core, ILoggingService loggingService, File[] inputFiles) {
+		return init(core, loggingService, null, 0, inputFiles);
 	}
 
-	public IStatus init(ICore core, ILoggingService loggingService, File settingsFile, long deadline,
-			File[] inputFiles, PreludeProvider prelude) {
-		Logger logger = null;
+	public IStatus init(ICore<ToolchainListType> core, ILoggingService loggingService, File settingsFile, long deadline,
+			File[] inputFiles) {
+		ILogger logger = null;
 		try {
 			mReachedInit = true;
 			if (core == null || loggingService == null) {
@@ -121,7 +119,7 @@ public class ExternalUltimateCore {
 			if (settingsFile != null) {
 				core.loadPreferences(settingsFile.getAbsolutePath());
 			}
-			mJob = getToolchainJob(core, mController, logger, inputFiles, prelude);
+			mJob = getToolchainJob(core, mController, logger, inputFiles);
 			if (deadline > 0) {
 				mJob.setDeadline(deadline);
 			}
@@ -137,13 +135,13 @@ public class ExternalUltimateCore {
 		return mReturnStatus;
 	}
 
-	protected Logger getLogger(ILoggingService loggingService) {
+	protected ILogger getLogger(ILoggingService loggingService) {
 		return loggingService.getControllerLogger();
 	}
 
-	protected ManualReleaseToolchainJob getToolchainJob(ICore core, IController controller, Logger logger,
-			File[] inputFiles, PreludeProvider prelude) {
-		return new ManualReleaseToolchainJob("Processing Toolchain", core, controller, logger, inputFiles, prelude);
+	protected ManualReleaseToolchainJob getToolchainJob(ICore<ToolchainListType> core,
+			IController<ToolchainListType> controller, ILogger logger, File[] inputFiles) {
+		return new ManualReleaseToolchainJob("Processing Toolchain", core, controller, logger, inputFiles);
 	}
 
 	public void complete() {
@@ -176,9 +174,9 @@ public class ExternalUltimateCore {
 
 	protected class ManualReleaseToolchainJob extends DefaultToolchainJob {
 
-		public ManualReleaseToolchainJob(String name, ICore core, IController controller, Logger logger, File[] inputs,
-				PreludeProvider preludefile) {
-			super(name, core, controller, logger, inputs, preludefile);
+		public ManualReleaseToolchainJob(String name, ICore<ToolchainListType> core,
+				IController<ToolchainListType> controller, ILogger logger, File[] inputs) {
+			super(name, core, controller, logger, inputs);
 		}
 
 		@Override

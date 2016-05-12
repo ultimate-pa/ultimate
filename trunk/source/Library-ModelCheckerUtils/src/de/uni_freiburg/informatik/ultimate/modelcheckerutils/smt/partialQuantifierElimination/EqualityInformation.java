@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -77,7 +77,7 @@ public class EqualityInformation {
 	 * @param logger
 	 */
 	public static EqualityInformation getEqinfo(Script script, Term givenTerm, Term[] context, Term forbiddenTerm,
-			int quantifier, Logger logger) {
+			int quantifier, ILogger logger) {
 		BinaryEqualityRelation[] binaryRelations = new BinaryEqualityRelation[context.length];
 
 		// stage 1: check if there is an "=" or "distinct" term where the

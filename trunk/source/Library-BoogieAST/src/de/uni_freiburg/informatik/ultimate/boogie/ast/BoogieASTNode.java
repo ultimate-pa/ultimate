@@ -37,8 +37,7 @@ import de.uni_freiburg.informatik.ultimate.models.structure.ISimpleAST;
 import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
 import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
 
-
-public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<BoogieASTNode>  {
+public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<BoogieASTNode, VisualizationNode> {
 
 	private static final long serialVersionUID = 5856434889026482850L;
 
@@ -65,7 +64,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 	protected BoogieASTNode createSpecialChild(Object obj) {
 		return new BoogieASTWrapper(null, obj);
 	}
-	
+
 	@Override
 	public VisualizationNode getVisualizationGraph() {
 		return new VisualizationNode(this);
@@ -74,7 +73,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 	@Override
 	public List<IWalkable> getSuccessors() {
 		ArrayList<IWalkable> rtr = new ArrayList<>();
-		for(BoogieASTNode node : getOutgoingNodes()){
+		for (BoogieASTNode node : getOutgoingNodes()) {
 			rtr.add(node);
 		}
 		return rtr;

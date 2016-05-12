@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -19,13 +19,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, CodeBlock, IBoogieVar> {	
 	
 	private final BoogieSymbolTable mSymbolTable;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
 	private IAbstractStateBinaryOperator<CongruenceDomainState> mWideningOperator;
 	private IAbstractStateBinaryOperator<CongruenceDomainState> mMergeOperator;
 	private IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> mPostOperator;
 	
-	public CongruenceDomain(final Logger logger, final BoogieSymbolTable symbolTable) {
+	public CongruenceDomain(final ILogger logger, final BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		

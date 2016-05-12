@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
@@ -70,7 +70,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	private final Map<String, CongruenceDomainValue> mValuesMap;
 	private final Map<String, BooleanValue> mBooleanValuesMap;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	protected enum VariableType {
 		VARIABLE, BOOLEAN, ARRAY
@@ -95,7 +95,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 * @param logger
 	 *            The current logger object in the current context.
 	 */
-	protected CongruenceDomainState(final Logger logger) {
+	protected CongruenceDomainState(final ILogger logger) {
 		mVariablesMap = new HashMap<String, IBoogieVar>();
 		mValuesMap = new HashMap<String, CongruenceDomainValue>();
 		mBooleanValuesMap = new HashMap<String, BooleanValue>();
@@ -117,7 +117,7 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 	 * @param booleanValuesMap
 	 *            The values of all boolean variables.
 	 */
-	protected CongruenceDomainState(final Logger logger, final Map<String, IBoogieVar> variablesMap,
+	protected CongruenceDomainState(final ILogger logger, final Map<String, IBoogieVar> variablesMap,
 			final Map<String, CongruenceDomainValue> valuesMap, final Map<String, BooleanValue> booleanValuesMap) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, CongruenceDomainValue>(valuesMap);

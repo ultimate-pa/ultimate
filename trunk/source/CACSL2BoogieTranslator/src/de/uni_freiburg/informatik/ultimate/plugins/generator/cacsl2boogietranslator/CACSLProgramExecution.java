@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -49,11 +49,11 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 	private final ProgramState<IASTExpression> mInitialState;
 	private final List<ProgramState<IASTExpression>> mProgramStates;
 	private final List<AtomicTraceElement<CACSLLocation>> mTrace;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public CACSLProgramExecution(final ProgramState<IASTExpression> initialState,
 			final Collection<AtomicTraceElement<CACSLLocation>> trace,
-			final Collection<ProgramState<IASTExpression>> programStates, final Logger logger) {
+			final Collection<ProgramState<IASTExpression>> programStates, final ILogger logger) {
 		assert trace != null;
 		assert programStates != null;
 		assert trace.size() == programStates.size();

@@ -32,22 +32,20 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import pea_to_boogie.Activator;
-import pea_to_boogie.translator.Translator;
-import req_to_pea.ReqToPEA;
-import srParse.srParsePattern;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import pea_to_boogie.Activator;
+import pea_to_boogie.translator.Translator;
+import req_to_pea.ReqToPEA;
+import srParse.srParsePattern;
 
 public class PeaToBoogie implements ISource {
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	List<String> mFileNames = new ArrayList<String>();
 
 	@Override
@@ -87,10 +85,10 @@ public class PeaToBoogie implements ISource {
 		mFileNames.add(inputPath);
 		mLogger.info("Parsing: '" + inputPath + "'");
 		srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
-		//TODO: Add options to this cruel program 
+		// TODO: Add options to this cruel program
 		BitSet vacuityChecks = new BitSet(patterns.length);
 		vacuityChecks.set(0, patterns.length);
-		
+
 		int combinationNum = Math.min(patterns.length, 2); // TODO preference
 		translator.setVacuityChecks(vacuityChecks);
 		translator.setCombinationNum(combinationNum);
@@ -108,7 +106,7 @@ public class PeaToBoogie implements ISource {
 		try {
 			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
 		} catch (Exception ex) {
-			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
+			mLogger.fatal("syntax error: " + ex.getMessage());
 			return null;
 		}
 	}
@@ -136,6 +134,6 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public void finish() {
-		
+
 	}
 }

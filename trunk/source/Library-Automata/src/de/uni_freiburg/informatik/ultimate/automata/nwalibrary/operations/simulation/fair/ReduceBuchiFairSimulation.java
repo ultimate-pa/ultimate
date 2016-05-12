@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -257,7 +257,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		FairSimulation<LETTER, STATE> simulationSCC;
 		ReduceBuchiFairSimulation<LETTER, STATE> operationNoSCC;
 		FairSimulation<LETTER, STATE> simulationNoSCC;
-		Logger logger = null;
+		ILogger logger = null;
 		if (useLogger) {
 			logger = operation.m_Logger;
 		}
@@ -390,10 +390,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * @param message
 	 *            Message to log
 	 * @param logger
-	 *            Logger to log to or <tt>null</tt> if logging to
+	 *            ILogger to log to or <tt>null</tt> if logging to
 	 *            {@link System#out} is desired
 	 */
-	private static void logMessage(final String message, final Logger logger) {
+	private static void logMessage(final String message, final ILogger logger) {
 		if (logger != null) {
 			logger.debug(message);
 		} else {
@@ -404,7 +404,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	/**
 	 * The inputed buechi automaton.
 	 */

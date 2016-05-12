@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -57,10 +57,10 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		m_services = services;
 		m_operand = automaton;
 
-		Logger logger = services.getLoggingService().getLogger(operationName());
-		Logger convertLog = services.getLoggingService().getLogger("Converter");
-		Logger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
-		Logger solveLog = services.getLoggingService().getLogger("Solver");
+		ILogger logger = services.getLoggingService().getLogger(operationName());
+		ILogger convertLog = services.getLoggingService().getLogger("Converter");
+		ILogger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
+		ILogger solveLog = services.getLoggingService().getLogger("Solver");
 
 		logger.info(startMessage());
 

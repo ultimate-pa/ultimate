@@ -27,8 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.views;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
+import java.io.IOException;
+import java.io.Writer;
+
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.eclipse.swt.SWT;
@@ -41,30 +42,35 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.part.*;
+import org.eclipse.ui.part.ViewPart;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.gui.logging.GuiLoggingWindowAppender;
 
 /**
- * simple text showing de.uni_freiburg.informatik.ultimate.gui.logging for the
- * Gui .. so we can see logging messages without an IDE
+ * simple text showing de.uni_freiburg.informatik.ultimate.gui.logging for the Gui .. so we can see logging messages
+ * without an IDE
  * 
  * and for showing other textbased messages.
  * 
  * 
- * @author Christian Ortolf / dietsch
+ * @author Christian Ortolf
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * 
  */
 public class LoggingView extends ViewPart {
 
-	/**
-	 * the styled text that will contain our logs
-	 */
+	public static final String ID = "de.uni_freiburg.informatik.ultimate.gui.views.LoggingView";
+
+	private ILoggingService mLoggingService;
+	private Writer mLastWriter;
+
 	private StyledText mStyledText;
-	private GuiLoggingWindowAppender mAppender;
-	private int oldLineCount;
+	private int mOldLineCount;
 
 	private Color mColorDebug;
 	private Color mColorInfo;
@@ -72,34 +78,32 @@ public class LoggingView extends ViewPart {
 	private Color mColorError;
 	private Color mColorFatal;
 
-	public static final String ID = "de.uni_freiburg.informatik.ultimate.gui.views.LoggingView";
-
+	@Override
 	public void createPartControl(Composite parent) {
-		oldLineCount = 0;
+		mOldLineCount = 0;
 		parent.setLayout(new GridLayout());
 		mStyledText = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.MULTI | SWT.READ_ONLY | SWT.BORDER);
 		mStyledText.setFont(new Font(mStyledText.getFont().getDevice(), "Courier", 10, SWT.NORMAL));
 		mStyledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		mStyledText.addModifyListener(new ModifyListener() {
+			@Override
 			public void modifyText(final ModifyEvent e) {
 				mStyledText.setSelection(mStyledText.getCharCount());
 			}
 		});
+	}
 
-		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-
-		mAppender = new GuiLoggingWindowAppender();
-		mAppender.init();
-		mAppender
-				.setLayout(new PatternLayout(preferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
-
-		// use the root logger to have this appender in all child
-		// loggers
-		Logger.getRootLogger().addAppender(mAppender);
-		Logger.getRootLogger().info("Activated GUI Logging Window for Log4j Subsystem");
+	public void initializeLogging(final ILoggingService service) {
+		if(service == null){
+			throw new IllegalArgumentException("No service present");
+		}
+		mLoggingService = service;
+		renewWriter();
+		service.getControllerLogger().info("Activated GUI Logging Window for Log4j Subsystem");
 
 		// Listen to preference changes affecting the GUI log output: Pattern
 		// and colors
+		final UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		preferenceStore.addPreferenceChangeListener(new IPreferenceChangeListener() {
 			@Override
 			public void preferenceChange(PreferenceChangeEvent event) {
@@ -125,19 +129,18 @@ public class LoggingView extends ViewPart {
 	 */
 	public void clear() {
 		mStyledText.setText("");
-		oldLineCount = 0;
+		mOldLineCount = 0;
 	}
 
 	/**
 	 * writes a string to the textwidget
 	 * 
 	 * @param s
-	 *            - the string .. callers should prefix with "\n" if they want
-	 *            new lines..
+	 *            - the string .. callers should prefix with "\n" if they want new lines..
 	 */
 	public void write(String s) {
 		mStyledText.append(s);
-		for (int i = oldLineCount; i < mStyledText.getLineCount(); ++i) {
+		for (int i = mOldLineCount; i < mStyledText.getLineCount(); ++i) {
 			String line = mStyledText.getLine(i);
 			String[] splits = line.split(" ");
 			if (splits.length < 3) {
@@ -157,12 +160,7 @@ public class LoggingView extends ViewPart {
 				mStyledText.setLineBackground(i, 1, mColorFatal);
 			}
 		}
-		oldLineCount = mStyledText.getLineCount() - 1;
-	}
-
-	@Override
-	public void setFocus() {
-
+		mOldLineCount = mStyledText.getLineCount() - 1;
 	}
 
 	@Override
@@ -170,25 +168,48 @@ public class LoggingView extends ViewPart {
 		if (mStyledText != null) {
 			mStyledText.dispose();
 		}
+		if (mLoggingService != null) {
+			mLoggingService.removeWriter(mLastWriter);
+			mLastWriter = null;
+		} else if (mLastWriter != null) {
+			try {
+				mLastWriter.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		super.dispose();
 	}
 
+	@Override
+	public void setFocus() {
+		// TODO Auto-generated method stub
+	}
+
+	private void renewWriter() {
+		if (mLastWriter != null) {
+			mLoggingService.removeWriter(mLastWriter);
+		}
+		mLastWriter = GuiLoggingWindowAppender.createWriter();
+		final String layout = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
+		final ILogger logger = mLoggingService.getControllerLogger();
+		mLoggingService.addWriter(mLastWriter, layout);
+		logger.debug("Renewed GUI Logging Window");
+	}
+
 	private void refreshPreferenceProperties() {
-		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-
-		mAppender
-				.setLayout(new PatternLayout(preferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
-
+		final UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mColorDebug = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_DEBUG));
 		mColorInfo = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_INFO));
 		mColorWarning = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_WARNING));
 		mColorError = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_ERROR));
 		mColorFatal = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_FATAL));
+		renewWriter();
 	}
 
 	/**
-	 * Create a Color object with the colour given by a string as in
-	 * PreferenceType.Color
+	 * Create a Color object with the colour given by a string as in PreferenceType.Color
 	 * 
 	 * @param colorString
 	 *            Color as "red,green,blue" where 0 <= red, green, blue <= 255
@@ -210,4 +231,5 @@ public class LoggingView extends ViewPart {
 		// default colour: white
 		return new Color(Display.getDefault(), 255, 255, 255);
 	}
+
 }

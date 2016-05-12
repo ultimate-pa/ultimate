@@ -36,7 +36,7 @@ import java.util.List;
 
 import javax.print.attribute.standard.Severity;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -56,7 +56,7 @@ public class AutomataScriptParser implements ISource {
 
 	protected List<String> mFileNames = new ArrayList<String>();
 
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	private IUltimateServiceProvider mServices;
 

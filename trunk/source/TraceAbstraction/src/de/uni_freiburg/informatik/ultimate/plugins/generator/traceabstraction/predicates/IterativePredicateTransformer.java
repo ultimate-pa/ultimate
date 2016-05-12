@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class IterativePredicateTransformer {
 	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	private final IUltimateServiceProvider m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	private final Boogie2SMT m_Boogie2SMT;
 	
 	private final PredicateTransformer m_PredicateTransformer;
@@ -200,14 +200,14 @@ public class IterativePredicateTransformer {
 	public static class QuantifierEliminationPostprocessor implements PredicatePostprocessor {
 		
 		private final IUltimateServiceProvider m_Services; 
-		private final Logger m_Logger; 
+		private final ILogger m_Logger; 
 		private final Boogie2SMT m_Boogie2SMT;
 		private final PredicateFactory m_PredicateFactory;
 		
 
 		public QuantifierEliminationPostprocessor(
 				IUltimateServiceProvider services, 
-				Logger logger, Boogie2SMT boogie2smt, 
+				ILogger logger, Boogie2SMT boogie2smt, 
 				PredicateFactory predicateFactory) {
 			super();
 			m_Services = services;

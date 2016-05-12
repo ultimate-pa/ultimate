@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -62,13 +62,13 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 	private boolean mFixpointReached;
 	private RCFGNode mCurrentSourceNode;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final ScopedBoogieVarBuilder mVarBuilder;
 
 	public ReachDefRCFGVisitor(IAnnotationProvider<ReachDefEdgeAnnotation> provider,
-			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider, Logger logger, ScopedBoogieVarBuilder builder) {
+			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider, ILogger logger, ScopedBoogieVarBuilder builder) {
 		mLogger = logger;
 		mEdgeProvider = provider;
 		mStatementProvider = stmtProvider;

@@ -25,12 +25,13 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
 import java.util.ArrayList;
-import org.apache.log4j.Logger;
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.IOverallResultEvaluator;
@@ -79,32 +80,31 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	}
 
 	@Override
-	public final TestResult getTestResult(IResultService resultService) {
+	public final TestResult getTestResult(IUltimateServiceProvider services) {
 		mUltimateResultEvaluation = constructUltimateResultEvaluation();
-		mUltimateResultEvaluation.evaluateOverallResult(resultService);
+		mUltimateResultEvaluation.evaluateOverallResult(services.getResultService());
 		mTestResultEvaluation = constructTestResultEvaluation();
 		mTestResultEvaluation.evaluateTestResult(mExpectedResultEvaluation, mUltimateResultEvaluation);
-		writeResultLogMessages(resultService);
+		writeResultLogMessages(services);
 		return mTestResultEvaluation.getTestResult();
 	}
 
 	@Override
-	public final TestResult getTestResult(IResultService resultService, Throwable e) {
+	public final TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
 		mTestResultEvaluation = constructTestResultEvaluation();
 		mTestResultEvaluation.evaluateTestResult(mExpectedResultEvaluation, e);
-		writeResultLogMessages(resultService);
+		writeResultLogMessages(services);
 		return mTestResultEvaluation.getTestResult();
 	}
 
-	private final void writeResultLogMessages(IResultService resultService) {
-		Logger log = Logger.getLogger(getClass());
-		ArrayList<String> messages = new ArrayList<>();
+	private final void writeResultLogMessages(IUltimateServiceProvider services) {
+		final List<String> messages = new ArrayList<>();
 		messages.add("Expected: " + mExpectedResultEvaluation.getExpectedResultFinderMessage());
 		messages.add("Actual: " + mUltimateResultEvaluation.generateOverallResultMessage());
 		messages.add("Test result: " + mTestResultEvaluation.getTestResult().toString());
 
-		TestUtil.logResults(log, mUltimateRunDefinition.generateShortStringRepresentation(),
-				!getJUnitSuccess(mTestResultEvaluation.getTestResult()), messages, resultService);
+		TestUtil.logResults(getClass(), mUltimateRunDefinition.generateShortStringRepresentation(),
+				!getJUnitSuccess(mTestResultEvaluation.getTestResult()), messages, services);
 	}
 
 	@Override

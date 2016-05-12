@@ -56,19 +56,19 @@ import de.uni_freiburg.informatik.ultimate.models.IPayload;
  * @see IExplicitEdgesMultigraph
  */
 public final class VisualizationNode implements
-		IExplicitEdgesMultigraph<VisualizationNode, VisualizationEdge, VisualizationNode, VisualizationEdge> {
+		IExplicitEdgesMultigraph<VisualizationNode, VisualizationEdge, VisualizationNode, VisualizationEdge, VisualizationNode> {
 
 	private static final long serialVersionUID = 1L;
 
 	private final VisualizationWrapperNode mBacking;
 	private List<VisualizationNode> mOutgoing;
 
-	public VisualizationNode(final IExplicitEdgesMultigraph<?, ?, ?, ?> node) {
+	public VisualizationNode(final IExplicitEdgesMultigraph<?, ?, ?, ?, VisualizationNode> node) {
 		mBacking = new VisualizationWrapperNode(node) {
 
 			@Override
 			protected void createIncoming() {
-				for (IMultigraphEdge<?, ?, ?, ?> e : node.getIncomingEdges()) {
+				for (IMultigraphEdge<?, ?, ?, ?, VisualizationNode> e : node.getIncomingEdges()) {
 					if (e.getSource() != null) {
 						VisualizationEdge ve;
 						if (e.hasPayload()) {
@@ -85,7 +85,7 @@ public final class VisualizationNode implements
 
 			@Override
 			protected void createOutgoing() {
-				for (IMultigraphEdge<?, ?, ?, ?> e : node.getOutgoingEdges()) {
+				for (IMultigraphEdge<?, ?, ?, ?, VisualizationNode> e : node.getOutgoingEdges()) {
 					if (e.getTarget() != null) {
 						VisualizationEdge ve;
 						if (e.hasPayload()) {
@@ -104,13 +104,14 @@ public final class VisualizationNode implements
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			@Override
 			protected List<IWalkable> getSuccessors() {
-				return (List<IWalkable>) (List) getOutgoingEdges();
+				return (List) getOutgoingEdges();
 			}
 		};
 
 	}
 
-	public <T extends ILabeledEdgesMultigraph<T, L>, L> VisualizationNode(final ILabeledEdgesMultigraph<T, L> node) {
+	public <T extends ILabeledEdgesMultigraph<T, L, VisualizationNode>, L> VisualizationNode(
+			final ILabeledEdgesMultigraph<T, L, VisualizationNode> node) {
 		// TODO: We need to handle the case where L is an instance of an
 		// collection (i.e. multigraph)
 		mBacking = new VisualizationWrapperNode(node) {
@@ -131,7 +132,7 @@ public final class VisualizationNode implements
 			@SuppressWarnings("unchecked")
 			@Override
 			protected void createIncoming() {
-				for (ILabeledEdgesMultigraph<T, L> pred : node.getIncomingNodes()) {
+				for (ILabeledEdgesMultigraph<T, L, VisualizationNode> pred : node.getIncomingNodes()) {
 					VisualizationEdge ve;
 					IPayload pay = extractPayload(node.getIncomingEdgeLabel((T) pred));
 
@@ -148,7 +149,7 @@ public final class VisualizationNode implements
 			@SuppressWarnings("unchecked")
 			@Override
 			protected void createOutgoing() {
-				for (ILabeledEdgesMultigraph<T, L> succ : node.getOutgoingNodes()) {
+				for (ILabeledEdgesMultigraph<T, L, VisualizationNode> succ : node.getOutgoingNodes()) {
 					VisualizationEdge ve;
 					IPayload pay = extractPayload(node.getOutgoingEdgeLabel((T) succ));
 
@@ -167,8 +168,8 @@ public final class VisualizationNode implements
 			@Override
 			protected List<IWalkable> getSuccessors() {
 				ArrayList<IWalkable> rtr = new ArrayList<IWalkable>();
-				for (ILabeledEdgesMultigraph<T, L> succ : node.getOutgoingNodes()) {
-					final ILabeledEdgesMultigraph<T, L> child = succ;
+				for (ILabeledEdgesMultigraph<T, L, VisualizationNode> succ : node.getOutgoingNodes()) {
+					final ILabeledEdgesMultigraph<T, L, VisualizationNode> child = succ;
 					rtr.add(new IWalkable() {
 
 						private static final long serialVersionUID = 1L;
@@ -196,13 +197,13 @@ public final class VisualizationNode implements
 		};
 	}
 
-	public VisualizationNode(final ISimpleAST<?> node) {
+	public VisualizationNode(final ISimpleAST<?, VisualizationNode> node) {
 		mBacking = new VisualizationWrapperNode(node) {
 
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			@Override
 			protected List<IWalkable> getSuccessors() {
-				return (List<IWalkable>) (List) getOutgoingEdges();
+				return (List) getOutgoingEdges();
 			}
 
 			@Override
@@ -211,7 +212,7 @@ public final class VisualizationNode implements
 				// in the right order
 				mIncoming = new ArrayList<VisualizationEdge>();
 
-				for (ISimpleAST<?> succ : node.getOutgoingNodes()) {
+				for (ISimpleAST<?, VisualizationNode> succ : node.getOutgoingNodes()) {
 					if (succ == null) {
 						continue;
 					}
@@ -236,11 +237,11 @@ public final class VisualizationNode implements
 		};
 	}
 
-	public VisualizationNode(final IDirectedGraph<?> node) {
+	public VisualizationNode(final IDirectedGraph<?, VisualizationNode> node) {
 		this(node, new HashMap<IElement, VisualizationWrapperNode>());
 	}
 
-	private VisualizationNode(final IDirectedGraph<?> node,
+	private VisualizationNode(final IDirectedGraph<?, VisualizationNode> node,
 			final HashMap<IElement, VisualizationWrapperNode> backingDirectory) {
 		if (backingDirectory.containsKey(node)) {
 			mBacking = backingDirectory.get(node);
@@ -251,12 +252,12 @@ public final class VisualizationNode implements
 				@SuppressWarnings({ "unchecked", "rawtypes" })
 				@Override
 				protected List<IWalkable> getSuccessors() {
-					return (List<IWalkable>) (List) getOutgoingEdges();
+					return (List) getOutgoingEdges();
 				}
 
 				@Override
 				protected void createOutgoing() {
-					for (IDirectedGraph<?> succ : node.getOutgoingNodes()) {
+					for (IDirectedGraph<?, VisualizationNode> succ : node.getOutgoingNodes()) {
 						mOutgoing.add(new VisualizationEdge(VisualizationNode.this,
 								new VisualizationNode(succ, backingDirectory), null));
 					}
@@ -264,7 +265,7 @@ public final class VisualizationNode implements
 
 				@Override
 				protected void createIncoming() {
-					for (IDirectedGraph<?> pred : node.getOutgoingNodes()) {
+					for (IDirectedGraph<?, VisualizationNode> pred : node.getOutgoingNodes()) {
 						mIncoming.add(new VisualizationEdge(new VisualizationNode(pred, backingDirectory),
 								VisualizationNode.this, null));
 					}

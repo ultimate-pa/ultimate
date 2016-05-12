@@ -40,7 +40,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnota
 public class CorrectnessWitnessExtractor {
 
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private WitnessNode mWitnessNode;
 	private IASTTranslationUnit mTranslationUnit;
 	private Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> mAST2Invariant;

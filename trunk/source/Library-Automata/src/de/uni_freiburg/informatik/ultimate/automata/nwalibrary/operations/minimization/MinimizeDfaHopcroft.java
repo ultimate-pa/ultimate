@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 public class MinimizeDfaHopcroft<LETTER, STATE> implements
 		IOperation<LETTER, STATE> {
 	private final AutomataLibraryServices m_Services;
-	// Logger for debug - information.
-	private final Logger m_Logger;
+	// ILogger for debug - information.
+	private final ILogger m_Logger;
 	// Result automaton.
 	private INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
 	// Input automaton.

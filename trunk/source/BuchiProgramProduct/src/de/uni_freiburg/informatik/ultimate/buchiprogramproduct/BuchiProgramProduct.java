@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg.SmallBlockEncoder;
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
  */
 public class BuchiProgramProduct implements IGenerator {
 
-	private Logger mLogger;
+	private ILogger mLogger;
 	private BuchiProductObserver mBuchiProductObserver;
 	private boolean mUseBuchiProductObserver;
 	private boolean mPreviousToolFoundErrors;

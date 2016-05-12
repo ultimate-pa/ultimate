@@ -33,7 +33,7 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Seve
  */
 public class SyntaxChecker implements IAnalysis {
 	protected String[] mFileTypes;
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	protected List<String> mFileNames;
 	protected Unit mPreludeUnit;
 	private IUltimateServiceProvider mServices;

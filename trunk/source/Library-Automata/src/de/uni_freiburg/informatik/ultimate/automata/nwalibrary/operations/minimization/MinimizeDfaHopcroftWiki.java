@@ -36,7 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  */
 public class MinimizeDfaHopcroftWiki<LETTER, STATE> implements IMinimize,
 		IOperation<LETTER, STATE> {
-	// Logger for debug - information.
-	private final Logger m_Logger;
+	// ILogger for debug - information.
+	private final ILogger m_Logger;
 	// Service provider
 	private final AutomataLibraryServices m_services;
 	// Result automaton.

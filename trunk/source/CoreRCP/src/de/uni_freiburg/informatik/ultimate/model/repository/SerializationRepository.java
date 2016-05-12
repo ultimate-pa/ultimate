@@ -44,7 +44,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ModelContainer;
 
@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.ModelContainer;
 public class SerializationRepository implements IRepository<String, ModelContainer> {
 
 	private File mFileSystemDirectory;
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	/**
 	 * Constructor for {@link SerializationRepository}. Constructs a repository
@@ -67,7 +67,7 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 *            the directory in the local file system used by the repository
 	 *            to store the files containing the persisted objects
 	 */
-	public SerializationRepository(File fileSystemDirectory, Logger logger) {
+	public SerializationRepository(File fileSystemDirectory, ILogger logger) {
 		assert logger != null;
 		mFileSystemDirectory = fileSystemDirectory;
 		mLogger = logger;

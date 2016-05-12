@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.heapseparator;
 
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class HeapSeparatorObserver implements IUnmanagedObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	
 	/**
 	 *  arrayId before separation --> pointerId --> arrayId after separation

@@ -40,7 +40,7 @@ import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -134,7 +134,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	protected final static String s_ConjunctsInUnsatCore = "Conjuncts in UnsatCore";
 	protected final static String s_NumberOfCodeBlocks = "NumberOfCodeBlocks";
 
-	public final Logger mLogger;
+	public final ILogger mLogger;
 	private CodeChecker codeChecker;
 
 	RootNode m_originalRoot;

@@ -40,16 +40,16 @@ import de.uni_freiburg.informatik.ultimate.models.structure.IExplicitEdgesMultig
  */
 public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 
-	private final List<IExplicitEdgesMultigraph<?, ?, VL, TE>> mCFGs;
+	private final List<IExplicitEdgesMultigraph<?, ?, VL, TE,?>> mCFGs;
 	private final String mFilename;
 	private final Class<TE> mTraceElementClass;
 
-	public BacktranslatedCFG(final String filename, final IExplicitEdgesMultigraph<?, ?, VL, TE> cfg,
+	public BacktranslatedCFG(final String filename, final IExplicitEdgesMultigraph<?, ?, VL, TE,?> cfg,
 			final Class<TE> clazz) {
 		this(filename, Collections.singletonList(cfg), clazz);
 	}
 
-	public BacktranslatedCFG(final String filename, final List<? extends IExplicitEdgesMultigraph<?, ?, VL, TE>> cfgs,
+	public BacktranslatedCFG(final String filename, final List<? extends IExplicitEdgesMultigraph<?, ?, VL, TE,?>> cfgs,
 			final Class<TE> clazz) {
 		assert filename != null;
 		assert cfgs != null && !cfgs.isEmpty();
@@ -60,7 +60,7 @@ public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 	}
 
 	@Override
-	public List<IExplicitEdgesMultigraph<?, ?, VL, TE>> getCFGs() {
+	public List<IExplicitEdgesMultigraph<?, ?, VL, TE,?>> getCFGs() {
 		return mCFGs;
 	}
 

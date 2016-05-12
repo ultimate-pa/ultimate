@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
@@ -67,7 +67,7 @@ public class WitnessPrinter implements IOutput {
 		TRUE_WITNESS, FALSE_WITNESS, NO_WITNESS
 	}
 
-	private Logger mLogger;
+	private ILogger mLogger;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 	private Mode mMode;

@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -35,7 +35,7 @@ public class DummyCodeBlock extends CodeBlock {
 
 	private static final long serialVersionUID = 1L;
 
-	public DummyCodeBlock(Logger logger) {
+	public DummyCodeBlock(ILogger logger) {
 		super(null, null, logger);
 		// TODO Auto-generated constructor stub
 	}

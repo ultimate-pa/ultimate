@@ -41,7 +41,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
@@ -167,11 +167,11 @@ public class ModelExtractionUtils {
 	 * @param variables
 	 *            the list of variables that can be set to 0
 	 * @param logger
-	 * 			Logger to which we write information about the simplification.
+	 * 			ILogger to which we write information about the simplification.
 	 * @return the number of pops required on m_script
 	 */
 	@Deprecated
-	protected int simplifyAssignment(Script script, ArrayList<Term> variables, Logger logger) {
+	protected int simplifyAssignment(Script script, ArrayList<Term> variables, ILogger logger) {
 		// Shuffle the variable list for better effect
 		Random rnd = new Random(s_randomSeed);
 		Collections.shuffle(variables, rnd);
@@ -212,14 +212,14 @@ public class ModelExtractionUtils {
 	 * @param variables
 	 *            the list of variables that can be set to 0
 	 * @param logger
-	 * 			Logger to which we write information about the simplification.
+	 * 			ILogger to which we write information about the simplification.
 	 * @param services 
 	 * @return an assignment with (hopefully) many zeros
 	 * @throws TermException
 	 *             if model extraction fails
 	 */
 	public static Map<Term, Rational> getSimplifiedAssignment(Script script, 
-			Collection<Term> variables, Logger logger, IUltimateServiceProvider services) throws TermException {
+			Collection<Term> variables, ILogger logger, IUltimateServiceProvider services) throws TermException {
 		Random rnd = new Random(s_randomSeed);
 		Term zero = script.numeral("0");
 		Map<Term, Rational> val = getValuation(script, variables);
@@ -306,14 +306,14 @@ public class ModelExtractionUtils {
 	 * @param variables
 	 *            the list of variables that can be set to 0
 	 * @param logger
-	 * 			Logger to which we write information about the simplification.
+	 * 			ILogger to which we write information about the simplification.
 	 * @param services 
 	 * @return an assignment with (hopefully) many zeros
 	 * @throws TermException
 	 *             if model extraction fails
 	 */
 	public static Map<Term, Rational> getSimplifiedAssignment_TwoMode(Script script, 
-			Collection<Term> variables, Logger logger, IUltimateServiceProvider services) throws TermException {
+			Collection<Term> variables, ILogger logger, IUltimateServiceProvider services) throws TermException {
 		Term zero = script.numeral("0");
 
 		Set<Term> alreadyZero = new HashSet<Term>(); // variables fixed to 0

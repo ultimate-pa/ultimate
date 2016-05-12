@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
@@ -69,7 +69,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	private final Map<String, IntervalDomainValue> mValuesMap;
 	private final Map<String, BooleanValue> mBooleanValuesMap;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	protected enum VariableType {
 		VARIABLE, BOOLEAN, ARRAY
@@ -94,7 +94,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @param logger
 	 *            The current logger object in the current context.
 	 */
-	protected IntervalDomainState(final Logger logger) {
+	protected IntervalDomainState(final ILogger logger) {
 		mVariablesMap = new HashMap<String, IBoogieVar>();
 		mValuesMap = new HashMap<String, IntervalDomainValue>();
 		mBooleanValuesMap = new HashMap<String, BooleanValue>();
@@ -116,7 +116,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @param booleanValuesMap
 	 *            The values of all boolean variables.
 	 */
-	protected IntervalDomainState(final Logger logger, final Map<String, IBoogieVar> variablesMap,
+	protected IntervalDomainState(final ILogger logger, final Map<String, IBoogieVar> variablesMap,
 	        final Map<String, IntervalDomainValue> valuesMap, final Map<String, BooleanValue> booleanValuesMap) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);

@@ -33,7 +33,7 @@ import java.util.Vector;
 
 import net.sourceforge.czt.parser.util.ParseException;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.dom.DocumentImpl;
 import org.w3c.dom.Document;
@@ -62,7 +62,7 @@ public class FormulaJ2XMLConverter {
 
     private static final String DEFAULT_LOGGER = "FormulaJ2XMLConverter";
 
-    Logger logger = null;
+    ILogger logger = null;
 
     Document document = null;
 
@@ -83,15 +83,15 @@ public class FormulaJ2XMLConverter {
      * <code>PropertyConfigurator.configure()</code>.
      * 
      * @param loggerName
-     * @see Logger
+     * @see ILogger
      * @see PropertyConfigurator
      */
     public FormulaJ2XMLConverter(String loggerName) {
         if (loggerName.equals("")) {
-            this.logger = Logger
+            this.logger = ILogger
                     .getLogger(FormulaJ2XMLConverter.DEFAULT_LOGGER);
         } else {
-            this.logger = Logger.getLogger(loggerName);
+            this.logger = ILogger.getLogger(loggerName);
         }
     }
 

@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -78,20 +78,20 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 	private final static String[] s_AttribFields = { "Statements", "PrettyPrintedStatements", "TransitionFormula",
 			"OccurenceInCounterexamples" };
 
-	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Logger logger) {
+	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		m_Origin = Origin.IMPLEMENTATION;
 		this.addStatement(st);
 	}
 
-	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Origin origin, Logger logger) {
+	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Origin origin, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		m_Origin = origin;
 		this.addStatement(st);
 	}
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
-			Logger logger) {
+			ILogger logger) {
 		super(serialNumber, source, target, logger);
 		m_Statements.addAll(stmts);
 		m_Origin = origin;

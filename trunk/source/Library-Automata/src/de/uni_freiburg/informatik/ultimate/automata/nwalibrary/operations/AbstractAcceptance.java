@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 public abstract class AbstractAcceptance<LETTER,STATE> {
 
 	protected final AutomataLibraryServices m_Services;
-	protected final Logger m_Logger;
+	protected final ILogger m_Logger;
 	
 	
 	

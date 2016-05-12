@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -61,7 +61,7 @@ public class WitnessLocationMatcher {
 	private final HashRelation<ILocation, WitnessEdge> m_SingleLineLocation2WitnessLetters = new HashRelation<>();
 	private final HashRelation<WitnessEdge, ILocation> m_WitnessLetters2SingleLineLocations = new HashRelation<>();
 	private final Set<ILocation> m_MultiLineLocations = new HashSet<ILocation>();
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	private ArrayList<WitnessEdge> m_UnmatchedWitnessLetters;
 
 	public WitnessLocationMatcher(

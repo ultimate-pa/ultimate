@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -65,13 +65,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  */
 public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final IntervalDomainStatementProcessor mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
 	private final int mParallelStates;
 
-	public IntervalPostOperator(final Logger logger, final BoogieSymbolTable symbolTable) {
+	public IntervalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = new IntervalDomainStatementProcessor(mLogger, symbolTable);

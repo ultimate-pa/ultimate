@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.access.walker;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IManagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
@@ -38,10 +38,10 @@ import de.uni_freiburg.informatik.ultimate.models.IElement;
 
 public abstract class BaseWalker implements IWalker {
 
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	protected List<IObserver> mObservers;
 
-	protected BaseWalker(Logger logger) {
+	protected BaseWalker(ILogger logger) {
 		mObservers = new LinkedList<IObserver>();
 		mLogger = logger;
 	}

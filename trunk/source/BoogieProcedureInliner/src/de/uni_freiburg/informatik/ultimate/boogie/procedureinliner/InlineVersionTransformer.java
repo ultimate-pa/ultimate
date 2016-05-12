@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -149,7 +149,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		}
 	}
 
-	private Logger mLogger;
+	private ILogger mLogger;
 	
 	private IProgressMonitorService mProgressMonitorService;
 	

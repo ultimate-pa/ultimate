@@ -24,22 +24,27 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class TestToolchainJob extends DefaultToolchainJob {
 
-	public TestToolchainJob(String name, ICore core, IController controller, Logger logger, File[] inputFiles,
-			PreludeProvider preludefile) {
-		super(name, core, controller, logger, inputFiles, preludefile);
+	public TestToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller,
+			ILogger logger, File[] inputFiles) {
+		super(name, core, controller, logger, inputFiles);
 	}
 
 	@Override

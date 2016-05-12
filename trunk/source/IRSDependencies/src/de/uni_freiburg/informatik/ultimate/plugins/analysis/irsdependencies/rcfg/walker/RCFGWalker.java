@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
@@ -57,9 +57,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 public abstract class RCFGWalker implements IRCFGWalker {
 
 	protected ObserverDispatcher mDispatcher;
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
-	public RCFGWalker(ObserverDispatcher dispatcher, Logger logger) {
+	public RCFGWalker(ObserverDispatcher dispatcher, ILogger logger) {
 		mDispatcher = dispatcher;
 		mLogger = logger;
 	}

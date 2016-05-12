@@ -33,7 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
@@ -146,7 +146,7 @@ public class PRDispatcher extends Dispatcher {
     private final LinkedHashSet<IASTNode> m_VariablesOnHeap;
 
 	public PRDispatcher(CACSL2BoogieBacktranslator backtranslator,
-			IUltimateServiceProvider services, Logger logger, LinkedHashMap<String,Integer> functionToIndex, LinkedHashSet<IASTDeclaration> reachableDeclarations) {
+			IUltimateServiceProvider services, ILogger logger, LinkedHashMap<String,Integer> functionToIndex, LinkedHashSet<IASTDeclaration> reachableDeclarations) {
 		super(backtranslator, services, logger);
 		mFunctionToIndex = functionToIndex;
 		this.reachableDeclarations = reachableDeclarations;

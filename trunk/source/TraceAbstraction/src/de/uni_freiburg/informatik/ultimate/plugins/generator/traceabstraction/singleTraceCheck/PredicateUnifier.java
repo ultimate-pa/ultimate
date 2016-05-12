@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -92,7 +92,7 @@ public class PredicateUnifier {
 	private final Map<IPredicate, IPredicate> m_DeprecatedPredicates = new HashMap<>();
 	private final CoverageRelation m_CoverageRelation = new CoverageRelation();
 	private boolean m_BringTermsToCommuhashNormalForm = true;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
 	private final IPredicate m_TruePredicate;

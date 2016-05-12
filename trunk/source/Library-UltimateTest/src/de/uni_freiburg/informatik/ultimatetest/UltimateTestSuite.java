@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest;
 
 import java.util.Arrays;
@@ -32,7 +33,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.runner.RunWith;
 
@@ -52,7 +52,6 @@ public abstract class UltimateTestSuite {
 
 	private static List<ITestSummary> sSummaries;
 	private static List<IIncrementalLog> sLogFiles;
-	protected static Logger sLogger = Logger.getLogger(UltimateTestSuite.class);
 
 	public UltimateTestSuite() {
 		if (sSummaries == null) {
@@ -66,7 +65,6 @@ public abstract class UltimateTestSuite {
 			} else {
 				sSummaries = null;
 			}
-
 		}
 		if (sLogFiles == null) {
 			final IIncrementalLog[] logs = constructIncrementalLog();

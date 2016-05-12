@@ -31,7 +31,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ACSLHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class SvComp14MainDispatcher extends MainDispatcher {
 
 	public SvComp14MainDispatcher(CACSL2BoogieBacktranslator backtranslator, BeforeAfterWitnessInvariantsMapping witnessInvariants, IUltimateServiceProvider services,
-			Logger logger) {
+			ILogger logger) {
 		super(backtranslator, witnessInvariants, services, logger);
 	}
 

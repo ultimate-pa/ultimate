@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -37,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
@@ -46,8 +47,8 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 	private IElement mAST;
 	private ModelType mOutputDefinition;
 
-	public ExternalParserToolchainJob(String name, ICore core, IController controller, IElement ast,
-			ModelType outputDefinition, Logger logger) {
+	public ExternalParserToolchainJob(String name, ICore<ToolchainListType> core,
+			IController<ToolchainListType> controller, IElement ast, ModelType outputDefinition, ILogger logger) {
 		super(name, core, controller, logger);
 		mAST = ast;
 		mOutputDefinition = outputDefinition;
@@ -73,7 +74,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
 		IStatus returnstatus = Status.OK_STATUS;
 		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
-		IToolchain currentToolchain = null;
+		IToolchain<ToolchainListType> currentToolchain = null;
 
 		try {
 			tpm.worked(1);
@@ -118,14 +119,14 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 
 		return returnstatus;
 	}
-	
+
 	/**
-	 * This method releases the active toolchain back to the core. Overwrite
-	 * this method if you want to delay the release of the toolchain.
+	 * This method releases the active toolchain back to the core. Overwrite this method if you want to delay the
+	 * release of the toolchain.
 	 * 
 	 * @param currentToolchain
 	 */
-	protected void releaseToolchain(IToolchain chain) {
+	protected void releaseToolchain(IToolchain<ToolchainListType> chain) {
 		mCore.releaseToolchain(chain);
 	}
 

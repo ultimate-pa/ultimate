@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  */
 public class TraceAbstractionObserver implements IUnmanagedObserver {
 
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	private final IUltimateServiceProvider m_Services;
 	
 	private RootNode m_RcfgRootNode;

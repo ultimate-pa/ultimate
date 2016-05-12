@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
@@ -50,19 +51,19 @@ public interface ITestResultDecider {
 	 * {@link Throwable}, this method will be called by {@link UltimateTestCase}
 	 * to determine the actual test result.
 	 * 
-	 * @param resultService
+	 * @param services
 	 *            Provides the {@link IUltimateServiceProvider} instance of the
 	 *            toolchain that was run for the test on which
 	 *            {@link ITestResultDecider} should decide.
 	 */
-	public TestResult getTestResult(IResultService resultService);
+	public TestResult getTestResult(IUltimateServiceProvider services);
 
 	/**
 	 * If the execution of an {@link UltimateTestCase} does generate a
 	 * {@link Throwable}, this method will be called by {@link UltimateTestCase}
 	 * to determine the actual test result.
 	 * 
-	 * @param resultService
+	 * @param services
 	 *            Provides the {@link IUltimateServiceProvider} instance of the
 	 *            toolchain that was run for the test on which
 	 *            {@link ITestResultDecider} should decide.
@@ -71,7 +72,7 @@ public interface ITestResultDecider {
 	 *            The {@link Throwable} that caused Ultimate to end its
 	 *            execution.
 	 */
-	public TestResult getTestResult(IResultService resultService, Throwable e);
+	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e);
 
 	/**
 	 * After {@link UltimateTestCase} called {@link #getTestResult()} or

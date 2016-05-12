@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
@@ -293,7 +293,7 @@ public class TransFormula implements Serializable {
 		}
 	}
 
-	private static boolean allVarsContainsFreeVars(Set<TermVariable> allVars, Term term, Logger logger) {
+	private static boolean allVarsContainsFreeVars(Set<TermVariable> allVars, Term term, ILogger logger) {
 		Set<TermVariable> freeVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
 		boolean result = true;
 		for (TermVariable tv : freeVars) {
@@ -305,7 +305,7 @@ public class TransFormula implements Serializable {
 		return result;
 	}
 
-	private static boolean freeVarsContainsAllVars(Set<TermVariable> allVars, Term term, Logger logger) {
+	private static boolean freeVarsContainsAllVars(Set<TermVariable> allVars, Term term, ILogger logger) {
 		Set<TermVariable> freeVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
 		boolean result = true;
 		for (TermVariable tv : allVars) {
@@ -327,7 +327,7 @@ public class TransFormula implements Serializable {
 	}
 
 	private static boolean freeVarsSubsetInOutAuxBranch(Term term, Map<BoogieVar, TermVariable> inVars,
-			Map<BoogieVar, TermVariable> outVars, Set<TermVariable> aux, Set<TermVariable> branchEncoders, Logger logger) {
+			Map<BoogieVar, TermVariable> outVars, Set<TermVariable> aux, Set<TermVariable> branchEncoders, ILogger logger) {
 		Set<TermVariable> freeVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
 		boolean result = true;
 		for (TermVariable tv : freeVars) {
@@ -503,7 +503,7 @@ public class TransFormula implements Serializable {
 	 * @return the relational composition (concatenation) of transformula1 und
 	 *         transformula2
 	 */
-	public static TransFormula sequentialComposition(Logger logger, IUltimateServiceProvider services,
+	public static TransFormula sequentialComposition(ILogger logger, IUltimateServiceProvider services,
 			Boogie2SMT boogie2smt, boolean simplify, boolean extPqe, boolean tranformToCNF,
 			TransFormula... transFormula) {
 		logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
@@ -909,7 +909,7 @@ public class TransFormula implements Serializable {
 	 * @param logger
 	 * @param services
 	 */
-	public static TransFormula parallelComposition(Logger logger, IUltimateServiceProvider services, int serialNumber,
+	public static TransFormula parallelComposition(ILogger logger, IUltimateServiceProvider services, int serialNumber,
 			Boogie2SMT boogie2smt, TermVariable[] branchIndicators, boolean tranformToCNF,
 			TransFormula... transFormulas) {
 		logger.debug("parallel composition");
@@ -1323,7 +1323,7 @@ public class TransFormula implements Serializable {
 	 */
 	public static TransFormula sequentialCompositionWithPendingCall(Boogie2SMT boogie2smt, boolean simplify,
 			boolean extPqe, boolean transformToCNF, List<TransFormula> beforeCall, TransFormula callTf,
-			TransFormula oldVarsAssignment, TransFormula afterCall, Logger logger, IUltimateServiceProvider services, 
+			TransFormula oldVarsAssignment, TransFormula afterCall, ILogger logger, IUltimateServiceProvider services, 
 			Set<BoogieVar> modifiableGlobalsOfEndProcedure) {
 		logger.debug("sequential composition (pending call) with" + (simplify ? "" : "out") + " formula simplification");
 		TransFormula callAndBeforeTF;
@@ -1422,7 +1422,7 @@ public class TransFormula implements Serializable {
 	public static TransFormula sequentialCompositionWithCallAndReturn(Boogie2SMT boogie2smt, boolean simplify,
 			boolean extPqe, boolean transformToCNF, TransFormula callTf, 
 			TransFormula oldVarsAssignment, TransFormula globalVarsAssignment,
-			TransFormula procedureTf, TransFormula returnTf, Logger logger, IUltimateServiceProvider services) {
+			TransFormula procedureTf, TransFormula returnTf, ILogger logger, IUltimateServiceProvider services) {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		TransFormula result = sequentialComposition(logger, services, boogie2smt, simplify, extPqe, transformToCNF,
 				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf);
@@ -1542,7 +1542,7 @@ public class TransFormula implements Serializable {
 		return result;
 	}
 	
-	private static TransFormula negate(TransFormula tf, Boogie2SMT boogie2smt, IUltimateServiceProvider services, Logger logger) {
+	private static TransFormula negate(TransFormula tf, Boogie2SMT boogie2smt, IUltimateServiceProvider services, ILogger logger) {
 		Set<TermVariable> auxVars = Collections.emptySet();
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
@@ -1568,7 +1568,7 @@ public class TransFormula implements Serializable {
 	}
 	
 	public static TransFormula computeMarkhorTransFormula(TransFormula tf, 
-			Boogie2SMT boogie2smt, IUltimateServiceProvider services, Logger logger) {
+			Boogie2SMT boogie2smt, IUltimateServiceProvider services, ILogger logger) {
 		TransFormula guard = computeGuard(tf, boogie2smt);
 		TransFormula negGuard = negate(guard, boogie2smt, services, logger);
 		TransFormula markhor = parallelComposition(logger, services, tf.hashCode(), boogie2smt, null, false, tf, negGuard);

@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 
 	protected final AutomataLibraryServices m_Services;
-	protected final Logger m_Logger;
+	protected final ILogger m_Logger;
 	public enum ReachFinal {
 		UNKNOWN, AT_LEAST_ONCE
 	}

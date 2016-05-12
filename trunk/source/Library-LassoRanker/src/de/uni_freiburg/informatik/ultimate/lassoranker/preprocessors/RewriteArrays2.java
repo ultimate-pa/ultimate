@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVaria
  */
 public class RewriteArrays2 extends LassoPreprocessor {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
 	public static final boolean s_AdditionalChecksIfAssertionsEnabled = !false;
@@ -219,7 +219,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	
 	
 	private boolean checkStemImplication(IUltimateServiceProvider services, 
-			Logger logger,
+			ILogger logger,
 			LassoUnderConstruction oldLasso,
 			LassoUnderConstruction newLasso,
 			Boogie2SMT boogie2smt) {

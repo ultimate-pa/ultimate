@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 public class CodeBlockFactory implements IStorable {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	private final Boogie2SMT m_Boogie2smt;
 	private final ModifiableGlobalVariableManager m_MgvManager;
 	

@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class AbstractInterpretation implements IAnalysis {
 
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	private IUltimateServiceProvider mServices;
 	private List<IObserver> mObserver;
 

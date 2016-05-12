@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
@@ -46,14 +46,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
 
 public class TypeManager {
 
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	private HashMap<String, TypeConstructor> typeConstructors = new HashMap<String, TypeConstructor>();
 	private HashMap<String, TypeDeclaration> declarations = new HashMap<String, TypeDeclaration>();
 	private Stack<String> visiting = new Stack<String>();
 	private Stack<TypeParameters> typeParamScopes = new Stack<TypeParameters>();
 
-	public TypeManager(Declaration[] decls, Logger logger) {
+	public TypeManager(Declaration[] decls, ILogger logger) {
 		mLogger = logger;
 		for (Declaration d : decls) {
 			if (d instanceof TypeDeclaration) {

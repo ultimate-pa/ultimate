@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -90,7 +90,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 			SmtManager smtManager, ModifiableGlobalVariableManager modglobvarman, IHoareTripleChecker hoareTripleChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
-			PredicateUnifier predicateUnifier, Logger logger, 
+			PredicateUnifier predicateUnifier, ILogger logger, 
 			boolean conservativeSuccessorCandidateSelection,
 			boolean cannibalize) {
 		super(services, smtManager, hoareTripleChecker, true, abstraction, 

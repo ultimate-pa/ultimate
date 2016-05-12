@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -54,13 +54,13 @@ public class RCFG2AnnotatedRCFG {
 
 
 	HashMap<ProgramPoint, AnnotatedProgramPoint> m_oldPpTonew;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final SmtManager m_smtManager;
 	private final IPredicate m_truePredicate;
 	private final Map<RCFGNode, Term> m_initialPredicates;
 	private final boolean m_useInitialPredicates;
 
-	public RCFG2AnnotatedRCFG(SmtManager smtMan, Logger logger, IPredicate truePredicate, Map<RCFGNode, Term> initialPredicates) {
+	public RCFG2AnnotatedRCFG(SmtManager smtMan, ILogger logger, IPredicate truePredicate, Map<RCFGNode, Term> initialPredicates) {
 		mLogger = logger;
 		m_smtManager = smtMan;
 		m_truePredicate = truePredicate;

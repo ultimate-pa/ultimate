@@ -32,15 +32,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
@@ -71,11 +72,10 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  */
 public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	/**
-	 * Root Node of this Ultimate model. I use this to store information that
-	 * should be passed to the next plugin. The Successors of this node exactly
-	 * the initial nodes of procedures.
+	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
+	 * Successors of this node exactly the initial nodes of procedures.
 	 */
 	private IElement m_Graphroot = null;
 	private final IUltimateServiceProvider m_Services;
@@ -96,8 +96,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		mLogger.warn(taPrefs.dumpPath());
 
-		SmtManager smtManager = new SmtManager(rootNode.getRootAnnot().getBoogie2SMT().getScript(), rootNode.getRootAnnot().getBoogie2SMT(), rootNode
-				.getRootAnnot().getModGlobVarManager(), m_Services, false, rootNode.getRootAnnot().getManagedScript());
+		SmtManager smtManager = new SmtManager(rootNode.getRootAnnot().getBoogie2SMT().getScript(),
+				rootNode.getRootAnnot().getBoogie2SMT(), rootNode.getRootAnnot().getModGlobVarManager(), m_Services,
+				false, rootNode.getRootAnnot().getManagedScript());
 		TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -220,8 +221,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (ProgramPoint errorLoc : errorLocs) {
-				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME,
-						errorLoc, m_Services.getBacktranslationService());
+				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME, errorLoc,
+						m_Services.getBacktranslationService());
 				reportResult(pResult);
 			}
 		}
@@ -241,12 +242,12 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorIpp : errorLocs) {
-			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
-			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
-			String timeOutMessage = "Timeout! Unable to prove that "
-					+ origin.getCheck().getPositiveMessage();
+			final ProgramPoint errorLoc = errorIpp;
+			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+			final Check check = ResultUtil.getCheckedSpecification(errorLoc.getBoogieASTNode());
+			String timeOutMessage = "Timeout! Unable to prove that " + check.getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
+			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
 					Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			mLogger.warn(timeOutMessage);
@@ -259,7 +260,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
-	
+
 	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
 		String shortDescription = "Ultimate Automizer benchmark data";
 		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);

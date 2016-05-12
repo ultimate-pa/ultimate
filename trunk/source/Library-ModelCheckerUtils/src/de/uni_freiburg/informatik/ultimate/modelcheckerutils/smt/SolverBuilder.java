@@ -35,6 +35,7 @@ import java.util.Date;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
@@ -59,35 +60,30 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInt
 public class SolverBuilder {
 
 	public enum SolverMode {
-		Internal_SMTInterpol, 
-		External_PrincessInterpolationMode, 
-		External_SMTInterpolInterpolationMode, 
-		External_Z3InterpolationMode, 
-		External_ModelsAndUnsatCoreMode,
-		External_ModelsMode,
-		External_DefaultMode,
+		Internal_SMTInterpol, External_PrincessInterpolationMode, External_SMTInterpolInterpolationMode, External_Z3InterpolationMode, External_ModelsAndUnsatCoreMode, External_ModelsMode, External_DefaultMode,
 	};
 
 	private static final String sSolverLoggerName = "SolverLogger";
 	private static final boolean s_UseWrapperScriptWithTermConstructionChecks = false;
 
 	private static Script createSMTInterpol(IUltimateServiceProvider services, IToolchainStorage storage) {
-		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
-		TerminationRequest termRequest = new SMTInterpolTerminationRequest(services.getProgressMonitorService());
-		Script script = new SMTInterpol(solverLogger, false, termRequest);
+		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
+		final TerminationRequest termRequest = new SMTInterpolTerminationRequest(services.getProgressMonitorService());
+		final Script script = new SMTInterpol(
+				(Logger) services.getLoggingService().getBacking(solverLogger, Logger.class), false, termRequest);
 		return script;
 	}
 
 	private static Script createExternalSolver(IUltimateServiceProvider services, IToolchainStorage storage,
 			String command) throws IOException {
-		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
+		ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		Script script = new Scriptor(command, solverLogger, services, storage, "External");
 		return script;
 	}
 
 	private static Script createExternalSolverWithInterpolation(IUltimateServiceProvider services,
 			IToolchainStorage storage, String command, ExternalInterpolator externalInterpolator) throws IOException {
-		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
+		ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator,
 				"ExternalInterpolator");
 		return script;
@@ -113,7 +109,7 @@ public class SolverBuilder {
 	 * @return A Script that represents an SMT solver which is defined by settings.
 	 */
 	public static Script buildScript(IUltimateServiceProvider services, IToolchainStorage storage, Settings settings) {
-		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
+		ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		Script result;
 		if (settings.useExternalSolver()) {
 			solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
@@ -246,7 +242,7 @@ public class SolverBuilder {
 
 	public static Settings constructSolverSettings(final String filename, final SolverMode solverMode,
 			final String commandExternalSolver, final boolean dumpSmtScriptToFile, final String pathOfDumpedScript)
-					throws AssertionError {
+			throws AssertionError {
 		final boolean useExternalSolver;
 
 		final int timeoutSmtInterpol;
@@ -295,7 +291,7 @@ public class SolverBuilder {
 	public static Script buildAndInitializeSolver(IUltimateServiceProvider services, IToolchainStorage storage,
 			SolverMode solverMode, Settings solverSettings, final boolean dumpUsatCoreTrackBenchmark,
 			final boolean dumpMainTrackBenchmark, String logicForExternalSolver, String solverId)
-					throws AssertionError {
+			throws AssertionError {
 
 		Script script = SolverBuilder.buildScript(services, storage, solverSettings);
 		if (dumpUsatCoreTrackBenchmark) {

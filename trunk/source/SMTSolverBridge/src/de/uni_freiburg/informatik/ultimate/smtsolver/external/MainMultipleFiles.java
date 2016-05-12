@@ -35,10 +35,11 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.Log4JWrapper;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 public class MainMultipleFiles {
 
@@ -79,7 +80,8 @@ public class MainMultipleFiles {
 			count++;
 			Script benchmark;
 			if (!command.equals("SMTInterpol"))
-				benchmark = new Scriptor(command, logger, null, null, "external in solverbridge (multiple files)");
+				benchmark = new Scriptor(command, new Log4JWrapper(logger), null, null,
+						"external in solverbridge (multiple files)");
 			else
 				benchmark = new SMTInterpol(logger, true);
 

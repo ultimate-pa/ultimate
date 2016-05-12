@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.codan.core.model.CheckerLaunchMode;
 import org.eclipse.cdt.codan.core.model.IProblemWorkingCopy;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -200,7 +200,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	 *            the FileName
 	 */
 	private void reportProblems(String fileName) {
-		Logger log = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		ILogger log = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// we obtain the results by UltimateServices
 		Set<String> tools = mServices.getResultService().getResults().keySet();
 
@@ -223,7 +223,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	private void reportProblemWithoutLocation(IResult result, Logger log) {
+	private void reportProblemWithoutLocation(IResult result, ILogger log) {
 		if (result instanceof ExceptionOrErrorResult) {
 			reportProblem(CCheckerDescriptor.GENERIC_ERROR_RESULT_ID, getFile(), 0, result.getShortDescription(),
 					CDTResultStore.addHackyResult(result));
@@ -233,7 +233,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	private void reportProblemWithLocation(IResultWithLocation result, Logger log) {
+	private void reportProblemWithLocation(IResultWithLocation result, ILogger log) {
 		if (result.getLocation() == null) {
 			log.warn("Result type should have location, but has none: " + result.getShortDescription() + " ("
 					+ result.getClass() + ")");

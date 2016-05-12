@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
@@ -57,7 +57,7 @@ public class BuchiAutomizer implements IGenerator {
 	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
 
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	private BuchiAutomizerObserver mObserver;
 	private ModelType mInputDefinition;

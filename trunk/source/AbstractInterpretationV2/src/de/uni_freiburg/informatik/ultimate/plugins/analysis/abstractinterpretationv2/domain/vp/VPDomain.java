@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
@@ -55,7 +55,7 @@ public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoog
 	private Map<BoogieVar, Set<BoogieVar>> indexToArraysMap;
 	
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public VPDomain(IUltimateServiceProvider services) {
 		mServices = services;

@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
@@ -72,7 +72,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services, 
 			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPointSequence,
 			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, StateFactory<IPredicate> predicateFactory,
-			Logger logger) {
+			ILogger logger) {
 		super(services, interpolantGenerator, programPointSequence, logger);
 		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), alphabet.getInternalAlphabet(),
 				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);

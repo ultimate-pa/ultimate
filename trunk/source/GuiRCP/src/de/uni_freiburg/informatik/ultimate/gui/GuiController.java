@@ -35,7 +35,6 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
@@ -50,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvisor;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.AnalysisChooseDialog;
@@ -57,27 +58,28 @@ import de.uni_freiburg.informatik.ultimate.gui.dialogs.ModelChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
 
 /**
- * GUIController is the IController implementation of the UltimateDebug GUI
+ * GUIController is the IController<ToolchainListType> implementation of the UltimateDebug GUI
  * 
  * @author dietsch
  * 
  */
-public class GuiController implements IController {
+public class GuiController implements IController<ToolchainListType> {
 
 	// public static final String sPLUGINID = "UltimateGui";
 	public static final String sPLUGINID = GuiController.class.getPackage().getName();
 	public static final String sPLUGINNAME = "Gui Controller";
 
-	private Logger mLogger;
+	private ILogger mLogger;
 	private Display mDisplay;
 
 	private volatile ISource mParser;
 	private volatile ToolchainData mTools;
 	private volatile List<String> mModels;
 
-	private ICore mCore;
+	private ICore<ToolchainListType> mCore;
 	private TrayIconNotifier mTrayIconNotifier;
-	private IToolchain mCurrentToolchain;
+	private IToolchain<ToolchainListType> mCurrentToolchain;
+	private ILoggingService mLoggingService;
 
 	/**
 	 * Initialization of Controller. The GUI is created here. Note: This methods
@@ -85,14 +87,16 @@ public class GuiController implements IController {
 	 * 
 	 * @return the exit code for the application
 	 */
-	public int init(ICore core, ILoggingService loggingService) {
+	@Override
+	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
 		if(loggingService == null){
 			throw new IllegalArgumentException("loggingService may not be null");
 		}
+		mLoggingService = loggingService;
 		mLogger = loggingService.getControllerLogger();
 
 		if (core == null) {
-			mLogger.fatal("Initialization failed because no ICore instance was supplied");
+			mLogger.fatal("Initialization failed because no ICore<ToolchainListType> instance was supplied");
 			return -1;
 		}
 
@@ -104,7 +108,7 @@ public class GuiController implements IController {
 		mLogger.debug("Creating Workbench ...");
 		mLogger.debug("--------------------------------------------------------------------------------");
 		int returnCode = -1;
-		ApplicationWorkbenchAdvisor workbenchAdvisor = new ApplicationWorkbenchAdvisor();
+		final ApplicationWorkbenchAdvisor workbenchAdvisor = new ApplicationWorkbenchAdvisor();
 		if (mDisplay != null && workbenchAdvisor != null) {
 			mTrayIconNotifier = new TrayIconNotifier(workbenchAdvisor);
 			workbenchAdvisor.init(mCore, mTrayIconNotifier, this, mLogger);
@@ -127,9 +131,11 @@ public class GuiController implements IController {
 		return returnCode;
 	}
 
+	@Override
 	public synchronized ISource selectParser(final Collection<ISource> parsers) {
 
 		mDisplay.syncExec(new Runnable() {
+			@Override
 			public void run() {
 				Shell shell = new Shell(mDisplay);
 				mParser = new ParserChooseDialog(shell, parsers).open();
@@ -138,6 +144,7 @@ public class GuiController implements IController {
 		return mParser;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public synchronized ToolchainData selectTools(final List<ITool> t) {
 		return selectTools(t, Collections.EMPTY_LIST);
@@ -145,6 +152,7 @@ public class GuiController implements IController {
 
 	public synchronized ToolchainData selectTools(final List<ITool> t, final List<ITool> previous) {
 		mDisplay.syncExec(new Runnable() {
+			@Override
 			public void run() {
 				Shell shell = new Shell(mDisplay);
 				try {
@@ -163,8 +171,10 @@ public class GuiController implements IController {
 		return mTools;
 	}
 
+	@Override
 	public synchronized List<String> selectModel(final List<String> modelNames) {
 		mDisplay.syncExec(new Runnable() {
+			@Override
 			public void run() {
 				Shell shell = new Shell(mDisplay);
 				mModels = new ModelChooseDialog(shell, modelNames, "Choose the model").open();
@@ -173,10 +183,12 @@ public class GuiController implements IController {
 		return mModels;
 	}
 
+	@Override
 	public String getPluginName() {
 		return sPLUGINNAME;
 	}
 
+	@Override
 	public String getPluginID() {
 		return sPLUGINID;
 	}
@@ -203,13 +215,6 @@ public class GuiController implements IController {
 
 	@Override
 	public void displayException(final String description, final Throwable ex) {
-		// mDisplay.asyncExec(new Runnable() {
-		// public void run() {
-		// Shell shell = new Shell(mDisplay);
-		// // MessageDialog.openError(shell, "An error occured", description +
-		// " " + ex.getMessage());
-		// }
-		// });
 
 	}
 
@@ -218,14 +223,18 @@ public class GuiController implements IController {
 		return null;
 	}
 
-	public void setCurrentToolchain(IToolchain toolchain) {
+	public void setCurrentToolchain(IToolchain<ToolchainListType> toolchain) {
 		if (mCurrentToolchain != null && mCurrentToolchain != toolchain) {
 			mCore.releaseToolchain(mCurrentToolchain);
 		}
 		mCurrentToolchain = toolchain;
 	}
 
-	public IToolchain getCurrentToolchain() {
+	public IToolchain<ToolchainListType> getCurrentToolchain() {
 		return mCurrentToolchain;
+	}
+
+	public ILoggingService getLoggingService() {
+		return mLoggingService;
 	}
 }

@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @author Christian Simon
  * 
  */
-public class ToolchainData implements IToolchainData {
+public class ToolchainData implements IToolchainData<ToolchainListType> {
 	
 	private final ToolchainListType mToolchain;
 	private final ToolchainStorage mStorage;

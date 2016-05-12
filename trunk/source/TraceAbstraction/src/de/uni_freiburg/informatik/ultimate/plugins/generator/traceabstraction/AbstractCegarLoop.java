@@ -34,7 +34,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -80,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public abstract class AbstractCegarLoop {
 
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	/**
 	 * Result of CEGAR loop iteration
@@ -181,7 +181,7 @@ public abstract class AbstractCegarLoop {
 
 	public AbstractCegarLoop(IUltimateServiceProvider services, IToolchainStorage storage, String name,
 			RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs, Collection<ProgramPoint> errorLocs,
-			Logger logger) {
+			ILogger logger) {
 		m_Services = services;
 		mLogger = logger;
 		this.m_PrintAutomataLabeling = taPrefs.getAutomataFormat();
@@ -454,7 +454,7 @@ public abstract class AbstractCegarLoop {
 	/*
 	 * TODO unify sequential and concurrent
 	 */
-	protected static void dumpNestedRun(IRun<CodeBlock, IPredicate> run, PrintWriter pW, Logger logger) {
+	protected static void dumpNestedRun(IRun<CodeBlock, IPredicate> run, PrintWriter pW, ILogger logger) {
 		NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(run.getWord());
 		ArrayList<IPredicate> stateSequence = null;
 		if (run instanceof NestedRun) {

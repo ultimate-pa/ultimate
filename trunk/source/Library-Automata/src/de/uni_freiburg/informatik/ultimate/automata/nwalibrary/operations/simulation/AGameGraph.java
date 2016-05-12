@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -107,7 +107,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	/**
 	 * Holds information about the performance of the simulation after usage.
 	 */
@@ -143,11 +143,11 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param stateFactory
 	 *            State factory used for state creation.
 	 */
-	public AGameGraph(final IProgressAwareTimer progressTimer, final Logger logger,
+	public AGameGraph(final IProgressAwareTimer progressTimer, final ILogger logger,
 			final StateFactory<STATE> stateFactory) {
 		m_ProgressTimer = progressTimer;
 		m_Logger = logger;
@@ -636,7 +636,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * 
 	 * @return The logger used by the Ultimate framework.
 	 */
-	protected Logger getLogger() {
+	protected ILogger getLogger() {
 		return m_Logger;
 	}
 

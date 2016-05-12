@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
 import java.util.ArrayList;
@@ -33,11 +34,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
@@ -74,7 +72,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IPredicate m_Postcondition;
 	private final IPredicate[] m_Interpolants;
 	private final PredicateUnifier m_PredicateUnifier;
-	private final Logger logger;
+	private final ILogger logger;
 
 	/**
 	 * Creates a default factory.
@@ -169,12 +167,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		m_Postcondition = postcondition;
 		m_PredicateUnifier = predicateUnifier;
 
-		final Logger logService = services.getLoggingService().getLogger(
+		final ILogger logService = services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID);
 
-		this.logger = logService;
+		logger = logService;
 
-		logService.log(Level.INFO,
+		logService.info(
 				"Started with a run of length " + m_Run.getLength());
 
 		// Project path to CFG
@@ -211,7 +209,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		final ControlFlowGraph cfg = new ControlFlowGraph(locations.get(0),
 				locations.get(len - 1), locations, transitions);
-		logService.log(Level.INFO, "[PathInvariants] Built projected CFG, "
+		logService.info( "[PathInvariants] Built projected CFG, "
 				+ locations.size() + " states and " + transitions.size()
 				+ " transitions.");
 
@@ -221,23 +219,23 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final Map<ControlFlowGraph.Location, IPredicate> invariants = generator
 				.generateInvariantsFromCFG(cfg, precondition, postcondition,
 						invPatternProcFactory);
-		logService.log(Level.INFO, "[PathInvariants] Generated invariant map.");
+		logService.info( "[PathInvariants] Generated invariant map.");
 
 		// Populate resulting array
 		if (invariants != null) {
 			m_Interpolants = new IPredicate[len];
 			for (int i = 0; i < len; i++) {
 				m_Interpolants[i] = invariants.get(locations.get(i));
-				logService.log(Level.INFO, "[PathInvariants] Interpolant no "
-				        + i + " " + this.m_Interpolants[i].toString());
+				logService.info( "[PathInvariants] Interpolant no "
+				        + i + " " + m_Interpolants[i].toString());
 			}
-			logService.log(Level.INFO, "[PathInvariants] Invariants found and "
+			logService.info( "[PathInvariants] Invariants found and "
 					+ "processed.");
-			logService.log(Level.INFO, "Got a Invariant map of length "
+			logService.info( "Got a Invariant map of length "
 					+ m_Interpolants.length);
 		} else {
 			m_Interpolants = null;
-			logService.log(Level.INFO, "[PathInvariants] No invariants found.");
+			logService.info( "[PathInvariants] No invariants found.");
 		}
 	}
 
@@ -296,9 +294,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		if (m_Interpolants == null){
 			return null;
 		}
-		IPredicate[] interpolantMapWithOutFirstInterpolant = new IPredicate[this.m_Interpolants.length - 2];
-		for (int i = 0; i < this.m_Interpolants.length - 2; i++) {
-			interpolantMapWithOutFirstInterpolant[i] = this.m_Interpolants[i+1];
+		IPredicate[] interpolantMapWithOutFirstInterpolant = new IPredicate[m_Interpolants.length - 2];
+		for (int i = 0; i < m_Interpolants.length - 2; i++) {
+			interpolantMapWithOutFirstInterpolant[i] = m_Interpolants[i+1];
 		}
 		return interpolantMapWithOutFirstInterpolant;
 	}

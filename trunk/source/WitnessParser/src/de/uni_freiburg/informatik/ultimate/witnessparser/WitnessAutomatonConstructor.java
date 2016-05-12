@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.Transformer;
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
@@ -72,7 +72,7 @@ import edu.uci.ics.jung.io.graphml.NodeMetadata;
 public class WitnessAutomatonConstructor {
 
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private Map<String, WitnessNode> mNodes;
 	private ModelType.Type mWitnessType;
 	private WitnessGraphAnnotation mGraphAnnotation;

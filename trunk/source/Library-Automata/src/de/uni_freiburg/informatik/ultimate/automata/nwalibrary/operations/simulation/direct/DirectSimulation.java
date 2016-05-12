@@ -36,7 +36,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -91,7 +91,7 @@ public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> 
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -103,7 +103,7 @@ public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> 
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DirectSimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
+	public DirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final AGameGraph<LETTER, STATE> game)
 					throws OperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DIRECT);

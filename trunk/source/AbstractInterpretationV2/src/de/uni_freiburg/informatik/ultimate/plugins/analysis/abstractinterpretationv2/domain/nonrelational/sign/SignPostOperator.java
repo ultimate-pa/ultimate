@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -55,7 +55,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final SignDomainStatementProcessor mStatementProcessor;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	/**
 	 * Default constructor.

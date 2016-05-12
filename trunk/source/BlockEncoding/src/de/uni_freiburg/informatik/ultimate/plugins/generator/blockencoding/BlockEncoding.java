@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
@@ -70,7 +70,7 @@ public class BlockEncoding implements IGenerator {
 
 	@Override
 	public void init() {
-		Logger logger = mServices.getLoggingService().getLogger(s_PLUGIN_ID);
+		ILogger logger = mServices.getLoggingService().getLogger(s_PLUGIN_ID);
 		mConversionObserver = new MinModelConversionObserver(mServices);
 		mBlockEncodingObserver = new BlockEncodingObserver(logger, mServices);
 	}

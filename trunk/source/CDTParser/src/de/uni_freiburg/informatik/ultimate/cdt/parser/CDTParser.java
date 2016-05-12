@@ -41,8 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.parser.c.GCCParserExtensionConfiguration;
 import org.eclipse.cdt.core.dom.parser.c.GCCScannerExtensionConfiguration;
@@ -62,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInit
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
@@ -83,7 +82,7 @@ public class CDTParser implements ISource {
 	/**
 	 * The logger instance.
 	 */
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	/**
 	 * List of file names.
 	 */
@@ -198,9 +197,9 @@ public class CDTParser implements ISource {
 	@Override
 	public ModelType getOutputDefinition() {
 		try {
-			return new ModelType(getPluginID(), ModelType.Type.AST, this.m_FileNames);
+			return new ModelType(getPluginID(), ModelType.Type.AST, m_FileNames);
 		} catch (Exception ex) {
-			mLogger.log(Level.FATAL, ex.getMessage());
+			mLogger.fatal(ex.getMessage());
 			return null;
 		}
 	}

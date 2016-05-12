@@ -34,13 +34,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.models.structure.IExplicitEdgesMultigraph;
@@ -60,20 +59,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.result.model.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.util.IToString;
-import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
+import de.uni_freiburg.informatik.ultimate.translation.IToString;
 
 public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNode, Expression, Expression> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
-	public RCFGBacktranslator(final Logger logger) {
+	public RCFGBacktranslator(final ILogger logger) {
 		super(RCFGEdge.class, BoogieASTNode.class, Expression.class, Expression.class);
 		mLogger = logger;
 	}
@@ -227,7 +226,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 	 */
 	@SuppressWarnings("unchecked")
 	private <TVL> Multigraph<String, BoogieASTNode> translateCFGEdge(
-			final Map<IExplicitEdgesMultigraph<?, ?, TVL, RCFGEdge>, Multigraph<String, BoogieASTNode>> cache,
+			final Map<IExplicitEdgesMultigraph<?, ?, TVL, RCFGEdge,?>, Multigraph<String, BoogieASTNode>> cache,
 			final RCFGEdge oldEdge, final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final RCFGNode oldTarget = oldEdge.getTarget();
 		// this is the node we want to return
@@ -236,7 +235,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			newTarget = cache.get(oldTarget);
 			if (newTarget == null) {
 				newTarget = createWitnessNode(oldTarget);
-				cache.put((IExplicitEdgesMultigraph<?, ?, TVL, RCFGEdge>) oldTarget, newTarget);
+				cache.put((IExplicitEdgesMultigraph<?, ?, TVL, RCFGEdge,?>) oldTarget, newTarget);
 			}
 		} else {
 			// if the codeblock is disconnected, we need to create some fresh target node

@@ -34,7 +34,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
@@ -65,7 +65,7 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 	 * @param logger
 	 * @param services 
 	 */
-	public MinimizeLoopVisitor(Logger logger, IUltimateServiceProvider services) {
+	public MinimizeLoopVisitor(ILogger logger, IUltimateServiceProvider services) {
 		super(logger);
 		m_Services = services;
 	}

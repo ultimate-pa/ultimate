@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -71,7 +71,7 @@ public class PredicateFactory {
 	private static final String[] NO_PROCEDURE = new String[0];
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	protected Term m_DontCareTerm;
 	protected Term m_EmptyStackTerm;

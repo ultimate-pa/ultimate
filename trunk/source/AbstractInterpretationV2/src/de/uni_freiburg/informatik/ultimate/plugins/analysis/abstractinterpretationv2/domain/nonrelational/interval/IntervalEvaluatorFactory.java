@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -53,10 +53,10 @@ public class IntervalEvaluatorFactory
 	private static final int ARITY_MAX = 2;
 	private static final int BUFFER_MAX = 100;
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final String mSettingsEvaluatorType;
 
-	public IntervalEvaluatorFactory(final Logger logger) {
+	public IntervalEvaluatorFactory(final ILogger logger) {
 		mLogger = logger;
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mSettingsEvaluatorType = ups.getString(IntervalDomainPreferences.LABEL_EVALUATOR_TYPE);

@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
 
 public class IndexAnalyzer2 {
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	private final boolean m_IsStem;
 	private final SetOfDoubletons<Term> neitherInvarNorOutvarDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> inVarDoubletons = new SetOfDoubletons<>();
@@ -77,7 +77,7 @@ public class IndexAnalyzer2 {
 	public IndexAnalyzer2(Term term, HashRelation<TermVariable, 
 			ArrayIndex> array2Indices, 
 			Boogie2SMT boogie2smt, TransFormulaLR tf, 
-			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, boolean isStem, Logger logger) {
+			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, boolean isStem, ILogger logger) {
 		super();
 		m_Logger = logger;
 		m_IsStem = isStem;

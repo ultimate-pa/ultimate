@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -223,7 +223,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	/**
 	 * Output to console
 	 */
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	/**
 	 * Root of the newly created AST
@@ -308,7 +308,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 */
 	private int procLabelCounter = 0;
 
-	public DSITransformerObserver(Logger logger){
+	public DSITransformerObserver(ILogger logger){
 		 mLogger = logger;
 	}
 	

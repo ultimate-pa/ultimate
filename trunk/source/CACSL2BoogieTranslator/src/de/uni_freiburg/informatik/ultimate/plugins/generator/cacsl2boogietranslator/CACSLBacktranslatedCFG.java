@@ -2,10 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.models.structure.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.CorrectnessWitnessGenerator;
@@ -17,11 +17,11 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.CorrectnessWitnessGene
  */
 public class CACSLBacktranslatedCFG extends BacktranslatedCFG<String, CACSLLocation> {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	public CACSLBacktranslatedCFG(final String filename,
-			final List<? extends IExplicitEdgesMultigraph<?, ?, String, CACSLLocation>> cfgs, final Class<CACSLLocation> clazz,
-			final Logger logger) {
+			final List<? extends IExplicitEdgesMultigraph<?, ?, String, CACSLLocation, ?>> cfgs,
+			final Class<CACSLLocation> clazz, final ILogger logger) {
 		super(filename, cfgs, clazz);
 		mLogger = logger;
 	}

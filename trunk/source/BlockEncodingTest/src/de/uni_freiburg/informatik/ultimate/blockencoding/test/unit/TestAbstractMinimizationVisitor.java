@@ -32,7 +32,7 @@ import java.util.HashSet;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -72,7 +72,7 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 	 */
 	private RCFGNode rcfgNode;
 
-	private Logger s_Logger;
+	private ILogger s_Logger;
 
 	private HashSet<RCFGNode> visitedOrigNodes;
 

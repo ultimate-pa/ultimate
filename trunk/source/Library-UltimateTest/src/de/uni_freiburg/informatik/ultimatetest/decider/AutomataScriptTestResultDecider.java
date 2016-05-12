@@ -30,21 +30,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 public class AutomataScriptTestResultDecider implements ITestResultDecider {
-	
+
 	private OverallResult m_Category;
 	private String m_ErrorMessage;
 
 	@Override
-	public TestResult getTestResult(IResultService resultService) {
+	public TestResult getTestResult(IUltimateServiceProvider  services) {
 		AutomataScriptInterpreterOverallResult asior = null;
-		Map<String, List<IResult>> allResults = resultService.getResults();
-		for (Entry<String, List<IResult>> entry  : allResults.entrySet()) {
+		Map<String, List<IResult>> allResults = services.getResultService().getResults();
+		for (Entry<String, List<IResult>> entry : allResults.entrySet()) {
 			for (IResult iResult : entry.getValue()) {
 				if (iResult instanceof AutomataScriptInterpreterOverallResult) {
 					asior = (AutomataScriptInterpreterOverallResult) iResult;
@@ -55,7 +55,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 			throw new AssertionError("no overall result");
 		} else {
 			m_Category = asior.getOverallResult();
-			if(m_Category == OverallResult.EXCEPTION_OR_ERROR) {
+			if (m_Category == OverallResult.EXCEPTION_OR_ERROR) {
 				m_ErrorMessage = asior.getErrorMessage();
 			} else {
 				m_ErrorMessage = null;
@@ -65,8 +65,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IResultService resultService,
-			Throwable e) {
+	public TestResult getTestResult(IUltimateServiceProvider service, Throwable e) {
 		m_Category = OverallResult.EXCEPTION_OR_ERROR;
 		return getTestResultFromCategory(m_Category);
 	}
@@ -97,7 +96,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 			throw new AssertionError();
 		}
 	}
-	
+
 	private TestResult getTestResultFromCategory(OverallResult category) {
 		switch (category) {
 		case ALL_ASSERTIONS_HOLD:

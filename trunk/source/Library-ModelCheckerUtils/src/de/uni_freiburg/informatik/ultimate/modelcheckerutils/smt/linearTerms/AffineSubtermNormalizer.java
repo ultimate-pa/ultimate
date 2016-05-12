@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
 public class AffineSubtermNormalizer extends TermTransformer {
 
 	private final Script m_Script;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
-	public AffineSubtermNormalizer(Script script, Logger logger) {
+	public AffineSubtermNormalizer(Script script, ILogger logger) {
 		super();
 		m_Script = script;
 		mLogger = logger;

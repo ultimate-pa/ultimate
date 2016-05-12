@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -70,7 +70,7 @@ public class LineCoverageCalculator {
 
 	private final IUltimateServiceProvider mServices;
 	private final LineCoverageCalculator mRelative;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final Set<Integer> mLinenumbers;
 
 	public LineCoverageCalculator(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton) {

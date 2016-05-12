@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.models.IPayload;
  * @see BasePayloadContainer
  * @see ModifiableExplicitEdgesMultigraph
  */
-public abstract class ModifiableMultigraphEdge<V extends IModifiableExplicitEdgesMultigraph<V, E, VL, EL>, E extends IModifiableMultigraphEdge<V, E, VL, EL>, VL, EL>
-		extends BaseMultigraphEdge<V, E, VL, EL> implements IModifiableMultigraphEdge<V, E, VL, EL> {
+public abstract class ModifiableMultigraphEdge<V extends IModifiableExplicitEdgesMultigraph<V, E, VL, EL, VisualizationNode>, E extends IModifiableMultigraphEdge<V, E, VL, EL, VisualizationNode>, VL, EL>
+		extends BaseMultigraphEdge<V, E, VL, EL> implements IModifiableMultigraphEdge<V, E, VL, EL, VisualizationNode> {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be

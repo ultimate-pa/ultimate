@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.AbstractMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 
-	public TestMinimizationVisitor(Logger logger) {
+	public TestMinimizationVisitor(ILogger logger) {
 		super(logger);
 	}
 

@@ -40,9 +40,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -59,91 +59,98 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
- * Took stuff from the old SafetyCheckTestResultDecider_OldVersion
- * 'cause there was so much I had to adjust for my own needs and
- * I don't want to dig into the new one to see if it suits me better
+ * Took stuff from the old SafetyCheckTestResultDecider_OldVersion 'cause there was so much I had to adjust for my own
+ * needs and I don't want to dig into the new one to see if it suits me better
+ * 
  * @author Christopher Dillo
  */
 public class AbstractInterpretationTestResultDecider extends TestResultDecider {
-	
+
 	public enum ExpectedResultType {
 		SAFE, UNSAFE, SYNTAXERROR, NOANNOTATION
 	}
-	
+
 	public enum ActualResultType {
 		SAFE, UNSAFE, UNKNOWN, SYNTAX_ERROR, TIMEOUT, UNSUPPORTED_SYNTAX, EXCEPTION_OR_ERROR, NO_RESULT;
 	}
+
 	protected class ActualResult {
 		private final IResult m_IResult;
 		private final ActualResultType m_actualResultType;
+
 		public ActualResult(ActualResultType automizerResultType, IResult iResult) {
 			m_IResult = iResult;
 			m_actualResultType = automizerResultType;
 		}
+
 		public IResult getIResult() {
 			return m_IResult;
 		}
+
 		public ActualResultType getResultType() {
 			return m_actualResultType;
 		}
 	}
-	
-	private String m_inputFile;
-	
+
+	private String mInputFile;
+
 	private String m_toolIdentifier;
-	
+
 	private ExpectedResultType m_expectedResult;
 
-	private Collection<IResult> m_results;
+	private Collection<IResult> mResults;
 
 	/** Peak memory in MiB **/
-	private String m_resultMemory = "";
+	private String mResultMemory = "";
 	/** Runtime in ms **/
-	private String m_resultTime = "";
-	
+	private String mResultTime = "";
+
 	/**
-	 * @param inputFile Well duh ;-)
-	 * @param toolIdentifier Used to identify which tool the result belongs to.
+	 * @param inputFile
+	 *            Well duh ;-)
+	 * @param toolIdentifier
+	 *            Used to identify which tool the result belongs to.
 	 */
 	public AbstractInterpretationTestResultDecider(File inputFile, String toolIdentifier) {
 		super();
-		m_inputFile = inputFile.getAbsolutePath();
+		mInputFile = inputFile.getAbsolutePath();
 		m_toolIdentifier = toolIdentifier;
 		generateExpectedResult(inputFile);
 	}
 
-
 	@Override
-	public TestResult getTestResult(IResultService resultService) {
-		Logger log = Logger.getLogger(AbstractInterpretationTestResultDecider.class);
-		Collection<String> customMessages = new LinkedList<String>();
+	public TestResult getTestResult(IUltimateServiceProvider services) {
+		final IResultService resultService = services.getResultService();
+		ILogger log = services.getLoggingService().getLogger(AbstractInterpretationTestResultDecider.class);
+		final Collection<String> customMessages = new LinkedList<String>();
 		final TestResult testoutcome;
-		m_results = new ArrayList<IResult>();
-		for (Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
-			m_results.addAll(entry.getValue());
+		mResults = new ArrayList<IResult>();
+		
+		for (final Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
+			mResults.addAll(entry.getValue());
 		}
 
 		// get benchmark result stuff
-		for (IResult r : m_results) {
+		for (final IResult r : mResults) {
 			if (r instanceof BenchmarkResult) {
-				BenchmarkResult<?> br = (BenchmarkResult<?>) r;
-				ICsvProviderProvider<?> ic = br.getBenchmark();
-				
+				final BenchmarkResult<?> br = (BenchmarkResult<?>) r;
+				final ICsvProviderProvider<?> ic = br.getBenchmark();
+
 				if (ic instanceof Benchmark) {
-					Benchmark benchmark = (Benchmark) ic;
-					
+					final Benchmark benchmark = (Benchmark) ic;
+
 					long memory = 0; // in bytes
 					double time = 0; // in milliseconds
-					
+
 					for (String title : benchmark.getTitles()) {
 						long watchMem = benchmark.getStartHeapSize(title) + benchmark.getPeakMemoryConsumed(title);
 						if (watchMem > memory)
 							memory = watchMem;
 						time += benchmark.getElapsedTime(title, TimeUnit.MILLISECONDS);
 					}
-					
-					m_resultMemory = String.format("%d", (memory / 1024 / 1024)); // -> MiB
-					m_resultTime = String.format("%.0f", time);
+
+					mResultMemory = String.format("%d", (memory / 1024 / 1024)); // -> MiB
+					mResultTime = String.format("%.0f", time);
 				}
 			}
 		}
@@ -154,9 +161,9 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		}
 
 		if (expected == ExpectedResultType.NOANNOTATION) {
-			customMessages.add("Couldn't understand the specification of the file \"" + m_inputFile + "\".");
+			customMessages.add("Couldn't understand the specification of the file \"" + mInputFile + "\".");
 		}
-		ActualResult scResult = getActualResult(m_results);
+		ActualResult scResult = getActualResult(mResults);
 		if (scResult == null) {
 			testoutcome = TestResult.FAIL;
 		} else {
@@ -219,16 +226,16 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		}
 
 		generateResultMessageAndCategory(scResult);
-		TestUtil.logResults(log, m_inputFile, !getJUnitSuccess(testoutcome), customMessages, resultService);
+		TestUtil.logResults(log, mInputFile, !getJUnitSuccess(testoutcome), customMessages, resultService);
 		return testoutcome;
 	}
 
 	@Override
-	public TestResult getTestResult(IResultService resultService, Throwable e) {
-		generateResultMessageAndCategory(new ActualResult(ActualResultType.EXCEPTION_OR_ERROR,
-				new ExceptionOrErrorResult("Ultimate", e)));
-		Logger log = Logger.getLogger(AbstractInterpretationTestResultDecider.class);
-		TestUtil.logResults(log, m_inputFile, true, new LinkedList<String>(), resultService);
+	public TestResult getTestResult(IUltimateServiceProvider service, Throwable e) {
+		generateResultMessageAndCategory(
+				new ActualResult(ActualResultType.EXCEPTION_OR_ERROR, new ExceptionOrErrorResult("Ultimate", e)));
+		TestUtil.logResults(AbstractInterpretationTestResultDecider.class, mInputFile, true, new LinkedList<String>(),
+				service);
 		return TestResult.FAIL;
 	}
 
@@ -237,7 +244,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 			setExpectedResult(getExpectedResult(inputFile));
 		}
 	}
-	
+
 	public static ExpectedResultType getExpectedResult(File inputFile) {
 		String line = TestUtil.extractFirstLine(inputFile);
 		if (line != null) {
@@ -250,26 +257,24 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 			}
 		}
 		String lowercaseFilename = inputFile.getName().toLowerCase();
-		if (lowercaseFilename.contains("-safe") 
-				|| lowercaseFilename.contains("_safe")
-				|| lowercaseFilename.contains("true-unreach-call")){
+		if (lowercaseFilename.contains("-safe") || lowercaseFilename.contains("_safe")
+				|| lowercaseFilename.contains("true-unreach-call")) {
 			return ExpectedResultType.SAFE;
-		} else if (lowercaseFilename.contains("-unsafe")
-				|| lowercaseFilename.contains("_unsafe")
-				|| lowercaseFilename.contains("false-unreach-call")){
+		} else if (lowercaseFilename.contains("-unsafe") || lowercaseFilename.contains("_unsafe")
+				|| lowercaseFilename.contains("false-unreach-call")) {
 			return ExpectedResultType.UNSAFE;
 		}
 		return ExpectedResultType.NOANNOTATION;
 	}
-	
+
 	protected ExpectedResultType getExpectedResult() {
 		return m_expectedResult;
 	}
-	
+
 	protected void setExpectedResult(ExpectedResultType expectedResult) {
 		m_expectedResult = expectedResult;
 	}
-	
+
 	/**
 	 * Message: Symbol for the LaTeX table denoting the expected result.
 	 */
@@ -292,23 +297,18 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		IResult iResult = safetyCheckerResult.getIResult();
 		if (iResult != null) {
 			setResultMessage(getResultMessage() + "\t ShortDescription: " + iResult.getShortDescription());
-			setResultMessage(getResultMessage() + "\t LongDescription: "
-					+ iResult.getLongDescription().replace(System.getProperty("line.separator"), " ##NEWLINE## ").replace("\n", " ##NEWLINE## "));
+			setResultMessage(getResultMessage() + "\t LongDescription: " + iResult.getLongDescription()
+					.replace(System.getProperty("line.separator"), " ##NEWLINE## ").replace("\n", " ##NEWLINE## "));
 		}
-		
+
 		// category: Plug-in, expected, actual
-		setResultCategory(String.format("%s ## %s ## %s",
-				m_toolIdentifier,
-				getExpectedResult(),
+		setResultCategory(String.format("%s ## %s ## %s", m_toolIdentifier, getExpectedResult(),
 				safetyCheckerResult.getResultType()));
-		
+
 		// statistics prefix:
-		setResultMessage(String.format("%s ## %s ## %s ## %s ## %s",
-				getExpectedResult(),
-				safetyCheckerResult.getResultType(),
-				m_resultTime,
-				m_resultMemory,
-				getResultMessage().replace("\n", "\n\t\t\t")));
+		setResultMessage(
+				String.format("%s ## %s ## %s ## %s ## %s", getExpectedResult(), safetyCheckerResult.getResultType(),
+						mResultTime, mResultMemory, getResultMessage().replace("\n", "\n\t\t\t")));
 	}
 
 	private ActualResult getActualResult(Collection<IResult> results) {
@@ -323,11 +323,11 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 				resultSet.put(extracted.getResultType(), extracted);
 			}
 		}
-		
+
 		// only benchmark result: assume timeout~
 		if ((benchmark != null) && results.size() == 1)
 			return new ActualResult(ActualResultType.TIMEOUT, benchmark);
-			
+
 		if (resultSet.containsKey(ActualResultType.EXCEPTION_OR_ERROR)) {
 			returnValue = resultSet.get(ActualResultType.EXCEPTION_OR_ERROR);
 		} else if (resultSet.containsKey(ActualResultType.SYNTAX_ERROR)) {
@@ -351,25 +351,25 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	private ActualResult extractResult(IResult result) {
 		if (result instanceof AllSpecificationsHoldResult)
 			return new ActualResult(ActualResultType.SAFE, result);
-		
+
 		if (result instanceof CounterExampleResult)
 			return new ActualResult(ActualResultType.UNSAFE, result);
-		
+
 		if (result instanceof UnprovableResult)
 			return new ActualResult(ActualResultType.UNKNOWN, result);
-		
+
 		if (result instanceof TypeErrorResult)
 			return new ActualResult(ActualResultType.SYNTAX_ERROR, result);
-		
+
 		if (result instanceof SyntaxErrorResult)
 			return new ActualResult(ActualResultType.SYNTAX_ERROR, result);
-		
+
 		if (result instanceof ITimeoutResult)
 			return new ActualResult(ActualResultType.TIMEOUT, result);
-		
+
 		if (result instanceof UnsupportedSyntaxResult)
 			return new ActualResult(ActualResultType.UNSUPPORTED_SYNTAX, result);
-		
+
 		if (result instanceof ExceptionOrErrorResult)
 			return new ActualResult(ActualResultType.EXCEPTION_OR_ERROR, result);
 
@@ -378,7 +378,6 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 
 		return null;
 	}
-
 
 	@Override
 	public boolean getJUnitSuccess(TestResult actualResult) {

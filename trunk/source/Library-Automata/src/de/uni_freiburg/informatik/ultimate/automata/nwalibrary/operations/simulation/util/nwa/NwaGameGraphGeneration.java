@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -123,9 +123,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final AGameGraph<LETTER, STATE> m_GameGraph;
 	/**
-	 * Logger of the Ultimate framework.
+	 * ILogger of the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	/**
 	 * The underlying nwa automaton, as double decker automaton, from which the
 	 * game graph gets generated.
@@ -171,7 +171,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
-	 *            Logger of the Ultimate framework.
+	 *            ILogger of the Ultimate framework.
 	 * @param nwa
 	 *            The underlying nwa automaton from which the game graph gets
 	 *            generated.
@@ -186,7 +186,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *             framework.
 	 */
 	public NwaGameGraphGeneration(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final Logger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
+			final ILogger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
 			final AGameGraph<LETTER, STATE> gameGraph, final ESimulationType simulationType)
 					throws OperationCanceledException {
 		m_Services = services;

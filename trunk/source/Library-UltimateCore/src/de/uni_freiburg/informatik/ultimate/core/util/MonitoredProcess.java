@@ -47,9 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -87,7 +85,7 @@ public final class MonitoredProcess implements IStorable {
 
 	private static final AtomicInteger sInstanceCounter = new AtomicInteger();
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IToolchainStorage mStorage;
 	private final IUltimateServiceProvider mServices;
 	private final String mCommand;
@@ -167,7 +165,7 @@ public final class MonitoredProcess implements IStorable {
 					command[0] = f.getAbsolutePath();
 				}
 			}
-			final Logger logger = services.getLoggingService().getControllerLogger();
+			final ILogger logger = services.getLoggingService().getControllerLogger();
 			logger.info("No working directory specified, using " + System.getProperty("user.dir"));
 			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand,
 					services, storage);
@@ -439,7 +437,7 @@ public final class MonitoredProcess implements IStorable {
 				tobeclosed.add(mStdErrStreamPipe);
 				killProcess();
 			} catch (NullPointerException ex) {
-				if (mLogger.getLevel().isGreaterOrEqual(Level.WARN)) {
+				if (mLogger.isWarnEnabled()) {
 					mLogger.warn(
 							getLogStringPrefix() + " Rare case: The thread was killed right after we checked if it "
 									+ "was killed and before we wanted to kill it manually");
@@ -614,7 +612,7 @@ public final class MonitoredProcess implements IStorable {
 				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe, endOfPumps, "stdErr");
 
 			} catch (IOException e) {
-				if (mMonitoredProcess.mLogger.getLevel().isGreaterOrEqual(Level.ERROR)) {
+				if (mMonitoredProcess.mLogger.isErrorEnabled()) {
 					mMonitoredProcess.mLogger.error(
 							getLogStringPrefix() + " Failed during stream data buffering. Terminating abnormally.", e);
 				}
@@ -640,7 +638,7 @@ public final class MonitoredProcess implements IStorable {
 					}
 				}
 			} catch (InterruptedException e) {
-				if (mMonitoredProcess.mLogger.getLevel().isGreaterOrEqual(Level.ERROR)) {
+				if (mMonitoredProcess.mLogger.isErrorEnabled()) {
 					mMonitoredProcess.mLogger.error(getLogStringPrefix() + " Interrupted. Terminating abnormally.", e);
 				}
 			} finally {
@@ -677,33 +675,8 @@ public final class MonitoredProcess implements IStorable {
 					mOutputStream.write(chunk);
 					mOutputStream.flush();
 				}
-				// int busywaits = 0;
-				// while (isRunning()) {
-				// if (reader.ready()) {
-				// while (reader.ready()) {
-				// int chunk = reader.read();
-				// if (chunk == -1) {
-				// // Note that the finally block will be executed
-				// return;
-				// }
-				// mOutputStream.write(chunk);
-				// }
-				// mOutputStream.flush();
-				// } else if (!mProcess.isAlive()) {
-				// // we also die here if the process is already dead or presumed dead
-				// mLogger.warn(getLogStringPrefix() + " pump " + mPumpName
-				// + " is ending because process is not alive");
-				// return;
-				// } else if (busywaits > 10000) {
-				// busywaits = 0;
-				// Thread.sleep(WAIT_BETWEEN_CHECKS_MILLIS);
-				// mLogger.warn(getLogStringPrefix() + " waiting for pump " + mPumpName);
-				// } else {
-				// busywaits++;
-				// }
-				// }
 			} catch (IOException /* | InterruptedException */ e) {
-				if (mLogger.getLevel().isGreaterOrEqual(Level.WARN)) {
+				if (mLogger.isWarnEnabled()) {
 					mLogger.warn(getLogStringPrefix() + " The stream was forcibly closed: " + mPumpName);
 				}
 			} finally {

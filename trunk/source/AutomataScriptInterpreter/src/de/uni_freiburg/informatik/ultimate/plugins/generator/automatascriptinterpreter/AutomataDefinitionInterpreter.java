@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -83,10 +83,10 @@ public class AutomataDefinitionInterpreter {
 	 */
 	private ILocation mErrorLocation;
 	private IMessagePrinter mMessagePrinter;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
-	public AutomataDefinitionInterpreter(IMessagePrinter printer, Logger logger, IUltimateServiceProvider services) {
+	public AutomataDefinitionInterpreter(IMessagePrinter printer, ILogger logger, IUltimateServiceProvider services) {
 		mAutomata = new HashMap<String, Object>();
 		mMessagePrinter = printer;
 		mLogger = logger;

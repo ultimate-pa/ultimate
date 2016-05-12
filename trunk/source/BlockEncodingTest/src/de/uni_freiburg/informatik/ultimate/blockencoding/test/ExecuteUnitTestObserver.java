@@ -30,7 +30,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.test;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  */
 public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 
-	private static Logger sLogger;
+	private static ILogger sLogger;
 	private static IUltimateServiceProvider sServices;
 
 	/**
@@ -61,7 +61,7 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 	 * 
 	 * @return Nothing of your damn business.
 	 */
-	public static Logger getLogger() {
+	public static ILogger getLogger() {
 		return sLogger;
 	}
 

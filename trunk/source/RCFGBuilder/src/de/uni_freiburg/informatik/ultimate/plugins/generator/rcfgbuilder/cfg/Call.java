@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -61,7 +61,7 @@ public class Call extends CodeBlock implements ICallAction {
 	private final static String[] s_AttribFields = { "CallStatement", "PrettyPrintedStatements", "TransitionFormula",
 			"OccurenceInCounterexamples" };
 
-	Call(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st, Logger logger) {
+	Call(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		m_CallStatement = st;
 		m_PrettyPrintedStatements = BoogiePrettyPrinter.print(st);

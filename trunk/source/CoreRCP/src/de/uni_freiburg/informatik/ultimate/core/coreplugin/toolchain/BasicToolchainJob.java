@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -41,7 +40,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
@@ -72,14 +73,15 @@ public abstract class BasicToolchainJob extends Job {
 	}
 
 	protected ChainMode mJobMode;
-	protected ICore mCore;
-	protected IController mController;
-	protected Logger mLogger;
-	protected IToolchainData mChain;
+	protected ICore<ToolchainListType> mCore;
+	protected IController<ToolchainListType> mController;
+	protected ILogger mLogger;
+	protected IToolchainData<ToolchainListType> mChain;
 	protected IUltimateServiceProvider mServices;
 	private long mDeadline;
 
-	public BasicToolchainJob(String name, ICore core, IController controller, Logger logger) {
+	public BasicToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller,
+			ILogger logger) {
 		super(name);
 		assert logger != null;
 		mCore = core;

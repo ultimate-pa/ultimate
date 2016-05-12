@@ -34,7 +34,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -66,7 +66,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	/**
 	 * The inputed buechi automaton.
 	 */
@@ -211,7 +211,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * 
 	 * @return The logger used by the Ultimate framework.
 	 */
-	protected Logger getLogger() {
+	protected ILogger getLogger() {
 		return m_Logger;
 	}
 

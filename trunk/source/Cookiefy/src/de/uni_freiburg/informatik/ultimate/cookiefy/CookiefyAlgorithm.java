@@ -32,7 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -80,14 +80,14 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 		return this.root;
 	}
 
-	// public static Logger logger =
+	// public static ILogger logger =
 	// UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
 	protected TemplateStore TemplateStore;
 	protected Program InputProgram;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
-	public CookiefyAlgorithm(Logger logger) {
+	public CookiefyAlgorithm(ILogger logger) {
 		mLogger = logger;
 	}
 

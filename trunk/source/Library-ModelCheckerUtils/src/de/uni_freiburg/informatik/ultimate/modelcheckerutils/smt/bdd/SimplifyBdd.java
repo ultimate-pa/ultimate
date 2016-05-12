@@ -25,7 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -45,7 +45,7 @@ public class SimplifyBdd {
 	
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	//TODO: 2016-05-09 Matthias: The following field might be be useless
 	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
 	

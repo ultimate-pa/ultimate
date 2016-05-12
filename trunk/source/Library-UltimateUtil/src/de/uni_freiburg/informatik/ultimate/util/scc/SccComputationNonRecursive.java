@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 /**
  * Non-recursive implementation of {@link SccComputation}.
@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
 public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComponent<NODE>> extends SccComputation<NODE, COMP> {
 	
 	public SccComputationNonRecursive(
-			Logger logger,
+			ILogger logger,
 			ISuccessorProvider<NODE> successorProvider,
 			IStronglyConnectedComponentFactory<NODE, COMP> sccFac,
 			int numberOfAllNodes, Set<NODE> startNodes) {

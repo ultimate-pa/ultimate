@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -97,7 +97,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	
 	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() throws AutomataLibraryException {

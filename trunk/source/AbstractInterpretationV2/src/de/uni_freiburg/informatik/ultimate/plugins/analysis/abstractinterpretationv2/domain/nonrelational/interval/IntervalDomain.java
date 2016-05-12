@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -53,14 +53,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class IntervalDomain implements IAbstractDomain<IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final BoogieSymbolTable mSymbolTable;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final LiteralCollection mLiteralCollection;
 
 	private IAbstractStateBinaryOperator<IntervalDomainState> mWideningOperator;
 	private IAbstractStateBinaryOperator<IntervalDomainState> mMergeOperator;
 	private IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> mPostOperator;
 
-	public IntervalDomain(final Logger logger, final BoogieSymbolTable symbolTable,
+	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
 	        final LiteralCollection literalCollector) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;

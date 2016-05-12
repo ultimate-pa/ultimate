@@ -34,7 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -77,7 +77,7 @@ public class PartialQuantifierElimination {
 	private static boolean m_PushPull = true;
 	
 	
-	public static Term tryToEliminate(IUltimateServiceProvider services, Logger logger, Script script, 
+	public static Term tryToEliminate(IUltimateServiceProvider services, ILogger logger, Script script, 
 			IFreshTermVariableConstructor freshTermVariableConstructor, final Term term) {
 		final Term withoutIte = (new IteRemover(script)).transform(term);
 		final Term nnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.KEEP).transform(withoutIte); 
@@ -180,7 +180,7 @@ public class PartialQuantifierElimination {
 	 * @param services
 	 * @param logger
 	 */
-	public static Term quantifier(IUltimateServiceProvider services, Logger logger, Script script, 
+	public static Term quantifier(IUltimateServiceProvider services, ILogger logger, Script script, 
 			IFreshTermVariableConstructor freshTermVariableConstructor, int quantifier,
 			final Collection<TermVariable> vars, final Term body, Term[]... patterns) {
 		Set<TermVariable> varSet = constructIntersectionWithFreeVars(vars, body);
@@ -229,7 +229,7 @@ public class PartialQuantifierElimination {
 	}
 
 	public static Term elimPushPull(Script script, int quantifier, final Set<TermVariable> eliminatees, final Term term,
-			IUltimateServiceProvider services, Logger logger, 
+			IUltimateServiceProvider services, ILogger logger, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		final Term withoutIte = (new IteRemover(script)).transform(term);
 		final Term nnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.KEEP).transform(withoutIte); 
@@ -244,7 +244,7 @@ public class PartialQuantifierElimination {
 	
 
 	public static Term elim(Script script, int quantifier, final Set<TermVariable> eliminatees, final Term term,
-			IUltimateServiceProvider services, Logger logger, 
+			IUltimateServiceProvider services, ILogger logger, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
 		Iterator<TermVariable> it = eliminatees.iterator();
@@ -484,7 +484,7 @@ public class PartialQuantifierElimination {
 	}
 
 
-	public static Term sos(Script script, int quantifier, Term term, Set<TermVariable> eliminatees, Logger logger,
+	public static Term sos(Script script, int quantifier, Term term, Set<TermVariable> eliminatees, ILogger logger,
 			IUltimateServiceProvider services, IFreshTermVariableConstructor freshTermVariableConstructor) {
 		Term result = term;
 		Set<TermVariable> overallAuxVars = new HashSet<TermVariable>();
@@ -528,7 +528,7 @@ public class PartialQuantifierElimination {
 //	 * 
 //	 * @param logger
 //	 */
-//	public static Term updSimple(Script script, int quantifier, Term term, Set<TermVariable> vars, Logger logger) {
+//	public static Term updSimple(Script script, int quantifier, Term term, Set<TermVariable> vars, ILogger logger) {
 //		Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
 //		vars.retainAll(occuringVars);
 //		Set<Term> parameters;
@@ -682,7 +682,7 @@ public class PartialQuantifierElimination {
 	 * 
 	 * @param logger
 	 */
-	private static Term findEqualTermExists(TermVariable tv, Term term, Logger logger) {
+	private static Term findEqualTermExists(TermVariable tv, Term term, ILogger logger) {
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			FunctionSymbol sym = appTerm.getFunction();
@@ -716,7 +716,7 @@ public class PartialQuantifierElimination {
 	 * 
 	 * @param logger
 	 */
-	private static Term findEqualTermForall(TermVariable tv, Term term, Logger logger) {
+	private static Term findEqualTermForall(TermVariable tv, Term term, ILogger logger) {
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			FunctionSymbol sym = appTerm.getFunction();
@@ -770,7 +770,7 @@ public class PartialQuantifierElimination {
 	 * @param logger
 	 * 
 	 */
-	private static int tvOnOneSideOfEquality(TermVariable tv, Term[] params, Logger logger) {
+	private static int tvOnOneSideOfEquality(TermVariable tv, Term[] params, ILogger logger) {
 		if (params.length != 2) {
 			logger.warn("Equality of length " + params.length);
 		}
@@ -794,7 +794,7 @@ public class PartialQuantifierElimination {
 	
 	
 	
-//	public static Term usr(Script script, int quantifier, Term term, Collection<TermVariable> eliminatees, Set<TermVariable> affectedEliminatees, Logger logger) {
+//	public static Term usr(Script script, int quantifier, Term term, Collection<TermVariable> eliminatees, Set<TermVariable> affectedEliminatees, ILogger logger) {
 //		Term[] oldParams;
 //		if (quantifier == QuantifiedFormula.EXISTS) {
 //			oldParams = SmtUtils.getConjuncts(term);

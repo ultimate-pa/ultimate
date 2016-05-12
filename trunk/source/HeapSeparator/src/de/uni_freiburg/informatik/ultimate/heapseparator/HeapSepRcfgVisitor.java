@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -36,7 +36,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> m_arrayToPartitions;
 	Script m_script;
 
-	public HeapSepRcfgVisitor(Logger logger, HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> map, Script script) {
+	public HeapSepRcfgVisitor(ILogger logger, HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> map, Script script) {
 		super(logger);
 		m_oldArrayToPointerToNewArray = map;
 		m_arrayToPartitions = reverseInnerMap(m_oldArrayToPointerToNewArray);

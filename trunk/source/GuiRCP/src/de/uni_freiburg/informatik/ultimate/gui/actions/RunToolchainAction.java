@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
@@ -52,7 +51,9 @@ import org.xml.sax.SAXException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
@@ -60,11 +61,11 @@ import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 public abstract class RunToolchainAction extends Action {
 
 	protected final IWorkbenchWindow mWorkbenchWindow;
-	protected final Logger mLogger;
-	protected final ICore mCore;
+	protected final ILogger mLogger;
+	protected final ICore<ToolchainListType> mCore;
 	protected final GuiController mController;
 
-	public RunToolchainAction(Logger logger, IWorkbenchWindow window, ICore icore, GuiController controller, String id,
+	public RunToolchainAction(ILogger logger, IWorkbenchWindow window, ICore<ToolchainListType> icore, GuiController controller, String id,
 			String label, String imageFilePath) {
 		super();
 		mLogger = logger;

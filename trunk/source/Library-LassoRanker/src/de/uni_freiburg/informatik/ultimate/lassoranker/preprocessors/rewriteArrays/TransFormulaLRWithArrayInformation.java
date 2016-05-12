@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
@@ -80,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
  */
 public class TransFormulaLRWithArrayInformation {
 
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
 	
@@ -187,7 +187,7 @@ public class TransFormulaLRWithArrayInformation {
 	
 	
 	private boolean checkSunftranformation(IUltimateServiceProvider services, 
-			Logger logger, IFreshTermVariableConstructor ftvc, 
+			ILogger logger, IFreshTermVariableConstructor ftvc, 
 			Boogie2SMT boogie2smt, List<List<ArrayEquality>> arrayEqualities, SingleUpdateNormalFormTransformer[] sunfts) {
 		TransFormulaLR afterSunft = constructTransFormulaLRWInSunf(services, logger, ftvc, m_Script, m_TransFormulaLR, arrayEqualities, sunfts);
 		LBool notStronger = TransFormulaUtils.implies(mServices, mLogger, m_TransFormulaLR, afterSunft, m_Script, boogie2smt.getBoogie2SmtSymbolTable());
@@ -783,7 +783,7 @@ public class TransFormulaLRWithArrayInformation {
 
 
 	private static TransFormulaLR constructTransFormulaLRWInSunf(IUltimateServiceProvider services, 
-			Logger logger, IFreshTermVariableConstructor ftvc, 
+			ILogger logger, IFreshTermVariableConstructor ftvc, 
 			Script script, TransFormulaLR tf, 
 			List<List<ArrayEquality>> arrayEqualities, SingleUpdateNormalFormTransformer... sunfts) {
 		TransFormulaLR result = new TransFormulaLR(tf);

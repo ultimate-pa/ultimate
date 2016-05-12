@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
-	private static Logger m_Logger;
+	private static ILogger m_Logger;
 	
 	public NwaList(AutomataLibraryServices services,INestedWordAutomaton<LETTER,STATE> orginalAutomata, INestedWordAutomaton<LETTER,STATE> newAutomata){
 		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

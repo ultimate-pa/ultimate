@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cookiefy;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
@@ -46,7 +46,7 @@ public class CookiefyPlugin implements IGenerator {
 
 	private CookiefyAlgorithm m_CookiefyAlgorithm;
 	private ModelType m_InputType;
-	private Logger mLogger;
+	private ILogger mLogger;
 
 	@Override
 	public ModelType getOutputDefinition() {

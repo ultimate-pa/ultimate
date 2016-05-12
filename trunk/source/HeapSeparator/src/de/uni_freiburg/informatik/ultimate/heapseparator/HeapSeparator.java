@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.models.ModelType;
  */
 public class HeapSeparator implements IGenerator {
 
-	private Logger m_logger;
+	private ILogger m_logger;
 	private IToolchainStorage m_storage;
 	private HeapSeparatorObserver m_observer;
 	private IUltimateServiceProvider m_services;

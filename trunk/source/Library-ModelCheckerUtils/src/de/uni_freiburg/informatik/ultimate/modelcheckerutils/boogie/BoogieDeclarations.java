@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
  */
 public class BoogieDeclarations {
 	
-	private final Logger mLogger; 
+	private final ILogger mLogger; 
 
 	private final List<Axiom> m_Axioms = 
 			new ArrayList<Axiom>();
@@ -123,7 +123,7 @@ public class BoogieDeclarations {
 								new HashMap<String,Set<String>>();
 	
 	
-	public BoogieDeclarations(Unit unit, Logger logger) {
+	public BoogieDeclarations(Unit unit, ILogger logger) {
 		mLogger = logger;
 		for (Declaration decl : unit.getDeclarations()) {
 			if (decl instanceof Axiom)

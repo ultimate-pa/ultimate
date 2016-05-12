@@ -28,11 +28,11 @@ package de.uni_freiburg.informatik.ultimatetest;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IStatus;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestMethod;
 import de.uni_freiburg.informatik.ultimate.core.controllers.LivecycleException;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
@@ -52,12 +52,10 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 	private final ITestResultDecider mDecider;
 	private final List<ITestSummary> mSummaries;
 	private final List<IIncrementalLog> mLogs;
-	private final Logger mLogger;
 
 	public UltimateTestCase(final String name, final ITestResultDecider decider, final UltimateStarter starter,
 			final UltimateRunDefinition ultimateRunDefinition, final List<ITestSummary> summaries,
 			final List<IIncrementalLog> incrementalLogs) {
-		mLogger = Logger.getLogger(UltimateStarter.class);
 		if (ultimateRunDefinition == null) {
 			throw new IllegalArgumentException("ultimateRunDefinition");
 		}
@@ -88,22 +86,25 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 		Throwable th = null;
 		TestResult result = TestResult.FAIL;
 		boolean livecycleFailure = false;
+		
 		try {
 			updateLogsPreStart();
-			String deciderName = mDecider.getClass().getSimpleName();
-			IStatus returnCode = mStarter.runUltimate();
-			mLogger.info("Deciding this test: " + deciderName);
-			result = mDecider.getTestResult(mStarter.getServices().getResultService());
+			final String deciderName = mDecider.getClass().getSimpleName();
+			final IStatus returnCode = mStarter.runUltimate();
+			//logging service is only available after runUltimate() has been called
+			final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
+			logger.info("Deciding this test: " + deciderName);
+			result = mDecider.getTestResult(mStarter.getServices());
 			if (!returnCode.isOK() && result != TestResult.FAIL) {
-				mLogger.fatal("#################### Overwriting decision of " + deciderName
+				logger.fatal("#################### Overwriting decision of " + deciderName
 						+ " and setting test status to FAIL ####################");
-				mLogger.fatal("Ultimate returned an unexpected status:");
-				mLogger.fatal("Code      " + returnCode.getCode());
-				mLogger.fatal("Severity  " + returnCode.getSeverity());
-				mLogger.fatal("Message   " + returnCode.getMessage());
-				mLogger.fatal("Plugin ID " + returnCode.getPlugin());
+				logger.fatal("Ultimate returned an unexpected status:");
+				logger.fatal("Code      " + returnCode.getCode());
+				logger.fatal("Severity  " + returnCode.getSeverity());
+				logger.fatal("Message   " + returnCode.getMessage());
+				logger.fatal("Plugin ID " + returnCode.getPlugin());
 				if (returnCode.getException() != null) {
-					mLogger.fatal("Exception:", returnCode.getException());
+					logger.fatal("Exception:", returnCode.getException());
 				}
 				result = TestResult.FAIL;
 			}
@@ -116,8 +117,9 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 			livecycleFailure = true;
 		} catch (Throwable e) {
 			th = e;
-			result = mDecider.getTestResult(mStarter.getServices().getResultService(), e);
-			mLogger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
+			result = mDecider.getTestResult(mStarter.getServices(), e);
+			final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
+			logger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
 					ExceptionUtils.getStackTrace(e)));
 		} finally {
 			boolean success = false;

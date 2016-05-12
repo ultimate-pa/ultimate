@@ -26,9 +26,10 @@
  */
 package pea;
 
-import org.apache.log4j.Logger;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Vector;
 
 
 /**
@@ -56,9 +57,6 @@ import java.util.*;
  * @see pea.Decision
  */
 public class CDD {
-    @SuppressWarnings("unused")
-    private static Logger log = Logger.getLogger(CDD.class);
-
     /**
      * The formula TRUE.
      */
@@ -261,15 +259,15 @@ try_next:
         if (result != null)
         	return result;
         CDD[] newchilds;
-        int cmpTo = this.decision.compareTo(other.decision);
+        int cmpTo = decision.compareTo(other.decision);
 
         if (cmpTo == 0) {
-            result = this.decision.and(other.decision, this.childs, other.childs, cache);
+            result = decision.and(other.decision, childs, other.childs, cache);
         } else if (cmpTo < 0) {
-            newchilds = new CDD[this.childs.length];
+            newchilds = new CDD[childs.length];
 
-            for (int i = 0; i < this.childs.length; i++)
-                newchilds[i] = this.childs[i].and(other, cache);
+            for (int i = 0; i < childs.length; i++)
+                newchilds[i] = childs[i].and(other, cache);
 
             result = decision.simplify(newchilds);
         } else {
@@ -299,22 +297,22 @@ try_next:
         }
 
         CDD[] newchilds;
-        int cmpTo = this.decision.compareTo(other.decision);
+        int cmpTo = decision.compareTo(other.decision);
 
         if (cmpTo == 0) {
-            return this.decision.or(other.decision, this.childs, other.childs);
+            return decision.or(other.decision, childs, other.childs);
         } else if (cmpTo < 0) {
-            newchilds = new CDD[this.childs.length];
+            newchilds = new CDD[childs.length];
 
-            for (int i = 0; i < this.childs.length; i++)
-                newchilds[i] = this.childs[i].or(other);
+            for (int i = 0; i < childs.length; i++)
+                newchilds[i] = childs[i].or(other);
 
             return decision.simplify(newchilds);
         } else {
             newchilds = new CDD[other.childs.length];
 
             for (int i = 0; i < other.childs.length; i++)
-                newchilds[i] = this.or(other.childs[i]);
+                newchilds[i] = or(other.childs[i]);
 
             return other.decision.simplify(newchilds);
         }
@@ -419,7 +417,7 @@ try_next:
 
                         newchilds[i] = cdnf[j];
 
-                        CDD newCDD = create(this.decision, newchilds);
+                        CDD newCDD = create(decision, newchilds);
 
                         if (!dnf.contains(newCDD)) {
                             dnf.add(newCDD);
@@ -429,11 +427,11 @@ try_next:
             }
         }
 
-        return (CDD[]) dnf.toArray(new CDD[dnf.size()]);
+        return dnf.toArray(new CDD[dnf.size()]);
     }
 
     public CDD toDNF_CDD() {
-        CDD[] dnfList = this.toDNF();
+        CDD[] dnfList = toDNF();
         CDD result = CDD.FALSE;
 
         for (int i = 0; i < dnfList.length; i++) {
@@ -490,7 +488,7 @@ try_next:
 
                         newchilds[i] = ccnf[j];
 
-                        CDD newCDD = create(this.decision, newchilds);
+                        CDD newCDD = create(decision, newchilds);
 
                         if (!cnf.contains(newCDD)) {
                             cnf.add(newCDD);
@@ -500,11 +498,11 @@ try_next:
             }
         }
 
-        return (CDD[]) cnf.toArray(new CDD[cnf.size()]);
+        return cnf.toArray(new CDD[cnf.size()]);
     }
 
     public CDD toCNF_CDD() {
-        CDD[] cnfList = this.toCNF();
+        CDD[] cnfList = toCNF();
         CDD result = CDD.TRUE;
 
         for (int i = 0; i < cnfList.length; i++) {
@@ -580,7 +578,8 @@ try_next:
     /**
      * Creates a string representation of the CDD.
      */
-    public String toString() {
+    @Override
+	public String toString() {
         return toString(false);
     }
 
@@ -877,7 +876,7 @@ try_next:
             return;
         }
 
-        System.out.println("Decision=" + this.decision.toString(i));
+        System.out.println("Decision=" + decision.toString(i));
 
         for (int j = 0; j < childs.length; j++) {
             childs[j].printCDD(j);
@@ -909,7 +908,7 @@ try_next:
         Decision decision = this.decision;
         Decision newDecision;
 
-        CDD[] children = this.childs;
+        CDD[] children = childs;
         CDD[] newChildren = new CDD[children.length];
 
         for (int i = 0; i < children.length; i++) {
@@ -926,10 +925,10 @@ try_next:
     //the function returns whether a CDD is an atomic proposition (like A, !A) or a 
     // proposition composed of several variables (e.g., A&B, A||B)
     public boolean isAtomic() {
-        if (((this.getChilds()[0] == CDD.TRUE) ||
-                (this.getChilds()[0] == CDD.FALSE)) &&
-                ((this.getChilds()[1] == CDD.TRUE) ||
-                (this.getChilds()[1] == CDD.FALSE))) {
+        if (((getChilds()[0] == CDD.TRUE) ||
+                (getChilds()[0] == CDD.FALSE)) &&
+                ((getChilds()[1] == CDD.TRUE) ||
+                (getChilds()[1] == CDD.FALSE))) {
             return true;
         } else {
             return false;
@@ -949,7 +948,7 @@ try_next:
         Decision decision = this.decision;
         Decision newDecision;
 
-        CDD[] children = this.childs;
+        CDD[] children = childs;
         CDD[] newChildren = new CDD[children.length];
 
         for (int i = 0; i < children.length; i++) {

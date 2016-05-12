@@ -36,35 +36,30 @@ import de.uni_freiburg.informatik.ultimate.models.IPayload;
  * 
  * @author dietsch, heizmann@informatik.uni-freiburg.de
  * @param <T>
- *            is the type of the concrete model. This parameter should be used
- *            by sub-interfaces to specify a more restrictive type and thus free
- *            clients from the need of down-casting.<br>
- *            Final implementations should fix this parameter to their type,
- *            e.g. a (fictive) type <tt>FinalModel</tt> would declare
- *            <tt>public final class FinalModel implements IModifiableDirectedGraph&lt;FinalModel&gt;</tt>
+ *            is the type of the concrete model. This parameter should be used by sub-interfaces to specify a more
+ *            restrictive type and thus free clients from the need of down-casting.<br>
+ *            Final implementations should fix this parameter to their type, e.g. a (fictive) type <tt>FinalModel</tt>
+ *            would declare <tt>public final class FinalModel implements IModifiableDirectedGraph&lt;FinalModel&gt;</tt>
  *            .
  */
-public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph<T>>
-extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T> {
+public abstract class ModifiableDirectedGraph<T extends IModifiableDirectedGraph<T, VisualizationNode>>
+		extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T, VisualizationNode> {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
 	/***
-	 * This constructor creates a directed graph node without a predecessor and
-	 * without a payload.
+	 * This constructor creates a directed graph node without a predecessor and without a payload.
 	 */
 	protected ModifiableDirectedGraph() {
 		this(null, null);
 	}
 
 	/**
-	 * This constructor creates a directed graph node without a predecessor but
-	 * with a given payload.
+	 * This constructor creates a directed graph node without a predecessor but with a given payload.
 	 * 
 	 * @param payload
 	 *            A given payload or null
@@ -75,35 +70,28 @@ extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T> {
 	}
 
 	/**
-	 * This constructor creates a directed graph node with a given predecessor
-	 * node but without a payload.
+	 * This constructor creates a directed graph node with a given predecessor node but without a payload.
 	 * 
 	 * @param parent
-	 *            A given parent node or null. If the given parent node is not
-	 *            null, this node will be added to the parent's list of outgoing
-	 *            nodes and the parent will be added to this node's list of
-	 *            incoming nodes.
+	 *            A given parent node or null. If the given parent node is not null, this node will be added to the
+	 *            parent's list of outgoing nodes and the parent will be added to this node's list of incoming nodes.
 	 */
 	protected ModifiableDirectedGraph(T parent) {
 		this(parent, null);
 	}
 
 	/**
-	 * This constructor creates a directed graph node with a given predecessor
-	 * node and a given payload.
+	 * This constructor creates a directed graph node with a given predecessor node and a given payload.
 	 * 
 	 * @param parent
-	 *            A given parent node or null. If the given parent node is not
-	 *            null, this node will be added to the parent's list of outgoing
-	 *            nodes and the parent will be added to this node's list of
-	 *            incoming nodes.
+	 *            A given parent node or null. If the given parent node is not null, this node will be added to the
+	 *            parent's list of outgoing nodes and the parent will be added to this node's list of incoming nodes.
 	 * @param payload
 	 *            A given payload or null
 	 */
 	protected ModifiableDirectedGraph(T parent, IPayload payload) {
 		super(parent, payload);
 	}
-	
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -114,11 +102,10 @@ extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T> {
 		return thisIncomingChanged;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean disconnectIncoming(T predecessor) {
 		boolean thisIncomingChanged = removeIncoming(predecessor);
-		boolean predecessorOutgoingChanged = predecessor.removeOutgoing((T) this);
+		boolean predecessorOutgoingChanged = predecessor.removeOutgoing(this);
 		assert (thisIncomingChanged == predecessorOutgoingChanged);
 		return thisIncomingChanged;
 	}
@@ -132,15 +119,13 @@ extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T> {
 		return thisOutgoingChanged;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean disconnectOutgoing(T successor) {
 		boolean thisOutgoingChanged = removeOutgoing(successor);
-		boolean predecessorIncomingChanged = successor.removeIncoming((T) this);
+		boolean predecessorIncomingChanged = successor.removeIncoming(this);
 		assert (thisOutgoingChanged == predecessorIncomingChanged);
 		return thisOutgoingChanged;
 	}
-	
 
 	/* ---------- IModifiableOutgoing<IMultigraphEdge> implementation ---------- */
 

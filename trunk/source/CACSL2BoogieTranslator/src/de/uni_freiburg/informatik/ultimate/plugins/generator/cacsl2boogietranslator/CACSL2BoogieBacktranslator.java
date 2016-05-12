@@ -43,7 +43,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -71,8 +70,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -84,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.models.annotation.ConditionAnnotation;
@@ -92,13 +92,13 @@ import de.uni_freiburg.informatik.ultimate.models.structure.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.models.structure.Multigraph;
 import de.uni_freiburg.informatik.ultimate.models.structure.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IRelevanceInformation;
+import de.uni_freiburg.informatik.ultimate.result.model.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
@@ -114,7 +114,7 @@ public class CACSL2BoogieBacktranslator
 
 	private Boogie2C mBoogie2C;
 	private IUltimateServiceProvider mServices;
-	private Logger mLogger;
+	private ILogger mLogger;
 	private static final String sUnfinishedBacktranslation = "Unfinished Backtranslation";
 	private AExpressionTranslation mExpressionTranslation;
 	private boolean mGenerateBacktranslationWarnings;
@@ -522,10 +522,11 @@ public class CACSL2BoogieBacktranslator
 
 	@SuppressWarnings("unchecked")
 	private <TVL, SVL> Multigraph<TVL, CACSLLocation> translateCFGEdge(
-			final Map<IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode>, Multigraph<TVL, CACSLLocation>> cache,
-			final IMultigraphEdge<?, ?, ?, BoogieASTNode> oldEdge, final Multigraph<TVL, CACSLLocation> newSourceNode) {
+			final Map<IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode, ?>, Multigraph<TVL, CACSLLocation>> cache,
+			final IMultigraphEdge<?, ?, ?, BoogieASTNode, ?> oldEdge,
+			final Multigraph<TVL, CACSLLocation> newSourceNode) {
 
-		final IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode> oldTarget = (IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode>) oldEdge
+		final IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode, ?> oldTarget = (IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode, ?>) oldEdge
 				.getTarget();
 		Multigraph<TVL, CACSLLocation> currentSource = newSourceNode;
 
@@ -609,16 +610,16 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private IBacktranslatedCFG<String, CACSLLocation> reduceCFGs(IBacktranslatedCFG<String, CACSLLocation> translated) {
-		for (final IExplicitEdgesMultigraph<?, ?, String, CACSLLocation> root : translated.getCFGs()) {
+		for (final IExplicitEdgesMultigraph<?, ?, String, CACSLLocation, ?> root : translated.getCFGs()) {
 			reduceCFG(root);
 		}
 		return translated;
 	}
 
 	@SuppressWarnings("unchecked")
-	private void reduceCFG(final IExplicitEdgesMultigraph<?, ?, String, CACSLLocation> root) {
+	private void reduceCFG(final IExplicitEdgesMultigraph<?, ?, String, CACSLLocation, ?> root) {
 		final Deque<Multigraph<String, CACSLLocation>> worklist = new ArrayDeque<>();
-		final Set<IExplicitEdgesMultigraph<?, ?, String, CACSLLocation>> closed = new HashSet<>();
+		final Set<IExplicitEdgesMultigraph<?, ?, String, CACSLLocation, ?>> closed = new HashSet<>();
 		int i = 0;
 		worklist.add((Multigraph<String, CACSLLocation>) root);
 		while (!worklist.isEmpty()) {

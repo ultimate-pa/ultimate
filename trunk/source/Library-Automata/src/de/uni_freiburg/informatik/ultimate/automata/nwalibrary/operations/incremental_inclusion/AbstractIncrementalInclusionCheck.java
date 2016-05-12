@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incre
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	
 	protected final AutomataLibraryServices m_Services;
-	protected final Logger m_Logger;
+	protected final ILogger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_A;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> m_B = new ArrayList<>();

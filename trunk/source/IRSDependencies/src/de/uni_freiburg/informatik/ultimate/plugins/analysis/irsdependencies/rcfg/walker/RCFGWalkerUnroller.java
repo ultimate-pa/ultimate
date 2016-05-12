@@ -32,9 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Stack;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.IRSDependenciesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.RCFGUnrollWalkerAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -59,10 +57,9 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 	protected List<RCFGEdge> mCurrentPath;
 
-	public RCFGWalkerUnroller(ObserverDispatcher dispatcher, Logger logger, int unrollings) {
+	public RCFGWalkerUnroller(ObserverDispatcher dispatcher, ILogger logger, int unrollings) {
 		super(dispatcher, logger);
 		mUnrollings = unrollings;
-		mLogger.setLevel(Level.INFO);
 	}
 
 	@Override

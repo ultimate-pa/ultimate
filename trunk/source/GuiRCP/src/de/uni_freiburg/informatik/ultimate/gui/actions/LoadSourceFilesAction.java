@@ -28,16 +28,15 @@ package de.uni_freiburg.informatik.ultimate.gui.actions;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
-import de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 
 /**
@@ -60,8 +59,8 @@ public class LoadSourceFilesAction extends RunToolchainAction implements IWorkbe
 	 * @param ist
 	 *            the steerablecore that will take the command
 	 */
-	public LoadSourceFilesAction(final IWorkbenchWindow window, final ICore icore, final GuiController controller,
-			Logger logger) {
+	public LoadSourceFilesAction(final IWorkbenchWindow window, final ICore<ToolchainListType> icore,
+			final GuiController controller, ILogger logger) {
 		super(logger, window, icore, controller, LoadSourceFilesAction.class.getName(), s_DIALOG_NAME,
 				IImageKeys.LOADSOURCEFILES);
 	}
@@ -69,14 +68,13 @@ public class LoadSourceFilesAction extends RunToolchainAction implements IWorkbe
 	/**
 	 * the action opens a file dialog then passes the files for opening to the core
 	 */
+	@Override
 	public final void run() {
 		final File[] fp = getInputFilesFromUser(s_DIALOG_NAME);
 		if (fp == null || fp.length <= 0) {
 			return;
 		}
-		final File prelude = PreludeContribution.getPreludeFile();
-		final BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, fp,
-				prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger), mLogger);
+		final BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, fp, mLogger);
 		tcj.schedule();
 	}
 

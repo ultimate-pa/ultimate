@@ -39,7 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -379,7 +379,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	/**
 	 * The inputed buechi automaton.
 	 */
@@ -791,7 +791,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 * 
 	 * @return The logger object used by this operation.
 	 */
-	protected Logger getLogger() {
+	protected ILogger getLogger() {
 		return m_Logger;
 	}
 

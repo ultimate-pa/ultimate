@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -65,7 +65,7 @@ import petruchio.interfaces.petrinet.Transition;
 public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	
 	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 	
 	@Override
 	public String operationName() {

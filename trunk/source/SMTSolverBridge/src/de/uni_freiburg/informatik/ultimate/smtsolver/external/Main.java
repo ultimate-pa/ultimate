@@ -32,10 +32,11 @@ import java.math.BigInteger;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.Log4JWrapper;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 public class Main {
 
@@ -51,10 +52,11 @@ public class Main {
 		Logger logger = Logger.getRootLogger();
 		int paramctr = 0;
 		Script benchmark;
-		if (!command.equals("SMTInterpol"))
-			benchmark = new Scriptor(command, logger, null, null, "external in solverbridge");
-		else
+		if (!command.equals("SMTInterpol")) {
+			benchmark = new Scriptor(command, new Log4JWrapper(logger), null, null, "external in solverbridge");
+		} else {
 			benchmark = new SMTInterpol(logger, true);
+		}
 
 		while (paramctr < param.length && param[paramctr].startsWith("-")) {
 			if (param[paramctr].equals("--")) {

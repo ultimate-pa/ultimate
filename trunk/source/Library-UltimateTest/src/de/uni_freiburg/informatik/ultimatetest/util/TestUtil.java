@@ -41,12 +41,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Map.Entry;
+import java.util.Random;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
@@ -363,14 +363,14 @@ public final class TestUtil {
 		return rtr;
 	}
 
-	/**
-	 * 
-	 * @param logger
-	 * @param inputFile
-	 * @param fail
-	 * @param customMessages
-	 */
-	public static void logResults(final Logger logger, String inputFile, boolean fail,
+
+	public static void logResults(final Class<?> caller, final String inputFile, final boolean fail,
+			final Collection<String> customMessages, final IUltimateServiceProvider services){
+		final ILogger logger = services.getLoggingService().getLogger(caller);
+		logResults(logger, inputFile, fail, customMessages, services.getResultService());
+	}
+	
+	public static void logResults(final ILogger logger, String inputFile, boolean fail,
 			Collection<String> customMessages, IResultService resultService) {
 
 		if (logger == null) {
@@ -628,7 +628,7 @@ public final class TestUtil {
 
 	public static void writeSummary(ITestSummary testSummary) {
 		final File logFile = new File(TestUtil.generateAbsolutePathForLogfile(testSummary));
-		final Logger logger = Logger.getLogger(testSummary.getUltimateTestSuiteClass());
+		final ILogger logger = ILogger.getLogger(testSummary.getUltimateTestSuiteClass());
 		if (!logFile.isDirectory()) {
 			if (!logFile.getParentFile().mkdirs()) {
 				if (!logFile.getParentFile().isDirectory()) {

@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
@@ -52,7 +52,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	private HashSet<String> mOutputs;
 	private HashMap<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> mDebugZoneMap;
 
-	public SequencingVisitor(RCFGWalkerUnroller w, Logger logger) {
+	public SequencingVisitor(RCFGWalkerUnroller w, ILogger logger) {
 		super(logger);
 		mWalker = w;
 		mInputs = new HashSet<>();

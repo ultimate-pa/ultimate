@@ -34,7 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
  *
  */
 public class Program {
-	private final Logger mLogger;
+	private final ILogger mLogger;
 	private Unit m_Unit;
 	
 	public Map<String, Procedure> Procedures;
@@ -60,7 +60,7 @@ public class Program {
 	 * Constructs a new program
 	 * @param logger 
 	 */
-	public Program(Logger logger) {
+	public Program(ILogger logger) {
 		mLogger = logger;
 		Procedures = new LinkedHashMap<String, Procedure>();
 		Globals = new LinkedList<VariableDeclaration>();
@@ -73,7 +73,7 @@ public class Program {
 	 * @param unit
 	 * @param logger 
 	 */
-	public Program(Unit unit, Logger logger) {
+	public Program(Unit unit, ILogger logger) {
 		this(logger);
 		this.m_Unit = unit;
 

@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.HashSet;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -75,7 +75,7 @@ public abstract class CodeChecker {
 	protected GraphWriter _graphWriter;
 
 	public CodeChecker(IElement root, SmtManager smtManager, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
-			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
+			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
 		mLogger = logger;
 		this.m_smtManager = smtManager;
 		this.m_originalRoot = originalRoot;
@@ -147,7 +147,7 @@ public abstract class CodeChecker {
 	 * Debugs all the nodes in a graph.
 	 */
 	HashSet<AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>();
-	protected final Logger mLogger;
+	protected final ILogger mLogger;
 
 	public void debug() {
 		visited.clear();
