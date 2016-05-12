@@ -32,11 +32,11 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider_Overflow;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider_Overflow;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de

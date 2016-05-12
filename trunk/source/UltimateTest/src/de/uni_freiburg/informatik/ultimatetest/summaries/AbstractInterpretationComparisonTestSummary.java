@@ -38,10 +38,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.AbstractInterpretationTestResultDecider.ActualResultType;
-import de.uni_freiburg.informatik.ultimatetest.decider.AbstractInterpretationTestResultDecider.ExpectedResultType;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.AbstractInterpretationTestResultDecider.ActualResultType;
+import de.uni_freiburg.informatik.ultimate.test.decider.AbstractInterpretationTestResultDecider.ExpectedResultType;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 
 /**
  * @author Christopher Dillo

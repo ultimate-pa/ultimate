@@ -6,7 +6,6 @@ Bundle-Version: 0.0.1
 Fragment-Host: Library-ModelCheckerUtils;bundle-version="0.0.1"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: Library-UltimateCore,
- Library-junit-helper,
  org.junit
 Import-Package: org.junit,
  org.junit.runner,

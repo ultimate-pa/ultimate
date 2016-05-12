@@ -30,11 +30,11 @@ package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinitionGenerator;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinitionGenerator;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;

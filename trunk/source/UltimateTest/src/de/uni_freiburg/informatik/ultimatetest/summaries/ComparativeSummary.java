@@ -31,12 +31,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.NewTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class ComparativeSummary extends NewTestSummary {
 

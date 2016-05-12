@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 
 /**
  * Incremental log in which for each test the BenchmarkResults are shown.

@@ -31,11 +31,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.TranslationTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class LTLTranslationRegressionTestSuite extends AbstractRegressionTestSuite {
 

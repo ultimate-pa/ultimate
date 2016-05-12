@@ -28,7 +28,8 @@
 package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 
 import java.util.Collection;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 

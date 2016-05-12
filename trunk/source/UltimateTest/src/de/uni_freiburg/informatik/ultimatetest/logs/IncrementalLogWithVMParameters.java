@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.logs;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 
 public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 

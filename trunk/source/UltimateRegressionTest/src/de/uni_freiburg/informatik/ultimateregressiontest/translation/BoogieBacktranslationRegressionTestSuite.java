@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimateregressiontest.translation;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.decider.BacktranslationTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.BacktranslationTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class BoogieBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
 

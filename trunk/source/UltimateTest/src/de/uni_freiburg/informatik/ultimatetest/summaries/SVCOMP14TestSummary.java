@@ -29,9 +29,9 @@ package de.uni_freiburg.informatik.ultimatetest.summaries;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.OldTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.OldTestSummary;
 
 public class SVCOMP14TestSummary extends OldTestSummary {
 

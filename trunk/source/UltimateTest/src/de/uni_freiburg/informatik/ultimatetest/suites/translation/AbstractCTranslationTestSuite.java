@@ -30,15 +30,15 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.TranslationTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TranslationTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 

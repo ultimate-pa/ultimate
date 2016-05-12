@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 /**
  *  Represents a subset from {@link InliningTest}, which is currently investigated.

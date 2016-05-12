@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.reporting.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;

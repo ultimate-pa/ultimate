@@ -30,23 +30,23 @@ package de.uni_freiburg.informatik.ultimatetest.suites.lassoranker;
 import java.io.File;
 import java.util.*;
 
-import de.uni_freiburg.informatik.junit_helper.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.LassoRankerTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.LassoRankerTestResultDecider.ExpectedResult;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.LassoRankerTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.LassoRankerTestResultDecider.ExpectedResult;
+import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
+import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
-import de.uni_freiburg.informatik.ultimatetest.reporting.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Test Suite for the LassoRanker plugin

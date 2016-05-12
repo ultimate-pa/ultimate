@@ -44,18 +44,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Buch
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParameters;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
@@ -66,7 +67,6 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.SVCOMPTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Test suite for SVCOMP15.

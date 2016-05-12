@@ -32,11 +32,11 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.NewTestSummary;
 import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 
 /**
  * Lists how often a toolchain/setting pair produced a certain result.

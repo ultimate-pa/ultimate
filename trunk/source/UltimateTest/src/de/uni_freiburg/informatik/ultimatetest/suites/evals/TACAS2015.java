@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;

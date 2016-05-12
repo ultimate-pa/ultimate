@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+
 public class UtilsTest {
 
 	@Test

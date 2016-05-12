@@ -34,8 +34,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 
 /**
  * 

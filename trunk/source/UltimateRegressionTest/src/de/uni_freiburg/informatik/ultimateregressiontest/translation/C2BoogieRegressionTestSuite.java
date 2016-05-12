@@ -32,11 +32,11 @@ import java.util.Collection;
 
 import org.junit.AfterClass;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.TranslationTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * This testsuite tests whether the CACSL2BoogieTranslator translates C programs

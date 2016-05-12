@@ -33,13 +33,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils.IExplicitConverter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 
 /**

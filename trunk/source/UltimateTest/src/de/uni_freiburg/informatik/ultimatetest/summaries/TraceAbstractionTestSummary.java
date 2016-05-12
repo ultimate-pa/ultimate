@@ -36,14 +36,14 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.NewTestSummary;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 
 public class TraceAbstractionTestSummary extends NewTestSummary {
 	

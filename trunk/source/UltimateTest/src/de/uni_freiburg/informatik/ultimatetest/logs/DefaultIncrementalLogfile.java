@@ -33,11 +33,11 @@ import java.io.IOException;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 public class DefaultIncrementalLogfile implements IIncrementalLog {
 
