@@ -63,6 +63,8 @@ public abstract class NonCoreBooleanSubTermTransformer {
 	private static boolean isCoreBooleanConnective(String fun) {
 		if (fun.equals("=")) {
 			return true;
+		} else if (fun.equals("not")) {
+			return true;
 		} else if (fun.equals("and")) {
 			return true;
 		} else if (fun.equals("or")) {
