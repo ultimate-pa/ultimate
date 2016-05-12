@@ -319,7 +319,7 @@ public class IterativePredicateTransformer {
 							successor, summary.getWithCallAndReturn());
 						final IPredicate wpOfSummary_Predicate = constructPredicate(wpOfSummary_Term);
 						wpOfSummary =  
-							applyPostprocessors(postprocs, i, wpOfSummary_Predicate);
+							applyPostprocessors(postprocs, callPos, wpOfSummary_Predicate);
 					}
 					callerPredicatesComputed.put(callPos, wpOfSummary);
 					if (callPredecessorIsAlwaysFalse) {
