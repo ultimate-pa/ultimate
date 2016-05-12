@@ -313,15 +313,19 @@ public class IterativePredicateTransformer {
 							m_Trace, callLocalVarsAssignment, returnTf, 
 							oldVarAssignments, globalVarsAssignments, nf, callPos, i);
 					varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
-					final Term wpOfSummary = m_PredicateTransformer.weakestPrecondition(
-							successor,
-							summary.getWithCallAndReturn());
-					final IPredicate wpOfSummaryPredicate = constructPredicate(wpOfSummary);
-					callerPredicatesComputed.put(callPos, wpOfSummaryPredicate);
+					final IPredicate wpOfSummary;
+					{
+						final Term wpOfSummary_Term = m_PredicateTransformer.weakestPrecondition(
+							successor, summary.getWithCallAndReturn());
+						final IPredicate wpOfSummary_Predicate = constructPredicate(wpOfSummary_Term);
+						wpOfSummary =  
+							applyPostprocessors(postprocs, i, wpOfSummary_Predicate);
+					}
+					callerPredicatesComputed.put(callPos, wpOfSummary);
 					if (callPredecessorIsAlwaysFalse) {
 						callerPred = m_FalsePredicate;
 					} else {
-						callerPred = wpOfSummaryPredicate;
+						callerPred = wpOfSummary;
 					}
 				}
 				wpTerm = m_PredicateTransformer.weakestPrecondition(
@@ -332,15 +336,15 @@ public class IterativePredicateTransformer {
 				wpTerm = m_PredicateTransformer.weakestPrecondition(
 						successor, nf.getFormulaFromNonCallPos(i));
 			}
-			final IPredicate wp;
+			final IPredicate postprocessed;
 			if ((m_Trace.getSymbol(i) instanceof Call) && !m_Trace.isPendingCall(i)) {
 				// predicate was already constructed while processing the 
 				// corresponding return
-				wp = callerPredicatesComputed.get(i);
+				postprocessed = callerPredicatesComputed.get(i);
 			} else {
-				wp = constructPredicate(wpTerm);
+				final IPredicate wp = constructPredicate(wpTerm);
+				postprocessed = applyPostprocessors(postprocs, i, wp); 
 			}
-			final IPredicate postprocessed = applyPostprocessors(postprocs, i, wp);
 			if (i == 0) {
 				computedPrecondition = postprocessed;
 			} else {
