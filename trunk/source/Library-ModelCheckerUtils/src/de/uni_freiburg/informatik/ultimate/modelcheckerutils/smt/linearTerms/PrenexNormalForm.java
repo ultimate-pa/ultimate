@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonCoreBooleanSubTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -96,7 +97,7 @@ public class PrenexNormalForm extends TermTransformer {
 		final QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script);
 		final Term inner = quantifierSequence.extractQuantifiers(notArg, true, m_FreshTermVariableConstructor);
 		final List<QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifiedVariableSequence();
-		Term result = inner;
+		Term result = Util.not(m_Script, inner);
 		for (int i = qVarSeq.size()-1; i>=0; i--) {
 			final QuantifiedVariables quantifiedVars = qVarSeq.get(i);
 			final int resultQuantifier = (quantifiedVars.getQuantifier() + 1) % 2;
