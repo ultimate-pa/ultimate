@@ -94,7 +94,7 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 		{
 			Map<Term, Term> substitutionMapping = 
 					Collections.singletonMap((Term) iteTerm, elseTerm);
-			replacedWithElse = (new SafeSubstitution(
+			replacedWithElse = (new SafeSubstitutionWithLocalSimplification(
 					m_Script, substitutionMapping)).transform(term);
 		}
 		Term withoutThisIte = Util.or(m_Script, 
