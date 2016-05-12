@@ -461,8 +461,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(m_SmtManager.getScript(), 
-					QuantifiedFormula.EXISTS, nonLiveVars, pred.getFormula(), 
-					m_SmtManager.getBoogie2Smt().getVariableManager());
+					QuantifiedFormula.EXISTS, nonLiveVars, pred.getFormula());
 			final Term pushed = new QuantifierPusher(m_SmtManager.getScript(), m_Services, 
 					m_SmtManager.getVariableManager()).transform(projectedT);
 			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(pushed, m_SmtManager.getBoogie2Smt());
@@ -493,8 +492,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert m_LiveVariables : "use this postprocessor only if m_LiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(m_RelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(m_SmtManager.getScript(), 
-					QuantifiedFormula.FORALL, nonLiveVars, pred.getFormula(), 
-					m_SmtManager.getBoogie2Smt().getVariableManager());
+					QuantifiedFormula.FORALL, nonLiveVars, pred.getFormula());
 			final Term pushed = new QuantifierPusher(m_SmtManager.getScript(), m_Services, 
 					m_SmtManager.getVariableManager()).transform(projectedT);
 			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(pushed, m_SmtManager.getBoogie2Smt());
