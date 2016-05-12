@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
 import java.util.Arrays;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonCoreBooleanSubTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 
 /**
  * Transform a Term into prenex normal form (quantifiers outside).
@@ -63,11 +65,14 @@ public class PrenexNormalForm extends TermTransformer {
 			String fun = appTerm.getFunction().getName();
 			if (fun.equals("=")) {
 				throw new UnsupportedOperationException("not yet implemented, we need term in nnf");
+			} else if (fun.equals("not")) {
+				final Term result = pullQuantifiersNot(newArgs);
+				setResult(result);
 			} else if (fun.equals("and")) {
-				Term result = pullQuantifiers(appTerm, newArgs);
+				final Term result = pullQuantifiers(appTerm, newArgs);
 				setResult(result);
 			} else if (fun.equals("or")) {
-				Term result = pullQuantifiers(appTerm, newArgs);
+				final Term result = pullQuantifiers(appTerm, newArgs);
 				setResult(result);
 			} else if (fun.equals("=>")) {
 				throw new UnsupportedOperationException("not yet implemented, we need term in nnf");
@@ -83,6 +88,22 @@ public class PrenexNormalForm extends TermTransformer {
 		} else {
 			super.convertApplicationTerm(appTerm, newArgs);
 		}
+	}
+
+	private Term pullQuantifiersNot(Term[] newArgs) {
+		assert newArgs.length == 1 : "no not";
+		final Term notArg = newArgs[0];
+		final QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script);
+		final Term inner = quantifierSequence.extractQuantifiers(notArg, true, m_FreshTermVariableConstructor);
+		final List<QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifiedVariableSequence();
+		Term result = inner;
+		for (int i = qVarSeq.size()-1; i>=0; i--) {
+			final QuantifiedVariables quantifiedVars = qVarSeq.get(i);
+			final int resultQuantifier = (quantifiedVars.getQuantifier() + 1) % 2;
+			result = SmtUtils.quantifier(m_Script, resultQuantifier, 
+					quantifiedVars.getVariables(), result, m_FreshTermVariableConstructor);
+		}
+		return result;
 	}
 
 	private Term pullQuantifiers(ApplicationTerm appTerm, Term[] newArgs) {
