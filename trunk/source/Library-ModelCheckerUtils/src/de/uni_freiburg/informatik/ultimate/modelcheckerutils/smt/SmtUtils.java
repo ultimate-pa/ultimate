@@ -939,21 +939,14 @@ public class SmtUtils {
 	 * Returns quantified formula. 
 	 * Drops quantifiers for variables that do not occur in formula.
 	 * If subformula is quantified formula with same quantifier both are
-	 * merged, variables of outer quantified formula are renamed if necessary
-	 * (necessary if same variable occurs in inner and outer formula).
+	 * merged.
 	 */
 	public static Term quantifier(final Script script, final int quantifier, 
-			final Collection<TermVariable> vars, final Term body, 
-			final IFreshTermVariableConstructor freshTermVariableConstructor) {
+			final Collection<TermVariable> vars, final Term body) {
 		if (vars.size() == 0) {
 			return body;
 		}
-		final Collection<TermVariable> resultVars = new ArrayList<>();
-		for (TermVariable tv : Arrays.asList(body.getFreeVars())) {
-			if (vars.contains(tv)) {
-				resultVars.add(tv);
-			}
-		}
+		final Collection<TermVariable> resultVars = filterToVarsThatOccurFreelyInTerm(vars, body);
 		if (resultVars.isEmpty()) {
 			return body;
 		} else {
@@ -963,32 +956,30 @@ public class SmtUtils {
 				return script.quantifier(quantifier, resultVars.toArray(
 						new TermVariable[resultVars.size()]), body);
 			} else {
-				final Set<TermVariable> innerQuantifiedVars = 
+				final Set<TermVariable> resultQuantifiedVars = 
 						new HashSet<>(Arrays.asList(innerQuantifiedFormula.getVariables()));
-				final Map<Term, Term> substitutionMapping = new HashMap<>();
-				final Collection<TermVariable> renamedResultVars = new ArrayList<>();
-				for (TermVariable resultVar : resultVars) {
-					if (innerQuantifiedVars.contains(resultVar)) {
-						final TermVariable replacement = freshTermVariableConstructor.
-								constructFreshTermVariable("quantifierMerge", resultVar.getSort());
-						substitutionMapping.put(resultVar, replacement);
-						renamedResultVars.add(replacement);
-					} else {
-						renamedResultVars.add(resultVar);
-					}
-				}
-				renamedResultVars.addAll(innerQuantifiedVars);
-				final Term resultBody;
-				if (substitutionMapping.isEmpty()) {
-					resultBody = innerQuantifiedFormula.getSubformula();
-				} else {
-					resultBody = (new SafeSubstitution(script, substitutionMapping)).
-							transform(innerQuantifiedFormula.getSubformula());
-				}
-				return script.quantifier(quantifier, renamedResultVars.toArray(
-						new TermVariable[renamedResultVars.size()]), resultBody);
+				resultQuantifiedVars.addAll(vars);
+				return script.quantifier(quantifier, resultQuantifiedVars.toArray(
+						new TermVariable[resultQuantifiedVars.size()]), body);
 			}
 		}
+	}
+
+	
+	/**
+	 * Returns a new HashSet that contains all variables that are contained
+	 * in vars and occur freely in term.
+	 */
+	public static HashSet<TermVariable> filterToVarsThatOccurFreelyInTerm(
+			final Collection<TermVariable> vars,
+			final Term term) {
+		final HashSet<TermVariable> result = new HashSet<>();
+		for (TermVariable tv : Arrays.asList(term.getFreeVars())) {
+			if (vars.contains(tv)) {
+				result.add(tv);
+			}
+		}
+		return result;
 	}
 	
 	/**

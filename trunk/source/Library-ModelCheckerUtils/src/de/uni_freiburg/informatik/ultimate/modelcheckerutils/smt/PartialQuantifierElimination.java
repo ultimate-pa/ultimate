@@ -94,7 +94,7 @@ public class PartialQuantifierElimination {
 			final QuantifiedVariables qv = qvs.get(i);
 			final Set<TermVariable> eliminatees = new HashSet<>(qv.getVariables());
 			result = elim(script, qv.getQuantifier(), eliminatees, result, services, logger, freshTermVariableConstructor);
-			result = SmtUtils.quantifier(script, qv.getQuantifier(), eliminatees, result, freshTermVariableConstructor);
+			result = SmtUtils.quantifier(script, qv.getQuantifier(), eliminatees, result);
 			result = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(result);
 		}
 		return result;

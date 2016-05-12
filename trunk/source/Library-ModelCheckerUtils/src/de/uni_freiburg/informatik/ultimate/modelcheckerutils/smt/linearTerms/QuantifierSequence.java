@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;

@@ -114,8 +114,7 @@ public class QuantifierPusher extends TermTransformer {
 		Term[] newParams = new Term[oldParams.length];
 		for (int i=0; i<oldParams.length; i++) {
 			newParams[i] = SmtUtils.quantifier(m_Script, quantifiedFormula.getQuantifier(), 
-					Arrays.asList(quantifiedFormula.getVariables()), oldParams[i], 
-					m_FreshTermVariableConstructor);
+					Arrays.asList(quantifiedFormula.getVariables()), oldParams[i]);
 		}
 		return m_Script.term(appTerm.getFunction().getName(), newParams);
 	}
@@ -171,7 +170,7 @@ public class QuantifierPusher extends TermTransformer {
 			if (xjunct2singleOccurrenceEliminatee.getDomain().contains(derResult[i])) {
 				Set<TermVariable> vars = xjunct2singleOccurrenceEliminatee.getImage(derResult[i]);
 				Term quantified = SmtUtils.quantifier(m_Script, quantifiedFormula.getQuantifier(), 
-						vars, derResult[i], m_FreshTermVariableConstructor);
+						vars, derResult[i]);
 				resultXjuncts[i] = quantified;
 			} else {
 				resultXjuncts[i] = derResult[i];
@@ -180,7 +179,7 @@ public class QuantifierPusher extends TermTransformer {
 		final Term resultXJunction = PartialQuantifierElimination.composeXjunctsInner(m_Script, 
 				quantifiedFormula.getQuantifier(), resultXjuncts);
 		final Term result = SmtUtils.quantifier(m_Script, quantifiedFormula.getQuantifier(), 
-					multiOcucrrenceEliminatees, resultXJunction, m_FreshTermVariableConstructor);
+					multiOcucrrenceEliminatees, resultXJunction);
 		return result;
 	}
 

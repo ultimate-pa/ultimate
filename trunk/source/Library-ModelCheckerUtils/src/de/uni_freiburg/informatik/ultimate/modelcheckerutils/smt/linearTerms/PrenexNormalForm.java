@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonCoreBooleanSubTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 
 /**
  * Transform a Term into prenex normal form (quantifiers outside).
@@ -96,13 +95,13 @@ public class PrenexNormalForm extends TermTransformer {
 		final Term notArg = newArgs[0];
 		final QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script);
 		final Term inner = quantifierSequence.extractQuantifiers(notArg, true, m_FreshTermVariableConstructor);
-		final List<QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifiedVariableSequence();
+		final List<QuantifierSequence.QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifiedVariableSequence();
 		Term result = Util.not(m_Script, inner);
 		for (int i = qVarSeq.size()-1; i>=0; i--) {
-			final QuantifiedVariables quantifiedVars = qVarSeq.get(i);
+			final QuantifierSequence.QuantifiedVariables quantifiedVars = qVarSeq.get(i);
 			final int resultQuantifier = (quantifiedVars.getQuantifier() + 1) % 2;
 			result = SmtUtils.quantifier(m_Script, resultQuantifier, 
-					quantifiedVars.getVariables(), result, m_FreshTermVariableConstructor);
+					quantifiedVars.getVariables(), result);
 		}
 		return result;
 	}
@@ -130,7 +129,7 @@ public class PrenexNormalForm extends TermTransformer {
 	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
 		if (SmtUtils.isQuantifiedFormulaWithSameQuantifier(old.getQuantifier(), newBody) != null) {
 			final Term result = SmtUtils.quantifier(m_Script, old.getQuantifier(), 
-					Arrays.asList(old.getVariables()), newBody, m_FreshTermVariableConstructor);
+					Arrays.asList(old.getVariables()), newBody);
 			setResult(result);
 		} else {
 			super.postConvertQuantifier(old, newBody);
