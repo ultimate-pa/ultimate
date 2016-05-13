@@ -168,7 +168,14 @@ public class SmtParser implements ISource {
 		final String filename = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
 				.getString(PreferenceInitializer.LABEL_Filename);
 
+		final boolean inHornSolverMode = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_HornSolverMode);
+		
 		Script script;
+
+		if (inHornSolverMode) {
+			throw new UnsupportedOperationException();
+		}
+
 		if (useExternalSolver) {
 			mLogger.info("Starting external SMT solver with command " + commandExternalSolver);
 			script = new Scriptor(commandExternalSolver, mLogger, mServices, mStorage,

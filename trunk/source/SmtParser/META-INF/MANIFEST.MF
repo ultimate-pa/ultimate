@@ -13,4 +13,5 @@ Require-Bundle: Library-UltimateCore,
  SMTInterpol
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: de.uni_freiburg.informatik.ultimate.source.smtparser
 

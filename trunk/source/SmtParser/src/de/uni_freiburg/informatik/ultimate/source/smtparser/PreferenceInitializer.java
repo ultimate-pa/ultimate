@@ -45,6 +45,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						DEF_Filename, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_Directory,
 						DEF_Directory, PreferenceType.Directory),
+				new UltimatePreferenceItem<Boolean>(LABEL_HornSolverMode,
+						DEF_HornSolverMode, PreferenceType.Boolean),
 		};
 	}
 
@@ -73,4 +75,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_Directory = "Directory";
 	public static final String DEF_Directory = "";
 	
+	public static final String LABEL_HornSolverMode = "Use TreeAutomizer as solver for the given file (assumes the file contains Horn clauses only).";
+	public static final boolean DEF_HornSolverMode = false;
 }
