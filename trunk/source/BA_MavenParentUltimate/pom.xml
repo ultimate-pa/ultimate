@@ -257,6 +257,7 @@
 		<module>../SmtParser</module>
 		<module>../SyntaxChecker</module>
 		<module>../HeapSeparator</module>
+		<module>../HornClauseGraphBuilder</module>
 	</modules>
 
 	<profiles>
