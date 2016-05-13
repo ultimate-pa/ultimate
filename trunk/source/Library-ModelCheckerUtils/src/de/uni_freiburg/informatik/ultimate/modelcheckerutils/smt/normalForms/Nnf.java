@@ -192,12 +192,11 @@ public class Nnf {
 					Term condTerm = params[0];
 					Term ifTerm = params[1];
 					Term elseTerm = params[2];
-					Term condImpliesIf = Util.or(m_Script, Util.not(m_Script, condTerm), ifTerm);
-					Term notCondImpliesElse = Util.or(m_Script, condTerm, elseTerm);
+					Term result = convertIte(condTerm, ifTerm, elseTerm);
 					// we deliberately call convert() instead of super.convert()
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
-					convert(Util.and(m_Script, condImpliesIf, notCondImpliesElse));
+					convert(result);
 					return;
 				} else {
 					//consider term as atom
@@ -258,6 +257,13 @@ public class Nnf {
 						Arrays.toString(((AnnotatedTerm) term).getAnnotations()));
 				convert(((AnnotatedTerm) term).getSubterm());
 			}
+		}
+
+		private Term convertIte(Term condTerm, Term ifTerm, Term elseTerm) {
+			Term condImpliesIf = Util.or(m_Script, Util.not(m_Script, condTerm), ifTerm);
+			Term notCondImpliesElse = Util.or(m_Script, condTerm, elseTerm);
+			Term result = Util.and(m_Script, condImpliesIf, notCondImpliesElse);
+			return result;
 		}
 
 		/**
@@ -339,6 +345,14 @@ public class Nnf {
 						convert(SmtUtils.binaryBooleanEquality(
 								m_Script, notParams[0], notParams[1]));
 					}
+				} else if (functionName.equals("ite") && SmtUtils.allParamsAreBool(appTerm)) {
+					Term[] notParams = appTerm.getParameters();
+					assert params.length == 3;
+					Term condTerm = notParams[0];
+					Term ifTerm = notParams[1];
+					Term elseTerm = notParams[2];
+					Term convertedIte = convertIte(condTerm, ifTerm, elseTerm);
+					convertNot(convertedIte, Util.not(m_Script, convertedIte));
 				} else {
 					//consider original term as atom
 					setResult(notTerm);
