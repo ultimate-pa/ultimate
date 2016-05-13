@@ -63,6 +63,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.DefaultTransFormulas;
@@ -80,9 +82,16 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class FlowSensitiveFaultLocalizer {
 
-	private final  IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider m_Services;
 	private final ILogger m_Logger;
-	private final IRelevanceInformation[] m_RelevanceOfTrace; 
+	private final IRelevanceInformation[] m_RelevanceOfTrace;
+	/**
+	 * Apply quantifier elimination during the computation of pre and wp.
+	 * If set to true, there is a higher risk that we run into a timeout.
+	 * If set to false, there is a higher risk that the SMT solver returns 
+	 * unknown.
+	 */
+	private final boolean m_ApplyQuantifierElimination = true;
 
 	public FlowSensitiveFaultLocalizer(IRun<CodeBlock, IPredicate> counterexample,
 			INestedWordAutomaton<CodeBlock, IPredicate> cfg, IUltimateServiceProvider services,
@@ -294,8 +303,19 @@ public class FlowSensitiveFaultLocalizer {
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, 
 				null, falsePredicate, Collections.emptySortedMap(), modGlobVarManager, false);
 		
+		
+		
+		final List<PredicatePostprocessor> postprocessors;
+		if (m_ApplyQuantifierElimination) {
+			final QuantifierEliminationPostprocessor qePostproc = 
+					new QuantifierEliminationPostprocessor(m_Services, m_Logger, 
+							smtManager.getBoogie2Smt(), smtManager.getPredicateFactory());
+			postprocessors = Collections.singletonList(qePostproc);
+		} else {
+			postprocessors = Collections.emptyList();
+		}
 		final InterpolantsPreconditionPostcondition weakestPreconditionSequence = 
-				ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), true);
+				ipt.computeWeakestPreconditionSequence(dtf, postprocessors, true);
 		// End of the calculation
 		
 		for(int i = counterexampleWord.length()-1 ; i >= 0; i--) {
