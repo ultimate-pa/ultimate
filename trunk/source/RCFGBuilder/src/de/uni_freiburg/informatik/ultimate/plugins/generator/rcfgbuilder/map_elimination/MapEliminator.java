@@ -25,8 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.map_elimination;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -42,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class MapEliminator {
 	
 	private final IUltimateServiceProvider mServices;
-	private final Logger mLogger;
+	private final ILogger mLogger;
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
