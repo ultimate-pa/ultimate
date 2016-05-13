@@ -7,11 +7,11 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.source.smtparser.Activator
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
  Library-log4j,
- Library-BoogieAST,
  Library-SMTLIB,
- SMTSolverBridge,
  SMTInterpol,
- de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder,
+ SMTSolverBridge,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder;bundle-version="0.0.1",
+ Library-BoogieAST,
  Library-ModelCheckerUtils
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
