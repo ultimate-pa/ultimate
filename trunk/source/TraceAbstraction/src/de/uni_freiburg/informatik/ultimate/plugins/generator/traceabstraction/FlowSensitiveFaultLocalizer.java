@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -57,8 +58,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -67,8 +70,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.result.model.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 /**
  * 
  * @author Numair Mansur
@@ -90,7 +91,7 @@ public class FlowSensitiveFaultLocalizer {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_RelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
-		final List<int[]> informationFromCFG = computeInformationFromCFG(
+		final Map<Integer, List<Integer>> informationFromCFG = computeInformationFromCFG(
 				(NestedRun<CodeBlock, IPredicate>) counterexample, cfg); 
 		computeNONFlowSensitiveTraceFormula((NestedWord<CodeBlock>) counterexample.getWord(),
 				predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager);
@@ -123,11 +124,13 @@ public class FlowSensitiveFaultLocalizer {
 	 * in the list this means that there is an alternative path from
 	 * position k to position j in the trace.
 	 */
-	private List<int[]> computeInformationFromCFG(final NestedRun<CodeBlock, IPredicate> counterexample,
+	private Map<Integer, List<Integer>> computeInformationFromCFG(final NestedRun<CodeBlock, IPredicate> counterexample,
 			final INestedWordAutomaton<CodeBlock, IPredicate> cfg){
 		final List<int[]> result = new ArrayList<>();
-		//final Map<Integer, List<Integer>> result = new HashMap<Integer, List<Integer>>();
-		// TODO use better data structure
+		
+		//Using Better Data Structure to save graph information. 
+		final Map<Integer, List<Integer>> result2 = new HashMap<Integer, List<Integer>>();
+
 		
 		// Create a Map of Program_points in the CFG to States of the CFG.
 		final Map <ProgramPoint,IPredicate> programPoint_StateMap = new HashMap<>();
@@ -186,12 +189,24 @@ public class FlowSensitiveFaultLocalizer {
 								counterexample, posOfStartState, lastStateOfAlternativePath);
 						pair[1] = endPosition;
 						//// In-Branch Location computed.
+						
+						// If the Branch-In Location is not in the map, then add it.
+						if(result2.get(endPosition) == null ){
+							final List<Integer> branchInPosArray = new ArrayList<>();
+							branchInPosArray.add(posOfStartState);
+							result2.put(endPosition, branchInPosArray);
+						} else{ //It is in the map, 
+							result2.get(endPosition).add(posOfStartState);
+							// The array should be in descending order, so we can delete 
+							// the elements from this array more efficiently.
+							result2.get(endPosition).sort(Collections.reverseOrder());
+						}
 						result.add(pair);
 					}
 				}
 			}
 		}
-		return result;
+		return result2;
 	}
 
 	/**
@@ -232,7 +247,36 @@ public class FlowSensitiveFaultLocalizer {
 		}
 		return possibleEndPoints;
 	}
+	
+	
+	/**
+	 * Computes relevance criterion variables (Unsatisfiable core , Golden Frame).
+	 * 
+	 * @param relevance
+	 */
+	private Boolean[] relevanceCriterionVariables(ERelevanceStatus relevance){
+		final boolean relevanceCriterionUC;
+		final boolean relevanceCriterionGF;
+		if(relevance  == ERelevanceStatus.InUnsatCore) {
+			// This is the case when the triple is unsatisfiable and the action is in the Unsatisfiable core.
+			relevanceCriterionUC = true;
+			relevanceCriterionGF = false;
+			
+		} else if(relevance == ERelevanceStatus.Sat) {
+			// The case when we have HAVOC statements. In this case the action is relevant if the triple is satisfiable.
+			relevanceCriterionUC = false;
+			relevanceCriterionGF = true;
+		} else {
+			relevanceCriterionUC = false;
+			relevanceCriterionGF = false;
+		}
+		Boolean[] relevanceCriterionVariables = new Boolean[]{relevanceCriterionUC,relevanceCriterionGF };
+		return relevanceCriterionVariables;
+	}
+	
 
+	
+	
 	private void computeNONFlowSensitiveTraceFormula(NestedWord<CodeBlock> counterexampleWord,
 		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager) {
 		
@@ -284,21 +328,11 @@ public class FlowSensitiveFaultLocalizer {
 							action.getClass().getSimpleName());
 				}
 				
-				final boolean relevanceCriterion1uc;
-				final boolean relevanceCriterion1gf;
-				if(relevance  == ERelevanceStatus.InUnsatCore) {
-					// This is the case when the triple is unsatisfiable and the action is in the Unsatisfiable core.
-					relevanceCriterion1uc = true;
-					relevanceCriterion1gf = false;
-					
-				} else if(relevance == ERelevanceStatus.Sat) {
-					// The case when we have HAVOC statements. In this case the action is relevant if the triple is satisfiable.
-					relevanceCriterion1uc = false;
-					relevanceCriterion1gf = true;
-				} else {
-					relevanceCriterion1uc = false;
-					relevanceCriterion1gf = false;
-				}
+
+				Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
+				final boolean relevanceCriterion1uc = relevanceCriterionVariables[0];
+				final boolean relevanceCriterion1gf = relevanceCriterionVariables[1];
+
 				// Adding relevance information in the array list Relevance_of_statements.
 				final RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
@@ -323,24 +357,33 @@ public class FlowSensitiveFaultLocalizer {
 	}
 	
 	
-	
-	private TransFormula computeMarkhorFormula(int a, int b, NestedWord<CodeBlock> counterexampleWord, List<int[]> informationFromCFG, SmtManager smtManager){
+	/**
+	 * Recursively Compute the Markhor Formula of a branch.
+	 * @param a Starting location of the branch.
+	 * @param b End location of the branch.
+	 * @param counterexampleWord 
+	 * @param informationFromCFG
+	 * @param smtManager
+	 * @return
+	 */
+	private TransFormula computeMarkhorFormula(int a, int b, NestedWord<CodeBlock> counterexampleWord, Map<Integer, List<Integer>> informationFromCFG, SmtManager smtManager){
 		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(a).getTransitionFormula();
 		for(int i = a+1; i<=b; i++){
-			int flag = 0;
+			boolean subBranch=false;
 			int branchOut = 0;
 			int branchIn = 0;
-			for(int j =0; j< informationFromCFG.size() ; j++){
-				if(i == informationFromCFG.get(j)[0] & informationFromCFG.get(j)[1]-1 <= b ){
-					flag = 1;
-					branchOut = informationFromCFG.get(j)[0];
-					branchIn = informationFromCFG.get(j)[1]-1;
-					i = informationFromCFG.get(j)[1] -1 ;
-					break;
+			
+			
+			for(Integer brachInPosition:informationFromCFG.keySet()){
+				if(informationFromCFG.get(brachInPosition).contains(i)){
+					subBranch = true;
+					branchOut = informationFromCFG.get(brachInPosition).indexOf(i);
+					branchIn = brachInPosition;
+					i = branchIn +1;
 				}
 			}
 			
-			if(flag == 1){ // The current statement is a branch out and it's branch-in is with in the current branch. 
+			if(subBranch){ // The current statement is a branch out and it's branch-in is with in the current branch. 
 				TransFormula sub_markhor = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,informationFromCFG,smtManager);
 				combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,sub_markhor);
 			}
@@ -366,8 +409,8 @@ public class FlowSensitiveFaultLocalizer {
 	 * @param modGlobVarManager
 	 * @return
 	 */
-	private ArrayList<TransFormula> checkBranchRelevance(int a, int b, IPredicate weakestPreconditionOld, NestedWord<CodeBlock> counterexampleWord, 
-			List<int[]> informationFromCFG, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager){
+	private TransFormula[] checkBranchRelevance(int a, int b, IPredicate weakestPreconditionOld, NestedWord<CodeBlock> counterexampleWord, 
+			Map<Integer, List<Integer>> informationFromCFG, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager){
 		
 		
 		final PredicateTransformer pt = new PredicateTransformer(smtManager.getVariableManager(), 
@@ -384,19 +427,24 @@ public class FlowSensitiveFaultLocalizer {
 
 		final ERelevanceStatus relevance = rc.relevanceInternal(pre, basic, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionOld)));
 		if(relevance == ERelevanceStatus.InUnsatCore || relevance == ERelevanceStatus.Sat){ // Branch is RELEVANT
-			return new ArrayList<TransFormula>() {{add(markhor); add(markhor);}}; //IF the second value is not null, the branch is relevant.
+			return new TransFormula[]{markhor,markhor};
+			
 			
 		}
 		else{ // BRANCH IS NOT RELEVANT
-			return new ArrayList<TransFormula>() {{add(markhor); add(null);}}; // IF the second value is null, the branch is NOT relevant.
+			return new TransFormula[]{markhor,null}; // IF the second value is null, the branch is NOT relevant.
 		}
 	}
 
-
+/**
+ * Computes the Statements relevant to the flow sensitive analysis in the trace. 
+ * @return  A list of relevant statements. The main contribution of this method is update of RelevancyCriterion variables
+ * 			in the RelevanceInformation Objects.
+ */
 	private ArrayList<CodeBlock> relevantFlowSensitiveStatements(NestedWord<CodeBlock> counterexampleWord,
 			int start_location, int end_location, IPredicate weakestPreconditionOld, IPredicate weakestPreconditionNew,
 			PredicateTransformer pt, FaultLocalizationRelevanceChecker rc, SmtManager smtManager,
-			ModifiableGlobalVariableManager modGlobVarManager, List<int[]> informationFromCFG) {
+			ModifiableGlobalVariableManager modGlobVarManager, Map<Integer, List<Integer>> informationFromCFG) {
 		ArrayList <CodeBlock> relevantStatements = new ArrayList<CodeBlock>();
 		IPredicate pre = null;
 		ERelevanceStatus relevance;
@@ -406,23 +454,22 @@ public class FlowSensitiveFaultLocalizer {
 			int positionBranchOut = 0;
 			int positionBranchIn = 0;
 			// Find out if the current Statement is a BRANCH-IN statement.
-			for(int j =0; j< informationFromCFG.size() ; j++){
-				if(position == informationFromCFG.get(j)[1]-1){
-					isBranchIn = true; // Yes it is a Branch-IN statement.
-					positionBranchOut = informationFromCFG.get(j)[0];
-					positionBranchIn = informationFromCFG.get(j)[1]-1;
-					position = positionBranchOut; // Go one step behind the branch
-					informationFromCFG.remove(j);
-					break;
-				}
+			if(informationFromCFG.get(position-1) != null ){ 
+				// We are on a branch-in Statement'
+				int sizeOfbranchInPosArray = informationFromCFG.get(position-1).size();
+				positionBranchOut = informationFromCFG.get(position-1).get(sizeOfbranchInPosArray-1); //fetch the last element.
+				positionBranchIn = position;
+				informationFromCFG.get(position-1).remove(sizeOfbranchInPosArray-1);
+				
 			}
+			
 			if(isBranchIn){ // The current statement is a BRANCH-IN Statement.
 				
 				// Check the relevance of the branch ?
-				final ArrayList<TransFormula> markhor_formula =  checkBranchRelevance(
+				final TransFormula[] markhor_formula =  checkBranchRelevance(
 						positionBranchOut,positionBranchIn,weakestPreconditionNew,counterexampleWord,
 						informationFromCFG,smtManager,modGlobVarManager);
-				if(markhor_formula.get(1) != null){ // If the branch is Relevant.
+				if(markhor_formula[1] != null){ // If the branch is Relevant.
 					//Recursion
 					ArrayList<CodeBlock> relevantSubStatements = relevantFlowSensitiveStatements(
 							counterexampleWord, positionBranchOut,positionBranchIn,weakestPreconditionNew,
@@ -433,7 +480,7 @@ public class FlowSensitiveFaultLocalizer {
 
 					m_Logger.info(" - - Irrelevant Branch - - - [MarkhorFormula:"+ markhor_formula + " ]");
 				}
-				final Term wpTerm = pt.weakestPrecondition(weakestPreconditionNew, markhor_formula.get(0));
+				final Term wpTerm = pt.weakestPrecondition(weakestPreconditionNew, markhor_formula[0]);
 				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
 				weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
 				// If the branch is relevant, then recursively call the same function on it self with the updated parameters.
@@ -474,24 +521,10 @@ public class FlowSensitiveFaultLocalizer {
 							action.getClass().getSimpleName());
 				}
 				
-				final boolean relevanceCriterion2uc;
-				final boolean relevanceCriterion2gf;
 				
-				if(relevance == ERelevanceStatus.InUnsatCore)
-				{
-					relevanceCriterion2uc = true; // relevant with respect to the flow sensitive analysis
-					relevanceCriterion2gf = false;
-				}
-				else if(relevance == ERelevanceStatus.Sat)
-				{
-					relevanceCriterion2uc = false;
-					relevanceCriterion2gf = true; // relevant with respect to the flow sensitive analysis
-				}
-				else
-				{
-					relevanceCriterion2uc = false; // not relevant with respect to the flow sensitive analysis.
-					relevanceCriterion2gf = false;
-				}
+				Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
+				final boolean relevanceCriterion2uc = relevanceCriterionVariables[0];
+				final boolean relevanceCriterion2gf = relevanceCriterionVariables[1];
 				
 				RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
@@ -511,7 +544,7 @@ public class FlowSensitiveFaultLocalizer {
 	
 	private void computeFlowSensitiveTraceFormula(NestedWord<CodeBlock> counterexampleWord,
 			IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager, 
-			List<int[]> informationFromCFG ){
+			Map<Integer, List<Integer>> informationFromCFG ){
 
 
 		m_Logger.info("Initializing Flow Sensitive Fault Localization");
