@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest.logs;
 
 import java.io.File;
@@ -31,7 +32,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
@@ -64,18 +64,18 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 	}
 
 	@Override
-	public void addEntryPreStart(UltimateRunDefinition urd) {
+	public void addEntryPreStart(UltimateRunDefinition urd, ILogger testlogger) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 		sb.append(" Starting test for ");
 		sb.append(urd);
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
-		writeToFile(sb.toString());
+		writeToFile(sb.toString(), testlogger);
 	}
 
 	@Override
-	public void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result,
-			String resultCategory, String resultMessage, IUltimateServiceProvider services) {
+	public void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result, String resultCategory,
+			String resultMessage, IUltimateServiceProvider services, ILogger testlogger) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 		sb.append(" Finishing test with ");
@@ -87,10 +87,10 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 		sb.append(": ");
 		sb.append(resultMessage);
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
-		writeToFile(sb.toString());
+		writeToFile(sb.toString(), testlogger);
 	}
 
-	protected void writeToFile(String logmessage) {
+	protected void writeToFile(String logmessage, ILogger log) {
 		if (logmessage == null || logmessage.isEmpty()) {
 			return;
 		}
@@ -102,18 +102,13 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 		}
 
 		try {
-			FileWriter fw = new FileWriter(mLogFile, true);
-
-			ILogger log = ILogger.getLogger(getUltimateTestSuiteClass());
-			if (log.getAllAppenders().hasMoreElements()) {
-				ILogger.getLogger(getUltimateTestSuiteClass()).info(
-						"Writing " + getDescriptiveLogName() + " for " + getUltimateTestSuiteClass().getCanonicalName()
-								+ " to " + mLogFile.getAbsolutePath());
-			}
+			final FileWriter fw = new FileWriter(mLogFile, true);
+			log.info("Writing " + getDescriptiveLogName() + " for " + getUltimateTestSuiteClass().getCanonicalName()
+					+ " to " + mLogFile.getAbsolutePath());
 			fw.append(logmessage);
 			fw.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.fatal("Could not write " + getDescriptiveLogName() + " to file", e);
 		}
 	}
 }

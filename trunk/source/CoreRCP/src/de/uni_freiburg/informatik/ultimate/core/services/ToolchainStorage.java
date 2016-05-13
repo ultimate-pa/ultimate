@@ -34,11 +34,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
@@ -48,14 +47,12 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
- * Simple implementation of {@link IToolchainStorage} and
- * {@link IUltimateServiceProvider}
+ * Simple implementation of {@link IToolchainStorage} and {@link IUltimateServiceProvider}
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class ToolchainStorage implements IToolchainStorage,
-		IUltimateServiceProvider {
+public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProvider {
 
 	private final Map<String, IStorable> mToolchainStorage;
 
@@ -80,32 +77,29 @@ public class ToolchainStorage implements IToolchainStorage,
 
 	@Override
 	public void clear() {
-		List<IStorable> current = new ArrayList<>(mToolchainStorage.values());
+		final List<IStorable> current = new ArrayList<>(mToolchainStorage.values());
 
-		if(current.isEmpty()){
+		if (current.isEmpty()) {
 			return;
 		}
-		
+
 		// destroy storables in reverse order s.t., e.g., scripts are destroyed
 		// before the solver is destroyed.
 		// this is done because we assume that instances created later may
 		// depend on instances created earlier.
 		Collections.reverse(current);
 
-		ILogger coreLogger = getLoggingService()
-				.getLogger(Activator.PLUGIN_ID);
-		for (IStorable storable : current) {
+		final ILogger coreLogger = getLoggingService().getLogger(Activator.PLUGIN_ID);
+		coreLogger.info("Clearing " + current.size() + " storables from " + getClass().getSimpleName());
+		for (final IStorable storable : current) {
 			try {
 				storable.destroy();
 			} catch (Throwable t) {
 				if (coreLogger == null) {
 					continue;
 				}
-				coreLogger
-						.fatal("There was an exception during clearing of toolchain storage while destroying "
-								+ storable.getClass().toString()
-								+ ": "
-								+ t.getMessage());
+				coreLogger.fatal("There was an exception during clearing of toolchain storage while destroying "
+						+ storable.getClass().toString() + ": " + t.getMessage());
 			}
 		}
 		mToolchainStorage.clear();
@@ -145,8 +139,7 @@ public class ToolchainStorage implements IToolchainStorage,
 	}
 
 	@Override
-	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(
-			Class<K> serviceType) {
+	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(Class<K> serviceType) {
 		return GenericServiceProvider.getServiceInstance(this, serviceType);
 	}
 }

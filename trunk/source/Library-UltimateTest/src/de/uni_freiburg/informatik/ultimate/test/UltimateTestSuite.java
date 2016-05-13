@@ -36,6 +36,7 @@ import java.util.List;
 import org.junit.AfterClass;
 import org.junit.runner.RunWith;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
@@ -52,8 +53,10 @@ public abstract class UltimateTestSuite {
 
 	private static List<ITestSummary> sSummaries;
 	private static List<IIncrementalLog> sLogFiles;
+	private final ILogger mLogger;
 
 	public UltimateTestSuite() {
+		mLogger = new ConsoleLogger();
 		if (sSummaries == null) {
 			final ITestSummary[] summaries = constructTestSummaries();
 
@@ -83,9 +86,8 @@ public abstract class UltimateTestSuite {
 	public abstract Collection<UltimateTestCase> createTestCases();
 
 	/**
-	 * Returns the ITestSummaries instances that produce summaries while running
-	 * the UltimateTestSuite. This method is called only once during each run of
-	 * an UltimateTestSuite.
+	 * Returns the ITestSummaries instances that produce summaries while running the UltimateTestSuite. This method is
+	 * called only once during each run of an UltimateTestSuite.
 	 */
 	protected abstract ITestSummary[] constructTestSummaries();
 
@@ -94,9 +96,8 @@ public abstract class UltimateTestSuite {
 	/**
 	 * Provides a collection of ITestSummary instances.
 	 * 
-	 * @return A collection containing ITestSummary instances. They will be
-	 *         accessed at the end of this test suite and their content written
-	 *         in a file.
+	 * @return A collection containing ITestSummary instances. They will be accessed at the end of this test suite and
+	 *         their content written in a file.
 	 */
 	protected List<ITestSummary> getSummaries() {
 		return Collections.unmodifiableList(sSummaries);
@@ -108,18 +109,23 @@ public abstract class UltimateTestSuite {
 
 	@AfterClass
 	public final static void writeSummaries() {
+		final ILogger log = new ConsoleLogger();
 		if (sSummaries == null || sSummaries.size() == 0) {
-			System.out.println("No test summaries available");
+			log.info("No test summaries available");
 			return;
 		}
 
 		for (final ITestSummary summary : sSummaries) {
 			try {
-				TestUtil.writeSummary(summary);
+				TestUtil.writeSummary(summary, log);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
 		}
 		sSummaries = null;
+	}
+	
+	public ILogger getLogger(){
+		return mLogger;
 	}
 }

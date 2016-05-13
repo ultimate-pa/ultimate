@@ -626,9 +626,8 @@ public final class TestUtil {
 		}
 	}
 
-	public static void writeSummary(ITestSummary testSummary) {
+	public static void writeSummary(final ITestSummary testSummary,final ILogger logger) {
 		final File logFile = new File(TestUtil.generateAbsolutePathForLogfile(testSummary));
-		final ILogger logger = ILogger.getLogger(testSummary.getUltimateTestSuiteClass());
 		if (!logFile.isDirectory()) {
 			if (!logFile.getParentFile().mkdirs()) {
 				if (!logFile.getParentFile().isDirectory()) {

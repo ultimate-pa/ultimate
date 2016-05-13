@@ -52,6 +52,7 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 	private final ITestResultDecider mDecider;
 	private final List<ITestSummary> mSummaries;
 	private final List<IIncrementalLog> mLogs;
+	private final ConsoleLogger mTestLogger;
 
 	public UltimateTestCase(final String name, final ITestResultDecider decider, final UltimateStarter starter,
 			final UltimateRunDefinition ultimateRunDefinition, final List<ITestSummary> summaries,
@@ -65,6 +66,7 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 		mSummaries = summaries;
 		mUltimateRunDefinition = ultimateRunDefinition;
 		mLogs = incrementalLogs;
+		mTestLogger = new ConsoleLogger();
 	}
 
 	@FactoryTestMethod
@@ -86,12 +88,12 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 		Throwable th = null;
 		TestResult result = TestResult.FAIL;
 		boolean livecycleFailure = false;
-		
+
 		try {
 			updateLogsPreStart();
 			final String deciderName = mDecider.getClass().getSimpleName();
 			final IStatus returnCode = mStarter.runUltimate();
-			//logging service is only available after runUltimate() has been called
+			// logging service is only available after runUltimate() has been called
 			final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
 			logger.info("Deciding this test: " + deciderName);
 			result = mDecider.getTestResult(mStarter.getServices());
@@ -153,34 +155,39 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 	}
 
 	private void updateLogsPreStart() {
-		if (mLogs != null) {
-			for (IIncrementalLog log : mLogs) {
-				log.addEntryPreStart(mUltimateRunDefinition);
-			}
+		if (mLogs == null) {
+			return;
+		}
+		for (final IIncrementalLog log : mLogs) {
+			log.addEntryPreStart(mUltimateRunDefinition, mTestLogger);
+		}
+
+	}
+
+	private void updateLogsPostCompletion(final TestResult result) {
+		if (mLogs == null) {
+			return;
+		}
+		for (final IIncrementalLog log : mLogs) {
+			log.addEntryPostCompletion(mUltimateRunDefinition, result, mDecider.getResultCategory(),
+					mDecider.getResultMessage(), mStarter.getServices(), mTestLogger);
 		}
 	}
 
-	private void updateLogsPostCompletion(TestResult result) {
-		if (mLogs != null) {
-			for (IIncrementalLog log : mLogs) {
-				log.addEntryPostCompletion(mUltimateRunDefinition, result, mDecider.getResultCategory(),
-						mDecider.getResultMessage(), mStarter.getServices());
-			}
+	private void updateSummaries(final TestResult result) {
+		if (mSummaries == null) {
+			return;
 		}
-	}
 
-	private void updateSummaries(TestResult result) {
 		IResultService rservice = null;
 		if (mStarter.getServices() != null) {
 			rservice = mStarter.getServices().getResultService();
 			assert rservice != null : "Could not retrieve ResultService";
 		}
 
-		if (mSummaries != null) {
-			for (ITestSummary summary : mSummaries) {
-				summary.addResult(mUltimateRunDefinition, result, mDecider.getResultCategory(),
-						mDecider.getResultMessage(), mName, rservice);
-			}
+		for (final ITestSummary summary : mSummaries) {
+			summary.addResult(mUltimateRunDefinition, result, mDecider.getResultCategory(), mDecider.getResultMessage(),
+					mName, rservice);
 		}
 	}
 

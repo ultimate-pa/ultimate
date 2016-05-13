@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.test.reporting;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
@@ -37,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestR
  */
 public interface IIncrementalLog extends ITestLogfile {
 
-	void addEntryPreStart(UltimateRunDefinition urd);
+	void addEntryPreStart(UltimateRunDefinition urd, ILogger testLogger);
 
 	void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result, String resultCategory,
-			String resultMessage, IUltimateServiceProvider services);
+			String resultMessage, IUltimateServiceProvider services, ILogger testLogger);
 
 }

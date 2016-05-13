@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationReques
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Wrapper that constructs SMTInterpol or an external solver.
@@ -378,6 +379,8 @@ public class SolverBuilder {
 				} catch (SMTLIBException ex) {
 					// DD 2015-11-18: If we store all created solvers during a toolchain execution, we should also
 					// suppress broken solver exceptions if the solver was already killed by the user
+				} catch(ToolchainCanceledException ex){
+					//DD 2016-05-13: Same as above.
 				}
 			}
 		});

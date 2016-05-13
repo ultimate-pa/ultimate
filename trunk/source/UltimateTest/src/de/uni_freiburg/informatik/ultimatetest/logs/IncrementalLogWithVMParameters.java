@@ -24,8 +24,10 @@
  * licensors of the ULTIMATE Test Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest.logs;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
@@ -50,7 +52,7 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 	}
 
 	@Override
-	public void addEntryPreStart(UltimateRunDefinition urd) {
+	public void addEntryPreStart(UltimateRunDefinition urd, ILogger testlogger) {
 		mCountCurrent++;
 		StringBuilder sb = new StringBuilder();
 		String indent = "\t";
@@ -79,7 +81,7 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 		sb.append(" ### Starting test for ");
 		sb.append(urd);
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
-		writeToFile(sb.toString());
+		writeToFile(sb.toString(),testlogger);
 	}
 
 }
