@@ -253,6 +253,10 @@
 		<module>../Library-BoogieAST</module>
 		<module>../Library-JavaBDD</module>
 		<module>../Library-UltimateCore</module>
+		<module>../Library-UltimateModel</module>
+		<module>../SmtParser</module>
+		<module>../SyntaxChecker</module>
+		<module>../HeapSeparator</module>
 	</modules>
 
 	<profiles>
@@ -485,7 +489,6 @@
 
 			<modules>
 				<!-- modules containing test utilities -->
-				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
@@ -552,7 +555,6 @@
 
 			<modules>
 				<!-- modules containing test utilities -->
-				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
