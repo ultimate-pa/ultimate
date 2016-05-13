@@ -27,18 +27,19 @@
 /**
  * 
  */
+
 package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+
 
 /**
  * @author heizmanninformatik.uni-freiburg.de
  *
  */
-
 public class FloatTranslationTest extends AbstractTraceAbstractionTestSuite {
 	
 //	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
@@ -104,6 +105,4 @@ public class FloatTranslationTest extends AbstractTraceAbstractionTestSuite {
 		}
 		return super.createTestCases();
 	}
-
-	
 }

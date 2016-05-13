@@ -28,12 +28,14 @@
 /**
  * 
  */
+
 package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -74,9 +76,6 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
 	};
-	
-	
-	
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -88,6 +87,4 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 		}
 		return super.createTestCases();
 	}
-
-	
 }
