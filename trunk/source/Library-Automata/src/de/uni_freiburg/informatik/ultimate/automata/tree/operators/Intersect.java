@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operators;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -12,15 +10,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operators.Converter.MyState;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operators.Converter.MySymbol;
-import de.uni_muenster.cs.sev.lethal.utils.*;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_muenster.cs.sev.lethal.states.NamedState;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTA;
 import de.uni_muenster.cs.sev.lethal.treeautomata.generic.GenFTAOps;
+import de.uni_muenster.cs.sev.lethal.utils.Pair;
 
 public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+	private final ILogger m_Logger;
 
 	private final TreeAutomatonBU<LETTER, STATE> m_FstOperand;
 	private final TreeAutomatonBU<LETTER, STATE> m_SndOperand;

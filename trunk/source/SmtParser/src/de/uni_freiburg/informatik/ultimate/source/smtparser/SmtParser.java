@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
@@ -57,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
  */
 public class SmtParser implements ISource {
 	protected String[] mFileTypes;
-	protected Logger mLogger;
+	protected ILogger mLogger;
 	protected List<String> mFileNames;
 	protected Unit mPreludeUnit;
 	private IUltimateServiceProvider mServices;
@@ -73,10 +74,12 @@ public class SmtParser implements ISource {
 		return getClass().getPackage().getName();
 	}
 
+	@Override
 	public void init() {
 		mFileNames = new ArrayList<String>();
 	}
 
+	@Override
 	public String getPluginName() {
 		return "SmtParser";
 	}
@@ -85,10 +88,12 @@ public class SmtParser implements ISource {
 		return null;
 	}
 
+	@Override
 	public IElement parseAST(File[] files) throws IOException {
 		throw new UnsupportedOperationException("processing several files is not yet implemented");
 	}
 
+	@Override
 	public IElement parseAST(File file) throws IOException {
 		if (file.isDirectory()) {
 			return parseAST(file.listFiles());
@@ -98,6 +103,7 @@ public class SmtParser implements ISource {
 		return null;
 	}
 
+	@Override
 	public boolean parseable(File[] files) {
 		for (final File f : files) {
 			if (!parseable(f)) {
@@ -107,6 +113,7 @@ public class SmtParser implements ISource {
 		return true;
 	}
 
+	@Override
 	public boolean parseable(File file) {
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
@@ -116,10 +123,12 @@ public class SmtParser implements ISource {
 		return false;
 	}
 
+	@Override
 	public String[] getFileTypes() {
 		return mFileTypes;
 	}
 
+	@Override
 	public ModelType getOutputDefinition() {
 		return new ModelType(Activator.PLUGIN_ID,ModelType.Type.OTHER, mFileNames);
 	}
@@ -172,7 +181,7 @@ public class SmtParser implements ISource {
 						"external solver of SMT parser plugin");
 			} else {
 				mLogger.info("Starting SMTInterpol");
-				script = new SMTInterpol(mLogger, true);
+				script = new SMTInterpol((Logger) mServices.getLoggingService().getBacking(mLogger, Logger.class), true);
 			}
 
 			if (writeCommandsToFile) {
@@ -194,8 +203,5 @@ public class SmtParser implements ISource {
 		} finally {
 			script.exit();
 		}
-		
 	}
-	
-
 }
