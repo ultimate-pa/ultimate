@@ -21,7 +21,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final ILogger m_Logger;
 	
 	private final TreeAutomatonBU<LETTER, STATE> m_Operand;
-	private TreeAutomatonBU<LETTER, NamedState<Set<MyState<STATE>>>> m_Result;
+	private TreeAutomatonBU<MySymbol<LETTER>, NamedState<Set<MyState<STATE>>>> m_Result;
 	private final StateFactory<STATE> m_StateFactory;
 	
 
@@ -32,8 +32,8 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_StateFactory = m_Operand.getStateFactory();
 		m_Logger.info(startMessage());
 		ConverterToFTA<LETTER, STATE> converter = new ConverterToFTA<LETTER, STATE>();
+		ConverterFTAToTree<MySymbol<LETTER>, NamedState<Set<MyState<STATE>>>> reverseConverter = new ConverterFTAToTree<>();
 		GenFTA<MySymbol<LETTER>, NamedState<Set<MyState<STATE>>>> gen = GenFTAOps.determinize(converter.convertITreeToFTA(m_Operand));
-		ConverterFTAToTree<LETTER, NamedState<Set<MyState<STATE>>>> reverseConverter = new ConverterFTAToTree<>();
 		m_Result = reverseConverter.convertToTree(gen);
 		m_Logger.info(exitMessage());
 	}
@@ -54,7 +54,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 
 	@Override
-	public TreeAutomatonBU<LETTER, NamedState<Set<MyState<STATE>>>> getResult() throws AutomataLibraryException {
+	public TreeAutomatonBU<MySymbol<LETTER>, NamedState<Set<MyState<STATE>>>> getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 
