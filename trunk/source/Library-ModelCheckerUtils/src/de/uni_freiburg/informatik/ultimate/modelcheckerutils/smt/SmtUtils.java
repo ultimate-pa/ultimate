@@ -960,7 +960,7 @@ public class SmtUtils {
 						new HashSet<>(Arrays.asList(innerQuantifiedFormula.getVariables()));
 				resultQuantifiedVars.addAll(vars);
 				return script.quantifier(quantifier, resultQuantifiedVars.toArray(
-						new TermVariable[resultQuantifiedVars.size()]), body);
+						new TermVariable[resultQuantifiedVars.size()]), innerQuantifiedFormula.getSubformula());
 			}
 		}
 	}
