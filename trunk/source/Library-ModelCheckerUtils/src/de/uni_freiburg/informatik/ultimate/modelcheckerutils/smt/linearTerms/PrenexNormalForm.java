@@ -93,9 +93,9 @@ public class PrenexNormalForm extends TermTransformer {
 	private Term pullQuantifiersNot(Term[] newArgs) {
 		assert newArgs.length == 1 : "no not";
 		final Term notArg = newArgs[0];
-		final QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script);
-		final Term inner = quantifierSequence.extractQuantifiers(notArg, true, m_FreshTermVariableConstructor);
-		final List<QuantifierSequence.QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifiedVariableSequence();
+		final QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script, notArg);
+		final Term inner = quantifierSequence.getInnerTerm();
+		final List<QuantifierSequence.QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifierBlocks();
 		Term result = Util.not(m_Script, inner);
 		for (int i = qVarSeq.size()-1; i>=0; i--) {
 			final QuantifierSequence.QuantifiedVariables quantifiedVars = qVarSeq.get(i);
@@ -107,14 +107,12 @@ public class PrenexNormalForm extends TermTransformer {
 	}
 
 	private Term pullQuantifiers(ApplicationTerm appTerm, Term[] newArgs) {
-		QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script);
-		Term[] resultArgs = new Term[newArgs.length];
+		final QuantifierSequence[] quantifierSequences = new QuantifierSequence[newArgs.length];
 		for (int i=0; i<newArgs.length; i++) {
-			Term resultArg = newArgs[i];
-			resultArgs[i] = quantifierSequence.extractQuantifiers(resultArg, true, m_FreshTermVariableConstructor);
+			quantifierSequences[i] = new QuantifierSequence(m_Script, newArgs[i]);
 		}
-		Term resultBody = m_Script.term(appTerm.getFunction().getName(), resultArgs);
-		Term result = quantifierSequence.prependQuantifierSequence(resultBody);
+		final Term result = QuantifierSequence.mergeQuantifierSequences(m_Script, 
+				m_FreshTermVariableConstructor, appTerm.getFunction().getName(), quantifierSequences);
 		return result;
 	}
 

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,10 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
@@ -589,10 +585,10 @@ public class NestedInterpolantsBuilder {
 				m_SmtManagerPredicates.getVariableManager(), QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
 //		not needed, at the moment our NNF transformation also produces 		
 //		Term prenex = (new PrenexNormalForm(m_SmtManagerPredicates.getScript(), m_SmtManagerPredicates.getVariableManager())).transform(nnf);
-		QuantifierSequence qs = new QuantifierSequence(m_SmtManagerPredicates.getScript());
+		QuantifierSequence qs = new QuantifierSequence(m_SmtManagerPredicates.getScript(), nnf);
 //		The quantifier-free part of of formula in prenex normal form is called
 //		matrix
-		Term matrix = qs.extractQuantifiers(nnf, false, null);
+		Term matrix = qs.getInnerTerm();
 
 		ApplicationTermFinder atf = new ApplicationTermFinder("array-ext", false);
 		Set<ApplicationTerm> arrayExtAppTerms = atf.findMatchingSubterms(matrix);
@@ -613,7 +609,7 @@ public class NestedInterpolantsBuilder {
 		Term result = (new SafeSubstitution(m_SmtManagerPredicates.getScript(), substitutionMapping)).transform(matrix);
 		result = Util.and(m_SmtManagerPredicates.getScript(), result, Util.and(m_SmtManagerPredicates.getScript(), implications));
 		result = m_SmtManagerPredicates.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
-		result = qs.prependQuantifierSequence(result);
+		result = QuantifierSequence.prependQuantifierSequence(m_ScriptTc, qs.getQuantifierBlocks(), matrix);
 //		Term pushed = new QuantifierPusher(m_SmtManagerPredicates.getScript(), m_Services).transform(result);
 		return result;
 	}

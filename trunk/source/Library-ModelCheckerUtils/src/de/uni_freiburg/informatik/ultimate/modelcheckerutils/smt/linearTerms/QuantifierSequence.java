@@ -27,8 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,85 +40,176 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
- * Auxiliary class for the handling of nested quantified formulas.
+ * Data structure that represents a quantified formula but allows one to
+ * explicitly access leading quantifiers and quantified variables.
+ * Two blocks with the same quantifier are merged into one block, e.g., 
+ * the term ∃x.∃y x=y becomes ∃x,y. x=y
+ * Furthermore we remove variables the do not occur freely in the subformula,
+ * e.g., the term ∃x,y.∀x. x=y becomes ∃y.∀x. x=y
  * 
  * @author Matthias Heizmann
  * 
  */
 public class QuantifierSequence {
 	private final Script m_Script;
-	private final List<LinkedHashSet<TermVariable>> m_List = new ArrayList<>();
-	private final static String s_FreshVariableString = "prenex";
+	private final List<QuantifiedVariables> m_QuantifierBlocks = new ArrayList<>();
+	private Term m_InnerTerm;
 
-	public QuantifierSequence(Script script) {
+	public QuantifierSequence(final Script script, 
+			final Term input) {
 		m_Script = script;
-		m_List.add(new LinkedHashSet<TermVariable>());
-	}
-
-	public Term extractQuantifiers(Term term, boolean replaceVariables, IFreshTermVariableConstructor ftvc) {
-		int numberOfAlternations = 0;
-		while (term instanceof QuantifiedFormula) {
-			assert m_List.size() >= numberOfAlternations + 1;
-			QuantifiedFormula quantifiedArg = (QuantifiedFormula) term;
-			if (numberOfAlternations % 2 != quantifiedArg.getQuantifier()) {
-				numberOfAlternations++;
-				if (m_List.size() == numberOfAlternations) {
-					m_List.add(new LinkedHashSet<TermVariable>());
-				}
-			}
-			if (replaceVariables) {
-				Map<Term, Term> substitutionMapping = new HashMap<>();
-				for (TermVariable tv : quantifiedArg.getVariables()) {
-					TermVariable fresh = ftvc.constructFreshTermVariable(s_FreshVariableString, tv.getSort());
-					substitutionMapping.put(tv, fresh);
-					addToPosition(fresh, numberOfAlternations);
-				}
-				term = new SafeSubstitution(m_Script, ftvc, substitutionMapping).transform(quantifiedArg.getSubformula());
+		Term innerTerm = input;
+		while(innerTerm instanceof QuantifiedFormula) {
+			final QuantifiedFormula qf = (QuantifiedFormula) innerTerm;
+			final Set<TermVariable> variables = SmtUtils.filterToVarsThatOccurFreelyInTerm(
+					Arrays.asList(qf.getVariables()), qf.getSubformula()); 
+			final int quantifier = qf.getQuantifier();
+			if (m_QuantifierBlocks.isEmpty() || m_QuantifierBlocks.get(m_QuantifierBlocks.size()-1).getQuantifier() != quantifier) {
+				final QuantifiedVariables qv = new QuantifiedVariables(qf.getQuantifier(), variables);
+				m_QuantifierBlocks.add(qv);
 			} else {
-				for (TermVariable tv : quantifiedArg.getVariables()) {
-					addToPosition(tv, numberOfAlternations);
-				}
-				term = quantifiedArg.getSubformula();
+				final QuantifiedVariables last = m_QuantifierBlocks.remove(m_QuantifierBlocks.size()-1);
+				final Set<TermVariable> newQuantifiedVariables = new HashSet<>(last.getVariables());
+				newQuantifiedVariables.addAll(variables);
+				m_QuantifierBlocks.add(new QuantifiedVariables(quantifier, newQuantifiedVariables));
 			}
+			innerTerm = qf.getSubformula();
 		}
-		return term;
+		m_InnerTerm = innerTerm;
 	}
-
-	private void addToPosition(TermVariable tv, int numbersOfAlternation) {
-		m_List.get(numbersOfAlternation).add(tv);
-	}
-
 	
-	public Term prependQuantifierSequence(final Term term) {
+	
+	/**
+	 * Prepend a sequence of quantifiers to a term.
+	 */
+	public static Term prependQuantifierSequence(Script script, 
+			List<QuantifiedVariables> quantifierSequence, final Term term) {
 		Term result = term;
-		for (int i=m_List.size()-1; i>=0; i--) {
-			m_List.get(i);
-			final int quantor = i % 2;
-			final TermVariable[] vars = m_List.get(i).toArray(new TermVariable[m_List.get(i).size()]);
-			if (vars.length != 0) {
-				result = m_Script.quantifier(quantor, vars, result);
-			}
+		for (int i = quantifierSequence.size()-1; i>=0; i--) {
+			final QuantifiedVariables quantifiedVars = quantifierSequence.get(i);
+			result = script.quantifier(quantifiedVars.getQuantifier(), 
+					quantifiedVars.getVariables().toArray(
+							new TermVariable[quantifiedVars.getVariables().size()]), result);
 		}
 		return result;
 	}
 	
-	public List<QuantifiedVariables> getQuantifiedVariableSequence() {
-		final List<QuantifiedVariables> result = new ArrayList<>();
-		for (int i=0; i < m_List.size(); i++) {
-			final int quantifier = i % 2;
-			final Set<TermVariable> vars = m_List.get(i);
-			if (vars.size() > 0) {
-				result.add(new QuantifiedVariables(quantifier, vars));
-			}
-		}
-		return result;
+	public Term getInnerTerm() {
+		return m_InnerTerm;
+	}
+
+	public Term toTerm() {
+		return prependQuantifierSequence(m_Script, m_QuantifierBlocks, m_InnerTerm);
 	}
 	
-	public class QuantifiedVariables {
+	public void replace(final Set<TermVariable> forbiddenVariables, 
+			final IFreshTermVariableConstructor freshVarConstructor,
+			final String replacementName) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (QuantifiedVariables qv : m_QuantifierBlocks) {
+			for (TermVariable tv : forbiddenVariables) {
+				if (qv.m_Variables.contains(tv)) {
+					final TermVariable fresh = freshVarConstructor.constructFreshTermVariable(
+							replacementName, tv.getSort());
+					substitutionMapping.put(tv, fresh);
+					qv.m_Variables.remove(tv);
+					qv.m_Variables.add(fresh);
+				}
+			}
+		}
+		m_InnerTerm = (new SafeSubstitution(m_Script, substitutionMapping)).transform(m_InnerTerm);
+	}
+	
+	public static Term mergeQuantifierSequences(final Script script, 
+			final IFreshTermVariableConstructor freshVarConstructor, 
+			final String functionSymbolName, 
+			final QuantifierSequence[] quantifierSequences) {
+		// sort sequences, sequence with largest number of blocks first 
+		Arrays.sort(quantifierSequences, Collections.reverseOrder(Comparator.comparing(
+				QuantifierSequence::getNumberOfQuantifierBlocks)));
+		
+		final QuantifierSequence largestSequence = quantifierSequences[0];
+		final List<QuantifiedVariables> resultQuantifierBlocks = 
+				new ArrayList<QuantifiedVariables>(largestSequence.getNumberOfQuantifierBlocks());
+		final Term innerTerms[] = new Term[quantifierSequences.length];
+		for (int i=0; i<largestSequence.getNumberOfQuantifierBlocks(); i++) {
+			final int quantifierOfLargestSequence = 
+					largestSequence.getQuantifierBlocks().get(i).getQuantifier();
+			resultQuantifierBlocks.add(new QuantifiedVariables(
+					quantifierOfLargestSequence, new HashSet<>()));
+		}
+		assert resultQuantifierBlocks.size() == largestSequence.getNumberOfQuantifierBlocks();
+		
+		Set<TermVariable> occurredVariables = new HashSet<>();
+		for (int i=0; i<quantifierSequences.length; i++) {
+			quantifierSequences[i].replace(occurredVariables, freshVarConstructor, "prenex");
+			innerTerms[i] = quantifierSequences[i].getInnerTerm();
+			if (quantifierSequences[i].getNumberOfQuantifierBlocks() > 0) {
+				integrateQuantifierBlocks(resultQuantifierBlocks, quantifierSequences[i].getQuantifierBlocks());
+			}
+		}
+		final Term resultInnerTerm;
+		if (functionSymbolName.equals("and")) {
+			resultInnerTerm = Util.and(script, innerTerms);
+		} else if (functionSymbolName.equals("or")) {
+			resultInnerTerm = Util.or(script, innerTerms);
+		} else {
+			throw new IllegalArgumentException("unsupported " + functionSymbolName);
+		}
+		final Term result = prependQuantifierSequence(script, 
+				resultQuantifierBlocks, resultInnerTerm);
+		return result; 
+	}
+	
+	
+	
+	private static void integrateQuantifierBlocks(List<QuantifiedVariables> resultQuantifierBlocks,
+			List<QuantifiedVariables> quantifierBlocks) {
+		final int offset;
+		{
+			final int lastQuantifierResult = resultQuantifierBlocks.get(resultQuantifierBlocks.size()-1).getQuantifier();
+			final int lastQuantifierCurrent = quantifierBlocks.get(quantifierBlocks.size()-1).getQuantifier();
+			if (lastQuantifierResult == lastQuantifierCurrent) {
+				offset = resultQuantifierBlocks.size() - quantifierBlocks.size();
+			} else {
+				if (resultQuantifierBlocks.size() == quantifierBlocks.size()) {
+					// special case where both sequences have same size but
+					// start with different quantifiers
+					resultQuantifierBlocks.add(new QuantifiedVariables(lastQuantifierCurrent, new HashSet<>()));
+				} 
+				offset = resultQuantifierBlocks.size() - quantifierBlocks.size();
+			}
+			assert offset >= 0;
+		}
+		for (int i=0; i<quantifierBlocks.size(); i++) {
+			assert resultQuantifierBlocks.get(i+offset).getQuantifier() == 
+					quantifierBlocks.get(i).getQuantifier() : "wrong offset";
+			resultQuantifierBlocks.get(i+offset).getVariables().addAll(quantifierBlocks.get(i).getVariables());
+		}
+	}
+
+
+	public List<QuantifiedVariables> getQuantifierBlocks() {
+		return m_QuantifierBlocks;
+	}
+	
+	public int getNumberOfQuantifierBlocks() {
+		return m_QuantifierBlocks.size();
+	}
+	
+	@Override
+	public String toString() {
+		return m_QuantifierBlocks + " " + m_InnerTerm;
+	}
+
+
+	public static class QuantifiedVariables {
 		private final int m_Quantifier;
 		private final Set<TermVariable> m_Variables;
 		public QuantifiedVariables(int quantifier, Set<TermVariable> variables) {
@@ -129,8 +223,12 @@ public class QuantifierSequence {
 		public Set<TermVariable> getVariables() {
 			return m_Variables;
 		}
+		@Override
+		public String toString() {
+			return ((m_Quantifier == 0) ? "exists" : "forall") + m_Variables + ". ";
+		}
+		
 		
 	}
-
 
 }

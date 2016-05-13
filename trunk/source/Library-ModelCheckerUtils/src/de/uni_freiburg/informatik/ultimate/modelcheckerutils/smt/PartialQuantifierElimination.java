@@ -83,9 +83,9 @@ public class PartialQuantifierElimination {
 		final Term nnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.KEEP).transform(withoutIte); 
 		final Term pushed = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(nnf);
 		final Term pnf = new PrenexNormalForm(script, freshTermVariableConstructor).transform(pushed);
-		final QuantifierSequence qs = new QuantifierSequence(script);
-		final Term matrix = qs.extractQuantifiers(pnf, true, freshTermVariableConstructor);
-		final List<QuantifiedVariables> qvs = qs.getQuantifiedVariableSequence();
+		final QuantifierSequence qs = new QuantifierSequence(script, pnf);
+		final Term matrix = qs.getInnerTerm();
+		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
 		Term result = matrix;
 //		if (qvs.size() > 1) {
 //			throw new AssertionError("Attention!!! quantifier alternation " + qvs.size());

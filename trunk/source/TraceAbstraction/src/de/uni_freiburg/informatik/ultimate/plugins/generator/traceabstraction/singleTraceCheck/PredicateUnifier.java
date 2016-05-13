@@ -794,9 +794,8 @@ public class PredicateUnifier {
 			final String result;
 			final Term pnf = new PrenexNormalForm(m_SmtManager.getScript(), m_SmtManager.getVariableManager()).transform(closedTerm);
 			if (pnf instanceof QuantifiedFormula) {
-				final QuantifierSequence qs = new QuantifierSequence(m_SmtManager.getScript());
-				qs.extractQuantifiers(pnf, true, m_SmtManager.getVariableManager());
-				result = "quantified with " + (qs.getQuantifiedVariableSequence().size()-1) + "quantifier alternations";
+				final QuantifierSequence qs = new QuantifierSequence(m_SmtManager.getScript(), pnf);
+				result = "quantified with " + (qs.getNumberOfQuantifierBlocks()-1) + "quantifier alternations";
 			} else {
 				result = "quantifier-free";
 			}
