@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
@@ -45,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HCGBuilderHelper;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornClauseParserScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
@@ -56,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
  */
 public class SmtParser implements ISource {
 	protected String[] mFileTypes;
-	protected ILogger mLogger;
+	protected Logger mLogger;
 	protected List<String> mFileNames;
 	protected Unit mPreludeUnit;
 	private IUltimateServiceProvider mServices;
@@ -72,12 +73,10 @@ public class SmtParser implements ISource {
 		return getClass().getPackage().getName();
 	}
 
-	@Override
 	public void init() {
 		mFileNames = new ArrayList<String>();
 	}
 
-	@Override
 	public String getPluginName() {
 		return "SmtParser";
 	}
@@ -86,12 +85,10 @@ public class SmtParser implements ISource {
 		return null;
 	}
 
-	@Override
 	public IElement parseAST(File[] files) throws IOException {
 		throw new UnsupportedOperationException("processing several files is not yet implemented");
 	}
 
-	@Override
 	public IElement parseAST(File file) throws IOException {
 		if (file.isDirectory()) {
 			return parseAST(file.listFiles());
@@ -101,7 +98,6 @@ public class SmtParser implements ISource {
 		return null;
 	}
 
-	@Override
 	public boolean parseable(File[] files) {
 		for (final File f : files) {
 			if (!parseable(f)) {
@@ -111,7 +107,6 @@ public class SmtParser implements ISource {
 		return true;
 	}
 
-	@Override
 	public boolean parseable(File file) {
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
@@ -121,14 +116,12 @@ public class SmtParser implements ISource {
 		return false;
 	}
 
-	@Override
 	public String[] getFileTypes() {
 		return mFileTypes;
 	}
 
-	@Override
 	public ModelType getOutputDefinition() {
-		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.OTHER, mFileNames);
+		return new ModelType(Activator.PLUGIN_ID,ModelType.Type.OTHER, mFileNames);
 	}
 
 	@Override
@@ -155,40 +148,38 @@ public class SmtParser implements ISource {
 	public void finish() {
 
 	}
-
+	
 	private void processFile(File file) throws IOException {
-
-		final boolean useExternalSolver = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
-				.getBoolean(PreferenceInitializer.LABEL_UseExtSolver);
-		final String commandExternalSolver = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
-				.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
-
-		final boolean writeCommandsToFile = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
-				.getBoolean(PreferenceInitializer.LABEL_WriteToFile);
-		final String filename = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
-				.getString(PreferenceInitializer.LABEL_Filename);
+		
+		final boolean useExternalSolver = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_UseExtSolver);
+		final String commandExternalSolver = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+		
+		final boolean writeCommandsToFile = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_WriteToFile);
+		final String filename = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getString(PreferenceInitializer.LABEL_Filename);
 
 		final boolean inHornSolverMode = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_HornSolverMode);
 		
 		Script script;
 
 		if (inHornSolverMode) {
-			throw new UnsupportedOperationException();
-		}
-
-		if (useExternalSolver) {
-			mLogger.info("Starting external SMT solver with command " + commandExternalSolver);
-			script = new Scriptor(commandExternalSolver, mLogger, mServices, mStorage,
-					"external solver of SMT parser plugin");
+			mLogger.info("Parsing .smt2 file as a set of Horn Clauses");
+			Script smtSolverScript = HCGBuilderHelper.constructAndInitializeBackendSmtSolver(mServices, mStorage, null);
+			script = new HornClauseParserScript(smtSolverScript);
 		} else {
-			mLogger.info("Starting SMTInterpol");
-			script = new SMTInterpol((Logger) mServices.getLoggingService().getBacking(mLogger, Logger.class), true);
-		}
+			if (useExternalSolver) {
+				mLogger.info("Starting external SMT solver with command " + commandExternalSolver);
+				script = new Scriptor(commandExternalSolver, mLogger, mServices, mStorage, 
+						"external solver of SMT parser plugin");
+			} else {
+				mLogger.info("Starting SMTInterpol");
+				script = new SMTInterpol(mLogger, true);
+			}
 
-		if (writeCommandsToFile) {
-			String abs = (new File(filename)).getAbsolutePath();
-			mLogger.info("Writing all SMT commands to " + abs);
-			script = new LoggingScript(script, filename, true);
+			if (writeCommandsToFile) {
+				String abs = (new File(filename)).getAbsolutePath();
+				mLogger.info("Writing all SMT commands to " + abs);
+				script = new LoggingScript(script ,filename, true);
+			}
 		}
 
 		mLogger.info("Executing SMT file " + file.getAbsolutePath());
@@ -203,6 +194,8 @@ public class SmtParser implements ISource {
 		} finally {
 			script.exit();
 		}
-
+		
 	}
+	
+
 }

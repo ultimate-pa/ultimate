@@ -10,7 +10,9 @@ Require-Bundle: Library-UltimateCore,
  Library-BoogieAST,
  Library-SMTLIB,
  SMTSolverBridge,
- SMTInterpol
+ SMTInterpol,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder,
+ Library-ModelCheckerUtils
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.source.smtparser

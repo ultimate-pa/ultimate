@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCFGBuilder
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.Activator
+Require-Bundle: Library-UltimateCore,
+ UltimateCore,
+ Library-log4j,
+ Library-SMTLIB,
+ SMTInterpol,
+ Library-ModelCheckerUtils
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script
