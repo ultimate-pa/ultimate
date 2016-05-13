@@ -28,9 +28,6 @@ public class ConverterFTAToTree<LETTER, STATE extends State> extends Converter {
 				srcState.add(state);
 			}
 			result.addRule(rule.getSymbol().getLetter(), srcState, rule.getDestState());
-			if (rule.getSymbol().getArity() == 0) {
-				result.addInitialState(rule.getDestState());
-			}
 		}
 		return result;
 	}
