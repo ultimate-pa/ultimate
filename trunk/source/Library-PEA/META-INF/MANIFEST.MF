@@ -19,3 +19,4 @@ Require-Bundle: Library-UltimateCore,
  Library-jdom,
  Library-xerces,
  Library-CZT
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
