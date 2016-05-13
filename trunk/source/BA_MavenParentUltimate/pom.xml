@@ -322,7 +322,6 @@
 
 			<modules>
 				<!-- modules containing test utilities -->
-				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
@@ -403,7 +402,6 @@
 
 			<modules>
 				<!-- modules containing test utilities -->
-				<module>../Library-junit-helper</module>
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
