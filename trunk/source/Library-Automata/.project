@@ -3,7 +3,6 @@
 	<name>NestedWordAutomata</name>
 	<comment></comment>
 	<projects>
-		<project>Library-Lethal</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
