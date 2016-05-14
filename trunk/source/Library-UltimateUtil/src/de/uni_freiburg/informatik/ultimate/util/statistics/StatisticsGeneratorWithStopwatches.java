@@ -68,6 +68,15 @@ public abstract class StatisticsGeneratorWithStopwatches {
 		mBenchmark.pause(stopwatchName);
 	}
 	
+	/*
+	 * 2016-05-14 Matthias:
+	 * Marked as deprecated since this method has several problems.
+	 * - Method adds new stopwatch, but stopwatches should only be added at the 
+	 * beginning.
+	 * - Method obfuscates the problem that the caller does not know which
+	 * of his clocks are currently running.
+	 */
+	@Deprecated
 	public void stopIfRunning(String name){
 		mRunningStopwatches.put(name, false);
 		mBenchmark.pause(name);
