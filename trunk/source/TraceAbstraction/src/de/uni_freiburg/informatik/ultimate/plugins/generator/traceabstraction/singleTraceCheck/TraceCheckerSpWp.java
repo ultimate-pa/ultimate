@@ -310,7 +310,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 //			checkSPImpliesWP(m_InterpolantsFp, m_InterpolantsBp);
 //		}
 		if (m_ConstructForwardInterpolantSequence && m_ConstructBackwardInterpolantSequence) {
-			selectListOFPredicatesFromBothTypes();
+			boolean omitMixedSequence = true;
+			if (omitMixedSequence) {
+				m_Interpolants = null;
+			} else {
+				selectListOFPredicatesFromBothTypes();
+			}
 		} else if (m_ConstructForwardInterpolantSequence) {
 			m_Interpolants = m_InterpolantsFp.toArray(new IPredicate[m_InterpolantsFp.size()]);
 		} else if (m_ConstructBackwardInterpolantSequence) {
