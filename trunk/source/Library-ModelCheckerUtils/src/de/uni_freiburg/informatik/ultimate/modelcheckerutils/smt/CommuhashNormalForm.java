@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -153,6 +154,16 @@ public class CommuhashNormalForm {
 					m_Script, funcname, indices, sortedParams);
 			return simplified;
 		}
+
+		@Override
+		public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
+			final Term result = SmtUtils.quantifier(m_Script, 
+					old.getQuantifier(), Arrays.asList(old.getVariables()), newBody);
+			setResult(result);
+		}
+		
+		
+		
 
 	}
 }
