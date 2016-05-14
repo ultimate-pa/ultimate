@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableMana
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -221,9 +222,22 @@ public class IterativePredicateTransformer {
 			final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(
 					m_Services, m_Logger, m_Boogie2SMT.getScript(), 
 					m_Boogie2SMT.getVariableManager(), pred.getFormula());
-			final Term pnf = new PrenexNormalForm(m_Boogie2SMT.getScript(), 
-					m_Boogie2SMT.getVariableManager()).transform(lessQuantifier);
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(pnf, m_Boogie2SMT);
+			final Term resultTerm;
+			{
+				// 2016-05-14 Matthias: Which structure of the resulting 
+				// formula is better? 1. Prenex normal form (quantifiers outside)
+				// or 2. a form where quantifiers are pushed inside.
+				// Option 2. allows us to simplify the formula with SimplifyDDA
+				// (which considers quantified formulas as atoms).
+				// However, SimplifyDDA may waste a lot of time.
+				// A small evaluation that I did today (using Z3) shows that 
+				// there is not much difference between both variants. 
+				resultTerm = new QuantifierPusher(m_Boogie2SMT.getScript(), 
+						m_Services, m_Boogie2SMT.getVariableManager()).transform(lessQuantifier);
+//				resultTerm = new PrenexNormalForm(m_Boogie2SMT.getScript(), 
+//									m_Boogie2SMT.getVariableManager()).transform(lessQuantifier);
+			}
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(resultTerm, m_Boogie2SMT);
 			final IPredicate result = m_PredicateFactory.newPredicate(tvp);
 			return result;
 		}
