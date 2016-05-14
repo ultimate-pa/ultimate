@@ -89,8 +89,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -376,8 +377,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		RcfgProgramExecution realErrorProgramExecution = null;
 
 		// benchmark data collector variables
-		CegarLoopBenchmarkGenerator benchmarkGenerator =  new CegarLoopBenchmarkGenerator();
-		benchmarkGenerator.start(CegarLoopBenchmarkType.s_OverallTime);
+		CegarLoopStatisticsGenerator benchmarkGenerator =  new CegarLoopStatisticsGenerator();
+		benchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
 		int iterationsCount = 0;
 
@@ -608,7 +609,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		//benchmark stuff
 		benchmarkGenerator.setResult(overallResult);
-		benchmarkGenerator.stop(CegarLoopBenchmarkType.s_OverallTime);
+		benchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
 		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(m_originalRoot.getRootAnnot());
 		ccb.aggregateBenchmarkData(benchmarkGenerator);

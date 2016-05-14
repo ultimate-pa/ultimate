@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -224,7 +223,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 		// howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 
-		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
+		m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 
 //		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(),
@@ -308,7 +307,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 			}
 		} finally {
 //			m_CegarLoopBenchmark.addEdgeCheckerData(edgeChecker.getEdgeCheckerBenchmark());
-			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+			m_CegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		}
 		if (progress) {
 			return true;

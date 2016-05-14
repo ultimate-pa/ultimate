@@ -28,14 +28,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType.SizeIterationPair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
-public class CegarLoopBenchmarkGenerator extends StatisticsGeneratorWithStopwatches implements IStatisticsDataProvider {
+public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwatches implements IStatisticsDataProvider {
 
 	private Object m_Result;
 	private final StatisticsData m_EcData = new StatisticsData();
@@ -46,9 +47,10 @@ public class CegarLoopBenchmarkGenerator extends StatisticsGeneratorWithStopwatc
 	private int m_StatesRemovedByMinimization = 0;
 	private int m_Iterations = 0;
 	private int m_AbsIntIterations = 0;
-	private SizeIterationPair m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(-1, -1);
+	private SizeIterationPair m_BiggestAbstraction = CegarStatisticsType.getInstance().new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation m_BCI = new BackwardCoveringInformation(0, 0);
 	private int m_AbsIntStrong = 0;
+	private int m_TraceHistogramMaximum = 0;
 
 	@Override
 	public Collection<String> getKeys() {
@@ -101,48 +103,57 @@ public class CegarLoopBenchmarkGenerator extends StatisticsGeneratorWithStopwatc
 
 	public void reportAbstractionSize(int size, int iteration) {
 		if (size > m_BiggestAbstraction.getSize()) {
-			m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(size, iteration);
+			m_BiggestAbstraction = CegarStatisticsType.getInstance().new SizeIterationPair(size, iteration);
+		}
+	}
+	
+	public void reportTraceHistogramMaximum(int maxCurrentTrace) {
+		if (maxCurrentTrace > m_TraceHistogramMaximum) {
+			m_TraceHistogramMaximum = maxCurrentTrace;
 		}
 	}
 
 	@Override
 	public Object getValue(String key) {
-		switch (key) {
-		case CegarLoopBenchmarkType.s_Result:
+		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
+		switch (keyEnum) {
+		case Result:
 			return m_Result;
-		case CegarLoopBenchmarkType.s_OverallTime:
-		case CegarLoopBenchmarkType.s_AutomataDifference:
-		case CegarLoopBenchmarkType.s_DeadEndRemovalTime:
-		case CegarLoopBenchmarkType.s_AutomataMinimizationTime:
-		case CegarLoopBenchmarkType.s_HoareAnnotationTime:
-		case CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime:
-		case CegarLoopBenchmarkType.s_AbsIntTime:
+		case OverallTime:
+		case AutomataDifference:
+		case DeadEndRemovalTime:
+		case AutomataMinimizationTime:
+		case HoareAnnotationTime:
+		case BasicInterpolantAutomatonTime:
+		case AbstIntTime:
 			try {
 				return getElapsedTime(key);
 			} catch (StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		case CegarLoopBenchmarkType.s_EdgeCheckerData:
+		case HoareTripleCheckerStatistics:
 			return m_EcData;
-		case CegarLoopBenchmarkType.s_PredicateUnifierData:
+		case PredicateUnifierStatistics:
 			return m_PuData;
-		case CegarLoopBenchmarkType.s_TraceCheckerBenchmark:
+		case TraceCheckerStatistics:
 			return m_TcData;
-		case CegarLoopBenchmarkType.s_InterpolantConsolidationBenchmark:
+		case InterpolantConsolidationStatistics:
 			return m_InterpolantConsolidationBenchmarks;
-		case CegarLoopBenchmarkType.s_TotalInterpolationBenchmark:
+		case TotalInterpolationStatistics:
 			return m_TiData;
-		case CegarLoopBenchmarkType.s_StatesRemovedByMinimization:
+		case StatesRemovedByMinimization:
 			return m_StatesRemovedByMinimization;
-		case CegarLoopBenchmarkType.s_OverallIterations:
+		case OverallIterations:
 			return m_Iterations;
-		case CegarLoopBenchmarkType.s_AbsIntIterations:
+		case TraceHistogramMax:
+			return m_TraceHistogramMaximum;
+		case AbstIntIterations:
 			return m_AbsIntIterations;
-		case CegarLoopBenchmarkType.s_AbsIntStrong:
+		case AbstIntStrong:
 			return m_AbsIntStrong;			
-		case CegarLoopBenchmarkType.s_BiggestAbstraction:
+		case BiggestAbstraction:
 			return m_BiggestAbstraction;
-		case CegarLoopBenchmarkType.s_InterpolantCoveringCapability:
+		case InterpolantCoveringCapability:
 			return m_BCI;
 		default:
 			throw new AssertionError("unknown data");
@@ -151,14 +162,19 @@ public class CegarLoopBenchmarkGenerator extends StatisticsGeneratorWithStopwatc
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
-		return CegarLoopBenchmarkType.getInstance();
+		return CegarStatisticsType.getInstance();
 	}
 
 	@Override
 	public String[] getStopwatches() {
-		return new String[] { CegarLoopBenchmarkType.s_OverallTime, CegarLoopBenchmarkType.s_AbsIntTime,
-				CegarLoopBenchmarkType.s_AutomataDifference, CegarLoopBenchmarkType.s_DeadEndRemovalTime,
-				CegarLoopBenchmarkType.s_AutomataMinimizationTime, CegarLoopBenchmarkType.s_HoareAnnotationTime,
-				CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime };
+		return new String[] { CegarLoopStatisticsDefinitions.OverallTime.toString(), 
+				CegarLoopStatisticsDefinitions.AbstIntTime.toString(),
+				CegarLoopStatisticsDefinitions.AutomataDifference.toString(), 
+				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
+				CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString(), 
+				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
+				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString() };
 	}
+
+
 }

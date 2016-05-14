@@ -207,8 +207,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(smtManager);
 
-		m_CegarLoopBenchmark = new CegarLoopBenchmarkGenerator();
-		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_OverallTime);
+		m_CegarLoopBenchmark = new CegarLoopStatisticsGenerator();
+		m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
 		UltimatePreferenceStore m_Prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		m_UnsatCores = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
@@ -282,6 +282,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			mLogger.debug(m_Counterexample.getWord());
 		}
 		HistogramOfIterable<CodeBlock> traceHistogram = new HistogramOfIterable<CodeBlock>(m_Counterexample.getWord());
+		m_CegarLoopBenchmark.reportTraceHistogramMaximum(traceHistogram.getVisualizationArray()[0]);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("trace histogram " + traceHistogram.toString());
 		}
@@ -441,7 +442,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					m_InterpolantGenerator.getPredicateUnifier(), m_SmtManager,
 					(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_Counterexample);
 		} else {
-			m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
+			m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 			switch (m_InterpolantAutomatonConstructionProcedure) {
 			case CANONICAL: {
 				List<ProgramPoint> programPoints = CoverageAnalysis.extractProgramPoints(m_Counterexample);
@@ -526,7 +527,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 				break;
 			}
-			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
+			m_CegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 
 			assert (accepts(m_Services, m_InterpolAutomaton,
 					m_Counterexample.getWord())) : "Interpolant automaton broken!";
@@ -557,7 +558,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 		// howDifferentAreInterpolants(interpolAutomaton.getStates());
 
-		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
+		m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
@@ -765,7 +766,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		} finally {
 			m_CegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 			m_CegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
-			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+			m_CegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		}
 
 		// if(m_RemoveDeadEnds && m_ComputeHoareAnnotation) {
@@ -854,7 +855,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			String filename = m_RootNode.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + m_Iteration;
 			super.writeAutomatonToFile(m_Abstraction, filename);
 		}
-		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
+		m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		// long startTime = System.currentTimeMillis();
 		int oldSize = m_Abstraction.size();
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
@@ -949,7 +950,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 			m_CegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
 		} finally {
-			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
+			m_CegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		}
 	}
 
@@ -1133,7 +1134,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 	}
 
-	public CegarLoopBenchmarkGenerator getCegarLoopBenchmark() {
+	public CegarLoopStatisticsGenerator getCegarLoopBenchmark() {
 		return m_CegarLoopBenchmark;
 	}
 

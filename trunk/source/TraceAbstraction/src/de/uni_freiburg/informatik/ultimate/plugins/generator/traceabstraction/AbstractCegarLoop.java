@@ -33,8 +33,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -61,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgPro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -69,6 +72,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * CEGAR loop of a trace abstraction. Can be used to check safety and termination of sequential and concurrent programs.
@@ -95,6 +101,27 @@ public abstract class AbstractCegarLoop {
 	public enum Result {
 		SAFE, UNSAFE, TIMEOUT, UNKNOWN
 	}
+	public static Result aggregateResult(Object value1, Object value2) {
+		Result result1 = (Result) value1;
+		Result result2 = (Result) value2;
+		Set<Result> results = new HashSet<Result>();
+		results.add(result1);
+		results.add(result2);
+		if (results.contains(Result.UNSAFE)) {
+			return Result.UNSAFE;
+		} else if (results.contains(Result.UNKNOWN)) {
+			return Result.UNKNOWN;
+		} else if (results.contains(Result.TIMEOUT)) {
+			return Result.TIMEOUT;
+		} else if (results.contains(Result.SAFE)) {
+			return Result.SAFE;
+		} else {
+			throw new AssertionError();
+		}
+	}
+	
+	public static Function<Object, Function<Object,Object>> s_DefaultAggregation = 
+			x -> y -> { return aggregateResult((BackwardCoveringInformation)x, (BackwardCoveringInformation)y); };
 
 	/**
 	 * Unique m_Name of this CEGAR loop to distinguish this instance from other instances in a complex verification
@@ -167,7 +194,7 @@ public abstract class AbstractCegarLoop {
 	protected PrintWriter m_IterationPW;
 	protected final Format m_PrintAutomataLabeling;
 
-	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
+	protected CegarLoopStatisticsGenerator m_CegarLoopBenchmark;
 
 	protected final IUltimateServiceProvider m_Services;
 	// protected final IToolchainStorage m_ToolchainStorage = null; TODO: this is not what we want, is it?
@@ -385,13 +412,13 @@ public abstract class AbstractCegarLoop {
 			} catch (OperationCanceledException e) {
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
-				m_CegarLoopBenchmark.stopIfRunning(CegarLoopBenchmarkType.s_AbsIntTime);
+				m_CegarLoopBenchmark.stopIfRunning(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 				return Result.TIMEOUT;
 			} catch (ToolchainCanceledException e) {
 				m_ToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
-				m_CegarLoopBenchmark.stopIfRunning(CegarLoopBenchmarkType.s_AbsIntTime);
+				m_CegarLoopBenchmark.stopIfRunning(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 				return Result.TIMEOUT;
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError("Automata Operation failed" + e.getMessage());
@@ -554,6 +581,59 @@ public abstract class AbstractCegarLoop {
 			iterationPW.println("");
 		} finally {
 			iterationPW.flush();
+		}
+	}
+	
+	
+	public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
+		
+		Result(Result.class, AbstractCegarLoop.s_DefaultAggregation, AStatisticsType.s_DataBeforeKey),
+		OverallTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+		OverallIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		TraceHistogramMax(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		AutomataDifference(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+		DeadEndRemovalTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+		AutomataMinimizationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+		HoareAnnotationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+		HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
+		PredicateUnifierStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
+		StatesRemovedByMinimization(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_DataBeforeKey),
+		BasicInterpolantAutomatonTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+		BiggestAbstraction(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		TraceCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
+		InterpolantConsolidationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
+		InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.s_DefaultAggregation, AStatisticsType.s_DataBeforeKey),
+		TotalInterpolationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
+		AbstIntTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+		AbstIntIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		AbstIntStrong(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		;
+		
+		private final Class<?> m_Clazz;
+		private final Function<Object, Function<Object, Object>> m_Aggr;
+		private final Function<String, Function<Object, String>> m_Prettyprinter;
+		
+		CegarLoopStatisticsDefinitions(Class<?> clazz, 
+				Function<Object, Function<Object, Object>> aggr, 
+				Function<String, Function<Object, String>> prettyprinter) {
+			m_Clazz = clazz;
+			m_Aggr = aggr;
+			m_Prettyprinter = prettyprinter;
+		}
+
+		@Override
+		public Object aggregate(Object o1, Object o2) {
+			return m_Aggr.apply(o1).apply(o2);
+		}
+
+		@Override
+		public String prettyprint(Object o) {
+			return m_Prettyprinter.apply(this.name()).apply(o);
+		}
+
+		@Override
+		public Class<?> getDataType() {
+			return m_Clazz;
 		}
 	}
 

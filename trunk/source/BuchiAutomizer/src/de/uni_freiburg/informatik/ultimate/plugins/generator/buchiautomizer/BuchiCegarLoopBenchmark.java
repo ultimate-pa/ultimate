@@ -37,13 +37,12 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -51,10 +50,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
-public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements IStatisticsType {
+public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements IStatisticsType {
 	
 	private static final BuchiCegarLoopBenchmark s_Instance = new BuchiCegarLoopBenchmark();
 	
+	public static final String s_Result = "Result";
 	public static final String s_HighestRank = "HighestRank";
 	public static final String s_NonLiveStateRemoval = "NonLiveStateRemoval";
 	public static final String s_BuchiClosure = "BuchiClosure";
@@ -153,10 +153,10 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append("BüchiAutomizer plugin needed ");
-		Long overallTime = (Long) benchmarkData.getValue(s_OverallTime);
+		Long overallTime = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		sb.append(prettyprintNanoseconds(overallTime));
 		sb.append(" and ");
-		Integer overallIterations = (Integer) benchmarkData.getValue(s_OverallIterations);
+		Integer overallIterations = (Integer) benchmarkData.getValue(CegarLoopStatisticsDefinitions.OverallIterations.toString());
 		sb.append(overallIterations);
 		sb.append(" iterations. ");
 		
@@ -166,7 +166,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append(". ");
 		
 		StatisticsData ecData = 
-				(StatisticsData) benchmarkData.getValue(s_EdgeCheckerData);
+				(StatisticsData) benchmarkData.getValue(CegarLoopStatisticsDefinitions.HoareTripleCheckerStatistics.toString());
 		Long ecTime;
 		if (ecData.getBenchmarkType() == null) {
 			ecTime = 0L;
@@ -176,7 +176,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		
 		sb.append("Construction of modules took ");
 		sb.append(prettyprintNanoseconds(ecTime));
-		Long differenceTime = (Long) benchmarkData.getValue(s_AutomataDifference);
+		Long differenceTime = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		sb.append(". ");
 		sb.append("Büchi inclusion checks took ");
 		sb.append(prettyprintNanoseconds(differenceTime - ecTime));
@@ -188,9 +188,9 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append(". ");
 		
 		sb.append("Minimization removed ");
-		sb.append(benchmarkData.getValue(s_StatesRemovedByMinimization));
+		sb.append(benchmarkData.getValue(CegarLoopStatisticsDefinitions.StatesRemovedByMinimization.toString()));
 		sb.append(" states and took ");
-		Long time = (Long) benchmarkData.getValue(s_AutomataMinimizationTime);
+		Long time = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		sb.append(prettyprintNanoseconds(time));
 		sb.append(". ");
 		
@@ -202,7 +202,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append(prettyprintNanoseconds(buchiClosureTime));
 		sb.append(". ");
 		
-		SizeIterationPair sip = (SizeIterationPair) benchmarkData.getValue(s_BiggestAbstraction);
+		SizeIterationPair sip = (SizeIterationPair) benchmarkData.getValue(CegarLoopStatisticsDefinitions.BiggestAbstraction.toString());
 		sb.append("Biggest automaton had ");
 		sb.append(sip.getSize());
 		sb.append(" states and ocurred in iteration ");
@@ -226,7 +226,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append(bcib.toString());
 		sb.append("\t");
 		
-		sb.append(s_EdgeCheckerData);
+		sb.append(CegarLoopStatisticsDefinitions.HoareTripleCheckerStatistics.toString());
 		sb.append(": ");
 		sb.append(ecData);
 		sb.append("\t");

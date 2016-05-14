@@ -38,11 +38,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Lass
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.SynthesisResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.TraceCheckResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
-public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerator {
+public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerator {
 	
 	int[] m_NontrivialModuleStages = new int[5];
 	LassoAnalysisResults m_LassoAnalysisResults = new LassoAnalysisResults();

@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
@@ -34,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {

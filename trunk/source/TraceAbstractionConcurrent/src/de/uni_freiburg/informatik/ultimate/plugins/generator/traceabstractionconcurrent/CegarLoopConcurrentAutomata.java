@@ -54,13 +54,11 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
@@ -70,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
@@ -90,13 +87,13 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
+		m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 		StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(
 				m_Services, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_InterpolantGenerator, m_PredicateFactoryInterpolantAutomata);
 		m_InterpolAutomaton = iab.getResult();
 		mLogger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 
-		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
+		m_CegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 		assert (accepts(m_Services, m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult() : "Not inductive";
@@ -154,7 +151,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 		// howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 
-		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
+		m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 
 		PredicateFactoryForInterpolantAutomata predicateFactory = (PredicateFactoryForInterpolantAutomata) m_Abstraction.getStateFactory();
@@ -209,7 +206,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		}
 
 		m_CegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
-		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+		m_CegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
 		Minimization minimization = m_Pref.minimize();
 		switch (minimization) {

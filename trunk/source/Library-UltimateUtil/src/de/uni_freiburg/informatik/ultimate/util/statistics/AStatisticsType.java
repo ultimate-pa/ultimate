@@ -15,6 +15,10 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 			x -> y -> (Long) x + (Long) y;
 	public static Function<Object, Function<Object,Object>> s_IncareAddition = 
 			x -> y -> { ((InCaReCounter) x).add((InCaReCounter) y); return x;};
+	public static Function<Object, Function<Object,Object>> s_StatisticsDataAggregation = 
+			x -> y -> { ((StatisticsData) x).aggregateBenchmarkData((StatisticsData) y); return x;};
+	public static Function<String, Function<Object,String>> s_KeyBeforeData = 
+			key -> data -> key + ": " + String.valueOf(data);
 	public static Function<String, Function<Object,String>> s_DataBeforeKey = 
 			key -> data -> String.valueOf(data) + " " + key;
 	public static Function<String, Function<Object,String>> s_TimeBeforeKey = 

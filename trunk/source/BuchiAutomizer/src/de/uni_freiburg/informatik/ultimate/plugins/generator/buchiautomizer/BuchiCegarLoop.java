@@ -36,8 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
@@ -66,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
@@ -91,8 +90,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
@@ -248,7 +247,7 @@ public class BuchiCegarLoop {
 		this.m_SmtManager = smtManager;
 		this.m_BinaryStatePredicateManager = new BinaryStatePredicateManager(m_SmtManager, m_Services);
 		m_BenchmarkGenerator = new BuchiCegarLoopBenchmarkGenerator();
-		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_OverallTime);
+		m_BenchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		// this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
 		// m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable(),
 		// m_RootNode.getRootAnnot().getModGlobVarManager(),
@@ -583,7 +582,7 @@ public class BuchiCegarLoop {
 		} finally {
 			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		}
-		m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
+		m_BenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		int statesBeforeMinimization = m_Abstraction.size();
 		mLogger.info("Abstraction has " + m_Abstraction.sizeInformation());
 		Collection<Set<IPredicate>> partition = computePartition(m_Abstraction);
@@ -598,7 +597,7 @@ public class BuchiCegarLoop {
 		} catch (AutomataLibraryException e) {
 			throw new AssertionError(e.getMessage());
 		} finally {
-			m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
+			m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		}
 		int statesAfterMinimization = m_Abstraction.size();
 		m_BenchmarkGenerator.announceStatesRemovedByMinimization(statesBeforeMinimization - statesAfterMinimization);
@@ -661,7 +660,7 @@ public class BuchiCegarLoop {
 
 	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker)
 			throws OperationCanceledException {
-		m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataDifference);
+		m_BenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
 		BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
 				lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
@@ -677,11 +676,11 @@ public class BuchiCegarLoop {
 						lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation, m_BenchmarkGenerator,
 						m_ComplementationConstruction);
 			} catch (OperationCanceledException e) {
-				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+				m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				String runningTaskInfo = "applying " + e.getClassOfThrower().getSimpleName() + " in stage " + stage;
 				throw new ToolchainCanceledException(getClass(), runningTaskInfo);
 			} catch (ToolchainCanceledException e) {
-				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+				m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				throw e;
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError(e.getMessage());
@@ -706,7 +705,7 @@ public class BuchiCegarLoop {
 				default:
 					throw new AssertionError("unsupported");
 				}
-				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+				m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				m_BenchmarkGenerator.addBackwardCoveringInformationBuchi(m_RefineBuchi.getBci());
 				return newAbstraction;
 			}
@@ -760,7 +759,7 @@ public class BuchiCegarLoop {
 	}
 
 	private void refineFinite(LassoChecker lassoChecker) throws OperationCanceledException {
-		m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataDifference);
+		m_BenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final InterpolatingTraceChecker traceChecker;
 		final NestedRun<CodeBlock, IPredicate> run;
 		LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
@@ -806,13 +805,13 @@ public class BuchiCegarLoop {
 					determinized, psd, m_StateFactoryForRefinement, true);
 		} catch (AutomataLibraryException e) {
 			if (e instanceof OperationCanceledException) {
-				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+				m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				throw (OperationCanceledException) e;
 			} else {
 				throw new AssertionError();
 			}
 		} catch (ToolchainCanceledException e) {
-			m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+			m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 			throw e;
 		}
 		determinized.switchToReadonlyMode();
@@ -833,7 +832,7 @@ public class BuchiCegarLoop {
 								.getResult();
 		m_Abstraction = diff.getResult();
 		m_BenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
-		m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+		m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 	}
 
 	protected void constructInterpolantAutomaton(InterpolatingTraceChecker traceChecker,

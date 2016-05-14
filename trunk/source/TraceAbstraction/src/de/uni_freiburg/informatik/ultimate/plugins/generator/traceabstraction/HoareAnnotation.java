@@ -32,13 +32,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -58,11 +57,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
 import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableAST;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
  * Specifies properties of a state in a graph representation of a system. These

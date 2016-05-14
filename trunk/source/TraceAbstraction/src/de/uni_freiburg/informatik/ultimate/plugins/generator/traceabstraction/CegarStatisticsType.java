@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2014-2015 Betim Musa (musab@informatik.uni-freiburg.de)
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
@@ -28,28 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 
-public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> {
-
-	private final StatisticsData m_CegarLoopBenchmarkData;
-	private final int m_Procedures;
-	private final int m_Locations;
-	private final int m_ErrorLocations;
-
-	public TraceAbstractionBenchmarks(RootAnnot rootAnnot) {
-		m_Procedures = rootAnnot.getEntryNodes().size();
-		m_Locations = rootAnnot.getNumberOfProgramPoints();
-		m_ErrorLocations = rootAnnot.getNumberOfErrorNodes();
-		m_CegarLoopBenchmarkData = new StatisticsData();
+public class CegarStatisticsType extends AStatisticsType<CegarLoopStatisticsDefinitions> {
+	
+	public CegarStatisticsType() {
+		super(CegarLoopStatisticsDefinitions.class);
 	}
 
-	public void aggregateBenchmarkData(CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator) {
-		m_CegarLoopBenchmarkData.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
+	private static CegarStatisticsType s_Instance = new CegarStatisticsType();
+	
+	public static CegarStatisticsType getInstance() {
+		return s_Instance;
 	}
+
 
 	public static String prettyprintNanoseconds(long time) {
 		long seconds = time / 1000000000;
@@ -57,23 +48,27 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 		return seconds + "." + tenthDigit + "s";
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("CFG has ");
-		sb.append(m_Procedures);
-		sb.append(" procedures, ");
-		sb.append(m_Locations);
-		sb.append(" locations, ");
-		sb.append(m_ErrorLocations);
-		sb.append(" error locations. ");
-		sb.append(m_CegarLoopBenchmarkData.toString());
-		return sb.toString();
-	}
+	public class SizeIterationPair {
+		final int m_Size;
+		final int m_Iteration;
 
-	@Override
-	public ICsvProvider<Object> createCvsProvider() {
-		return m_CegarLoopBenchmarkData.createCvsProvider();
-	}
+		public SizeIterationPair(int size, int iteration) {
+			super();
+			m_Size = size;
+			m_Iteration = iteration;
+		}
 
+		public int getSize() {
+			return m_Size;
+		}
+
+		public int getIteration() {
+			return m_Iteration;
+		}
+
+		@Override
+		public String toString() {
+			return "size=" + m_Size + "occurred in iteration=" + m_Iteration;
+		}
+	}
 }

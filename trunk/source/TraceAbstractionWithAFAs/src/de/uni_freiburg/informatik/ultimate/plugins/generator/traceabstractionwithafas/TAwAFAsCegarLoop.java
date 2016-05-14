@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
@@ -477,7 +477,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	protected boolean refineAbstraction() throws AutomataLibraryException { //copied
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 
-		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
+		m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
@@ -525,7 +525,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			super.writeAutomatonToFile(m_InterpolAutomaton, filename);
 		}
 
-		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+		m_CegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
 		Minimization minimization = m_Pref.minimize();
 		switch (minimization) {

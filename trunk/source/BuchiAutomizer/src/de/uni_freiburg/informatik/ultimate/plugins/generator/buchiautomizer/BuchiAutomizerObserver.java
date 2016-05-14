@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -115,7 +116,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, mSmtManager, mPref, mServices, mStorage);
 		Result result = bcl.iterate();
 		BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
-		benchGen.stop(BuchiCegarLoopBenchmark.s_OverallTime);
+		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
 		IResult benchDecomp = new BenchmarkResult<String>(Activator.s_PLUGIN_ID, "Constructed decomposition of program",
 				bcl.getMDBenchmark());

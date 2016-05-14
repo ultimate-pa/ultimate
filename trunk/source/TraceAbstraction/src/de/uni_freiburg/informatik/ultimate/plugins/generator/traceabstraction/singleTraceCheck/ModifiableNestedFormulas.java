@@ -32,7 +32,6 @@ import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * NestedFormulas where we can set formulas after construction of the object.
