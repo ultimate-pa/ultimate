@@ -48,13 +48,14 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	private static final File m_ToolchainFile = new File(TestUtil.getPathFromTrunk(m_Toolchain));
 	private static int m_Timeout = 10 * 1000;
 	private static final String[] m_Directories = { 
-		"examples/Automata/atsTestFiles",
-		"examples/Automata/AUTOMATA_SCRIPT", 
+//		"examples/Automata/atsTestFiles",
+//		"examples/Automata/AUTOMATA_SCRIPT", 
 		"examples/Automata/BuchiAutomata", 
-		"examples/Automata/BuchiNwa",
-		"examples/Automata/finiteAutomata", 
-		"examples/Automata/nwa", 
-		"examples/Automata/nwaOperations",
+//		"examples/Automata/BuchiNwa",
+//		"examples/Automata/finiteAutomata", 
+//		"examples/Automata/nwa", 
+//		"examples/Automata/nwaOperations/debugging/",
+//		"examples/Automata/nwaOperations/minimizeMaxSAT/",
 	// the following two have still bugs
 	// "examples/Automata/PetriNet",
 	// "examples/Automata/senwa",
@@ -92,6 +93,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 					urd, super.getSummaries(), null);
 			testCases.add(utc);
 		}
+		testCases.sort(null);
 		return testCases;
 	}
 
