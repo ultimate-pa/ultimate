@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonCoreBooleanSubTermTransformer;
@@ -108,11 +110,14 @@ public class PrenexNormalForm extends TermTransformer {
 
 	private Term pullQuantifiers(ApplicationTerm appTerm, Term[] newArgs) {
 		final QuantifierSequence[] quantifierSequences = new QuantifierSequence[newArgs.length];
+		final HashSet<TermVariable> freeVariables = new HashSet<>();
 		for (int i=0; i<newArgs.length; i++) {
+			freeVariables.addAll(Arrays.asList(newArgs[i].getFreeVars()));
 			quantifierSequences[i] = new QuantifierSequence(m_Script, newArgs[i]);
 		}
 		final Term result = QuantifierSequence.mergeQuantifierSequences(m_Script, 
-				m_FreshTermVariableConstructor, appTerm.getFunction().getName(), quantifierSequences);
+				m_FreshTermVariableConstructor, appTerm.getFunction().getName(), 
+				quantifierSequences, freeVariables);
 		return result;
 	}
 

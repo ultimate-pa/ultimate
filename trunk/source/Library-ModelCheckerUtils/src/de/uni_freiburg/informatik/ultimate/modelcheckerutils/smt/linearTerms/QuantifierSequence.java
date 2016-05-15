@@ -129,7 +129,8 @@ public class QuantifierSequence {
 	public static Term mergeQuantifierSequences(final Script script, 
 			final IFreshTermVariableConstructor freshVarConstructor, 
 			final String functionSymbolName, 
-			final QuantifierSequence[] quantifierSequences) {
+			final QuantifierSequence[] quantifierSequences, 
+			final HashSet<TermVariable> freeVariables) {
 		// sort sequences, sequence with largest number of blocks first 
 		Arrays.sort(quantifierSequences, Collections.reverseOrder(Comparator.comparing(
 				QuantifierSequence::getNumberOfQuantifierBlocks)));
@@ -146,7 +147,7 @@ public class QuantifierSequence {
 		}
 		assert resultQuantifierBlocks.size() == largestSequence.getNumberOfQuantifierBlocks();
 		
-		Set<TermVariable> occurredVariables = new HashSet<>();
+		Set<TermVariable> occurredVariables = new HashSet<>(freeVariables);
 		for (int i=0; i<quantifierSequences.length; i++) {
 			quantifierSequences[i].replace(occurredVariables, freshVarConstructor, "prenex");
 			innerTerms[i] = quantifierSequences[i].getInnerTerm();
