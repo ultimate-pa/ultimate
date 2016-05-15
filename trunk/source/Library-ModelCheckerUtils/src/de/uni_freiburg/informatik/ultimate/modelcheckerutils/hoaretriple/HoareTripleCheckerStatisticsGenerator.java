@@ -59,7 +59,7 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 		m_SolverCounterUnknown = new InCaReCounter();
 		m_SolverCounterNotChecked= new InCaReCounter();
 		m_Benchmark = new Benchmark();
-		m_Benchmark.register(String.valueOf(HoareTripleCheckerStatisticsDefinitions.EdgeCheckerTime));
+		m_Benchmark.register(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
 
 	public InCaReCounter getSDtfsCounter() {
@@ -87,17 +87,17 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 		return m_SolverCounterNotChecked;
 	}
 	public long getEdgeCheckerTime() {
-		return (long) m_Benchmark.getElapsedTime(String.valueOf(HoareTripleCheckerStatisticsDefinitions.EdgeCheckerTime), TimeUnit.NANOSECONDS);
+		return (long) m_Benchmark.getElapsedTime(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time), TimeUnit.NANOSECONDS);
 	}
 	public void continueEdgeCheckerTime() {
 		assert m_Running == false : "Timing already running";
 		m_Running = true;
-		m_Benchmark.unpause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.EdgeCheckerTime));
+		m_Benchmark.unpause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
 	public void stopEdgeCheckerTime() {
 		assert m_Running == true : "Timing not running";
 		m_Running = false;
-		m_Benchmark.pause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.EdgeCheckerTime));
+		m_Benchmark.pause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
 	@Override
 	public Collection<String> getKeys() {
@@ -122,7 +122,7 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 			return m_SolverCounterUnknown;
 		case SolverNotchecked:
 			return m_SolverCounterNotChecked;
-		case EdgeCheckerTime:
+		case Time:
 			return getEdgeCheckerTime();
 		default:
 			throw new AssertionError("unknown key");

@@ -95,7 +95,7 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 		SolverUnsat(Integer.class, AStatisticsType.s_IncareAddition, AStatisticsType.s_DataBeforeKey),
 		SolverUnknown(Integer.class, AStatisticsType.s_IncareAddition, AStatisticsType.s_DataBeforeKey),
 		SolverNotchecked(Integer.class, AStatisticsType.s_IncareAddition, AStatisticsType.s_DataBeforeKey),
-		EdgeCheckerTime(Integer.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+		Time(Integer.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
 		;
 		
 		private final Class<?> m_Clazz;

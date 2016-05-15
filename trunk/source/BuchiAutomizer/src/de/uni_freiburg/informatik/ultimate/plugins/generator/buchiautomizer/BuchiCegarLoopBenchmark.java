@@ -171,7 +171,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		if (ecData.getBenchmarkType() == null) {
 			ecTime = 0L;
 		} else {
-			ecTime = (Long) ecData.getValue(String.valueOf(HoareTripleCheckerStatisticsDefinitions.EdgeCheckerTime));
+			ecTime = (Long) ecData.getValue(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 		}
 		
 		sb.append("Construction of modules took ");
