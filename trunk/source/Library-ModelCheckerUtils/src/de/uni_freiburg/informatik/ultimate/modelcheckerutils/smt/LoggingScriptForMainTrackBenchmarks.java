@@ -130,7 +130,8 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 //		return "QF_NRA";
 //		return "QF_NIA";
 //		return "QF_AUFNIRA";
-		return "QF_ABV";
+//		return "QF_ABV";
+		return "BV";
 	}
 	
 	public static String SOURCE_INVSYNTH = 
@@ -198,7 +199,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 			"Ultimate Automizer to benchmarks from the SV-COMP 2016 [4,5] which are"  + System.lineSeparator() + 
 			"available at [6]. " + System.lineSeparator() + 
 			"" + System.lineSeparator() + 
-			"2016-04-30, Matthias Heizmann (heizmann@informatik.uni-freiburg.de)" + System.lineSeparator() + 
+			"May 2016, Matthias Heizmann (heizmann@informatik.uni-freiburg.de)" + System.lineSeparator() + 
 			"" + System.lineSeparator() + 
 			"" + System.lineSeparator() + 
 			"[1] http://http://ultimate.informatik.uni-freiburg.de/automizer/" + System.lineSeparator() + 
