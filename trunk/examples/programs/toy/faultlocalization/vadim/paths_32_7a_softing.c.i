@@ -554,6 +554,7 @@ int __VERIFIER_nondet_int(void);
 struct mutex {
  int a;
 };
+void mutex_init(struct mutex *lock);
 static int ldv_mutex_fw_lock = 1;
 int ldv_mutex_lock_interruptible_fw_lock(struct mutex *lock)
 {

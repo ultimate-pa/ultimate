@@ -29,6 +29,8 @@ struct mutex {
 	int a;
 };
 
+void mutex_init(struct mutex *lock);
+
 #define ldv_assert(b) if(!(b)) __VERIFIER_error()
 
 static int ldv_mutex_fw_lock = 1;
