@@ -596,7 +596,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		
-		declareFloatingPointFunction(loc, funcname, funcname, true, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
+		declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
 		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
 		return result;
 	}
