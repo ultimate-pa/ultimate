@@ -349,7 +349,9 @@ public class MemoryHandler {
     public ArrayList<Declaration> declareMemoryModelInfrastructure(
             final Dispatcher main, final ILocation tuLoc) {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
-        if (!main.isMMRequired()) {
+        if (!main.isMMRequired() && 
+        		!m_RequiredMemoryModelFeatures.isMemoryModelInfrastructureRequired() &&
+        		m_RequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().isEmpty()) {
             return decl;
         }
 
@@ -373,18 +375,22 @@ public class MemoryHandler {
         
         if (m_RequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.Ultimate_Alloc)) {
         	decl.addAll(declareMalloc(m_TypeHandler, tuLoc));
+        	m_FunctionHandler.registerProcedureForCallGraphAndModifies(MemoryModelDeclarations.Ultimate_Alloc.getName());
         }
 
         if (m_RequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.C_Memset)) {
         	decl.addAll(declareMemset(main, heapDataArrays));
+        	m_FunctionHandler.registerProcedureForCallGraphAndModifies(MemoryModelDeclarations.C_Memset.getName());
         }
         
         if (m_RequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.Ultimate_MemInit)) {
         	decl.addAll(declareUltimateMeminit(main, heapDataArrays));
+        	m_FunctionHandler.registerProcedureForCallGraphAndModifies(MemoryModelDeclarations.Ultimate_MemInit.getName());
         }
         
         if (m_RequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.C_Memcpy)) {
         	decl.addAll(declareMemcpy(main, heapDataArrays));
+        	m_FunctionHandler.registerProcedureForCallGraphAndModifies(MemoryModelDeclarations.C_Memcpy.getName());
         }
 
         return decl;

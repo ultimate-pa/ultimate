@@ -332,12 +332,8 @@ public class FunctionHandler {
 				proc.getIdentifier(), proc.getTypeParams(), in, proc.getOutParams(), proc.getSpecification(), null);
 		currentProcedure = declWithCorrectlyNamedInParams;
 		currentProcedureIsVoid = returnTypeIsVoid;
-		if (!modifiedGlobals.containsKey(currentProcedure.getIdentifier())) {
-			modifiedGlobals.put(currentProcedure.getIdentifier(), new LinkedHashSet<String>());
-		}
-		if (!callGraph.containsKey(currentProcedure.getIdentifier())) {
-			callGraph.put(currentProcedure.getIdentifier(), new LinkedHashSet<String>());
-		}
+		final String procId = currentProcedure.getIdentifier();
+		registerProcedureForCallGraphAndModifies(procId);
 
 		/*
 		 * The structure is as follows: 1) Preprocessing of the method body: -
@@ -372,6 +368,16 @@ public class FunctionHandler {
 		currentProcedureIsVoid = false;
 		main.cHandler.endScope();
 		return new Result(impl);
+	}
+
+
+	public void registerProcedureForCallGraphAndModifies(final String procId) {
+		if (!modifiedGlobals.containsKey(procId)) {
+			modifiedGlobals.put(procId, new LinkedHashSet<String>());
+		}
+		if (!callGraph.containsKey(procId)) {
+			callGraph.put(procId, new LinkedHashSet<String>());
+		}
 	}
 
 	/**
