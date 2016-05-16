@@ -395,9 +395,9 @@ public class FlowSensitiveFaultLocalizer {
 			for(Integer brachInPosition:informationFromCFG.keySet()){
 				if(informationFromCFG.get(brachInPosition).contains(i)){
 					subBranch = true;
-					branchOut = informationFromCFG.get(brachInPosition).indexOf(i);
-					branchIn = brachInPosition;
-					i = branchIn +1;
+					branchOut = i;
+					branchIn = brachInPosition -1;
+					i = branchIn;
 				}
 			}
 			
@@ -472,12 +472,15 @@ public class FlowSensitiveFaultLocalizer {
 			int positionBranchOut = 0;
 			int positionBranchIn = 0;
 			// Find out if the current Statement is a BRANCH-IN statement.
-			if(informationFromCFG.get(position-1) != null ){ 
+			List<Integer> branchIn = informationFromCFG.get(position+1);
+			if(branchIn != null ){ 
 				// We are on a branch-in Statement'
-				int sizeOfbranchInPosArray = informationFromCFG.get(position-1).size();
-				positionBranchOut = informationFromCFG.get(position-1).get(sizeOfbranchInPosArray-1); //fetch the last element.
+				int sizeOfbranchInPosArray = branchIn.size();
+				positionBranchOut = branchIn.get(sizeOfbranchInPosArray-1); //fetch the last element.
 				positionBranchIn = position;
-				informationFromCFG.get(position-1).remove(sizeOfbranchInPosArray-1);
+				informationFromCFG.get(position+1).remove(sizeOfbranchInPosArray-1);
+				position = positionBranchOut;
+				isBranchIn = true;
 				
 			}
 			
