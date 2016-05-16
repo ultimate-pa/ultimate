@@ -205,7 +205,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 
 	public static final String DEF_GRAPHWRITERPATH = "";
 
-	public static final int DEF_TIMEOUT = 1000000;
+	public static final int DEF_TIMEOUT = 100000;
 	
 	public static final int DEF_ITERATIONS = -1;
 	

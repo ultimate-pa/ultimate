@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
@@ -36,11 +37,20 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.preferences.HornClauseGraphBuilderPreferenceInitializer;
 
 public class HornClauseGraphBuilder implements IGenerator {
 	
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	public static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
+	
+	
+	private HornClauseGraphBuilderObserver m_Observer;
+//	private ModelType m_InputDefinition;
+
+	private IUltimateServiceProvider m_Services;
+	private IToolchainStorage m_ToolchainStorage;
+	private List<IObserver> m_Observers;
 
 	@Override
 	public ModelType getOutputDefinition() {
@@ -74,26 +84,23 @@ public class HornClauseGraphBuilder implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_Observers;
 	}
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
-		// TODO Auto-generated method stub
-		
+		m_ToolchainStorage = storage;
 	}
 
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
-		// TODO Auto-generated method stub
-		
+		m_Services = services;
 	}
 
 	@Override
 	public void init() {
-		// TODO Auto-generated method stub
-		
+		m_Observer = new HornClauseGraphBuilderObserver();
+		m_Observers = Collections.singletonList(m_Observer);
 	}
 
 	@Override
@@ -104,20 +111,17 @@ public class HornClauseGraphBuilder implements IGenerator {
 
 	@Override
 	public String getPluginName() {
-		// TODO Auto-generated method stub
-		return null;
+		return s_PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		// TODO Auto-generated method stub
-		return null;
+		return s_PLUGIN_ID;
 	}
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
-		return null;
+		return new HornClauseGraphBuilderPreferenceInitializer();
 	}
 
 	@Override
