@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -53,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -435,7 +438,8 @@ public class FlowSensitiveFaultLocalizer {
 				smtManager.getScript(), modGlobVarManager, m_Services);
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		final TransFormula markhor = computeMarkhorFormula(a, b, counterexampleWord,informationFromCFG, smtManager);
-		final Term wpTerm = pt.weakestPrecondition(weakestPreconditionOld, markhor);
+		final Term wpTerm = computeWp(weakestPreconditionOld, markhor, smtManager.getScript(), 
+				smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
 		final IPredicate weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
 		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
@@ -501,7 +505,8 @@ public class FlowSensitiveFaultLocalizer {
 
 					m_Logger.info(" - - Irrelevant Branch - - - [MarkhorFormula:"+ markhor_formula + " ]");
 				}
-				final Term wpTerm = pt.weakestPrecondition(weakestPreconditionNew, markhor_formula[0]);
+				final Term wpTerm = computeWp(weakestPreconditionNew, markhor_formula[0], smtManager.getScript(), 
+						smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
 				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
 				weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
 				// If the branch is relevant, then recursively call the same function on it self with the updated parameters.
@@ -511,7 +516,9 @@ public class FlowSensitiveFaultLocalizer {
 			}
 			else{ // The statement under consideration is NOT a BRANCH-IN Statement.
 				weakestPreconditionOld = weakestPreconditionNew;
-				final Term wpTerm = pt.weakestPrecondition(weakestPreconditionOld, counterexampleWord.getSymbolAt(position).getTransitionFormula());
+				final TransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
+				final Term wpTerm = computeWp(weakestPreconditionOld, tf, smtManager.getScript(), 
+						smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
 				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
 				weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
 				pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
@@ -561,6 +568,20 @@ public class FlowSensitiveFaultLocalizer {
 		
 		return(relevantStatements);
 	
+	}
+
+	/**
+	 * Compute WP and optionally apply quantifier elimination. 
+	 */
+	private Term computeWp(IPredicate successor, TransFormula tf, Script script, 
+			IFreshTermVariableConstructor freshTermVariableConstructor, 
+			PredicateTransformer pt, boolean applyQuantifierElimination) {
+		Term result = pt.weakestPrecondition(successor, tf);
+		if (applyQuantifierElimination) {
+			result = PartialQuantifierElimination.tryToEliminate(m_Services, 
+					m_Logger, script, freshTermVariableConstructor, result);
+		}
+		return result;
 	}
 	
 	private void computeFlowSensitiveTraceFormula(NestedWord<CodeBlock> counterexampleWord,
