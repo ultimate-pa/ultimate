@@ -3,7 +3,8 @@
 //
 
 
-print(reduceNwaDirectSimulation(removeDeadEnds(nwa), false));
+//print(reduceNwaDirectSimulation(removeDeadEnds(nwa), false));
+print(reduceNwaDirectSimulation(nwa, false));
 
 
 NestedWordAutomaton nwa = (
@@ -12,7 +13,7 @@ NestedWordAutomaton nwa = (
 	returnAlphabet = {"r"},
 	states = {"q1" "q2" "q3" "q4" "qf" "q5"},
 	initialStates = {"q1"},
-	finalStates = {"q5"},
+	finalStates = {"qf" "q5"},
 	callTransitions = {
 		 ("q1" "c" "qf")
 	},

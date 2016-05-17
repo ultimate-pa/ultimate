@@ -915,8 +915,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			}
 
 			// Skip updating predecessors if there are no
+			boolean considerPushOverPredecessors = workingVertex.getPM(scc, m_GlobalInfinity) == m_GlobalInfinity && m_Game.hasPushOverPredecessors(workingVertex);
 			Set<Vertex<LETTER, STATE>> predVertices = m_Game.getPredecessors(workingVertex);
-			if (predVertices == null || predVertices.isEmpty()) {
+			if ((predVertices == null || predVertices.isEmpty()) && !considerPushOverPredecessors) {
 				continue;
 			}
 
@@ -926,10 +927,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			Set<Vertex<LETTER, STATE>> predecessorsToConsider = predVertices;
 			// If vertex reached infinity, propagate this over the push-over
 			// edges.
-			if (workingVertex.getPM(scc, m_GlobalInfinity) == m_GlobalInfinity
-					&& m_Game.hasPushOverPredecessors(workingVertex)) {
+			if (considerPushOverPredecessors) {
 				// Care for concurrent modification exception
-				predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>(predecessorsToConsider);
+				if (predecessorsToConsider != null) {
+					predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>(predecessorsToConsider);
+				} else {
+					predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>();
+				}
 				// TODO There is a problem with push-over edges not being
 				// considered in the SCC optimization.
 				predecessorsToConsider.addAll(m_Game.getPushOverPredecessors(workingVertex));

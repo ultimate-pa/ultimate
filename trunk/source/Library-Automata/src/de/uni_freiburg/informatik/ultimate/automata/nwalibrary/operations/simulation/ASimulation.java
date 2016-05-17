@@ -626,15 +626,20 @@ public abstract class ASimulation<LETTER, STATE> {
 			// Work through its predecessors and possibly add them
 			// to the working list since they may be interested in
 			// the changes of the working vertex
-			if (!game.hasPredecessors(v)) {
+			boolean considerPushOverPredecessors = v.getPM(scc, globalInfinity) == globalInfinity && game.hasPushOverPredecessors(v);
+			if (!game.hasPredecessors(v) && !considerPushOverPredecessors) {
 				continue;
 			}
 			Set<Vertex<LETTER, STATE>> predecessorsToConsider = game.getPredecessors(v);
 			// If vertex reached infinity, propagate this over the push-over
 			// edges.
-			if (v.getPM(scc, globalInfinity) == globalInfinity && game.hasPushOverPredecessors(v)) {
+			if (considerPushOverPredecessors) {
 				// Care for concurrent modification exception
-				predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>(predecessorsToConsider);
+				if (predecessorsToConsider != null) {
+					predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>(predecessorsToConsider);
+				} else {
+					predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>();
+				}
 				// TODO There is a problem with push-over edges not being
 				// considered in the SCC optimization.
 				predecessorsToConsider.addAll(game.getPushOverPredecessors(v));

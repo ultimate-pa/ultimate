@@ -1500,17 +1500,19 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// covered by summarize edges
 		for (DuplicatorDoubleDeckerVertex<LETTER, STATE> returnInvoker : m_DuplicatorReturningVertices) {
 			Set<Vertex<LETTER, STATE>> successors = m_GameGraph.getSuccessors(returnInvoker);
+			List<Vertex<LETTER, STATE>> successorsToProcess = null;
 			if (successors != null) {
 				// Care for concurrentModifcationException
-				List<Vertex<LETTER, STATE>> successorsToProcess = new LinkedList<>(successors);
+				successorsToProcess = new LinkedList<>(successors);
 				for (Vertex<LETTER, STATE> succ : successorsToProcess) {
 					m_GameGraph.removeEdge(returnInvoker, succ);
 				}
 			}
 			Set<Vertex<LETTER, STATE>> predecessors = m_GameGraph.getPredecessors(returnInvoker);
+			List<Vertex<LETTER, STATE>> predecessorsToProcess = null;
 			if (predecessors != null) {
 				// Care for concurrentModifcationException
-				List<Vertex<LETTER, STATE>> predecessorsToProcess = new LinkedList<>(predecessors);
+				predecessorsToProcess = new LinkedList<>(predecessors);
 				for (Vertex<LETTER, STATE> pred : predecessorsToProcess) {
 					m_GameGraph.removeEdge(pred, returnInvoker);
 					// Care for dead end spoiler vertices because they are not
@@ -1526,9 +1528,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			removeDuplicatorVertex(returnInvoker);
 			
 			// Add push-over edges for every pair of successors and predecessors
-			if (successors != null && predecessors != null) {
-				for (Vertex<LETTER, STATE> succ : successors) {
-					for (Vertex<LETTER, STATE> pred : predecessors) {
+			if (successorsToProcess != null && predecessorsToProcess != null) {
+				for (Vertex<LETTER, STATE> succ : successorsToProcess) {
+					for (Vertex<LETTER, STATE> pred : predecessorsToProcess) {
 						m_GameGraph.addPushOverEdge(pred, succ);
 					}
 				}
