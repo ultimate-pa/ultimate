@@ -201,7 +201,7 @@ public class IndexAnalyzer2 {
 			if (lbool == LBool.UNSAT) {
 				addDistinctDoubleton(Doubleton);
 			} else {
-				Term notEqual = Util.not(m_Script, equal);
+				Term notEqual = SmtUtils.not(m_Script, equal);
 				m_Script.push(1);
 				m_Script.assertTerm(notEqual);
 				lbool = m_Script.checkSat();
@@ -243,7 +243,7 @@ public class IndexAnalyzer2 {
 	}
 
 	private Term notEqualTerm(Doubleton<Term> Doubleton) {
-		return Util.not(m_Script, equalTerm(Doubleton));
+		return SmtUtils.not(m_Script, equalTerm(Doubleton));
 	}
 	
 	

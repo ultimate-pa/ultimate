@@ -499,7 +499,7 @@ public class SmtManager {
 		} else {
 			m_Script.push(1);
 			m_IndexedConstants = new ScopedHashMap<String, Term>();
-			Term negImpl = Util.and(m_Script, formula1, Util.not(m_Script, formula2));
+			Term negImpl = Util.and(m_Script, formula1, SmtUtils.not(m_Script, formula2));
 
 			// replace all vars by constants
 			{
@@ -786,7 +786,7 @@ public class SmtManager {
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
-		Term f = Util.not(m_Script, ps2renamed);
+		Term f = SmtUtils.not(m_Script, ps2renamed);
 		f = Util.and(m_Script, fTrans, f);
 		f = Util.and(m_Script, ps1renamed, f);
 
@@ -864,7 +864,7 @@ public class SmtManager {
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
-		Term f = Util.not(m_Script, ps2renamed);
+		Term f = SmtUtils.not(m_Script, ps2renamed);
 		f = Util.and(m_Script, fReturn, f);
 		f = Util.and(m_Script, ps1renamed, f);
 		f = Util.and(m_Script, fCall, f);

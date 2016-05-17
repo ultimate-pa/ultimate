@@ -99,7 +99,7 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 		}
 		Term withoutThisIte = Util.or(m_Script, 
 				Util.and(m_Script, condition, replacedWithIf), 
-				Util.and(m_Script, Util.not(m_Script, condition), replacedWithElse)
+				Util.and(m_Script, SmtUtils.not(m_Script, condition), replacedWithElse)
 				);
 		return withoutThisIte;
 	}

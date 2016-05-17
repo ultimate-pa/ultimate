@@ -90,7 +90,7 @@ public class PredicateUtils {
 	//
 	// //We want to return true if (fState1 && fTrans)-> fState2 is valid
 	// //This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
-	// Term f = Util.not(boogie2smt.getScript(),ps2renamed);
+	// Term f = SmtUtils.not(boogie2smt.getScript(),ps2renamed);
 	// f = Util.and(boogie2smt.getScript(),fTrans,f);
 	// f = Util.and(boogie2smt.getScript(),ps1renamed, f);
 	//
@@ -299,7 +299,7 @@ public class PredicateUtils {
 			Term postcondRenamed = rename(boogie2smt.getScript(), postcond, tf.getAssignedVars());
 			negativeConjuncts.add(postcondRenamed);
 			Term negative = SmtUtils.and(boogie2smt.getScript(), negativeConjuncts);
-			boogie2smt.getScript().assertTerm(Util.not(boogie2smt.getScript(), negative));
+			boogie2smt.getScript().assertTerm(SmtUtils.not(boogie2smt.getScript(), negative));
 		}
 		LBool result = boogie2smt.getScript().checkSat();
 

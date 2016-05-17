@@ -244,8 +244,8 @@ public class PredicateFactory {
 		if (isDontCare(p)) {
 			return new TermVarsProc(m_DontCareTerm, EMPTY_VARS, NO_PROCEDURE, m_DontCareTerm);
 		}
-		Term term = Util.not(m_Script, p.getFormula());
-		Term closedTerm = Util.not(m_Script, p.getClosedFormula());
+		Term term = SmtUtils.not(m_Script, p.getFormula());
+		Term closedTerm = SmtUtils.not(m_Script, p.getClosedFormula());
 		return new TermVarsProc(term, p.getVars(), p.getProcedures(), closedTerm);
 	}
 	

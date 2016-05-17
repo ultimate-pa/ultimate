@@ -418,7 +418,7 @@ public class TransFormulaLRWithArrayCells {
 					select2CellVariable);
 			Term newDataIsUpdateData = SmtUtils.binaryEquality(m_Script, newCellVariable, data);
 			Term newDateIsOldData = SmtUtils.binaryEquality(m_Script, newCellVariable, oldCellVariable);
-			Term indexIsNotUpdateIndex = Util.not(m_Script, indexIsUpdateIndex);
+			Term indexIsNotUpdateIndex = SmtUtils.not(m_Script, indexIsUpdateIndex);
 			Term indexIsUpdateIndexImpliesUpdateData = Util.or(m_Script, indexIsNotUpdateIndex, newDataIsUpdateData);
 			Term indexIsNotUpdateIndexImpliesOldData = Util.or(m_Script, indexIsUpdateIndex, newDateIsOldData);
 			conjuncts[offset] = Util.and(m_Script, indexIsUpdateIndexImpliesUpdateData,
@@ -486,7 +486,7 @@ public class TransFormulaLRWithArrayCells {
 			SafeSubstitution select2CellVariable) {
 		Term indexEquality = pairwiseEqualityExploitDoubletons(index1, index2, select2CellVariable);
 		Term valueEquality = SmtUtils.binaryEquality(m_Script, value1, value2);
-		return Util.or(m_Script, Util.not(m_Script, indexEquality), valueEquality);
+		return Util.or(m_Script, SmtUtils.not(m_Script, indexEquality), valueEquality);
 	}
 
 	Term pairwiseEqualityExploitDoubletons(ArrayIndex index1, ArrayIndex index2, SafeSubstitution select2CellVariable) {

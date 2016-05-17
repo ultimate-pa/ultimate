@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Literal;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Literal.Polarity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Represents a set of literals {@see Literal} as a map that assigns to each
@@ -161,7 +162,7 @@ public class XJunction {
 			if (entry.getValue() == Polarity.POSITIVE) {
 				result.add(entry.getKey());
 			} else {
-				result.add(Util.not(script, entry.getKey()));
+				result.add(SmtUtils.not(script, entry.getKey()));
 			}
 		}
 		return result;

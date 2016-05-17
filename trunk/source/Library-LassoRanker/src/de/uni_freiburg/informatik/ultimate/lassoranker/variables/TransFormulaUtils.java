@@ -175,7 +175,7 @@ public class TransFormulaUtils {
 		Term consequentTerm = renameToConstants(services, logger, script, symbTab, consequent);
 		script.push(1);
 		script.assertTerm(antecentTerm);
-		script.assertTerm(Util.not(script, consequentTerm));
+		script.assertTerm(SmtUtils.not(script, consequentTerm));
 		LBool result = script.checkSat();
 		script.pop(1);
 		return result;

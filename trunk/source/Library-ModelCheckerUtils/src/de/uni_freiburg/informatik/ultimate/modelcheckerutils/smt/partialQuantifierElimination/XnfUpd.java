@@ -199,7 +199,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
 			Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
-			LBool isSat = Util.checkSat(script, Util.not(script, disjunction));
+			LBool isSat = Util.checkSat(script, SmtUtils.not(script, disjunction));
 			if (isSat == LBool.SAT) {
 				return script.term("false");
 			} else if (isSat == LBool.UNSAT) {

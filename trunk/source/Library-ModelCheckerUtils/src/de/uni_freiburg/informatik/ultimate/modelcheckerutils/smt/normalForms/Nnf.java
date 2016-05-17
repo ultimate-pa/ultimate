@@ -260,7 +260,7 @@ public class Nnf {
 		}
 
 		private Term convertIte(Term condTerm, Term ifTerm, Term elseTerm) {
-			Term condImpliesIf = Util.or(m_Script, Util.not(m_Script, condTerm), ifTerm);
+			Term condImpliesIf = Util.or(m_Script, SmtUtils.not(m_Script, condTerm), ifTerm);
 			Term notCondImpliesElse = Util.or(m_Script, condTerm, elseTerm);
 			Term result = Util.and(m_Script, condImpliesIf, notCondImpliesElse);
 			return result;
@@ -320,7 +320,7 @@ public class Nnf {
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
-						convert(Util.not(m_Script, binarized));
+						convert(SmtUtils.not(m_Script, binarized));
 					} else {
 						assert notParams.length == 2;
 						// we deliberately call convert() instead of super.convert()
@@ -336,7 +336,7 @@ public class Nnf {
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
-						convert(Util.not(m_Script, binarized));
+						convert(SmtUtils.not(m_Script, binarized));
 					} else {
 						assert notParams.length == 2;
 						// we deliberately call convert() instead of super.convert()
@@ -352,7 +352,7 @@ public class Nnf {
 					Term ifTerm = notParams[1];
 					Term elseTerm = notParams[2];
 					Term convertedIte = convertIte(condTerm, ifTerm, elseTerm);
-					convertNot(convertedIte, Util.not(m_Script, convertedIte));
+					convertNot(convertedIte, SmtUtils.not(m_Script, convertedIte));
 				} else {
 					//consider original term as atom
 					setResult(notTerm);
@@ -379,7 +379,7 @@ public class Nnf {
 					final QuantifiedFormula qf = (QuantifiedFormula) notParam;
 					final int quantor = (qf.getQuantifier() + 1) % 2;
 					final TermVariable[] vars = qf.getVariables();
-					final Term body = Util.not(m_Script, qf.getSubformula());
+					final Term body = SmtUtils.not(m_Script, qf.getSubformula());
 					final Term negated = m_Script.quantifier(quantor, vars, body);
 					super.convert(negated);
 					return;
@@ -399,7 +399,7 @@ public class Nnf {
 		private Term[] negateTerms(Term[] terms) {
 			Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length; i++) {
-				newTerms[i] = Util.not(m_Script, terms[i]);
+				newTerms[i] = SmtUtils.not(m_Script, terms[i]);
 			}
 			return newTerms;
 		}
@@ -409,14 +409,14 @@ public class Nnf {
 			for (int i=0; i<terms.length-1; i++) {
 				newTerms[i] = terms[i];
 			}
-			newTerms[terms.length-1] = Util.not(m_Script, terms[terms.length-1]);
+			newTerms[terms.length-1] = SmtUtils.not(m_Script, terms[terms.length-1]);
 			return newTerms;
 		}
 		
 		private Term[] negateAllButLast(Term[] terms) {
 			Term[] newTerms = new Term[terms.length];
 			for (int i=0; i<terms.length-1; i++) {
-				newTerms[i] = Util.not(m_Script, terms[i]);
+				newTerms[i] = SmtUtils.not(m_Script, terms[i]);
 			}
 			newTerms[terms.length-1] = terms[terms.length-1];
 			return newTerms;

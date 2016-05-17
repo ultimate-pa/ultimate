@@ -679,7 +679,7 @@ public class PredicateTransformer {
 		final Term renamedTransFormula = new SafeSubstitutionWithLocalSimplification(m_Script, substitutionForTransFormula).transform(tf.getFormula());
 		final Term renamedSuccessor = new SafeSubstitutionWithLocalSimplification(m_Script, substitutionForSuccessor).transform(p.getFormula());
 			
-		final Term result = Util.or(m_Script, Util.not(m_Script, renamedTransFormula), renamedSuccessor);
+		final Term result = Util.or(m_Script, SmtUtils.not(m_Script, renamedTransFormula), renamedSuccessor);
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(m_Script, Script.FORALL, varsToQuantify, result);
@@ -761,7 +761,7 @@ public class PredicateTransformer {
 
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>(ip.getFreshTermVariables());
 		Term result = Util.or(m_Script,
-				Util.not(m_Script, Util.and(m_Script, call_TFrenamed, globalVarsAssignmentsRenamed, oldVarsAssignmentsRenamed)),
+				SmtUtils.not(m_Script, Util.and(m_Script, call_TFrenamed, globalVarsAssignmentsRenamed, oldVarsAssignmentsRenamed)),
 				calleePredRenamed);
 		varsToQuantify.addAll(call_TF.getAuxVars());
 		final Term quantified = SmtUtils.quantifier(m_Script, Script.FORALL, varsToQuantify, result);
@@ -899,7 +899,7 @@ public class PredicateTransformer {
 		Term callerPredANDCallANDReturnAndGlobalVars = Util.and(m_Script, callerPredRenamed, returnTermRenamed,
 				callTermRenamed, globalVarsRenamed);
 
-		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturnAndGlobalVars), returnPredRenamed);
+		Term result = Util.or(m_Script, SmtUtils.not(m_Script, callerPredANDCallANDReturnAndGlobalVars), returnPredRenamed);
 		return SmtUtils.quantifier(m_Script, Script.FORALL, varsToQuantify, result);
 	}
 	

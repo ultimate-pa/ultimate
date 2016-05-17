@@ -216,7 +216,7 @@ public class ElimStore3 {
 					auxTerm = Util.and(m_Script, auxTerm, auxVarDef);
 				} else {
 					assert quantifier == QuantifiedFormula.FORALL;
-					auxTerm = Util.or(m_Script, auxTerm, Util.not(m_Script, auxVarDef));
+					auxTerm = Util.or(m_Script, auxTerm, SmtUtils.not(m_Script, auxVarDef));
 				}
 				Set<TermVariable> auxAuxVars = new HashSet<TermVariable>();
 				Term auxRes = elim(quantifier, eliminatee, auxTerm, newAuxVars);
@@ -407,12 +407,12 @@ public class ElimStore3 {
 //			assert ourIndex.size() == othersIndex.size();
 //			Term indexEquality = Util.and(script, buildPairwiseEquality(ourIndex, othersIndices[i], null, script));
 //			Term valueEquality = SmtUtils.binaryEquality(script, ourValue, othersValues[i]);
-//			Term conjunct = Util.or(script, Util.not(script, indexEquality), valueEquality);
+//			Term conjunct = Util.or(script, SmtUtils.not(script, indexEquality), valueEquality);
 //			if (quantifier == QuantifiedFormula.EXISTS) {
 //				additionalConjuncs.add(conjunct);
 //			} else {
 //				assert quantifier == QuantifiedFormula.FORALL;
-//				additionalConjuncs.add(Util.not(script, conjunct));
+//				additionalConjuncs.add(SmtUtils.not(script, conjunct));
 //			}
 //		}
 //		Term result;
@@ -557,7 +557,7 @@ public class ElimStore3 {
 		public Term getTerm() {
 			Term indexTerm = m_IndexEquality;
 			if (m_SelectConnection) {
-				indexTerm = Util.not(m_Script, indexTerm);
+				indexTerm = SmtUtils.not(m_Script, indexTerm);
 			}
 			return Util.or(m_Script, indexTerm, m_ValueEquality);
 

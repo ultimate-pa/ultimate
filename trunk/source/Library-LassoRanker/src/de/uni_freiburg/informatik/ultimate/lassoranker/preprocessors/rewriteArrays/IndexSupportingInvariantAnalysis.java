@@ -140,7 +140,7 @@ public class IndexSupportingInvariantAnalysis {
 	}
 
 	private Term notEqualTerm(Doubleton<Term> Doubleton) {
-		return Util.not(m_Script, equalTerm(Doubleton));
+		return SmtUtils.not(m_Script, equalTerm(Doubleton));
 	}
 	
 	private boolean isInVariant(Doubleton<Term> definingDoubleton, boolean checkEquals) {

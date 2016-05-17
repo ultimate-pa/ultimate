@@ -165,7 +165,7 @@ public class SmtUtils {
 		assert lhs.getSort().getName().equals("Bool");
 		assert rhs.getSort().getName().equals("Bool");
 		Term bothTrue = Util.and(script, lhs, rhs);
-		Term bothFalse = Util.and(script, Util.not(script, lhs), Util.not(script, rhs));
+		Term bothFalse = Util.and(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
 		return Util.or(script, bothTrue, bothFalse);
 	}
 
@@ -177,7 +177,7 @@ public class SmtUtils {
 		assert lhs.getSort().getName().equals("Bool");
 		assert rhs.getSort().getName().equals("Bool");
 		Term oneIsTrue = Util.or(script, lhs, rhs);
-		Term oneIsFalse = Util.or(script, Util.not(script, lhs), Util.not(script, rhs));
+		Term oneIsFalse = Util.or(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
 		return Util.and(script, oneIsTrue, oneIsFalse);
 	}
 
@@ -188,7 +188,7 @@ public class SmtUtils {
 	public static List<Term> negateElementwise(Script script, List<Term> terms) {
 		List<Term> result = new ArrayList<>(terms.size());
 		for (Term term : terms) {
-			result.add(Util.not(script, term));
+			result.add(SmtUtils.not(script, term));
 		}
 		return result;
 	}
@@ -258,7 +258,7 @@ public class SmtUtils {
 		assert index1.size() == index2.size();
 		Term indexEquality = Util.and(script, SmtUtils.pairwiseEquality(script, index1, index2));
 		Term valueEquality = SmtUtils.binaryEquality(script, value1, value2);
-		Term result = Util.or(script, Util.not(script, indexEquality), valueEquality);
+		Term result = Util.or(script, SmtUtils.not(script, indexEquality), valueEquality);
 		return result;
 	}
 
@@ -350,6 +350,24 @@ public class SmtUtils {
 			throw new UnsupportedOperationException("unkown sort " + sort);
 		}
 	}
+	
+	/**
+	 * Return term that represents negation of boolean term.
+	 */
+	public static Term not(Script script, Term term) {
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getFunction().getName().equals("distinct") && 
+					appTerm.getParameters().length == 2) {
+				return SmtUtils.binaryEquality(script, 
+						appTerm.getParameters()[0], appTerm.getParameters()[1]);
+			} else {
+				return Util.not(script, term);
+			}
+		} else {
+			return Util.not(script, term);
+		}
+	}
 
 	/**
 	 * Returns the equality ("=" lhs rhs), or true resp. false if some simple checks detect validity or unsatisfiablity
@@ -376,11 +394,11 @@ public class SmtUtils {
 		if (lhs.equals(trueTerm)) {
 			return rhs;
 		} else if (lhs.equals(falseTerm)) {
-			return Util.not(script, rhs);
+			return SmtUtils.not(script, rhs);
 		} else if (rhs.equals(trueTerm)) {
 			return lhs;
 		} else if (rhs.equals(falseTerm)) {
-			return Util.not(script, lhs);
+			return SmtUtils.not(script, lhs);
 		} else {
 			return script.term("=", lhs, rhs);
 		}
@@ -652,7 +670,7 @@ public class SmtUtils {
 			if (params.length != 1) {
 				throw new IllegalArgumentException("no not term");
 			} else {
-				result = Util.not(script, params[0]);
+				result = SmtUtils.not(script, params[0]);
 			}
 			break;
 		case "=":
@@ -666,7 +684,7 @@ public class SmtUtils {
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
 			} else {
-				result = Util.not(script, binaryEquality(script, params[0], params[1]));
+				result = SmtUtils.not(script, binaryEquality(script, params[0], params[1]));
 			}
 			break;
 		case "=>":

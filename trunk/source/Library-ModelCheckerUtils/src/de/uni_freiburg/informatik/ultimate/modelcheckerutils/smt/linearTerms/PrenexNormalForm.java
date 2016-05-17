@@ -98,7 +98,7 @@ public class PrenexNormalForm extends TermTransformer {
 		final QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script, notArg);
 		final Term inner = quantifierSequence.getInnerTerm();
 		final List<QuantifierSequence.QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifierBlocks();
-		Term result = Util.not(m_Script, inner);
+		Term result = SmtUtils.not(m_Script, inner);
 		for (int i = qVarSeq.size()-1; i>=0; i--) {
 			final QuantifierSequence.QuantifiedVariables quantifiedVars = qVarSeq.get(i);
 			final int resultQuantifier = (quantifiedVars.getQuantifier() + 1) % 2;
