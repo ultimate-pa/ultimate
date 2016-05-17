@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
@@ -174,7 +174,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 			final ILogger logger, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi) throws OperationCanceledException {
 		// Ensure automaton meets the requirements of not having dead ends.
-		m_Buechi = new RemoveUnreachable<LETTER, STATE>(services, buechi).getResult();
+		m_Buechi = new RemoveNonLiveStates<LETTER, STATE>(services, buechi).getResult();
 
 		m_ProgressTimer = progressTimer;
 		m_Logger = logger;

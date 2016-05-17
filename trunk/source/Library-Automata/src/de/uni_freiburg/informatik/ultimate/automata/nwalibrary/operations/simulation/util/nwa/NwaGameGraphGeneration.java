@@ -2069,30 +2069,27 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			if (sourceOfSummarizeEdges != null && sourceOfSummarizeEdges instanceof SpoilerDoubleDeckerVertex<?, ?>) {
 				SpoilerDoubleDeckerVertex<LETTER, STATE> sourceOfSummarizeEdgeAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) sourceOfSummarizeEdges;
 				// First we need to validate if the invoking down state forms a
-				// safe
-				// down state.
+				// safe down state.
 				// If the down state is unsafe we do not update summarize edges.
 				// We do so by first assuming that the down state is reversely
-				// safe,
-				// that is when following outgoing edges to the search root.
-				// The down state then is safe if the computed source of the
-				// summarize edges is a predecessor of the current vertex.
-				if (!m_GameGraph.getPredecessors(invokingVertex).contains(sourceOfSummarizeEdges)) {
+				// safe, that is when following outgoing edges to the search
+				// root. The down state then is safe if the computed
+				// source of the summarize edges is a predecessor
+				// of the current vertex.
+				if (!(m_GameGraph.hasPredecessors(invokingVertex)
+						&& m_GameGraph.getPredecessors(invokingVertex).contains(sourceOfSummarizeEdges))) {
 					m_Logger.debug("\t\tIs no pred: " + sourceOfSummarizeEdges + ", for: " + invokingVertex);
 					return;
 				}
 				// Additionally the down state of the current vertex must be
 				// receivable by using the call transition with any down state
-				// of
-				// the summarize edge source vertex.
+				// of the summarize edge source vertex.
 				// Search for a corresponding down state to validate safeness of
-				// the
-				// invoking down state.
+				// the invoking down state.
 				boolean foundCorrespondingDownState = false;
 				for (VertexDownState<STATE> sourceDownState : sourceOfSummarizeEdgeAsSpoilerDD.getVertexDownStates()) {
 					// The right down states must be equal, also the left down
-					// state
-					// must change to the called state.
+					// state must change to the called state.
 					if (sourceDownState.getRightDownState().equals(invokingDownState.getRightDownState())
 							&& invokingDownState.getLeftDownState().equals(sourceOfSummarizeEdges.getQ0())) {
 						foundCorrespondingDownState = true;
@@ -2106,12 +2103,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				}
 
 				// Down state is safe, now update the priority of all
-				// corresponding
-				// summarize edges
-				for (SummarizeEdge<LETTER, STATE> summarizeEdge : m_SrcDestToSummarizeEdges
-						.get(sourceOfSummarizeEdgeAsSpoilerDD).values()) {
-					summarizeEdge.setPriority(priorityToSet);
-					m_Logger.debug("\t\tUpdated summarize edge: " + summarizeEdge.hashCode());
+				// corresponding summarize edges
+				Map<SpoilerDoubleDeckerVertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>> destToEdges = m_SrcDestToSummarizeEdges
+						.get(sourceOfSummarizeEdgeAsSpoilerDD);
+				if (destToEdges != null) {
+					for (SummarizeEdge<LETTER, STATE> summarizeEdge : destToEdges.values()) {
+						summarizeEdge.setPriority(priorityToSet);
+						m_Logger.debug("\t\tUpdated summarize edge: " + summarizeEdge.hashCode());
+					}
 				}
 			}
 		}

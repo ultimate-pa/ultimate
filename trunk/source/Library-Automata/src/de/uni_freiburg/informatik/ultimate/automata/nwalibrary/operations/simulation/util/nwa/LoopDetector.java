@@ -137,6 +137,9 @@ public final class LoopDetector<LETTER, STATE> {
 		boolean destinationFound = false;
 		while (!queue.isEmpty() && !destinationFound) {
 			Vertex<LETTER, STATE> element = queue.poll();
+			if (element == null) {
+				continue;
+			}
 
 			if (element.equals(destination)) {
 				destinationFound = true;
@@ -147,7 +150,10 @@ public final class LoopDetector<LETTER, STATE> {
 
 			if (!destinationFound && !wasAlreadyProcessed && !isToAvoid) {
 				// Add successors to queue
-				queue.addAll(m_GameGraph.getSuccessors(element));
+				Set<Vertex<LETTER, STATE>> successors = m_GameGraph.getSuccessors(element);
+				if (successors != null) {
+					queue.addAll(m_GameGraph.getSuccessors(element));
+				}
 			}
 
 			// If operation was canceled, for example from the
