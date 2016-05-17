@@ -339,8 +339,11 @@ public class SolverBuilder {
 			if (logicForExternalSolver.endsWith("A")) {
 				indexSort = result.sort("Int");
 				Sort boolSort = result.sort("Bool");
-				Sort arraySort = result.sort("Array", indexSort, boolSort);
-				result.declareFun("array-ext", new Sort[] { arraySort, arraySort }, indexSort);
+				Sort boolArraySort = result.sort("Array", indexSort, boolSort);
+				result.declareFun("array-ext", new Sort[] { boolArraySort, boolArraySort }, indexSort);
+				Sort intSort = result.sort("Int");
+				Sort intArraySort = result.sort("Array", indexSort, intSort);
+				result.declareFun("array-ext", new Sort[] { intArraySort, intArraySort }, indexSort);
 			} else if (logicForExternalSolver.endsWith("BV")) {
 				// do nothing. several have to be added here
 			}
