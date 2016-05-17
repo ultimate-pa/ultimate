@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -564,7 +565,7 @@ public class PostProcessor {
 			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE
 					&& !cPrimitive0.isComplexType()) {
 				Attribute[] attributes = new Attribute[2];
-				attributes[0] = new NamedAttribute(loc, "builtin", new Expression[]{new StringLiteral(loc, "FloatingPoint")});
+				attributes[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "FloatingPoint")});
 				int bytesize = typesizes.getSize(cPrimitive);
 				int[] indices = new int[2];
 				switch (bytesize) {
@@ -583,7 +584,7 @@ public class PostProcessor {
 					default:
 						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 				}
-				attributes[1] = new NamedAttribute(loc, "indices",
+				attributes[1] = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER,
 						new Expression[]{	new IntegerLiteral(loc, String.valueOf(indices[0])),
 											new IntegerLiteral(loc, String.valueOf(indices[1]))});
 				String identifier = "C_" + cPrimitive.name();
