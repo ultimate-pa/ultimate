@@ -1,7 +1,6 @@
-// Author: Christian Schilling
-// Date: 2016-05-09
+// Author: Christian Schilling, Daniel Tischner, Matthias Heizmann
+// Date: 2016-05-17
 //
-// Small automaton where direct nwa simulation merges two states which are not mergeable.
 
 
 print(reduceNwaDirectSimulation(nwa, false));
