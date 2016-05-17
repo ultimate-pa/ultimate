@@ -182,7 +182,7 @@ public class FlowSensitiveFaultLocalizer {
 					// do nothing, because we want to find an alternative path
 					// (i.e., path that is not in counterexample
 				} else {
-					final int[] pair = new int[2]; //For Branch in Branch Out information.
+					 //For Branch in Branch Out information.
 					// Path from the successor state not in the counter example 
 					// to one of the states in possibleEndPoints.
 					final NestedRun<CodeBlock, IPredicate> alternativePath = 
@@ -192,26 +192,36 @@ public class FlowSensitiveFaultLocalizer {
 						// that comes back to the counter example
 						// THAT MEANS WE HAVE FOUND AN out-BRANCH AT POSITION "COUNTER"
 						final IPredicate lastStateOfAlternativePath = 
-								alternativePath.getStateAtPosition(alternativePath.getLength()-1);
-						pair[0] = posOfStartState; //position OUT-BRANCH in the counterexample.
+								alternativePath.getStateAtPosition(alternativePath.getLength()-1);						
 						
-						final int endPosition = computeEndpointOfAlternativePath(
+						final List<Integer> endPosition = computeEndpointOfAlternativePath(
 								counterexample, posOfStartState, lastStateOfAlternativePath);
-						pair[1] = endPosition;
-						//// In-Branch Location computed.
 						
-						// If the Branch-In Location is not in the map, then add it.
-						if(result2.get(endPosition) == null ){
-							final List<Integer> branchInPosArray = new ArrayList<>();
-							branchInPosArray.add(posOfStartState);
-							result2.put(endPosition, branchInPosArray);
-						} else{ //It is in the map, 
-							result2.get(endPosition).add(posOfStartState);
-							// The array should be in descending order, so we can delete 
-							// the elements from this array more efficiently.
-							result2.get(endPosition).sort(Collections.reverseOrder());
+						for(Integer i:endPosition){
+							final int[] pair = new int[2];
+							pair[0] = posOfStartState; //position OUT-BRANCH in the counterexample.
+							pair[1] = i;
+							result.add(pair);
+							
+							// If the Branch-In Location is not in the map, then add it.
+							if(result2.get(i) == null ){
+								final List<Integer> branchInPosArray = new ArrayList<>();
+								branchInPosArray.add(posOfStartState);
+								result2.put(i, branchInPosArray);
+							} else{ //It is in the map, 
+								result2.get(i).add(posOfStartState);
+								// The array should be in descending order, so we can delete 
+								// the elements from this array more efficiently.
+								result2.get(i).sort(Collections.reverseOrder());
+							}
+							
+							
+							
 						}
-						result.add(pair);
+
+						
+
+						
 					}
 				}
 			}
@@ -220,26 +230,32 @@ public class FlowSensitiveFaultLocalizer {
 	}
 
 	/**
-	 * Computing the end point (position of the IN-BRANCH) an alternative path. 
+	 * Computing the end point (position of the IN-BRANCH) an alternative path.
 	 * Search for the last state in the trace that satisfies
 	 * the following properties.
 	 * - position in trace is larger than posOfStartState
 	 * - program point of the state coincides with 
 	 *    program point of lastStateOfAlternativePath
 	 */
-	private int computeEndpointOfAlternativePath(final NestedRun<CodeBlock, IPredicate> counterexample,
+	private List<Integer> computeEndpointOfAlternativePath(final NestedRun<CodeBlock, IPredicate> counterexample,
 			final int posOfStartState, final IPredicate lastStateOfAlternativePath) {
-
+		List<Integer>  endPoints = new ArrayList<Integer>();
 		for(int j = counterexample.getLength() - 1; j > posOfStartState; j--) {
 			final IPredicate stateAtPosJ = counterexample.getStateAtPosition(j);
 			final ProgramPoint programpointAtPosJ = ((ISLPredicate) stateAtPosJ).getProgramPoint();
 			final ProgramPoint programpointOfLastState = ((ISLPredicate)lastStateOfAlternativePath).getProgramPoint();
 			if(programpointOfLastState.equals(programpointAtPosJ)) {
 				// position of state in the counter example where the branch ends
-				return j; 
+				endPoints.add(j);
+				//return j; 
 			}
 		}
+		if(endPoints.size() != 0){
+			return endPoints;
+		}else {
 		throw new AssertionError("endpoint not in trace");
+		}
+		
 	}
 
 	/**
@@ -477,7 +493,7 @@ public class FlowSensitiveFaultLocalizer {
 			int positionBranchIn = 0;
 			// Find out if the current Statement is a BRANCH-IN statement.
 			List<Integer> branchIn = informationFromCFG.get(position+1);
-			if(branchIn != null ){ 
+			if(branchIn != null && branchIn.size() > 0){ // null is not enough, the list can also be empty, hence 2 conditions.
 				// We are on a branch-in Statement'
 				int sizeOfbranchInPosArray = branchIn.size();
 				positionBranchOut = branchIn.get(sizeOfbranchInPosArray-1); //fetch the last element.
