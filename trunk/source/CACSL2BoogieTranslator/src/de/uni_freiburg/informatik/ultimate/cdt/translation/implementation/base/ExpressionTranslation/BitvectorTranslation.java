@@ -325,7 +325,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			ASTType[] paramASTTypes = new ASTType[paramCType.length + 1];
 			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, resultCType);
 			int counter = 1;
-			paramASTTypes[0] = new NamedType(loc,"RNE", new ASTType[0]);
+			paramASTTypes[0] = new NamedType(loc,"RoundingMode", new ASTType[0]);
 			for (CPrimitive cType : paramCType) {
 				paramASTTypes[counter] = m_TypeHandler.ctype2asttype(loc, cType);
 				counter += 1;
@@ -597,7 +597,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		}
 		
 		declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
-		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
+		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{new StringLiteral(loc, "RNE"), exp1, exp2});
 		return result;
 	}
 

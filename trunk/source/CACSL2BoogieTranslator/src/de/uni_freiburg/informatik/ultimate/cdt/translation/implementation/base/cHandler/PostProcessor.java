@@ -558,6 +558,15 @@ public class PostProcessor {
 	public static ArrayList<Declaration> declareFloatDataTypes(ILocation loc,
 			TypeSizes typesizes, TypeHandler typeHandler) {
 		ArrayList<Declaration> decls = new ArrayList<Declaration>();
+		
+		//Roundingmodes, for now RNE hardcoded
+		
+		Attribute[] attributesRM = new Attribute[1];
+		attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RoundingMode")});
+		String identifierRM = "RoundingMode";
+		String[] typeParamsRM = new String[0];
+		decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
+		
 		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			
 			CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
