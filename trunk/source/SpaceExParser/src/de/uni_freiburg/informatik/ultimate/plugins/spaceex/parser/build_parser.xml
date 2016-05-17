@@ -1,14 +1,27 @@
 <project name="SpaceEx_Parser" default="spaceex_parser" basedir=".">
 
+	<property name="targetDir" location="${workspacedir}/SpaceExParser/src"/>
+	
+    <description>
+        Build File for SpaceEx format xml parser
+    </description>
+
 	<!-- this expects the binary xjc to be known / to be in the PATH on your system,
-		 but if you really use some JDK 6 (what you are required to do anyway) that
+		 but if you really use some JDK (what you are required to do anyway) that
 		 should automatically be the case on Unix machines -->
-	<!-- Beware Windows user: You might have to add JDK1.6.X/bin to your PATH environment variable -->
+	<!-- Beware Windows user: You might have to add JDK/bin to your PATH environment variable -->
 	<target name="spaceex_parser">
-		<echo>Building the SpaceEx File Parser</echo>
-		<exec executable="xjc">
-			<arg line="-d ../../../../../../../ -p de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated sspaceex.xsd" />
+		<property environment="env" />
+		<echo>Building SpaceEx File Parser with xjc</echo>
+		<echo>targetDir is ${targetDir}</echo>
+		<exec executable="xjc" failonerror="true">
+			<arg value="-d" />
+			<arg value="${targetDir}" />
+			<arg value="-p" /> 
+			<arg value="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated" />
+			<arg value="sspaceex.xsd" />
 		</exec>
 	</target>
-
+</project>
+	
 </project>

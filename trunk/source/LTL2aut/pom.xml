@@ -60,20 +60,20 @@
 								<echo>AutomataScriptParser: flexBinary is ${flexBinary}</echo>
 
 								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
-									dir="${ltl2autParserDir}">
+									dir="${ltl2autParserDir}" failonerror="true">
 									<arg line="-parser Parser" />
 									<arg value="AutPromela.cup" />
 								</java>
-								<java jar="${flexBinary}" fork="true" dir="${ltl2autParserDir}">
+								<java jar="${flexBinary}" fork="true" dir="${ltl2autParserDir}" failonerror="true">
 									<arg value="AutPromela.flex" />
 								</java>
 
 								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
-									dir="${ltl2autParserDir}">
+									dir="${ltl2autParserDir}" failonerror="true">
 									<arg line="-parser Parser" />
 									<arg value="Apformula.cup" />
 								</java>
-								<java jar="${flexBinary}" fork="true" dir="${ltl2autParserDir}">
+								<java jar="${flexBinary}" fork="true" dir="${ltl2autParserDir}" failonerror="true">
 									<arg value="Apformula.flex" />
 								</java>
 							</tasks>

@@ -48,7 +48,7 @@
 
 								<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main"
 									classpath="${astbuilderBinaries}:${cupDir}" fork="true"
-									dir="${boogieastDir}">
+									dir="${boogieastDir}" failonerror="true">
 									<arg value="-ultimatenew" />
 									<arg value="Boogie.ast" />
 								</java>
