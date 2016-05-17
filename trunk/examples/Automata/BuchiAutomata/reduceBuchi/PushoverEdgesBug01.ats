@@ -11,16 +11,17 @@ NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},
 	internalAlphabet = {"a1" "a2" "a3"},
 	returnAlphabet = {"r"},
-	states = {"q0" "q1" "q2" "q3" "q4" "qf"},
-	initialStates = {"q0"},
-	finalStates = {"qf"},
+	states = {"q1" "q2" "q3" "q4" "qf" "q5"},
+	initialStates = {"q1"},
+	finalStates = {"q5"},
 	callTransitions = {
 		 ("q1" "c" "qf")
 	},
 	internalTransitions = {
-		 ("q0" "a1" "q1")
 		 ("qf" "a2" "q2")
 		 ("qf" "a3" "q3")
+		 ("q4" "a1" "q5")
+		 ("q5" "a1" "q5")
 	},
 	returnTransitions = {
 		 ("q2" "q1" "r" "q4")
