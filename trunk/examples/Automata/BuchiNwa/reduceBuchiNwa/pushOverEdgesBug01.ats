@@ -3,7 +3,7 @@
 //
 
 
-print(reduceNwaDirectSimulation(nwa, false));
+print(reduceNwaDirectSimulation(removeDeadEnds(nwa), false));
 
 
 NestedWordAutomaton nwa = (

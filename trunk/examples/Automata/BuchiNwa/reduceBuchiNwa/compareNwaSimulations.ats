@@ -4,7 +4,7 @@
 // Compares the effectiveness of different nwa simulation methods on a given automata and logs the results.
 
 assert(!isEmpty(nwa));
-compareReduceNwaSimulation(nwa);
+compareReduceNwaSimulation(removeDeadEnds(nwa));
 
 // Automata to test
 

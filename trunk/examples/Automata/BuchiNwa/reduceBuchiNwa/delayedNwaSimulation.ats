@@ -7,7 +7,7 @@ assert(!isEmpty(nwa));
 // Before operation
 //print(nwa);
 // After operation
-print(reduceNwaDelayedSimulation(nwa, false));
+print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
 
 // Use a random automaton
 //print(reduceNwaDelayedSimulation(removeDeadEnds(getRandomDfa(10, 2, 5))));

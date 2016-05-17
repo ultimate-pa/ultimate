@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
@@ -165,7 +164,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            State factory used for state creation.
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
-	 *            generated.
+	 *            generated. It must not have any dead ends.
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
@@ -173,8 +172,9 @@ public abstract class AGameGraph<LETTER, STATE> {
 	public AGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi) throws OperationCanceledException {
-		// Ensure automaton meets the requirements of not having dead ends.
-		m_Buechi = new RemoveNonLiveStates<LETTER, STATE>(services, buechi).getResult();
+		// We assume the automaton has no dead ends, this is a requirement for
+		// the algorithm to work correctly.
+		m_Buechi = buechi;
 
 		m_ProgressTimer = progressTimer;
 		m_Logger = logger;

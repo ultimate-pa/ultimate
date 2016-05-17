@@ -7,7 +7,7 @@ assert(!isEmpty(nwa));
 // Before operation
 //print(nwa);
 // After operation
-print(reduceNwaFairSimulation(nwa, false));
+print(reduceNwaFairSimulation(removeDeadEnds(nwa), false));
 // Check correctness of operation
 //print(reduceNwaFairSimulation(nwa, true, true));
 
