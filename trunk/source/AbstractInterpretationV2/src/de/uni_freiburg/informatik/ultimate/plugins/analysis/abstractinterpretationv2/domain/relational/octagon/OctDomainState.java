@@ -447,7 +447,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 				return SubsetResult.NONE;
 			}
 		}
-		if (!cachedSelectiveClosure().elementwiseRelation(other.cachedSelectiveClosure(),
+		if (!cachedSelectiveClosure().elementwiseRelation(other.mNumericAbstraction, // no need to use other.closure
 				(thisVal, otherVal) -> thisVal.compareTo(otherVal) <= 0)) {
 			return SubsetResult.NONE;
 		}
