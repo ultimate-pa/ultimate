@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
@@ -552,7 +553,11 @@ public class NestedInterpolantsBuilder {
 					if (m_InstantiateArrayExt ) {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
-					TermVarsProc tvp = TermVarsProc.computeTermVarsProc(withoutIndices, m_SmtManagerPredicates.getBoogie2Smt());
+					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(
+							m_Services, m_Logger, m_SmtManagerPredicates.getScript(), 
+							m_SmtManagerPredicates.getVariableManager(),
+							withoutIndices);
+					TermVarsProc tvp = TermVarsProc.computeTermVarsProc(lessQuantifiers, m_SmtManagerPredicates.getBoogie2Smt());
 					result[resultPos] = m_PredicateBuilder.getOrConstructPredicate(tvp);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
@@ -608,7 +613,7 @@ public class NestedInterpolantsBuilder {
 		Term result = (new SafeSubstitution(m_SmtManagerPredicates.getScript(), substitutionMapping)).transform(matrix);
 		result = Util.and(m_SmtManagerPredicates.getScript(), result, Util.and(m_SmtManagerPredicates.getScript(), implications));
 		result = m_SmtManagerPredicates.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
-		result = QuantifierSequence.prependQuantifierSequence(m_ScriptTc, qs.getQuantifierBlocks(), matrix);
+		result = QuantifierSequence.prependQuantifierSequence(m_SmtManagerPredicates.getScript(), qs.getQuantifierBlocks(), result);
 //		Term pushed = new QuantifierPusher(m_SmtManagerPredicates.getScript(), m_Services).transform(result);
 		return result;
 	}
