@@ -125,11 +125,12 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	public DirectGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		super(progressTimer, logger, stateFactory);
-		verifyAutomatonValidity(buechi);
+		super(services, progressTimer, logger, stateFactory, buechi);
+		INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
+		verifyAutomatonValidity(preparedBuechi);
 
 		m_Services = services;
-		m_Buechi = buechi;
+		m_Buechi = preparedBuechi;
 		m_StateFactory = stateFactory;
 		m_BuechiAmountOfStates = 0;
 		m_BuechiAmountOfTransitions = 0;

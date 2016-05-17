@@ -102,10 +102,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		super(services, progressTimer, logger, nwa, stateFactory);
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
-		if (nwa instanceof IDoubleDeckerAutomaton<?, ?>) {
-			m_Nwa = (IDoubleDeckerAutomaton<LETTER, STATE>) nwa;
+		INestedWordAutomatonOldApi<LETTER, STATE> preparedNwa = getAutomaton();
+		if (preparedNwa instanceof IDoubleDeckerAutomaton<?, ?>) {
+			m_Nwa = (IDoubleDeckerAutomaton<LETTER, STATE>) preparedNwa;
 		} else {
-			m_Nwa = new RemoveUnreachable<LETTER, STATE>(services, nwa).getResult();
+			m_Nwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
 		}
 		m_Generation = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), m_Nwa, this,
 				ESimulationType.FAIR);

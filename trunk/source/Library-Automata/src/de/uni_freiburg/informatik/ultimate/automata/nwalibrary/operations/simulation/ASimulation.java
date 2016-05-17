@@ -36,6 +36,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
@@ -193,6 +194,60 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
+	 * Starts the simulation that calculates the corresponding progress measures
+	 * to all vertices of the underlying game graph. After that it uses that
+	 * information to possible reduce the inputed buechi automaton and finally
+	 * assigns the result which then can be accessed by {@link #getResult()}.
+	 * 
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public void doSimulation() throws OperationCanceledException {
+		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL);
+		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
+
+		if (m_UseSCCs) { // calculate reduction with SCC
+			m_Performance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
+			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
+			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(getGameGraph());
+			m_SccComp = new SccComputation<>(m_Logger, succProvider, sccFactory, getGameGraph().getSize(),
+					getGameGraph().getVertices());
+
+			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
+					m_SccComp.getSCCs()).iterator();
+			m_Performance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
+			int amountOfSCCs = 0;
+			while (iter.hasNext()) {
+				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
+				iter.remove();
+				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
+				amountOfSCCs++;
+			}
+			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSCCs);
+		} else { // calculate reduction w/o SCCs
+			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
+			m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
+		}
+		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
+		m_Result = getGameGraph().generateAutomatonFromGraph();
+
+		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL);
+		// Add time building of the graph took to the overall time since this
+		// happens outside of simulation
+		long durationGraph = m_Performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
+		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
+			duration += durationGraph;
+			m_Performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
+		}
+		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
+		m_Performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
+
+		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
+	}
+
+	/**
 	 * Gets the resulting possible reduced buechi automaton.
 	 * 
 	 * @return The resulting possible reduced buechi automaton.
@@ -318,7 +373,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * {@link SpoilerVertex}.<br/>
 	 * For a {@link DuplicatorVertex} the minimal progress measure of its
 	 * successor is returned, maximal for a {@link SpoilerVertex}.<br/>
-	 * The returned then gets decreased based on the priority of the given
+	 * The returned value then gets decreased based on the priority of the given
 	 * vertex.
 	 * 
 	 * @param vertex
@@ -332,12 +387,30 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected int calcBestNghbMeasure(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
+		AGameGraph<LETTER, STATE> gameGraph = getGameGraph();
 		boolean isDuplicatorVertex = vertex.isDuplicatorVertex();
 
-		// If there are no successors the corresponding player looses
-		if (!getGameGraph().hasSuccessors(vertex)) {
+		// Compute of there is a push-over successor with a progress measure of
+		// infinity, we need to consider those successors.
+		boolean considerPushOverEdges = false;
+		HashSet<Vertex<LETTER, STATE>> considerablePushOverSuccessors = null;
+		if (gameGraph.hasPushOverSuccessors(vertex)) {
+			for (Vertex<LETTER, STATE> pushOverSucc : gameGraph.getPushOverSuccessors(vertex)) {
+				if (pushOverSucc.getPM(scc, gameGraph.getGlobalInfinity()) == gameGraph.getGlobalInfinity()) {
+					if (considerablePushOverSuccessors == null) {
+						considerablePushOverSuccessors = new HashSet<>();
+						considerPushOverEdges = true;
+					}
+					considerablePushOverSuccessors.add(pushOverSucc);
+				}
+			}
+		}
+
+		// If there are no successors nor considerable push-over successors,
+		// the corresponding player looses
+		if (!gameGraph.hasSuccessors(vertex) && !considerPushOverEdges) {
 			if (isDuplicatorVertex) {
-				return getGameGraph().getGlobalInfinity();
+				return gameGraph.getGlobalInfinity();
 			} else {
 				return 0;
 			}
@@ -346,15 +419,23 @@ public abstract class ASimulation<LETTER, STATE> {
 		// Initiate the known optimum, big for duplicator and small for spoiler
 		int optimum;
 		if (isDuplicatorVertex) {
-			optimum = getGameGraph().getGlobalInfinity();
+			optimum = gameGraph.getGlobalInfinity();
 		} else {
 			optimum = 0;
 		}
 
 		// The optimum is the minimal progress measure of its successors for
 		// Duplicator and maximal for Spoiler
-		for (Vertex<LETTER, STATE> succ : getGameGraph().getSuccessors(vertex)) {
-			int progressMeasure = succ.getPM(scc, getGameGraph().getGlobalInfinity());
+		Set<Vertex<LETTER, STATE>> successorsToConsider = gameGraph.getSuccessors(vertex);
+		// If vertex reached infinity, propagate this over
+		// the push-over edges.
+		if (considerPushOverEdges) {
+			// Care for concurrent modification exception
+			successorsToConsider = new HashSet<Vertex<LETTER, STATE>>(successorsToConsider);
+			successorsToConsider.addAll(considerablePushOverSuccessors);
+		}
+		for (Vertex<LETTER, STATE> succ : successorsToConsider) {
+			int progressMeasure = succ.getPM(scc, gameGraph.getGlobalInfinity());
 			if (isDuplicatorVertex) {
 				if (progressMeasure < optimum) {
 					optimum = progressMeasure;
@@ -367,7 +448,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		}
 
 		// Decrease the optimum based on the priority
-		return decreaseVector(getGameGraph().getPriority(vertex), optimum, localInfinity);
+		return decreaseVector(gameGraph.getPriority(vertex), optimum, localInfinity);
 	}
 
 	/**
@@ -386,16 +467,43 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected int calcNghbCounter(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
-		// If there are no successors we have zero best neighbors
-		if (!getGameGraph().hasSuccessors(vertex)) {
+		AGameGraph<LETTER, STATE> gameGraph = getGameGraph();
+
+		// Compute of there is a push-over successor with a progress measure of
+		// infinity, we need to consider those successors.
+		boolean considerPushOverEdges = false;
+		HashSet<Vertex<LETTER, STATE>> considerablePushOverSuccessors = null;
+		if (gameGraph.hasPushOverSuccessors(vertex)) {
+			for (Vertex<LETTER, STATE> pushOverSucc : gameGraph.getPushOverSuccessors(vertex)) {
+				if (pushOverSucc.getPM(scc, gameGraph.getGlobalInfinity()) == gameGraph.getGlobalInfinity()) {
+					if (considerablePushOverSuccessors == null) {
+						considerablePushOverSuccessors = new HashSet<>();
+						considerPushOverEdges = true;
+					}
+					considerablePushOverSuccessors.add(pushOverSucc);
+				}
+			}
+		}
+
+		// If there are no successors nor considerable push-over successors,
+		// we have zero best neighbors
+		if (!gameGraph.hasSuccessors(vertex) && !considerPushOverEdges) {
 			return 0;
 		}
 
 		// Count the number of successors that have the best
 		// neighbor measure from the perspective of the vertex and its priority
 		int counter = 0;
-		for (Vertex<LETTER, STATE> succ : getGameGraph().getSuccessors(vertex))
-			if (decreaseVector(getGameGraph().getPriority(vertex), succ.getPM(scc, getGameGraph().getGlobalInfinity()),
+		Set<Vertex<LETTER, STATE>> successorsToConsider = gameGraph.getSuccessors(vertex);
+		// If vertex reached infinity, propagate this over
+		// the push-over edges.
+		if (considerPushOverEdges) {
+			// Care for concurrent modification exception
+			successorsToConsider = new HashSet<Vertex<LETTER, STATE>>(successorsToConsider);
+			successorsToConsider.addAll(considerablePushOverSuccessors);
+		}
+		for (Vertex<LETTER, STATE> succ : successorsToConsider)
+			if (decreaseVector(gameGraph.getPriority(vertex), succ.getPM(scc, gameGraph.getGlobalInfinity()),
 					localInfinity) == vertex.getBEff()) {
 				counter++;
 			}
@@ -464,61 +572,6 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Starts the simulation that calculates the corresponding progress measures
-	 * to all vertices of the underlying game graph. After that it uses that
-	 * information to possible reduce the inputed buechi automaton and finally
-	 * assigns the result which then can be accessed by {@link #getResult()}.
-	 * 
-	 * @throws OperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public void doSimulation() throws OperationCanceledException {
-		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL);
-		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
-
-		if (m_UseSCCs) { // calculate reduction with SCC
-			m_Performance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
-			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
-			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(getGameGraph());
-			m_SccComp = new SccComputation<>(m_Logger, succProvider, sccFactory, getGameGraph().getSize(),
-					getGameGraph().getVertices());
-
-			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
-					m_SccComp.getSCCs()).iterator();
-			m_Performance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
-			int amountOfSCCs = 0;
-			while (iter.hasNext()) {
-				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
-				iter.remove();
-				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
-				amountOfSCCs++;
-			}
-			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSCCs);
-		} else { // calculate reduction w/o SCCs
-			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
-			m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
-			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
-		}
-		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
-		m_Result = getGameGraph().generateAutomatonFromGraph();
-
-		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL);
-		// Add time building of the graph took to the overall time since this
-		// happens outside of simulation
-		long durationGraph = m_Performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
-				EMultipleDataOption.ADDITIVE);
-		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
-			duration += durationGraph;
-			m_Performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
-		}
-		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
-		m_Performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
-
-		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
-	}
-
-	/**
 	 * The actual simulation calculation algorithm which simulates the
 	 * corresponding game defined by the type of {@link AGameGraph}.<br/>
 	 * When finished the progress measures of given vertices determine a
@@ -573,11 +626,23 @@ public abstract class ASimulation<LETTER, STATE> {
 			// Work through its predecessors and possibly add them
 			// to the working list since they may be interested in
 			// the changes of the working vertex
-			if (!game.hasPredecessors(v))
+			if (!game.hasPredecessors(v)) {
 				continue;
-			for (Vertex<LETTER, STATE> w : game.getPredecessors(v)) {
-				if (m_UseSCCs && !scc.contains(w))
+			}
+			Set<Vertex<LETTER, STATE>> predecessorsToConsider = game.getPredecessors(v);
+			// If vertex reached infinity, propagate this over the push-over
+			// edges.
+			if (v.getPM(scc, globalInfinity) == globalInfinity && game.hasPushOverPredecessors(v)) {
+				// Care for concurrent modification exception
+				predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>(predecessorsToConsider);
+				// TODO There is a problem with push-over edges not being
+				// considered in the SCC optimization.
+				predecessorsToConsider.addAll(game.getPushOverPredecessors(v));
+			}
+			for (Vertex<LETTER, STATE> w : predecessorsToConsider) {
+				if (m_UseSCCs && !scc.contains(w)) {
 					continue;
+				}
 
 				// If the working vertex has increased its progress
 				// measure from the perspective of the predecessor and

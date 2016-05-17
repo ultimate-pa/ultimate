@@ -33,7 +33,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
@@ -57,42 +56,6 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 
 	/**
 	 * Creates a new fair simulation that tries to reduce the given nwa
-	 * automaton using <b>fair simulation</b>.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
-	 * <br/>
-	 * 
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
-	 * 
-	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
-	 * @param logger
-	 *            ILogger of the Ultimate framework.
-	 * @param buechi
-	 *            The nwa automaton to reduce with no dead ends nor with
-	 *            duplicate transitions
-	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
-	 * @param stateFactory
-	 *            The state factory used for creating states.
-	 * @param game
-	 *            The fair nwa game graph to use for simulation.
-	 * @throws OperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final FairNwaGameGraph<LETTER, STATE> game)
-					throws OperationCanceledException {
-		this(progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList(), game);
-	}
-
-	/**
-	 * Creates a new fair simulation that tries to reduce the given nwa
 	 * automaton using <b>fair simulation</b>. Uses a given collection of
 	 * equivalence classes to optimize the simulation.<br/>
 	 * After construction the simulation can be started and results can be get
@@ -107,9 +70,6 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 *            cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
-	 * @param buechi
-	 *            The nwa automaton to reduce with no dead ends nor with
-	 *            duplicate transitions
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -126,11 +86,42 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairNwaGameGraph<LETTER, STATE> game) throws OperationCanceledException {
-		super(progressTimer, logger, buechi, useSCCs, stateFactory, possibleEquivalentClasses, game);
+		super(progressTimer, logger, useSCCs, stateFactory, possibleEquivalentClasses, game);
+	}
+
+	/**
+	 * Creates a new fair simulation that tries to reduce the given nwa
+	 * automaton using <b>fair simulation</b>.<br/>
+	 * After construction the simulation starts and results can be get by using
+	 * {@link #getResult()}.<br/>
+	 * <br/>
+	 * 
+	 * For correctness its important that the inputed automaton has <b>no dead
+	 * ends</b> nor <b>duplicate transitions</b>.
+	 * 
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            ILogger of the Ultimate framework.
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @param game
+	 *            The fair nwa game graph to use for simulation.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory, final FairNwaGameGraph<LETTER, STATE> game)
+					throws OperationCanceledException {
+		this(progressTimer, logger, useSCCs, stateFactory, Collections.emptyList(), game);
 	}
 
 	/*

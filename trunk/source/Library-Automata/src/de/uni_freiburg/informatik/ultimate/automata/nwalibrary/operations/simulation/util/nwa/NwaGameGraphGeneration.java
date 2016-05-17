@@ -1379,6 +1379,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	public void generateSummarizeEdges() throws OperationCanceledException {
 		m_Logger.debug("Generating summarize edges.");
+		LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(m_GameGraph, m_Logger, m_ProgressTimer);
+
 		// Return edges (q', q1 [q5, q6]) -> (q0, q1, r/q2) -> (q0, q3) lead
 		// to creation of summarize edge (q5, q6) -> (q0, q3)
 		for (DuplicatorDoubleDeckerVertex<LETTER, STATE> returnInvoker : m_DuplicatorReturningVertices) {
@@ -1418,24 +1420,70 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (leftDownState.equals(m_Bottom) || rightDownState.equals(m_Bottom)) {
 							continue;
 						}
-						// TODO How to determine which bits are sources in
-						// delayed simulation
-						SpoilerVertex<LETTER, STATE> summarizeSrc = getSpoilerVertex(leftDownState, rightDownState,
-								false, null, null);
-						if (summarizeSrc == null || !(summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
-							continue;
+
+						// In the standard case we use the false bit.
+						SpoilerVertex<LETTER, STATE> summarizeSrcFalseBit = getSpoilerVertex(leftDownState,
+								rightDownState, false, null, null);
+						// In the standard case this vertex must be able to
+						// reach the destination.
+						boolean canFalseBitReachDestination = true;
+						// In delayed simulation there may be up to two sources,
+						// differentiating in the bit, depending on if they can
+						// reach the destination.
+						if (m_SimulationType == ESimulationType.DELAYED) {
+							// TODO This check is expensive, there may be better
+							// ways to solve the problem
+							canFalseBitReachDestination = loopDetector.canVertexReachDestination(summarizeSrcFalseBit,
+									summarizeDestAsDD);
 						}
-						SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
-						// Do not add the edge if the source or destination is a
-						// Spoiler vertex where Duplicator directly looses in
-						// direct simulation, if he uses the edge.
-						if (m_SimulationType == ESimulationType.DIRECT
-								&& (doesLooseInDirectSim(summarizeSrcAsDD.getQ0(), summarizeSrcAsDD.getQ1())
-										|| doesLooseInDirectSim(summarizeDestAsDD.getQ0(),
-												summarizeDestAsDD.getQ1()))) {
-							continue;
+
+						// False bit summarize edge
+						if (m_SimulationType != ESimulationType.DELAYED || canFalseBitReachDestination) {
+							SpoilerVertex<LETTER, STATE> summarizeSrc = summarizeSrcFalseBit;
+							if (summarizeSrc == null || !(summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
+								continue;
+							}
+							SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
+							// Do not add the edge if the source or destination
+							// is a Spoiler vertex where Duplicator directly
+							// looses in direct simulation, if he uses the edge.
+							if (m_SimulationType == ESimulationType.DIRECT
+									&& (doesLooseInDirectSim(summarizeSrcAsDD.getQ0(), summarizeSrcAsDD.getQ1())
+											|| doesLooseInDirectSim(summarizeDestAsDD.getQ0(),
+													summarizeDestAsDD.getQ1()))) {
+								continue;
+							}
+							addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD, preInvokerAsDD);
 						}
-						addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD, preInvokerAsDD);
+						// True bit summarize edge
+						if (m_SimulationType == ESimulationType.DELAYED) {
+							SpoilerVertex<LETTER, STATE> summarizeSrcTrueBit = getSpoilerVertex(leftDownState,
+									rightDownState, true, null, null);
+							// TODO This check is expensive, there may be better
+							// ways to solve the problem
+							boolean canTrueBitReachDestination = loopDetector
+									.canVertexReachDestination(summarizeSrcTrueBit, summarizeDestAsDD);
+							if (canTrueBitReachDestination) {
+								SpoilerVertex<LETTER, STATE> summarizeSrc = summarizeSrcTrueBit;
+								if (summarizeSrc == null
+										|| !(summarizeSrc instanceof SpoilerDoubleDeckerVertex<?, ?>)) {
+									continue;
+								}
+								SpoilerDoubleDeckerVertex<LETTER, STATE> summarizeSrcAsDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) summarizeSrc;
+								// Do not add the edge if the source or
+								// destination
+								// is a Spoiler vertex where Duplicator directly
+								// looses in direct simulation,
+								// if he uses the edge.
+								if (m_SimulationType == ESimulationType.DIRECT
+										&& (doesLooseInDirectSim(summarizeSrcAsDD.getQ0(), summarizeSrcAsDD.getQ1())
+												|| doesLooseInDirectSim(summarizeDestAsDD.getQ0(),
+														summarizeDestAsDD.getQ1()))) {
+									continue;
+								}
+								addSummarizeEdge(summarizeSrcAsDD, summarizeDestAsDD, preInvokerAsDD);
+							}
+						}
 					}
 				}
 
@@ -1476,6 +1524,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 			// Remove not reachable vertex
 			removeDuplicatorVertex(returnInvoker);
+			
+			// Add push-over edges for every pair of successors and predecessors
+			if (successors != null && predecessors != null) {
+				for (Vertex<LETTER, STATE> succ : successors) {
+					for (Vertex<LETTER, STATE> pred : predecessors) {
+						m_GameGraph.addPushOverEdge(pred, succ);
+					}
+				}
+			}
 		}
 	}
 
@@ -1997,49 +2054,65 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// The corresponding down state defines the source of the corresponding
 		// edges. If the down state is [q0, q1] then all corresponding summarize
 		// edges have (q0, q1) as source.
-		// TODO How to determine which bits are sources in delayed simulation
-		Vertex<LETTER, STATE> sourceOfSummarizeEdges = getSpoilerVertex(historyDownState.getLeftDownState(),
-				historyDownState.getRightDownState(), false, null, null);
-		if (sourceOfSummarizeEdges != null && sourceOfSummarizeEdges instanceof SpoilerDoubleDeckerVertex<?, ?>) {
-			SpoilerDoubleDeckerVertex<LETTER, STATE> sourceOfSummarizeEdgeAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) sourceOfSummarizeEdges;
-			// First we need to validate if the invoking down state forms a safe
-			// down state.
-			// If the down state is unsafe we do not update summarize edges.
-			// We do so by first assuming that the down state is reversely safe,
-			// that is when following outgoing edges to the search root.
-			// The down state then is safe if the computed source of the
-			// summarize edges is a predecessor of the current vertex.
-			if (!m_GameGraph.getPredecessors(invokingVertex).contains(sourceOfSummarizeEdges)) {
-				m_Logger.debug("\t\tIs no pred: " + sourceOfSummarizeEdges + ", for: " + invokingVertex);
-				return;
-			}
-			// Additionally the down state of the current vertex must be
-			// receivable by using the call transition with any down state of
-			// the summarize edge source vertex.
-			// Search for a corresponding down state to validate safeness of the
-			// invoking down state.
-			boolean foundCorrespondingDownState = false;
-			for (VertexDownState<STATE> sourceDownState : sourceOfSummarizeEdgeAsSpoilerDD.getVertexDownStates()) {
-				// The right down states must be equal, also the left down state
-				// must change to the called state.
-				if (sourceDownState.getRightDownState().equals(invokingDownState.getRightDownState())
-						&& invokingDownState.getLeftDownState().equals(sourceOfSummarizeEdges.getQ0())) {
-					foundCorrespondingDownState = true;
-					break;
-				}
-			}
-			if (!foundCorrespondingDownState) {
-				m_Logger.debug(
-						"\t\tFound no state in: " + sourceOfSummarizeEdgeAsSpoilerDD + ", for: " + invokingDownState);
-				return;
-			}
+		int bound = 1;
+		// In delayed simulation there may be up to two sources, differentiating
+		// in the bit, depending on if they are predecessors of the invoker.
+		if (m_SimulationType == ESimulationType.DELAYED) {
+			bound = 2;
+		}
+		for (int i = 0; i < bound; i++) {
+			// First use the false bit. In other cases also try the true bit.
+			boolean bitToUse = i != 0;
 
-			// Down state is safe, now update the priority of all corresponding
-			// summarize edges
-			for (SummarizeEdge<LETTER, STATE> summarizeEdge : m_SrcDestToSummarizeEdges
-					.get(sourceOfSummarizeEdgeAsSpoilerDD).values()) {
-				summarizeEdge.setPriority(priorityToSet);
-				m_Logger.debug("\t\tUpdated summarize edge: " + summarizeEdge.hashCode());
+			Vertex<LETTER, STATE> sourceOfSummarizeEdges = getSpoilerVertex(historyDownState.getLeftDownState(),
+					historyDownState.getRightDownState(), bitToUse, null, null);
+			if (sourceOfSummarizeEdges != null && sourceOfSummarizeEdges instanceof SpoilerDoubleDeckerVertex<?, ?>) {
+				SpoilerDoubleDeckerVertex<LETTER, STATE> sourceOfSummarizeEdgeAsSpoilerDD = (SpoilerDoubleDeckerVertex<LETTER, STATE>) sourceOfSummarizeEdges;
+				// First we need to validate if the invoking down state forms a
+				// safe
+				// down state.
+				// If the down state is unsafe we do not update summarize edges.
+				// We do so by first assuming that the down state is reversely
+				// safe,
+				// that is when following outgoing edges to the search root.
+				// The down state then is safe if the computed source of the
+				// summarize edges is a predecessor of the current vertex.
+				if (!m_GameGraph.getPredecessors(invokingVertex).contains(sourceOfSummarizeEdges)) {
+					m_Logger.debug("\t\tIs no pred: " + sourceOfSummarizeEdges + ", for: " + invokingVertex);
+					return;
+				}
+				// Additionally the down state of the current vertex must be
+				// receivable by using the call transition with any down state
+				// of
+				// the summarize edge source vertex.
+				// Search for a corresponding down state to validate safeness of
+				// the
+				// invoking down state.
+				boolean foundCorrespondingDownState = false;
+				for (VertexDownState<STATE> sourceDownState : sourceOfSummarizeEdgeAsSpoilerDD.getVertexDownStates()) {
+					// The right down states must be equal, also the left down
+					// state
+					// must change to the called state.
+					if (sourceDownState.getRightDownState().equals(invokingDownState.getRightDownState())
+							&& invokingDownState.getLeftDownState().equals(sourceOfSummarizeEdges.getQ0())) {
+						foundCorrespondingDownState = true;
+						break;
+					}
+				}
+				if (!foundCorrespondingDownState) {
+					m_Logger.debug("\t\tFound no state in: " + sourceOfSummarizeEdgeAsSpoilerDD + ", for: "
+							+ invokingDownState);
+					return;
+				}
+
+				// Down state is safe, now update the priority of all
+				// corresponding
+				// summarize edges
+				for (SummarizeEdge<LETTER, STATE> summarizeEdge : m_SrcDestToSummarizeEdges
+						.get(sourceOfSummarizeEdgeAsSpoilerDD).values()) {
+					summarizeEdge.setPriority(priorityToSet);
+					m_Logger.debug("\t\tUpdated summarize edge: " + summarizeEdge.hashCode());
+				}
 			}
 		}
 	}

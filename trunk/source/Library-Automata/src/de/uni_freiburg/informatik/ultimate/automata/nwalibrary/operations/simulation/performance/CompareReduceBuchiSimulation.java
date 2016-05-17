@@ -853,7 +853,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 				FairGameGraph<LETTER, STATE> graph = new FairGameGraph<>(services, progressTimer, m_Logger, operand,
 						stateFactory);
 				graph.generateGameGraphFromAutomaton();
-				FairSimulation<LETTER, STATE> sim = new FairSimulation<>(progressTimer, m_Logger, operand, useSCCs,
+				FairSimulation<LETTER, STATE> sim = new FairSimulation<>(progressTimer, m_Logger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
@@ -861,7 +861,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 				FairDirectGameGraph<LETTER, STATE> graph = new FairDirectGameGraph<>(services, progressTimer, m_Logger,
 						operand, stateFactory);
 				graph.generateGameGraphFromAutomaton();
-				FairDirectSimulation<LETTER, STATE> sim = new FairDirectSimulation<>(progressTimer, m_Logger, operand,
+				FairDirectSimulation<LETTER, STATE> sim = new FairDirectSimulation<>(progressTimer, m_Logger,
 						useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;

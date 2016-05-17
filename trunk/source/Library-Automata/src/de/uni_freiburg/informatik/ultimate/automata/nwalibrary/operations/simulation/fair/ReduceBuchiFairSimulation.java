@@ -537,8 +537,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 					throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
 				new FairSimulation<LETTER, STATE>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand, useSCCs,
-						stateFactory, possibleEquivalentClasses,
+						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), useSCCs, stateFactory,
+						possibleEquivalentClasses,
 						new FairGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
 								stateFactory)));

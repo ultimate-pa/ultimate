@@ -157,11 +157,12 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	public FairGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		super(progressTimer, logger, stateFactory);
-		verifyAutomatonValidity(buechi);
+		super(services, progressTimer, logger, stateFactory, buechi);
+		INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
+		verifyAutomatonValidity(preparedBuechi);
 
 		m_Services = services;
-		m_Buechi = buechi;
+		m_Buechi = preparedBuechi;
 		m_ChangedBuechiTransitionsInverse = new NestedMap3<>();
 		m_BuechiTransitions = new HashSet<>();
 		m_EquivalenceClasses = new UnionFind<>();

@@ -38,7 +38,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
@@ -148,16 +147,16 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	private final boolean debugSimulation = false;
 	/**
+	 * Amount of SCCs of the initial game graph version.
+	 */
+	private int m_AmountOfSCCs;
+	/**
 	 * True if currently attempting to do changes on the game graph, false if
 	 * not. Used to tell {@link #efficientLiftingAlgorithm(int, Set)} to re use
 	 * information of previous simulation runs and to store information about
 	 * changes in order to be able to undo them.
 	 */
 	private boolean m_AttemptingChanges;
-	/**
-	 * The underlying buechi automaton from which the game graph gets generated.
-	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
 	/**
 	 * The game graph changes object that is currently used to store information
 	 * about made changes. Used by {@link #efficientLiftingAlgorithm(int, Set)}
@@ -174,10 +173,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * Copy of {@link AGameGraph#getGlobalInfinity()} for faster access.
 	 */
 	private int m_GlobalInfinity;
-	/**
-	 * Amount of SCCs of the initial game graph version.
-	 */
-	private int m_AmountOfSCCs;
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
@@ -213,42 +208,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	private boolean m_SimulationWasAborted;
 
 	/**
-	 * Creates a new fair simulation that tries to reduce the given buechi
-	 * automaton using <b>fair simulation</b>.<br/>
-	 * After construction the simulation can be started and results can be get
-	 * by using {@link #getResult()}.<br/>
-	 * <br/>
-	 * 
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
-	 * 
-	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
-	 * @param logger
-	 *            ILogger of the Ultimate framework.
-	 * @param buechi
-	 *            The buechi automaton to reduce with no dead ends nor with
-	 *            duplicate transitions
-	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
-	 * @param stateFactory
-	 *            The state factory used for creating states.
-	 * @param game
-	 *            The fair game graph to use for simulation.
-	 * @throws OperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final FairGameGraph<LETTER, STATE> game)
-					throws OperationCanceledException {
-		this(progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList(), game);
-	}
-
-	/**
 	 * Creates a new fair simulation with a given fair game graph that tries to
 	 * reduce the given buechi automaton using <b>fair simulation</b>.<br/>
 	 * After construction the simulation can be started and results can be get
@@ -263,9 +222,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
-	 * @param buechi
-	 *            The buechi automaton to reduce with no dead ends nor with
-	 *            duplicate transitions
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -282,13 +238,11 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.FAIR);
 
-		m_Buechi = buechi;
 		m_Logger = getLogger();
 		m_PossibleEquivalentClasses = processEquivalenceClasses(possibleEquivalentClasses);
 		m_pokedFromNeighborSCC = null;
@@ -301,6 +255,188 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		m_AttemptingChanges = false;
 		m_SimulationWasAborted = false;
 		m_AmountOfSCCs = 0;
+	}
+
+	/**
+	 * Creates a new fair simulation that tries to reduce the given buechi
+	 * automaton using <b>fair simulation</b>.<br/>
+	 * After construction the simulation can be started and results can be get
+	 * by using {@link #getResult()}.<br/>
+	 * <br/>
+	 * 
+	 * For correctness its important that the inputed automaton has <b>no dead
+	 * ends</b> nor <b>duplicate transitions</b>.
+	 * 
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            ILogger of the Ultimate framework.
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @param game
+	 *            The fair game graph to use for simulation.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory, final FairGameGraph<LETTER, STATE> game)
+					throws OperationCanceledException {
+		this(progressTimer, logger, useSCCs, stateFactory, Collections.emptyList(), game);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.ASimulation#doSimulation()
+	 */
+	@Override
+	public void doSimulation() throws OperationCanceledException {
+		m_Logger.debug("Fair Game Graph has " + m_Game.getSize() + " vertices.");
+		m_GlobalInfinity = m_Game.getGlobalInfinity();
+
+		SimulationPerformance performance = super.getSimulationPerformance();
+		performance.startTimeMeasure(ETimeMeasure.OVERALL);
+		performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
+
+		// First simulation
+		m_Logger.debug("Starting first simulation...");
+		doSingleSimulation(null);
+		m_Logger.debug("Ending first simulation.");
+
+		// Deactivate the usage of SCCs for the following simulations since the
+		// overhead of using SCCs is only worth it if simulation does not
+		// terminate as quickly as it will do now.
+		if (!isUsingSCCs()) {
+			performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
+		}
+		boolean disabledSCCUsage = false;
+		if (isUsingSCCs()) {
+			setUseSCCs(false);
+			disabledSCCUsage = true;
+			performance.setCountingMeasure(ECountingMeasure.SCCS, m_AmountOfSCCs);
+		}
+		performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, m_GlobalInfinity);
+
+		// Merge states
+		m_AttemptingChanges = true;
+		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
+		Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
+
+		if (m_Logger.isDebugEnabled()) {
+			m_Logger.debug("Size of merge candidates: " + mergeCandidates.size());
+		}
+
+		for (SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
+			STATE leftState = mergeCandidate.getQ0();
+			STATE rightState = mergeCandidate.getQ1();
+
+			// Attempt merge
+			FairGameGraphChanges<LETTER, STATE> changes = attemptMerge(leftState, rightState);
+			// Undo if language changed, else do not consider
+			// pair for transition removal
+			if (changes != null) {
+				if (m_Logger.isDebugEnabled()) {
+					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState
+							+ " was not successful, undoing...");
+				}
+
+				m_Game.undoChanges(changes);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_MERGE_ATTEMPTS);
+			} else {
+				if (m_Logger.isDebugEnabled()) {
+					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
+				}
+				// Pass merge to game graph
+				m_Game.markMergeable(leftState, rightState);
+
+				// Pair and mirrored pair are no candidates
+				// for transition removal
+				noTransitionCandidates.add(mergeCandidate);
+				SpoilerVertex<LETTER, STATE> mirroredCandidate = m_Game.getSpoilerVertex(rightState, leftState, false);
+				if (mirroredCandidate != null) {
+					noTransitionCandidates.add(mirroredCandidate);
+				}
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				m_Logger.debug("Stopped in doSimulation/attempting merges");
+				throw new OperationCanceledException(this.getClass());
+			}
+		}
+
+		// Remove redundant transitions
+		HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(noTransitionCandidates);
+
+		if (m_Logger.isDebugEnabled()) {
+			m_Logger.debug("Size of transition candidates: " + transitionCandidates.size());
+		}
+
+		for (Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
+			STATE src = transitionCandidate.getFirst();
+			LETTER a = transitionCandidate.getSecond();
+			STATE dest = transitionCandidate.getThird();
+			STATE invoker = transitionCandidate.getFourth();
+
+			// Attempt transition removal
+			FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
+			// Undo if language changed, else add transition for removal
+			if (changes != null) {
+				if (m_Logger.isDebugEnabled()) {
+					m_Logger.debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
+							+ " was not successful, undoing...");
+				}
+
+				m_Game.undoChanges(changes);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
+			} else {
+				if (m_Logger.isDebugEnabled()) {
+					m_Logger.debug(
+							"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
+				}
+				// Pass removal to game graph
+				m_Game.markRemoveableTransition(src, a, dest);
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				m_Logger.debug("Stopped in doSimulation/attempting transition removal");
+				throw new OperationCanceledException(this.getClass());
+			}
+		}
+
+		// Re-enable the usage
+		if (disabledSCCUsage) {
+			setUseSCCs(true);
+		}
+
+		performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
+
+		// Generate the resulting automata
+		m_Logger.debug("Generating the result automaton...");
+		setResult(m_Game.generateAutomatonFromGraph());
+
+		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL);
+		// Add time building of the graph took to the overall time since this
+		// happens outside of simulation
+		long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
+		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
+			duration += durationGraph;
+			performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
+		}
+		performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, m_Game.getSize());
+
+		m_Logger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
+				+ performance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS) + " simulation steps.");
 	}
 
 	/*
@@ -320,7 +456,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		result.append(lineSeparator + "\tglobalInfinity = " + m_GlobalInfinity);
 		result.append(lineSeparator + "\tstepCounter = "
 				+ getSimulationPerformance().getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS));
-		result.append(lineSeparator + "\tbuechi size before = " + m_Buechi.size() + " states");
+		result.append(lineSeparator + "\tbuechi size before = " + m_Game.getAutomatonSize() + " states");
 		if (getResult() != null) {
 			result.append(lineSeparator + "\tbuechi size after = " + getResult().size() + " states");
 		}
@@ -559,7 +695,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				// q1 -a-> q2 where q1 -a-> q3 and q3 simulating q2
 				STATE simulatingState = vertex.getQ1();
 				STATE simulatedState = vertex.getQ0();
-				for (IncomingInternalTransition<LETTER, STATE> predTrans : m_Buechi
+				for (IncomingInternalTransition<LETTER, STATE> predTrans : m_Game.getAutomaton()
 						.internalPredecessors(simulatingState)) {
 					STATE src = predTrans.getPred();
 					LETTER a = predTrans.getLetter();
@@ -692,157 +828,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * (non-Javadoc)
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * buchiReduction.ASimulation#doSimulation()
-	 */
-	@Override
-	public void doSimulation() throws OperationCanceledException {
-		m_Logger.debug("Fair Game Graph has " + m_Game.getSize() + " vertices.");
-		m_GlobalInfinity = m_Game.getGlobalInfinity();
-
-		SimulationPerformance performance = super.getSimulationPerformance();
-		performance.startTimeMeasure(ETimeMeasure.OVERALL);
-		performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
-
-		// First simulation
-		m_Logger.debug("Starting first simulation...");
-		doSingleSimulation(null);
-		m_Logger.debug("Ending first simulation.");
-
-		// Deactivate the usage of SCCs for the following simulations since the
-		// overhead of using SCCs is only worth it if simulation does not
-		// terminate as quickly as it will do now.
-		if (!isUsingSCCs()) {
-			performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
-			performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
-		}
-		boolean disabledSCCUsage = false;
-		if (isUsingSCCs()) {
-			setUseSCCs(false);
-			disabledSCCUsage = true;
-			performance.setCountingMeasure(ECountingMeasure.SCCS, m_AmountOfSCCs);
-		}
-		performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, m_GlobalInfinity);
-
-		// Merge states
-		m_AttemptingChanges = true;
-		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
-		Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
-
-		if (m_Logger.isDebugEnabled()) {
-			m_Logger.debug("Size of merge candidates: " + mergeCandidates.size());
-		}
-
-		for (SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
-			STATE leftState = mergeCandidate.getQ0();
-			STATE rightState = mergeCandidate.getQ1();
-
-			// Attempt merge
-			FairGameGraphChanges<LETTER, STATE> changes = attemptMerge(leftState, rightState);
-			// Undo if language changed, else do not consider
-			// pair for transition removal
-			if (changes != null) {
-				if (m_Logger.isDebugEnabled()) {
-					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState
-							+ " was not successful, undoing...");
-				}
-
-				m_Game.undoChanges(changes);
-				performance.increaseCountingMeasure(ECountingMeasure.FAILED_MERGE_ATTEMPTS);
-			} else {
-				if (m_Logger.isDebugEnabled()) {
-					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
-				}
-				// Pass merge to game graph
-				m_Game.markMergeable(leftState, rightState);
-
-				// Pair and mirrored pair are no candidates
-				// for transition removal
-				noTransitionCandidates.add(mergeCandidate);
-				SpoilerVertex<LETTER, STATE> mirroredCandidate = m_Game.getSpoilerVertex(rightState, leftState, false);
-				if (mirroredCandidate != null) {
-					noTransitionCandidates.add(mirroredCandidate);
-				}
-			}
-
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				m_Logger.debug("Stopped in doSimulation/attempting merges");
-				throw new OperationCanceledException(this.getClass());
-			}
-		}
-
-		// Remove redundant transitions
-		HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(noTransitionCandidates);
-
-		if (m_Logger.isDebugEnabled()) {
-			m_Logger.debug("Size of transition candidates: " + transitionCandidates.size());
-		}
-
-		for (Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
-			STATE src = transitionCandidate.getFirst();
-			LETTER a = transitionCandidate.getSecond();
-			STATE dest = transitionCandidate.getThird();
-			STATE invoker = transitionCandidate.getFourth();
-
-			// Attempt transition removal
-			FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
-			// Undo if language changed, else add transition for removal
-			if (changes != null) {
-				if (m_Logger.isDebugEnabled()) {
-					m_Logger.debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
-							+ " was not successful, undoing...");
-				}
-
-				m_Game.undoChanges(changes);
-				performance.increaseCountingMeasure(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
-			} else {
-				if (m_Logger.isDebugEnabled()) {
-					m_Logger.debug(
-							"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
-				}
-				// Pass removal to game graph
-				m_Game.markRemoveableTransition(src, a, dest);
-			}
-
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
-				m_Logger.debug("Stopped in doSimulation/attempting transition removal");
-				throw new OperationCanceledException(this.getClass());
-			}
-		}
-
-		// Re-enable the usage
-		if (disabledSCCUsage) {
-			setUseSCCs(true);
-		}
-
-		performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
-
-		// Generate the resulting automata
-		m_Logger.debug("Generating the result automaton...");
-		setResult(m_Game.generateAutomatonFromGraph());
-
-		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL);
-		// Add time building of the graph took to the overall time since this
-		// happens outside of simulation
-		long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
-				EMultipleDataOption.ADDITIVE);
-		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
-			duration += durationGraph;
-			performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
-		}
-		performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, m_Game.getSize());
-
-		m_Logger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
-				+ performance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS) + " simulation steps.");
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.ASimulation#efficientLiftingAlgorithm(int, java.util.Set)
 	 */
 	@Override
@@ -938,7 +923,18 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			// Work through its predecessors and possibly add them
 			// to the working list since they may be interested in
 			// the changes of the working vertex
-			for (Vertex<LETTER, STATE> pred : predVertices) {
+			Set<Vertex<LETTER, STATE>> predecessorsToConsider = predVertices;
+			// If vertex reached infinity, propagate this over the push-over
+			// edges.
+			if (workingVertex.getPM(scc, m_GlobalInfinity) == m_GlobalInfinity
+					&& m_Game.hasPushOverPredecessors(workingVertex)) {
+				// Care for concurrent modification exception
+				predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>(predecessorsToConsider);
+				// TODO There is a problem with push-over edges not being
+				// considered in the SCC optimization.
+				predecessorsToConsider.addAll(m_Game.getPushOverPredecessors(workingVertex));
+			}
+			for (Vertex<LETTER, STATE> pred : predecessorsToConsider) {
 				if (debugSimulation) {
 					m_Logger.debug("\t\tWorking pred: " + pred);
 				}

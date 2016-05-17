@@ -33,10 +33,11 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
@@ -81,6 +82,10 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
  */
 public abstract class AGameGraph<LETTER, STATE> {
 	/**
+	 * The underlying buechi automaton from which the game graph gets generated.
+	 */
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
+	/**
 	 * Data structure that allows a fast access to {@link DuplicatorVertex}
 	 * objects by using their representation:<br/>
 	 * <b>(State of spoiler or q0, Letter spoiler used before, State of
@@ -122,6 +127,16 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private final IProgressAwareTimer m_ProgressTimer;
 	/**
+	 * Data structure that allows a fast access to push-over predecessors of a
+	 * given vertex in the game graph.
+	 */
+	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_PushOverPredecessors;
+	/**
+	 * Data structure that allows a fast access to push-over successors of a
+	 * given vertex in the game graph.
+	 */
+	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_PushOverSuccessors;
+	/**
 	 * Set of all {@link SpoilerVertex} objects the game graph holds.
 	 */
 	private final HashSet<SpoilerVertex<LETTER, STATE>> m_SpoilerVertices;
@@ -139,6 +154,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * Creates a new game graph object that initializes all needed data
 	 * structures.
 	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
 	 * @param progressTimer
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
@@ -146,20 +163,101 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            ILogger of the Ultimate framework.
 	 * @param stateFactory
 	 *            State factory used for state creation.
+	 * @param buechi
+	 *            The underlying buechi automaton from which the game graph gets
+	 *            generated.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
-	public AGameGraph(final IProgressAwareTimer progressTimer, final ILogger logger,
-			final StateFactory<STATE> stateFactory) {
+	public AGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
+			final ILogger logger, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi) throws OperationCanceledException {
+		// Ensure automaton meets the requirements of not having dead ends.
+		m_Buechi = new RemoveUnreachable<LETTER, STATE>(services, buechi).getResult();
+
 		m_ProgressTimer = progressTimer;
 		m_Logger = logger;
 		m_StateFactory = stateFactory;
 		m_DuplicatorVertices = new HashSet<>();
 		m_SpoilerVertices = new HashSet<>();
 		m_Successors = new HashMap<>();
+		m_PushOverSuccessors = new HashMap<>();
 		m_Predecessors = new HashMap<>();
+		m_PushOverPredecessors = new HashMap<>();
 		m_BuechiStatesToGraphSpoilerVertex = new NestedMap3<>();
 		m_BuechiStatesToGraphDuplicatorVertex = new NestedMap4<>();
 		m_GlobalInfinity = 0;
 		m_Performance = null;
+	}
+
+	/**
+	 * Adds a given {@link DuplicatorVertex} object to the game graph.
+	 * 
+	 * @param vertex
+	 *            Vertex to add
+	 */
+	public void addDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
+		m_DuplicatorVertices.add(vertex);
+		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
+				vertex);
+	}
+
+	/**
+	 * Adds a given edge, represented by its source and destination, to the game
+	 * graph.
+	 * 
+	 * @param src
+	 *            Source of the edge
+	 * @param dest
+	 *            Destination of the edge
+	 */
+	public void addEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
+		// Update successor information
+		if (!m_Successors.containsKey(src)) {
+			m_Successors.put(src, new HashSet<>());
+		}
+		m_Successors.get(src).add(dest);
+
+		// Update predecessor information
+		if (!m_Predecessors.containsKey(dest)) {
+			m_Predecessors.put(dest, new HashSet<>());
+		}
+		m_Predecessors.get(dest).add(src);
+	}
+
+	/**
+	 * Adds a given push-over edge, represented by its source and destination,
+	 * to the game graph.
+	 * 
+	 * @param src
+	 *            Source of the push-over edge
+	 * @param dest
+	 *            Destination of the push-over edge
+	 */
+	public void addPushOverEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
+		// Update successor information
+		if (!m_PushOverSuccessors.containsKey(src)) {
+			m_PushOverSuccessors.put(src, new HashSet<>());
+		}
+		m_PushOverSuccessors.get(src).add(dest);
+
+		// Update predecessor information
+		if (!m_PushOverPredecessors.containsKey(dest)) {
+			m_PushOverPredecessors.put(dest, new HashSet<>());
+		}
+		m_PushOverPredecessors.get(dest).add(src);
+	}
+
+	/**
+	 * Adds a given {@link SpoilerVertex} object to the game graph.
+	 * 
+	 * @param vertex
+	 *            Vertex to add
+	 */
+	public void addSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
+		m_SpoilerVertices.add(vertex);
+		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), vertex);
 	}
 
 	/**
@@ -184,6 +282,24 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *             framework.
 	 */
 	public abstract void generateGameGraphFromAutomaton() throws OperationCanceledException;
+
+	/**
+	 * Gets the underlying automaton.
+	 * 
+	 * @return The underlying automaton.
+	 */
+	public INestedWordAutomatonOldApi<LETTER, STATE> getAutomaton() {
+		return m_Buechi;
+	}
+
+	/**
+	 * Gets the size of the underlying automaton.
+	 * 
+	 * @return The size of the underlying automaton.
+	 */
+	public int getAutomatonSize() {
+		return m_Buechi.size();
+	}
 
 	/**
 	 * Gets the {@link DuplicatorVertex} object of the game graph by its
@@ -230,6 +346,26 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the internal used field for duplicator vertices. <b>Use with
+	 * caution!</b> By modifying this field the game graph may get messed up.
+	 * 
+	 * @return The internal used field for duplicator vertices.
+	 */
+	public HashSet<DuplicatorVertex<LETTER, STATE>> getInternalDuplicatorVerticesField() {
+		return m_DuplicatorVertices;
+	}
+
+	/**
+	 * Gets the internal used field for spoiler vertices. <b>Use with
+	 * caution!</b> By modifying this field the game graph may get messed up.
+	 * 
+	 * @return The internal used field for spoiler vertices.
+	 */
+	public HashSet<SpoilerVertex<LETTER, STATE>> getInternalSpoilerVerticesField() {
+		return m_SpoilerVertices;
+	}
+
+	/**
 	 * Gets an unmodifiable set of all {@link Vertex} objects the game graph has
 	 * that do have successors, also known as non dead end.
 	 * 
@@ -271,6 +407,40 @@ public abstract class AGameGraph<LETTER, STATE> {
 			throw new IllegalArgumentException("The given vertex must not be null.");
 		}
 		return vertex.getPriority();
+	}
+
+	/**
+	 * Gets an unmodifiable set of all push-over predecessors a given
+	 * {@link Vertex} has or <tt>null</tt> if it has no.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @return An unmodifiable set of all push-over predecessors the given
+	 *         {@link Vertex} has or <tt>null</tt> if it has no.
+	 */
+	public Set<Vertex<LETTER, STATE>> getPushOverPredecessors(final Vertex<LETTER, STATE> vertex) {
+		if (hasPushOverPredecessors(vertex)) {
+			return Collections.unmodifiableSet(m_PushOverPredecessors.get(vertex));
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Gets an unmodifiable set of all push-over successors a given
+	 * {@link Vertex} has or <tt>null</tt> if it has no.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @return An unmodifiable set of all push-over successors the given
+	 *         {@link Vertex} has or <tt>null</tt> if it has no.
+	 */
+	public Set<Vertex<LETTER, STATE>> getPushOverSuccessors(final Vertex<LETTER, STATE> vertex) {
+		if (hasPushOverSuccessors(vertex)) {
+			return Collections.unmodifiableSet(m_PushOverSuccessors.get(vertex));
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -350,6 +520,28 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
+	 * If a given {@link Vertex} has push-over predecessor vertices or not.
+	 * 
+	 * @param vertex
+	 *            Vertex of interest
+	 * @return True if the vertex has push-over predecessors, false if not.
+	 */
+	public boolean hasPushOverPredecessors(final Vertex<LETTER, STATE> vertex) {
+		return m_PushOverPredecessors.containsKey(vertex);
+	}
+
+	/**
+	 * If a given {@link Vertex} has push-over successor vertices or not.
+	 * 
+	 * @param vertex
+	 *            Vertex of interest
+	 * @return True if the vertex has push-over successors, false if not.
+	 */
+	public boolean hasPushOverSuccessors(final Vertex<LETTER, STATE> vertex) {
+		return m_PushOverSuccessors.containsKey(vertex);
+	}
+
+	/**
 	 * If a given {@link Vertex} has successor vertices or not.
 	 * 
 	 * @param vertex
@@ -358,6 +550,91 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public boolean hasSuccessors(final Vertex<LETTER, STATE> vertex) {
 		return m_Successors.containsKey(vertex);
+	}
+
+	/**
+	 * Increases the current global infinity bound by one.<br/>
+	 * For more information see {@link #getGlobalInfinity()}.
+	 */
+	public void increaseGlobalInfinity() {
+		m_GlobalInfinity++;
+	}
+
+	/**
+	 * Removes a given {@link DuplicatorVertex} object from the game graph.
+	 * 
+	 * @param vertex
+	 *            The vertex to remove
+	 */
+	public void removeDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
+		m_DuplicatorVertices.remove(vertex);
+		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
+				null);
+	}
+
+	/**
+	 * Removes a given edge, represented by its source and destination, from the
+	 * game graph.
+	 * 
+	 * @param src
+	 *            Source of the edge
+	 * @param dest
+	 *            Destination of the edge
+	 */
+	public void removeEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
+		// Update successor information
+		if (m_Successors.get(src) != null) {
+			m_Successors.get(src).remove(dest);
+			if (m_Successors.get(src).size() == 0) {
+				m_Successors.remove(src);
+			}
+		}
+
+		// Update predecessor information
+		if (m_Predecessors.get(dest) != null) {
+			m_Predecessors.get(dest).remove(src);
+			if (m_Predecessors.get(dest).size() == 0) {
+				m_Predecessors.remove(dest);
+			}
+		}
+	}
+
+	/**
+	 * Removes a given push-over edge, represented by its source and
+	 * destination, from the game graph.
+	 * 
+	 * @param src
+	 *            Source of the edge
+	 * @param dest
+	 *            Destination of the edge
+	 */
+	public void removePushOverEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
+		// Update successor information
+		if (m_PushOverSuccessors.get(src) != null) {
+			m_PushOverSuccessors.get(src).remove(dest);
+			if (m_PushOverSuccessors.get(src).size() == 0) {
+				m_PushOverSuccessors.remove(src);
+			}
+		}
+
+		// Update predecessor information
+		if (m_PushOverPredecessors.get(dest) != null) {
+			m_PushOverPredecessors.get(dest).remove(src);
+			if (m_PushOverPredecessors.get(dest).size() == 0) {
+				m_PushOverPredecessors.remove(dest);
+			}
+		}
+	}
+
+	/**
+	 * Removes a given {@link SpoilerVertex} object from the game graph.
+	 * 
+	 * @param vertex
+	 *            The vertex to remove
+	 */
+	public void removeSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
+		m_SpoilerVertices.remove(vertex);
+		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), null);
 	}
 
 	/**
@@ -566,72 +843,6 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Adds a given {@link DuplicatorVertex} object to the game graph.
-	 * 
-	 * @param vertex
-	 *            Vertex to add
-	 */
-	public void addDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
-		m_DuplicatorVertices.add(vertex);
-		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
-				vertex);
-	}
-
-	/**
-	 * Adds a given edge, represented by its source and destination, to the game
-	 * graph.
-	 * 
-	 * @param src
-	 *            Source of the edge
-	 * @param dest
-	 *            Destination of the edge
-	 */
-	public void addEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
-		// Update successor information
-		if (!m_Successors.containsKey(src)) {
-			m_Successors.put(src, new HashSet<>());
-		}
-		m_Successors.get(src).add(dest);
-
-		// Update predecessor information
-		if (!m_Predecessors.containsKey(dest)) {
-			m_Predecessors.put(dest, new HashSet<>());
-		}
-		m_Predecessors.get(dest).add(src);
-	}
-
-	/**
-	 * Adds a given {@link SpoilerVertex} object to the game graph.
-	 * 
-	 * @param vertex
-	 *            Vertex to add
-	 */
-	public void addSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
-		m_SpoilerVertices.add(vertex);
-		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), vertex);
-	}
-
-	/**
-	 * Gets the internal used field for duplicator vertices. <b>Use with
-	 * caution!</b> By modifying this field the game graph may get messed up.
-	 * 
-	 * @return The internal used field for duplicator vertices.
-	 */
-	public HashSet<DuplicatorVertex<LETTER, STATE>> getInternalDuplicatorVerticesField() {
-		return m_DuplicatorVertices;
-	}
-
-	/**
-	 * Gets the internal used field for spoiler vertices. <b>Use with
-	 * caution!</b> By modifying this field the game graph may get messed up.
-	 * 
-	 * @return The internal used field for spoiler vertices.
-	 */
-	public HashSet<SpoilerVertex<LETTER, STATE>> getInternalSpoilerVerticesField() {
-		return m_SpoilerVertices;
-	}
-
-	/**
 	 * Gets the logger used by the Ultimate framework.
 	 * 
 	 * @return The logger used by the Ultimate framework.
@@ -667,64 +878,6 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	protected StateFactory<STATE> getStateFactory() {
 		return m_StateFactory;
-	}
-
-	/**
-	 * Increases the current global infinity bound by one.<br/>
-	 * For more information see {@link #getGlobalInfinity()}.
-	 */
-	public void increaseGlobalInfinity() {
-		m_GlobalInfinity++;
-	}
-
-	/**
-	 * Removes a given {@link DuplicatorVertex} object from the game graph.
-	 * 
-	 * @param vertex
-	 *            The vertex to remove
-	 */
-	public void removeDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
-		m_DuplicatorVertices.remove(vertex);
-		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
-				null);
-	}
-
-	/**
-	 * Removes a given edge, represented by its source and destination, from the
-	 * game graph.
-	 * 
-	 * @param src
-	 *            Source of the edge
-	 * @param dest
-	 *            Destination of the edge
-	 */
-	public void removeEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
-		// Update successor information
-		if (m_Successors.get(src) != null) {
-			m_Successors.get(src).remove(dest);
-			if (m_Successors.get(src).size() == 0) {
-				m_Successors.remove(src);
-			}
-		}
-
-		// Update predecessor information
-		if (m_Predecessors.get(dest) != null) {
-			m_Predecessors.get(dest).remove(src);
-			if (m_Predecessors.get(dest).size() == 0) {
-				m_Predecessors.remove(dest);
-			}
-		}
-	}
-
-	/**
-	 * Removes a given {@link SpoilerVertex} object from the game graph.
-	 * 
-	 * @param vertex
-	 *            The vertex to remove
-	 */
-	public void removeSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
-		m_SpoilerVertices.remove(vertex);
-		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), null);
 	}
 
 	/**

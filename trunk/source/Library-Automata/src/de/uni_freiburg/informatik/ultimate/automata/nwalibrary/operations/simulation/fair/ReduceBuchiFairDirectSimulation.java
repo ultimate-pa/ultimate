@@ -127,7 +127,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 					throws OperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
 				new FairDirectSimulation<LETTER, STATE>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand, useSCCs,
+						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), useSCCs,
 						stateFactory, possibleEquivalentClasses,
 						new FairDirectGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,

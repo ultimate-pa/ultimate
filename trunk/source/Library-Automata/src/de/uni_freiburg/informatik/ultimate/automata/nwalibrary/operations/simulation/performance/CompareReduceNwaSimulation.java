@@ -149,7 +149,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, progressTimer, logger, operand,
 						stateFactory);
 				graph.generateGameGraphFromAutomaton();
-				FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, operand, useSCCs,
+				FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;

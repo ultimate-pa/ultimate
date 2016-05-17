@@ -112,7 +112,8 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(services, progressTimer, logger, buechi, stateFactory);
-		verifyAutomatonValidity(buechi);
+		INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
+		verifyAutomatonValidity(preparedBuechi);
 		
 		m_IsCurrentlyDirectGameGraph = false;
 		m_DirectSimulations = new HashSet<>();
