@@ -38,30 +38,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	
 	private final SmtManager m_SmtManager;
-	private HoareTripleCheckerStatisticsGenerator m_EdgeCheckerBenchmark;
+	private HoareTripleCheckerStatisticsGenerator m_HoareTripleCheckerStatistics;
 	
 	
 
 	public MonolithicHoareTripleChecker(SmtManager smtManager) {
 		super();
 		m_SmtManager = smtManager;
-		m_EdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
+		m_HoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
 	}
 
 	@Override
 	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
+		m_HoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		Validity result = IHoareTripleChecker.lbool2validity(m_SmtManager.isInductive(pre, act, succ));
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		m_HoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
-			m_EdgeCheckerBenchmark.getSolverCounterSat().incIn();
+			m_HoareTripleCheckerStatistics.getSolverCounterSat().incIn();
 			break;
 		case UNKNOWN:
-			m_EdgeCheckerBenchmark.getSolverCounterUnknown().incIn();
+			m_HoareTripleCheckerStatistics.getSolverCounterUnknown().incIn();
 			break;
 		case VALID:
-			m_EdgeCheckerBenchmark.getSolverCounterUnsat().incIn();
+			m_HoareTripleCheckerStatistics.getSolverCounterUnsat().incIn();
 			break;
 		default:
 			throw new AssertionError("unknown case");
@@ -71,18 +71,18 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
+		m_HoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		Validity result =  IHoareTripleChecker.lbool2validity(m_SmtManager.isInductiveCall(pre, (Call) act, succ));
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		m_HoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
-			m_EdgeCheckerBenchmark.getSolverCounterSat().incCa();
+			m_HoareTripleCheckerStatistics.getSolverCounterSat().incCa();
 			break;
 		case UNKNOWN:
-			m_EdgeCheckerBenchmark.getSolverCounterUnknown().incCa();
+			m_HoareTripleCheckerStatistics.getSolverCounterUnknown().incCa();
 			break;
 		case VALID:
-			m_EdgeCheckerBenchmark.getSolverCounterUnsat().incCa();
+			m_HoareTripleCheckerStatistics.getSolverCounterUnsat().incCa();
 			break;
 		default:
 			throw new AssertionError("unknown case");
@@ -93,18 +93,18 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
 			IReturnAction act, IPredicate succ) {
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
+		m_HoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		Validity result =  IHoareTripleChecker.lbool2validity(m_SmtManager.isInductiveReturn(preLin, preHier, (Return) act, succ));
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		m_HoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
-			m_EdgeCheckerBenchmark.getSolverCounterSat().incRe();
+			m_HoareTripleCheckerStatistics.getSolverCounterSat().incRe();
 			break;
 		case UNKNOWN:
-			m_EdgeCheckerBenchmark.getSolverCounterUnknown().incRe();
+			m_HoareTripleCheckerStatistics.getSolverCounterUnknown().incRe();
 			break;
 		case VALID:
-			m_EdgeCheckerBenchmark.getSolverCounterUnsat().incRe();
+			m_HoareTripleCheckerStatistics.getSolverCounterUnsat().incRe();
 			break;
 		default:
 			throw new AssertionError("unknown case");
@@ -113,7 +113,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return m_EdgeCheckerBenchmark;
+		return m_HoareTripleCheckerStatistics;
 	}
 
 	@Override
