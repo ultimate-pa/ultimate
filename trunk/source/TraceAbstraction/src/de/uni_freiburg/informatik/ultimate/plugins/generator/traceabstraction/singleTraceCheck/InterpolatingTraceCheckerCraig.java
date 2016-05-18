@@ -188,7 +188,10 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_TcSmtManager, m_AAA.getAnnotatedSsa(),
 				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, interpolatedPositions, true, m_Services, this, m_SmtManager, m_InstantiateArrayExt);
 		m_Interpolants = nib.getNestedInterpolants();
-		assert !inductivityOfSequenceCanBeRefuted();
+		assert TraceCheckerUtils.checkInterpolantsInductivityForward(
+				Arrays.asList(m_Interpolants), m_Trace, m_Precondition, m_Postcondition, 
+				m_PendingContexts, "Craig", m_SmtManager, m_ModifiedGlobals, m_Logger) : 
+					"invalid Hoare triple in tree interpolants";
 		assert m_Interpolants != null;
 	}
 
@@ -221,7 +224,10 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 		// forget trace - endTraceCheck already called
 		if (m_Interpolants != null) {
-			assert !inductivityOfSequenceCanBeRefuted();
+			assert TraceCheckerUtils.checkInterpolantsInductivityForward(
+					Arrays.asList(m_Interpolants), m_Trace, m_Precondition, m_Postcondition, 
+					m_PendingContexts, "Craig", m_SmtManager, m_ModifiedGlobals, m_Logger) : 
+						"invalid Hoare triple in nested interpolants";
 		}
 
 		for (Integer nonPendingCall : nonPendingCallPositions) {

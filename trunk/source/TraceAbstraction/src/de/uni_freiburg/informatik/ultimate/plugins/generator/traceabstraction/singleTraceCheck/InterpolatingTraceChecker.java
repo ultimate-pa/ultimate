@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
@@ -38,10 +39,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -63,13 +66,6 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 
 	protected IPredicate[] m_Interpolants;
 	
-	protected void unlockSmtManager() {
-		super.unlockSmtManager();
-		if (m_Interpolants != null) {
-			assert !inductivityOfSequenceCanBeRefuted();
-		}
-	}
-
 	/**
 	 * Check if trace fulfills specification given by precondition,
 	 * postcondition and pending contexts. The pendingContext maps the positions
@@ -167,50 +163,6 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	public final PredicateUnifier getPredicateUnifier() {
 		return m_PredicateUnifier;
 	}
-
-	/**
-	 * Return true iff m_Interpolants is an inductive sequence of nested
-	 * interpolants.
-	 */
-	protected final boolean inductivityOfSequenceCanBeRefuted() {
-		boolean result = false;
-		for (int i = 0; i < m_Trace.length(); i++) {
-			if (m_Trace.isCallPosition(i)) {
-				LBool inductive = m_SmtManager.isInductiveCall(getInterpolant(i - 1), (Call) m_Trace.getSymbol(i),
-						getInterpolant(i), true);
-				result |= (inductive == LBool.SAT);
-			} else if (m_Trace.isReturnPosition(i)) {
-				IPredicate context;
-				if (m_Trace.isPendingReturn(i)) {
-					context = m_PendingContexts.get(i);
-				} else {
-					int callPosition = ((NestedWord<CodeBlock>) m_Trace).getCallPosition(i);
-					context = getInterpolant(callPosition - 1);
-				}
-				LBool inductive = m_SmtManager.isInductiveReturn(getInterpolant(i - 1), context,
-						(Return) m_Trace.getSymbol(i), getInterpolant(i), true);
-				result |= (inductive == LBool.SAT);
-			} else {
-				LBool inductive = m_SmtManager.isInductive(getInterpolant(i - 1), (IInternalAction) m_Trace.getSymbol(i),
-						getInterpolant(i), true);
-				result |= (inductive == LBool.SAT);
-			}
-			assert !result;
-		}
-		return result;
-	}
-
-	private final IPredicate getInterpolant(int i) {
-		if (i == -1) {
-			return m_Precondition;
-		} else if (i == m_Interpolants.length) {
-			return m_Postcondition;
-		} else {
-			return m_Interpolants[i];
-		}
-	}
-
-
 
 	/**
 	 * Set<Integer> implementation that has only a contains method. The method

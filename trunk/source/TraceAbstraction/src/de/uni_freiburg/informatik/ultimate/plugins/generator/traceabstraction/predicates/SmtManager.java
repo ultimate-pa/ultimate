@@ -1395,51 +1395,6 @@ public class SmtManager {
 	boolean isLockOwner(Object allegedLockOwner) {
 		return m_ManagedScript.isLockOwner(allegedLockOwner);
 	}
-	
-	private class AuxilliaryTerm extends Term {
-
-		String m_Name;
-
-		private AuxilliaryTerm(String name) {
-			super(0);
-			m_Name = name;
-		}
-
-		@Override
-		public Sort getSort() {
-			throw new UnsupportedOperationException("Auxiliary term has no sort");
-		}
-
-		@Override
-		public void toStringHelper(ArrayDeque<Object> m_Todo) {
-			throw new UnsupportedOperationException("Auxiliary term must not be subterm of other terms");
-		}
-
-		@Override
-		public TermVariable[] getFreeVars() {
-			throw new UnsupportedOperationException("Auxiliary term has no vars");
-		}
-
-		@Override
-		public Theory getTheory() {
-			throw new UnsupportedOperationException("Auxiliary term has no theory");
-		}
-
-		@Override
-		public String toString() {
-			return m_Name;
-		}
-
-		@Override
-		public String toStringDirect() {
-			return m_Name;
-		}
-
-		@Override
-		public int hashCode() {
-			throw new UnsupportedOperationException("Auxiliary term must not be contained in any collection");
-		}
-	}
 
 
 }
