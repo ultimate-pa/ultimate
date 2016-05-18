@@ -275,24 +275,7 @@ public class SmtManager {
 		return m_Boogie2Smt.getVariableManager();
 	}
 	
-	/**
-	 * Returns the DAG size of the predicate's formula. 
-	 * (DAG size means that similar sub-formulas are counted only once.)
-	 */
-	public int computeDagSizeOfPredicate(IPredicate p) {
-		return (new DAGSize()).size(p.getFormula());
-	}
-	
-	/**
-	 * Computes DAG size for an array of predicates.
-	 */
-	public int[] computeDagSizeOfPredicates(List<IPredicate> predicates) {
-		int[] sizeOfPredicates = new int[predicates.size()];
-		for (int i = 0; i < predicates.size(); i++) {
-			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i));
-		}
-		return sizeOfPredicates;
-	}
+
 
 	/**
 	 * Returns a predicate which states that old(g)=g for all global variables g

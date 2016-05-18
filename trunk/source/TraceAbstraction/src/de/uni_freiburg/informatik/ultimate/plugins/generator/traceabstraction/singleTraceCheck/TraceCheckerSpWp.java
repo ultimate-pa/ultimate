@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantif
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
@@ -254,7 +255,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in FP";
 			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsFp);
 			if (m_CollectInformationAboutSizeOfPredicates) {
-				sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
+				sizeOfPredicatesFP = PredicateUtils.computeDagSizeOfPredicates(m_InterpolantsFp);
 			}
 		}
 		
@@ -281,7 +282,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in BP";
 			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsBp);
 			if (m_CollectInformationAboutSizeOfPredicates) {
-				sizeOfPredicatesBP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsBp);
+				sizeOfPredicatesBP = PredicateUtils.computeDagSizeOfPredicates(m_InterpolantsBp);
 			}
 		}
 
@@ -296,7 +297,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					m_InterpolantsFp.set(i, p_new);
 				}
 				if (m_CollectInformationAboutSizeOfPredicates) {
-					sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
+					sizeOfPredicatesFP = PredicateUtils.computeDagSizeOfPredicates(m_InterpolantsFp);
 				}
 			}
 		}

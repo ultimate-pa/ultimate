@@ -43,15 +43,35 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class PredicateUtils {
+	
+	/**
+	 * Returns the DAG size of the predicate's formula. 
+	 * (DAG size means that similar sub-formulas are counted only once.)
+	 */
+	public static int computeDagSizeOfPredicate(IPredicate p) {
+		return (new DAGSize()).size(p.getFormula());
+	}
+	
+	/**
+	 * Computes DAG size for an array of predicates.
+	 */
+	public static int[] computeDagSizeOfPredicates(List<IPredicate> predicates) {
+		int[] sizeOfPredicates = new int[predicates.size()];
+		for (int i = 0; i < predicates.size(); i++) {
+			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i));
+		}
+		return sizeOfPredicates;
+	}
+	
 
 	public static Term computeClosedFormula(Term formula, Set<BoogieVar> boogieVars, Script script) {
 		Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
