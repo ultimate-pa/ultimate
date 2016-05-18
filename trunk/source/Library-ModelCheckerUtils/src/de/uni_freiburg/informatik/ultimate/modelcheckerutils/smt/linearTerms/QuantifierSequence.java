@@ -183,8 +183,10 @@ public class QuantifierSequence {
 					// special case where both sequences have same size but
 					// start with different quantifiers
 					resultQuantifierBlocks.add(new QuantifiedVariables(lastQuantifierCurrent, new HashSet<>()));
-				} 
-				offset = resultQuantifierBlocks.size() - quantifierBlocks.size();
+					offset = resultQuantifierBlocks.size() - quantifierBlocks.size();
+				} else {
+					offset = resultQuantifierBlocks.size() - quantifierBlocks.size() - 1;
+				}
 			}
 			assert offset >= 0;
 		}
