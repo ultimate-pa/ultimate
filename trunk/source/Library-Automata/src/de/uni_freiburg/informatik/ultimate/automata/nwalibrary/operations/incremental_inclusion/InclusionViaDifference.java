@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incre
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -64,7 +64,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	
 	public InclusionViaDifference(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
-			INestedWordAutomatonSimple<LETTER, STATE> a) throws OperationCanceledException {
+			INestedWordAutomatonSimple<LETTER, STATE> a) throws AutomataOperationCanceledException {
 		this(services, stateFactory, stateFactory, a);
 		
 	}
@@ -73,12 +73,12 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	 * Constructor that uses different stateFactories for intersection and
 	 * determinization. This is currently needed when we use the inclusion
 	 * check in program verification. 
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
 	public InclusionViaDifference(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactoryIntersect,
 			StateFactory<STATE> stateFactoryDeterminize,
-			INestedWordAutomatonSimple<LETTER, STATE> a) throws OperationCanceledException {
+			INestedWordAutomatonSimple<LETTER, STATE> a) throws AutomataOperationCanceledException {
 		super(services, a);
 		m_StateFactoryIntersect = stateFactoryIntersect;
 		m_StateFactoryDeterminize = stateFactoryDeterminize;
@@ -88,7 +88,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	}
 
 	@Override
-	public NestedRun<LETTER, STATE> getCounterexample() throws OperationCanceledException {
+	public NestedRun<LETTER, STATE> getCounterexample() throws AutomataOperationCanceledException {
 		return m_AcceptingRun;
 	}
 

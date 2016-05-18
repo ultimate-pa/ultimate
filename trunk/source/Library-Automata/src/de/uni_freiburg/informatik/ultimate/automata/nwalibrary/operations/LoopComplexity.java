@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AutomatonSccComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -96,7 +96,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	 * where each edge has the same label. As label we us some letter form the alphabet.
 	 */
 	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph(
-			INestedWordAutomaton<LETTER, STATE> automaton) throws OperationCanceledException {
+			INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
 		LETTER letter = automaton.getInternalAlphabet().iterator().next();
 		Set<LETTER> singletonAlphabet = Collections.singleton(letter);
 		NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<LETTER, STATE>(m_Services, singletonAlphabet,
@@ -151,7 +151,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			for (STATE stateOut : nonchainStates) {
 				// Check for cancel button.
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException(this.getClass());
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 
 				copyStates.remove(stateOut);

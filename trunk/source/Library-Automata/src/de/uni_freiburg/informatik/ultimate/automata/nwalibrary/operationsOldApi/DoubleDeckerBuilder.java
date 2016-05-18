@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
@@ -109,7 +109,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	protected abstract Collection<STATE> buildReturnSuccessors(
 			DoubleDecker<STATE> doubleDecker);
 	
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
 		return m_TraversedNwa;
 	}
 

@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -82,7 +82,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * 
 	 * @param operand
 	 *            the input automaton
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
     public MinimizeDfa(AutomataLibraryServices services, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws AutomataLibraryException {
@@ -120,7 +120,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 *            the alphabet
 	 * @param table
 	 *            the table
-     * @throws OperationCanceledException 
+     * @throws AutomataOperationCanceledException 
 	 */
 	private void calculateTable(ArrayList<STATE> states, boolean[][] table) throws AutomataLibraryException {
 		// we iterate on the table to get all the equivalent states
@@ -152,7 +152,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				}
 				if (m_Services.getProgressMonitorService() != null
 						&& !m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException(this.getClass());
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 		}

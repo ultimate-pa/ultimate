@@ -34,7 +34,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -146,7 +146,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 				InCaReAlphabet<CodeBlock> alphabet,
 				StateFactory<IPredicate> predicateFactory,
 				NestedWord<CodeBlock> stem,
-				NestedWord<CodeBlock> loop) throws OperationCanceledException {
+				NestedWord<CodeBlock> loop) throws AutomataOperationCanceledException {
 			m_Result =	new NestedWordAutomaton<CodeBlock, IPredicate>(
 					new AutomataLibraryServices(m_Services),
 							alphabet.getInternalAlphabet(),

@@ -36,7 +36,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -95,7 +95,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	public DeterminizeDD(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER,STATE> input, 
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer) 
-											throws OperationCanceledException {
+											throws AutomataOperationCanceledException {
 		super(services);
 		this.contentFactory = input.getStateFactory();
 		this.m_Operand = input;
@@ -238,7 +238,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		return super.getResult();
 	}
 

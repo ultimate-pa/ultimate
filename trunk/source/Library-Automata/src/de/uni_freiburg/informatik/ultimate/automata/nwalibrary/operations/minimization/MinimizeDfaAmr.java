@@ -39,7 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -138,7 +138,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * GUI Constructor.
 	 * 
 	 * @param operand input automaton (DFA)
-	 * @throws OperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 * @throws AutomataLibraryException thrown by DFA check
 	 */
 	public MinimizeDfaAmr(final AutomataLibraryServices services,
@@ -153,7 +153,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * 
 	 * @param operand input automaton (DFA)
 	 * @param interrupt interrupt
-	 * @throws OperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 * @throws AutomataLibraryException thrown by DFA check
 	 */
 	public MinimizeDfaAmr(final AutomataLibraryServices services,
@@ -221,7 +221,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * This method invokes the minimization process.
 	 * 
 	 * @return the minimal DFA
-	 * @throws OperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 */
 	private INestedWordAutomaton<LETTER, STATE> minimize()
 			throws AutomataLibraryException {

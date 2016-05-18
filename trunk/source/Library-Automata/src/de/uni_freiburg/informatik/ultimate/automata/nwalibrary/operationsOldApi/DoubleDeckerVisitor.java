@@ -41,7 +41,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -166,7 +166,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 
-	public Object getResult() throws OperationCanceledException {
+	public Object getResult() throws AutomataOperationCanceledException {
 		return m_TraversedNwa;
 	}
 
@@ -286,7 +286,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 		return Collections.unmodifiableMap(m_Marked_Up2Down);
 	}
 
-	protected final void traverseDoubleDeckerGraph() throws OperationCanceledException {
+	protected final void traverseDoubleDeckerGraph() throws AutomataOperationCanceledException {
 		Collection<STATE> initialStates = getInitialStates();
 		for (STATE state : initialStates) {
 			DoubleDecker<STATE> initialDoubleDecker = new DoubleDecker<STATE>(m_TraversedNwa.getEmptyStackState(),
@@ -338,7 +338,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 			}
 			if (m_Services.getProgressMonitorService() != null
 					&& !m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 
 		}

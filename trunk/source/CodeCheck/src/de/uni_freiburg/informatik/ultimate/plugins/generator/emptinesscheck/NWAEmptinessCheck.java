@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -69,7 +69,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		try {
 			return new IsEmpty<CodeBlock, AnnotatedProgramPoint>(new AutomataLibraryServices(m_Services), 
 					(new RemoveUnreachable<CodeBlock, AnnotatedProgramPoint>(new AutomataLibraryServices(m_Services), converted)).getResult()).getNestedRun();
-		} catch (OperationCanceledException e) {
+		} catch (AutomataOperationCanceledException e) {
 			e.printStackTrace();
 			return null;
 		}

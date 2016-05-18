@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -406,7 +406,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 *            The state factory used for creating states
 	 * @param operand
 	 *            The buechi automaton to compare with
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 * @throws IllegalArgumentException
@@ -414,7 +414,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 	 *             an empty call and return alphabet.
 	 */
 	public CompareReduceBuchiSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		verifyAutomatonValidity(operand);
 
 		m_LoggedLines = new LinkedList<String>();
@@ -873,7 +873,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 				method = new ShrinkNwa<>(m_Services, stateFactory, operand);
 				m_ExternalOverallTime = System.currentTimeMillis() - startTime;
 			}
-		} catch (OperationCanceledException e) {
+		} catch (AutomataOperationCanceledException e) {
 			m_Logger.info("Method timed out.");
 			timedOut = true;
 		} catch (AutomataLibraryException e) {

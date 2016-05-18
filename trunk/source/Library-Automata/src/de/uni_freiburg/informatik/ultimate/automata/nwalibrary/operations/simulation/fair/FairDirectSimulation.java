@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.DirectSimulation;
@@ -107,13 +107,13 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The fair direct game graph to use for simulation.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public FairDirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final FairDirectGameGraph<LETTER, STATE> game)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(progressTimer, logger, useSCCs, stateFactory, Collections.emptyList(), game);
 	}
 
@@ -145,13 +145,13 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *            optimization for the simulation
 	 * @param game
 	 *            The fair direct game graph to use for simulation.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public FairDirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
-			final FairDirectGameGraph<LETTER, STATE> game) throws OperationCanceledException {
+			final FairDirectGameGraph<LETTER, STATE> game) throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, possibleEquivalentClasses, game);
 	}
 
@@ -179,7 +179,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 */
 	@Override
 	protected FairGameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState, final STATE secondState)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		// Use previous calculated direct simulation results as optimization
 		if (getGameGraph() instanceof FairDirectGameGraph) {
 			FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
@@ -209,7 +209,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 */
 	@Override
 	protected FairGameGraphChanges<LETTER, STATE> attemptTransitionRemoval(final STATE src, final LETTER a,
-			final STATE dest, final STATE invoker) throws OperationCanceledException {
+			final STATE dest, final STATE invoker) throws AutomataOperationCanceledException {
 		// Use previous calculated direct simulation results as optimization
 		if (getGameGraph() instanceof FairDirectGameGraph) {
 			FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
@@ -254,7 +254,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 * buchiReduction.ASimulation#doSimulation()
 	 */
 	@Override
-	public void doSimulation() throws OperationCanceledException {
+	public void doSimulation() throws AutomataOperationCanceledException {
 		m_Performance = new SimulationPerformance(ESimulationType.FAIRDIRECT, isUsingSCCs());
 		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL);
 		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);

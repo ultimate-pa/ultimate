@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -101,7 +101,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 		
 		
 		if (!m_Services.getProgressMonitorService().continueProcessing()) {
-			throw new OperationCanceledException(this.getClass());
+			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
 		S symbol = nWord.getSymbol(position);

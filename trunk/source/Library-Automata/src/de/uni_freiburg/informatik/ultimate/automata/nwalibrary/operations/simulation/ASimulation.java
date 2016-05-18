@@ -42,7 +42,7 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance.ECountingMeasure;
@@ -175,12 +175,12 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            The state factory used for creating states.
 	 * @param simType
 	 *            Type of the simulation implementing.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final ESimulationType simType) throws OperationCanceledException {
+			final StateFactory<STATE> stateFactory, final ESimulationType simType) throws AutomataOperationCanceledException {
 		m_ProgressTimer = progressTimer;
 		m_Logger = logger;
 		m_UseSCCs = useSCCs;
@@ -198,11 +198,11 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * information to possible reduce the inputed buechi automaton and finally
 	 * assigns the result which then can be accessed by {@link #getResult()}.
 	 * 
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public void doSimulation() throws OperationCanceledException {
+	public void doSimulation() throws AutomataOperationCanceledException {
 		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL);
 		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
@@ -583,12 +583,12 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            not used
 	 * @param scc
 	 *            The containing SCC or <tt>null</tt> if not used
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		AGameGraph<LETTER, STATE> game = getGameGraph();
 		int globalInfinity = game.getGlobalInfinity();
 
@@ -682,7 +682,7 @@ public abstract class ASimulation<LETTER, STATE> {
 			// Ultimate framework
 			if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 				m_Logger.debug("Stopped in efficientLiftingAlgorithm");
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 	}

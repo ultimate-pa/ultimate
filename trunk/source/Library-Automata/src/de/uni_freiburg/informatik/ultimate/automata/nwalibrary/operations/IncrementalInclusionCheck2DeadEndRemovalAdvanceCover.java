@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -79,7 +79,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 		public LinkedList<NodeData> coveredNodes,ACCNodes;
 		public HashMap<NodeData, LinkedList<NodeData>> completedNodes,currentNodes;
 		public HashSet<NodeData> initialNodes;
-		public PseudoAutomata(INestedWordAutomatonSimple<LETTER,STATE> a) throws OperationCanceledException{
+		public PseudoAutomata(INestedWordAutomatonSimple<LETTER,STATE> a) throws AutomataOperationCanceledException{
 			associatedAutomata = a;
 			prvPAutomata = null;
 			letter = a.getAlphabet();
@@ -101,7 +101,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 			}while(true);
 		}
 		
-		public PseudoAutomata(PseudoAutomata preAutomata,INestedWordAutomatonSimple<LETTER,STATE> bn) throws OperationCanceledException{
+		public PseudoAutomata(PseudoAutomata preAutomata,INestedWordAutomatonSimple<LETTER,STATE> bn) throws AutomataOperationCanceledException{
 			associatedAutomata = bn;
 			prvPAutomata = preAutomata;
 			allNodes = new HashSet<NodeData>();
@@ -134,9 +134,9 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 		}
 				
 		@SuppressWarnings("unchecked")
-		public  HashMap<NodeData, LinkedList<NodeData>> expand(boolean iteration1, boolean init) throws OperationCanceledException{
+		public  HashMap<NodeData, LinkedList<NodeData>> expand(boolean iteration1, boolean init) throws AutomataOperationCanceledException{
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-                throw new OperationCanceledException(this.getClass());
+                throw new AutomataOperationCanceledException(this.getClass());
 			}
 			HashMap<NodeData, LinkedList<NodeData>> newNodes = new HashMap<NodeData, LinkedList<NodeData>>();
 			NodeData tempNodeData;
@@ -309,9 +309,9 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 			}
 		}*/
 		
-		public boolean cover(boolean acc) throws OperationCanceledException{
+		public boolean cover(boolean acc) throws AutomataOperationCanceledException{
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-                throw new OperationCanceledException(this.getClass());
+                throw new AutomataOperationCanceledException(this.getClass());
 			}
 			//cover() will need to write appropriate outgoing transition for previous nodes
 			boolean newNodeInCompleteTree = false;
@@ -461,9 +461,9 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 		}
 		
 		@SuppressWarnings("unchecked")
-		public void finishACCover() throws OperationCanceledException{
+		public void finishACCover() throws AutomataOperationCanceledException{
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-                throw new OperationCanceledException(this.getClass());
+                throw new AutomataOperationCanceledException(this.getClass());
 			}
 			assert !ACCNodes.isEmpty();
 			currentNodes.clear();

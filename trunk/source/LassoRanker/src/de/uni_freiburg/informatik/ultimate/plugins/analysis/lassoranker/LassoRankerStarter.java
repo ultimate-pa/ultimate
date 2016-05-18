@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -129,7 +129,7 @@ public class LassoRankerStarter {
 		if (useNewExtraction) {
 			try {
 				lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, m_SmtManager, mLogger);
-			} catch (OperationCanceledException oce) {
+			} catch (AutomataOperationCanceledException oce) {
 				throw new AssertionError("timeout while searching lasso");
 				// throw new ToolchainCanceledException(this.getClass());
 			} catch (AutomataLibraryException e) {

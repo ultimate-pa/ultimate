@@ -31,7 +31,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -90,12 +90,12 @@ public final class LoopDetector<LETTER, STATE> {
 	 *            Destination to reach
 	 * @return <tt>True if destination is reachable from vertex, <tt>false</tt>
 	 *         if not.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public boolean canVertexReachDestination(final Vertex<LETTER, STATE> vertex,
-			final Vertex<LETTER, STATE> destination) throws OperationCanceledException {
+			final Vertex<LETTER, STATE> destination) throws AutomataOperationCanceledException {
 		return !isLoopVertex(vertex, destination, null);
 	}
 
@@ -118,12 +118,12 @@ public final class LoopDetector<LETTER, STATE> {
 	 *            reach the destination
 	 * @return <tt>True</tt> if the given vertex is a loop vertex,
 	 *         <tt>false</tt> if not.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public boolean isLoopVertex(final Vertex<LETTER, STATE> vertex, final Vertex<LETTER, STATE> destination,
-			final Vertex<LETTER, STATE> toAvoid) throws OperationCanceledException {
+			final Vertex<LETTER, STATE> toAvoid) throws AutomataOperationCanceledException {
 		// Solve if 'vertex' can reach 'destination' without visiting 'toAvoid'.
 		// We do so by using a breadth-first search.
 		Queue<Vertex<LETTER, STATE>> queue = new LinkedList<>();
@@ -159,7 +159,7 @@ public final class LoopDetector<LETTER, STATE> {
 			// Ultimate framework
 			if (m_ProgressAwareTimer != null && !m_ProgressAwareTimer.continueProcessing()) {
 				m_Logger.debug("Stopped in isLoopVertex");
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 		// Vertex is a loop vertex if destination could not be found without

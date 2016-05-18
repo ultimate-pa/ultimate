@@ -34,6 +34,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
+
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_MergedUnion;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -90,7 +107,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	}
 
 	@Override
-	protected void constructInterpolantAutomaton() throws OperationCanceledException {
+	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		Word<CodeBlock> trace = (Word<CodeBlock>) m_InterpolantGenerator.getTrace();
 		mLogger.debug("current trace:");
 		mLogger.debug(trace.toString());
@@ -266,7 +283,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
             Term t = varToSsaVarNew.get(entry.getKey());
             assert t != null;
 			substitutionMapping.put(entry.getValue(), t);
-			constantsToBoogieVar.put((ApplicationTerm) t, entry.getKey());
+			constantsToBoogieVar.put(t, entry.getKey());
 		}
 		for (Entry<BoogieVar, TermVariable> entry : transFormula.getOutVars().entrySet()) {
 			Term t = null;
@@ -278,7 +295,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
             assert t != null;
 			substitutionMapping.put(entry.getValue(), t);
-			constantsToBoogieVar.put((ApplicationTerm) t, entry.getKey());
+			constantsToBoogieVar.put(t, entry.getKey());
 		}
 		/*
 		 * If more than one variable is assigned to, we need an additional substitution for the ones that are not
@@ -459,7 +476,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
 				m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
-				this.m_PredicateUnifier, mLogger, false, false);//change to CegarLoopConcurrentAutomata
+				m_PredicateUnifier, mLogger, false, false);//change to CegarLoopConcurrentAutomata
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
@@ -488,7 +505,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 		}
 
-		m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
+		m_Abstraction = diff.getResult();
 		// m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
 		if (m_Pref.dumpAutomata()) {
 			String filename = "InterpolantAutomaton_Iteration" + m_Iteration;
@@ -532,7 +549,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
 				m_RootNode.getRootAnnot().getModGlobVarManager(), 
-				this.m_PredicateUnifier, m_SmtManager); //only change to method in BasicCegarLoop
+				m_PredicateUnifier, m_SmtManager); //only change to method in BasicCegarLoop
 		return htc;
 	}
 	

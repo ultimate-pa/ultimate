@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -71,7 +71,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * Constructor.
 	 * 
 	 * @param operand input (finite, possibly nondeterministic) automaton
-	 * @throws OperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 */
 	public MinimizeBrzozowski(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
@@ -91,7 +91,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * results in the minimal DFA.
 	 * 
 	 * @return the minimal DFA
-	 * @throws OperationCanceledException thrown when execution is cancelled
+	 * @throws AutomataOperationCanceledException thrown when execution is cancelled
 	 */
 	private INestedWordAutomaton<LETTER, STATE> minimize()
 			throws AutomataLibraryException {
@@ -148,7 +148,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * 
 	 * @param automaton automaton
 	 * @return the determinized automaton
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
 	private INestedWordAutomaton<LETTER, STATE> determinize(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {

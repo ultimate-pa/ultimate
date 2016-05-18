@@ -36,7 +36,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -146,7 +146,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *            generated.
 	 * @param stateFactory
 	 *            State factory used for state creation
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 * @throws IllegalArgumentException
@@ -155,7 +155,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	public FairGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
-			StateFactory<STATE> stateFactory) throws OperationCanceledException {
+			StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, stateFactory, buechi);
 		INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
@@ -192,7 +192,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
@@ -224,7 +224,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			// Ultimate framework
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 				getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 
 			// Add states
@@ -295,7 +295,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		// Ultimate framework
 		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 			getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/states and transitions added");
-			throw new OperationCanceledException(this.getClass());
+			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
 		// Log performance
@@ -328,7 +328,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
 	@Override
-	public void generateGameGraphFromAutomaton() throws OperationCanceledException {
+	public void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException {
 		long graphBuildTimeStart = System.currentTimeMillis();
 
 		INestedWordAutomatonOldApi<LETTER, STATE> buechi = m_Buechi;
@@ -358,7 +358,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				// Ultimate framework
 				if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 					getLogger().debug("Stopped in generateGameGraphFromBuechi/generating vertices");
-					throw new OperationCanceledException(this.getClass());
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 
@@ -396,7 +396,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					// Ultimate framework
 					if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 						getLogger().debug("Stopped in generateGameGraphFromBuechi/generating edges");
-						throw new OperationCanceledException(this.getClass());
+						throw new AutomataOperationCanceledException(this.getClass());
 					}
 				}
 

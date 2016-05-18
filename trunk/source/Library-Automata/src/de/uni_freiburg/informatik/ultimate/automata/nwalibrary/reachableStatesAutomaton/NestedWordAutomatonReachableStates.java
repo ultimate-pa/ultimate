@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -147,7 +147,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 	public NestedWordAutomatonReachableStates(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.m_Operand = operand;
@@ -181,7 +181,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			assert (checkTransitionsReturnedConsistent());
 		} catch (ToolchainCanceledException tce) {
 			throw tce;
-		} catch (OperationCanceledException oce) {
+		} catch (AutomataOperationCanceledException oce) {
 			throw oce;
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
@@ -654,7 +654,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		private final LinkedList<StateContainer<LETTER, STATE>> m_ForwardWorklist = new LinkedList<StateContainer<LETTER, STATE>>();
 		private final LinkedList<StateContainer<LETTER, STATE>> m_DownPropagationWorklist = new LinkedList<StateContainer<LETTER, STATE>>();
 
-		ReachableStatesComputation() throws OperationCanceledException {
+		ReachableStatesComputation() throws AutomataOperationCanceledException {
 			addInitialStates(m_Operand.getInitialStates());
 
 			do {
@@ -695,7 +695,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					}
 					if (m_Services.getProgressMonitorService() != null
 							&& !m_Services.getProgressMonitorService().continueProcessing()) {
-						throw new OperationCanceledException(this.getClass());
+						throw new AutomataOperationCanceledException(this.getClass());
 					}
 				}
 				while (m_ForwardWorklist.isEmpty() && !m_DownPropagationWorklist.isEmpty()) {
@@ -707,7 +707,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						// (Settings:settings/TACASInterpolation2015/ForwardPredicates.epf,
 						// Toolchain:toolchains/AutomizerC.xml)
 
-						throw new OperationCanceledException(this.getClass());
+						throw new AutomataOperationCanceledException(this.getClass());
 					}
 
 					StateContainer<LETTER, STATE> cont = m_DownPropagationWorklist.remove(0);

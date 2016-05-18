@@ -39,7 +39,7 @@ import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -106,7 +106,7 @@ public class TotalInterpolationAutomatonBuilder {
 	public TotalInterpolationAutomatonBuilder(INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			ArrayList<IPredicate> stateSequence, IInterpolantGenerator interpolantGenerator, SmtManager smtManager,
 			PredicateFactoryForInterpolantAutomata predicateFactory, ModifiableGlobalVariableManager modifiableGlobals,
-			INTERPOLATION interpolation, IUltimateServiceProvider services, HoareTripleChecks hoareTripleChecks) throws OperationCanceledException {
+			INTERPOLATION interpolation, IUltimateServiceProvider services, HoareTripleChecks hoareTripleChecks) throws AutomataOperationCanceledException {
 		super();
 		m_Services = services;
 		m_StateSequence = stateSequence;
@@ -146,7 +146,7 @@ public class TotalInterpolationAutomatonBuilder {
 		m_BenchmarkGenerator.addEdgeCheckerData(m_Htc.getEdgeCheckerBenchmark());
 	}
 
-	private void doThings(IPredicate p) throws OperationCanceledException {
+	private void doThings(IPredicate p) throws AutomataOperationCanceledException {
 		for (OutgoingInternalTransition<CodeBlock, IPredicate> transition : m_Abstraction.internalSuccessors(p)) {
 			continueCheckForOutgoingPath(p, transition, transition.getSucc());
 		}
@@ -162,7 +162,7 @@ public class TotalInterpolationAutomatonBuilder {
 	}
 
 	private void continueCheckForOutgoingPath(IPredicate p, Transitionlet<CodeBlock, IPredicate> transition,
-			IPredicate succ) throws OperationCanceledException {
+			IPredicate succ) throws AutomataOperationCanceledException {
 		if (m_Annotated.contains(succ)) {
 			IPredicate predItp = m_Epimorphism.getMapping(p);
 			IPredicate succItp = m_Epimorphism.getMapping(succ);
@@ -390,7 +390,7 @@ public class TotalInterpolationAutomatonBuilder {
 	}
 
 	private NestedRun<CodeBlock, IPredicate> findRun(IPredicate p, Set<IPredicate> annotated)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_Abstraction, 
 				Collections.singleton(p), Collections.emptySet(), m_Annotated)).getNestedRun();
 	}

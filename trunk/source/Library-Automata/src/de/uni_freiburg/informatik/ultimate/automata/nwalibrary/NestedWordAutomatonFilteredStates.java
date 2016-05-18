@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
@@ -63,7 +63,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	NestedWordAutomatonFilteredStates(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER, STATE> automaton, 
 			Set<STATE> remainingStates, Set<STATE> newInitials, Set<STATE> newFinals) 
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Nwa = automaton;
@@ -79,7 +79,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 			AutomataLibraryServices services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> automaton, 
 			NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation ancestorComputation) 
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Nwa = automaton;

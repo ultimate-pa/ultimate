@@ -35,10 +35,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.AbstractInterpolantAutomaton;
@@ -219,6 +219,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		return sb.toString();
 	}
 
+	@Override
 	protected void computeSuccs(IPredicate resPred, IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
 		if (isPredHierLetterFalse(resPred, resHier, letter, sch)) {
 			if (!m_AlreadyConstrucedAutomaton.contains(m_IaFalseState)) {

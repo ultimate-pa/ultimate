@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
@@ -70,12 +70,12 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 *            The state factory used for creating states
 	 * @param operand
 	 *            The nwa automaton to compare with
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public CompareReduceNwaSimulation(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 	}
 
@@ -161,7 +161,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				method = new ShrinkNwa<>(getServices(), stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
-		} catch (OperationCanceledException e) {
+		} catch (AutomataOperationCanceledException e) {
 			logger.info("Method timed out.");
 			timedOut = true;
 		} catch (AutomataLibraryException e) {

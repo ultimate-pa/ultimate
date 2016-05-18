@@ -32,7 +32,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -65,11 +65,11 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * empty stack state of the result is different. 
 	 * 
 	 * @param nwa
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 */
 	public RemoveDeadEnds(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Input = nwa;
@@ -78,8 +78,8 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Input);
 			m_Reach.computeDeadEnds();
 			m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Reach, m_Reach.getWithOutDeadEnds());
-		} catch (OperationCanceledException oce) {
-			throw new OperationCanceledException(getClass());
+		} catch (AutomataOperationCanceledException oce) {
+			throw new AutomataOperationCanceledException(getClass());
 		}
 		m_Logger.info(exitMessage());
 		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
@@ -106,12 +106,12 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataOperationCanceledException {
 		return m_Result;
 	}
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException {
+	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		m_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);

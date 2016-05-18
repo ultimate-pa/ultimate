@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -90,14 +90,14 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 *            generated.
 	 * @param stateFactory
 	 *            State factory used for state creation
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	@SuppressWarnings("unchecked")
 	public DelayedNwaGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final INestedWordAutomatonOldApi<LETTER, STATE> nwa,
-			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
+			final StateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
@@ -118,7 +118,7 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 * simulation.delayed.DelayedGameGraph#generateAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
@@ -142,7 +142,7 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 * simulation.delayed.DelayedGameGraph#generateGameGraphFromAutomaton()
 	 */
 	@Override
-	public void generateGameGraphFromAutomaton() throws OperationCanceledException {
+	public void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException {
 		m_Generation.generateGameGraphFromAutomaton();
 
 		// Set values for compatibility with non nwa graph

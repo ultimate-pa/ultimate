@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -302,7 +302,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		return resSuccs;
 	}
 	
-	public Senwa<LETTER,STATE> getResult() throws OperationCanceledException {
+	public Senwa<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
 		return m_Senwa;
 	}
 	

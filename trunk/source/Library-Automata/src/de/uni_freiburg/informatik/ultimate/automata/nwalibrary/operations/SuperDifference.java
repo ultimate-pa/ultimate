@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -124,7 +124,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	 *            the automaton epimorphism
 	 * @param minimize
 	 *            if true, the resulting automaton will be reduced
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 */
 	public SuperDifference(
 			AutomataLibraryServices services,

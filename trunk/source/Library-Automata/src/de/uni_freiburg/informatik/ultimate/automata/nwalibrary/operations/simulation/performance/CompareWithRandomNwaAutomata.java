@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -79,12 +79,12 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 	 *            The state factory used for creating states
 	 * @param operand
 	 *            A nwa automaton, it is not used by the operation
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
@@ -114,7 +114,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 					(acceptanceInPerc + 0.0f) / 100).getResult();
 			try {
 				new CompareReduceNwaSimulation<String, String>(services, snf, nwa);
-			} catch (OperationCanceledException e) {
+			} catch (AutomataOperationCanceledException e) {
 				e.printStackTrace();
 			}
 		}

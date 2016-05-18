@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -113,7 +113,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			ILogger logger, 
 			PredicateUnifier predicateUnifier,
 			InterpolatingTraceChecker tc,
-			TAPreferences taPrefs) throws OperationCanceledException {
+			TAPreferences taPrefs) throws AutomataOperationCanceledException {
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
 		m_PendingContexts = pendingContexts;
@@ -138,7 +138,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		}
 	}
 
-	protected void computeInterpolants(Set<Integer> interpolatedPositions) throws OperationCanceledException {
+	protected void computeInterpolants(Set<Integer> interpolatedPositions) throws AutomataOperationCanceledException {
 		// Start the stopwatch to measure the time we need for interpolant consolidation
 		m_InterpolantConsolidationBenchmarkGenerator.start(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 
@@ -227,10 +227,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			}
 
 		} catch (AutomataLibraryException e) {
-			if (e instanceof OperationCanceledException) {
+			if (e instanceof AutomataOperationCanceledException) {
 				m_Logger.info("Timeout while computing interpolants");
 			}
-			throw ((OperationCanceledException)e);
+			throw ((AutomataOperationCanceledException)e);
 		}
 
 		// 6. Interpolant Consolidation step

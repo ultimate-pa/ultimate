@@ -32,7 +32,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -70,16 +70,16 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	 * not accepted by any of the automata B_0,..,B_n.
 	 * Return null if no such run exists, i.e., the language inclusion 
 	 * A ⊆ B_0 ∪ ... ∪ B_n holds. 
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
-	public abstract NestedRun<LETTER,STATE> getCounterexample() throws OperationCanceledException;
+	public abstract NestedRun<LETTER,STATE> getCounterexample() throws AutomataOperationCanceledException;
 	
 	
 	/**
 	 * Add automaton B_{n+1} to our set of subtrahends B_0,...,B_n.
 	 * @throws AutomataLibraryException 
 	 */
-	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException, AutomataLibraryException {
+	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException, AutomataLibraryException {
 		m_B.add(nwa);
 	}
 

@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
@@ -291,7 +291,7 @@ public class HoareAnnotationFragments {
 	 * from op dd was no double decker of the automaton any more.
 	 */
 	public void addDeadEndDoubleDeckers(IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> op)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		IPredicate emtpyStack = op.getResult().getEmptyStackState();
 		for (UpDownEntry<IPredicate> upDownEntry : op.getRemovedUpDownEntry()) {
 			addDoubleDecker(upDownEntry.getDown(), upDownEntry.getUp(), emtpyStack);

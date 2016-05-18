@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -115,8 +115,8 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 		m_Logger.info(startMessage());
 		try {
 			computateDifference(finalIsTrap);
-		} catch (OperationCanceledException oce) {
-			throw new OperationCanceledException(getClass());
+		} catch (AutomataOperationCanceledException oce) {
+			throw new AutomataOperationCanceledException(getClass());
 		}
 		m_Logger.info(exitMessage());
 	}
@@ -152,7 +152,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		if (m_ResultWOdeadEnds == null) {
 			return m_Result;
 		} else {
@@ -188,7 +188,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 
 
 	@Override
-	public boolean removeDeadEnds() throws OperationCanceledException {
+	public boolean removeDeadEnds() throws AutomataOperationCanceledException {
 		m_Result.computeDeadEnds();
 		m_ResultWOdeadEnds = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Result, m_Result.getWithOutDeadEnds());
 		m_Logger.info("With dead ends: " + m_Result.getStates().size());

@@ -35,7 +35,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -124,7 +124,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 					break;
 				}
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-	                throw new OperationCanceledException(this.getClass());
+	                throw new AutomataOperationCanceledException(this.getClass());
 				}
 				bufferedTree = null;
 				bufferedTree = expand(false);
@@ -328,7 +328,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 			}
 			else{
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-		                throw new OperationCanceledException(this.getClass());
+		                throw new AutomataOperationCanceledException(this.getClass());
 		        }
 				bufferedTree = expand(false);
 				currentTree = bufferedTree;

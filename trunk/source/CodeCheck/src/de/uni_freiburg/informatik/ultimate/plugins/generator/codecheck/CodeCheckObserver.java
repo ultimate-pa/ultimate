@@ -40,7 +40,7 @@ import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -544,7 +544,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								// m_CegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 								// m_InterpolantGenerator = interpConsoli;
 								interpolants = interpConsoli.getInterpolants();
-							} catch (OperationCanceledException e) {
+							} catch (AutomataOperationCanceledException e) {
 								// Timeout
 								e.printStackTrace();
 							}

@@ -35,7 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
@@ -84,7 +84,7 @@ class ShortestLassoExtractor<LETTER, STATE> {
 	NestedRun<LETTER, STATE> m_ConstructedNestedRun;
 	
 	public ShortestLassoExtractor(AutomataLibraryServices services, 
-			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, StateContainer<LETTER, STATE> goal) throws OperationCanceledException {
+			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, StateContainer<LETTER, STATE> goal) throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Nwars = nwars;

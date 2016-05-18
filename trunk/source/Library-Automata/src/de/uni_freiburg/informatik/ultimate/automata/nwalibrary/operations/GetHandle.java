@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -66,7 +66,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private NoHandleReason m_NoHandleReason;
 
 	public GetHandle(AutomataLibraryServices services,
-			INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+			INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
@@ -175,7 +175,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public NestedRun<LETTER,STATE> getResult() throws OperationCanceledException {
+	public NestedRun<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
 		return m_Handle;
 	}
 

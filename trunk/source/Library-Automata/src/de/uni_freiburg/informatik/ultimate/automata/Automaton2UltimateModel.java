@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 public class Automaton2UltimateModel<LETTER,STATE> {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static IElement ultimateModel(AutomataLibraryServices services, IAutomaton automaton) throws OperationCanceledException {
+	public static IElement ultimateModel(AutomataLibraryServices services, IAutomaton automaton) throws AutomataOperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			INestedWordAutomatonSimple nwa = (INestedWordAutomatonSimple) automaton;
 			NwaToUltimateModel transformer = new NwaToUltimateModel(services);

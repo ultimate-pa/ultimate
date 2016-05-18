@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -70,11 +70,11 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * 
 	 * @param args
 	 *            Not supported
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public static void main(final String[] args) throws OperationCanceledException {
+	public static void main(final String[] args) throws AutomataOperationCanceledException {
 		// Test correctness of operation using random automata or single given
 		// instances
 
@@ -246,12 +246,12 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * @param <STATE>
 	 *            State class of the operation
 	 * @return True if operation is correct, false if not.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	private static <LETTER, STATE> boolean checkOperationDeep(final ReduceBuchiFairSimulation<LETTER, STATE> operation,
-			final boolean logNoErrorDebug, final boolean useLogger) throws OperationCanceledException {
+			final boolean logNoErrorDebug, final boolean useLogger) throws AutomataOperationCanceledException {
 		ReduceBuchiFairSimulation<LETTER, STATE> operationSCC;
 		FairSimulation<LETTER, STATE> simulationSCC;
 		ReduceBuchiFairSimulation<LETTER, STATE> operationNoSCC;
@@ -442,12 +442,12 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *            The state factory used for creating states
 	 * @param operand
 	 *            The buechi automaton to reduce
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true, Collections.emptyList(), false);
 	}
 
@@ -465,13 +465,13 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList(), false);
 	}
 
@@ -494,13 +494,13 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
 	 *            optimization for the simulation
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
-			final Collection<Set<STATE>> possibleEquivalentClasses) throws OperationCanceledException {
+			final Collection<Set<STATE>> possibleEquivalentClasses) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, possibleEquivalentClasses, false);
 	}
 
@@ -526,14 +526,14 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * @param checkOperationDeeply
 	 *            If true the operation gets deeply checked for correctness,
 	 *            false if that is not desired. This can take some time.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalentClasses, final boolean checkOperationDeeply)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
 				new FairSimulation<LETTER, STATE>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
@@ -562,14 +562,14 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *            false if that is not desired. This can take some time.
 	 * @param simulation
 	 *            The simulation used by the operation
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
 			final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_StateFactory = stateFactory;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);

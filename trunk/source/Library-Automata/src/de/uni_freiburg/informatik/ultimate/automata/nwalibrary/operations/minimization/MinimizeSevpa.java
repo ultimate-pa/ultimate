@@ -42,7 +42,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -114,7 +114,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * creates a copy of operand where non-reachable states are omitted
 	 * 
 	 * @param operand nested word automaton to minimize
-	 * @throws OperationCanceledException iff cancel signal is received
+	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
 	public MinimizeSevpa(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER,STATE> operand)
@@ -129,14 +129,14 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * @param equivalenceClasses represent initial equivalence classes
 	 * @param removeUnreachables true iff removal of unreachable states is used
 	 * @param removeDeadEnds true iff removal of dead-end states is used
-	 * @throws OperationCanceledException iff cancel signal is received
+	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
 	public MinimizeSevpa(
 			AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
 			StateFactory<STATE> stateFactoryConstruction)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		super(services, stateFactoryConstruction, "minimizeSevpa", operand);
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 			m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
@@ -165,18 +165,18 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * (http://en.wikipedia.org/wiki/DFA_minimization)
 	 * 
 	 * @param equivalenceClasses initial partition of the states
-	 * @throws OperationCanceledException iff cancel signal is received
+	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
 	private void minimize(
 			Collection<Set<STATE>> equivalenceClasses)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		
 		// intermediate container for the states
 		StatesContainer states = new StatesContainer(m_operand);
 		
 		// cancel if signal is received
 		if (!m_Services.getProgressMonitorService().continueProcessing()) {
-			throw new OperationCanceledException(this.getClass());
+			throw new AutomataOperationCanceledException(this.getClass());
 		}
 		
 	
@@ -192,12 +192,12 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * @param states container with reachable states (gets deleted)
 	 * @param equivalenceClasses initial partition of the states
 	 * @return equivalent automaton with states merged
-	 * @throws OperationCanceledException iff cancel signal is received
+	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
 	private NestedWordAutomaton<LETTER, STATE> mergeStates(
 			StatesContainer states,
 			Collection<Set<STATE>> equivalenceClasses)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		
 		// creation of the initial partition (if not passed in the constructor)
 		if (equivalenceClasses == null) {
@@ -314,10 +314,10 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	 * iteratively refines partition until fixed point is reached
 	 * for each letter finds the set of predecessor states (X)
 	 * 
-	 * @throws OperationCanceledException iff cancel signal is received
+	 * @throws AutomataOperationCanceledException iff cancel signal is received
 	 */
 	private void refinePartition()
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		/*
 		 * naiveSplit used as long as possible
 		 * then switch to more complicated but sound split
@@ -400,7 +400,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 				
 				// cancel iteration iff cancel signal is received
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException(this.getClass());
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 			

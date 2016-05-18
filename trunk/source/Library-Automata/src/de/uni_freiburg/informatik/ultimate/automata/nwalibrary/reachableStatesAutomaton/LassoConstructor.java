@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
@@ -61,7 +61,7 @@ class LassoConstructor<LETTER, STATE> {
     
 	public LassoConstructor(AutomataLibraryServices services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			StateContainer<LETTER, STATE> goal, StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc) throws OperationCanceledException {
+			StateContainer<LETTER, STATE> goal, StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc) throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = goal;
@@ -83,7 +83,7 @@ class LassoConstructor<LETTER, STATE> {
 	
 	public LassoConstructor(AutomataLibraryServices services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			Summary<LETTER, STATE> summary, StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc) throws OperationCanceledException {
+			Summary<LETTER, STATE> summary, StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc) throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = summary.getSucc();
@@ -128,9 +128,9 @@ class LassoConstructor<LETTER, STATE> {
 
 	/**
 	 * Use m_SuccInfos to construct a run for a loop that has been found.
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
-	private void constructRunOfLoop() throws OperationCanceledException {
+	private void constructRunOfLoop() throws AutomataOperationCanceledException {
 		//then we reconstruct the run
 		m_Loop = new NestedRun<LETTER, STATE>(m_Goal.getState());
 		StateContainer<LETTER, STATE> current = m_Goal;

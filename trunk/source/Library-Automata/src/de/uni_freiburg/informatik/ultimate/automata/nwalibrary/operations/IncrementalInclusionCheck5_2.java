@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -158,7 +158,7 @@ public class IncrementalInclusionCheck5_2<LETTER,STATE> extends AbstractIncremen
 		m_Logger.info(exitMessage());
 	}
 	@SuppressWarnings("unchecked")
-	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException{
+	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException{
 		if(!local_m_A.getAlphabet().containsAll(nwa.getAlphabet())){
 			m_Logger.info("Alphabet inconsistent");
 			return;
@@ -167,7 +167,7 @@ public class IncrementalInclusionCheck5_2<LETTER,STATE> extends AbstractIncremen
 		if(result!=null){
 			do{
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-	                throw new OperationCanceledException(this.getClass());
+	                throw new AutomataOperationCanceledException(this.getClass());
 				}
 				counter_run++;
 				if(refine_exceptionRun()||cover()){
@@ -208,7 +208,7 @@ public class IncrementalInclusionCheck5_2<LETTER,STATE> extends AbstractIncremen
 			}
 			else{
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-	                throw new OperationCanceledException(this.getClass());
+	                throw new AutomataOperationCanceledException(this.getClass());
 				}
 				bufferedLeaf = null;
 				for(LETTER alphabet:local_m_A.getAlphabet()){

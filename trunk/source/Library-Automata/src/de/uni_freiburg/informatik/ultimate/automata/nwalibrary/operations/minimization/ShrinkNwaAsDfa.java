@@ -43,7 +43,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -85,7 +85,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * 
 	 * @param operand preprocessed nested word automaton preprocessing: dead end
 	 *        and unreachable states/transitions removed
-	 * @throws OperationCanceledException if cancel signal is received
+	 * @throws AutomataOperationCanceledException if cancel signal is received
 	 */
 	public ShrinkNwaAsDfa(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
@@ -103,7 +103,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @param stateFactory used for Hoare annotation
 	 * @param includeMapping true iff mapping old to new state is needed
 	 * @param considerNeutralStates true iff neutral states should be considered
-	 * @throws OperationCanceledException if cancel signal is received
+	 * @throws AutomataOperationCanceledException if cancel signal is received
 	 */
 	public ShrinkNwaAsDfa(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
@@ -138,7 +138,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @param isFiniteAutomaton true iff automaton is a finite automaton
 	 * @param modules predefined modules that must be split
 	 * @param includeMapping true iff mapping old to new state is needed
-	 * @throws OperationCanceledException if cancel signal is received
+	 * @throws AutomataOperationCanceledException if cancel signal is received
 	 */
 	private void minimize(final Iterable<Set<STATE>> modules,
 			final boolean includeMapping) throws AutomataLibraryException {
@@ -156,12 +156,12 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		while (m_workList.hasNext()) {
 			// cancel if signal is received
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			
 			// cancel if signal is received
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			
 			EquivalenceClass a = m_workList.next();

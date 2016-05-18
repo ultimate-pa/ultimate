@@ -38,7 +38,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -180,14 +180,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Simulation method to use for graph generation. Supported types
 	 *            are {@link ESimulationType#DIRECT DIRECT} and
 	 *            {@link ESimulationType#FAIR FAIR}.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public NwaGameGraphGeneration(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
 			final AGameGraph<LETTER, STATE> gameGraph, final ESimulationType simulationType)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Nwa = nwa;
 		m_AutomatonStatesToGraphDuplicatorVertex = new HashMap<>();
@@ -222,11 +222,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * by using a search starting at vertices which can have a down state
 	 * configuration of [bottom, bottom].
 	 * 
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public void computeSafeVertexDownStates() throws OperationCanceledException {
+	public void computeSafeVertexDownStates() throws AutomataOperationCanceledException {
 		m_Logger.debug("Computing which vertex down states are safe.");
 		// Add roots of search to the queue
 		Queue<SearchElement<LETTER, STATE>> searchQueue = new LinkedList<SearchElement<LETTER, STATE>>();
@@ -359,7 +359,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				// Ultimate framework
 				if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 					m_Logger.debug("Stopped in computeSafeVertexDownStates/successors");
-					throw new OperationCanceledException(this.getClass());
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 		}
@@ -372,11 +372,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @throws IllegalStateException
 	 *             If computing summarize edge priorities could not be done
 	 *             because a live lock occurred.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public void computeSummarizeEdgePriorities() throws OperationCanceledException {
+	public void computeSummarizeEdgePriorities() throws AutomataOperationCanceledException {
 		m_Logger.debug("Computing priorities of summarize edges.");
 		Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
 		HashMap<Pair<Vertex<LETTER, STATE>, VertexDownState<STATE>>, Integer> searchPriorities = new HashMap<>();
@@ -607,7 +607,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// Ultimate framework
 					if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 						m_Logger.debug("Stopped in computeSummarizeEdgePriorties/successors");
-						throw new OperationCanceledException(this.getClass());
+						throw new AutomataOperationCanceledException(this.getClass());
 					}
 				}
 				// If the current optimal non-loop successor priority not the
@@ -787,7 +787,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						// Ultimate framework
 						if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 							m_Logger.debug("Stopped in computeSummarizeEdgePriorties/predecessors");
-							throw new OperationCanceledException(this.getClass());
+							throw new AutomataOperationCanceledException(this.getClass());
 						}
 					}
 				}
@@ -806,11 +806,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * by an {@link ASimulation}.
 	 * 
 	 * @return A possible reduced nwa automaton
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		FairGameGraph<LETTER, STATE> fairGraph = castGraphToFairGameGraph();
 
 		// By default, we assume that there are merge-able states.
@@ -887,7 +887,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 				if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 					m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/equivalenceClasses");
-					throw new OperationCanceledException(this.getClass());
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 
@@ -906,7 +906,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// Ultimate framework
 			if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 				m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 
 			// Add states
@@ -1046,7 +1046,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Ultimate framework
 		if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 			m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/states and transitions added");
-			throw new OperationCanceledException(this.getClass());
+			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
 		// Remove unreachable states which can occur due to transition removal
@@ -1063,11 +1063,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Generates the game graph out of an original nwa automaton. The graph
 	 * represents a game, see {@link AGameGraph}.
 	 * 
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public void generateGameGraphFromAutomaton() throws OperationCanceledException {
+	public void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException {
 		m_SimulationPerformance.startTimeMeasure(ETimeMeasure.BUILD_GRAPH);
 
 		generateVertices();
@@ -1093,11 +1093,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	/**
 	 * Generates the regular edges of the game graph from the input automaton.
 	 * 
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public void generateRegularEdges() throws OperationCanceledException {
+	public void generateRegularEdges() throws AutomataOperationCanceledException {
 		m_Logger.debug("Generating regular edges.");
 		for (STATE edgeDest : m_Nwa.getStates()) {
 			// Edges generated by internal transitions
@@ -1173,7 +1173,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// Ultimate framework
 					if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 						m_Logger.debug("Stopped in generateGameGraphFromAutomaton/generating internal edges");
-						throw new OperationCanceledException(this.getClass());
+						throw new AutomataOperationCanceledException(this.getClass());
 					}
 				}
 
@@ -1256,7 +1256,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// Ultimate framework
 					if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 						m_Logger.debug("Stopped in generateGameGraphFromAutomaton/generating call edges");
-						throw new OperationCanceledException(this.getClass());
+						throw new AutomataOperationCanceledException(this.getClass());
 					}
 				}
 
@@ -1357,7 +1357,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// Ultimate framework
 					if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 						m_Logger.debug("Stopped in generateGameGraphFromAutomaton/generating return edges");
-						throw new OperationCanceledException(this.getClass());
+						throw new AutomataOperationCanceledException(this.getClass());
 					}
 				}
 
@@ -1372,11 +1372,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	/**
 	 * Generates the summarize edges of the game graph from the input automaton.
 	 * 
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public void generateSummarizeEdges() throws OperationCanceledException {
+	public void generateSummarizeEdges() throws AutomataOperationCanceledException {
 		m_Logger.debug("Generating summarize edges.");
 		LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(m_GameGraph, m_Logger, m_ProgressTimer);
 
@@ -1490,7 +1490,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				// Ultimate framework
 				if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 					m_Logger.debug("Stopped in generateGameGraphFromAutomaton/generating summarize edges");
-					throw new OperationCanceledException(this.getClass());
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 		}
@@ -1540,11 +1540,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	/**
 	 * Generates the vertices of the game graph from the input automaton.
 	 * 
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public void generateVertices() throws OperationCanceledException {
+	public void generateVertices() throws AutomataOperationCanceledException {
 		m_Logger.debug("Generating vertices.");
 		VertexDownState<STATE> bottomBoth = new VertexDownState<STATE>(m_Bottom, m_Bottom);
 		int duplicatorPriority = 2;
@@ -1659,7 +1659,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				// Ultimate framework
 				if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 					m_Logger.debug("Stopped in generateGameGraphFromAutomaton/generating vertices");
-					throw new OperationCanceledException(this.getClass());
+					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
 

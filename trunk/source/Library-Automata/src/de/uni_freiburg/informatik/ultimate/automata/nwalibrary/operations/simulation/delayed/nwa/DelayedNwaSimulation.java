@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
@@ -73,13 +73,13 @@ public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The game graph to use for simulation.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public DelayedNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final DelayedNwaGameGraph<LETTER, STATE> game)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, game);
 	}
 
@@ -90,7 +90,7 @@ public final class DelayedNwaSimulation<LETTER, STATE> extends DelayedSimulation
 	 * simulation.ASimulation#doSimulation()
 	 */
 	@Override
-	public void doSimulation() throws OperationCanceledException {
+	public void doSimulation() throws AutomataOperationCanceledException {
 		super.doSimulation();
 		// getLogger().debug(getGameGraph().toAtsFormat());
 		// setResult(getGameGraph().generateAutomatonFromGraph());

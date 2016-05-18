@@ -35,7 +35,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
@@ -233,13 +233,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            optimization for the simulation
 	 * @param game
 	 *            The fair game graph to use for simulation.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
-			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {
+			final FairGameGraph<LETTER, STATE> game) throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.FAIR);
 
 		m_Logger = getLogger();
@@ -278,13 +278,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The fair game graph to use for simulation.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final FairGameGraph<LETTER, STATE> game)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(progressTimer, logger, useSCCs, stateFactory, Collections.emptyList(), game);
 	}
 
@@ -295,7 +295,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * buchiReduction.ASimulation#doSimulation()
 	 */
 	@Override
-	public void doSimulation() throws OperationCanceledException {
+	public void doSimulation() throws AutomataOperationCanceledException {
 		m_Logger.debug("Fair Game Graph has " + m_Game.getSize() + " vertices.");
 		m_GlobalInfinity = m_Game.getGlobalInfinity();
 
@@ -368,7 +368,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			// Ultimate framework
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 				m_Logger.debug("Stopped in doSimulation/attempting merges");
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 
@@ -409,7 +409,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			// Ultimate framework
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 				m_Logger.debug("Stopped in doSimulation/attempting transition removal");
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 
@@ -530,12 +530,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            should not get stored
 	 * @return False if simulation was aborted because the underlying language
 	 *         changed, true if not.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	private boolean doSingleSimulation(final GameGraphChanges<LETTER, STATE> changes)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		if (isUsingSCCs()) {
 			m_pokedFromNeighborSCC = new HashSet<>();
 			getSimulationPerformance().startTimeMeasure(ETimeMeasure.BUILD_SCC);
@@ -723,12 +723,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *         the attempted change is not valid or <tt>null</tt> if it is
 	 *         valid. Can be used to undo changes by using
 	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	private FairGameGraphChanges<LETTER, STATE> validateChange(FairGameGraphChanges<LETTER, STATE> changes)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		// Only do simulation if there actually was a change
 		boolean wasSuccessful = true;
 		if (changes != null) {
@@ -756,12 +756,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *         the attempted change is not valid or <tt>null</tt> if it is
 	 *         valid. Can be used to undo changes by using
 	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	protected FairGameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState, final STATE secondState)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		// Optimize the attempted merge if we have information about equivalence
 		// classes of the states
 		if (!m_PossibleEquivalentClasses.isEmpty()) {
@@ -812,12 +812,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *         the attempted change is not valid or <tt>null</tt> if it is
 	 *         valid. Can be used to undo changes by using
 	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	protected FairGameGraphChanges<LETTER, STATE> attemptTransitionRemoval(final STATE src, final LETTER a,
-			final STATE dest, final STATE invoker) throws OperationCanceledException {
+			final STATE dest, final STATE invoker) throws AutomataOperationCanceledException {
 		FairGameGraphChanges<LETTER, STATE> changes = m_Game.removeBuechiTransition(src, a, dest);
 
 		return validateChange(changes);
@@ -831,7 +831,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	@Override
 	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		SimulationPerformance performance = super.getSimulationPerformance();
 		if (debugSimulation) {
 			m_Logger.debug("Lifting SCC: " + scc);
@@ -1047,7 +1047,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			// Ultimate framework
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 				m_Logger.debug("Stopped in efficientLiftingAlgorithm");
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 	}

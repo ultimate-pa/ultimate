@@ -33,7 +33,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
@@ -64,13 +64,13 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *            The state factory used for creating states
 	 * @param operand
 	 *            The buechi automaton to reduce
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, true, Collections.emptyList());
 	}
 
@@ -88,13 +88,13 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
-			final boolean useSCCs) throws OperationCanceledException {
+			final boolean useSCCs) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList());
 	}
 
@@ -117,14 +117,14 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
 	 *            optimization for the simulation
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
 			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
 				new FairDirectSimulation<LETTER, STATE>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs,

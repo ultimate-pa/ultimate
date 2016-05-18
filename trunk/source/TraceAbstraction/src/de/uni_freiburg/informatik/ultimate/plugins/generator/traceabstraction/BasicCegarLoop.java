@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -255,12 +255,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 
 	@Override
-	protected boolean isAbstractionCorrect() throws OperationCanceledException {
+	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		try {
 			m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
 					abstraction)).getNestedRun();
-		} catch (OperationCanceledException e) {
+		} catch (AutomataOperationCanceledException e) {
 			e.printStackTrace();
 		}
 
@@ -425,7 +425,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_CegarLoopBenchmark
 						.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 				m_InterpolantGenerator = interpConsoli;
-			} catch (OperationCanceledException e) {
+			} catch (AutomataOperationCanceledException e) {
 				// Timeout
 				e.printStackTrace();
 			}
@@ -434,7 +434,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 
 	@Override
-	protected void constructInterpolantAutomaton() throws OperationCanceledException {
+	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		if (mAbsIntRunner != null && mAbsIntRunner.hasShownInfeasibility()) {
 			// if AI has shown infeasibility, construct an AI interpolant automaton instead of an SMT-based one
 			m_InterpolAutomaton = mAbsIntRunner.constructInterpolantAutomaton(
@@ -553,7 +553,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private boolean refineWithGivenAutomaton(NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton,
 			PredicateUnifier predicateUnifier)
-			throws AssertionError, OperationCanceledException, AutomataLibraryException {
+			throws AssertionError, AutomataOperationCanceledException, AutomataLibraryException {
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 		// howDifferentAreInterpolants(interpolAutomaton.getStates());
 
@@ -849,7 +849,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	 */
 	protected void minimizeAbstraction(PredicateFactoryForInterpolantAutomata predicateFactoryRefinement,
 			PredicateFactoryResultChecking resultCheckPredFac, Minimization minimization)
-			throws OperationCanceledException, AutomataLibraryException, AssertionError {
+			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 		if (m_Pref.dumpAutomata()) {
 			String filename = m_RootNode.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + m_Iteration;
 			super.writeAutomatonToFile(m_Abstraction, filename);
@@ -1025,7 +1025,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	// }
 
 	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> determinizeInterpolantAutomaton(
-			INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton) throws OperationCanceledException {
+			INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton) throws AutomataOperationCanceledException {
 		mLogger.debug("Start determinization");
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia;
 		switch (m_Pref.interpolantAutomatonEnhancement()) {
@@ -1092,7 +1092,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				try {
 					return Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(m_Services),
 							m_ArtifactAutomaton);
-				} catch (OperationCanceledException e) {
+				} catch (AutomataOperationCanceledException e) {
 					return null;
 				}
 			}
@@ -1124,7 +1124,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 
 	protected static boolean accepts(IUltimateServiceProvider services, INestedWordAutomaton<CodeBlock, IPredicate> nia,
-			Word<CodeBlock> word) throws OperationCanceledException {
+			Word<CodeBlock> word) throws AutomataOperationCanceledException {
 		try {
 			return (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(services), nia,
 					NestedWord.nestedWord(word), false, false)).getResult();

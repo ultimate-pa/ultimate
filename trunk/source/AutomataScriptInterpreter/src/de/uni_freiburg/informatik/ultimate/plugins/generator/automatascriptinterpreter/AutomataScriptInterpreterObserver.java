@@ -32,7 +32,7 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -72,7 +72,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 		}
 		try {
 			mGraphrootOfUltimateModelOfLastPrintedAutomaton = Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices), printAutomaton);
-		} catch (OperationCanceledException e) {
+		} catch (AutomataOperationCanceledException e) {
 			mLogger.warn("Nothing visualized because of timeout");
 		}
 		return false;

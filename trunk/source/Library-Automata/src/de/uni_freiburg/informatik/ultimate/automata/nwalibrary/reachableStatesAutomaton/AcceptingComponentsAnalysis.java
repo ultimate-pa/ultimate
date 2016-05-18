@@ -37,7 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -130,7 +130,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		return m_SccComputation;
 	}
 	
-	public List<NestedLassoRun<LETTER, STATE>> computeNestedLassoRuns(boolean onePerScc) throws OperationCanceledException {
+	public List<NestedLassoRun<LETTER, STATE>> computeNestedLassoRuns(boolean onePerScc) throws AutomataOperationCanceledException {
 		if (onePerScc) {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
@@ -212,7 +212,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		m_NestedLassoRun = method4;
 	}
 
-	public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() throws OperationCanceledException {
+	public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() throws AutomataOperationCanceledException {
 		if (buchiIsEmpty()) {
 			return Collections.emptyList();
 		} else {

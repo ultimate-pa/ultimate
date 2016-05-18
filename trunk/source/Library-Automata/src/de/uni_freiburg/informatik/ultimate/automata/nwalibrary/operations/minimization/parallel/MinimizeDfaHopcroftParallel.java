@@ -41,7 +41,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -198,7 +198,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * 
 	 * @param operand
 	 *            input automaton (DFA)
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             thrown when execution is cancelled
 	 * @throws AutomataLibraryException
 	 *             thrown by DFA check
@@ -240,7 +240,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 *            input automaton (DFA)
 	 * @param interrupt
 	 *            interrupt
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             thrown when execution is cancelled
 	 * @throws AutomataLibraryException
 	 *             thrown by DFA check
@@ -250,7 +250,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, ArrayList<STATE> int2state,
 			HashMap<STATE, Integer> state2int)
-			throws OperationCanceledException, AutomataLibraryException {
+			throws AutomataOperationCanceledException, AutomataLibraryException {
 		super(services, operand.getStateFactory(),
 				"MinimizeDfaHopcroftParallel", operand);
 		m_interrupt = interrupt;

@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -81,13 +81,13 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 *            optimization for the simulation
 	 * @param game
 	 *            The fair nwa game graph to use for simulation.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
-			final FairNwaGameGraph<LETTER, STATE> game) throws OperationCanceledException {
+			final FairNwaGameGraph<LETTER, STATE> game) throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, possibleEquivalentClasses, game);
 	}
 
@@ -113,13 +113,13 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The fair nwa game graph to use for simulation.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final FairNwaGameGraph<LETTER, STATE> game)
-					throws OperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(progressTimer, logger, useSCCs, stateFactory, Collections.emptyList(), game);
 	}
 
@@ -130,7 +130,7 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 * buchiReduction.ASimulation#doSimulation()
 	 */
 	@Override
-	public void doSimulation() throws OperationCanceledException {
+	public void doSimulation() throws AutomataOperationCanceledException {
 		// super.doSimulation();
 		getLogger().debug(getGameGraph().toAtsFormat());
 		setResult(getGameGraph().generateAutomatonFromGraph());

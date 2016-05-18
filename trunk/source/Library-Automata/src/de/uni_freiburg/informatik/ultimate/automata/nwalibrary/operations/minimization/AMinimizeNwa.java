@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -204,12 +204,12 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method throws an exception iff the operation should be terminated.
 	 * 
-	 * @throws OperationCanceledException thrown to enforce termination.
+	 * @throws AutomataOperationCanceledException thrown to enforce termination.
 	 */
 	protected final void checkForContinuation()
 			throws AutomataLibraryException {
 		if (!m_Services.getProgressMonitorService().continueProcessing()) {
-			throw new OperationCanceledException(this.getClass());
+			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}
 	

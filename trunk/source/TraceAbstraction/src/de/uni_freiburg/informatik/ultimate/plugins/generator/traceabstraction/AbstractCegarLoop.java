@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -229,14 +229,14 @@ public abstract class AbstractCegarLoop {
 	 * 
 	 * @throws AutomataLibraryException
 	 */
-	protected abstract void getInitialAbstraction() throws OperationCanceledException, AutomataLibraryException;
+	protected abstract void getInitialAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException;
 
 	/**
 	 * Return true iff the m_Abstraction does not accept any trace.
 	 * 
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 */
-	protected abstract boolean isAbstractionCorrect() throws OperationCanceledException;
+	protected abstract boolean isAbstractionCorrect() throws AutomataOperationCanceledException;
 
 	/**
 	 * Determine if the trace of m_Counterexample is a feasible sequence of CodeBlocks. Return
@@ -255,9 +255,9 @@ public abstract class AbstractCegarLoop {
 	 * <li>accepts only infeasible traces.
 	 * </ul>
 	 * 
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 */
-	protected abstract void constructInterpolantAutomaton() throws OperationCanceledException;
+	protected abstract void constructInterpolantAutomaton() throws AutomataOperationCanceledException;
 
 	/**
 	 * Construct a new automaton m_Abstraction such that
@@ -272,7 +272,7 @@ public abstract class AbstractCegarLoop {
 	 *         the m_Abstraction.
 	 * @throws AutomataLibraryException
 	 */
-	protected abstract boolean refineAbstraction() throws OperationCanceledException, AutomataLibraryException;
+	protected abstract boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException;
 
 	/**
 	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
@@ -323,7 +323,7 @@ public abstract class AbstractCegarLoop {
 		}
 		try {
 			getInitialAbstraction();
-		} catch (OperationCanceledException e1) {
+		} catch (AutomataOperationCanceledException e1) {
 			mLogger.warn("Verification cancelled");
 			m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
@@ -346,7 +346,7 @@ public abstract class AbstractCegarLoop {
 		boolean initalAbstractionCorrect;
 		try {
 			initalAbstractionCorrect = isAbstractionCorrect();
-		} catch (OperationCanceledException e1) {
+		} catch (AutomataOperationCanceledException e1) {
 			mLogger.warn("Verification cancelled");
 			m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
@@ -382,7 +382,7 @@ public abstract class AbstractCegarLoop {
 
 			try {
 				constructInterpolantAutomaton();
-			} catch (OperationCanceledException e1) {
+			} catch (AutomataOperationCanceledException e1) {
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -409,7 +409,7 @@ public abstract class AbstractCegarLoop {
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
 					// return Result.UNKNOWN;
 				}
-			} catch (OperationCanceledException e) {
+			} catch (AutomataOperationCanceledException e) {
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				m_CegarLoopBenchmark.stopIfRunning(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
@@ -448,7 +448,7 @@ public abstract class AbstractCegarLoop {
 			boolean isAbstractionCorrect;
 			try {
 				isAbstractionCorrect = isAbstractionCorrect();
-			} catch (OperationCanceledException e) {
+			} catch (AutomataOperationCanceledException e) {
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;

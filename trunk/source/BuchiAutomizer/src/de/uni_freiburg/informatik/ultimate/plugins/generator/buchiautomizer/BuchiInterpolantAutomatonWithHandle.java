@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetHandle;
@@ -67,7 +67,7 @@ public class BuchiInterpolantAutomatonWithHandle extends
 		try {
 			gh = new GetHandle<CodeBlock, IPredicate>(new AutomataLibraryServices(services), abstraction);
 			m_Handle = gh.getResult();
-		} catch (OperationCanceledException e) {
+		} catch (AutomataOperationCanceledException e) {
 			throw new AssertionError();
 		}
 	}

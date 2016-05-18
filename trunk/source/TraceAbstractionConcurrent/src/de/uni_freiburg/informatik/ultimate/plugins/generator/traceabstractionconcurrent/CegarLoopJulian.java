@@ -32,7 +32,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
@@ -94,7 +94,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	}
 
 	@Override
-	protected void constructInterpolantAutomaton() throws OperationCanceledException {
+	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 		StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(
 				m_Services, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_InterpolantGenerator, m_PredicateFactoryInterpolantAutomata);
@@ -108,7 +108,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	}
 
 	@Override
-	protected boolean isAbstractionCorrect() throws OperationCanceledException {
+	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		PetriNetJulian<CodeBlock, IPredicate> abstraction = (PetriNetJulian<CodeBlock, IPredicate>) m_Abstraction;
 		String orderString = m_Pref.order();
 		boolean cutOffSameTrans = m_Pref.cutOffRequiresSameTransition();
@@ -194,7 +194,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	}
 
 	private static boolean acceptsPetriViaFA(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton, Word<CodeBlock> word)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> petriNetAsFA = (new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>(
 				new AutomataLibraryServices(services), (IPetriNet<CodeBlock, IPredicate>) automaton)).getResult();

@@ -35,7 +35,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -106,7 +106,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 					break;
 				}
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-	                throw new OperationCanceledException(this.getClass());
+	                throw new AutomataOperationCanceledException(this.getClass());
 				}
 				bufferedTree = null;
 				for(LETTER alphabet:local_m_A.getAlphabet()){
@@ -184,7 +184,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 			}
 			else{
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-		                throw new OperationCanceledException(this.getClass());
+		                throw new AutomataOperationCanceledException(this.getClass());
 		        }
 				bufferedTree = null;
 				for(LETTER alphabet:local_m_A.getAlphabet()){

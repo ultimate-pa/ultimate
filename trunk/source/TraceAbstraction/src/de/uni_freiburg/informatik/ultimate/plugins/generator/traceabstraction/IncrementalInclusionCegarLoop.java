@@ -34,7 +34,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -198,7 +198,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 
 
 	@Override
-	protected boolean isAbstractionCorrect() throws OperationCanceledException {
+	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		super.m_Counterexample = m_InclusionCheck.getCounterexample();
 //		try {
 //				m_Counterexample = emptyWithAI.getNestedRun();

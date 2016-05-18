@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
@@ -59,7 +59,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	private final ILogger m_Logger;
 	
 	public DownStateConsistencyCheck(AutomataLibraryServices services, 
-			IDoubleDeckerAutomaton<LETTER, STATE> nwa) throws OperationCanceledException {
+			IDoubleDeckerAutomaton<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = nwa;
@@ -90,12 +90,12 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 		return m_Result;
 	}
 	
-	public boolean consistentForAll() throws OperationCanceledException {
+	public boolean consistentForAll() throws AutomataOperationCanceledException {
 		boolean result = true;
 		result &= consistentForInitials();
 		for (STATE state : m_Operand.getStates()) {
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			result &= consistentForState(state);
 		}

@@ -37,7 +37,7 @@ import java.util.Stack;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
@@ -286,13 +286,13 @@ class RunConstructor<LETTER,STATE> {
 	/**
 	 * Returns run whose first state is m_Goal and whose last state is 
 	 * m_Start.
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
-	NestedRun<LETTER, STATE> constructRun() throws OperationCanceledException {
+	NestedRun<LETTER, STATE> constructRun() throws AutomataOperationCanceledException {
 		//TODO: Check if this timeout check is responsible for problems.
 		if (m_Services.getProgressMonitorService() != null
 				&& !m_Services.getProgressMonitorService().continueProcessing()) {
-			throw new OperationCanceledException(this.getClass());
+			throw new AutomataOperationCanceledException(this.getClass());
 		}
 		assert !m_SummaryMustContainAccepting || m_Goal != null;
 		if (!m_FindSummary && m_Nwars.isInitial(m_Start.getState())) {

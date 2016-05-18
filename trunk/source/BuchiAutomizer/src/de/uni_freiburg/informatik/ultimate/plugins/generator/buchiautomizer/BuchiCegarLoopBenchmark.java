@@ -75,9 +75,6 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		return s_Instance;
 	}
 
-
-
-
 	@Override
 	public Collection<String> getKeys() {
 		ArrayList<String> keyList = new ArrayList<String>(super.getKeys());
@@ -250,17 +247,17 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		
 		sb.append(s_LassoNonterminationAnalysisSAT);
 		sb.append(": ");
-		sb.append((Integer) benchmarkData.getValue(s_LassoNonterminationAnalysisSAT));
+		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisSAT));
 		sb.append("\t");
 		
 		sb.append(s_LassoNonterminationAnalysisUNSAT);
 		sb.append(": ");
-		sb.append((Integer) benchmarkData.getValue(s_LassoNonterminationAnalysisUNSAT));
+		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisUNSAT));
 		sb.append("\t");
 
 		sb.append(s_LassoNonterminationAnalysisUNKNOWN);
 		sb.append(": ");
-		sb.append((Integer) benchmarkData.getValue(s_LassoNonterminationAnalysisUNKNOWN));
+		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisUNKNOWN));
 		sb.append("\t");
 
 		sb.append(s_LassoNonterminationAnalysisTIME);

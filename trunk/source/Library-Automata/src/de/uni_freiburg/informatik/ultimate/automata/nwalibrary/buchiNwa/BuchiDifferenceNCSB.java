@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -93,8 +93,8 @@ public class BuchiDifferenceNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 		m_Logger.info(startMessage());
 		try {
 			constructDifference();
-		} catch (OperationCanceledException oce) {
-			throw new OperationCanceledException(getClass());
+		} catch (AutomataOperationCanceledException oce) {
+			throw new AutomataOperationCanceledException(getClass());
 		}
 		m_Logger.info(exitMessage());
 	}

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -164,12 +164,12 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 *            from the net.
 	 * @param stopIfAcceptingRunFound
 	 *            if false, the complete finite Prefix will be build.
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 */
 	public PetriNetUnfolder(AutomataLibraryServices services, 
 			PetriNetJulian<S, C> net, order Order,
 			boolean sameTransitionCutOff, boolean stopIfAcceptingRunFound)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.m_Net = net;
@@ -197,7 +197,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		m_Logger.info(m_Statistics.coRelationInformation());
 	}
 
-	private void computeUnfolding() throws OperationCanceledException {
+	private void computeUnfolding() throws AutomataOperationCanceledException {
 		m_PossibleExtensions.update(m_Unfolding.getDummyRoot());
 
 		while (!m_PossibleExtensions.isEmpy()) {
@@ -235,7 +235,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			// }
 
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 	}
@@ -319,18 +319,18 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * Return some accepting run of PetriNet net, return null if net does not
 	 * have an accepting run.
 	 * @throws AssertionError 
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
-	public PetriNetRun<S, C> getAcceptingRun() throws OperationCanceledException, AssertionError {
+	public PetriNetRun<S, C> getAcceptingRun() throws AutomataOperationCanceledException, AssertionError {
 		return m_Run;
 	}
 
 	/**
 	 * Return the occurrence net which is the finite prefix of the unfolding of
 	 * net.
-	 * @throws OperationCanceledException 
+	 * @throws AutomataOperationCanceledException 
 	 */
-	public BranchingProcess<S, C> getFinitePrefix() throws OperationCanceledException {
+	public BranchingProcess<S, C> getFinitePrefix() throws AutomataOperationCanceledException {
 		return m_Unfolding;
 	}
 

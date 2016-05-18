@@ -34,7 +34,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
@@ -59,13 +59,13 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	 * empty stack state of the result is different. 
 	 * 
 	 * @param nwa
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 */
 	public ReachableStatesCopy(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa,
 			boolean totalize, boolean complement,
 			boolean removeDeadEnds, boolean removeNonLiveStates)
-			throws OperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services);
 		if (complement && !totalize) {
 			throw new IllegalArgumentException("complement requires totalize");
@@ -232,7 +232,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	}
 	
 	
-	public final INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
+	public final INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
 		return m_TraversedNwa;
 	}
 

@@ -40,7 +40,7 @@ import java.util.TreeMap;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -187,10 +187,10 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	/**
 	 * constructs the interpolant automaton.
 	 * 
-	 * @throws OperationCanceledException
+	 * @throws AutomataOperationCanceledException
 	 */
 	@Override
-	protected void constructInterpolantAutomaton() throws OperationCanceledException {
+	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mLogger.debug("Start constructing interpolant automaton.");
 
 		m_nofAdditionalPaths = 0;
