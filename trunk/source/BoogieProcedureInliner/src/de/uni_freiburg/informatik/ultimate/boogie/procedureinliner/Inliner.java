@@ -34,9 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
@@ -49,10 +46,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.Nod
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferencesInlineSelector;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * Observer, which builds a call graph, sets inline flags of procedures and inlines the flagged procedures.

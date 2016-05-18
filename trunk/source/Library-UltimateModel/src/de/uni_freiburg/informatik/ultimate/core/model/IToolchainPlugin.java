@@ -27,8 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.core.model;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * @see {@link IUltimatePlugin}
@@ -56,7 +56,7 @@ public interface IToolchainPlugin extends IUltimatePlugin {
 	 * ...).
 	 * 
 	 * The services can be found in the namespace
-	 * de.uni_freiburg.informatik.ultimate.core.services.
+	 * de.uni_freiburg.informatik.ultimate.core.model.services.
 	 * 
 	 * @param services
 	 *            An instance of {@link IUltimateServiceProvider}. This instance

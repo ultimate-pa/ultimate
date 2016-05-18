@@ -2,7 +2,6 @@
 package jdd.examples;
 
 import jdd.bdd.*;
-import jdd.util.*;
 
 
 /**

@@ -30,10 +30,10 @@ package de.uni_freiburg.informatik.ultimate.test;
 import java.io.File;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * 

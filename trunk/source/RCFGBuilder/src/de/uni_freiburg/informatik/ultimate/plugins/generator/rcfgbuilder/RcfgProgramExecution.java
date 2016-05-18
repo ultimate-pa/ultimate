@@ -36,19 +36,19 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
-import de.uni_freiburg.informatik.ultimate.result.model.IRelevanceInformation;
 
 /**
  * 

@@ -2,9 +2,6 @@
 package jdd.util.math;
 
 import jdd.util.*;
-import jdd.bdd.*;
-
-import java.util.*;
 
 /**
  * some common simple operations involving numbers are gathered here

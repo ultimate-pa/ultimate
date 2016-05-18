@@ -26,8 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.bind.JAXBException;
 
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
@@ -36,17 +40,20 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JLoggingService;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.Log4JLoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 
 /**
@@ -56,8 +63,10 @@ import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
  */
 public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUltimatePlugin {
 
-	// TODO: Remove de.uni_freiburg.informatik.ultimate.core.coreplugin from
+	// TODO: Remove de.uni_freiburg.informatik.ultimate.core.model.coreplugin from
 	// exported packages
+
+	private static String[] sPluginNames;
 
 	private ILogger mLogger;
 
@@ -274,8 +283,6 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		return getCurrentController().getPluginID();
 	}
 
-	private static String[] sPluginNames;
-
 	public static String[] getPluginNames() {
 		if (sPluginNames == null) {
 			List<String> lil = new ArrayList<>();
@@ -288,6 +295,23 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 			sPluginNames = lil.toArray(new String[0]);
 		}
 		return sPluginNames;
+	}
+
+	@Override
+	public IToolchainData<ToolchainListType> createToolchainData(String filename)
+			throws FileNotFoundException, JAXBException, SAXException {
+		if (!new File(filename).exists()) {
+			throw new FileNotFoundException("The specified toolchain file " + filename + " was not found");
+		}
+
+		final ToolchainStorage tcStorage = new ToolchainStorage();
+		return new ToolchainData(filename, tcStorage, tcStorage);
+	}
+
+	@Override
+	public IToolchainData<ToolchainListType> createToolchainData() {
+		final ToolchainStorage tcStorage = new ToolchainStorage();
+		return new ToolchainData(tcStorage, tcStorage);
 	}
 
 }

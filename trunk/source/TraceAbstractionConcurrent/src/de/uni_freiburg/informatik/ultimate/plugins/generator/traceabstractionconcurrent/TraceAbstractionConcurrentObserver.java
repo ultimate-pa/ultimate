@@ -32,15 +32,24 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -56,15 +65,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**

@@ -26,16 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences;
 
+import static de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType.Boolean;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import static de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType.Boolean;
 
 /**
  * All items from the plug-in's preferences.

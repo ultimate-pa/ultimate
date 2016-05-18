@@ -29,7 +29,8 @@ package de.uni_freiburg.informatik.ultimate.core.model;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 
 /**
  * @see {@link IToolchainPlugin}

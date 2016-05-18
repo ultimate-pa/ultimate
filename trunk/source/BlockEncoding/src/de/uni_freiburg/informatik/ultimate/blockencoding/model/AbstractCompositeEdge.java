@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompo
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.models.Payload;
-import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 
 /**
  * Basic abstract class for composite edges (Conjunction or Disjunction),

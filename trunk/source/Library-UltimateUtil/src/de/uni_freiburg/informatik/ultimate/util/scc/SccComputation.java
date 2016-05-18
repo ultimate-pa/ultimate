@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Computes strongly connected components (SCCs) of a graph. 

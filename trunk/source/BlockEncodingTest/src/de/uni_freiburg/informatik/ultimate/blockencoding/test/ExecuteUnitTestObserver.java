@@ -30,16 +30,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.test;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**

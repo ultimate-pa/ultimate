@@ -9,5 +9,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.boogie,
  de.uni_freiburg.informatik.ultimate.boogie.ast,
  de.uni_freiburg.informatik.ultimate.boogie.output
 Require-Bundle: Library-UltimateUtil,
+ Library-UltimateModel,
  Library-UltimateCore,
  Library-SMTLIB

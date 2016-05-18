@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="de.uni_freiburg.informatik.ultimate.core.coreplugin" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="de.uni_freiburg.informatik.ultimate.core.model.coreplugin" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="de.uni_freiburg.informatik.ultimate.core.coreplugin" id="de.uni_freiburg.informatik.ultimate.ep.controller" name="Controller Extension Point"/>
+         <meta.schema plugin="de.uni_freiburg.informatik.ultimate.core.model.coreplugin" id="de.uni_freiburg.informatik.ultimate.ep.controller" name="Controller Extension Point"/>
       </appinfo>
       <documentation>
          [Enter description of this extension point.]
@@ -55,7 +55,7 @@
                   
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn="de.uni_freiburg.informatik.ultimate.ep.interfaces.IController"/>
+                  <meta.attribute kind="java" basedOn=":de.uni_freiburg.informatik.ultimate.core.model.IController"/>
                </appinfo>
             </annotation>
          </attribute>

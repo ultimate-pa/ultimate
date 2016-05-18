@@ -29,14 +29,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * 

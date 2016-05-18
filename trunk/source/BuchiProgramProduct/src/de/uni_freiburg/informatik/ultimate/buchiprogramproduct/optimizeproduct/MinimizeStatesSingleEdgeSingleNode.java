@@ -30,8 +30,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;

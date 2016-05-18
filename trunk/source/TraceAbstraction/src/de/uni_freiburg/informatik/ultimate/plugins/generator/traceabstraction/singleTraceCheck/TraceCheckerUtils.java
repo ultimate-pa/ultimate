@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;

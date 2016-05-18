@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -80,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
@@ -105,11 +105,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MEMORY_MODEL;
@@ -212,8 +212,8 @@ public class MemoryHandler {
     	final MEMORY_MODEL memoryModelPreference = m_MemoryModelPreference;
     	final AMemoryModel memoryModel = getMemoryModel(bitvectorTranslation, memoryModelPreference);
     	m_MemoryModel = memoryModel;
-		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
-		this.variablesToBeFreed = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
+		variablesToBeMalloced = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
+		variablesToBeFreed = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
 		
 		m_TypeSizeAndOffsetComputer = typeSizeComputer;
     }
@@ -238,7 +238,7 @@ public class MemoryHandler {
 				memoryModel = new MemoryModel_SingleBitprecise(8, m_TypeSizes, (TypeHandler) m_TypeHandler, m_ExpressionTranslation);
 				break;
 			case HoenickeLindenmann_Original:
-				memoryModel = new MemoryModel_MultiBitprecise(m_TypeSizes, (TypeHandler) m_TypeHandler, m_ExpressionTranslation);
+				memoryModel = new MemoryModel_MultiBitprecise(m_TypeSizes, m_TypeHandler, m_ExpressionTranslation);
 				break;
 			default:
 				throw new AssertionError("unknown value");
@@ -282,12 +282,12 @@ public class MemoryHandler {
 		
 	
 		MemoryModelDeclarations(String name) {
-			this.m_Name = name;
+			m_Name = name;
 		}
 		private final String m_Name;
 		
 		public String getName() {
-			return this.m_Name;
+			return m_Name;
 		}
 	
 	};
@@ -1632,7 +1632,7 @@ public class MemoryHandler {
      */
     // 2015-10
     public ExpressionResult getReadCall(Expression address, CType resultType) {
-    	ILocation loc = (ILocation) address.getLocation();
+    	ILocation loc = address.getLocation();
 //    	if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
 //    			&& (resultType.getUnderlyingType() instanceof CPrimitive)) {
 //    		CPrimitive cPrimitive = (CPrimitive) resultType.getUnderlyingType();
@@ -1702,7 +1702,7 @@ public class MemoryHandler {
         decl.add(tVarDecl);
         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
         CallStatement call = new CallStatement(loc, false, lhs, readCallProcedureName,//heapType.toString(),
-                new Expression[] { address, this.calculateSizeOf(loc, resultType) });
+                new Expression[] { address, calculateSizeOf(loc, resultType) });
         for (Overapprox overapprItem : overappr) {
             call.getPayload().getAnnotations().put(Overapprox.getIdentifier(),
                     overapprItem);
@@ -1782,7 +1782,7 @@ public class MemoryHandler {
     		m_FunctionHandler.getModifiedGlobals().
 				get(m_FunctionHandler.getCurrentProcedureID()).add(dhp.getVariableName());
     		stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
-    				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
+    				new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CEnum) {
         	//treat like INT
         	m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
@@ -1791,7 +1791,7 @@ public class MemoryHandler {
     		m_FunctionHandler.getModifiedGlobals().
 				get(m_FunctionHandler.getCurrentProcedureID()).add(dhp.getVariableName());
     		stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
-    				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
+    				new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CPointer) {
         	m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
         	String writeCallProcedureName = m_MemoryModel.getWritePointerProcedureName();
@@ -1799,7 +1799,7 @@ public class MemoryHandler {
     		m_FunctionHandler.getModifiedGlobals().
 				get(m_FunctionHandler.getCurrentProcedureID()).add(dhp.getVariableName());
     		stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
-    				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
+    				new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CStruct) {
         	CStruct rStructType = (CStruct) valueType;
         	for (String fieldId : rStructType.getFieldIds()) {
@@ -1933,12 +1933,12 @@ public class MemoryHandler {
 	 */
 	public ArrayList<Statement> insertMallocs(Dispatcher main, ArrayList<Statement> block) {
 		ArrayList<Statement> mallocs = new ArrayList<Statement>();
-		for (LocalLValueILocationPair llvp : this.variablesToBeMalloced.currentScopeKeys()) 
+		for (LocalLValueILocationPair llvp : variablesToBeMalloced.currentScopeKeys()) 
 			mallocs.add(this.getMallocCall(main, m_FunctionHandler, 
 					llvp.llv, llvp.loc));
 		ArrayList<Statement> frees = new ArrayList<Statement>();
-		for (LocalLValueILocationPair llvp : this.variablesToBeFreed.currentScopeKeys()) {  //frees are inserted in handleReturnStm
-			frees.add(this.getDeallocCall(main, m_FunctionHandler, llvp.llv, llvp.loc));
+		for (LocalLValueILocationPair llvp : variablesToBeFreed.currentScopeKeys()) {  //frees are inserted in handleReturnStm
+			frees.add(getDeallocCall(main, m_FunctionHandler, llvp.llv, llvp.loc));
 			frees.add(new HavocStatement(llvp.loc, new VariableLHS[] { (VariableLHS) llvp.llv.getLHS() }));
 		}
 		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
@@ -1949,7 +1949,7 @@ public class MemoryHandler {
 	}
 	
 	public void addVariableToBeFreed(Dispatcher main, LocalLValueILocationPair llvp) {
-		this.variablesToBeFreed.put(llvp, variablesToBeFreed.getActiveScopeNum());
+		variablesToBeFreed.put(llvp, variablesToBeFreed.getActiveScopeNum());
 	}
 	
 	public LinkedScopedHashMap<LocalLValueILocationPair, Integer> getVariablesToBeMalloced() {

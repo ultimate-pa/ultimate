@@ -38,8 +38,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
@@ -51,9 +49,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;

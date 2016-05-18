@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.model;
 
-import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * An {@link IGenerator} plugin creates a new model, typically from some input

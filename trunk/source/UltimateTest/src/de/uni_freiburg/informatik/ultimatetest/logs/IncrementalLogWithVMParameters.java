@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimatetest.logs;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.Utils;

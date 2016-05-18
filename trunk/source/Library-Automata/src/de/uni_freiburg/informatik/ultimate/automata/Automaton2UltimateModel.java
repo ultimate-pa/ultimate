@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 
 public class Automaton2UltimateModel<LETTER,STATE> {

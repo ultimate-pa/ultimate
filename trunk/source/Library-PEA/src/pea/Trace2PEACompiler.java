@@ -39,7 +39,7 @@ import java.util.TreeMap;
 
 import org.apache.log4j.PropertyConfigurator;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CounterTrace.DCPhase;
 import pea.modelchecking.MCTrace;
 

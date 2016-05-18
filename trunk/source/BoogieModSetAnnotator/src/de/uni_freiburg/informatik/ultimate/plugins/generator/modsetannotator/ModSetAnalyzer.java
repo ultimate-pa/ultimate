@@ -35,9 +35,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -49,9 +46,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * This class is an AST-Visitor that extends the Boogie Type Checker, it

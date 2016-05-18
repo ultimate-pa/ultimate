@@ -35,7 +35,7 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * Class representing a struct type.

@@ -30,12 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.Payload;
-import de.uni_freiburg.informatik.ultimate.models.structure.BasePayloadContainer;
-import de.uni_freiburg.informatik.ultimate.models.structure.ISimpleAST;
-import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ISimpleAST;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 
 public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<BoogieASTNode, VisualizationNode> {
 

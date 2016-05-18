@@ -25,10 +25,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;

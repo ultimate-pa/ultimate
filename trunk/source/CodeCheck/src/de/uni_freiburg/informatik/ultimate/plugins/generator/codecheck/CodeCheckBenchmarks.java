@@ -26,14 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 public class CodeCheckBenchmarks extends TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> {
 	//new (14.12.15): just take the functionality from TraceAbstractionBenchmarks for now..

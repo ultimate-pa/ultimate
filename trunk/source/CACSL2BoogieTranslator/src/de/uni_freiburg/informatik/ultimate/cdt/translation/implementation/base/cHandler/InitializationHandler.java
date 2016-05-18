@@ -71,9 +71,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 public class InitializationHandler {
 

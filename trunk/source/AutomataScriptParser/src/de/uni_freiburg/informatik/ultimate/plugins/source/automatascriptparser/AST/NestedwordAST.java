@@ -33,7 +33,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**

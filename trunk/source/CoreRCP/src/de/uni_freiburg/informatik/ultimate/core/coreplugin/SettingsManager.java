@@ -43,12 +43,12 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChange
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.service.prefs.BackingStoreException;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
 class SettingsManager {
 

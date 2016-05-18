@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.test.decider;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.IOverallResultEvaluator;

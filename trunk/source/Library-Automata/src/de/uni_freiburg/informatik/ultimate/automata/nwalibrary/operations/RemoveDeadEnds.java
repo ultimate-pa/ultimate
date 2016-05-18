@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -47,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
@@ -72,7 +71,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonSimple<LETTER,STATE> nwa)
 			throws OperationCanceledException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Input = nwa;
 		m_Logger.info(startMessage());
 		try {

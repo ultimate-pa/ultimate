@@ -5,8 +5,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ISimpleAST;
 import de.uni_freiburg.informatik.ultimate.model.IElementTest;
-import de.uni_freiburg.informatik.ultimate.models.structure.ISimpleAST;
 
 /**
  * TODO: The class, that shall be tested here, implements three different Interfaces. Multiple inheritance is not

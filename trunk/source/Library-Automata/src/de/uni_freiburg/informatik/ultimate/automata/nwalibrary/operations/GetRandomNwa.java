@@ -35,8 +35,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -44,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Class that provides the method {@code generateAutomaton()} for randomly
@@ -83,7 +82,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 			double returnTransitionProbability,
 			double acceptanceDensity) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Random = new Random();
 		m_alphabetSize = alphabetSize;
 		m_size = size;
@@ -115,7 +114,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 			int returnTransitionProbability,
 			int acceptanceDensity) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Random = new Random();
 		m_alphabetSize = alphabetSize;
 		m_size = size;

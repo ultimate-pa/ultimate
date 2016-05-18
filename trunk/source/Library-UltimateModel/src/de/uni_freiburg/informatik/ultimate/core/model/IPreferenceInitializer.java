@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.core.model;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 
 /**
  * 

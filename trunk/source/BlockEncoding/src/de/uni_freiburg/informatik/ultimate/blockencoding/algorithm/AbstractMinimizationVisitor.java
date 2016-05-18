@@ -34,13 +34,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.IMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;

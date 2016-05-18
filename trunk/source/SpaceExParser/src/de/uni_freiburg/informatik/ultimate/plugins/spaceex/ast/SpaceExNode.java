@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
 
-import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdgesMultigraph;
 
 /**
  * Represents the root node of a SpaceEx model AST parsed from any given SpaceEx model file.

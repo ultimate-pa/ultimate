@@ -40,8 +40,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -62,9 +60,17 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
@@ -72,13 +78,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.LoopEntryAnnotation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
@@ -850,7 +849,7 @@ public class CfgBuilder {
 		}
 
 		private void processLabel(Label st) {
-			String labelName = ((Label) st).getName();
+			String labelName = st.getName();
 			boolean existsAlready = !m_Labels.add(labelName);
 			if (existsAlready) {
 				throw new AssertionError("Label " + labelName + " occurred twice");
@@ -927,7 +926,7 @@ public class CfgBuilder {
 				m_current = locNode;
 			}
 			ProgramPoint locNode = (ProgramPoint) m_current;
-			Expression assertion = ((AssertStatement) st).getFormula();
+			Expression assertion = st.getFormula();
 			AssumeStatement assumeError = new AssumeStatement(st.getLocation(), getNegation(assertion));
 			passAllAnnotations(st, assumeError);
 			m_Backtranslator.putAux(assumeError, new BoogieASTNode[] { st });
@@ -964,7 +963,7 @@ public class CfgBuilder {
 			if (m_deadcode) {
 				return;
 			}
-			String[] targets = ((GotoStatement) st).getLabels();
+			String[] targets = st.getLabels();
 			assert (targets.length != 0) : "Goto must have at least one target";
 			mLogger.debug("Goto statement with " + targets.length + " targets.");
 			ProgramPoint locNode;

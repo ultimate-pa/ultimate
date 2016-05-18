@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences;
 
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 

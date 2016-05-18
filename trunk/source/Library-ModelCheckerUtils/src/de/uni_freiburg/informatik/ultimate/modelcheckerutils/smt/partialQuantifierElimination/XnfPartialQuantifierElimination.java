@@ -28,9 +28,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantif
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -52,7 +51,7 @@ public abstract class XnfPartialQuantifierElimination {
 		super();
 		m_Script = script;
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
+		m_Logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 	}
 	public abstract String getName();
 	public abstract String getAcronym();

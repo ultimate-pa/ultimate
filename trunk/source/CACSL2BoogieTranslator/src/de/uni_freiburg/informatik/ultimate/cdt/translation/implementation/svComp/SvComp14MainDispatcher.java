@@ -31,15 +31,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ACSLHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.SideEffectHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompTypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BeforeAfterWitnessInvariantsMapping;
 

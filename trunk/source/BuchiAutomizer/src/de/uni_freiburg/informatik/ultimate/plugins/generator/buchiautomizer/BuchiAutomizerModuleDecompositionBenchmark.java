@@ -32,10 +32,10 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
-import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;

@@ -30,8 +30,8 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.models.annotation.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * Ultimate model of a PetriNet place.
@@ -47,6 +47,6 @@ public class BranchingProcessInitialNode<S, C> extends PetriNetVisualizationNode
 		super("My sucessors are the initial conditions");
 		IAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		Map<String, IAnnotations> annotations = getPayload().getAnnotations();
-		annotations.put(LibraryIdentifiers.s_LibraryID, thisPluginsAnnotations);
+		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 	}
 }

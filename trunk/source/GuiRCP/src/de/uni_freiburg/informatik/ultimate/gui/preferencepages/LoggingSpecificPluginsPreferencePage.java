@@ -28,12 +28,13 @@ package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
 import java.util.StringTokenizer;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
+
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 
 public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPreferencePage {
 

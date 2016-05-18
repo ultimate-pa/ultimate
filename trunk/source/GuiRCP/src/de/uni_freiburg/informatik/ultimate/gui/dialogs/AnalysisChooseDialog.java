@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui.dialogs;
 
 import java.io.File;
@@ -36,7 +37,6 @@ import java.util.List;
 
 import javax.xml.bind.JAXBException;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
@@ -56,77 +56,71 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainFileValidator;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainFileValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
+/**
+ * 
+ * @author Jürgen Christ
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class AnalysisChooseDialog extends Dialog {
 
 	private Table mRresultTable;
 	private Table mTable;
-	private ArrayList<ITool> mResult;
+	private List<ITool> mResult;
 	private String mToolchainFile;
-
 	private Shell mShell;
 
 	private final List<ITool> mTools;
 	private final List<ITool> mPrevious;
 	private final ILogger mLogger;
+	private final ICore<ToolchainListType> mCore;
 
-	/**
-	 * Create the dialog
-	 * 
-	 * @param parent
-	 * @param style
-	 */
-	public AnalysisChooseDialog(ILogger logger, Shell parent, int style, List<ITool> tools, List<ITool> previous) {
+	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final int style, final List<ITool> tools,
+			final List<ITool> previous, final ICore<ToolchainListType> core) {
 		super(parent, style);
 		mTools = tools;
 		mPrevious = previous;
 		mLogger = logger;
+		mCore = core;
 		mToolchainFile = null;
 		mResult = null;
 	}
 
-	/**
-	 * Create the dialog
-	 * 
-	 * @param parent
-	 */
-	public AnalysisChooseDialog(ILogger logger, Shell parent, List<ITool> tools, List<ITool> previous) {
-		this(logger, parent, SWT.NONE, tools, previous);
+	public AnalysisChooseDialog(final ILogger logger, final Shell parent, final List<ITool> tools,
+			final List<ITool> previous, final ICore<ToolchainListType> core) {
+		this(logger, parent, SWT.NONE, tools, previous, core);
 	}
 
-	/**
-	 * Open the dialog
-	 * 
-	 * @return the result
-	 * @throws JAXBException
-	 * @throws FileNotFoundException
-	 * @throws SAXException
-	 */
-	public ToolchainData open() throws FileNotFoundException, JAXBException, SAXException {
-		final ToolchainData resultChain;
+	public IToolchainData<ToolchainListType> open() throws FileNotFoundException, JAXBException, SAXException {
 		createContents();
 		mShell.layout();
 		mShell.setSize(mShell.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 		mShell.open();
 		Display display = getParent().getDisplay();
 		while (!mShell.isDisposed()) {
-			if (!display.readAndDispatch())
+			if (!display.readAndDispatch()) {
 				display.sleep();
+			}
 		}
 
+		final IToolchainData<ToolchainListType> resultChain;
 		if (mToolchainFile != null) {
 			mLogger.info("Reading toolchain file from " + mToolchainFile);
-			resultChain = new ToolchainData(mToolchainFile);
+			resultChain = mCore.createToolchainData(mToolchainFile);
 		} else if (mResult != null) {
 			// convert selection into a toolchain
-			resultChain = new ToolchainData();
+			resultChain = mCore.createToolchainData();
 			for (ITool t : mResult) {
 				resultChain.addPlugin(t.getPluginID());
 			}
@@ -134,7 +128,7 @@ public class AnalysisChooseDialog extends Dialog {
 			String tDir = System.getProperty("java.io.tmpdir");
 			File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
 			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), resultChain.getToolchain());
-			new UltimatePreferenceStore(GuiController.sPLUGINID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
+			new UltimatePreferenceStore(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
 					tmpToolchain.getAbsolutePath());
 			mLogger.info("Saved custom toolchain to " + tmpToolchain.getAbsolutePath());
 
@@ -159,6 +153,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		mTable = new Table(mShell, SWT.FULL_SELECTION | SWT.BORDER | SWT.HIDE_SELECTION);
 		mTable.addMouseListener(new MouseAdapter() {
+			@Override
 			public void mouseDoubleClick(final MouseEvent e) {
 				moveItem(SWT.RIGHT);
 			}
@@ -191,12 +186,14 @@ public class AnalysisChooseDialog extends Dialog {
 
 		mRresultTable = new Table(mShell, SWT.BORDER);
 		mRresultTable.addMouseListener(new MouseAdapter() {
+			@Override
 			public void mouseDoubleClick(final MouseEvent e) {
 				moveItem(SWT.LEFT);
 			}
 		});
 		// a listener that should provide keyboard shortcuts for fast reordering
 		mRresultTable.addKeyListener(new KeyAdapter() {
+			@Override
 			public void keyPressed(final KeyEvent e) {
 				if (e.stateMask == SWT.SHIFT) {
 					switch (e.keyCode) {
@@ -231,6 +228,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button addButton = new Button(mShell, SWT.NONE);
 		addButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				moveItem(SWT.RIGHT);
 			}
@@ -239,6 +237,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button removeButton = new Button(mShell, SWT.NONE);
 		removeButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				moveItem(SWT.LEFT);
 			}
@@ -247,6 +246,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button upbutton = new Button(mShell, SWT.ARROW | SWT.UP);
 		upbutton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				moveItem(SWT.UP);
 			}
@@ -256,6 +256,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button downbutton = new Button(mShell, SWT.ARROW | SWT.DOWN);
 		downbutton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				moveItem(SWT.DOWN);
 			}
@@ -266,6 +267,7 @@ public class AnalysisChooseDialog extends Dialog {
 		final Button okButton = new Button(mShell, SWT.NONE);
 		// gets all items from the resulttable and puts them in the resultset ..
 		okButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				mResult = new ArrayList<ITool>();
 				for (TableItem item : mRresultTable.getItems()) {
@@ -285,9 +287,10 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button xmlButton = new Button(mShell, SWT.NONE);
 		xmlButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 
-				UltimatePreferenceStore prefs = new UltimatePreferenceStore(GuiController.sPLUGINID);
+				UltimatePreferenceStore prefs = new UltimatePreferenceStore(GuiController.PLUGIN_ID);
 				String filterpath = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH, null);
 
 				String[] extensions = new String[1];
@@ -310,6 +313,7 @@ public class AnalysisChooseDialog extends Dialog {
 
 		final Button cancelButton = new Button(mShell, SWT.NONE);
 		cancelButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(final SelectionEvent e) {
 				mShell.dispose();
 			}

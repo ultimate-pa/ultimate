@@ -26,8 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;

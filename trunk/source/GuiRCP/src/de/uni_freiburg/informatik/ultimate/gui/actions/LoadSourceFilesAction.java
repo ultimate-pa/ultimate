@@ -32,9 +32,9 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;

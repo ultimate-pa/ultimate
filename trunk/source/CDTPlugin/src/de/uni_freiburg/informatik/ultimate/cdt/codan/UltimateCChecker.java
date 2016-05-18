@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.codan.core.model.CheckerLaunchMode;
 import org.eclipse.cdt.codan.core.model.IProblemWorkingCopy;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -65,25 +64,26 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtLocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.GenericResultAtLocation;
-import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithLocation;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 
 /**
  * @author Markus Lindenmann
@@ -170,6 +170,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		// We have to do this in this asynch manner, because otherwise we would
 		// get a NullPointerException, because we are not in the UI Thread
 		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+			@Override
 			public void run() {
 				// Present results of the actual run!
 				IViewPart vpart = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()

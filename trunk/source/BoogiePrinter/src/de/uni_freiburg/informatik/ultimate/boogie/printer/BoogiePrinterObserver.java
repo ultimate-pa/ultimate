@@ -35,15 +35,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * @author hoenicke

@@ -37,9 +37,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.JVContextMenu;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection.JungSelection;

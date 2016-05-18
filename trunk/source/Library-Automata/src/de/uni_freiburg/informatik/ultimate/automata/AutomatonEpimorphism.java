@@ -30,9 +30,8 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -57,7 +56,7 @@ public class AutomatonEpimorphism<STATE> {
 
 	public AutomatonEpimorphism(AutomataLibraryServices services) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_epimorphism = new HashMap<STATE, STATE>();
 	}
 
@@ -78,7 +77,7 @@ public class AutomatonEpimorphism<STATE> {
 			
 			INestedWordAutomatonOldApi<String, String> a1,
 			INestedWordAutomatonOldApi<String, String> a2) {
-		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
 
 		// traversing the states

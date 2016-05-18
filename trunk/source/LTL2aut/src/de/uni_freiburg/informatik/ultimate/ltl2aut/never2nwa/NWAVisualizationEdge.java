@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa;
 
-import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 
 final class NWAVisualizationEdge<NWAVertex, NWAEdge>
 		extends

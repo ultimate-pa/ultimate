@@ -3,8 +3,6 @@ package jdd.bdd.debug;
 
 import jdd.util.*;
 import jdd.util.jre.*;
-import jdd.util.math.*;
-
 import java.io.*;
 import java.util.zip.*;
 

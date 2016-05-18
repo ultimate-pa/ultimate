@@ -40,7 +40,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
@@ -48,7 +47,8 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;

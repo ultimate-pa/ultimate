@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import de.uni_freiburg.informatik.ultimate.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 
 public abstract class RCFGEdge extends ModifiableMultigraphEdge<RCFGNode, RCFGEdge, RCFGNode, RCFGEdge>
 		implements RcfgElement {

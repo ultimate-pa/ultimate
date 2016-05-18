@@ -31,8 +31,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -45,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class Accepts<S, C> implements IOperation<S, C> {
 	
@@ -81,7 +80,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 	public Accepts(AutomataLibraryServices services, 
 			PetriNetJulian<S, C> net, Word<S> nWord) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.net = net;
 		this.nWord = nWord;
 		m_Logger.info(startMessage());

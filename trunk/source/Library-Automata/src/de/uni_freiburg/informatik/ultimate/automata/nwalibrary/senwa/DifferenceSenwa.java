@@ -32,8 +32,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -53,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.SenwaWalker.ISuccessorVisitor;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class DifferenceSenwa<LETTER, STATE> implements 
 								ISuccessorVisitor<LETTER, STATE>,
@@ -121,7 +120,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
 					throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
@@ -147,7 +146,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			boolean removeDeadEndsImmediately)
 					throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		contentFactory = minuend.getStateFactory();
 		if (minuend instanceof INestedWordAutomatonOldApi) {
 			this.minuend = (INestedWordAutomatonOldApi<LETTER, STATE>) minuend;

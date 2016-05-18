@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 
 public class BlockEncodingAnnotation extends AbstractAnnotations {

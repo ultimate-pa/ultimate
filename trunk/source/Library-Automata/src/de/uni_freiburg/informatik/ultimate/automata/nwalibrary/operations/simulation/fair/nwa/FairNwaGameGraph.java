@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.nwa;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
@@ -45,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.NwaGameGraphGeneration;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.nwa.SummarizeEdge;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
  * Game graph that realizes <b>fair simulation</b> for NWA automata.<br/>

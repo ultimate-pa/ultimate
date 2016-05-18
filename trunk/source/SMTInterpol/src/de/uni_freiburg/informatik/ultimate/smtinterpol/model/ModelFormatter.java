@@ -21,7 +21,6 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.IRAConstantFormatter;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;

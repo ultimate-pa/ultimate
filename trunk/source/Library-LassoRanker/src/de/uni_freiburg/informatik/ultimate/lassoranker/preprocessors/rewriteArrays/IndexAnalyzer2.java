@@ -33,8 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;

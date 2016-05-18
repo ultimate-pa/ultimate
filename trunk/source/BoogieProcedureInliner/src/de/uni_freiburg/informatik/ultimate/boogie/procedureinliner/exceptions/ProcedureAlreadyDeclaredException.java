@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
-import de.uni_freiburg.informatik.ultimate.result.AbstractResult;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 
 /**
  * Indicates that a Boogie procedure was declared more than one time.

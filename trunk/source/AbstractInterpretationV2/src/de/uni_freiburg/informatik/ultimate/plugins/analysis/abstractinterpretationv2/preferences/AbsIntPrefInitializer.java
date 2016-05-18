@@ -30,12 +30,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomainPreferences;

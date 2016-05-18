@@ -26,13 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.nwa;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.direct.DirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
  * Simulation that realizes <b>direct simulation</b> for reduction of a given

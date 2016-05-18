@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 public interface IServiceFactoryFactory {
 	<T,K extends IServiceFactory<T>> T createService(Class<K> service,

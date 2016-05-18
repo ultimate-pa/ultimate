@@ -34,8 +34,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -46,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.StateBasedTransitionFilterPredicateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.IteratorConcatenation;
 import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
@@ -101,7 +100,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 			NestedWordAutomatonReachableStates<LETTER, STATE>.AcceptingSummariesComputation asc, AutomataLibraryServices services,
 			Set<STATE> allStates, Set<STATE> startStates) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.nestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
 		m_ScComponentFactory = new StronglyConnectedComponentWithAcceptanceInformation_Factory(this.nestedWordAutomatonReachableStates);
 		m_NWARSSuccessorProvider = new InSumCaSuccessorProvider(nestedWordAutomatonReachableStates, allStates);

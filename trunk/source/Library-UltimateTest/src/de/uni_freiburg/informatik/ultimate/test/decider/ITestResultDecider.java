@@ -27,8 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 

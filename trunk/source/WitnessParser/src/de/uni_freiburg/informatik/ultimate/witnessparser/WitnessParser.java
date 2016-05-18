@@ -31,10 +31,10 @@ import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

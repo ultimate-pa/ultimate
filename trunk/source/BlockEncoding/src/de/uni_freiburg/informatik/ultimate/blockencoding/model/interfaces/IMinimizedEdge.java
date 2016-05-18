@@ -31,8 +31,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.models.structure.IModifiableMultigraphEdge;
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableMultigraphEdge;
 
 /**
  * This interface represents all kinds of minimized edges.

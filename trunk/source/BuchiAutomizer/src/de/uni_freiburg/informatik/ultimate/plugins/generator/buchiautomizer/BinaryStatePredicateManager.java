@@ -37,14 +37,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;

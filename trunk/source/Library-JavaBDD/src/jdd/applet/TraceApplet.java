@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import jdd.util.*;
-import jdd.bdd.*;
 import jdd.bdd.debug.*;
 
 

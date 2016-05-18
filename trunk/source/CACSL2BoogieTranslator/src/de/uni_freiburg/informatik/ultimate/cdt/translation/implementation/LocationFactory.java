@@ -32,9 +32,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
 
 /**
  * @author dietsch@informatik.uni-freiburg.de

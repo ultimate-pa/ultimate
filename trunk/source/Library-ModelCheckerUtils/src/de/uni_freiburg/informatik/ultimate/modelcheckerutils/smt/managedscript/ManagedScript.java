@@ -28,9 +28,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript;
 
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -58,7 +57,7 @@ public class ManagedScript {
 		super();
 		m_Services = services;
 		m_Script = script;
-		m_Logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
+		m_Logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 	}
 	
 	public void lock(Object lockOwner) {

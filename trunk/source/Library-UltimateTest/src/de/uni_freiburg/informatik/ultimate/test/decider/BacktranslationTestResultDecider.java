@@ -39,15 +39,15 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.Path;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
-import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 

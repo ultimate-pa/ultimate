@@ -1,7 +1,6 @@
 
 package jdd.util;
 
-import java.util.*;
 import java.io.*;
 
 /**

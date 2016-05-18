@@ -31,8 +31,6 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -43,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import petruchio.cov.Backward;
 import petruchio.cov.SimpleList;
 import petruchio.interfaces.petrinet.Place;
@@ -94,7 +93,7 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	public EmptinessPetruchio(AutomataLibraryServices services, 
 			PetriNetJulian<S,C> net) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_NetJulian = net;
 		m_Logger.info(startMessage());
 		m_Petruchio = new PetruchioWrapper<S,C>(m_Services, net);

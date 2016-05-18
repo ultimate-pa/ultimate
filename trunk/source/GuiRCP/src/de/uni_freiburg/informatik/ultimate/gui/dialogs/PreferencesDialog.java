@@ -90,7 +90,7 @@ public class PreferencesDialog extends Dialog {
 	 * Create contents of the dialog
 	 */
 	protected void createContents() {
-		Preferences my=Preferences.userRoot().node(GuiController.sPLUGINID);
+		Preferences my=Preferences.userRoot().node(GuiController.PLUGIN_ID);
 		
 		shell = new Shell(getParent(), SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
 		final GridLayout gridLayout_1 = new GridLayout();
@@ -153,7 +153,7 @@ public class PreferencesDialog extends Dialog {
 	
 	
 	private void save(){
-		Preferences my=Preferences.userRoot().node(GuiController.sPLUGINID);
+		Preferences my=Preferences.userRoot().node(GuiController.PLUGIN_ID);
 		my.put(dotpath, text.getText() );
 		
 		

@@ -30,8 +30,8 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Event;
-import de.uni_freiburg.informatik.ultimate.models.annotation.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * Ultimate model of a OcurrenceNet event.
@@ -53,7 +53,7 @@ public class EventNode<S,C> extends PetriNetVisualizationNode {
 		annot.put("ByLocalConfigurationRepresentedMarking",event.getMark());
 	
 		Map<String,IAnnotations> annotations =  getPayload().getAnnotations();
-		annotations.put(LibraryIdentifiers.s_LibraryID, annot);
+		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
 		
 		S symbol = event.getTransition().getSymbol();
 		if (symbol instanceof IAnnotations) {

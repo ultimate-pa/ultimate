@@ -2,9 +2,6 @@
 
 package jdd.util.zip;
 
-import jdd.util.*;
-import java.io.*;
-
 /**
  * Memory chunks are used internally by out memory streams to save data of unknown size.
  *

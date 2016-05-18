@@ -33,8 +33,8 @@ import java.awt.Frame;
 
 import javax.swing.JPanel;
 
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions.Mode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphListener;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection.JungSelectionProvider;

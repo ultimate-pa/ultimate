@@ -28,11 +28,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Builder used by buchiComplementFKV to obtain TightLevelRankingStateGenerators.
@@ -54,7 +53,7 @@ public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends Le
 			int userDefinedMaxRank) {
 		super();
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
 		m_UserDefinedMaxRank = userDefinedMaxRank;
 	}

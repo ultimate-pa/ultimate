@@ -32,15 +32,15 @@ import org.eclipse.core.runtime.Status;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.RcpProgressMonitorWrapper;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class ExternalParserToolchainJob extends BasicToolchainJob {
 

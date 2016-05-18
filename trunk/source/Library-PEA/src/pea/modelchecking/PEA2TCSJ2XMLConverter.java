@@ -32,9 +32,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.Transition;

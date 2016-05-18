@@ -99,9 +99,9 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 					throws OperationCanceledException {
 		super(services, stateFactory, operand,
 				new DelayedNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), useSCCs, stateFactory,
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						new DelayedNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
 	}
 

@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui;
 
 import java.io.FileNotFoundException;
@@ -42,16 +43,16 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvisor;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.AnalysisChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ModelChooseDialog;
@@ -65,15 +66,14 @@ import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
  */
 public class GuiController implements IController<ToolchainListType> {
 
-	// public static final String sPLUGINID = "UltimateGui";
-	public static final String sPLUGINID = GuiController.class.getPackage().getName();
-	public static final String sPLUGINNAME = "Gui Controller";
+	public static final String PLUGIN_ID = GuiController.class.getPackage().getName();
+	public static final String PLUGIN_NAME = "Gui Controller";
 
 	private ILogger mLogger;
 	private Display mDisplay;
 
 	private volatile ISource mParser;
-	private volatile ToolchainData mTools;
+	private volatile IToolchainData<ToolchainListType> mTools;
 	private volatile List<String> mModels;
 
 	private ICore<ToolchainListType> mCore;
@@ -82,14 +82,13 @@ public class GuiController implements IController<ToolchainListType> {
 	private ILoggingService mLoggingService;
 
 	/**
-	 * Initialization of Controller. The GUI is created here. Note: This methods
-	 * blocks until the GUI is closed.
+	 * Initialization of Controller. The GUI is created here. Note: This methods blocks until the GUI is closed.
 	 * 
 	 * @return the exit code for the application
 	 */
 	@Override
 	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
-		if(loggingService == null){
+		if (loggingService == null) {
 			throw new IllegalArgumentException("loggingService may not be null");
 		}
 		mLoggingService = loggingService;
@@ -146,17 +145,17 @@ public class GuiController implements IController<ToolchainListType> {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public synchronized ToolchainData selectTools(final List<ITool> t) {
+	public synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> t) {
 		return selectTools(t, Collections.EMPTY_LIST);
 	}
 
-	public synchronized ToolchainData selectTools(final List<ITool> t, final List<ITool> previous) {
+	private synchronized IToolchainData<ToolchainListType> selectTools(final List<ITool> t, final List<ITool> previous) {
 		mDisplay.syncExec(new Runnable() {
 			@Override
 			public void run() {
-				Shell shell = new Shell(mDisplay);
+				final Shell shell = new Shell(mDisplay);
 				try {
-					mTools = new AnalysisChooseDialog(mLogger, shell, t, previous).open();
+					mTools = new AnalysisChooseDialog(mLogger, shell, t, previous, mCore).open();
 				} catch (FileNotFoundException e) {
 					MessageDialog.openError(shell, "An error occured", "Toolchain XML file was not found.");
 
@@ -185,12 +184,12 @@ public class GuiController implements IController<ToolchainListType> {
 
 	@Override
 	public String getPluginName() {
-		return sPLUGINNAME;
+		return PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return sPLUGINID;
+		return PLUGIN_ID;
 	}
 
 	@Override
@@ -208,8 +207,8 @@ public class GuiController implements IController<ToolchainListType> {
 
 	@Override
 	public void displayToolchainResultProgramUnknown(String description) {
-		mTrayIconNotifier.showTrayBalloon("Program could not be checked", "Ultimate could not prove your program: "
-				+ description, SWT.ICON_INFORMATION);
+		mTrayIconNotifier.showTrayBalloon("Program could not be checked",
+				"Ultimate could not prove your program: " + description, SWT.ICON_INFORMATION);
 
 	}
 

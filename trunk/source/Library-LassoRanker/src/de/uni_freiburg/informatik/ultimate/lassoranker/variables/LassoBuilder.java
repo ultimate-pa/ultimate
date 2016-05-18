@@ -33,8 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Lasso;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;

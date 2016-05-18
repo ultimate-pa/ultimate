@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
@@ -44,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -136,7 +135,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 			throws AutomataLibraryException 
 	{
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Minuend = minuend;
 		m_Subtrahend = subtrahend;
 		m_Epimorphism = automatonEpimorhpism;

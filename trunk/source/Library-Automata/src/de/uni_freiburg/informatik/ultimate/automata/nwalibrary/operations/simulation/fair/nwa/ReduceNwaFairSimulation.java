@@ -30,8 +30,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -41,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.ReduceBuchiFairSimulation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that reduces a given nwa automaton by using {@link FairSimulation}.
@@ -135,12 +134,12 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 			final Collection<Set<STATE>> possibleEquivalentClasses) throws OperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
 				new FairNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), useSCCs, stateFactory,
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
 						new FairNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
-		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 
 	/*

@@ -32,8 +32,6 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
@@ -41,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.ShortcutErrEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 

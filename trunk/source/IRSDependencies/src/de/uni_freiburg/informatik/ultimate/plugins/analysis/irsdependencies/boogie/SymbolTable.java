@@ -31,7 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 
 public class SymbolTable
 {

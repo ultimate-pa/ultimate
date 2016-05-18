@@ -27,26 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils;
 
-import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
+public final class ModelCheckerUtils  {
 
-public final class ModelCheckerUtils implements IUltimatePlugin {
+	public static final String PLUGIN_ID = "Library-ModelCheckerUtils";
 
-	public static final String sPluginID = "ModelCheckerUtils";
-	
-	@Override
-	public String getPluginName() {
-		return sPluginID;
-	}
-
-	@Override
-	public String getPluginID() {
-		return sPluginID;
-	}
-
-	@Override
-	public IPreferenceInitializer getPreferences() {
-		return null;
-	}
-
+	public static final String PLUGIN_NAME = "ModelCheckerUtils";
 }

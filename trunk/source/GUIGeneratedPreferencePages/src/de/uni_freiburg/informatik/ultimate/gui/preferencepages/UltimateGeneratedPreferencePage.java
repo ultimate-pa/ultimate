@@ -49,9 +49,9 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.gui.customeditors.MultiLineTextFieldEditor;
 

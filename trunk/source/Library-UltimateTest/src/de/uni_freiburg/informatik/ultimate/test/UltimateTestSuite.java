@@ -36,7 +36,7 @@ import java.util.List;
 import org.junit.AfterClass;
 import org.junit.runner.RunWith;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;

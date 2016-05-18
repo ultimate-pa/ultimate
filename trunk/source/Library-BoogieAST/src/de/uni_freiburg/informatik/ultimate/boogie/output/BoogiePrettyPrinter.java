@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.translation.IToString;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 
 /**
  * Provides a static method to get a prettyprinted String representation of a (Boogie) Statement.

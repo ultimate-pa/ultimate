@@ -31,8 +31,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;

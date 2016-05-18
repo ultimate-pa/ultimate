@@ -46,7 +46,7 @@ public class CommandLineParser {
 	private String mSettingsFile;
 
 	private static final String s_PLUGIN_NAME = "Command Line Parser";
-	private static final String s_PLUGIN_ID = "de.uni_freiburg.informatik.ultimate.core.coreplugin.CommandLineParser";
+	private static final String s_PLUGIN_ID = "de.uni_freiburg.informatik.ultimate.core.model.coreplugin.CommandLineParser";
 
 	public CommandLineParser() {
 

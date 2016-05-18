@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.util.scc;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Non-recursive implementation of {@link SccComputation} that uses the default

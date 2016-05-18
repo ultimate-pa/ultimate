@@ -37,9 +37,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CDD;
 import pea.PEANet;
 import pea.Phase;

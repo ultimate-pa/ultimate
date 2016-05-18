@@ -29,6 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 public class LibraryIdentifiers {
 
-	public static final String s_LibraryID = "UltimateAutomataLibrary";
+	public static final String PLUGIN_ID = "UltimateAutomataLibrary";
 	
 }

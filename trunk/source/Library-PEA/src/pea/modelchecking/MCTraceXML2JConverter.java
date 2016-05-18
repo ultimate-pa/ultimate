@@ -26,13 +26,14 @@
  */
 package pea.modelchecking;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 import java.io.IOException;
 import java.util.Set;

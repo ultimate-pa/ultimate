@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.gui.actions;
 
 import org.eclipse.jface.action.Action;
@@ -35,12 +36,17 @@ import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class LoadSettingsAction extends Action implements IWorkbenchAction {
 
-	private ICore mCore;
+	private ICore<?> mCore;
 	private IWorkbenchWindow mWindow;
 
-	public LoadSettingsAction(final IWorkbenchWindow window, final ICore icore) {
+	public LoadSettingsAction(final IWorkbenchWindow window, final ICore<?> icore) {
 		setId(getClass().getName());
 		setText("Load settings");
 		setToolTipText("Loads previously saved settings from a file");
@@ -48,6 +54,7 @@ public class LoadSettingsAction extends Action implements IWorkbenchAction {
 		mWindow = window;
 	}
 
+	@Override
 	public void run() {
 		FileDialog fd = new FileDialog(mWindow.getShell(), SWT.OPEN);
 		fd.setFilterExtensions(new String[] { "*.epf", "*.*" });

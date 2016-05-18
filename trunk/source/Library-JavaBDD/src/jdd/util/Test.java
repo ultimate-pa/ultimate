@@ -1,8 +1,6 @@
 
 package jdd.util;
 
-import java.util.*;
-
 /** simple workframe for XP-like unit-testing */
 public class Test {
 	public static long total = 0, count = 0;

@@ -29,21 +29,21 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.access.walker.CFGWalker;
-import de.uni_freiburg.informatik.ultimate.access.walker.DFSTreeWalker;
-import de.uni_freiburg.informatik.ultimate.access.walker.IWalker;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.CFGWalker;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.DFSTreeWalker;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.IWalker;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
-import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 //@formatter:off
 /**

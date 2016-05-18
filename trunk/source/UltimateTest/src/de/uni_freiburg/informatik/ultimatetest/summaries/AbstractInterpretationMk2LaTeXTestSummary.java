@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimate.test.decider.AbstractInterpretationTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.AbstractInterpretationTestResultDecider.ActualResultType;
 import de.uni_freiburg.informatik.ultimate.test.decider.AbstractInterpretationTestResultDecider.ExpectedResultType;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;

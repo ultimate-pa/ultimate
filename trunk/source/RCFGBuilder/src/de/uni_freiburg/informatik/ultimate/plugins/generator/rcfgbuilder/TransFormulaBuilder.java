@@ -28,24 +28,22 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.util.Map;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 
 /**
  * Provides methods to build TransitionsFormulas for the nodes and edges of a

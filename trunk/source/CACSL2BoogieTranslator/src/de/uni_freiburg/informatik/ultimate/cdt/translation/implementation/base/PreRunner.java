@@ -59,7 +59,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 
 /**

@@ -5,6 +5,7 @@ Bundle-SymbolicName: AutomataScriptParser;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.Activator
 Require-Bundle: Library-UltimateCore,
+ Library-UltimateModel,
  UltimateCore,
  Library-log4j,
  JavaCup,

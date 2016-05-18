@@ -33,17 +33,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -74,7 +71,7 @@ public class SmtUtils {
 	}
 
 	public static Term simplify(Script script, Term formula, IUltimateServiceProvider services) {
-		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
+		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
 		}

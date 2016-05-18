@@ -34,8 +34,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -49,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.increm
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * 

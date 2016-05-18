@@ -26,14 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class FinitePrefix<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
@@ -46,7 +45,7 @@ public class FinitePrefix<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public FinitePrefix(AutomataLibraryServices services, 
 			PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 		PetriNetUnfolder<LETTER,STATE> unf = new PetriNetUnfolder<LETTER,STATE>(m_Services, operand, order.ERV, true, false);

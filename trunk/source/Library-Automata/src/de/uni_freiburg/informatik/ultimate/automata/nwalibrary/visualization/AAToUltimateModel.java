@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 
 public class AAToUltimateModel<LETTER,STATE> {

@@ -37,14 +37,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.result.NoResult;
-import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**

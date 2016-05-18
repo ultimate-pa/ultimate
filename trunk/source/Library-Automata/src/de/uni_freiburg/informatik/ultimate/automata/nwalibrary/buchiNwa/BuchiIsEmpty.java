@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -38,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -58,7 +57,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public BuchiIsEmpty(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Nwa = nwa;
 		m_Logger.info(startMessage());
 		try {

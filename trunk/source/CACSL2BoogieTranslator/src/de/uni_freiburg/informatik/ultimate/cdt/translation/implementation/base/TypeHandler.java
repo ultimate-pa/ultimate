@@ -92,8 +92,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.B
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 
 /**

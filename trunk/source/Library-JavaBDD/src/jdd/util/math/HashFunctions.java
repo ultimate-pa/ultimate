@@ -2,7 +2,6 @@
 package jdd.util.math;
 
 import jdd.util.*;	// for Test
-import java.util.*; // for Random, why isn't this in java.math instead
 
 
 /**

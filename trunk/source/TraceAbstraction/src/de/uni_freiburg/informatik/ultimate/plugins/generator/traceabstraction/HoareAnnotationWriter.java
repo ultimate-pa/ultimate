@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;

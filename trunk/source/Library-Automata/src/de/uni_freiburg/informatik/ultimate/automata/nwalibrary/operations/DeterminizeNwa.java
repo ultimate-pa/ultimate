@@ -31,8 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -42,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
@@ -63,7 +62,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
 		m_StateDeterminizer = stateDeterminizer;
 		m_StateFactory = sf;

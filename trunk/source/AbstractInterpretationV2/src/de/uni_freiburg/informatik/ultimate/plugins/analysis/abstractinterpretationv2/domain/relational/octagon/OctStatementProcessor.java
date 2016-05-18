@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;

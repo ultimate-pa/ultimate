@@ -26,8 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -35,8 +36,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 public class SymbolTableTransformer extends BoogieTransformer
 {

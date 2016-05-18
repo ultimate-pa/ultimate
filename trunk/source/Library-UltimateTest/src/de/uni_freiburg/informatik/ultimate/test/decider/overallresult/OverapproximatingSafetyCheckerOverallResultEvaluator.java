@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.test.decider.overallresult;
 
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 /**
  * 

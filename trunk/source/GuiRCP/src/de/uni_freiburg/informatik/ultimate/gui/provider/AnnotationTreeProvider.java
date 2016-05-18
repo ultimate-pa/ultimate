@@ -38,6 +38,15 @@ import java.util.Map;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ITree;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.gui.misc.Entry;
 import de.uni_freiburg.informatik.ultimate.gui.misc.GroupEntry;
 import de.uni_freiburg.informatik.ultimate.gui.misc.TreeViewEntry;
@@ -46,15 +55,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Visualizable;
-import de.uni_freiburg.informatik.ultimate.models.structure.ITree;
-import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
 
 /**
  * @author dietsch

@@ -28,17 +28,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.ICore;
-import de.uni_freiburg.informatik.ultimate.gui.GuiController;
-import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSettingsAction;
-import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSourceFilesAction;
-import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainAction;
-import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainNewTCAction;
-import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainOldTCAction;
-import de.uni_freiburg.informatik.ultimate.gui.actions.ResetSettingsAction;
-import de.uni_freiburg.informatik.ultimate.gui.actions.SaveSettingsAction;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -53,6 +42,18 @@ import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.gui.GuiController;
+import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSettingsAction;
+import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSourceFilesAction;
+import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainAction;
+import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainNewTCAction;
+import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainOldTCAction;
+import de.uni_freiburg.informatik.ultimate.gui.actions.ResetSettingsAction;
+import de.uni_freiburg.informatik.ultimate.gui.actions.SaveSettingsAction;
+
 /**
  * The class that handles the actions and fills the action bars.
  * 
@@ -61,7 +62,7 @@ import org.eclipse.ui.application.IActionBarConfigurer;
  */
 public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
-	private final ICore mCore;
+	private final ICore<ToolchainListType> mCore;
 	private final GuiController mController;
 	private final ILogger mLogger;
 
@@ -78,8 +79,8 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	private IWorkbenchAction mSaveSettings;
 	private IWorkbenchAction mResetSettings;
 
-	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ICore icc, GuiController controller,
-			ILogger logger) {
+	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ICore<ToolchainListType> icc,
+			GuiController controller, ILogger logger) {
 		super(configurer);
 		mCore = icc;
 		mController = controller;
@@ -92,6 +93,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	 * @param window
 	 *            the workbench window we are in
 	 */
+	@Override
 	protected final void makeActions(final IWorkbenchWindow window) {
 		mExitAction = registerAction(ActionFactory.QUIT.create(window));
 		mAboutAction = registerAction(ActionFactory.ABOUT.create(window));
@@ -116,6 +118,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	 * 
 	 * @param menuBar
 	 */
+	@Override
 	protected void fillMenuBar(IMenuManager menuBar) {
 		final MenuManager fileMenu = new MenuManager("&File", "file");
 
@@ -144,6 +147,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
 	}
 
+	@Override
 	protected void fillCoolBar(ICoolBarManager coolBar) {
 		final IToolBarManager toolBar = new ToolBarManager(SWT.PUSH);
 		coolBar.add(toolBar);
@@ -158,7 +162,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		toolBar.add(mSaveSettings);
 		toolBar.add(mResetSettings);
 
-//		toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+		// toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
 	}
 }

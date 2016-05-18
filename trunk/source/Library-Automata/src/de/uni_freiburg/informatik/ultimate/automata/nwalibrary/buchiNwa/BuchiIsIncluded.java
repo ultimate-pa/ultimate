@@ -26,14 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that checks if the language of the first Buchi automaton is 
@@ -62,7 +61,7 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2)
 			throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
 		m_Logger.info(startMessage());

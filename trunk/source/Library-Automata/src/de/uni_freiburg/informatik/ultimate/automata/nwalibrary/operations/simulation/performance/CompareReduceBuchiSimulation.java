@@ -39,8 +39,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -64,7 +62,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
@@ -420,7 +419,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 
 		m_LoggedLines = new LinkedList<String>();
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
 		m_Result = operand;
 		m_TimeMeasures = new LinkedHashMap<>();

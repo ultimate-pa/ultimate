@@ -32,15 +32,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -89,7 +89,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mServices = services;
 		Script script = boogie2smt.getScript();
-		this.m_CodeBlocks = codeBlocks;
+		m_CodeBlocks = codeBlocks;
 
 		String prettyPrinted = "";
 
@@ -122,10 +122,10 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		boolean s_TransformToCNF = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
-		m_TransitionFormula = TransFormula.parallelComposition(mLogger, mServices, this.getSerialNumer(), boogie2smt,
+		m_TransitionFormula = TransFormula.parallelComposition(mLogger, mServices, getSerialNumer(), boogie2smt,
 				null, s_TransformToCNF, transFormulas);
 		m_TransitionFormulaWithBranchEncoders = TransFormula.parallelComposition(mLogger, mServices,
-				this.getSerialNumer(), boogie2smt, branchIndicator, s_TransformToCNF, transFormulasWithBranchEncoders);
+				getSerialNumer(), boogie2smt, branchIndicator, s_TransformToCNF, transFormulasWithBranchEncoders);
 	}
 
 	@Override

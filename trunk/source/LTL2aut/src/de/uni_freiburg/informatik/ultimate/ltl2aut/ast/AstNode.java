@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.ltl2aut.ast;
 
-import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableSimpleAST;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableSimpleAST;
 
 public class AstNode extends ModifiableSimpleAST<AstNode>{
 	

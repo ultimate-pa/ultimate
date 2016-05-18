@@ -36,7 +36,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Literal;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Literal.Polarity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;

@@ -40,7 +40,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
@@ -103,9 +102,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * This class is a AST-Visitor for creating textual representations of the tree.
@@ -1144,6 +1144,7 @@ public class TypeChecker extends BaseObserver {
 		}
 	}
 
+	@Override
 	public boolean process(IElement root) {
 		if (root instanceof Unit) {
 			Unit unit = (Unit) root;

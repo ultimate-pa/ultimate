@@ -40,16 +40,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.model.repository.DataAccessException;
-import de.uni_freiburg.informatik.ultimate.model.repository.IRepository;
-import de.uni_freiburg.informatik.ultimate.model.repository.PersistentObjectNotFoundException;
-import de.uni_freiburg.informatik.ultimate.model.repository.PersistentObjectTypeMismatchException;
-import de.uni_freiburg.informatik.ultimate.model.repository.SerializationRepository;
-import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.DataAccessException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.IRepository;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.PersistentObjectNotFoundException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.PersistentObjectTypeMismatchException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.SerializationRepository;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * PersistenceAwareModelManager

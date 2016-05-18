@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.models.annotation.AbstractAnnotations;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de

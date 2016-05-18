@@ -32,7 +32,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
@@ -55,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 @Deprecated
@@ -77,7 +77,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean reduceBuchi(AutomataLibraryServices services, INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
-		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		StateFactory stateFactory = operand.getStateFactory();
 		if (resultCheckStackHeight >= maxResultCheckStackHeight)
@@ -129,7 +129,7 @@ public class ResultChecker<LETTER,STATE> {
 			INestedWordAutomatonOldApi operand1,
 			INestedWordAutomatonOldApi operand2,
 			INestedWordAutomatonOldApi result) {
-		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -147,7 +147,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean buchiComplement(AutomataLibraryServices services, INestedWordAutomatonOldApi operand,
 										  INestedWordAutomatonOldApi result) throws AutomataLibraryException {
-		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		logger.info("Testing correctness of complementBuchi");
@@ -184,7 +184,7 @@ public class ResultChecker<LETTER,STATE> {
 	public static boolean buchiComplementSVW(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
-		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -233,7 +233,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean petriNetJulian(AutomataLibraryServices services, INestedWordAutomatonOldApi op,
 										 PetriNetJulian result) throws AutomataLibraryException {
-		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -255,7 +255,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 
 	public static boolean petriNetLanguageEquivalence(AutomataLibraryServices services, PetriNetJulian net1, PetriNetJulian net2) throws AutomataLibraryException {
-		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -328,7 +328,7 @@ public class ResultChecker<LETTER,STATE> {
     	String workingDirectory = System.getProperty("user.dir");
     	
 		IScopeContext scope = InstanceScope.INSTANCE;
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(LibraryIdentifiers.s_LibraryID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(LibraryIdentifiers.PLUGIN_ID);
 //		boolean writeToFile = prefs.getBoolean(PreferenceInitializer.Name_Write);
 //		if (writeToFile) {
 			String filename = workingDirectory + File.separator+filenamePrefix + getDateTime() + ".ats";

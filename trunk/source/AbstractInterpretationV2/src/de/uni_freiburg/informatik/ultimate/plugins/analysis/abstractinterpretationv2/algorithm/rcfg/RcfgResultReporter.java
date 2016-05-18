@@ -34,7 +34,11 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -43,10 +47,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgPro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
 /**

@@ -38,13 +38,13 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.models.IType;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.translation.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.translation.ITranslator;
-import de.uni_freiburg.informatik.ultimate.translation.IValuation;
-import de.uni_freiburg.informatik.ultimate.translation.ProgramExecutionFormatter;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
 
 /**
  * 

@@ -26,7 +26,7 @@
  */
 package pea_to_boogie.translator;
 
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 
 public class ReqCheck extends Check {
 

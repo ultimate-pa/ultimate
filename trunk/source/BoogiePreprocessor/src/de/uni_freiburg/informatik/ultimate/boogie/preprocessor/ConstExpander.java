@@ -27,8 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -45,16 +50,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.IType;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 
 public class ConstExpander extends BoogieTransformer implements IUnmanagedObserver {
 
@@ -347,6 +346,7 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 		declList.add(constDecl);
 	}
 
+	@Override
 	public void finish() {
 	}
 

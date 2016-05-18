@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.test.TestValuation;
 import de.uni_freiburg.informatik.ultimate.cdt.views.locationtrace.LocationTrace;
 import de.uni_freiburg.informatik.ultimate.cdt.views.locationtrace.TraceNode;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 
 /**
  * @author Stefan Wissert

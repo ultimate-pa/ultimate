@@ -34,8 +34,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -45,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -60,7 +59,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public BuchiIsEmptyXW(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_nwa = nwa;
 		m_Logger.info(startMessage());
 		m_Result = checkEmptiness();

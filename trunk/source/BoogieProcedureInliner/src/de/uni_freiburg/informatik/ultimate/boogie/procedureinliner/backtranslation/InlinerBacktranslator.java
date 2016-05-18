@@ -35,8 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -46,15 +44,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersionTransformer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.translation.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.translation.IToString;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 
 /**
  * Backtranslates an inlined boogie program.

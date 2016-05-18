@@ -17,7 +17,7 @@ import java.util.Arrays;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 parser Parser;
 option java15, compact_red, newpositions;

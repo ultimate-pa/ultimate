@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.core.model;
 
 
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 
 /**
  * 

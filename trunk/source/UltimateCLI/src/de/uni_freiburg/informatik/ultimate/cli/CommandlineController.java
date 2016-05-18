@@ -43,18 +43,17 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 
 /**
  * Implements standard fallback controller for the command-line.
@@ -66,16 +65,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
  */
 public class CommandlineController implements IController<ToolchainListType> {
 
-	static {
-		sPLUGIN_ID = Activator.PLUGIN_ID;
-		sPLUGIN_NAME = Activator.PLUGIN_NAME;
-	}
-
 	private ILogger mLogger;
-	private ToolchainData mToolchain;
-
-	private static final String sPLUGIN_ID;
-	private static final String sPLUGIN_NAME;
+	private IToolchainData<ToolchainListType> mToolchain;
 
 	/**
 	 * parse the file with the specified toolchain
@@ -86,10 +77,12 @@ public class CommandlineController implements IController<ToolchainListType> {
 	 * @throws JAXBException
 	 * @throws SAXException
 	 */
-	private ToolchainData parseToolFile(String toolFile) throws FileNotFoundException, JAXBException, SAXException {
-		if (toolFile == null || toolFile.equals(""))
+	private IToolchainData<ToolchainListType> parseToolFile(String toolFile, ICore<ToolchainListType> core)
+			throws FileNotFoundException, JAXBException, SAXException {
+		if (toolFile == null || toolFile.equals("")) {
 			throw new FileNotFoundException();
-		return new ToolchainData(toolFile);
+		}
+		return core.createToolchainData(toolFile);
 	}
 
 	@Override
@@ -98,7 +91,7 @@ public class CommandlineController implements IController<ToolchainListType> {
 			return -1;
 		}
 
-		mLogger = loggingService.getLogger(sPLUGIN_ID);
+		mLogger = loggingService.getLogger(Activator.PLUGIN_ID);
 		mLogger.info("Initializing CommandlineController...");
 
 		// parse command line parameters and select ultimate mode
@@ -119,7 +112,7 @@ public class CommandlineController implements IController<ToolchainListType> {
 		}
 
 		try {
-			mToolchain = parseToolFile(cmdParser.getToolFile());
+			mToolchain = parseToolFile(cmdParser.getToolFile(), core);
 		} catch (FileNotFoundException e1) {
 			mLogger.fatal("Toolchain file not found. Path was: " + cmdParser.getToolFile());
 			return -1;
@@ -190,16 +183,16 @@ public class CommandlineController implements IController<ToolchainListType> {
 
 	@Override
 	public String getPluginName() {
-		return sPLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return sPLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
-	public ToolchainData selectTools(List<ITool> tools) {
+	public IToolchainData<ToolchainListType> selectTools(List<ITool> tools) {
 		return mToolchain;
 	}
 

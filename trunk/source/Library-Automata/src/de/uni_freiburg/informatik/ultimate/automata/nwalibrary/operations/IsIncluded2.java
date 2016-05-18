@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -36,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that takes three Operands A, B_1 and B_2 and checks if the language
@@ -70,7 +69,7 @@ public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonSimple<LETTER, STATE> b_1,
 			INestedWordAutomatonSimple<LETTER, STATE> b_2) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_A = a;
 		m_B1 = b_1;
 		m_B2 = b_2;

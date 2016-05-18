@@ -37,19 +37,30 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -65,17 +76,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
-import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -238,7 +238,7 @@ public class TraceAbstractionStarter {
 	private void logNumberOfWitnessInvariants(Collection<ProgramPoint> errNodesOfAllProc) {
 		int numberOfCheckedInvariants = 0;
 		for (ProgramPoint err : errNodesOfAllProc) {
-			BoogieASTNode boogieASTNode = ((ProgramPoint) err).getBoogieASTNode();
+			BoogieASTNode boogieASTNode = err.getBoogieASTNode();
 			IAnnotations annot = boogieASTNode.getPayload().getAnnotations().get(Check.class.getName());
 			if (annot != null) {
 				Check check = (Check) annot;
@@ -367,7 +367,7 @@ public class TraceAbstractionStarter {
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs,
 			ToolchainCanceledException toolchainCanceledException) {
 		for (ProgramPoint errorIpp : errorLocs) {
-			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
+			ProgramPoint errorLoc = errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that ";
 			timeOutMessage += ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();

@@ -38,8 +38,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -48,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Utility class for minimizing incomplete DFAs (Deterministic Finite
@@ -185,7 +184,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		init(stateAmount, letterAmount);
 		
 		m_result = minimizeICDFA(m_operand, initialPartition);
-		ILogger logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		ILogger logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		logger.info(exitMessage());
 	}
 

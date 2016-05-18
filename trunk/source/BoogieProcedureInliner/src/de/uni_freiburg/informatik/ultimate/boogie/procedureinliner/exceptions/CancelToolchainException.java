@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.AbstractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * This exception indicates, that the toolchain should be canceled.

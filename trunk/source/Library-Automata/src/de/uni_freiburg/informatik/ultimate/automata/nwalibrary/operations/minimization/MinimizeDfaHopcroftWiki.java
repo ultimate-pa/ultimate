@@ -36,8 +36,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -47,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.parallel.IMinimize;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Class for minimize deterministic finite automaton by the Hopcroft -
@@ -88,7 +87,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> implements IMinimize,
 	// Constructor.
 	public MinimizeDfaHopcroftWiki(AutomataLibraryServices services, INestedWordAutomaton<LETTER, STATE> operand) {
 		this.m_services = services;
-		this.m_Logger = m_services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		this.m_Logger = m_services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.m_operand = operand;
 
 		// Start minimization.

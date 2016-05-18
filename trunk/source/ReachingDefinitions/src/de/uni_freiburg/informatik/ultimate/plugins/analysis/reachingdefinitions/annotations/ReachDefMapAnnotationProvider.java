@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 public class ReachDefMapAnnotationProvider<T extends ReachDefBaseAnnotation> implements IAnnotationProvider<T> {
 

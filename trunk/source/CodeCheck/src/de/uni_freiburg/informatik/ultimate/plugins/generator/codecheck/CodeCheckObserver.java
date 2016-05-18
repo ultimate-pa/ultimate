@@ -40,17 +40,29 @@ import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -61,9 +73,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
@@ -91,7 +100,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -102,17 +110,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
@@ -347,6 +344,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
+	@Override
 	public boolean process(IElement root) {
 		initialize(root);
 
@@ -808,7 +806,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorIpp : errorLocs) {
-			ProgramPoint errorLoc = (ProgramPoint) errorIpp;
+			ProgramPoint errorLoc = errorIpp;
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "
 					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();

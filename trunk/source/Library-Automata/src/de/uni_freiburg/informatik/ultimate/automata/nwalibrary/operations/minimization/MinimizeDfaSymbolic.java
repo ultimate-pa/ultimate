@@ -33,8 +33,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -47,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -104,7 +103,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 */
 	public MinimizeDfaSymbolic(AutomataLibraryServices services, INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.m_operand = operand;
 
 		// Start minimization.

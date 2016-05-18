@@ -39,9 +39,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -527,7 +527,7 @@ public class SmtManager {
 			}
 
 			m_NontrivialCoverQueries++;
-			result = this.checkSatisfiable(negImpl);
+			result = checkSatisfiable(negImpl);
 			m_IndexedConstants = null;
 			m_Script.pop(1);
 		}
@@ -790,7 +790,7 @@ public class SmtManager {
 		f = Util.and(m_Script, fTrans, f);
 		f = Util.and(m_Script, ps1renamed, f);
 
-		LBool result = this.checkSatisfiable(f);
+		LBool result = checkSatisfiable(f);
 		m_IndexedConstants = null;
 		m_Script.pop(1);
 		if (expectUnsat) {
@@ -870,7 +870,7 @@ public class SmtManager {
 		f = Util.and(m_Script, fCall, f);
 		f = Util.and(m_Script, pskrenamed, f);
 
-		LBool result = this.checkSatisfiable(f);
+		LBool result = checkSatisfiable(f);
 		m_Script.pop(1);
 		m_IndexedConstants = null;
 		if (expectUnsat) {
@@ -1184,7 +1184,7 @@ public class SmtManager {
 		Term renamedFormula = (new SafeSubstitution(m_Script, getVariableManager(), substitutionMapping)).transform(ps.getFormula());
 		renamedFormula = SmtUtils.simplify(m_Script, renamedFormula, mServices);
 		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(renamedFormula, m_Boogie2Smt);
-		IPredicate result = this.getPredicateFactory().newPredicate(tvp);
+		IPredicate result = getPredicateFactory().newPredicate(tvp);
 		return result;
 	}
 
@@ -1302,7 +1302,7 @@ public class SmtManager {
 			return;
 		}
 		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
-		Validity testRes = sdhtch.sdecInteral(ps1, (IInternalAction) ta, ps2);
+		Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
 			// if (testRes != result) {

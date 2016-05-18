@@ -32,10 +32,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.IRSDependenciesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.UseDefSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerUnroller;

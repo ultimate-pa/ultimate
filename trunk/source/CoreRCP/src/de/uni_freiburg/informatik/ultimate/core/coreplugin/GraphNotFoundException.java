@@ -33,7 +33,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 
 /**
  * GraphNotFoundException

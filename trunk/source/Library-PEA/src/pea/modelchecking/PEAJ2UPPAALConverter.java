@@ -30,11 +30,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+
 import org.apache.xerces.dom.DocumentImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CDD;
 import pea.Phase;
 import pea.PhaseEventAutomata;

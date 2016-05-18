@@ -33,8 +33,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -47,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncl
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class PrefixProduct<S,C> implements IOperation<S,C> {
 	
@@ -122,7 +121,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	public PrefixProduct(AutomataLibraryServices services,
 			PetriNetJulian<S, C> net, NestedWordAutomaton<S, C> nwa) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.m_Net = net;
 		this.m_Nwa = nwa;
 		if (nwa.getInitialStates().size() != 1) {

@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
-import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.KeywordBasedExpectedResultFinder;

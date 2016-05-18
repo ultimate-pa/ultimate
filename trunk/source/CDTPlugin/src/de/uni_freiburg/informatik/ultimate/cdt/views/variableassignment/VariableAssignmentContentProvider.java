@@ -39,8 +39,8 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.models.IType;
-import de.uni_freiburg.informatik.ultimate.translation.IValuation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
 
 /**
  * The content provider for the VariableAssignment

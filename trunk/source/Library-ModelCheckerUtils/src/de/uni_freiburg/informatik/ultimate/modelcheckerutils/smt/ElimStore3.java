@@ -36,9 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -54,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.EqualityInformation;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -82,7 +80,7 @@ public class ElimStore3 {
 		m_Script = script;
 		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.sPluginID);
+		m_Logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 	}
 
 	private MultiDimensionalStore getArrayStore(Term array, Term term) {

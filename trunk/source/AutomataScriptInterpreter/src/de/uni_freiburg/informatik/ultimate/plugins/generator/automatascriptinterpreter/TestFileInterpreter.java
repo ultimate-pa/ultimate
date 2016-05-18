@@ -51,22 +51,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.core.runtime.FileLocator;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpressionAST;
@@ -90,12 +96,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableDeclarationAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatementAST;
-import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult;
-import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult.OverallResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
 
 /**
  * This enum represents the current flow of the program. It could have the
@@ -1139,7 +1139,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final Format format;
 			String formatAsString = (String) arguments.get(2);
 			try {
-				format = Format.valueOf((String) formatAsString);
+				format = Format.valueOf(formatAsString);
 			} catch (Exception e) {
 				throw new InterpreterException(oe.getLocation(), 
 						"unknown format " + (String) arguments.get(1));
@@ -1762,17 +1762,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 
 		public InterpreterException(final ILocation location, final String longDescription) {
 			super();
-			this.mLocation = location;
-			this.mLongDescription = longDescription;
-			this.mShortDescription = null;
+			mLocation = location;
+			mLongDescription = longDescription;
+			mShortDescription = null;
 		}
 
 		public InterpreterException(final ILocation location, final String longDescription,
 				final String shortDescription) {
 			super();
-			this.mLocation = location;
-			this.mLongDescription = longDescription;
-			this.mShortDescription = shortDescription;
+			mLocation = location;
+			mLongDescription = longDescription;
+			mShortDescription = shortDescription;
 		}
 
 		public ILocation getLocation() {

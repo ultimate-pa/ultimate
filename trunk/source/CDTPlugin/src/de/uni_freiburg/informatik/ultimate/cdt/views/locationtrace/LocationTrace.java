@@ -67,9 +67,9 @@ import org.osgi.framework.Bundle;
 import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 /**
  * This is the LocationStack, where we try to list up all Locations which are in

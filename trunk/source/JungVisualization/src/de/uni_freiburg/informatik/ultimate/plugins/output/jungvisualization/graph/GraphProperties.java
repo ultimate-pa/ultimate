@@ -46,9 +46,9 @@ import org.apache.commons.collections15.functors.ConstantTransformer;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.graphics.RGB;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.models.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues.EdgeLabels;
@@ -121,6 +121,7 @@ public class GraphProperties {
 
 			if (vertexShapePreference.equalsIgnoreCase("RoundRectangle")) {
 				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
+					@Override
 					public Shape transform(VisualizationNode n) {
 						Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						int vertexShapeLength = (int) bounds.getWidth() + 2;
@@ -131,6 +132,7 @@ public class GraphProperties {
 				};
 			} else if (vertexShapePreference.equalsIgnoreCase("Rectangle")) {
 				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
+					@Override
 					public Shape transform(VisualizationNode n) {
 						Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						int vertexShapeLength = (int) bounds.getWidth() + 2;
@@ -140,6 +142,7 @@ public class GraphProperties {
 				};
 			} else {
 				vertexShapeTransformer = new EllipseVertexShapeTransformer<VisualizationNode>() {
+					@Override
 					public Shape transform(VisualizationNode n) {
 						Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						int vertexShapeLength = (int) bounds.getWidth() + 2;
@@ -207,6 +210,7 @@ public class GraphProperties {
 			break;
 		case Text:
 			vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<VisualizationEdge>() {
+				@Override
 				public String transform(VisualizationEdge edge) {
 					return edge.toString();
 				}
@@ -214,6 +218,7 @@ public class GraphProperties {
 			break;
 		case Hashcode:
 			vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<VisualizationEdge>() {
+				@Override
 				public String transform(VisualizationEdge edge) {
 					return Integer.toString(edge.hashCode());
 				}

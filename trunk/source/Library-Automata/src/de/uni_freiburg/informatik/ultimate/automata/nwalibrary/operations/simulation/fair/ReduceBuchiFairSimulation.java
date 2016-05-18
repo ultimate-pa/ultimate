@@ -31,8 +31,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -48,7 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRan
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.util.Vertex;
-import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that reduces a given buechi automaton by using
@@ -80,7 +79,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		// instances
 
 		ToolchainStorage services = new ToolchainStorage();
-		StateFactory<String> snf = (StateFactory<String>) new StringFactory();
+		StateFactory<String> snf = new StringFactory();
 
 		// Buechi automaton
 		Set<String> alphabet = new HashSet<>();
@@ -537,10 +536,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 					throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
 				new FairSimulation<LETTER, STATE>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), useSCCs, stateFactory,
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
 						new FairGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
 	}
 
@@ -573,7 +572,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 					throws OperationCanceledException {
 		m_Services = services;
 		m_StateFactory = stateFactory;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
 		m_UseSCCs = useSCCs;
 		m_Logger.info(startMessage());

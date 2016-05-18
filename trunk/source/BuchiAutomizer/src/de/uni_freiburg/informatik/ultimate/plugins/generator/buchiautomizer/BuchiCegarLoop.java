@@ -63,10 +63,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
@@ -75,7 +77,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.TraceCheckResult;
@@ -111,7 +112,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class BuchiCegarLoop {
@@ -242,10 +242,10 @@ public class BuchiCegarLoop {
 		mStorage = storage;
 		mLogger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_MDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(m_Services.getBacktranslationService());
-		this.m_Name = "BuchiCegarLoop";
-		this.m_RootNode = rootNode;
-		this.m_SmtManager = smtManager;
-		this.m_BinaryStatePredicateManager = new BinaryStatePredicateManager(m_SmtManager, m_Services);
+		m_Name = "BuchiCegarLoop";
+		m_RootNode = rootNode;
+		m_SmtManager = smtManager;
+		m_BinaryStatePredicateManager = new BinaryStatePredicateManager(m_SmtManager, m_Services);
 		m_BenchmarkGenerator = new BuchiCegarLoopBenchmarkGenerator();
 		m_BenchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		// this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
@@ -253,7 +253,7 @@ public class BuchiCegarLoop {
 		// m_RootNode.getRootAnnot().getModGlobVarManager(),
 		// m_RootNode.getRootAnnot().getBoogie2SMT());
 
-		this.m_Pref = taPrefs;
+		m_Pref = taPrefs;
 		m_DefaultStateFactory = new PredicateFactoryForInterpolantAutomata(m_SmtManager, m_Pref);
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(m_SmtManager);
 
@@ -576,7 +576,7 @@ public class BuchiCegarLoop {
 		}
 		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		try {
-			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa<>(
+			m_Abstraction = (new BuchiClosureNwa<>(
 					new AutomataLibraryServices(m_Services), m_Abstraction));
 			// m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, m_Abstraction)).getResult();
 		} finally {

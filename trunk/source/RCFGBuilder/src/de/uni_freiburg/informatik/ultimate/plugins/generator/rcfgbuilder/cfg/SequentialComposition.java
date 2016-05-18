@@ -32,16 +32,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -87,7 +86,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe,
 			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
-		this.m_CodeBlocks = codeBlocks;
+		m_CodeBlocks = codeBlocks;
 
 		StringBuilder prettyPrinted = new StringBuilder();
 

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 
 /**
  * @author Markus Lindenmann

@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 /**
  * @author musab@informatik.uni-freiburg.de

@@ -38,13 +38,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.parser.util.ASTPrinter;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieAstCopier;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
@@ -56,20 +53,22 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 

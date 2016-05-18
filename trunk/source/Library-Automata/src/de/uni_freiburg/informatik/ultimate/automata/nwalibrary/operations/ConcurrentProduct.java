@@ -32,13 +32,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -177,7 +176,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa1,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa2, boolean concurrentPrefixProduct) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_ConcurrentPrefixProduct = concurrentPrefixProduct;
 		M_Nwa1 = nwa1;
 		M_Nwa2 = nwa2;

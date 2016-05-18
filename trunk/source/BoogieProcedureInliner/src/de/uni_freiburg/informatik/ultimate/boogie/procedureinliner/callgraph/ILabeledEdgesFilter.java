@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
-import de.uni_freiburg.informatik.ultimate.models.structure.ILabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILabeledEdgesMultigraph;
 
 /**
  * Filter for labeled edges. This can be used inside graph algorithms to ignore unwanted edges without having to build a

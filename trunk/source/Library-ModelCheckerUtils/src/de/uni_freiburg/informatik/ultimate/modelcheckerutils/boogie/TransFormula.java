@@ -38,12 +38,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -642,8 +641,8 @@ public class TransFormula implements Serializable {
 
 	private static void reportTimeoutResult(IUltimateServiceProvider services) {
 		String timeOutMessage = "Timeout during computation of TransFormula";
-		TimeoutResult timeOutRes = new TimeoutResult(ModelCheckerUtils.sPluginID, timeOutMessage);
-		services.getResultService().reportResult(ModelCheckerUtils.sPluginID, timeOutRes);
+		TimeoutResult timeOutRes = new TimeoutResult(ModelCheckerUtils.PLUGIN_ID, timeOutMessage);
+		services.getResultService().reportResult(ModelCheckerUtils.PLUGIN_ID, timeOutRes);
 	}
 
 	@Deprecated

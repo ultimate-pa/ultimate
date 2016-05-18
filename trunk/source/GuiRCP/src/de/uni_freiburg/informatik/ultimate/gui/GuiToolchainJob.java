@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.gui;
 import java.io.File;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class GuiToolchainJob extends DefaultToolchainJob {
 
@@ -49,7 +49,7 @@ public class GuiToolchainJob extends DefaultToolchainJob {
 	}
 
 	public GuiToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller,
-			ILogger logger, ToolchainData data, File[] inputFiles) {
+			ILogger logger, IToolchainData<ToolchainListType> data, File[] inputFiles) {
 		super(name, core, controller, logger, data, inputFiles);
 	}
 

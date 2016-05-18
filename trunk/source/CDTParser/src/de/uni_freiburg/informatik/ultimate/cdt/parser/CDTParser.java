@@ -57,15 +57,15 @@ import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFact
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
 
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 /**
  * @author Markus Lindenmann

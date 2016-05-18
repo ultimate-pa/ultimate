@@ -32,8 +32,6 @@ import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -43,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class TypeManager {
 

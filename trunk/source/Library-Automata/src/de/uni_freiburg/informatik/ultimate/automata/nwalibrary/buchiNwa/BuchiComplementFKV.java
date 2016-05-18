@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -43,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.MultiOpt
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 	
 
@@ -107,7 +106,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			String optimization,
 			int userDefinedMaxRank) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
@@ -129,7 +128,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	public BuchiComplementFKV(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> input, IStateDeterminizer<LETTER, STATE> stateDeterminizier) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.m_StateDeterminizer = stateDeterminizier;
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;

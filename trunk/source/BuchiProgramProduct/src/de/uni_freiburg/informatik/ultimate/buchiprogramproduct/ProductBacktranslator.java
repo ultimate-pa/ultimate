@@ -32,14 +32,14 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.translation.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
 
 /**
  * 

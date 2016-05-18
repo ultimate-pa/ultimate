@@ -31,8 +31,8 @@ package pea_to_boogie.translator;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * @author Jochen Hoenicke

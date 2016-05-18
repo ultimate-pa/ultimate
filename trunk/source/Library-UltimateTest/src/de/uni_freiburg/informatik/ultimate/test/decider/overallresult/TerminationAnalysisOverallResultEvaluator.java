@@ -30,16 +30,16 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
-import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult.TERMINATION;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.ITimeoutResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.TERMINATION;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 
 /**

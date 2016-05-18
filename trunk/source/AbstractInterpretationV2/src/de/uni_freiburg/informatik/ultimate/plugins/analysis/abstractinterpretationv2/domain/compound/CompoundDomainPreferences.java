@@ -30,10 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 
 /**
  * Preferences for the compound domain.

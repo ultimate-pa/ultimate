@@ -40,15 +40,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.eclipse.cdt.core.dom.ast.IASTComment;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
 
 /**
  * @author Markus Lindenmann

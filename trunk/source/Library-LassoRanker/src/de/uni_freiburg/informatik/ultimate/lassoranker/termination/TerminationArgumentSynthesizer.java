@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Lasso;

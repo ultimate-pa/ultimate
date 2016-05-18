@@ -35,17 +35,19 @@ import org.eclipse.core.runtime.Status;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.RcpProgressMonitorWrapper;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * This class implements an Eclipse Job processing a Ultimate toolchain using the methods publicly available from ICore<ToolchainListType>.
+ * This class implements an Eclipse Job processing a Ultimate toolchain using the methods publicly available from ICore
+ * <ToolchainListType>.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
@@ -67,7 +69,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param input
 	 *            The files on which the toolchain should run.
 	 */
-	public DefaultToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller, ILogger logger, File[] input) {
+	public DefaultToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller,
+			ILogger logger, File[] input) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
@@ -84,7 +87,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param logger
 	 * @param toolchain
 	 */
-	public DefaultToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller, ILogger logger, IToolchain<ToolchainListType> toolchain) {
+	public DefaultToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller,
+			ILogger logger, IToolchain<ToolchainListType> toolchain) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
@@ -102,8 +106,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param data
 	 * @param input
 	 */
-	public DefaultToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller, ILogger logger, ToolchainData data,
-			File[] input) {
+	public DefaultToolchainJob(String name, ICore<ToolchainListType> core, IController<ToolchainListType> controller,
+			ILogger logger, IToolchainData<ToolchainListType> data, File[] input) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
@@ -231,11 +235,10 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 
 		} catch (final Throwable e) {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
-			mLogger.fatal(e);
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = new Status(Status.CANCEL, Activator.PLUGIN_ID, Status.ERROR, "Toolchain threw an exception",
 					null);
-			String idOfCore = Activator.PLUGIN_ID;
+			final String idOfCore = Activator.PLUGIN_ID;
 			if (mServices != null) {
 				mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 			}

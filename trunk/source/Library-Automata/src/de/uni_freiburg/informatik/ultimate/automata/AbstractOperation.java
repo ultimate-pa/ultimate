@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public abstract class AbstractOperation<LETTER,STATE> implements IOperation<LETTER,STATE> {
 

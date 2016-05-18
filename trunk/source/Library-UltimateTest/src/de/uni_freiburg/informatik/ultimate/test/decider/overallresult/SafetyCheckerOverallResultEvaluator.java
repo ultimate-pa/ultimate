@@ -32,19 +32,19 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
-import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.result.model.ITimeoutResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
 
 /**

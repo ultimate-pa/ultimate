@@ -36,75 +36,35 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 
-
 public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferencePage
 		implements IWorkbenchPreferencePage {
 
-	
 	private ScopedPreferenceStore mPreferenceStore;
 
 	public LoggingExternalToolsPreferencePage() {
-		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-				CorePreferenceInitializer.PLUGINID);
+		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, CorePreferenceInitializer.PLUGINID);
 	}
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.AbstractDetailsPreferencePage
-	 * #getCorrectPreferenceStore()
-	 */
+
 	@Override
 	protected IPreferenceStore getCorrectPreferenceStore() {
 		return mPreferenceStore;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.AbstractDetailsPreferencePage
-	 * #getDefaults()
-	 */
 	@Override
 	protected String[] getDefaults() {
-		return convert(mPreferenceStore
-				.getDefaultString(CorePreferenceInitializer.PREFID_TOOLDETAILS));
+		return convert(mPreferenceStore.getDefaultString(CorePreferenceInitializer.PREFID_TOOLDETAILS));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.AbstractDetailsPreferencePage
-	 * #getInvalidEntryMessage()
-	 */
 	@Override
 	protected String getInvalidEntryMessage() {
 		return CorePreferenceInitializer.INVALID_TOOL_ENTRY;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.AbstractDetailsPreferencePage
-	 * #getPreferenceAsStringArray()
-	 */
 	@Override
 	protected String[] getPreferenceAsStringArray() {
-		return convert(mPreferenceStore
-				.getString(CorePreferenceInitializer.PREFID_TOOLDETAILS));
+		return convert(mPreferenceStore.getString(CorePreferenceInitializer.PREFID_TOOLDETAILS));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.AbstractDetailsPreferencePage
-	 * #setThePreference(java.lang.String[])
-	 */
 	@Override
 	protected void setThePreference(String[] items) {
 		StringBuffer buffer = new StringBuffer();
@@ -112,13 +72,9 @@ public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferenc
 			buffer.append(items[i]);
 			buffer.append(CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		}
-		mPreferenceStore.setValue(CorePreferenceInitializer.PREFID_TOOLDETAILS, buffer
-				.toString());
+		mPreferenceStore.setValue(CorePreferenceInitializer.PREFID_TOOLDETAILS, buffer.toString());
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.AbstractDetailsPreferencePage#getInfoContent(org.eclipse.swt.widgets.List)
-	 */
 	@Override
 	protected String getInfoContent(List detailList) {
 		return CorePreferenceInitializer.EMPTY_STRING;
@@ -128,10 +84,9 @@ public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferenc
 	protected String[] getComboSupply() {
 		return new String[0];
 	}
-	
+
 	/**
-	 * Converts ICorePreferenceStore.VALUE_DELIMITER_LOGGING_PREF delimited
-	 * String to a String array.
+	 * Converts ICorePreferenceStore.VALUE_DELIMITER_LOGGING_PREF delimited String to a String array.
 	 */
 	private static String[] convert(String preferenceValue) {
 		StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
@@ -144,6 +99,5 @@ public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferenc
 
 		return elements;
 	}
-
 
 }

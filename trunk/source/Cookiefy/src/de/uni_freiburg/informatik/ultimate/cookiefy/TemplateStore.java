@@ -33,8 +33,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -67,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathAlphaNode;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ContextPath.ContextPathNode;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Stores the templates for the Boogiepl code inserted by cookiefy.

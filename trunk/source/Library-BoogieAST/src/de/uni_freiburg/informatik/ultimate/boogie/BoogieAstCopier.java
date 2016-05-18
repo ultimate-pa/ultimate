@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  * Construct deep copy of an Boogie AST.

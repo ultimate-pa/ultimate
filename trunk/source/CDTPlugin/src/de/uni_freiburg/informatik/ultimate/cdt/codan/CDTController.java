@@ -37,21 +37,21 @@ import org.eclipse.equinox.app.IApplication;
 import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ExternalParserToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.models.ModelType.Type;
-import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
 
 /**
  * {@link CDTController} is one of the distinct controllers of Ultimate. It
@@ -66,13 +66,13 @@ public class CDTController implements IController<ToolchainListType> {
 	private ILogger mLogger;
 	private UltimateCChecker mChecker;
 
-	private ICore<ToolchainListType> mUltimate;
+	private ICore<ToolchainListType> mCore;
 	private UltimateThread mUltimateThread;
 	private ManualReleaseToolchainJob mCurrentJob;
 
 	private final Semaphore mUltimateExit;
 	private final Semaphore mUltimateReady;
-	private ToolchainData mToolchainData;
+	private IToolchainData<ToolchainListType> mToolchainData;
 
 	public CDTController(UltimateCChecker currentChecker) throws Exception {
 		mChecker = currentChecker;
@@ -87,7 +87,7 @@ public class CDTController implements IController<ToolchainListType> {
 		// reference
 		mLogger = loggingService.getControllerLogger();
 		new UltimatePreferencePageFactory(core).createPreferencePages();
-		mUltimate = core;
+		mCore = core;
 		// now we wait for the exit command
 		mUltimateReady.release();
 		mUltimateExit.acquireUninterruptibly();
@@ -97,11 +97,11 @@ public class CDTController implements IController<ToolchainListType> {
 	public void runToolchain(String toolchainPath, IASTTranslationUnit ast) throws Exception {
 		initUltimateThread();
 		mLogger.info("Using toolchain " + toolchainPath);
-		mToolchainData = new ToolchainData(toolchainPath);
+		mToolchainData = mCore.createToolchainData(toolchainPath);
 		mChecker.setServices(mToolchainData.getServices());
 		mChecker.setStorage(mToolchainData.getStorage());
 
-		mCurrentJob = new ManualReleaseToolchainJob("Run Ultimate...", mUltimate, this, new WrapperNode(null, ast),
+		mCurrentJob = new ManualReleaseToolchainJob("Run Ultimate...", mCore, this, new WrapperNode(null, ast),
 				new ModelType(Activator.PLUGIN_ID, Type.AST, new ArrayList<String>()), mLogger);
 		mCurrentJob.setUser(true);
 		mCurrentJob.schedule();
@@ -132,7 +132,7 @@ public class CDTController implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public ToolchainData selectTools(List<ITool> tools) {
+	public IToolchainData<ToolchainListType> selectTools(List<ITool> tools) {
 		return mToolchainData;
 	}
 

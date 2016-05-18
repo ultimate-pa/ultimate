@@ -40,12 +40,14 @@ public class NewUltimateEmit extends Emit {
 		mWriter.println("    private static final long serialVersionUID = 1L;");
 	}
 
+	@Override
 	public String getConstructorParam(Node node, boolean optional) {
 		if (node == null)
 			return "loc";
 		return super.getConstructorParam(node, optional);
 	}
 
+	@Override
 	protected void fillConstructorParamComment(Node node, StringBuffer param, StringBuffer comment, boolean optional) {
 		if (node.getParent() == null) {
 			param.append("ILocation loc");
@@ -54,6 +56,7 @@ public class NewUltimateEmit extends Emit {
 		super.fillConstructorParamComment(node, param, comment, optional);
 	}
 
+	@Override
 	public void emitConstructors(Node node) throws IOException {
 		int numNotWriteableParams = 1;
 		int numNotOptionalParams = 1;
@@ -89,13 +92,14 @@ public class NewUltimateEmit extends Emit {
 	public void emitPreamble(Node node) throws IOException {
 		super.emitPreamble(node);
 		mWriter.println("import java.util.List;");
-		mWriter.println("import de.uni_freiburg.informatik.ultimate.models.ILocation;");
+		mWriter.println("import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;");
 		mWriter.println("import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;");
 		if (needsArraysPackage(node)) {
 			mWriter.println("import java.util.Arrays;");
 		}
 	}
 
+	@Override
 	public void emitNodeHook(Node node) throws IOException {
 		mWriter.println();
 		mWriter.println("    public List<BoogieASTNode> getOutgoingNodes() {");

@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.performance;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -38,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that compares the different types of nwa simulation methods for nwa
@@ -87,7 +86,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> implements IOpera
 	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
 		m_Result = operand;
 		m_Logger.info(startMessage());

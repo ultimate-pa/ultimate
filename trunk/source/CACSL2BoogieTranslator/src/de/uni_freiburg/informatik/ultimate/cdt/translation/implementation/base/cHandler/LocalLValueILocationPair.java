@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class LocalLValueILocationPair {
 

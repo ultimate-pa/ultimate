@@ -34,8 +34,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.ConfigurableHeuristic;
@@ -44,10 +42,11 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.StatisticBasedHe
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
@@ -224,7 +223,7 @@ public class MinModelConverter {
 		rootAnnot.getLoopLocations().clear();
 		for (ProgramPoint oldVal : keySet) {
 			if (progPointMap.containsKey(oldVal)) {
-				ProgramPoint newVal = (ProgramPoint) progPointMap.get(oldVal);
+				ProgramPoint newVal = progPointMap.get(oldVal);
 				if (newVal.getBoogieASTNode() != null) {
 					// Since hashCode(oldVal) == hashCode(newVal), this line
 					// overwrites the old entry, so that we do not remove it in

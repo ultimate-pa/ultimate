@@ -27,11 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableLabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.models.structure.ModifiableLabeledEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
 public class DataflowDAG<T> extends ModifiableLabeledEdgesMultigraph<DataflowDAG<T>, ScopedBoogieVar> {

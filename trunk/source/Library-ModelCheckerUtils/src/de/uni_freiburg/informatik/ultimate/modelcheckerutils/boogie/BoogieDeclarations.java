@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -49,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Objects that stores all global declarations and procedure contracts and makes

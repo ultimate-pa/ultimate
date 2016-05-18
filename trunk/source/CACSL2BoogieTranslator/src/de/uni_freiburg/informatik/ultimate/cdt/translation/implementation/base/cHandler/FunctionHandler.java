@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -74,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
@@ -106,11 +106,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -174,18 +174,18 @@ public class FunctionHandler {
 	 * @param typeSizeComputer 
 	 */
 	public FunctionHandler(AExpressionTranslation expressionTranslation, TypeSizeAndOffsetComputer typeSizeComputer) {
-		this.m_ExpressionTranslation = expressionTranslation;
-		this.m_TypeSizeComputer = typeSizeComputer;
-		this.callGraph = new LinkedHashMap<String, LinkedHashSet<String>>();
-		this.currentProcedureIsVoid = false;
-		this.modifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
-		this.methodsCalledBeforeDeclared = new LinkedHashSet<String>();
-		this.procedures = new LinkedHashMap<String, Procedure>();
-		this.procedureToCFunctionType = new LinkedHashMap<>();
-		this.modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
+		m_ExpressionTranslation = expressionTranslation;
+		m_TypeSizeComputer = typeSizeComputer;
+		callGraph = new LinkedHashMap<String, LinkedHashSet<String>>();
+		currentProcedureIsVoid = false;
+		modifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
+		methodsCalledBeforeDeclared = new LinkedHashSet<String>();
+		procedures = new LinkedHashMap<String, Procedure>();
+		procedureToCFunctionType = new LinkedHashMap<>();
+		modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
 		m_CheckMemoryLeakAtEndOfMain = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
 				.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
-		this.functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
+		functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}
 
 	
@@ -425,7 +425,7 @@ public class FunctionHandler {
 		ArrayList<Overapprox> overApp = new ArrayList<>();
 		// The ReturnValue could be empty!
 		ILocation loc = LocationFactory.createCLocation(node);
-		VarList[] outParams = this.currentProcedure.getOutParams();
+		VarList[] outParams = currentProcedure.getOutParams();
 		ExpressionResult rExp = new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		if (methodsCalledBeforeDeclared.contains(currentProcedure.getIdentifier()) && currentProcedureIsVoid) {
 			// void method that was assumed to be returning int! -> return int
@@ -439,7 +439,7 @@ public class FunctionHandler {
 			exprResult.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
 
 			// do some implicit casts
-			CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier())
+			CType functionResultType = procedureToCFunctionType.get(currentProcedure.getIdentifier())
 					.getResultType();
 			if (!exprResult.lrVal.getCType().equals(functionResultType)) {
 				if (functionResultType instanceof CPointer && exprResult.lrVal.getCType() instanceof CPrimitive
@@ -873,10 +873,10 @@ public class FunctionHandler {
 			result.stmt.add(memoryHandler.constructUltimateMeminitCall(loc, nmemb.lrVal.getValue(), 
 					size.lrVal.getValue(), product, new IdentifierExpression(loc, tmpId)));
 			
-			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
-				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
-			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.Ultimate_MemInit.getName());
-			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.Ultimate_Alloc.getName());
+			if (callGraph.get(currentProcedure.getIdentifier()) == null)
+				callGraph.put(currentProcedure.getIdentifier(), new LinkedHashSet<String>());
+			callGraph.get(currentProcedure.getIdentifier()).add(MemoryModelDeclarations.Ultimate_MemInit.getName());
+			callGraph.get(currentProcedure.getIdentifier()).add(MemoryModelDeclarations.Ultimate_Alloc.getName());
 
 			return result;
 		} else if (methodName.equals("memset")) {
@@ -908,9 +908,9 @@ public class FunctionHandler {
 			result.stmt.add(memoryHandler.constructUltimateMemsetCall(loc, arg_s.lrVal.getValue(), 
 					arg_c.lrVal.getValue(), arg_n.lrVal.getValue(), tId));
 			
-			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
-				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
-			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.C_Memset.getName());
+			if (callGraph.get(currentProcedure.getIdentifier()) == null)
+				callGraph.put(currentProcedure.getIdentifier(), new LinkedHashSet<String>());
+			callGraph.get(currentProcedure.getIdentifier()).add(MemoryModelDeclarations.C_Memset.getName());
 			
 			return result;
 			
@@ -1370,7 +1370,7 @@ public class FunctionHandler {
 		// collect all functions that are addressoffed in the program and that
 		// match the signature
 		ArrayList<String> fittingFunctions = new ArrayList<>();
-		for (Entry<String, Integer> en : ((Dispatcher) main).getFunctionToIndex().entrySet()) {
+		for (Entry<String, Integer> en : main.getFunctionToIndex().entrySet()) {
 			CFunction ptdToFuncType = procedureToCFunctionType.get(en.getKey());
 //			if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
 			if (new ProcedureSignature(main, ptdToFuncType).equals(funcSignature)) {
@@ -1555,7 +1555,7 @@ public class FunctionHandler {
 	 * @return modified globals.
 	 */
 	public LinkedHashMap<String, LinkedHashSet<String>> getModifiedGlobals() {
-		return this.modifiedGlobals;
+		return modifiedGlobals;
 	}
 
 	/**
@@ -1564,7 +1564,7 @@ public class FunctionHandler {
 	 * @return procedures.
 	 */
 	public LinkedHashMap<String, Procedure> getProcedures() {
-		return this.procedures;
+		return procedures;
 	}
 
 	/**
@@ -1576,11 +1576,11 @@ public class FunctionHandler {
 		if (currentProcedure == null)
 			return null;
 		else
-			return this.currentProcedure.getIdentifier();
+			return currentProcedure.getIdentifier();
 	}
 
 	public boolean noCurrentProcedure() {
-		return this.currentProcedure == null;
+		return currentProcedure == null;
 	}
 
 	/**
@@ -1589,11 +1589,11 @@ public class FunctionHandler {
 	 * @return the call graph.
 	 */
 	public LinkedHashMap<String, LinkedHashSet<String>> getCallGraph() {
-		return this.callGraph;
+		return callGraph;
 	}
 	
 	public CFunction getCFunctionType(String function) {
-		return this.procedureToCFunctionType.get(function);
+		return procedureToCFunctionType.get(function);
 	}
 
 }

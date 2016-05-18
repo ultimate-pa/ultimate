@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 
 /**
  * Observer that stores the root node of a model if this node has a given type.

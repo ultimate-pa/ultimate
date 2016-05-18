@@ -34,7 +34,6 @@ import java.util.HashSet;
 
 import junit.framework.TestCase;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.PrintEdgeVisitor;
@@ -43,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnno
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.ExecuteUnitTestObserver;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;

@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
 
-import de.uni_freiburg.informatik.ultimate.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 
 public class RootNodeAnnotation extends AbstractAnnotations {
 

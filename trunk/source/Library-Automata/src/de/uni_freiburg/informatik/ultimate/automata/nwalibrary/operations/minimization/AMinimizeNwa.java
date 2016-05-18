@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -39,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * This is the superclass of all minimization classes.
@@ -86,7 +85,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		m_Services = services;
-		s_logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		s_logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_name = name;
 		m_operand = operand;
 		m_StateFactory = stateFactory;

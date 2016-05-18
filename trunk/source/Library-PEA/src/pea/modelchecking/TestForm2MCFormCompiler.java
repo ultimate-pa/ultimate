@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
@@ -42,6 +41,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.PhaseEventAutomata;
 
 /**

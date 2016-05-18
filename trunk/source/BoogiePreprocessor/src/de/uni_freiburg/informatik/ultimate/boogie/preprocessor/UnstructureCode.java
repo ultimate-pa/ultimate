@@ -35,7 +35,6 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -64,12 +63,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.models.annotation.ConditionAnnotation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.LoopEntryAnnotation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.LoopEntryAnnotation.LoopEntryType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  * Convert structured Boogie-Code (code containing while-loops, if-then-else constructs, break statements) into
@@ -109,7 +109,7 @@ public class UnstructureCode extends BaseObserver {
 	public BreakInfo findLabel(String label) {
 		ListIterator<BreakInfo> it = mBreakStack.listIterator(mBreakStack.size());
 		while (it.hasPrevious()) {
-			BreakInfo bi = (BreakInfo) it.previous();
+			BreakInfo bi = it.previous();
 			if (bi.breakLabels.contains(label))
 				return bi;
 		}
@@ -120,6 +120,7 @@ public class UnstructureCode extends BaseObserver {
 	 * The process function. Called by the tool-chain and gets a node of the graph as parameter. This function descends
 	 * to the unit node and then searches for all procedures and runs unstructureBody on it.
 	 */
+	@Override
 	public boolean process(IElement root) {
 		if (root instanceof Unit) {
 			Unit unit = (Unit) root;
@@ -350,7 +351,7 @@ public class UnstructureCode extends BaseObserver {
 				while (lhs[i] instanceof ArrayLHS) {
 					LeftHandSide array = ((ArrayLHS) lhs[i]).getArray();
 					Expression[] indices = ((ArrayLHS) lhs[i]).getIndices();
-					Expression arrayExpr = (Expression) getLHSExpression(array);
+					Expression arrayExpr = getLHSExpression(array);
 					rhs[i] = new ArrayStoreExpression(lhs[i].getLocation(), array.getType(), arrayExpr, indices,
 							rhs[i]);
 					lhs[i] = array;

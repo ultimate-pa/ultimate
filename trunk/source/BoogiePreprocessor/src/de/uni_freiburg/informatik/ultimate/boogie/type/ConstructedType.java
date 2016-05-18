@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * A Constructed type is a 

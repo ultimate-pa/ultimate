@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 
 /**

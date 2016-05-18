@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;

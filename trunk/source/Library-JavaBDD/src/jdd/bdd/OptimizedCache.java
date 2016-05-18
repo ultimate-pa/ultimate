@@ -9,8 +9,6 @@ package jdd.bdd;
 import jdd.util.*;
 import jdd.util.math.*;
 
-import java.util.*;
-
 
 /**
  * SimpleCache + some optimization

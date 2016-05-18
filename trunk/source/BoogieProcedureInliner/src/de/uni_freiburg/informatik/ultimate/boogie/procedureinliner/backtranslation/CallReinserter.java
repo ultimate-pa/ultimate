@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 
 /**
  * Analyzes a trace from an inlined boogie program and offers calls/returns to be inserted, before an new inlined call

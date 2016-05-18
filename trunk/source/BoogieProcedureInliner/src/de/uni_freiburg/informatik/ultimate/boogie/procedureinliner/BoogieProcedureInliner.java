@@ -29,14 +29,14 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.core.model.IObserver;
-import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.TypeChecker;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * Tool for inlining Boogie procedures.

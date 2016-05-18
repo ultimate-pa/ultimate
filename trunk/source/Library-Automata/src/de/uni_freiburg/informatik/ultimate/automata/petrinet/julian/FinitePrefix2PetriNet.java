@@ -35,8 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -44,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
@@ -89,7 +88,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 	public FinitePrefix2PetriNet(AutomataLibraryServices services, 
 			BranchingProcess<L, C> bp) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		// TODO implement merging for markings?
 		m_Input = bp;
 		m_Logger.info(startMessage());

@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  * Base class to recursively walk through a Boogie tree, doing transformations.

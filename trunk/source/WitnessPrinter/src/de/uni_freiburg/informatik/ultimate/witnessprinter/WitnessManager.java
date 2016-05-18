@@ -38,17 +38,17 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.MonitoredProcessState;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
-import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess.MonitoredProcessState;
-import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
-import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;

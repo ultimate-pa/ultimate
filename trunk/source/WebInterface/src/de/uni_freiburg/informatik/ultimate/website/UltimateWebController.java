@@ -10,16 +10,16 @@ import javax.xml.bind.JAXBException;
 import org.json.JSONObject;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.controllers.ExternalUltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.external.ExternalUltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * 
@@ -35,6 +35,7 @@ public class UltimateWebController implements IController<ToolchainListType> {
 
 	private IUltimateServiceProvider mCurrentServices;
 	private final ExternalUltimateCore mExternalUltimateCore;
+	private ICore<ToolchainListType> mCore;
 
 	public UltimateWebController(File settings, File input, File toolchain, long deadline) {
 		mExternalUltimateCore = new ExternalUltimateCore(this);
@@ -62,15 +63,16 @@ public class UltimateWebController implements IController<ToolchainListType> {
 		// the session id
 		// TODO: check what the whole settings thing means in parallel contexts
 		// clear old preferences
+		mCore = core;
 		core.resetPreferences();
 		return mExternalUltimateCore.init(core, loggingService, mSettingsFile, mDeadline, new File[] { mInputFile })
 				.getCode();
 	}
 
 	@Override
-	public ToolchainData selectTools(List<ITool> tools) {
+	public IToolchainData<ToolchainListType> selectTools(List<ITool> tools) {
 		try {
-			ToolchainData tc = new ToolchainData(mToolchainFile.getAbsolutePath());
+			final IToolchainData<ToolchainListType> tc = mCore.createToolchainData(mToolchainFile.getAbsolutePath());
 			mCurrentServices = tc.getServices();
 			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {

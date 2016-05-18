@@ -27,8 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class DummyCodeBlock extends CodeBlock {

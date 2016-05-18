@@ -9,10 +9,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import java.util.*;
 import java_cup.runtime.*;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 action code {:
     // Here I store the variables, which occur during parsing a file, and their types.

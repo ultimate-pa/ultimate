@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * Wrapper for ILoggingService and IProgressMonitorService that are used in

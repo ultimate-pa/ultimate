@@ -2,9 +2,6 @@
 
 package jdd.bdd;
 
-import jdd.util.*;
-import jdd.util.math.*;
-
 /**
  * some BDD helper function that we could/want not put in the BDD class directly
  */

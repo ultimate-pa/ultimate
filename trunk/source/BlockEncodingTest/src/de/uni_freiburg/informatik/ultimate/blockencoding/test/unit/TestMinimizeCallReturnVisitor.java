@@ -33,7 +33,6 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.test.unit;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.MinimizeBranchVisitor;
@@ -44,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasic
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.ExecuteUnitTestObserver;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;

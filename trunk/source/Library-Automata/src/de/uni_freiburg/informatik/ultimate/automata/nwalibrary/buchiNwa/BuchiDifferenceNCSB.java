@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -41,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 public class BuchiDifferenceNCSB<LETTER,STATE> implements IOperation<LETTER,STATE> {
@@ -87,7 +86,7 @@ public class BuchiDifferenceNCSB<LETTER,STATE> implements IOperation<LETTER,STAT
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = stateFactory;

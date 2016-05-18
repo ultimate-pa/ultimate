@@ -6,8 +6,6 @@ import jdd.bdd.*;
 import jdd.util.*;
 import jdd.util.math.*;
 
-import java.util.*;
-
 /**
  * RandomCache.java:
  *

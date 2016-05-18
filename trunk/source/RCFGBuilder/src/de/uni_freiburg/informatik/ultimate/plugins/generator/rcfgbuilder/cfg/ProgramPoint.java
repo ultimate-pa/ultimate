@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.Payload;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
  * Node of a recursive control flow graph. This can be seen as

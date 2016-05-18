@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.test;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * A very simple implementation of ILogger. All levels are always enabled, it prints error and fatal on stderr and the

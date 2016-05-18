@@ -34,13 +34,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	
@@ -63,7 +62,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	public BranchingProcess(AutomataLibraryServices services,
 			PetriNetJulian<S, C> net, Order<S, C> order) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.net = net;
 		this.m_Order = order;
 		this.place2cond = new HashMap<Place<S, C>, Set<Condition<S, C>>>();

@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception;
 
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * @author Markus Lindenmann, Matthias Heizmann

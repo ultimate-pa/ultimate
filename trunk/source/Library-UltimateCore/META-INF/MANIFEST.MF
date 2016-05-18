@@ -4,15 +4,15 @@ Bundle-Name: Library-UltimateCore
 Bundle-SymbolicName: Library-UltimateCore
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: de.uni_freiburg.informatik.ultimate.core.model.exceptions,
- de.uni_freiburg.informatik.ultimate.core.model.toolchain,
- de.uni_freiburg.informatik.ultimate.core.services.model,
- de.uni_freiburg.informatik.ultimate.core.util,
- de.uni_freiburg.informatik.ultimate.models.annotation,
- de.uni_freiburg.informatik.ultimate.models.structure,
- de.uni_freiburg.informatik.ultimate.result,
- de.uni_freiburg.informatik.ultimate.translation
-Require-Bundle: Library-log4j, 
+Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
+ de.uni_freiburg.informatik.ultimate.core.lib.models,
+ de.uni_freiburg.informatik.ultimate.core.lib.models.annotation,
+ de.uni_freiburg.informatik.ultimate.core.lib.observers,
+ de.uni_freiburg.informatik.ultimate.core.lib.results,
+ de.uni_freiburg.informatik.ultimate.core.lib.toolchain,
+ de.uni_freiburg.informatik.ultimate.core.lib.translation,
+ de.uni_freiburg.informatik.ultimate.core.lib.util
+Require-Bundle: Library-log4j,
  Library-UltimateModel;visibility:=reexport,
  Library-UltimateUtil,
  Library-SMTLIB

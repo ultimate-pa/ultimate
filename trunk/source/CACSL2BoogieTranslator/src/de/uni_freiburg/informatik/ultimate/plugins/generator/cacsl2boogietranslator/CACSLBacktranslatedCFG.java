@@ -5,9 +5,9 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.models.structure.IExplicitEdgesMultigraph;
-import de.uni_freiburg.informatik.ultimate.translation.BacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.CorrectnessWitnessGenerator;
 
 /**

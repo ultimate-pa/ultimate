@@ -3,8 +3,6 @@ package jdd.bdd;
 import jdd.util.*;
 import jdd.util.math.*;
 
-import java.util.*;
-
 
 // DONE: add a ref-count for entries so we dont remove the most useds
 // DONE: let cache_size be a power of two and use bitwise AND instead of MOD

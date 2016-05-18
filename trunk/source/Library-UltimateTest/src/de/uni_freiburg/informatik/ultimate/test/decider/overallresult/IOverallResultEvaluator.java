@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.test.decider.overallresult;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 
 /**
  * Classes that implement this interface can be used to evaluate an overall

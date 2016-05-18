@@ -30,8 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.LogManager;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PatternLayout;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Initializes a logger for the testing framework without having to run through all of the Ultimate classes and

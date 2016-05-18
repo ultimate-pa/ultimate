@@ -4,8 +4,6 @@ package jdd.bdd;
 import jdd.util.*;
 import jdd.util.math.*;
 
-import java.util.*;
-
 /**
  * Cache for int->double. based on simple cache
  *

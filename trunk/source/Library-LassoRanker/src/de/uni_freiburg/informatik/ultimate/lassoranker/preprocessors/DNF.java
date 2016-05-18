@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;

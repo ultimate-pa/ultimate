@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.gui;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.PlatformUI;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvisor;
@@ -61,7 +59,7 @@ public class TrayIconNotifier {
 		if (!isTrayBalloonEnabled()) {
 			return;
 		}
-		final Display display = PlatformUI.getWorkbench().getDisplay();
+//		final Display display = PlatformUI.getWorkbench().getDisplay();
 //		final TrayItem trayItem = mWorkbenchAdvisor.getTrayItem();
 		// No tray icon => cannot display result in tray icon.
 //		if (trayItem == null)

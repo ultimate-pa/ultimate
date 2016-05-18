@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loo
 
 import java.lang.reflect.Field;
 
-import de.uni_freiburg.informatik.ultimate.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 
 /**
  * 

@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 

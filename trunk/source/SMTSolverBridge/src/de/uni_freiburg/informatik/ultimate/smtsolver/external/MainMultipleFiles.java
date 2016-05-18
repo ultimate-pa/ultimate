@@ -35,7 +35,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.Log4JWrapper;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.Log4JWrapper;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;

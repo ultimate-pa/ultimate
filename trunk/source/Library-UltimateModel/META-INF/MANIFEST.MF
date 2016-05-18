@@ -5,10 +5,10 @@ Bundle-SymbolicName: Library-UltimateModel
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.core.model,
- de.uni_freiburg.informatik.ultimate.core.preferences,
- de.uni_freiburg.informatik.ultimate.core.services.model,
- de.uni_freiburg.informatik.ultimate.models,
- de.uni_freiburg.informatik.ultimate.models.annotation,
- de.uni_freiburg.informatik.ultimate.models.structure,
- de.uni_freiburg.informatik.ultimate.result.model,
- de.uni_freiburg.informatik.ultimate.translation
+ de.uni_freiburg.informatik.ultimate.core.model.models,
+ de.uni_freiburg.informatik.ultimate.core.model.models.annotation,
+ de.uni_freiburg.informatik.ultimate.core.model.observers,
+ de.uni_freiburg.informatik.ultimate.core.model.preferences,
+ de.uni_freiburg.informatik.ultimate.core.model.results,
+ de.uni_freiburg.informatik.ultimate.core.model.services,
+ de.uni_freiburg.informatik.ultimate.core.model.translation

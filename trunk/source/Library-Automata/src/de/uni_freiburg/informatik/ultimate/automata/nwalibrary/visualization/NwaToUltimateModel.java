@@ -30,8 +30,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -42,7 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class NwaToUltimateModel<LETTER,STATE> {
 	private final AutomataLibraryServices m_Services;
@@ -51,7 +50,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 	public NwaToUltimateModel(AutomataLibraryServices services) {
 		super();
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 
 	public IElement getUltimateModelOfNwa(INestedWordAutomatonSimple<LETTER,STATE> nwaSimple) throws OperationCanceledException {

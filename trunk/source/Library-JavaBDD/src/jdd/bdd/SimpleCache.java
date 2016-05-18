@@ -13,8 +13,6 @@ package jdd.bdd;
 import jdd.util.*;
 import jdd.util.math.*;
 
-import java.util.*;
-
 
 /**
  * A cache class that is [we belive] faster and uses less memory than Cache.java.

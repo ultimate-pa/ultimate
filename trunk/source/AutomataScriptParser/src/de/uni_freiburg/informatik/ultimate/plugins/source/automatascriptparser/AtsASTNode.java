@@ -33,9 +33,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.Payload;
-import de.uni_freiburg.informatik.ultimate.models.structure.BaseAST;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.BaseAST;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 
 
 

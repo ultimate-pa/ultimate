@@ -3,7 +3,6 @@ package jdd.internal.hashtest;
 
 
 
-import jdd.util.*;
 import jdd.util.math.*;
 
 import java.awt.*;

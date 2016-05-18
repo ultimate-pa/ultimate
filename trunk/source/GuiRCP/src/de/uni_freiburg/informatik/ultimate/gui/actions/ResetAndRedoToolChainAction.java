@@ -35,11 +35,11 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
@@ -93,7 +93,7 @@ public class ResetAndRedoToolChainAction extends RunToolchainAction implements I
 			return null;
 		}
 
-		final ToolchainData toolchain = getLastToolchainData();
+		final IToolchainData<ToolchainListType> toolchain = getLastToolchainData();
 
 		if (toolchain == null) {
 			return null;

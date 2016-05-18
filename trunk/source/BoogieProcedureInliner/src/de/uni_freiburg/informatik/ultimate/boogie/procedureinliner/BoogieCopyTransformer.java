@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  * Modification of the BoogieTransformer,

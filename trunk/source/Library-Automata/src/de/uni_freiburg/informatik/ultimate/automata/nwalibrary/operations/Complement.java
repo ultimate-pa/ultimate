@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -39,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
@@ -79,7 +78,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
 		m_StateDeterminizer = stateDeterminizer;
 		m_StateFactory = sf;
@@ -92,7 +91,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory);
 		m_StateFactory = stateFactory;

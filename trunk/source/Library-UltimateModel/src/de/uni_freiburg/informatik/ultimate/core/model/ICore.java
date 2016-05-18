@@ -24,42 +24,65 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.core.model;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
+import java.io.FileNotFoundException;
+
+import javax.xml.bind.JAXBException;
+
+import org.xml.sax.SAXException;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 
 /**
- * This interface describes the object that is passed to
- * {@link IController#init(ICore, ILoggingService)}.
+ * This interface describes the object that is passed to {@link IController#init(ICore, ILoggingService)}.
  * 
- * {@link IController} should use at least {@link #requestToolchain()} and
- * {@link #releaseToolchain(IToolchain)} to receive {@link IToolchain} instances
- * through which Ultimate is actually controlled.
+ * {@link IController} should use at least {@link #requestToolchain()} and {@link #releaseToolchain(IToolchain)} to
+ * receive {@link IToolchain} instances through which Ultimate is actually controlled.
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public interface ICore<T> {
 
 	/**
+	 * Create a toolchain data instance describing a to-be created toolchain using a path to an XML file defining this
+	 * toolchain.
+	 * 
+	 * @param filename
+	 *            A path to an XML file in Ultimate's toolchain format.
+	 * @throws SAXException
+	 * @throws JAXBException
+	 * @throws FileNotFoundException
+	 */
+	IToolchainData<T> createToolchainData(String filename) throws FileNotFoundException, JAXBException, SAXException;
+
+	/**
+	 * Create an empty toolchain data instance.
+	 */
+	IToolchainData<T> createToolchainData();
+
+	/**
+	 * Request an {@link IToolchain} instance from the core in order to start a new toolchain.
+	 * 
 	 * Don't forget to release the toolchain after use.
 	 * 
-	 * @return An {@link IToolchain} instance that can be initialized and
-	 *         started.
+	 * @return An {@link IToolchain} instance that can be initialized and started.
 	 */
 	IToolchain<T> requestToolchain();
 
 	/**
-	 * Release a previously requested {@link IToolchain} instance to invalidate
-	 * all resources.
+	 * Release a previously requested {@link IToolchain} instance to invalidate all resources.
 	 * 
 	 * @param toolchain
+	 *            The toolchain that should be released.
 	 */
 	void releaseToolchain(IToolchain<T> toolchain);
 
 	/**
-	 * ICore will try to save all settings different from the default settings
-	 * to the given path. An existing file will be overwritten.
+	 * ICore will try to save all settings different from the default settings to the given path. An existing file will
+	 * be overwritten.
 	 * 
 	 * @param absolutePath
 	 *            An absolute path to a (possibly existing) .epf file.
@@ -70,8 +93,7 @@ public interface ICore<T> {
 	 * ICore will try to load new settings from the given path.
 	 * 
 	 * @param absolutePath
-	 *            An absolute path to a .epf settings file compatible with
-	 *            Ultimate's settings.
+	 *            An absolute path to a .epf settings file compatible with Ultimate's settings.
 	 */
 	void loadPreferences(String absolutePath);
 
@@ -81,18 +103,13 @@ public interface ICore<T> {
 	void resetPreferences();
 
 	/**
-	 * Get an instance of every {@link IUltimatePlugin} that is known to the
-	 * Core (this will load every UltimatePlugin).
-	 * 
-	 * @return
+	 * Get an instance of every {@link IUltimatePlugin} that is known to the Core (this will load every UltimatePlugin).
 	 */
 	IUltimatePlugin[] getRegisteredUltimatePlugins();
 
 	/**
-	 * Get the name of every registered {@link IUltimatePlugin}. This will allow
-	 * you to prepare for lazy loading of plugins.
-	 * 
-	 * @return
+	 * Get the name of every registered {@link IUltimatePlugin}. This will allow you to prepare for lazy loading of
+	 * plugins.
 	 */
 	String[] getRegisteredUltimatePluginIDs();
 }

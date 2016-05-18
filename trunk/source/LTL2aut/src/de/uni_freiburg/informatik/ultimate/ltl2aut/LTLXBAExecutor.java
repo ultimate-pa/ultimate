@@ -35,12 +35,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;

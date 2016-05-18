@@ -37,17 +37,17 @@ import javax.xml.bind.JAXBException;
 import org.eclipse.core.runtime.IStatus;
 import org.xml.sax.SAXException;
 
-import de.uni_freiburg.informatik.ultimate.core.controllers.ExternalUltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.external.ExternalUltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
-import de.uni_freiburg.informatik.ultimate.core.model.toolchain.ToolchainListType;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * 
@@ -72,6 +72,8 @@ public class UltimateStarter implements IController<ToolchainListType> {
 	private IUltimateServiceProvider mCurrentSerivces;
 	private ILoggingService mLoggingService;
 
+	private ICore<ToolchainListType> mCurrentCore;
+
 	public UltimateStarter(UltimateRunDefinition ultimateRunDefinition, long deadline) {
 		this(ultimateRunDefinition, deadline, null, null);
 	}
@@ -94,6 +96,7 @@ public class UltimateStarter implements IController<ToolchainListType> {
 	public int init(ICore<ToolchainListType> core, ILoggingService loggingService) {
 		mLoggingService = loggingService;
 		mLogger = loggingService.getControllerLogger();
+		mCurrentCore = core;
 		core.resetPreferences();
 		return mExternalUltimateCore.init(core, loggingService, mUltimateRunDefinition.getSettings(), mDeadline,
 				mUltimateRunDefinition.getInput()).getCode();
@@ -144,9 +147,10 @@ public class UltimateStarter implements IController<ToolchainListType> {
 	}
 
 	@Override
-	public ToolchainData selectTools(List<ITool> tools) {
+	public IToolchainData<ToolchainListType> selectTools(List<ITool> tools) {
 		try {
-			ToolchainData tc = new ToolchainData(mUltimateRunDefinition.getToolchain().getAbsolutePath());
+			final IToolchainData<ToolchainListType> tc = mCurrentCore
+					.createToolchainData(mUltimateRunDefinition.getToolchain().getAbsolutePath());
 			mCurrentSerivces = tc.getServices();
 			mLogger.info("Loaded toolchain from " + mUltimateRunDefinition.getToolchain().getAbsolutePath());
 			return tc;
@@ -180,7 +184,7 @@ public class UltimateStarter implements IController<ToolchainListType> {
 
 	@Override
 	public void displayException(String description, Throwable ex) {
-
+		mLogger.fatal("Exception during Ultimate run: ", ex);
 	}
 
 	/**

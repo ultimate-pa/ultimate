@@ -10,11 +10,11 @@ import java_cup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.BoogieSymbol;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 
 
 parser Parser;

@@ -32,10 +32,9 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * To determine a good boundary, which is later used to estimate a good edge

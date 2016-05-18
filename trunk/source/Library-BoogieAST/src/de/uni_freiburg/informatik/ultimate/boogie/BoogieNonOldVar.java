@@ -29,9 +29,9 @@ package de.uni_freiburg.informatik.ultimate.boogie;
 
 import java.io.Serializable;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.models.IType;
 
 /**
  * See comment in GlobalBoogieVar.

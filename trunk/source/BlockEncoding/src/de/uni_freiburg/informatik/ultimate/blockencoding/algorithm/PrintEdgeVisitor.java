@@ -29,10 +29,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * @author Stefan Wissert

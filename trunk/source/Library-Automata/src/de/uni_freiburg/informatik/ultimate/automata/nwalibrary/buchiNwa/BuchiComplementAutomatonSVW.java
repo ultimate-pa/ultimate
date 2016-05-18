@@ -38,8 +38,6 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -54,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Automaton that is returned as the result of the {@code BuchiComplementSVW}
@@ -87,7 +86,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
 			throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_TMA = new TransitionMonoidAutomaton(origAutomaton);
 		m_Alphabet = origAutomaton.getInternalAlphabet();
 		if (!origAutomaton.getCallAlphabet().isEmpty() || !origAutomaton.getReturnAlphabet().isEmpty()) {

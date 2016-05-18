@@ -34,12 +34,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.CDD;
 import pea.EventDecision;
 import pea.PEANet;

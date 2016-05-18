@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot;
 
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * When the RCFG is used as a Büchi program, use this Annotation to mark all

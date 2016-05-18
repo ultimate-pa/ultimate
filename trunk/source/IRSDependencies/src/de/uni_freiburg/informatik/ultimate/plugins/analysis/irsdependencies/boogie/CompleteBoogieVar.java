@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie;
 
-import de.uni_freiburg.informatik.ultimate.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 
 /**
  * Class is used by Daniel for debugging symbol table. Orignially this was

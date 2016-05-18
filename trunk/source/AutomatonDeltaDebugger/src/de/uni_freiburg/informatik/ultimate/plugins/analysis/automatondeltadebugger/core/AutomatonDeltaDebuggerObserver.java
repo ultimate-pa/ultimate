@@ -30,12 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.NestedWordAutomatonFactory;

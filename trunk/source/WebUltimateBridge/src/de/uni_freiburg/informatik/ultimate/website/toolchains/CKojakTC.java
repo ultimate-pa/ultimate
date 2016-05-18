@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.website.Setting;
-import de.uni_freiburg.informatik.ultimate.website.Setting.SettingType;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
 import de.uni_freiburg.informatik.ultimate.website.WebToolchain;

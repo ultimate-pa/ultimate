@@ -29,8 +29,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * 

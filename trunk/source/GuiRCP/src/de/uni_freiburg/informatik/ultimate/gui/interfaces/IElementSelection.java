@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.gui.interfaces;
 
 import org.eclipse.jface.viewers.ISelection;
 
-import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 public interface IElementSelection extends ISelection {
 	

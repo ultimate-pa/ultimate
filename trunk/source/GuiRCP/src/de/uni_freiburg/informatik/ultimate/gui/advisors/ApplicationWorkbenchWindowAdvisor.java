@@ -36,8 +36,9 @@ import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
 import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
@@ -50,14 +51,14 @@ import de.uni_freiburg.informatik.ultimate.gui.views.LoggingView;
  */
 public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
-	private final ICore<?> mCore;
+	private final ICore<ToolchainListType> mCore;
 	private final GuiController mController;
 //	private TrayItem mTrayItem;
 //	private Image mTrayImage;
 //	private TrayIconNotifier mTrayIconNotifier;
 	private ILogger mLogger;
 
-	public ApplicationWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer, ICore<?> icc,
+	public ApplicationWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer, ICore<ToolchainListType> icc,
 			TrayIconNotifier notifier, GuiController controller, ILogger logger) {
 		super(configurer);
 		mCore = icc;

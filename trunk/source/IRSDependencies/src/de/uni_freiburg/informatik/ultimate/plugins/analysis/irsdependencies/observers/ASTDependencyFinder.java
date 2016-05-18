@@ -26,10 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.observers;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie.CriticalSectionTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie.SymbolTable;
 
@@ -44,6 +43,7 @@ public class ASTDependencyFinder extends BaseObserver{
 		mLogger = logger;
 	}
 
+	@Override
 	public boolean process(IElement root) {
 		return new CriticalSectionTransformer(mSymbolTable, mLogger).process(root);
 	}

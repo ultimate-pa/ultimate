@@ -28,9 +28,11 @@ package pea.modelchecking;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+
 import org.w3c.dom.Element;
 
 /**

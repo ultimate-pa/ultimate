@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 
 /**
  * Initializes the preferences using {@link PreferenceItem}.

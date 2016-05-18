@@ -48,7 +48,7 @@
 									<arg value="-d" />
 									<arg value="${workspaceDir}/Library-UltimateCore/src" />
 									<arg value="-p" />
-									<arg value="de.uni_freiburg.informatik.ultimate.core.model.toolchain" />
+									<arg value="de.uni_freiburg.informatik.ultimate.core.lib.toolchain" />
 									<arg
 										value="${toolchainDir}/toolchain.xsd" />
 								</exec>
@@ -66,16 +66,16 @@
 				<configuration>
 					<filesets>
 						<fileset>
-							<directory>${workspaceDir}/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/model/toolchain</directory>
+							<directory>${toolchainDir}</directory>
 							<includes>
-								<include>ModelType.java</include>
 								<include>ObjectFactory.java</include>
 								<include>PluginType.java</include>
 								<include>SerializeType.java</include>
 								<include>SubchainType.java</include>
-								<include>ToolchainListType.java</include>
 								<include>DropmodelType.java</include>
 								<include>ModelIdOnlyType.java</include>
+								<include>ToolchainModelType.java</include>
+								<include>ToolchainListType.java</include>
 							</includes>
 						</fileset>
 					</filesets>

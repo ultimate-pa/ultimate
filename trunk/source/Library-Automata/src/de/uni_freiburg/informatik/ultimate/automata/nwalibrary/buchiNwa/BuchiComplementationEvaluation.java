@@ -28,8 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -43,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 	
 
@@ -84,7 +83,7 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.m_Operand = new NestedWordAutomatonReachableStates<>(m_Services, input);
 		m_Logger.info(startMessage());
 		m_Result = evaluate(stateFactory);

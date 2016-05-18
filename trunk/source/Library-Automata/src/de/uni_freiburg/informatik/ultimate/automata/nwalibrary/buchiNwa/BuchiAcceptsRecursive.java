@@ -35,8 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -44,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -115,7 +114,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 	public BuchiAcceptsRecursive(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw){
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Nwa = nwa;
 		m_Nlw = nlw;
 		m_Logger.info(startMessage());

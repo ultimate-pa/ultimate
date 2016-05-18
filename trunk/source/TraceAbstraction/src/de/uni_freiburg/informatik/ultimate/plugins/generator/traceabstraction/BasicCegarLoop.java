@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -68,9 +67,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -82,7 +82,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -406,7 +405,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				NestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.m_RootNode, m_StateFactoryForRefinement, super.m_ErrorLocs);
 				FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(m_Counterexample,
-						(INestedWordAutomaton<CodeBlock, IPredicate>) cfg, m_Services, m_SmtManager,
+						cfg, m_Services, m_SmtManager,
 						m_ModGlobVarManager, predicateUnifier);
 				m_RcfgProgramExecution = m_RcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
@@ -727,7 +726,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					}
 				}
 
-				m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
+				m_Abstraction = diff.getResult();
 				// m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
 
 				if (m_Pref.dumpAutomata()) {

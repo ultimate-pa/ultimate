@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.core.model;
 
 import java.io.File;
 
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 
 /**
  * 
@@ -116,5 +116,4 @@ public interface IToolchain<T> {
 	public enum ReturnCode {
 		Ok, Error, Cancel
 	}
-
 }

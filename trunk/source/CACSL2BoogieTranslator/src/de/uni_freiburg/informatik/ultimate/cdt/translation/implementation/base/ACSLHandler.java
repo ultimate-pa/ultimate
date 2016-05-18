@@ -89,6 +89,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.B
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
@@ -113,11 +118,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.IType;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.models.annotation.Overapprox;
 
 /**
  * @author Markus Lindenmann

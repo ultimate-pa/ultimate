@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -38,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeUnderappox;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
@@ -85,7 +84,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 		INestedWordAutomatonOldApi<LETTER,STATE> operandWithoutNonLiveStates = 

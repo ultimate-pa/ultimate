@@ -33,7 +33,6 @@ import java.util.Vector;
 
 import net.sourceforge.czt.parser.util.ParseException;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xerces.dom.DocumentImpl;
 import org.w3c.dom.Document;
@@ -41,6 +40,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.Decision;

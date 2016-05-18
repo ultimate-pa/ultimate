@@ -1,7 +1,6 @@
 
 package jdd.util.zip;
 
-import jdd.util.*;
 import java.io.*;
 
 /**

@@ -1,8 +1,6 @@
 
 package jdd.bdd;
 
-import jdd.util.*;
-
 /** BDD-style node naming: v1..vn  but also accepts names provided by the user */
 public class BDDUserNames extends BDDNames {
 	private String []names;

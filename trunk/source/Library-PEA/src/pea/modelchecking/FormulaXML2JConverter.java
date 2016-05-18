@@ -28,12 +28,12 @@ package pea.modelchecking;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 import org.apache.log4j.PropertyConfigurator;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.EventDecision;

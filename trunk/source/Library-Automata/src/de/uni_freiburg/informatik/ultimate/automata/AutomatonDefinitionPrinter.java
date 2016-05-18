@@ -39,8 +39,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
@@ -53,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 
 /**
@@ -140,7 +139,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		public AutomatonDefinitionPrinter(AutomataLibraryServices services,
 				String automatonName, String filename, Format format, String message, Object... automata) {
 			m_Services = services;
-			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 			m_Logger.warn("Dumping Testfile");
 			initializePrintWriter(filename, format);
 			switch (format) {
@@ -171,7 +170,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		
 		public AutomatonDefinitionPrinter(AutomataLibraryServices services, String name, Format format, Object automaton) {
 			m_Services = services;
-			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 			m_StringWriter = new StringWriter();
 			m_printWriter = new PrintWriter(m_StringWriter);
 			printAutomaton(name, automaton, format);

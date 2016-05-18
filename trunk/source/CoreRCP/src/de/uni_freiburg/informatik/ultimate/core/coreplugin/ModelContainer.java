@@ -31,9 +31,9 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.models.structure.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 
 /**
  * This class is the general model container. It should preselect walkers and

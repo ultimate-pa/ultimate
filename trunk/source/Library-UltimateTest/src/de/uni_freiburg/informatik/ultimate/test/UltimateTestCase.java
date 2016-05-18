@@ -30,9 +30,9 @@ import java.util.List;
 
 import org.eclipse.core.runtime.IStatus;
 
-import de.uni_freiburg.informatik.ultimate.core.controllers.LivecycleException;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.external.LivecycleException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestMethod;

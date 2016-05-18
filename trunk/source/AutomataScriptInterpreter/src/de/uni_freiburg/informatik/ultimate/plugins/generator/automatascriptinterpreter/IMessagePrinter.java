@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
 
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.TestFileInterpreter.LoggerSeverity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
-import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 
 interface IMessagePrinter {
 	/**

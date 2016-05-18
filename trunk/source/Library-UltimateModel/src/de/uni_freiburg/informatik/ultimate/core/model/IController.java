@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.core.model;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 
 /**
  * This is the interface that all plugins providing a user interface to Ultimate

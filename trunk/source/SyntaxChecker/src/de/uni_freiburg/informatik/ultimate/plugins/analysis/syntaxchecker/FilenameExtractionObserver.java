@@ -28,10 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.models.structure.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 
 /**
  * Extract filename of input from C AST.

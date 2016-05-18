@@ -5,7 +5,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.translation.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 
 /**
  * 

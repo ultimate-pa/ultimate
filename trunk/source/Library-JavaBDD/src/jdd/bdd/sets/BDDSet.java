@@ -1,7 +1,6 @@
 
 package jdd.bdd.sets;
 
-import jdd.bdd.*;
 import jdd.util.*;
 import jdd.util.sets.*;
 

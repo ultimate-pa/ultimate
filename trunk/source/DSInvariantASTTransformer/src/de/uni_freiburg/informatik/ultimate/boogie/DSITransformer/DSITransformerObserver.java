@@ -35,9 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferenceInitializer;
@@ -48,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -73,12 +71,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.models.IElement;
-import de.uni_freiburg.informatik.ultimate.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.models.ModelUtils;
 
 /**
  * This class transforms the procedures in the input AST into a single procedure
@@ -624,7 +623,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				p.getLineNr(), -1, -1, -1, null);
 		if (newLists.size() > 0) {
 			vardecls.add(new VariableDeclaration(loccationOfP,
-					(Attribute[]) new NamedAttribute[0], newLists
+					new NamedAttribute[0], newLists
 							.toArray(new VarList[newLists.size()])));
 		}
 
@@ -842,7 +841,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		strPtrDecl = new VarList[] { structPtr };
 
 		procVars.add(new VariableDeclaration(new BoogieLocation("", -5, -5, -5,
-				-5, null), (Attribute[]) new NamedAttribute[0], strPtrDecl));
+				-5, null), new NamedAttribute[0], strPtrDecl));
 
 		// Now collect the statements in the right order
 		List<Statement> procStatements = new ArrayList<Statement>();

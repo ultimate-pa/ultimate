@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
-import de.uni_freiburg.informatik.ultimate.result.model.IRelevanceInformation;
 
 /**
  * Implementation of IRelevanceInformation that supports the non-flow-sensitive

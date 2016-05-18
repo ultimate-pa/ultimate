@@ -27,15 +27,13 @@
  */
 /*
  * Project:	CoreRCP
- * Package:	de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences
+ * Package:	de.uni_freiburg.informatik.ultimate.core.model.coreplugin.preferences
  * File:	AbstractDetailsPreferencePage.java created on Feb 5, 2010 by Bjï¿½rn Buchhold
  *
  */
 package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
 import java.util.Arrays;
-
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferencePage;
@@ -52,6 +50,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
+
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 
 /**
  * AbstractDetailsPreferencePage
@@ -72,6 +72,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 	/*
 	 * @see PreferencePage#createContents(Composite)
 	 */
+	@Override
 	protected Control createContents(Composite parent) {
 
 		Composite entryTable = new Composite(parent, SWT.NULL);
@@ -109,6 +110,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 
 		addButton.setText("Add to List"); //$NON-NLS-1$
 		addButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(SelectionEvent event) {
 				String text = newEntryText.getText();
 				if (entryIsValid(text)) {
@@ -136,6 +138,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 
 		removeButton.setText("Remove Selection"); //$NON-NLS-1$
 		removeButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(SelectionEvent event) {
 				detailList.remove(detailList.getSelectionIndex());
 				fillInfoLabel(detailList);
@@ -145,6 +148,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 		Button editButton = new Button(buttonComposite, SWT.PUSH | SWT.CENTER);
 		editButton.setText("Edit Selected"); //$NON-NLS-1$
 		editButton.addSelectionListener(new SelectionAdapter() {
+			@Override
 			public void widgetSelected(SelectionEvent event) {
 				int index = detailList.getSelectionIndex();
 				if (index == -1) {
@@ -232,6 +236,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 	/*
 	 * @see IWorkbenchPreferencePage#init(IWorkbench)
 	 */
+	@Override
 	public void init(IWorkbench workbench) {
 		// Initialize the preference store we wish to use
 		setPreferenceStore(getCorrectPreferenceStore());
@@ -248,6 +253,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 	 * Performs special processing when this page's Restore Defaults button has
 	 * been pressed. Sets the contents of the nameEntry field to be the default
 	 */
+	@Override
 	protected void performDefaults() {
 		detailList.setItems(getDefaults());
 	}
@@ -258,6 +264,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage imple
 	 * Method declared on IPreferencePage. Save the author name to the
 	 * preference store.
 	 */
+	@Override
 	public boolean performOk() {
 		setThePreference(detailList.getItems());
 		return super.performOk();

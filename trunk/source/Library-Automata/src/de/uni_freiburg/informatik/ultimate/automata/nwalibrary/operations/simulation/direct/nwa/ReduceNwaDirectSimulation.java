@@ -99,9 +99,9 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 					throws OperationCanceledException {
 		super(services, stateFactory, operand,
 				new DirectNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), useSCCs, stateFactory,
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						new DirectNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand,
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
 	}
 

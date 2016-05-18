@@ -29,14 +29,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Utility class that provides an interface for constructing a list of INestedWordAutomatons.  
@@ -49,7 +48,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	private static ILogger m_Logger;
 	
 	public NwaList(AutomataLibraryServices services,INestedWordAutomaton<LETTER,STATE> orginalAutomata, INestedWordAutomaton<LETTER,STATE> newAutomata){
-		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Logger.info(startMessage());
 		automataCollection = new ArrayList<INestedWordAutomaton<LETTER,STATE>>();
 		automataCollection.add(orginalAutomata);
@@ -58,14 +57,14 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	}
 	
 	public NwaList(AutomataLibraryServices services,ArrayList<INestedWordAutomaton<LETTER,STATE>> orginalAutomataCollection, INestedWordAutomaton<LETTER,STATE> newAutomata){
-		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Logger.info(startMessage());
 		automataCollection = orginalAutomataCollection;
 		automataCollection.add(newAutomata);
 		m_Logger.info(exitMessage());
 	}
 	public NwaList(AutomataLibraryServices services,INestedWordAutomaton<LETTER,STATE> newAutomata,ArrayList<INestedWordAutomaton<LETTER,STATE>> orginalAutomataCollection){
-		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Logger.info(startMessage());
 		automataCollection = orginalAutomataCollection;
 		automataCollection.add(newAutomata);
@@ -76,7 +75,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	 * Constructs a list that consists of a single automaton.
 	 */
 	public NwaList(AutomataLibraryServices services,INestedWordAutomaton<LETTER,STATE> newAutomata){
-		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		m_Logger.info(startMessage());
 		automataCollection = new ArrayList<INestedWordAutomaton<LETTER,STATE>>();
 		automataCollection.add(newAutomata);

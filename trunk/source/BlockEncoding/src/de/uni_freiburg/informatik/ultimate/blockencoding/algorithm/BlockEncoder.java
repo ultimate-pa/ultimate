@@ -32,16 +32,15 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
-
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.TestMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -134,7 +133,7 @@ public class BlockEncoder {
 			ArrayList<MinimizedNode> methodNodes = new ArrayList<MinimizedNode>();
 			for (RCFGEdge edge : root.getOutgoingEdges()) {
 				if (edge instanceof RootEdge) {
-					methodNodes.add(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
+					methodNodes.add(BlockEncodingAnnotation.getAnnotation(edge).getNode());
 				}
 			}
 			// Now we start processing the method nodes, first step is to
@@ -152,13 +151,13 @@ public class BlockEncoder {
 				// further minimization is possible in the next run
 				for (RCFGEdge edge : root.getOutgoingEdges()) {
 					if (edge instanceof RootEdge) {
-						mbVisitor.visitNode(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
+						mbVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(edge).getNode());
 					}
 				}
 				for (RCFGEdge edge : root.getOutgoingEdges()) {
 					if (edge instanceof RootEdge) {
-						mlVisitor.visitNode(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
-						tmVisitor.visitNode(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
+						mlVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(edge).getNode());
+						tmVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(edge).getNode());
 					}
 				}
 			} while (!methodNodes.isEmpty());

@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 
 /**

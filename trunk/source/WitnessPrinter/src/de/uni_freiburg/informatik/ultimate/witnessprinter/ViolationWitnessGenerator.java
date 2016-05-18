@@ -31,12 +31,12 @@ import java.io.StringWriter;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
-import de.uni_freiburg.informatik.ultimate.core.services.model.ILogger;
 
-import de.uni_freiburg.informatik.ultimate.translation.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.translation.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
