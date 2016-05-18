@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
@@ -85,7 +85,7 @@ public abstract class RunToolchainAction extends Action {
 	}
 
 	protected File[] getLastInputFiles() {
-		final String lastInputFilePath = new UltimatePreferenceStore(GuiController.PLUGIN_ID)
+		final String lastInputFilePath = new RcpPreferenceProvider(GuiController.PLUGIN_ID)
 				.getString(IPreferencesKeys.LASTPATH);
 		if (lastInputFilePath == null || lastInputFilePath.isEmpty()) {
 			// there is no last input file saved
@@ -108,7 +108,7 @@ public abstract class RunToolchainAction extends Action {
 	}
 
 	protected IToolchainData<ToolchainListType> getLastToolchainData() {
-		final String toolchainxml = new UltimatePreferenceStore(GuiController.PLUGIN_ID)
+		final String toolchainxml = new RcpPreferenceProvider(GuiController.PLUGIN_ID)
 				.getString(IPreferencesKeys.LASTTOOLCHAINPATH);
 		if (toolchainxml == null || toolchainxml.isEmpty()) {
 			// there is no last toolchain saved
@@ -157,7 +157,7 @@ public abstract class RunToolchainAction extends Action {
 				sb.append(path).append(File.separator).append(name).append(File.pathSeparator);
 			}
 			sb.delete(sb.length() - 1, sb.length());
-			new UltimatePreferenceStore(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTPATH, sb.toString());
+			new RcpPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTPATH, sb.toString());
 		}
 
 		final List<File> rtr = new ArrayList<>();

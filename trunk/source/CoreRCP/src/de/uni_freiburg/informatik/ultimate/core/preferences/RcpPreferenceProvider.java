@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.core.preferences;
 
 import java.io.InputStream;
@@ -47,81 +48,90 @@ import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.service.prefs.BackingStoreException;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
-public class UltimatePreferenceStore {
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class RcpPreferenceProvider implements IPreferenceProvider {
 
 	private final String mPluginID;
 
 	private static Map<String, Set<IPreferenceChangeListener>> sActiveListener = new HashMap<String, Set<IPreferenceChangeListener>>();
 
-	public UltimatePreferenceStore(String pluginID) {
+	public RcpPreferenceProvider(String pluginID) {
 		mPluginID = pluginID;
 	}
 
 	/*********************************** Getter ***********************************/
 
 	/**
-	 * Retrieves a preference value of type boolean from the store. If the key
-	 * is neither in the current store nor in the default store, false is
-	 * returned.
+	 * Retrieves a preference value of type boolean from the store. If the key is neither in the current store nor in
+	 * the default store, false is returned.
 	 * 
 	 * @param key
 	 * @return
 	 */
+	@Override
 	public boolean getBoolean(String key) {
 		return getBoolean(key, false);
 	}
 
+	@Override
 	public boolean getBoolean(String key, boolean defaultValue) {
 		return getInstance().getBoolean(key, getDefault().getBoolean(key, defaultValue));
 	}
 
 	/**
-	 * Retrieves a preference value of type String from the store. If the key is
-	 * neither in the current store nor in the default store, "" is returned.
+	 * Retrieves a preference value of type String from the store. If the key is neither in the current store nor in the
+	 * default store, "" is returned.
 	 * 
 	 * @param key
 	 * @return
 	 */
+	@Override
 	public String getString(String key) {
 		return getString(key, "");
 	}
 
+	@Override
 	public String getString(String key, String defaultValue) {
 		return getInstance().get(key, getDefault().get(key, defaultValue));
 	}
 
 	/**
-	 * Retrieves a preference value of type T, where T is a subtype of Enum,
-	 * from the store. If the key is neither in the current store nor in the
-	 * default store, an UnknownFormatConversionException is returned.
+	 * Retrieves a preference value of type T, where T is a subtype of Enum, from the store. If the key is neither in
+	 * the current store nor in the default store, an UnknownFormatConversionException is returned.
 	 * 
 	 * @param key
 	 * @param enumType
 	 * @return
 	 * @throws UnknownFormatConversionException
 	 */
+	@Override
 	public <T extends Enum<T>> T getEnum(String key, Class<T> enumType) throws UnknownFormatConversionException {
 		final String strValue = getString(key);
 		if (strValue.isEmpty()) {
-			throw new UnknownFormatConversionException("String " + strValue + " cannot be converted to type "
-					+ enumType);
+			throw new UnknownFormatConversionException(
+					"String " + strValue + " cannot be converted to type " + enumType);
 		} else {
 			return Enum.valueOf(enumType, strValue);
 		}
 	}
 
 	/**
-	 * Retrieves a preference value of type T, where T is a subtype of Enum,
-	 * from the store. If the key is neither in the current store nor in the
-	 * default store, defaultValue is returned.
+	 * Retrieves a preference value of type T, where T is a subtype of Enum, from the store. If the key is neither in
+	 * the current store nor in the default store, defaultValue is returned.
 	 * 
 	 * @param key
 	 * @param defaultValue
 	 * @param enumType
 	 * @return
 	 */
+	@Override
 	public <T extends Enum<T>> T getEnum(String key, T defaultValue, Class<T> enumType) {
 		final String strValue = getString(key);
 		if (strValue.isEmpty()) {
@@ -132,77 +142,86 @@ public class UltimatePreferenceStore {
 	}
 
 	/**
-	 * Retrieves a preference value of type byte[] from the store. If the key is
-	 * neither in the current store nor in the default store, an empty byte
-	 * array of length 0 is returned.
+	 * Retrieves a preference value of type byte[] from the store. If the key is neither in the current store nor in the
+	 * default store, an empty byte array of length 0 is returned.
 	 * 
 	 * @param key
 	 * @return
 	 */
+	@Override
 	public byte[] getByteArray(String key) {
 		return getByteArray(key, new byte[0]);
 	}
 
+	@Override
 	public byte[] getByteArray(String key, byte[] defaultValue) {
 		return getInstance().getByteArray(key, getDefault().getByteArray(key, defaultValue));
 	}
 
 	/**
-	 * Retrieves a preference value of type double from the store. If the key is
-	 * neither in the current store nor in the default store, 0.0d is returned.
+	 * Retrieves a preference value of type double from the store. If the key is neither in the current store nor in the
+	 * default store, 0.0d is returned.
 	 * 
 	 * @param key
 	 * @return
 	 */
+	@Override
 	public double getDouble(String key) {
 		return getDouble(key, 0.0d);
 	}
 
+	@Override
 	public double getDouble(String key, double defaultValue) {
 		return getInstance().getDouble(key, getDefault().getDouble(key, defaultValue));
 	}
 
 	/**
-	 * Retrieves a preference value of type float from the store. If the key is
-	 * neither in the current store nor in the default store, 0.0f is returned.
+	 * Retrieves a preference value of type float from the store. If the key is neither in the current store nor in the
+	 * default store, 0.0f is returned.
 	 * 
 	 * @param key
 	 * @return
 	 */
+	@Override
 	public float getFloat(String key) {
 		return getFloat(key, 0.0f);
 	}
 
+	@Override
 	public float getFloat(String key, float defaultValue) {
 		return getInstance().getFloat(key, getDefault().getFloat(key, defaultValue));
 	}
 
 	/**
-	 * Retrieves a preference value of type int from the store. If the key is
-	 * neither in the current store nor in the default store, 0 is returned.
+	 * Retrieves a preference value of type int from the store. If the key is neither in the current store nor in the
+	 * default store, 0 is returned.
 	 * 
 	 * @param key
 	 * @return
 	 */
+	@Override
 	public int getInt(String key) {
 		return getInt(key, 0);
 	}
 
+	@Override
 	public int getInt(String key, int defaultValue) {
 		return getInstance().getInt(key, getDefault().getInt(key, defaultValue));
 	}
 
 	/**
-	 * Retrieves a preference value of type long from the store. If the key is
-	 * neither in the current store nor in the default store, 0L is returned.
+	 * Retrieves a preference value of type long from the store. If the key is neither in the current store nor in the
+	 * default store, 0L is returned.
 	 * 
 	 * @param key
 	 * @return
 	 */
+	@Override
 	public long getLong(String key) {
 		return getLong(key, 0L);
 	}
 
+	@Override
 	public long getLong(String key, long defaultValue) {
 		return getInstance().getLong(key, getDefault().getLong(key, defaultValue));
 	}
@@ -211,6 +230,7 @@ public class UltimatePreferenceStore {
 
 	/*********************************** Setter ***********************************/
 
+	@Override
 	public void put(String key, String value) {
 		getInstance().put(key, value);
 		try {
@@ -275,7 +295,7 @@ public class UltimatePreferenceStore {
 		return status;
 	}
 
-	public String getDefaultPreferencesString() {
+	private String getDefaultPreferencesString() {
 		final StringBuilder sb = new StringBuilder();
 		try {
 			final String br = CoreUtil.getPlatformLineSeparator();
@@ -289,7 +309,7 @@ public class UltimatePreferenceStore {
 		return sb.toString();
 	}
 
-	public String getCurrentPreferencesString() {
+	private String getCurrentPreferencesString() {
 		final StringBuilder sb = new StringBuilder();
 		try {
 			final String br = CoreUtil.getPlatformLineSeparator();
@@ -304,8 +324,7 @@ public class UltimatePreferenceStore {
 	}
 
 	/**
-	 * Get an array of strings were each entry represents all preferences that
-	 * differ from their default values.
+	 * Get an array of strings were each entry represents all preferences that differ from their default values.
 	 * 
 	 */
 	public String[] getDeltaPreferencesStrings() {

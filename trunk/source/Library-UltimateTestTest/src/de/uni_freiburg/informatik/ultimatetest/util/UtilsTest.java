@@ -72,7 +72,6 @@ public class UtilsTest {
 		for(int i=0;i<size;++i){
 			input.add(String.valueOf(i));
 		}
-		
 		Assert.assertEquals(10, TestUtil.uniformN(input, 10).size());
 	}
 }

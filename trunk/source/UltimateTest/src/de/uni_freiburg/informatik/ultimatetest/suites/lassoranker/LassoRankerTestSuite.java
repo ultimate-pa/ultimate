@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -114,7 +114,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 
 		File toolchainFile = new File(TestUtil.getPathFromTrunk(s_toolchain));
 		File settingsFile = new File(TestUtil.getPathFromTrunk(s_settings_file));
-		String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+		String logPattern = new RcpPreferenceProvider(Activator.s_PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);

@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
@@ -276,7 +276,7 @@ public class LassoRankerStarter {
 	 * @return the templates specified in the preferences
 	 */
 	private RankingTemplate[] getTemplates() {
-		UltimatePreferenceStore store = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
 		List<RankingTemplate> templates = new ArrayList<RankingTemplate>();
 
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_affine_template)) {
@@ -336,7 +336,7 @@ public class LassoRankerStarter {
 	 * @return the templates specified in the preferences
 	 */
 	private RankingTemplate[] getTemplatesExactly() {
-		UltimatePreferenceStore store = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
 		List<RankingTemplate> templates = new ArrayList<RankingTemplate>();
 
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_affine_template)) {
@@ -532,7 +532,7 @@ public class LassoRankerStarter {
 	// FIXME: allow also Stefans BlockEncoding
 	private void checkRCFGBuilderSettings() {
 		String rcfgBuilderPluginId = de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator.PLUGIN_ID;
-		UltimatePreferenceStore store = new UltimatePreferenceStore(rcfgBuilderPluginId);
+		RcpPreferenceProvider store = new RcpPreferenceProvider(rcfgBuilderPluginId);
 		String removeGotoLabel = de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.LABEL_RemoveGotoEdges;
 		boolean removeGoto = store.getBoolean(removeGotoLabel);
 		String codeBlockSizeLabel = de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.LABEL_CodeBlockSize;

@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpressionAST;
@@ -678,7 +678,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private void readPreferences() {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
 		mPrintAutomataToFile = prefs.getBoolean(PreferenceInitializer.Name_WriteToFile);
 		mPath = prefs.getString(PreferenceInitializer.Name_Path);
 	}

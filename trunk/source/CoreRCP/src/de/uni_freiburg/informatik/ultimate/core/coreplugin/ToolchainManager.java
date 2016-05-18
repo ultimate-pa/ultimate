@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
@@ -122,7 +122,7 @@ public class ToolchainManager {
 	}
 
 	private IModelManager createModelManager() {
-		String tmp_dir = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		String tmp_dir = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_MM_TMPDIRECTORY);
 		return new PersistenceAwareModelManager(tmp_dir, mLogger);
 	}
@@ -251,7 +251,7 @@ public class ToolchainManager {
 		@Override
 		public ReturnCode processToolchain(IToolchainProgressMonitor monitor) throws Throwable {
 			mLogger.info("####################### " + getLogPrefix() + " #######################");
-			UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+			RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 			boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			Benchmark bench = null;
 			if (useBenchmark) {
@@ -352,7 +352,7 @@ public class ToolchainManager {
 		}
 
 		private final IElement runParser(final File file, ISource parser) throws Exception {
-			boolean useBenchmark = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+			boolean useBenchmark = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			IElement root = null;
 

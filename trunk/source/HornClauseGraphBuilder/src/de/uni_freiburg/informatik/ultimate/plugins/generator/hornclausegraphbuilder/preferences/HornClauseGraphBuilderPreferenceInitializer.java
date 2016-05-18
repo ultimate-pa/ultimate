@@ -28,11 +28,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbui
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.Activator;
 
-public class HornClauseGraphBuilderPreferenceInitializer extends UltimatePreferenceInitializer {
+public class HornClauseGraphBuilderPreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

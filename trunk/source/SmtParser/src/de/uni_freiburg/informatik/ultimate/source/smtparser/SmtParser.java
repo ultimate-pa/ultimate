@@ -34,14 +34,14 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -160,13 +160,13 @@ public class SmtParser implements ISource {
 	
 	private void processFile(File file) throws IOException {
 		
-		final boolean useExternalSolver = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_UseExtSolver);
-		final String commandExternalSolver = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+		final boolean useExternalSolver = (new RcpPreferenceProvider(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_UseExtSolver);
+		final String commandExternalSolver = (new RcpPreferenceProvider(Activator.PLUGIN_ID)).getString(PreferenceInitializer.LABEL_ExtSolverCommand);
 		
-		final boolean writeCommandsToFile = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_WriteToFile);
-		final String filename = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getString(PreferenceInitializer.LABEL_Filename);
+		final boolean writeCommandsToFile = (new RcpPreferenceProvider(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_WriteToFile);
+		final String filename = (new RcpPreferenceProvider(Activator.PLUGIN_ID)).getString(PreferenceInitializer.LABEL_Filename);
 
-		final boolean inHornSolverMode = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_HornSolverMode);
+		final boolean inHornSolverMode = (new RcpPreferenceProvider(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_HornSolverMode);
 		
 		Script script;
 

@@ -11,5 +11,6 @@ Export-Package: srParse;
    org.antlr.runtime,
    PatternLanguage"
 Require-Bundle: Library-PEA,
- JavaCup
+ JavaCup,
+ ASTBuilder
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

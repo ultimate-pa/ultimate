@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
@@ -122,7 +122,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 
-		boolean constructTermcompProof = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID))
+		boolean constructTermcompProof = (new RcpPreferenceProvider(Activator.s_PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
 		if (constructTermcompProof) {
 			IResult termcompProof = new BenchmarkResult<Double>(Activator.s_PLUGIN_ID,

@@ -45,10 +45,10 @@ import org.osgi.service.prefs.BackingStoreException;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
-import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 class SettingsManager {
 
@@ -78,7 +78,7 @@ class SettingsManager {
 
 			try {
 				final FileInputStream fis = new FileInputStream(filename);
-				final IStatus status = UltimatePreferenceStore.importPreferences(fis);
+				final IStatus status = RcpPreferenceProvider.importPreferences(fis);
 				if (!status.isOK()) {
 					mLogger.warn("Failed to load preferences. Status is: " + status);
 					mLogger.warn("Did not attach debug property logger");
@@ -102,7 +102,7 @@ class SettingsManager {
 		boolean isSomePluginDifferent = false;
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final String pluginId = plugin.getPluginID();
-			final String[] delta = new UltimatePreferenceStore(pluginId).getDeltaPreferencesStrings();
+			final String[] delta = new RcpPreferenceProvider(pluginId).getDeltaPreferencesStrings();
 			if (delta != null && delta.length > 0) {
 				isSomePluginDifferent = true;
 				mLogger.info("Preferences of " + plugin.getPluginName() + " differ from their defaults:");
@@ -129,7 +129,7 @@ class SettingsManager {
 			final FileOutputStream fis = new FileOutputStream(filename);
 
 			for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
-				new UltimatePreferenceStore(plugin.getPluginID()).exportPreferences(fis);
+				new RcpPreferenceProvider(plugin.getPluginID()).exportPreferences(fis);
 			}
 
 			fis.flush();
@@ -162,7 +162,7 @@ class SettingsManager {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(pluginID);
+		RcpPreferenceProvider ups = new RcpPreferenceProvider(pluginID);
 		try {
 			IEclipsePreferences defaults = ups.getDefaultEclipsePreferences();
 			String prefix = "[" + pluginName + " (Current)] Preference \"";
@@ -211,12 +211,12 @@ class SettingsManager {
 	class LogPreferenceChangeListener implements IPreferenceChangeListener {
 
 		private final String mScope;
-		private final UltimatePreferenceStore mPreferences;
+		private final RcpPreferenceProvider mPreferences;
 		private final String mPrefix;
 
 		public LogPreferenceChangeListener(String scope, String pluginID, String pluginName) {
 			mScope = scope;
-			mPreferences = new UltimatePreferenceStore(pluginID);
+			mPreferences = new RcpPreferenceProvider(pluginID);
 			mPrefix = "[" + pluginName + " (" + mScope + ")] Preference \"";
 		}
 

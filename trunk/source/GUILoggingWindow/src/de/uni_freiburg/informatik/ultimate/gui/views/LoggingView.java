@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.gui.logging.GuiLoggingWindowAppender;
 
 /**
@@ -103,7 +103,7 @@ public class LoggingView extends ViewPart {
 
 		// Listen to preference changes affecting the GUI log output: Pattern
 		// and colors
-		final UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final RcpPreferenceProvider preferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		preferenceStore.addPreferenceChangeListener(new IPreferenceChangeListener() {
 			@Override
 			public void preferenceChange(PreferenceChangeEvent event) {
@@ -191,7 +191,7 @@ public class LoggingView extends ViewPart {
 			mLoggingService.removeWriter(mLastWriter);
 		}
 		mLastWriter = GuiLoggingWindowAppender.createWriter();
-		final String layout = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		final String layout = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		final ILogger logger = mLoggingService.getControllerLogger();
 		mLoggingService.addWriter(mLastWriter, layout);
@@ -199,7 +199,7 @@ public class LoggingView extends ViewPart {
 	}
 
 	private void refreshPreferenceProperties() {
-		final UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final RcpPreferenceProvider preferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		mColorDebug = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_DEBUG));
 		mColorInfo = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_INFO));
 		mColorWarning = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_WARNING));

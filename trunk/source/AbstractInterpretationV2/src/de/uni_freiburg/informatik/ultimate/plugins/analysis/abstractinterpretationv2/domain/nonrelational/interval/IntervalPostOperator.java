@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -76,7 +76,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 		mStatementProcessor = new IntervalDomainStatementProcessor(mLogger, symbolTable);
 		mSymbolTable = symbolTable;
 
-		mParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		mParallelStates = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 		        .getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 	}
 

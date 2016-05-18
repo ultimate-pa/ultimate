@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
  * 
@@ -25,34 +25,47 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.core.model;
-
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+package de.uni_freiburg.informatik.ultimate.core.model.preferences;
 
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IPreferenceInitializer {
+public interface IPreferenceProvider {
 
-	/***
-	 * This method is called by the preference initializer to initialize default preference values.
-	 * 
-	 * Note: Clients should not call this method. It will be called automatically by the preference initializer when the
-	 * appropriate default preference node is accessed.
-	 */
-	void initializeDefaultPreferences();
+	boolean getBoolean(String key);
 
-	void resetDefaults();
+	boolean getBoolean(String key, boolean defaultValue);
 
-	BaseUltimatePreferenceItem[] getDefaultPreferences();
+	String getString(String key);
 
-	/**
-	 * Should return the title of the preference page node
-	 * 
-	 * @return
-	 */
-	String getPreferencePageTitle();
+	String getString(String key, String defaultValue);
+
+	<T extends Enum<T>> T getEnum(String key, Class<T> clazz);
+
+	<T extends Enum<T>> T getEnum(String key, T defaultValue, Class<T> clazz);
+
+	byte[] getByteArray(String key);
+
+	byte[] getByteArray(String key, byte[] defaultValue);
+
+	double getDouble(String key);
+
+	double getDouble(String key, double defaultValue);
+
+	float getFloat(String key);
+
+	float getFloat(String key, float defaultValue);
+
+	int getInt(String key);
+
+	int getInt(String key, int defaultValue);
+
+	long getLong(String key);
+
+	long getLong(String key, long defaultValue);
+
+	void put(String key, String value);
 
 }

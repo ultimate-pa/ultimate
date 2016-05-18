@@ -36,9 +36,9 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
-import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 

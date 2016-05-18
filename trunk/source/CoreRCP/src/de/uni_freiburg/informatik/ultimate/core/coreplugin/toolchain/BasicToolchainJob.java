@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 public abstract class BasicToolchainJob extends Job {
 
@@ -116,7 +116,7 @@ public abstract class BasicToolchainJob extends Job {
 				sb.append(result.getShortDescription());
 				mLogger.info(sb.toString());
 
-				boolean appendCompleteLongDescription = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+				boolean appendCompleteLongDescription = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 						.getBoolean(CorePreferenceInitializer.LABEL_LONG_RESULT);
 				String[] s = result.getLongDescription().split("\n");
 				if (appendCompleteLongDescription) {
@@ -135,7 +135,7 @@ public abstract class BasicToolchainJob extends Job {
 	private void setTimeout() {
 		long realDeadline = 0;
 
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		int preferencesDeadline = ups.getInt(CorePreferenceInitializer.LABEL_TIMEOUT);
 
 		// first , check if we have a deadline set by the executor

@@ -43,7 +43,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
@@ -66,7 +66,7 @@ public class CommandExportAsSVG extends AbstractHandler {
 	 */
 	public void exportAsSVG(JungEditorInput editorInput) {
 		assert editorInput != null;
-		String svgFilePath = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		String svgFilePath = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(JungPreferenceValues.LABEL_PATH);
 
 		JFileChooser chooser = new JFileChooser();

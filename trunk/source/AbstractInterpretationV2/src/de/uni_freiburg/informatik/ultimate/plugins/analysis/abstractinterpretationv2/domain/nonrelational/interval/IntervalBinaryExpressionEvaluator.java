@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
@@ -64,7 +64,7 @@ public class IntervalBinaryExpressionEvaluator
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 		mEvaluatorType = type;
-		mMaxParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		mMaxParallelStates = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 		        .getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 	}
 

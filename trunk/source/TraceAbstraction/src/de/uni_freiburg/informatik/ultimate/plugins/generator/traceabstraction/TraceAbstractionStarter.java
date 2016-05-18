@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
@@ -257,7 +257,7 @@ public class TraceAbstractionStarter {
 			TraceAbstractionBenchmarks taBenchmark, Collection<ProgramPoint> errorLocs,
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		BasicCegarLoop basicCegarLoop;
-		LanguageOperation languageOperation = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID))
+		LanguageOperation languageOperation = (new RcpPreferenceProvider(Activator.s_PLUGIN_ID))
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
@@ -424,7 +424,7 @@ public class TraceAbstractionStarter {
 	}
 
 	private boolean interpolationModeSwitchNeeded() {
-		SolverMode solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		SolverMode solver = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		if (solver == SolverMode.External_PrincessInterpolationMode) {
 			return true;

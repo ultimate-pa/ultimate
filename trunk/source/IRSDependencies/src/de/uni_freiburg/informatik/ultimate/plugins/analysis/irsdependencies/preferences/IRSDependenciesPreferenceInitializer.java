@@ -28,15 +28,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.pre
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
 
 /**
  * @author Dietsch
  * 
  */
-public class IRSDependenciesPreferenceInitializer extends UltimatePreferenceInitializer {
+public class IRSDependenciesPreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -61,7 +61,7 @@ public class IRSDependenciesPreferenceInitializer extends UltimatePreferenceInit
 	}
 
 	public static Mode getMode() {
-		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getEnum(sMode, Mode.class);
+		return new RcpPreferenceProvider(Activator.PLUGIN_ID).getEnum(sMode, Mode.class);
 	}
 
 }

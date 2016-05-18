@@ -39,15 +39,15 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * Use external tool to do a syntax check.
@@ -116,11 +116,11 @@ public class SyntaxChecker implements IAnalysis {
 		}
 	}
 	private void doSyntaxCheck() throws IOException {
-		final String toolCommandError = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
+		final String toolCommandError = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
 		final String filename = m_FilenameExtractionObserver.getFilename();
 		
-		final boolean removeFilename = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
+		final boolean removeFilename = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_RemoveFilename);
 		
 		final String outputError = callSytaxCheckerAndReturnStderrOutput(toolCommandError, filename);
@@ -136,10 +136,10 @@ public class SyntaxChecker implements IAnalysis {
 		}
 
 		
-		final boolean doSyntaxWarningCheck = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
+		final boolean doSyntaxWarningCheck = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_DoSyntaxWarningCheck);
 		if (doSyntaxWarningCheck) {
-			final String toolCommandWarnings = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
+			final String toolCommandWarnings = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 					.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
 			final String outputWarnings = callSytaxCheckerAndReturnStderrOutput(toolCommandWarnings, filename);
 			if (outputWarnings == null) {

@@ -31,7 +31,7 @@ import org.eclipse.jface.resource.StringConverter;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool.ModelQuery;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues.EdgeLabels;
 
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.pref
  * @author dietsch
  * 
  */
-public class JungPreferenceInitializer extends UltimatePreferenceInitializer {
+public class JungPreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

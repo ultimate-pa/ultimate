@@ -31,14 +31,14 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 
 /**
  * Initializes the preferences using {@link PreferenceItem}.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class PreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

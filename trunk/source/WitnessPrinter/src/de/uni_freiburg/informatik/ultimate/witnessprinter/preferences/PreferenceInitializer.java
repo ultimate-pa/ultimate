@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter.preferences;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.Activator;
 
 /**
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.Activator;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class PreferenceInitializer extends RcpPreferenceInitializer {
 
 	public enum WitnessVerifierType {
 		CPACHECKER
@@ -111,7 +111,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		@Override
 		public boolean isValid(Boolean value) {
 			if (value) {
-				UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+				RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 				return ups.getBoolean(LABEL_WITNESS_GEN) && ups.getBoolean(LABEL_WITNESS_WRITE);
 			} else {
 				return true;

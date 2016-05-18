@@ -109,7 +109,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
@@ -183,7 +183,7 @@ public class FunctionHandler {
 		procedures = new LinkedHashMap<String, Procedure>();
 		procedureToCFunctionType = new LinkedHashMap<>();
 		modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
-		m_CheckMemoryLeakAtEndOfMain = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
+		m_CheckMemoryLeakAtEndOfMain = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
 		functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}

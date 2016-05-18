@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -64,9 +64,9 @@ public class AssumeMerger extends BaseProductOptimizer {
 	@Override
 	protected void init(RootNode root, IUltimateServiceProvider services) {
 		mAssumesMerged = 0;
-		mRewriteNotEquals = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		mRewriteNotEquals = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
-		mUseSBE = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		mUseSBE = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_SBE);
 	}
 

@@ -48,7 +48,7 @@ import org.eclipse.swt.graphics.RGB;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues.EdgeLabels;
@@ -108,7 +108,7 @@ public class GraphProperties {
 	public static void setGraphProperties(final VisualizationViewer<VisualizationNode, VisualizationEdge> vv,
 			Graph<VisualizationNode, VisualizationEdge> graph, VisualizationNode rootNode,
 			final ArrayList<LinkedHashSet<Object>> errorTraces) {
-		UltimatePreferenceStore store = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		final Font font = vv.getFont();
 		final FontRenderContext frc = vv.getFontMetrics(font).getFontRenderContext();
 		Layout<VisualizationNode, VisualizationEdge> layout = vv.getGraphLayout();

@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -55,7 +55,7 @@ public class TAPreferences {
 	private final Concurrency m_Concurrency;
 	private final boolean m_SeperateViolationCheck = true;
 	private final HoareTripleChecks m_HoareTripleChecks;
-	private UltimatePreferenceStore m_Prefs;
+	private RcpPreferenceProvider m_Prefs;
 	private final HoareAnnotationPositions m_HoareAnnotationPositions;
 
 	public enum Artifact {
@@ -77,7 +77,7 @@ public class TAPreferences {
 
 	public TAPreferences() {
 
-		m_Prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		m_Prefs = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
 
 		m_Interprocedural = m_Prefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDUTAL);

@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.Never2Automaton;
@@ -192,7 +192,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 
 		mLogger.info("Using LTL specification from settings.");
-		String property = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		String property = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(PreferenceInitializer.LABEL_PPROPERTY);
 		return property.split("\n");
 	}

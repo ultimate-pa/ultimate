@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator.Activator;
 
 /**
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator.Act
  * @author dietsch
  * 
  */
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class PreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

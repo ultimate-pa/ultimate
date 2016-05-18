@@ -35,7 +35,7 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -72,7 +72,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 		mSymbolTable = symbolTable;
 		mLiteralCollectorFactory = literalCollectorFactory;
 
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		mOctDomainStateFactory = makeDomainStateFactory(ups);
 		mWideningOperatorFactory = makeWideningOperatorFactory(ups);
 		mPostOperatorFactory = makePostOperatorFactory(ups);
@@ -86,7 +86,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	 * @param ups Preferences
 	 * @return Factory for creating empty octagons
 	 */
-	private Supplier<OctDomainState> makeDomainStateFactory(final  UltimatePreferenceStore ups) {
+	private Supplier<OctDomainState> makeDomainStateFactory(final  RcpPreferenceProvider ups) {
 		final String settingLabel = OctPreferences.LOG_STRING_FORMAT;
 		final LogMessageFormatting settingValue = ups.getEnum(settingLabel, LogMessageFormatting.class);
 
@@ -117,7 +117,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	 * @return Factory for creating widening operators
 	 */
 	private Supplier<IAbstractStateBinaryOperator<OctDomainState>> makeWideningOperatorFactory(
-			final UltimatePreferenceStore ups) {
+			final RcpPreferenceProvider ups) {
 		final String settingLabel = OctPreferences.WIDENING_OPERATOR;
 		final WideningOperator settingValue = ups.getEnum(settingLabel, WideningOperator.class);
 
@@ -149,7 +149,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	 * @return Factory for creating widening operators
 	 */
 	private Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> makePostOperatorFactory(
-			final UltimatePreferenceStore ups) {
+			final RcpPreferenceProvider ups) {
 		final int maxParallelStates =
 				ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 		final boolean fallbackAssignIntervalProjection =

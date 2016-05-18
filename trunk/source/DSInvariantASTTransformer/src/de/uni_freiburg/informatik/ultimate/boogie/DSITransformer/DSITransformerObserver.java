@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * This class transforms the procedures in the input AST into a single procedure
@@ -329,7 +329,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		procedures = new HashMap<String, ProcedureContainer>();
 
 		// Retrieve settings from the Preferences Page
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(
 				Activator.s_PLUGIN_ID);
 
 		trimAfterWrap = prefs.getBoolean(PreferenceInitializer.LABEL_TRIMWRAP,

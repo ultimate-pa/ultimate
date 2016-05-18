@@ -27,14 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.Activator;
 
 /**
  * @author dietsch
  * 
  */
-public class ReachingDefinitionsPreferenceInitializer extends UltimatePreferenceInitializer {
+public class ReachingDefinitionsPreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

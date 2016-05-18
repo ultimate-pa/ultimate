@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingSta
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
@@ -94,7 +94,7 @@ public class MinModelConverter {
 		RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
 		ModelUtils.copyAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
-		boolean simplify = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		boolean simplify = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 		mConvertVisitor = new ConversionVisitor(mBoogie2SMT, root, getRatingHeuristic(), mServices, simplify);
 		for (RCFGEdge edge : root.getOutgoingEdges()) {
@@ -125,7 +125,7 @@ public class MinModelConverter {
 	 * @return gets the rating boundary
 	 */
 	private IRatingHeuristic getRatingHeuristic() {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
 		String prefValue = prefs.getString(PreferenceInitializer.LABEL_RATINGBOUND);
 		RatingStrategy strategy = prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class);
 		// if there is no boundary value given, we do Large Block Encoding

@@ -32,7 +32,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.ojalgo.OjAlgoSolver;
 
@@ -53,7 +53,7 @@ public class LpSolverFactory {
 
 	public LpSolverFactory(ILogger logger) {
 		mLogger = logger;
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		final String type = ups.getString(LpSolverPreferences.LABEL_LPSOLVER_NUMBER_TYPE);
 
 		if (type.equals(LpSolverPreferences.VALUE_NUMBER_TYPE_BIGDECIMAL)) {

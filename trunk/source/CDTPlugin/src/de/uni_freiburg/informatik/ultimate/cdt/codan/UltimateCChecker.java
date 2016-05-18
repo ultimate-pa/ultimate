@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * @author Markus Lindenmann
@@ -154,7 +154,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	private String getToolchainPath() {
 		// obtain selected toolchain from preferences
-		String selectedToolchain = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		String selectedToolchain = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(PreferencePage.TOOLCHAIN_SELECTION_TEXT);
 
 		File tc = mToolchainFiles.get(selectedToolchain);

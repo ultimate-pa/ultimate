@@ -35,7 +35,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * All items from the plug-in's preferences.
@@ -103,11 +103,11 @@ public enum PreferenceItem {
 	}
 	
 	public Boolean getBooleanValue() {
-		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getBoolean(mName);
+		return new RcpPreferenceProvider(Activator.PLUGIN_ID).getBoolean(mName);
 	}
 	
 	public String getStringValue() {
-		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getString(mName);
+		return new RcpPreferenceProvider(Activator.PLUGIN_ID).getString(mName);
 	}
 	
 	/** @return Tokens from {@link #getStringValue()}, which where separated by whitespace. */
@@ -121,7 +121,7 @@ public enum PreferenceItem {
 	}
 	
 	public UserListType getUserListTypeValue() {
-		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getEnum(mName, UserListType.class);
+		return new RcpPreferenceProvider(Activator.PLUGIN_ID).getEnum(mName, UserListType.class);
 	}
 
 	public UltimatePreferenceItem<?> newUltimatePreferenceItem() {

@@ -24,14 +24,15 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.core.preferences;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.osgi.service.prefs.BackingStoreException;
 
-import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 /**
@@ -41,17 +42,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
  * Clients should derive from this class and contribute to the extension point
  * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml of CoreRCP for an example)
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public abstract class UltimatePreferenceInitializer extends AbstractPreferenceInitializer implements IPreferenceInitializer {
+public abstract class RcpPreferenceInitializer extends AbstractPreferenceInitializer implements IPreferenceInitializer {
 
 	private final BaseUltimatePreferenceItem[] mPreferenceDescriptors;
-	private final UltimatePreferenceStore mPreferenceStore;
+	private final RcpPreferenceProvider mPreferenceStore;
 
-	public UltimatePreferenceInitializer() {
+	public RcpPreferenceInitializer() {
 		mPreferenceDescriptors = initDefaultPreferences();
-		mPreferenceStore = new UltimatePreferenceStore(getPlugID());
+		mPreferenceStore = new RcpPreferenceProvider(getPlugID());
 	}
 
 	@Override
@@ -74,7 +75,7 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 		}
 
 		for (BaseUltimatePreferenceItem prefItem : BaseUltimatePreferenceItem
-		        .constructFlattenedList(mPreferenceDescriptors)) {
+				.constructFlattenedList(mPreferenceDescriptors)) {
 			if (prefItem instanceof UltimatePreferenceItem) {
 				UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
 				String label = item.getLabel();
@@ -104,7 +105,7 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 					break;
 				default:
 					throw new UnsupportedOperationException(
-					        "You need to implement the new enum type \"" + item.getType() + "\" here");
+							"You need to implement the new enum type \"" + item.getType() + "\" here");
 				}
 			}
 		}

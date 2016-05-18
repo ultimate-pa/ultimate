@@ -32,7 +32,7 @@ import java.util.LinkedHashMap;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.SIGNEDNESS;
 
@@ -74,7 +74,7 @@ public class TypeSizes {
 			new LinkedHashMap<>();
 	
 
-	public TypeSizes(UltimatePreferenceStore ups) {
+	public TypeSizes(RcpPreferenceProvider ups) {
 		m_UseFixedTypeSizes = 
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		sizeOfVoidType = 1;

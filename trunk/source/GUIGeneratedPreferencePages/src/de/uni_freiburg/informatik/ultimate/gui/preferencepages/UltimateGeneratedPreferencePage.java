@@ -52,7 +52,7 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.gui.customeditors.MultiLineTextFieldEditor;
 
 /**
@@ -73,7 +73,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 		mPluginID = pluginID;
 		mDefaultPreferences = preferences;
 		mTitle = title;
-		mPreferenceStore = new ScopedPreferenceStore(new UltimatePreferenceStore(mPluginID).getScopeContext(),
+		mPreferenceStore = new ScopedPreferenceStore(new RcpPreferenceProvider(mPluginID).getScopeContext(),
 				mPluginID);
 		mCheckedFields = new HashMap<FieldEditor, UltimatePreferenceItem<?>>();
 		setPreferenceStore(mPreferenceStore);

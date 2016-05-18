@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbui
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -13,13 +13,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuil
 public class HCGBuilderHelper {
 	public static Script constructAndInitializeBackendSmtSolver(IUltimateServiceProvider services, IToolchainStorage storage,
 			String filename) {
-		final SolverMode solverMode = (new UltimatePreferenceStore(HornClauseGraphBuilder.s_PLUGIN_ID))
+		final SolverMode solverMode = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
 				.getEnum(HornClauseGraphBuilderPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		
-		final String commandExternalSolver = (new UltimatePreferenceStore(HornClauseGraphBuilder.s_PLUGIN_ID))
+		final String commandExternalSolver = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
 				.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverCommand);
 		
-		final String logicForExternalSolver = (new UltimatePreferenceStore(HornClauseGraphBuilder.s_PLUGIN_ID))
+		final String logicForExternalSolver = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
 				.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverLogic);
 
 		final Settings solverSettings = SolverBuilder.constructSolverSettings(

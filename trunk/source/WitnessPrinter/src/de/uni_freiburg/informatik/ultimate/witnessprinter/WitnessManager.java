@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
@@ -89,7 +89,7 @@ public class WitnessManager {
 	 */
 	public void run(final Collection<Supplier<Triple<IResult, String, String>>> funsResultSupplier)
 			throws IOException, InterruptedException {
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 
 		int cexNo = 0;
 		String suffix = null;
@@ -185,7 +185,7 @@ public class WitnessManager {
 	private boolean checkWitness(String svcompWitnessFile, IResult cex, String originalFile, String svcompWitness)
 			throws IOException, InterruptedException {
 		mLogger.info("Verifying witness for CEX: " + cex.getShortDescription());
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		final PreferenceInitializer.WitnessVerifierType type = ups.getEnum(PreferenceInitializer.LABEL_WITNESS_VERIFIER,
 				PreferenceInitializer.WitnessVerifierType.class);
 		final String command = ups.getString(PreferenceInitializer.LABEL_WITNESS_VERIFIER_COMMAND);
@@ -207,7 +207,7 @@ public class WitnessManager {
 					WitnessVerificationStatus.VERIFIED);
 			return false;
 		}
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		int timeoutInS = ups.getInt(PreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
 
 		final String[] cmdArray = makeCPACheckerCommand(command, svcompWitnessFile,

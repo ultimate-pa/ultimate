@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
  * @see LassoRankerPreferences
  * @author Jan Leike
  */
-public class PreferencesInitializer extends UltimatePreferenceInitializer {
+public class PreferencesInitializer extends RcpPreferenceInitializer {
 	/*
 	 * Default values for GUI-only preferences
 	 */
@@ -260,8 +260,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		// Get default preferences
 		LassoRankerPreferences preferences = new LassoRankerPreferences();
 		
-		UltimatePreferenceStore store =
-				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider store =
+				new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
 		preferences.enable_partitioneer = store.getBoolean(
 				LABEL_enable_partitioneer
 		);
@@ -293,8 +293,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		// Get default preferences
 		TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
 		
-		UltimatePreferenceStore store =
-				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider store =
+				new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
 		settings.analysis =
 				store.getEnum(LABEL_termination_analysis,
 						AnalysisType.class);
@@ -325,8 +325,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		NonTerminationAnalysisSettings settings =
 				new NonTerminationAnalysisSettings();
 		
-		UltimatePreferenceStore store =
-				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider store =
+				new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
 		settings.analysis =
 				store.getEnum(LABEL_nontermination_analysis,
 						AnalysisType.class);

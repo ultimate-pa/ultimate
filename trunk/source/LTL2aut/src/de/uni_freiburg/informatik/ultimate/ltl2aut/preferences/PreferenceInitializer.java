@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.Activator;
 
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class PreferenceInitializer extends RcpPreferenceInitializer {
 
 	/*
 	 * labels for the different preferencess
@@ -76,7 +76,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	public static boolean readPropertyFromFile() {
-		return new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		return new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE);
 	}
 }

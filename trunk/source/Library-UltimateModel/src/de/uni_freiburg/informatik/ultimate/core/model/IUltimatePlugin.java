@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.model;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+
 /**
  * An IUltimatePlugin describes the most basic interface for all plugins that
  * together form the Ultimate ecosystem.

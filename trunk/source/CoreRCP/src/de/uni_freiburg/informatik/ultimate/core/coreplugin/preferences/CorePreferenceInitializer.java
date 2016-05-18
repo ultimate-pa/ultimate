@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 
 /**
  * CorePreferenceInitializer implements UltimatePreferenceStore for UltimateCore. It initializes the default values for
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
+public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

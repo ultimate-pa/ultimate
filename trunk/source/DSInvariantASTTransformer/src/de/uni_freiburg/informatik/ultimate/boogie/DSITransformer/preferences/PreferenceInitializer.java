@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences;
 import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 
 /**
  * 
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
  * @author Dietsch
  * 
  */
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class PreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

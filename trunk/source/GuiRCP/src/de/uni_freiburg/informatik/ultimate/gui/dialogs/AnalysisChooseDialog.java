@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.ITool;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
@@ -128,7 +128,7 @@ public class AnalysisChooseDialog extends Dialog {
 			String tDir = System.getProperty("java.io.tmpdir");
 			File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
 			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), resultChain.getToolchain());
-			new UltimatePreferenceStore(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
+			new RcpPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
 					tmpToolchain.getAbsolutePath());
 			mLogger.info("Saved custom toolchain to " + tmpToolchain.getAbsolutePath());
 
@@ -290,7 +290,7 @@ public class AnalysisChooseDialog extends Dialog {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
 
-				UltimatePreferenceStore prefs = new UltimatePreferenceStore(GuiController.PLUGIN_ID);
+				RcpPreferenceProvider prefs = new RcpPreferenceProvider(GuiController.PLUGIN_ID);
 				String filterpath = prefs.getString(IPreferencesKeys.LASTTOOLCHAINPATH, null);
 
 				String[] extensions = new String[1];

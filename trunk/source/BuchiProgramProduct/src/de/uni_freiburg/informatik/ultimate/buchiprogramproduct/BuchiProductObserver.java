@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -90,7 +90,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		reportSizeBenchmark("Initial RCFG", mRcfg);
 
 		mLogger.info("Beginning generation of product automaton");
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		try {
 			LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
 			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices,
@@ -139,7 +139,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return;
 	}
 
-	private boolean optimizeRemoveSinkStates(UltimatePreferenceStore ups, boolean continueOptimization) {
+	private boolean optimizeRemoveSinkStates(RcpPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
 			RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices, mStorage);
 			mProduct = rss.getResult();
@@ -148,7 +148,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private boolean optimizeRemoveInfeasibleEdges(UltimatePreferenceStore ups, boolean continueOptimization) {
+	private boolean optimizeRemoveInfeasibleEdges(RcpPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
 			RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices, mStorage);
 			mProduct = opt1.getResult();
@@ -157,7 +157,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private boolean optimizeMaximizeFinalStates(UltimatePreferenceStore ups, boolean continueOptimization) {
+	private boolean optimizeMaximizeFinalStates(RcpPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
 			MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices, mStorage);
 			mProduct = opt2.getResult();
@@ -166,7 +166,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private boolean optimizeMinimizeStates(UltimatePreferenceStore ups, boolean continueOptimization) {
+	private boolean optimizeMinimizeStates(RcpPreferenceProvider ups, boolean continueOptimization) {
 		MinimizeStates minimizeStates = ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES,
 				MinimizeStates.class);
 
@@ -192,7 +192,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return continueOptimization;
 	}
 
-	private boolean optimizeSimplifyAssumes(UltimatePreferenceStore ups, boolean continueOptimization) {
+	private boolean optimizeSimplifyAssumes(RcpPreferenceProvider ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
 			BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices, mStorage);
 			mProduct = opt4.getResult();

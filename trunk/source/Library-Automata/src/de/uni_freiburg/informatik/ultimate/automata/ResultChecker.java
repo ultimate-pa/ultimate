@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 @Deprecated
 public class ResultChecker<LETTER,STATE> {
@@ -328,7 +328,7 @@ public class ResultChecker<LETTER,STATE> {
     	String workingDirectory = System.getProperty("user.dir");
     	
 		IScopeContext scope = InstanceScope.INSTANCE;
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(LibraryIdentifiers.PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(LibraryIdentifiers.PLUGIN_ID);
 //		boolean writeToFile = prefs.getBoolean(PreferenceInitializer.Name_Write);
 //		if (writeToFile) {
 			String filename = workingDirectory + File.separator+filenamePrefix + getDateTime() + ".ats";

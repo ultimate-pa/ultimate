@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
@@ -82,7 +82,7 @@ public abstract class Dispatcher {
 
 	protected final ILogger mLogger;
 
-	public UltimatePreferenceStore mPreferences;
+	public RcpPreferenceProvider mPreferences;
 
 	/**
 	 * The side effect handler.
@@ -131,7 +131,7 @@ public abstract class Dispatcher {
 		this.backtranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
-		mPreferences = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		mPreferences = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		m_TypeSizes = new TypeSizes(mPreferences);
 		m_TranslationSettings = new TranslationSettings(mPreferences);
 	}
@@ -285,7 +285,7 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void warn(ILocation loc, String longDescription) {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		boolean reportUnsoundnessWarning = prefs
 				.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
 		if (reportUnsoundnessWarning) {
@@ -303,7 +303,7 @@ public abstract class Dispatcher {
 	 * @return the checked method's name.
 	 */
 	public String getCheckedMethod() {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		String checkMethod = SFO.EMPTY;
 		try {
 			checkMethod = prefs.getString(CACSLPreferenceInitializer.LABEL_MAINPROC);
@@ -344,7 +344,7 @@ public abstract class Dispatcher {
 	public class TranslationSettings {
 		private final POINTER_CHECKMODE m_DivisionByZero;
 
-		public TranslationSettings(UltimatePreferenceStore preferences) {
+		public TranslationSettings(RcpPreferenceProvider preferences) {
 			m_DivisionByZero = 
 					preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO, POINTER_CHECKMODE.class);
 		}

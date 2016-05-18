@@ -58,14 +58,14 @@ import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
 
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
-import de.uni_freiburg.informatik.ultimate.core.model.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * @author Markus Lindenmann
@@ -143,7 +143,7 @@ public class CDTParser implements ISource {
 
 		FileContent fContent = FileContent.createForExternalFileLocation(file.getAbsolutePath());
 
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		String path = prefs.getString(PreferenceInitializer.INCLUDE_PATHS);
 		String[] includePaths;
 		IncludeFileContentProvider includeProvider;

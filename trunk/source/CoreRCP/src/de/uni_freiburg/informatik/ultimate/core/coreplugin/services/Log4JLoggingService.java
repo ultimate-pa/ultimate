@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
 /**
  * UltimateLoggers
@@ -78,7 +78,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 	private static final String LOGGER_NAME_TOOLS = "tools";
 	private static final String STORE_KEY = "LoggingService";
 
-	private UltimatePreferenceStore mPreferenceStore;
+	private RcpPreferenceProvider mPreferenceStore;
 	private List<String> mLiveLoggerIds;
 	private ConsoleAppender mConsoleAppender;
 	private IPreferenceChangeListener mRefreshingListener;
@@ -90,7 +90,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	private Log4JLoggingService() {
 		mLogFiles = new HashMap<String, FileAppender>();
-		mPreferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		mPreferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		mAdditionalAppenders = new HashSet<Appender>();
 
 		// we remove the initial log4j console appender because we want to

@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.BinaryOperator;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.BoolLiteral;
@@ -106,7 +106,7 @@ public class Never2Automaton {
 		mIRS = irs;
 		mCodeblockFactory = cbf;
 
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(
+		final RcpPreferenceProvider ups = new RcpPreferenceProvider(
 				de.uni_freiburg.informatik.ultimate.ltl2aut.Activator.PLUGIN_ID);
 		mUseSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_SBE);
 		mRewriteAssumeDuringSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_REWRITEASSUME);
