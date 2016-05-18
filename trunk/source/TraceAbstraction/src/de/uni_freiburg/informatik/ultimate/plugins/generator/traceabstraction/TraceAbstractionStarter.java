@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -161,7 +162,7 @@ public class TraceAbstractionStarter {
 		m_Logger.debug("Continue processing: " + m_Services.getProgressMonitorService().continueProcessing());
 		if (taPrefs.computeHoareAnnotation() && m_OverallResult != Result.TIMEOUT
 				&& m_Services.getProgressMonitorService().continueProcessing()) {
-			assert (smtManager.cfgInductive(rcfgRootNode));
+			assert (new HoareAnnotationChecker(m_Services, rcfgRootNode, smtManager).isInductive());
 
 			final IBacktranslationService backTranslatorService = m_Services.getBacktranslationService();
 			final Term trueterm = smtManager.getScript().term("true");
