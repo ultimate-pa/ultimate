@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
@@ -798,9 +797,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	public IPredicate applyConfiguration(
 			Collection<Collection<LinearPatternBase>> pattern) {
 		Term term = getValuatedTermForPattern(pattern);
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term,
-				smtManager.getBoogie2Smt());
-		return predicateUnifier.getOrConstructPredicate(tvp);
+		return predicateUnifier.getOrConstructPredicate(term);
 	}
 
 }

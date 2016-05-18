@@ -29,12 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -43,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
@@ -83,8 +80,7 @@ public class DivisibilityPredicateGenerator {
 			for (MultiDimensionalSelect mds : mdsList) {
 				if (isLengthArray(mds.getArray())) {
 					Term term = getDivisibilityTerm(mds.getSelectTerm(), Integer.valueOf(4));
-					TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, boogie2smt);
-					IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(tvp);
+					IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(term);
 					result.add(unified);
 				}
 			}
@@ -92,12 +88,7 @@ public class DivisibilityPredicateGenerator {
 		}
 		for (Entry<BoogieVar, Integer> entry  : offsetVar2size.entrySet()) {
 			Term term = getDivisibilityTerm(entry.getKey().getTermVariable(), entry.getValue());
-			Set<BoogieVar> vars = Collections.singleton(entry.getKey());
-			String bvProc = entry.getKey().getProcedure();
-			String[] procs = bvProc == null ? new String[0] : new String[]{bvProc};
-//			Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
-//			TermVarsProc tvp = new TermVarsProc(term, vars , procedures , closedTerm);
-			IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(term, vars, procs);
+			IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(term);
 			result.add(unified);
 		}
 		return result;

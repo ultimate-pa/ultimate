@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BuchiPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -109,7 +109,8 @@ public class PredicateFactory {
 		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
-	public PredicateWithHistory newPredicateWithHistory(ProgramPoint pp, TermVarsProc tvp, Map<Integer, Term> history) {
+	public PredicateWithHistory newPredicateWithHistory(ProgramPoint pp, Term term, Map<Integer, Term> history) {
+		final TermVarsProc tvp = constructTermVarsProc(term);
 		PredicateWithHistory pred = new PredicateWithHistory(pp, m_SerialNumber++, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), history);
 		return pred;
@@ -119,23 +120,40 @@ public class PredicateFactory {
 		return pred.getFormula() == m_DontCareTerm;
 	}
 	
-	public boolean isDontCare(TermVarsProc tvp) {
-		return tvp.getFormula() == m_DontCareTerm;
+	public boolean isDontCare(Term term) {
+		return term == m_DontCareTerm;
 	}
 
-	public SPredicate newSPredicate(ProgramPoint pp, TermVarsProc termVarsProc) {
+	public SPredicate newSPredicate(ProgramPoint pp, final Term term) {
+		final TermVarsProc termVarsProc = constructTermVarsProc(term);
+		return newSPredicate(pp, termVarsProc);
+	}
+	
+	private SPredicate newSPredicate(ProgramPoint pp, final TermVarsProc termVarsProc) {
 		SPredicate pred = new SPredicate(pp, m_SerialNumber++, termVarsProc.getProcedures(), termVarsProc.getFormula(),
 				termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return pred;
 	}
 
-	public BasicPredicate newPredicate(TermVarsProc termVarsProc) {
+	public BasicPredicate newPredicate(final Term term) {
+		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		BasicPredicate predicate = new BasicPredicate(m_SerialNumber++, termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
 
-	public MLPredicate newMLPredicate(ProgramPoint[] programPoints, TermVarsProc termVarsProc) {
+	private TermVarsProc constructTermVarsProc(final Term term) {
+		final TermVarsProc termVarsProc;
+		if (term == m_DontCareTerm) {
+			termVarsProc = constructDontCare();
+		} else {
+			termVarsProc = TermVarsProc.computeTermVarsProc(term, m_Boogie2Smt);
+		}
+		return termVarsProc;
+	}
+
+	public MLPredicate newMLPredicate(ProgramPoint[] programPoints, Term term) {
+		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		MLPredicate predicate = new MLPredicate(programPoints, m_SerialNumber++, termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
@@ -145,17 +163,7 @@ public class PredicateFactory {
 		return new ProdState(m_SerialNumber++, programPoints, m_Script.term("true"),new HashSet<BoogieVar>(0));
 	}
 	
-	public TermVarsProc constructTrue() {
-		final Term trueTerm = m_Script.term("true");
-		return new TermVarsProc(trueTerm, EMPTY_VARS, NO_PROCEDURE, trueTerm);
-	}
-	
-	public TermVarsProc constructFalse() {
-		final Term trueTerm = m_Script.term("false");
-		return new TermVarsProc(trueTerm, EMPTY_VARS, NO_PROCEDURE, trueTerm);
-	}
-	
-	public TermVarsProc constructDontCare() {
+	private TermVarsProc constructDontCare() {
 		return new TermVarsProc(m_DontCareTerm, EMPTY_VARS, NO_PROCEDURE, m_DontCareTerm);
 	}
 
@@ -189,7 +197,8 @@ public class PredicateFactory {
 	}
 
 	public IPredicate newBuchiPredicate(Set<IPredicate> inputPreds) {
-		TermVarsProc tvp = and(inputPreds.toArray(new IPredicate[0]));
+		final Term conjunction = and(inputPreds);
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, m_Boogie2Smt);
 		BuchiPredicate buchi = new BuchiPredicate(m_SerialNumber++, tvp.getProcedures(), tvp.getFormula(),
 				tvp.getVars(), tvp.getClosedFormula(), inputPreds);
 		return buchi;
@@ -197,56 +206,45 @@ public class PredicateFactory {
 	
 	
 	
-	public TermVarsProc and(IPredicate... preds) {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
-		Set<String> procs = new HashSet<String>();
+	public Term and(IPredicate... preds) {
+		return and(Arrays.asList(preds));
+	}
+	
+	public Term and(Collection<IPredicate> preds) {
 		Term term = m_Script.term("true");
 		for (IPredicate p : preds) {
 			if (isDontCare(p)) {
-				return new TermVarsProc(m_DontCareTerm, EMPTY_VARS, NO_PROCEDURE, m_DontCareTerm);
+				return m_DontCareTerm;
 			}
-			vars.addAll(p.getVars());
-			procs.addAll(Arrays.asList(p.getProcedures()));
 			term = Util.and(m_Script, term, p.getFormula());
 		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
-		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
+		return term;
 	}
 	
-	public TermVarsProc or(IPredicate... preds) {
-		return or(false, preds);
-	}
-	
-	public TermVarsProc orWithSimplifyDDA(IPredicate... preds) {
-		return or(true, preds);
+	public Term or(boolean withSimplifyDDA, IPredicate... preds) {
+		return or(withSimplifyDDA, Arrays.asList(preds));
 	}
 
-	public TermVarsProc or(boolean withSimplifyDDA, IPredicate... preds) {
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
-		Set<String> procs = new HashSet<String>();
+	public Term or(boolean withSimplifyDDA, Collection<IPredicate> preds) {
 		Term term = m_Script.term("false");
 		for (IPredicate p : preds) {
 			if (isDontCare(p)) {
-				return new TermVarsProc(m_DontCareTerm, EMPTY_VARS, NO_PROCEDURE, m_DontCareTerm);
+				return m_DontCareTerm;
 			}
-			vars.addAll(p.getVars());
-			procs.addAll(Arrays.asList(p.getProcedures()));
 			term = Util.or(m_Script, term, p.getFormula());
 		}
 		if (withSimplifyDDA) {
 			term = SmtUtils.simplify(m_Script, term, m_Services);
 		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
-		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
+		return term;
 	}
 
-	public TermVarsProc not(IPredicate p) {
+	public Term not(IPredicate p) {
 		if (isDontCare(p)) {
-			return new TermVarsProc(m_DontCareTerm, EMPTY_VARS, NO_PROCEDURE, m_DontCareTerm);
+			return m_DontCareTerm;
 		}
 		Term term = SmtUtils.not(m_Script, p.getFormula());
-		Term closedTerm = SmtUtils.not(m_Script, p.getClosedFormula());
-		return new TermVarsProc(term, p.getVars(), p.getProcedures(), closedTerm);
+		return term;
 	}
 	
 

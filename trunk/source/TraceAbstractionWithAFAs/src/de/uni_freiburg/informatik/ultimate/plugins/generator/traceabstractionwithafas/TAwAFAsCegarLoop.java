@@ -34,23 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_MergedUnion;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.BooleanExpression;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -61,13 +44,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
@@ -102,10 +84,9 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
 		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
-		TermVarsProc trueTvp = smtManager.getPredicateFactory().constructTrue();
-		TermVarsProc falseTvp = smtManager.getPredicateFactory().constructFalse();
-		m_PredicateUnifier = new PredicateUnifier(services, smtManager, smtManager.getPredicateFactory().newPredicate(trueTvp),
-				smtManager.getPredicateFactory().newPredicate(falseTvp));
+		m_PredicateUnifier = new PredicateUnifier(services, smtManager, 
+				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("true")),
+				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("false")));
 	}
 
 	@Override
@@ -383,8 +364,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			if (result[resultPos] == null) {
 				m_sfmv.clearVarsAndProc();
 				Term withoutIndices = const2RepTvSubst.transform(withIndices);
-				TermVarsProc tvp = TermVarsProc.computeTermVarsProc(withoutIndices, m_SmtManager.getBoogie2Smt());
-				result[resultPos] = m_PredicateUnifier.getOrConstructPredicate(tvp);
+				result[resultPos] = m_PredicateUnifier.getOrConstructPredicate(withoutIndices);
 				withIndices2Predicate.put(withIndices, result[resultPos]);
 			}
 		}
@@ -600,7 +580,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 		}
 		if(bex.getNextConjunctExpression() != null){
-			pred = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().or(pred, 
+			pred = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().or(false, pred, 
 					bexToPredicate(bex.getNextConjunctExpression(), states)));
 		}
 		return pred;

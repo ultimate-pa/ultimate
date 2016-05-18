@@ -247,9 +247,9 @@ public class PredicateUtils {
 		return constant;
 	}
 
-	public static LBool isInductiveHelper(Boogie2SMT boogie2smt, IPredicate precond, IPredicate postcond,
+	public static LBool isInductiveHelper(Script script, IPredicate precond, IPredicate postcond,
 			TransFormula tf, Set<BoogieVar> modifiableGlobalsBefore, Set<BoogieVar> modifiableGlobalsAfter) {
-		boogie2smt.getScript().push(1);
+		script.push(1);
 
 		Set<BoogieVar> empty = Collections.emptySet();
 		{
@@ -266,11 +266,11 @@ public class PredicateUtils {
 			List<Term> positiveConjuncts = new ArrayList<Term>();
 			for (BoogieNonOldVar bv : unprimedOldVarEqualities) {
 				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
-						boogie2smt.getScript()));
+						script));
 			}
 			for (BoogieNonOldVar bv : primedOldVarEqualities) {
 				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
-						boogie2smt.getScript()));
+						script));
 			}
 			Term tfRenamed = tf.getClosedFormula();
 			assert tfRenamed != null;
@@ -278,8 +278,8 @@ public class PredicateUtils {
 			assert precondRenamed != null;
 			positiveConjuncts.add(precondRenamed);
 			positiveConjuncts.add(tfRenamed);
-			Term positive = SmtUtils.and(boogie2smt.getScript(), positiveConjuncts);
-			boogie2smt.getScript().assertTerm(positive);
+			Term positive = SmtUtils.and(script, positiveConjuncts);
+			script.assertTerm(positive);
 		}
 		{
 			Set<BoogieNonOldVar> unprimedOldVarEqualities = new HashSet<>();
@@ -289,20 +289,20 @@ public class PredicateUtils {
 					unprimedOldVarEqualities, primedOldVarEqualities);
 			for (BoogieNonOldVar bv : unprimedOldVarEqualities) {
 				negativeConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
-						boogie2smt.getScript()));
+						script));
 			}
 			for (BoogieNonOldVar bv : primedOldVarEqualities) {
 				negativeConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
-						boogie2smt.getScript()));
+						script));
 			}
-			Term postcondRenamed = rename(boogie2smt.getScript(), postcond, tf.getAssignedVars());
+			Term postcondRenamed = rename(script, postcond, tf.getAssignedVars());
 			negativeConjuncts.add(postcondRenamed);
-			Term negative = SmtUtils.and(boogie2smt.getScript(), negativeConjuncts);
-			boogie2smt.getScript().assertTerm(SmtUtils.not(boogie2smt.getScript(), negative));
+			Term negative = SmtUtils.and(script, negativeConjuncts);
+			script.assertTerm(SmtUtils.not(script, negative));
 		}
-		LBool result = boogie2smt.getScript().checkSat();
+		LBool result = script.checkSat();
 
-		boogie2smt.getScript().pop(1);
+		script.pop(1);
 		return result;
 	}
 

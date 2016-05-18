@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -557,8 +556,7 @@ public class NestedInterpolantsBuilder {
 							m_Services, m_Logger, m_SmtManagerPredicates.getScript(), 
 							m_SmtManagerPredicates.getVariableManager(),
 							withoutIndices);
-					TermVarsProc tvp = TermVarsProc.computeTermVarsProc(lessQuantifiers, m_SmtManagerPredicates.getBoogie2Smt());
-					result[resultPos] = m_PredicateBuilder.getOrConstructPredicate(tvp);
+					result[resultPos] = m_PredicateBuilder.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
 			} else {

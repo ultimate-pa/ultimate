@@ -234,7 +234,7 @@ public class ImpulseChecker extends CodeChecker {
             // TODO: Handle the false predicate properly.
 			//if (clones[i].getPredicate().toString().endsWith("false"))
 			IPredicate annotation = clones[i].getPredicate();
-			if (m_predicateUnifier.getOrConstructPredicate(annotation.getFormula(), annotation.getVars(), annotation.getProcedures())
+			if (m_predicateUnifier.getOrConstructPredicate(annotation.getFormula())
 		        .equals(m_predicateUnifier.getFalsePredicate()))
 				clones[i].isolateNode();
 		}

@@ -12,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -63,9 +62,7 @@ public class AbstractInterpretationAutomatonGenerator {
 			if (term == null) {
 				continue;
 			}
-
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mSmtManager.getBoogie2Smt());
-			final IPredicate newPred = predicateUnifier.getOrConstructPredicate(tvp);
+			final IPredicate newPred = predicateUnifier.getOrConstructPredicate(term);
 			if (!predicates.add(newPred)) {
 				continue;
 			}

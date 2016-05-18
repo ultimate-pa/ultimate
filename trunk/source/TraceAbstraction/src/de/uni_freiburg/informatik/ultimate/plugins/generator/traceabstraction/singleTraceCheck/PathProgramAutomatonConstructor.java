@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -102,8 +102,8 @@ public class PathProgramAutomatonConstructor {
 		tempProgramPoint = (ProgramPoint) path.getSymbol(0).getSource();
 		
 		// Add the initial state
-		TermVarsProc trueTvp = smtManager.getPredicateFactory().constructTrue();
-		SPredicate initialState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTvp);
+		final Term trueTerm = smtManager.getScript().term("true");
+		SPredicate initialState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTerm);
 		pathPA.addState(true, false, initialState);
 		programPointToState.put(tempProgramPoint, initialState);
 		m_PositionsToStates.add(0, initialState);
@@ -112,7 +112,7 @@ public class PathProgramAutomatonConstructor {
 		for (int i = 0; i < path.length(); i++) {
 			tempProgramPoint = (ProgramPoint) path.getSymbol(i).getTarget();
 			if (!programPointToState.containsKey(tempProgramPoint)) {
-				SPredicate newState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTvp);
+				SPredicate newState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTerm);
 				programPointToState.put(tempProgramPoint, newState);
 				arrOfProgPoints[i] = (ProgramPoint) path.getSymbol(i).getTarget();
 				if (i + 1 == path.length()) {

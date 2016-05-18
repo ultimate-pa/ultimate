@@ -249,7 +249,7 @@ public class ElimStore3 {
 		intermediateResult = subst.transform(intermediateResult);
 		
 		if (writtenFrom == null && Arrays.asList(intermediateResult.getFreeVars()).contains(eliminatee)) {
-			throw new AssertionError("var is still there " + eliminatee + " term size " + (new DagSizePrinter(term)));
+			throw new AssertionError("var is still there " + eliminatee + "  quantifier " + quantifier + "  term size " + (new DagSizePrinter(term)) + "   " + term);
 		}
 		if (write) {
 			Term a_heir;

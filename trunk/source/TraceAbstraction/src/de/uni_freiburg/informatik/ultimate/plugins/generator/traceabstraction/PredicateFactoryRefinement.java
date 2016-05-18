@@ -34,7 +34,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -73,7 +72,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		if (p1 instanceof IMLPredicate) {
 //			assert m_SmtManager.isDontCare(p2);
 			assert !m_Pref.computeHoareAnnotation();
-			TermVarsProc dontcare = m_SmtManager.getPredicateFactory().constructDontCare();
+			final Term dontcare = m_SmtManager.getPredicateFactory().getDontCareTerm();
 			return m_SmtManager.getPredicateFactory().newMLPredicate(((IMLPredicate) p1).getProgramPoints(), dontcare);
 		}
 		
@@ -84,7 +83,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		if (omitComputationOfHoareAnnotation(pp, p1, p2)) {
 			return m_SmtManager.getPredicateFactory().newDontCarePredicate(pp);
 		}
-		TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(p1, p2);
+		Term conjunction = m_SmtManager.getPredicateFactory().and(p1, p2);
 		IPredicate result;
 		if (s_DebugComputeHistory) {
 			assert (p1 instanceof PredicateWithHistory);
@@ -92,9 +91,9 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 					((PredicateWithHistory) p1).getCopyOfHistory();
 				history.put(m_Iteration,p2.getFormula());
 			result = m_SmtManager.getPredicateFactory().newPredicateWithHistory(
-					pp, tvp, history);
+					pp, conjunction, history);
 		} else {
-			result = m_SmtManager.getPredicateFactory().newSPredicate(pp, tvp);
+			result = m_SmtManager.getPredicateFactory().newSPredicate(pp, conjunction);
 		}
 		
 		if (m_MaintainHoareAnnotationFragments) {
@@ -133,26 +132,21 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 				assert false : "minimize empty set???";
 			return m_SmtManager.getPredicateFactory().newDontCarePredicate(pp);
 			}
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().orWithSimplifyDDA(
-					states.toArray(new IPredicate[0]));
-			if (m_SmtManager.getPredicateFactory().isDontCare(tvp)) {
+			final Term disjuntion = m_SmtManager.getPredicateFactory().or(false, states);
+			if (m_SmtManager.getPredicateFactory().isDontCare(disjuntion)) {
 				return m_SmtManager.getPredicateFactory().newDontCarePredicate(pp);
 			} else {
-				return m_SmtManager.getPredicateFactory().newSPredicate(pp, tvp);
+				return m_SmtManager.getPredicateFactory().newSPredicate(pp, disjuntion);
 			}
 		} else if (someElement instanceof IMLPredicate) {
 			ProgramPoint[] pps = ((IMLPredicate) someElement).getProgramPoints();
 			if (states.isEmpty()) {
 				assert false : "minimize empty set???";
-				TermVarsProc dontcare = m_SmtManager.getPredicateFactory().constructDontCare();
-				return m_SmtManager.getPredicateFactory().newMLPredicate(pps, dontcare);
+				final Term dontcareTerm = m_SmtManager.getPredicateFactory().getDontCareTerm();
+				return m_SmtManager.getPredicateFactory().newMLPredicate(pps, dontcareTerm);
 			}
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().or(states.toArray(new IPredicate[0]));
-			if (m_SmtManager.getPredicateFactory().isDontCare(tvp)) {
-				return m_SmtManager.getPredicateFactory().newMLPredicate(pps, tvp);
-			} else {
-				return m_SmtManager.getPredicateFactory().newMLPredicate(pps, tvp);
-			}
+			final Term disjunction = m_SmtManager.getPredicateFactory().or(false, states);
+			return m_SmtManager.getPredicateFactory().newMLPredicate(pps, disjunction);
 		} else {
 			throw new AssertionError("unknown predicate");
 		}

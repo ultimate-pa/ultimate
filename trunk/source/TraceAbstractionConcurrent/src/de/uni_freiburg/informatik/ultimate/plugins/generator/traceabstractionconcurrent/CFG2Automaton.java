@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -209,8 +209,8 @@ public abstract class CFG2Automaton {
 		// add states
 		for (ProgramPoint locNode : allNodes) {
 			boolean isErrorLocation = locNode.isErrorLocation();
-			TermVarsProc trueTvp = m_SmtManager.getPredicateFactory().constructTrue();
-			IPredicate automatonState = m_SmtManager.getPredicateFactory().newSPredicate(locNode, trueTvp);
+			final Term trueTerm = m_SmtManager.getScript().term("true");
+			IPredicate automatonState = m_SmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm);
 			nwa.addState(false, isErrorLocation, automatonState);
 			nodes2States.put(locNode, automatonState);
 			if (locNode == initialNode) {
@@ -240,8 +240,8 @@ public abstract class CFG2Automaton {
 
 		mLogger.debug("Step: SharedVarsInit part");
 		ProgramPoint entryOfInitProc = (ProgramPoint) m_SharedVarsInit.getSource();
-		TermVarsProc trueTvp = m_SmtManager.getPredicateFactory().constructTrue();
-		IPredicate initialContent = m_SmtManager.getPredicateFactory().newSPredicate(entryOfInitProc, trueTvp);
+		final Term trueTerm = m_SmtManager.getScript().term("true");
+		IPredicate initialContent = m_SmtManager.getPredicateFactory().newSPredicate(entryOfInitProc, trueTerm);
 		nwa.addState(true, false, initialContent);
 		IPredicate automatonSuccState;
 		automatonSuccState = procedureInitialState;

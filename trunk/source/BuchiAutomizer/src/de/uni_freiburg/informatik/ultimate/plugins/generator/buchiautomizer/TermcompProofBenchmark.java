@@ -27,8 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.util.Map.Entry;
 import java.util.ArrayList;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;

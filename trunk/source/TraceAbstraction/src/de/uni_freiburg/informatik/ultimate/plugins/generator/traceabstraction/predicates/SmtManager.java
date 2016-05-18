@@ -605,7 +605,7 @@ public class SmtManager {
 		Set<BoogieVar> modifiableGlobalsPred = m_ModifiableGlobals.getModifiedBoogieVars(procPred);
 		Set<BoogieVar> modifiableGlobalsSucc = m_ModifiableGlobals.getModifiedBoogieVars(procSucc);
 
-		LBool result = PredicateUtils.isInductiveHelper(m_Boogie2Smt, 
+		LBool result = PredicateUtils.isInductiveHelper(m_Script, 
 				ps1, ps2, tf, modifiableGlobalsPred, modifiableGlobalsSucc);
 
 		if (expectUnsat) {
@@ -1183,8 +1183,7 @@ public class SmtManager {
 		}
 		Term renamedFormula = (new SafeSubstitution(m_Script, getVariableManager(), substitutionMapping)).transform(ps.getFormula());
 		renamedFormula = SmtUtils.simplify(m_Script, renamedFormula, mServices);
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(renamedFormula, m_Boogie2Smt);
-		IPredicate result = getPredicateFactory().newPredicate(tvp);
+		IPredicate result = this.getPredicateFactory().newPredicate(renamedFormula);
 		return result;
 	}
 

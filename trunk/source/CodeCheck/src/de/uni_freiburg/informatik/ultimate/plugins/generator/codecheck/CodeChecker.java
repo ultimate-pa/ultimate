@@ -33,9 +33,9 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -110,7 +110,7 @@ public abstract class CodeChecker {
 	 *            : The second Predicate.
 	 */
 	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
-		TermVarsProc tvp = m_smtManager.getPredicateFactory().and(a, b);
+		Term tvp = m_smtManager.getPredicateFactory().and(a, b);
 		return m_predicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -121,7 +121,7 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicate(IPredicate a) {
-		TermVarsProc tvp = m_smtManager.getPredicateFactory().not(a);
+		Term tvp = m_smtManager.getPredicateFactory().not(a);
 		return m_predicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -133,8 +133,8 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicateNoPU(IPredicate a) {
-		TermVarsProc tvp = m_smtManager.getPredicateFactory().not(a);
-		return m_smtManager.getPredicateFactory().newPredicate(tvp);
+		final Term negation = m_smtManager.getPredicateFactory().not(a);
+		return m_smtManager.getPredicateFactory().newPredicate(negation);
 	}
 
 

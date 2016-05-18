@@ -133,8 +133,7 @@ public class RCFG2AnnotatedRCFG {
 			Term aiTerm = m_initialPredicates.get(pp);
 			IPredicate aiPredicate;
 			if (aiTerm != null) {
-				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(aiTerm, m_smtManager.getBoogie2Smt()); 
-				aiPredicate = m_smtManager.getPredicateFactory().newPredicate(tvp);
+				aiPredicate = m_smtManager.getPredicateFactory().newPredicate(aiTerm);
 			} else {
 				aiPredicate = m_truePredicate;
 			}

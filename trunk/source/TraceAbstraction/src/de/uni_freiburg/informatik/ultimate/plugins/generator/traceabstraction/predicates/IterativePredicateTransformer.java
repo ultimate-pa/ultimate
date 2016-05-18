@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -190,8 +189,7 @@ public class IterativePredicateTransformer {
 	 * Eliminate quantifiers and construct predicate.
 	 */
 	private IPredicate constructPredicate(final Term term) {
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_Boogie2SMT);
-		final IPredicate pred = m_PredicateFactory.newPredicate(tvp);
+		final IPredicate pred = m_PredicateFactory.newPredicate(term);
 		return pred;
 	}
 	
@@ -235,8 +233,7 @@ public class IterativePredicateTransformer {
 //				resultTerm = new PrenexNormalForm(m_Boogie2SMT.getScript(), 
 //									m_Boogie2SMT.getVariableManager()).transform(lessQuantifier);
 			}
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(resultTerm, m_Boogie2SMT);
-			final IPredicate result = m_PredicateFactory.newPredicate(tvp);
+			final IPredicate result = m_PredicateFactory.newPredicate(resultTerm);
 			return result;
 		}
 	}

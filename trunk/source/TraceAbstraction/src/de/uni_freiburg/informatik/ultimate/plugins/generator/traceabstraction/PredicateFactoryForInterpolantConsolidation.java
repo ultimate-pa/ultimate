@@ -33,8 +33,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -86,8 +86,8 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 		
 		ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
 		
-		TermVarsProc tvp = super.m_SmtManager.getPredicateFactory().and(p1, p2);
-		IPredicate result = super.m_SmtManager.getPredicateFactory().newSPredicate(pp, tvp);
+		Term conjunction = super.m_SmtManager.getPredicateFactory().and(p1, p2);
+		IPredicate result = super.m_SmtManager.getPredicateFactory().newSPredicate(pp, conjunction);
 		
 		if (m_IntersectedPredicateToArgumentPredicates.containsKey(result)) {
 			throw new AssertionError("States of difference automaton are not unique!");

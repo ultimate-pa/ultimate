@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantif
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
@@ -293,7 +292,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			if (m_PostProcess_FP_Predicates) {
 				for (int i = 0; i < m_InterpolantsFp.size(); i++) {
 					IPredicate p_old = m_InterpolantsFp.get(i);
-					IPredicate p_new = m_PredicateUnifier.getOrConstructPredicate(p_old.getFormula(), p_old.getVars(), p_old.getProcedures());
+					IPredicate p_new = m_PredicateUnifier.getOrConstructPredicate(p_old.getFormula());
 					m_InterpolantsFp.set(i, p_new);
 				}
 				if (m_CollectInformationAboutSizeOfPredicates) {
@@ -469,8 +468,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					QuantifiedFormula.EXISTS, nonLiveVars, pred.getFormula());
 			final Term pushed = new QuantifierPusher(m_SmtManager.getScript(), m_Services, 
 					m_SmtManager.getVariableManager()).transform(projectedT);
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(pushed, m_SmtManager.getBoogie2Smt());
-			final IPredicate projected = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+			final IPredicate projected = m_SmtManager.getPredicateFactory().newPredicate(pushed);
 			m_NonLiveVariablesFp += nonLiveVars.size();
 			return projected;
 		}
@@ -500,8 +498,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					QuantifiedFormula.FORALL, nonLiveVars, pred.getFormula());
 			final Term pushed = new QuantifierPusher(m_SmtManager.getScript(), m_Services, 
 					m_SmtManager.getVariableManager()).transform(projectedT);
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(pushed, m_SmtManager.getBoogie2Smt());
-			final IPredicate projected = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+			final IPredicate projected = m_SmtManager.getPredicateFactory().newPredicate(pushed);
 			m_NonLiveVariablesBp += nonLiveVars.size();
 			return projected;
 		}
@@ -512,7 +509,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		@Override
 		public IPredicate postprocess(IPredicate pred, int i) {
 			IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(
-					pred.getFormula(), pred.getVars(), pred.getProcedures());
+					pred.getFormula());
 			return unified;
 		}
 		

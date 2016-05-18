@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -274,25 +273,25 @@ public class BinaryStatePredicateManager {
 		if (siConjunctionIsTrue) {
 			m_StemPostcondition = unseededPredicate;
 		} else {
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(unseededPredicate, m_SiConjunction);
-			m_StemPostcondition = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+			final Term conjunction = m_SmtManager.getPredicateFactory().and(unseededPredicate, m_SiConjunction);
+			m_StemPostcondition = m_SmtManager.getPredicateFactory().newPredicate(conjunction);
 		}
 		if (siConjunctionIsTrue) {
 			m_RankEqualityAndSi = m_RankEquality;
 		} else {
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(m_RankEquality, m_SiConjunction);
-			m_RankEqualityAndSi = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+			final Term conjunction = m_SmtManager.getPredicateFactory().and(m_RankEquality, m_SiConjunction);
+			m_RankEqualityAndSi = m_SmtManager.getPredicateFactory().newPredicate(conjunction);
 		}
 		IPredicate unseededOrRankDecrease;
 		{
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().or(unseededPredicate, m_RankDecreaseAndBound);
-			unseededOrRankDecrease = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+			final Term disjunction = m_SmtManager.getPredicateFactory().or(false, unseededPredicate, m_RankDecreaseAndBound);
+			unseededOrRankDecrease = m_SmtManager.getPredicateFactory().newPredicate(disjunction);
 		}
 		if (siConjunctionIsTrue) {
 			m_Honda = unseededOrRankDecrease;
 		} else {
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(m_SiConjunction, unseededOrRankDecrease);
-			m_Honda = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+			final Term conjunction = m_SmtManager.getPredicateFactory().and(m_SiConjunction, unseededOrRankDecrease);
+			m_Honda = m_SmtManager.getPredicateFactory().newPredicate(conjunction);
 		}
 		m_ProvidesPredicates = true;
 	}
@@ -317,18 +316,14 @@ public class BinaryStatePredicateManager {
 		List<Term> siSubsetAndRankEqualityList = new ArrayList<Term>(Arrays.asList(siTermSubset));
 		siSubsetAndRankEqualityList.add(m_RankEquality.getFormula());
 		IPredicate siSubsetAndRankEquality = m_SmtManager.getPredicateFactory().newPredicate(
-				TermVarsProc.computeTermVarsProc(
-						SmtUtils.and(m_Script, siSubsetAndRankEqualityList), 
-						m_SmtManager.getBoogie2Smt()));
+						SmtUtils.and(m_Script, siSubsetAndRankEqualityList));
 		
 		List<Term> siSubsetAndRankDecreaseAndBoundList = new ArrayList<Term>(Arrays.asList(siTermSubset));
 		siSubsetAndRankDecreaseAndBoundList.add(m_RankDecreaseAndBound.getFormula());
 		IPredicate siSubsetAndRankDecreaseAndBound = m_SmtManager.getPredicateFactory().newPredicate(
-				TermVarsProc.computeTermVarsProc(
-						SmtUtils.and(m_Script, siSubsetAndRankDecreaseAndBoundList), 
-						m_SmtManager.getBoogie2Smt()));
+						SmtUtils.and(m_Script, siSubsetAndRankDecreaseAndBoundList));
 		LBool sat = PredicateUtils.isInductiveHelper(
-				m_SmtManager.getBoogie2Smt(), 
+				m_Script, 
 				siSubsetAndRankEquality, 
 				siSubsetAndRankDecreaseAndBound, loopTf, 
 				modifiableGlobals, modifiableGlobals);
@@ -347,9 +342,7 @@ public class BinaryStatePredicateManager {
 		List<Term> siSubsetAndRankEqualityList = new ArrayList<Term>(Arrays.asList(siTermSubset));
 		siSubsetAndRankEqualityList.add(m_RankEquality.getFormula());
 		IPredicate siSubsetAndRankEquality = m_SmtManager.getPredicateFactory().newPredicate(
-				TermVarsProc.computeTermVarsProc(
-						SmtUtils.and(m_Script, siSubsetAndRankEqualityList), 
-						m_SmtManager.getBoogie2Smt()));
+						SmtUtils.and(m_Script, siSubsetAndRankEqualityList));
 		
 		List<Term> siSubsetAndRankDecreaseAndBoundList = new ArrayList<Term>(Arrays.asList(siTermSubset));
 		siSubsetAndRankDecreaseAndBoundList.add(m_RankDecreaseAndBound.getFormula());
@@ -359,11 +352,9 @@ public class BinaryStatePredicateManager {
 		}
 		for (Term succTerm : siSubsetAndRankDecreaseAndBoundConjunctsList) {
 			IPredicate succPred = m_SmtManager.getPredicateFactory().newPredicate(
-					TermVarsProc.computeTermVarsProc(
-							succTerm, 
-							m_SmtManager.getBoogie2Smt()));
+							succTerm);
 			LBool sat = PredicateUtils.isInductiveHelper(
-					m_SmtManager.getBoogie2Smt(), 
+					m_Script, 
 					siSubsetAndRankEquality, 
 					succPred, loopTf, modifiableGlobals, modifiableGlobals);
 			if (sat != LBool.UNSAT) {
@@ -391,9 +382,7 @@ public class BinaryStatePredicateManager {
 		Set<BoogieVar> vars = new HashSet<BoogieVar>(1);
 		vars.add(m_UnseededVariable);
 		Term formula = m_UnseededVariable.getTermVariable();
-		TermVarsProc tvp = new TermVarsProc(formula, vars, new String[0], 
-				m_UnseededVariable.getDefaultConstant());
-		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(formula);
 		return result;
 	}
 
@@ -420,7 +409,7 @@ public class BinaryStatePredicateManager {
 		}
 		
 		Term conjunction = SmtUtils.and(m_Script, siTerms);
-		Term si;
+		final Term si;
 		if (false) {
 			Term simplified = SmtUtils.simplify(m_SmtManager.getScript(), conjunction, mServices);   
 			Term normalized = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(simplified);
@@ -428,8 +417,7 @@ public class BinaryStatePredicateManager {
 		} else {
 			si = conjunction;
 		}
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(si, m_SmtManager.getBoogie2Smt());
-		return m_SmtManager.getPredicateFactory().newPredicate(tvp);
+		return m_SmtManager.getPredicateFactory().newPredicate(si);
 	}
 
 	private boolean impliedByStem(TransFormula stemTf, List<Term> siTerms, Set<BoogieVar> modifiableGlobals) {
@@ -458,15 +446,11 @@ public class BinaryStatePredicateManager {
 			Set<Term> postcondition, Set<BoogieVar> postconditionModifiableGlobals) {
 		
 		IPredicate precondPredicate = m_SmtManager.getPredicateFactory().newPredicate(
-				TermVarsProc.computeTermVarsProc(
-						SmtUtils.and(m_Script, precondition), 
-						m_SmtManager.getBoogie2Smt()));
+						SmtUtils.and(m_Script, precondition));
 		IPredicate postcondPredicate = m_SmtManager.getPredicateFactory().newPredicate(
-				TermVarsProc.computeTermVarsProc(
-						SmtUtils.and(m_Script, postcondition), 
-						m_SmtManager.getBoogie2Smt()));
+						SmtUtils.and(m_Script, postcondition));
 		LBool sat = PredicateUtils.isInductiveHelper(
-				m_SmtManager.getBoogie2Smt(), 
+				m_SmtManager.getScript(), 
 				precondPredicate, 
 				postcondPredicate, transFormula, 
 				preconditionModifiableGlobals, postconditionModifiableGlobals);
@@ -480,8 +464,7 @@ public class BinaryStatePredicateManager {
 	}
 
 	public IPredicate term2Predicate(Term term) {
-		TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(term, m_SmtManager.getBoogie2Smt());
-		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(termVarsProc);
+		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(term);
 		return result;
 	}
 
@@ -514,8 +497,8 @@ public class BinaryStatePredicateManager {
 	}
 
 	private IPredicate computeRankEquality() {
-		TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(m_LexEquality);
-		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+		Term conjunction = m_SmtManager.getPredicateFactory().and(m_LexEquality);
+		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(conjunction);
 		return result;
 	}
 
@@ -527,12 +510,12 @@ public class BinaryStatePredicateManager {
 				conjuncts[j] = m_LexEquality[j];
 			}
 			conjuncts[i] = m_LexDecrease[i];
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(conjuncts);
-			disjuncts[i] = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+			final Term conjunction = m_SmtManager.getPredicateFactory().and(conjuncts);
+			disjuncts[i] = m_SmtManager.getPredicateFactory().newPredicate(conjunction);
 		}
 
-		TermVarsProc tvp = m_SmtManager.getPredicateFactory().or(disjuncts);
-		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+		final Term disjunction = m_SmtManager.getPredicateFactory().or(false, disjuncts);
+		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(disjunction);
 		return result;
 	}
 
@@ -544,17 +527,7 @@ public class BinaryStatePredicateManager {
 			equality = Util.and(m_Script, equality, getRankGeq0(oldRankVariable));
 		}
 
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(rfTerm, m_SmtManager.getBoogie2Smt());
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
-		vars.add(oldRankVariable);
-		vars.addAll(tvp.getVars());
-
-		Term closedFormula = PredicateUtils.computeClosedFormula(equality, vars, m_Script);
-
-		TermVarsProc newTvp = new TermVarsProc(equality, vars, tvp.getProcedures(), closedFormula);
-		// TODO try to compute tvp directly
-		//TermVarsProc t = TermVarsProc.computeTermVarsProc(equality, m_SmtManager.getBoogie2Smt());
-		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(newTvp);
+		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(equality);
 		return result;
 	}
 
@@ -568,7 +541,7 @@ public class BinaryStatePredicateManager {
 		boolean result = true;
 		TraceChecker traceChecker;
 		IPredicate truePredicate = m_SmtManager.getPredicateFactory().
-				newPredicate(m_SmtManager.getPredicateFactory().constructTrue());
+				newPredicate(m_SmtManager.getScript().term("true"));
 		if (isTrue(siPredicate)) {
 			siPredicate = truePredicate;
 		}

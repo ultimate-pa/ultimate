@@ -35,8 +35,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LevelRankingState;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -75,8 +75,8 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 					upPredicates.add(current);
 				}
 			}
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(upPredicates.toArray(new IPredicate[0]));
-			IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+			Term conjunction = m_SmtManager.getPredicateFactory().and(upPredicates);
+			IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(conjunction);
 			return result;
 		} else {
 			return m_SmtManager.getPredicateFactory().newDontCarePredicate(null);
@@ -84,7 +84,7 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 	}
 
 	public IPredicate createSinkStateContent() {
-		return m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructTrue());
+		return m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getScript().term("true"));
 	}
 
 	@Override
@@ -99,8 +99,8 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 
 	@Override
 	public IPredicate minimize(Collection<IPredicate> states) {
-		TermVarsProc tvp = m_SmtManager.getPredicateFactory().or(states.toArray(new IPredicate[0]));
-		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+		Term disjunction = m_SmtManager.getPredicateFactory().or(false, states);
+		IPredicate result = m_SmtManager.getPredicateFactory().newPredicate(disjunction);
 		return result;
 	}
 
@@ -144,8 +144,8 @@ public class PredicateFactoryForInterpolantAutomata extends StateFactory<IPredic
 		}
 		ProgramPoint c2PP = ((ISLPredicate) c2).getProgramPoint();
 		programPoints[programPoints.length - 1] = c2PP;
-		TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(c1, c2);
-		IMLPredicate result = m_SmtManager.getPredicateFactory().newMLPredicate(programPoints, tvp);
+		Term conjunction = m_SmtManager.getPredicateFactory().and(c1, c2);
+		IMLPredicate result = m_SmtManager.getPredicateFactory().newMLPredicate(programPoints, conjunction);
 		return result;
 	}
 

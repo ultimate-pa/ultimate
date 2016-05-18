@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -90,7 +89,6 @@ public class PredicateUnifier {
 	private final List<IPredicate> m_KnownPredicates = new ArrayList<IPredicate>();
 	private final Map<IPredicate, IPredicate> m_DeprecatedPredicates = new HashMap<>();
 	private final CoverageRelation m_CoverageRelation = new CoverageRelation();
-	private boolean m_BringTermsToCommuhashNormalForm = true;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
@@ -117,12 +115,12 @@ public class PredicateUnifier {
 			}
 		}
 		if (truePredicate == null) {
-			m_TruePredicate = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructTrue());
+			m_TruePredicate = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getScript().term("true"));
 		} else {
 			m_TruePredicate = truePredicate;
 		}
 		if (falsePredicate == null) {
-			m_FalsePredicate = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructFalse());
+			m_FalsePredicate = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getScript().term("false"));
 		} else {
 			m_FalsePredicate = falsePredicate;
 		}
@@ -185,10 +183,6 @@ public class PredicateUnifier {
 		m_PredicateUnifierBenchmarkGenerator.incrementDeclaredPredicates();
 	}
 
-	public IPredicate getOrConstructPredicate(TermVarsProc tvp) {
-		return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
-	}
-	
 	/**
 	 * GetOrConstruct a predicate that is a conjunction of IPredicates that were
 	 * construction by (resp. declared in) this PredicateUnifier. 
@@ -220,8 +214,8 @@ public class PredicateUnifier {
 					}
 				}
 			}
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().and(minimalSubset.toArray(new IPredicate[minimalSubset.size()]));
-			return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures(), 
+			final Term term = m_SmtManager.getPredicateFactory().and(minimalSubset);
+			return getOrConstructPredicate(term, 
 					impliedPredicates, expliedPredicates);
 		}
 	}
@@ -257,8 +251,8 @@ public class PredicateUnifier {
 					}
 				}
 			}
-			TermVarsProc tvp = m_SmtManager.getPredicateFactory().or(minimalSubset.toArray(new IPredicate[minimalSubset.size()]));
-			return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures(), 
+			Term term = m_SmtManager.getPredicateFactory().or(false, minimalSubset);
+			return getOrConstructPredicate(term, 
 					impliedPredicates, expliedPredicates);
 		}
 	}
@@ -351,37 +345,26 @@ public class PredicateUnifier {
 	 * @param proc
 	 *            All procedures of which vars contains local variables.
 	 */
-	public IPredicate getOrConstructPredicate(Term term, Set<BoogieVar> vars, String[] procs) {
-		return getOrConstructPredicate(term, vars, procs, null, null);
+	public IPredicate getOrConstructPredicate(Term term) {
+		return getOrConstructPredicate(term, null, null);
 	}
 	
 	/**
 	 * Variant of getOrConstruct methods where we can provide information
 	 * about implied/explied predicates.
 	 */
-	private IPredicate getOrConstructPredicate(Term term, Set<BoogieVar> vars, String[] procs,
-			HashMap<IPredicate, Validity> impliedPredicates, 
-			HashMap<IPredicate, Validity> expliedPredicates) {
+	private IPredicate getOrConstructPredicate(final Term term,
+			final HashMap<IPredicate, Validity> impliedPredicates, 
+			final HashMap<IPredicate, Validity> expliedPredicates) {
 
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_SmtManager.getBoogie2Smt());
 		m_PredicateUnifierBenchmarkGenerator.continueTime();
 		m_PredicateUnifierBenchmarkGenerator.incrementGetRequests();
-		assert varsIsSupersetOfFreeTermVariables(term, vars);
-		if (term instanceof AnnotatedTerm) {
-			AnnotatedTerm annotatedTerm = (AnnotatedTerm) term;
-			Annotation[] annotations = annotatedTerm.getAnnotations();
-			if (annotations.length == 1) {
-				if (annotations[0].getKey().equals(":quoted")) {
-					term = annotatedTerm.getSubterm();
-				} else {
-					throw new UnsupportedOperationException();
-				}
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		}
+		assert varsIsSupersetOfFreeTermVariables(term, tvp.getVars());
+		final Term withoutAnnotation = stripAnnotation(term);
 
 		{
-			IPredicate p = m_Term2Predicates.get(term);
+			IPredicate p = m_Term2Predicates.get(withoutAnnotation);
 			if (p != null) {
 				if (m_DeprecatedPredicates.containsKey(p)) {
 					p = m_DeprecatedPredicates.get(p);
@@ -391,9 +374,9 @@ public class PredicateUnifier {
 				return p;
 			}
 		}
-		term = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(term);
+		final Term commuNF = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(withoutAnnotation);
 		{
-			IPredicate p = m_Term2Predicates.get(term);
+			IPredicate p = m_Term2Predicates.get(commuNF);
 			if (p != null) {
 				if (m_DeprecatedPredicates.containsKey(p)) {
 					p = m_DeprecatedPredicates.get(p);
@@ -404,7 +387,7 @@ public class PredicateUnifier {
 			}
 		}
 		
-		PredicateComparison pc = new PredicateComparison(term, vars, 
+		PredicateComparison pc = new PredicateComparison(commuNF, tvp.getVars(), 
 				impliedPredicates, expliedPredicates);
 		if (pc.isEquivalentToExistingPredicateWithLeqQuantifiers()) {
 			m_PredicateUnifierBenchmarkGenerator.incrementSemanticMatches();
@@ -412,44 +395,21 @@ public class PredicateUnifier {
 			return pc.getEquivalantLeqQuantifiedPredicate();
 		}
 		final IPredicate result;
-		assert !SmtUtils.isTrue(term) : "illegal predicate: true";
-		assert !SmtUtils.isFalse(term) : "illegal predicate: false";
-		assert !m_Term2Predicates.containsKey(term);
-		Term simplifiedTerm;
+		assert !SmtUtils.isTrue(commuNF) : "illegal predicate: true";
+		assert !SmtUtils.isFalse(commuNF) : "illegal predicate: false";
+		assert !m_Term2Predicates.containsKey(commuNF);
+		final Term simplifiedTerm;
 		if (pc.isIntricatePredicate()) {
-			simplifiedTerm = term;
+			simplifiedTerm = commuNF;
 		} else {
 			try {
-				simplifiedTerm = SmtUtils.simplify(m_SmtManager.getScript(), term, mServices);
+				final Term tmp = SmtUtils.simplify(m_SmtManager.getScript(), commuNF, mServices);
+				simplifiedTerm  = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(tmp);
 			} catch (ToolchainCanceledException tce) {
 				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while unifying predicates");
 			}
 		}
-		if (m_BringTermsToCommuhashNormalForm) {
-			simplifiedTerm = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(simplifiedTerm);
-		}
-		if (simplifiedTerm == term) {
-			TermVarsProc tvp = new TermVarsProc(term, vars, procs, pc.getClosedTerm());
-			result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
-		} else {
-			Set<TermVariable> tvs = new HashSet<TermVariable>(
-					Arrays.asList(simplifiedTerm.getFreeVars()));
-			Set<BoogieVar> newVars = new HashSet<BoogieVar>();
-			Set<String> newProcs = new HashSet<String>();
-			for (BoogieVar bv : vars) {
-				if (tvs.contains(bv.getTermVariable())) {
-					newVars.add(bv);
-					if (bv.getProcedure() != null) {
-						newProcs.add(bv.getProcedure());
-					}
-				}
-			}
-			Term closedTerm = PredicateUtils.computeClosedFormula(
-					simplifiedTerm, vars, m_SmtManager.getScript());
-			TermVarsProc tvp = new TermVarsProc(simplifiedTerm, newVars, 
-					newProcs.toArray(new String[newProcs.size()]), closedTerm);
-			result = m_SmtManager.getPredicateFactory().newPredicate(tvp);
-		}
+		result = m_SmtManager.getPredicateFactory().newPredicate(simplifiedTerm);
 		if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
 			m_DeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
 			m_PredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
@@ -460,6 +420,26 @@ public class PredicateUnifier {
 		m_PredicateUnifierBenchmarkGenerator.incrementConstructedPredicates();
 		m_PredicateUnifierBenchmarkGenerator.stopTime();
 		return result;
+	}
+
+	private Term stripAnnotation(final Term term) {
+		final Term withoutAnnotation;
+		if (term instanceof AnnotatedTerm) {
+			AnnotatedTerm annotatedTerm = (AnnotatedTerm) term;
+			Annotation[] annotations = annotatedTerm.getAnnotations();
+			if (annotations.length == 1) {
+				if (annotations[0].getKey().equals(":quoted")) {
+					withoutAnnotation = annotatedTerm.getSubterm();
+				} else {
+					throw new UnsupportedOperationException();
+				}
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		} else {
+			withoutAnnotation = term;
+		}
+		return withoutAnnotation;
 	}
 
 	
@@ -853,8 +833,7 @@ public class PredicateUnifier {
 			conjuncts = SmtUtils.getConjuncts(cnf);
 		}
 		for (Term conjunct : conjuncts) {
-			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunct, m_SmtManager.getBoogie2Smt());
-			IPredicate predicate = getOrConstructPredicate(tvp);
+			IPredicate predicate = getOrConstructPredicate(conjunct);
 			result.add(predicate);
 		}
 		return result;

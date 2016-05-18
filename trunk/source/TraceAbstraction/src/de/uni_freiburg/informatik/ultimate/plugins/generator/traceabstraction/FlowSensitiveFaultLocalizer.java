@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
@@ -440,8 +439,7 @@ public class FlowSensitiveFaultLocalizer {
 		final TransFormula markhor = computeMarkhorFormula(startPosition, endPosition, counterexampleWord,informationFromCFG, smtManager);
 		final Term wpTerm = computeWp(weakestPreconditionOld, markhor, smtManager.getScript(), 
 				smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
-		final IPredicate weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
+		final IPredicate weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(wpTerm);
 		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPreceedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(endPosition).getSucceedingProcedure();
@@ -500,8 +498,7 @@ public class FlowSensitiveFaultLocalizer {
 				}
 				final Term wpTerm = computeWp(weakestPreconditionNew, markhor_formula[0], smtManager.getScript(), 
 						smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
-				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
-				weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
+				weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(wpTerm);
 				// If the branch is relevant, then recursively call the same function on it self with the updated parameters.
 				// If the branch is not relevant, then just ignore the branch and update the backward counter and also take a look what should you do with the pre and wp.
 				
@@ -512,8 +509,7 @@ public class FlowSensitiveFaultLocalizer {
 				final TransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
 				final Term wpTerm = computeWp(weakestPreconditionOld, tf, smtManager.getScript(), 
 						smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
-				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
-				weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(tvp);
+				weakestPreconditionNew = smtManager.getPredicateFactory().newPredicate(wpTerm);
 				final IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionNew));
 				m_Logger.info(" ");
 				m_Logger.info("WP -- > " + weakestPreconditionOld);
@@ -619,7 +615,7 @@ public class FlowSensitiveFaultLocalizer {
 		final int start_location = 0;
 		final int end_location = counterexample.getWord().length()-1;
 		final IPredicate weakestPreconditionOld = smtManager.getPredicateFactory().newPredicate(
-				smtManager.getPredicateFactory().constructFalse());
+				smtManager.getScript().term("false"));
 		final IPredicate weakestPreconditionNew = weakestPreconditionOld;
 
 		computeRelevantStatements_FlowSensitive(counterexample.getWord(),start_location, end_location,weakestPreconditionOld,

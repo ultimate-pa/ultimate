@@ -233,7 +233,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			String calledMethod = call.getCallStatement().getMethodName();
 			TermVarsProc oldVarsEquality = m_SmtManager.getOldVarsEquality(calledMethod, m_ModifiedGlobals);
 
-			IPredicate precondition = m_PredicateUnifier.getOrConstructPredicate(oldVarsEquality);
+			IPredicate precondition = m_PredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
 
 			// Use a pendingContext the interpolant at the position before the
 			// call, if this is -1 (because call is first codeBlock) use the

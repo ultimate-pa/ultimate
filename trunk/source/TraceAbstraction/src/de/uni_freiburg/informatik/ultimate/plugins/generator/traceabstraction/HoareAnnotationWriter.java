@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -71,7 +70,7 @@ public class HoareAnnotationWriter {
 	}
 
 	public void addHoareAnnotationToCFG() {
-		IPredicate precondForContext = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getPredicateFactory().constructTrue());
+		IPredicate precondForContext = m_SmtManager.getPredicateFactory().newPredicate(m_SmtManager.getScript().term("true"));
 		addHoareAnnotationForContext(m_SmtManager, precondForContext,
 				m_HoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
 
@@ -81,8 +80,7 @@ public class HoareAnnotationWriter {
 			} else {
 				final Term spTerm = m_PredicateTransformer.strongestPostcondition(context,
 						getCall((ISLPredicate) context), true);
-				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(spTerm, m_SmtManager.getBoogie2Smt());
-				precondForContext = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+				precondForContext = m_SmtManager.getPredicateFactory().newPredicate(spTerm);
 			}
 			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
 			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments
@@ -96,8 +94,7 @@ public class HoareAnnotationWriter {
 			} else {
 				final Term spTerm = m_PredicateTransformer.strongestPostcondition(context,
 						getCall((ISLPredicate) context), true);
-				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(spTerm, m_SmtManager.getBoogie2Smt());
-				precondForContext = m_SmtManager.getPredicateFactory().newPredicate(tvp);
+				precondForContext = m_SmtManager.getPredicateFactory().newPredicate(spTerm);
 			}
 			precondForContext = m_SmtManager.renameGlobalsToOldGlobals(precondForContext);
 			HashRelation<ProgramPoint, IPredicate> pp2preds = m_HoareAnnotationFragments
@@ -115,7 +112,7 @@ public class HoareAnnotationWriter {
 			HashRelation<ProgramPoint, IPredicate> pp2preds) {
 		for (ProgramPoint pp : pp2preds.getDomain()) {
 			IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);
-			TermVarsProc tvp = smtManager.getPredicateFactory().or(preds);
+			Term tvp = smtManager.getPredicateFactory().or(false, preds);
 			IPredicate formulaForPP = m_SmtManager.getPredicateFactory().newPredicate(tvp);
 			addFormulasToLocNodes(pp, precondForContext, formulaForPP);
 		}

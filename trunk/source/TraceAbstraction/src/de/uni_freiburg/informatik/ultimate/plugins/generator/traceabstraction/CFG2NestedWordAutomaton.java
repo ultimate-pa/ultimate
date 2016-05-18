@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -188,11 +187,11 @@ public class CFG2NestedWordAutomaton {
 			boolean isErrorLocation = errorLocs.contains(locNode);
 
 			IPredicate automatonState;
-			TermVarsProc trueTvp = m_SmtManager.getPredicateFactory().constructTrue();
+			Term trueTerm = m_SmtManager.getScript().term("true");
 			if (m_StoreHistory) {
-				automatonState = m_SmtManager.getPredicateFactory().newPredicateWithHistory(locNode, trueTvp, new HashMap<Integer, Term>());
+				automatonState = m_SmtManager.getPredicateFactory().newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
 			} else {
-				automatonState = m_SmtManager.getPredicateFactory().newSPredicate(locNode, trueTvp); 
+				automatonState = m_SmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm); 
 			}
 					
 			nwa.addState(isInitial, isErrorLocation, automatonState);
