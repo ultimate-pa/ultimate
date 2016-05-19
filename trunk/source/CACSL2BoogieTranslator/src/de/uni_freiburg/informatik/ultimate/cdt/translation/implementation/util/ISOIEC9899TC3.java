@@ -35,9 +35,12 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -213,15 +216,15 @@ public final class ISOIEC9899TC3 {
 			final CType resultType;
 			if (floatType == null || floatType.equals("d") || floatType.equals("D")) {
 				exponentLength = 11;
-				significantLength = 52;
+				significantLength = 53;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.DOUBLE);
 			} else if (floatType.equals("f") || floatType.equals("F")) {
 				exponentLength = 8;
-				significantLength = 23;
+				significantLength = 24;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.FLOAT);
 			} else if (floatType.equals("l") || floatType.equals("L")) {
 				exponentLength = 15;
-				significantLength = 112;
+				significantLength = 113;
 				resultType = new CPrimitive(CPrimitive.PRIMITIVE.LONGDOUBLE);
 			} else {
 				throw new IllegalArgumentException("not a float type");
@@ -241,6 +244,22 @@ public final class ISOIEC9899TC3 {
 				functionName = "+zero";
 				arguments = new Expression[] {eb, sb};
 			} else {
+				DeclarationInformation RoundingInfo = 
+						new DeclarationInformation(StorageClass.GLOBAL, null);
+				IdentifierExpression roundingMode = new IdentifierExpression(loc, "RNE");
+				roundingMode.setDeclarationInformation(RoundingInfo);
+				if (resultType.toString().equals("FLOAT")){
+					functionName = "declareFloat";
+				} else if (resultType.toString().equals("DOUBLE")) {
+					functionName = "declareDouble";
+				} else if (resultType.toString().equals("LONGDOUBLE")) {
+					functionName = "declareLongDouble";
+				} else {
+					throw new IllegalArgumentException();
+				}
+				Expression realValue = new RealLiteral(loc, floatVal.toString());
+				arguments = new Expression[] {eb, sb, roundingMode, realValue};
+				/*
 				final BigDecimal twoPointZero = new BigDecimal("2.0");
 				// calculate exponent value and value of the significant
 				while (floatVal.compareTo(twoPointZero) == 1) {
@@ -263,6 +282,7 @@ public final class ISOIEC9899TC3 {
 				exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
 				significant = new BitvecLiteral(loc, floatValString, significantLength);
 				arguments = new Expression[]{sign, exponent, significant};
+				*/
 			}
 			
 			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
