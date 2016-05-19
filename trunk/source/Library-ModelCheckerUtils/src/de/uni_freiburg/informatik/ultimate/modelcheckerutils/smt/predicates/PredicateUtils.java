@@ -199,14 +199,16 @@ public class PredicateUtils {
 	 * </ul>
 	 */
 	public static Term formulaWithIndexedVars(TransFormula tf, int idxInVar, int idxOutVar, Set<BoogieVar> assignedVars,
-			Map<String, Term> indexedConstants, Script script, VariableManager variableManager) {
+			Map<String, Term> indexedConstants, Script script) {
 		assert (assignedVars != null && assignedVars.isEmpty());
 		Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
 		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans = tf.getFormula();
 		String t = fTrans.toString();
+		final Map<TermVariable, BoogieVar> reverseMapping = new HashMap<TermVariable, BoogieVar>();
 		for (BoogieVar inVar : tf.getInVars().keySet()) {
 			TermVariable tv = tf.getInVars().get(inVar);
+			reverseMapping.put(tv, inVar);
 			Term cIndex;
 			if (inVar.isOldvar()) {
 				cIndex = inVar.getDefaultConstant();
@@ -222,6 +224,7 @@ public class PredicateUtils {
 		}
 		for (BoogieVar outVar : tf.getOutVars().keySet()) {
 			TermVariable tv = tf.getOutVars().get(outVar);
+			reverseMapping.put(tv, outVar);
 			if (tf.getInVars().get(outVar) != tv) {
 				assignedVars.add(outVar);
 				Term cIndex;
@@ -238,7 +241,7 @@ public class PredicateUtils {
 			}
 		}
 		for (TermVariable tv : notYetSubst) {
-			Term cIndex = variableManager.getOrConstructCorrespondingConstant(tv);
+			Term cIndex = reverseMapping.get(tv).getDefaultConstant();
 			TermVariable[] vars = { tv };
 			Term[] values = { cIndex };
 			fTrans = script.let(vars, values, fTrans);

@@ -205,24 +205,24 @@ public class TwoTrackInterpolantAutomatonBuilder {
 //		}
 //	}
 	
-	/**
-	 Checks whether we are allowed to add a transition from a state annotated with the predicate p1 computed via
-	 * SP (or WP)  with the statement obtained by symbolPos to a state annotated with the assertion p2 computed via WP (or SP).
-	 * @param symbolPos - represents the corresponding statement
-	 * @param callerPred - this predicate may be null if the statement represented by the given argument symbolPos is not interprocedural,
-	 *               otherwise not
-	 */
-	private boolean transitionFromOneStateToTheOppositeStateAllowed(IPredicate p1, int symbolPos, IPredicate p2, IPredicate callerPred) {
-		CodeBlock statement = m_NestedWord.getSymbol(symbolPos);
-		if (m_NestedWord.isCallPosition(symbolPos)) {
-			return (m_SmtManager.isInductiveCall(p1, (Call) statement, p2) == LBool.UNSAT);
-		} else if (m_NestedWord.isReturnPosition(symbolPos)) {
-			assert callerPred != null : "callerPred shouldn't be null for a Return statement.";
-			return (m_SmtManager.isInductiveReturn(p1, callerPred,(Return) statement, p2) == LBool.UNSAT);
-		} else {
-			return (m_SmtManager.isInductive(p1, (IInternalAction) statement, p2) == LBool.UNSAT);
-		}
-	}
+//	/**
+//	 Checks whether we are allowed to add a transition from a state annotated with the predicate p1 computed via
+//	 * SP (or WP)  with the statement obtained by symbolPos to a state annotated with the assertion p2 computed via WP (or SP).
+//	 * @param symbolPos - represents the corresponding statement
+//	 * @param callerPred - this predicate may be null if the statement represented by the given argument symbolPos is not interprocedural,
+//	 *               otherwise not
+//	 */
+//	private boolean transitionFromOneStateToTheOppositeStateAllowed(IPredicate p1, int symbolPos, IPredicate p2, IPredicate callerPred) {
+//		CodeBlock statement = m_NestedWord.getSymbol(symbolPos);
+//		if (m_NestedWord.isCallPosition(symbolPos)) {
+//			return (m_SmtManager.isInductiveCall(p1, (Call) statement, p2) == LBool.UNSAT);
+//		} else if (m_NestedWord.isReturnPosition(symbolPos)) {
+//			assert callerPred != null : "callerPred shouldn't be null for a Return statement.";
+//			return (m_SmtManager.isInductiveReturn(p1, callerPred,(Return) statement, p2) == LBool.UNSAT);
+//		} else {
+//			return (m_SmtManager.isInductive(p1, (IInternalAction) statement, p2) == LBool.UNSAT);
+//		}
+//	}
 	
 	
 	/**

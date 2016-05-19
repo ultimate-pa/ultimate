@@ -190,7 +190,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		m_Interpolants = nib.getNestedInterpolants();
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(
 				Arrays.asList(m_Interpolants), m_Trace, m_Precondition, m_Postcondition, 
-				m_PendingContexts, "Craig", m_SmtManager, m_ModifiedGlobals, m_Logger) : 
+				m_PendingContexts, "Craig", m_ModifiedGlobals, m_Logger, 
+				m_ManagedScript, m_VariableManager) : 
 					"invalid Hoare triple in tree interpolants";
 		assert m_Interpolants != null;
 	}
@@ -226,7 +227,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		if (m_Interpolants != null) {
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(
 					Arrays.asList(m_Interpolants), m_Trace, m_Precondition, m_Postcondition, 
-					m_PendingContexts, "Craig", m_SmtManager, m_ModifiedGlobals, m_Logger) : 
+					m_PendingContexts, "Craig", m_ModifiedGlobals, m_Logger,
+					m_ManagedScript, m_VariableManager) : 
 						"invalid Hoare triple in nested interpolants";
 		}
 

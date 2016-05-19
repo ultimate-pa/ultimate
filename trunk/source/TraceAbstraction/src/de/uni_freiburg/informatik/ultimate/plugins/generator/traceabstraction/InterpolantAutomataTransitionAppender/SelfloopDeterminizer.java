@@ -34,10 +34,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
@@ -53,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class SelfloopDeterminizer 
 					implements IStateDeterminizer<CodeBlock, IPredicate> {
 
-	SmtManager m_SmtManager;
+	IHoareTripleChecker m_HoareTriplechecker;
 	PowersetDeterminizer<CodeBlock, IPredicate> m_PowersetDeterminizer;
 	
 	INestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
@@ -76,7 +79,7 @@ public class SelfloopDeterminizer
 			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom,
 			StateFactory<IPredicate> stateFactory) {
 		super();
-		m_SmtManager = mSmtManager;
+		m_HoareTriplechecker = new MonolithicHoareTripleChecker(mSmtManager);
 		m_InterpolantAutomaton = interpolantAutom;
 		m_StateFactory = stateFactory;
 		m_PowersetDeterminizer = 
@@ -120,9 +123,9 @@ public class SelfloopDeterminizer
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
 			IPredicate detStateContent = getState(detState);
-			LBool isInductive = m_SmtManager.isInductive(detStateContent,
+			Validity isInductive = m_HoareTriplechecker.checkInternal(detStateContent,
 													   (IInternalAction) symbol, detStateContent);
-			if (isInductive == Script.LBool.UNSAT) {
+			if (isInductive == Validity.VALID) {
 				m_InternalSelfloop++;
 				return detState;
 			}
@@ -148,9 +151,9 @@ public class SelfloopDeterminizer
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
 			IPredicate detStateContent = getState(detState);
-			LBool isInductive = m_SmtManager.isInductiveCall(detStateContent,
+			Validity isInductive = m_HoareTriplechecker.checkCall(detStateContent,
 										   (Call) symbol, detStateContent);
-			if (isInductive == Script.LBool.UNSAT) {
+			if (isInductive == Validity.VALID) {
 				m_CallSelfloop++;
 				return detState;
 			}
@@ -181,9 +184,9 @@ public class SelfloopDeterminizer
 		if (powersetSucc.isSubsetOf(detState)) {
 			IPredicate detStateContent = getState(detState);
 			IPredicate detHierContent = getState(derHier);
-			LBool isInductive = m_SmtManager.isInductiveReturn(detStateContent, 
+			Validity isInductive = m_HoareTriplechecker.checkReturn(detStateContent, 
 						detHierContent, (Return) symbol, detStateContent);
-			if (isInductive == Script.LBool.UNSAT) {
+			if (isInductive == Validity.VALID) {
 				m_ReturnSelfloop++;
 				return detState;
 			}

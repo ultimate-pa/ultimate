@@ -35,20 +35,21 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 public class BestApproximationDeterminizer 
 		implements IStateDeterminizer<CodeBlock, IPredicate> {
 	
-	SmtManager m_SmtManager;
+	IHoareTripleChecker m_HoareTriplechecker;
 	TAPreferences m_TaPreferences;
 	StateFactory<IPredicate> m_StateFactory;
 	NestedWordAutomaton<CodeBlock, IPredicate> m_Nwa;
@@ -78,7 +79,7 @@ public class BestApproximationDeterminizer
 			NestedWordAutomaton<CodeBlock, IPredicate> mNwa,
 			StateFactory<IPredicate> stateFactory) {
 		super();
-		m_SmtManager = mSmtManager;
+		m_HoareTriplechecker = new MonolithicHoareTripleChecker(mSmtManager);
 		m_TaPreferences = taPreferences;
 		m_StateFactory = stateFactory;
 		m_Nwa = mNwa;
@@ -110,12 +111,12 @@ public class BestApproximationDeterminizer
 			}
 		}
 		if (m_TaPreferences.computeHoareAnnotation()) {
-			assert(m_SmtManager.isInductive(getState(detState), 
+			assert(m_HoareTriplechecker.checkInternal(getState(detState), 
 						(IInternalAction) symbol, 
-						getState(succDetState)) == Script.LBool.UNSAT ||
-					m_SmtManager.isInductive(detState.getContent(m_StateFactory), 
+						getState(succDetState)) == Validity.VALID ||
+				   m_HoareTriplechecker.checkInternal(detState.getContent(m_StateFactory), 
 						(IInternalAction) symbol, 
-						getState(succDetState)) == Script.LBool.UNKNOWN);
+						getState(succDetState)) == Validity.UNKNOWN);
 		}
 		return succDetState;	
 	}
@@ -135,13 +136,13 @@ public class BestApproximationDeterminizer
 			}
 		}
 		if (m_TaPreferences.computeHoareAnnotation()) {
-			assert(m_SmtManager.isInductiveCall(
+			assert(m_HoareTriplechecker.checkCall(
 						getState(detState), 
 						(Call) symbol, 
-						getState(succDetState)) == Script.LBool.UNSAT ||
-					m_SmtManager.isInductiveCall(getState(detState), 
+						getState(succDetState)) == Validity.VALID ||
+				   m_HoareTriplechecker.checkCall(getState(detState), 
 						(Call) symbol, 
-						getState(succDetState)) == Script.LBool.UNKNOWN);
+						getState(succDetState)) == Validity.UNKNOWN);
 		}
 		return succDetState;	
 	}
@@ -173,15 +174,15 @@ public class BestApproximationDeterminizer
 		}
 		
 		if (m_TaPreferences.computeHoareAnnotation()) {
-			assert(m_SmtManager.isInductiveReturn(
+			assert(m_HoareTriplechecker.checkReturn(
 					getState(detState),
 					getState(detLinPred),
 					(Return) symbol, 
-					getState(succDetState)) == Script.LBool.UNSAT ||
-					m_SmtManager.isInductiveReturn(getState(detState),
+					getState(succDetState)) == Validity.VALID ||
+							m_HoareTriplechecker.checkReturn(getState(detState),
 						getState(detLinPred),
 						(Return) symbol, 
-						getState(succDetState)) == Script.LBool.UNKNOWN);
+						getState(succDetState)) == Validity.UNKNOWN);
 		}
 
 		return succDetState;	
@@ -335,9 +336,9 @@ public class BestApproximationDeterminizer
 		}
 		IPredicate presentPs = state;
 		IPredicate succPs = succ;
-		LBool sat = m_SmtManager.isInductive(presentPs, (IInternalAction) symbol, succPs);
+		Validity sat = m_HoareTriplechecker.checkInternal(presentPs, (IInternalAction) symbol, succPs);
 		m_AnswerInternalSolver++;
-		if (sat == Script.LBool.UNSAT) {
+		if (sat == Validity.VALID) {
 			m_Nwa.addInternalTransition(state, symbol, succ);
 			return true;
 		}
@@ -369,9 +370,9 @@ public class BestApproximationDeterminizer
 		}
 		IPredicate presentPs = state;
 		IPredicate succPs = succ;
-		LBool sat = m_SmtManager.isInductiveCall(presentPs, symbol, succPs);
+		Validity sat = m_HoareTriplechecker.checkCall(presentPs, symbol, succPs);
 		m_AnswerCallSolver++;
-		if (sat == Script.LBool.UNSAT) {
+		if (sat == Validity.VALID) {
 			return true;
 		}
 		return false;
@@ -481,10 +482,10 @@ public class BestApproximationDeterminizer
 		IPredicate presentPs = state;
 		IPredicate callerPs = callerState;
 		IPredicate succPs = succ;
-		LBool sat = 
-			m_SmtManager.isInductiveReturn(presentPs, callerPs, symbol, succPs);
+		Validity sat = 
+			m_HoareTriplechecker.checkReturn(presentPs, callerPs, symbol, succPs);
 		m_AnswerReturnSolver++;
-		if (sat == Script.LBool.UNSAT) {
+		if (sat == Validity.VALID) {
 			return true;
 		}
 		return false;

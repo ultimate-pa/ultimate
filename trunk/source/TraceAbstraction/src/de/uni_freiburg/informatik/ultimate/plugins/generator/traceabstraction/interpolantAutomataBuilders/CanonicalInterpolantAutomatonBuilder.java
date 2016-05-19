@@ -182,14 +182,16 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 		if (m_AlternativeCallPredecessors.get(callPos) == null) {
 			return;
 		}
-		for (IPredicate hier : m_AlternativeCallPredecessors.get(callPos)) {
-			LBool isInductive = m_SmtManager.isInductiveReturn(pred, hier, (Return) symbol, succ);
-			mLogger.debug("Trying to add alternative call Predecessor");
-			if (isInductive == Script.LBool.UNSAT) {
-				m_IA.addReturnTransition(pred, hier, symbol, succ);
-				mLogger.debug("Added return from alternative call Pred");
-			}
-		}
+		// 2016-05-18 Matthias: Do not add alternative returns, this seems to be expensive
+		// and I am too lazy to construct another IHoaretripleChecker for these few checks.
+//		for (IPredicate hier : m_AlternativeCallPredecessors.get(callPos)) {
+//			LBool isInductive = m_SmtManager.isInductiveReturn(pred, hier, (Return) symbol, succ);
+//			mLogger.debug("Trying to add alternative call Predecessor");
+//			if (isInductive == Script.LBool.UNSAT) {
+//				m_IA.addReturnTransition(pred, hier, symbol, succ);
+//				mLogger.debug("Added return from alternative call Pred");
+//			}
+//		}
 	}
 
 }

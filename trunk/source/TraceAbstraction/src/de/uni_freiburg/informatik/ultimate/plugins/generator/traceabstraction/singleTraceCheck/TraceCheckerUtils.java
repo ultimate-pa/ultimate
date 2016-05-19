@@ -35,13 +35,16 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -170,13 +173,14 @@ public class TraceCheckerUtils {
 	public static boolean checkInterpolantsInductivityForward(List<IPredicate> interpolants, NestedWord<? extends IAction> trace, 
 			IPredicate precondition, IPredicate postcondition, 
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
-			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
-			ILogger logger) {
+			ModifiableGlobalVariableManager mgvManager,
+			ILogger logger, ManagedScript managedScript, VariableManager variableManager) {
+		IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
 		Validity result;
 		for (int i = 0; i <= interpolants.size(); i++) {
-			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, smtManager, mgvManager, logger);
+			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, htc, logger);
 			if (result != Validity.VALID && result != Validity.UNKNOWN) {
 				throw new AssertionError("invalid Hoare triple in " + computation);
 			}
@@ -188,19 +192,23 @@ public class TraceCheckerUtils {
 	 * Similar to the method checkInterpolantsInductivityForward.
 	 * But here we start from the end. This ensures that we get the last
 	 * Hoare triple that is invalid.
+	 * @param script 
+	 * @param managedScript 
+	 * @param variableManager 
 	 * 
 	 * @see checkInterpolantsInductivityForward
 	 */
 	public static boolean checkInterpolantsInductivityBackward(List<IPredicate> interpolants, NestedWord<? extends IAction> trace, 
 			IPredicate precondition, IPredicate postcondition, 
 			SortedMap<Integer, IPredicate> pendingContexts, String computation, 
-			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
-			ILogger logger) {
+			ModifiableGlobalVariableManager mgvManager,
+			ILogger logger, ManagedScript managedScript, VariableManager variableManager) {
+		IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
-		Validity result;
 		for (int i = interpolants.size(); i >= 0; i--) {
-			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, smtManager, mgvManager, logger);
+			final Validity result;
+			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, htc, logger);
 			if (result != Validity.VALID && result != Validity.UNKNOWN) {
 				throw new AssertionError("invalid Hoare triple in " + computation);
 			}
@@ -213,9 +221,8 @@ public class TraceCheckerUtils {
 			InterpolantsPreconditionPostcondition ipp,
 			NestedWord<? extends IAction> trace,
 			SortedMap<Integer, IPredicate> pendingContexts,
-			SmtManager smtManager, ModifiableGlobalVariableManager mgvManager,
+			IHoareTripleChecker htc,
 			ILogger logger) {
-		IHoareTripleChecker htc = new MonolithicHoareTripleChecker(smtManager);
 		IPredicate predecessor = ipp.getInterpolant(i);
 		IPredicate successor = ipp.getInterpolant(i+1);
 		IAction cb = trace.getSymbol(i);

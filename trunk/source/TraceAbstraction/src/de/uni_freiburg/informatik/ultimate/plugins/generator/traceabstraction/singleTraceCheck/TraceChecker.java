@@ -42,17 +42,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -119,6 +122,9 @@ public class TraceChecker {
 	 * Interface for query the SMT solver.
 	 */
 	protected final SmtManager m_SmtManager;
+	protected final VariableManager m_VariableManager;
+	protected final ManagedScript m_ManagedScript;
+	protected final Script m_Script;
 	protected final SmtManager m_TcSmtManager;
 	/**
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
@@ -402,6 +408,9 @@ public class TraceChecker {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_SmtManager = smtManager;
+		m_VariableManager = smtManager.getVariableManager();
+		m_ManagedScript = smtManager.getManagedScript();
+		m_Script = smtManager.getScript();
 		m_TcSmtManager = tcSmtManager;
 		m_ModifiedGlobals = modifiedGlobals;
 		m_Trace = trace;

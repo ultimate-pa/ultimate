@@ -71,7 +71,8 @@ public class HoareAnnotationChecker {
 		m_Services = services;
 		mLogger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_RootNode = rootNode;
-		m_HoareTripleChecker = new MonolithicHoareTripleChecker(smtManager);
+		m_HoareTripleChecker = new MonolithicHoareTripleChecker(smtManager.getManagedScript(), 
+				smtManager.getModifiableGlobals());
 		m_IsInductive = cfgInductive(m_RootNode);
 	}
 
