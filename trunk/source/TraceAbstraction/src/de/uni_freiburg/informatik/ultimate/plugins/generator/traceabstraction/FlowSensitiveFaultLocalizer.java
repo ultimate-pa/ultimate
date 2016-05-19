@@ -631,18 +631,11 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	private NestedRun<CodeBlock, IPredicate> findPathInCFG(IPredicate startPoint, 
 			IPredicate parent_state, Set<IPredicate> possibleEndPoints, INestedWordAutomaton<CodeBlock, 
-			IPredicate> cfg) 
-	{
-
-		
-		try 
-		{
+			IPredicate> cfg) {
+		try {
 			return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), cfg, 
 					Collections.singleton(startPoint), Collections.singleton(parent_state), possibleEndPoints)).getNestedRun();
-		} 
-		
-		catch (AutomataOperationCanceledException e) 
-		{
+		} catch (AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass());
 		}
 	}
