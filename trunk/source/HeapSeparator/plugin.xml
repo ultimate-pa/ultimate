@@ -5,8 +5,4 @@
          point="de.uni_freiburg.informatik.ultimate.ep.generator">
       <impl class="de.uni_freiburg.informatik.ultimate.heapseparator.HeapSeparator"/>
    </extension>
-   <extension point="org.eclipse.core.runtime.preferences">
-    <initializer class="de.uni_freiburg.informatik.ultimate.heapseparator.preferences.PreferenceInitializer" />
- </extension>
-
 </plugin>

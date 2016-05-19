@@ -7,11 +7,4 @@
             class="de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParser">
       </impl>
    </extension>
- <extension
-       point="org.eclipse.core.runtime.preferences">
-    <initializer
-          class="de.uni_freiburg.informatik.ultimate.source.smtparser.PreferenceInitializer">
-    </initializer>
- </extension>
-
 </plugin>

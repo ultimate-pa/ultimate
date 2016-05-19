@@ -2,12 +2,6 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         point="org.eclipse.core.runtime.preferences">
-      <initializer
-            class="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer">
-      </initializer>
-   </extension>
-   <extension
          point="de.uni_freiburg.informatik.ultimate.ep.source">
       <impl
             class="de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.SpaceExParser">

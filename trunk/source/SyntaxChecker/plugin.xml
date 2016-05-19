@@ -7,11 +7,5 @@
           class="de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker.SyntaxChecker">
     </impl>
  </extension>
- <extension
-       point="org.eclipse.core.runtime.preferences">
-    <initializer
-          class="de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker.PreferenceInitializer">
-    </initializer>
- </extension>
 
 </plugin>

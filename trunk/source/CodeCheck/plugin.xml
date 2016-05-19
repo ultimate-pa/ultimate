@@ -5,10 +5,4 @@
       <impl class="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheck">
       </impl>
    </extension>
-   <extension point="org.eclipse.core.runtime.preferences">
-    <initializer
-          class="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer">
-    </initializer>
- </extension>
-
 </plugin>

@@ -38,7 +38,7 @@
       </product>
    </extension>
   
-  
+  <!--The core should load its preference defaults the RCP way because it already depends on RCP and we can ignore the conflict between logging depending on settings and vice versa-->
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer"/>
    </extension>

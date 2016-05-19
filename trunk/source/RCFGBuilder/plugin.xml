@@ -5,11 +5,4 @@
       <impl class="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder">
       </impl>
    </extension>
- <extension
-       point="org.eclipse.core.runtime.preferences">
-    <initializer
-          class="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer">
-    </initializer>
- </extension>
-
 </plugin>
