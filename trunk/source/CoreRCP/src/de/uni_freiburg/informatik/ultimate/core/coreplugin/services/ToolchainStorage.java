@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IService;
@@ -124,7 +123,7 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
-	public ILoggingService getLoggingService() {
+	public Log4JLoggingService getLoggingService() {
 		return Log4JLoggingService.getService(this);
 	}
 
