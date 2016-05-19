@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
@@ -203,19 +202,19 @@ public class FlowSensitiveFaultLocalizer {
 						for(Integer i:endPosition){
 							final int[] pair = new int[2];
 							pair[0] = posOfStartState; //position OUT-BRANCH in the counterexample.
-							pair[1] = i;
+							pair[1] = i-1;
 							result.add(pair);
 							
 							// If the Branch-In Location is not in the map, then add it.
-							if(result2.get(i) == null ){
+							if(result2.get(i-1) == null ){
 								final List<Integer> branchInPosArray = new ArrayList<>();
 								branchInPosArray.add(posOfStartState);
-								result2.put(i, branchInPosArray);
+								result2.put(i-1, branchInPosArray);
 							} else{ //It is in the map, 
-								result2.get(i).add(posOfStartState);
+								result2.get(i-1).add(posOfStartState);
 								// The array should be in descending order, so we can delete 
 								// the elements from this array more efficiently.
-								result2.get(i).sort(Collections.reverseOrder());
+								result2.get(i-1).sort(Collections.reverseOrder());
 							}							
 						}
 					}
@@ -465,7 +464,7 @@ public class FlowSensitiveFaultLocalizer {
 				{
 					bo.isBranchIn = true; 
 					bo.positionBranchOut = branchIn.get(i);
-					informationFromCFG.get(position+1).remove(i);
+					informationFromCFG.get(position).remove(i);
 					bo.informationFromCFG = informationFromCFG;
 					break;
 				}
@@ -485,7 +484,7 @@ public class FlowSensitiveFaultLocalizer {
 		for (int position = end_location; position >= start_location; position--){
 			final CodeBlock statement = counterexampleWord.getSymbol(position);
 
-			List<Integer> branchIn = informationFromCFG.get(position+1);
+			List<Integer> branchIn = informationFromCFG.get(position);
 			branchOutInformation branchOutObject = computeCorrespondingBranchOutLocation(branchIn, position, start_location, informationFromCFG);			
 			IPredicate weakestPreconditionRight = weakestPreconditionLeft;
 			if(branchOutObject.isBranchIn){ // Branch IN Statement
@@ -497,7 +496,6 @@ public class FlowSensitiveFaultLocalizer {
 				final TransFormula markhor = computeMarkhorFormula(positionBranchOut, positionBranchIn, counterexampleWord,informationFromCFG, smtManager);
 				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, smtManager.getScript(), 
 						smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
-				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
 				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
 				// Check the relevance of the branch.
 				final boolean isRelevant =  checkBranchRelevance(
@@ -519,7 +517,6 @@ public class FlowSensitiveFaultLocalizer {
 				final TransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
 				final Term wpTerm = computeWp(weakestPreconditionRight, tf, smtManager.getScript(), 
 						smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
-				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(wpTerm, smtManager.getBoogie2Smt());
 				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
 				final IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionLeft));
 				m_Logger.info(" ");
