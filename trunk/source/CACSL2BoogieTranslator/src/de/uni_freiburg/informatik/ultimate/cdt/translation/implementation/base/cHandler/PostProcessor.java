@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ParentEdge;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -565,6 +567,10 @@ public class PostProcessor {
 		String identifierRM = "RoundingMode";
 		String[] typeParamsRM = new String[0];
 		decls.add(new TypeDeclaration(loc, attributesRM, false, identifierRM, typeParamsRM));
+		
+		Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[]{new StringLiteral(loc, "RNE")});
+		
+		decls.add(new ConstDeclaration(loc, new Attribute[]{attributeRNE}, false, new VarList(loc, new String[]{"RNE"}, new NamedType(loc, "RoundingMode", new ASTType[0])),null, false));
 		
 		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			
