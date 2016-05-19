@@ -10,18 +10,21 @@ int main()
 {
   double x = 2.0;
   double y = 1.0;
-  
-  if ((x + y) != 3.0) {
+  double z = x + y;
+  double a = 3.0;
+
+  if (z != a) {
     //@assert \false;
   } 
 
+  /*
   if ((x - y) != 1.0) {
     //@assert \false;
   }
 
-  if ((x * y) != 2.0) {
+//  if ((x * y) != 2.0) {
     //@assert \false;
-  }
+//  }
 
 //  if ((x / y) != 2.0) {
 //    //@assert \false;
@@ -30,6 +33,6 @@ int main()
 //  if ((x % y) != 0.0) {
 //    //@assert \false;
 //  }
-
+*/
   return 0;
 }
