@@ -35,6 +35,8 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -43,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
@@ -595,9 +598,17 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		
-		declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
-		result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{new StringLiteral(loc, "RNE"), exp1, exp2});
+		if (isRounded) {
+			DeclarationInformation RoundingInfo = 
+					new DeclarationInformation(StorageClass.GLOBAL, null);
+			IdentifierExpression roundingMode = new IdentifierExpression(loc, "RNE");
+			roundingMode.setDeclarationInformation(RoundingInfo);
+			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
+			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{roundingMode, exp1, exp2});
+		} else {
+			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
+			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
+		}
 		return result;
 	}
 
