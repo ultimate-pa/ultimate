@@ -156,7 +156,7 @@ public class CACSLPreferenceInitializer extends RcpPreferenceInitializer {
 	}
 
 	@Override
-	public String getPreferencePageTitle() {
+	public String getPreferenceTitle() {
 		return "C+ACSL to Boogie Translator";
 	}
 

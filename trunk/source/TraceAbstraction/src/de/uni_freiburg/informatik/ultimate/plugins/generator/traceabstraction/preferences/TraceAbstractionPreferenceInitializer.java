@@ -105,7 +105,7 @@ public class TraceAbstractionPreferenceInitializer extends RcpPreferenceInitiali
 	}
 
 	@Override
-	public String getPreferencePageTitle() {
+	public String getPreferenceTitle() {
 		return "Automizer (Trace Abstraction)";
 	}
 

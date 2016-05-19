@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 
 import java.util.Arrays;
@@ -31,8 +32,8 @@ import java.util.Arrays;
 import org.eclipse.core.runtime.Platform;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 
@@ -47,74 +48,8 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitial
  */
 public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 
-	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem[] {
-
-				// Core
-				new UltimatePreferenceItem<Boolean>(LABEL_SHOWUSABLEPARSER, VALUE_SHOWUSABLEPARSER_DEFAULT,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_SHOWRESULTNOTIFIERPOPUP,
-						VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_BENCHMARK, VALUE_BENCHMARK_DEFAULT, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_LONG_RESULT, VALUE_LONG_RESULT_DEFAULT,
-						PreferenceType.Boolean),
-
-				// Log files
-				new UltimatePreferenceItem<String>(DESC_LOGFILE, null, PreferenceType.Label),
-				new UltimatePreferenceItem<Boolean>(LABEL_LOGFILE, VALUE_LOGFILE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_APPEXLOGFILE, VALUE_APPEXLOGFILE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_LOGFILE_NAME, VALUE_LOGFILE_NAME, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_LOGFILE_DIR, VALUE_LOGFILE_DIR, PreferenceType.Directory),
-
-				// ModelManager
-				new UltimatePreferenceItem<Boolean>(LABEL_MM_DROP_MODELS, VALUE_MM_DROP_MODELS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_MM_TMPDIRECTORY, VALUE_MM_TMPDIRECTORY,
-						PreferenceType.Directory),
-
-				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, DEFAULT_VALUE_LOG4J_PATTERN,
-						PreferenceType.String),
-
-				// Log levels
-				new UltimatePreferenceItem<String>(LOGGING_PREFERENCES_DESC, null, PreferenceType.Label),
-				new UltimatePreferenceItem<String>(LABEL_ROOT_PREF, DEFAULT_VALUE_ROOT_PREF, PreferenceType.String,
-						null, new LogLevelValidator()),
-				new UltimatePreferenceItem<String>(LABEL_CORE_PREF, DEFAULT_VALUE_CORE_PREF, PreferenceType.String,
-						null, new LogLevelValidator()),
-				new UltimatePreferenceItem<String>(LABEL_CONTROLLER_PREF, DEFAULT_VALUE_CONTROLLER_PREF,
-						PreferenceType.String, null, new LogLevelValidator()),
-				new UltimatePreferenceItem<String>(LABEL_PLUGINS_PREF, DEFAULT_VALUE_PLUGINS_PREF,
-						PreferenceType.String, null, new LogLevelValidator()),
-				new UltimatePreferenceItem<String>(LABEL_TOOLS_PREF, DEFAULT_VALUE_TOOLS_PREF, PreferenceType.String,
-						null, new LogLevelValidator()),
-				new UltimatePreferenceItem<String>(PREFID_DETAILS, "", PreferenceType.String, null, true, null, null),
-
-				// Log colours
-				new UltimatePreferenceItem<String>(LABEL_COLOR_DEBUG, DEFAULT_VALUE_COLOR_DEBUG, PreferenceType.Color),
-				new UltimatePreferenceItem<String>(LABEL_COLOR_INFO, DEFAULT_VALUE_COLOR_INFO, PreferenceType.Color),
-				new UltimatePreferenceItem<String>(LABEL_COLOR_WARNING, DEFAULT_VALUE_COLOR_WARNING,
-						PreferenceType.Color),
-				new UltimatePreferenceItem<String>(LABEL_COLOR_ERROR, DEFAULT_VALUE_COLOR_ERROR, PreferenceType.Color),
-				new UltimatePreferenceItem<String>(LABEL_COLOR_FATAL, DEFAULT_VALUE_COLOR_FATAL, PreferenceType.Color),
-
-				// Toolchain
-				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, VALUE_TIMEOUT, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)),
-		};
-	}
-
 	public enum WitnessVerifierType {
 		CPACHECKER
-	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferencePageTitle() {
-		return "General";
 	}
 
 	public static final String PLUGINID = Activator.PLUGIN_ID;
@@ -233,14 +168,80 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String ALL_PLUGINS_PRESENT = "All entered plugins are in fact present!";
 	public static final String PLUGINS_NOT_PRESENT = "The following plugins are not present at the moment: \n";
 	public static final String EMPTY_STRING = "";
+	
+	@Override
+	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+		return new UltimatePreferenceItem[] {
 
-	private class LogLevelValidator implements IUltimatePreferenceItemValidator<String> {
+				// Core
+				new UltimatePreferenceItem<Boolean>(LABEL_SHOWUSABLEPARSER, VALUE_SHOWUSABLEPARSER_DEFAULT,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_SHOWRESULTNOTIFIERPOPUP,
+						VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_BENCHMARK, VALUE_BENCHMARK_DEFAULT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_LONG_RESULT, VALUE_LONG_RESULT_DEFAULT,
+						PreferenceType.Boolean),
+
+				// Log files
+				new UltimatePreferenceItem<String>(DESC_LOGFILE, null, PreferenceType.Label),
+				new UltimatePreferenceItem<Boolean>(LABEL_LOGFILE, VALUE_LOGFILE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_APPEXLOGFILE, VALUE_APPEXLOGFILE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(LABEL_LOGFILE_NAME, VALUE_LOGFILE_NAME, PreferenceType.String),
+				new UltimatePreferenceItem<String>(LABEL_LOGFILE_DIR, VALUE_LOGFILE_DIR, PreferenceType.Directory),
+
+				// ModelManager
+				new UltimatePreferenceItem<Boolean>(LABEL_MM_DROP_MODELS, VALUE_MM_DROP_MODELS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(LABEL_MM_TMPDIRECTORY, VALUE_MM_TMPDIRECTORY,
+						PreferenceType.Directory),
+
+				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, DEFAULT_VALUE_LOG4J_PATTERN,
+						PreferenceType.String),
+
+				// Log levels
+				new UltimatePreferenceItem<String>(LOGGING_PREFERENCES_DESC, null, PreferenceType.Label),
+				new UltimatePreferenceItem<String>(LABEL_ROOT_PREF, DEFAULT_VALUE_ROOT_PREF, PreferenceType.String,
+						null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(LABEL_CORE_PREF, DEFAULT_VALUE_CORE_PREF, PreferenceType.String,
+						null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(LABEL_CONTROLLER_PREF, DEFAULT_VALUE_CONTROLLER_PREF,
+						PreferenceType.String, null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(LABEL_PLUGINS_PREF, DEFAULT_VALUE_PLUGINS_PREF,
+						PreferenceType.String, null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(LABEL_TOOLS_PREF, DEFAULT_VALUE_TOOLS_PREF, PreferenceType.String,
+						null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(PREFID_DETAILS, "", PreferenceType.String, null, true, null, null),
+
+				// Log colours
+				new UltimatePreferenceItem<String>(LABEL_COLOR_DEBUG, DEFAULT_VALUE_COLOR_DEBUG, PreferenceType.Color),
+				new UltimatePreferenceItem<String>(LABEL_COLOR_INFO, DEFAULT_VALUE_COLOR_INFO, PreferenceType.Color),
+				new UltimatePreferenceItem<String>(LABEL_COLOR_WARNING, DEFAULT_VALUE_COLOR_WARNING,
+						PreferenceType.Color),
+				new UltimatePreferenceItem<String>(LABEL_COLOR_ERROR, DEFAULT_VALUE_COLOR_ERROR, PreferenceType.Color),
+				new UltimatePreferenceItem<String>(LABEL_COLOR_FATAL, DEFAULT_VALUE_COLOR_FATAL, PreferenceType.Color),
+
+				// Toolchain
+				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, VALUE_TIMEOUT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)),
+		};
+	}
+	
+	@Override
+	protected String getPlugID() {
+		return Activator.PLUGIN_ID;
+	}
+
+	@Override
+	public String getPreferenceTitle() {
+		return "General";
+	}
+	
+	private final static class LogLevelValidator implements IUltimatePreferenceItemValidator<String> {
 		@Override
 		public boolean isValid(String value) {
-			String s = value.toUpperCase();
-			return s.equals(VALUE_TRACE_LOGGING_PREF) || s.equals(VALUE_DEBUG_LOGGING_PREF)
-					|| s.equals(VALUE_INFO_LOGGING_PREF) || s.equals(VALUE_WARN_LOGGING_PREF)
-					|| s.equals(VALUE_ERROR_LOGGING_PREF) || s.equals(VALUE_FATAL_LOGGING_PREF);
+			final String upper = value.toUpperCase();
+			return upper.equals(VALUE_TRACE_LOGGING_PREF) || upper.equals(VALUE_DEBUG_LOGGING_PREF)
+					|| upper.equals(VALUE_INFO_LOGGING_PREF) || upper.equals(VALUE_WARN_LOGGING_PREF)
+					|| upper.equals(VALUE_ERROR_LOGGING_PREF) || upper.equals(VALUE_FATAL_LOGGING_PREF);
 		}
 
 		@Override

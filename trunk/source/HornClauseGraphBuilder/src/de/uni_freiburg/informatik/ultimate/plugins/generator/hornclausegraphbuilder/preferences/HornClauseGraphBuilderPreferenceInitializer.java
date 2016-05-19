@@ -52,7 +52,7 @@ public class HornClauseGraphBuilderPreferenceInitializer extends RcpPreferenceIn
 	}
 
 	@Override
-	public String getPreferencePageTitle() {
+	public String getPreferenceTitle() {
 		return "Horn Clause Graph Builder";
 	}
 	

@@ -47,7 +47,7 @@ public class ReachingDefinitionsPreferenceInitializer extends RcpPreferenceIniti
 	}
 
 	@Override
-	public String getPreferencePageTitle() {
+	public String getPreferenceTitle() {
 		return Activator.PLUGIN_NAME;
 	}
 }

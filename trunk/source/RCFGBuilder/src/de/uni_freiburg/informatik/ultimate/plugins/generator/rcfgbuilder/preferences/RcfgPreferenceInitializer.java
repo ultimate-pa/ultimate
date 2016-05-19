@@ -73,7 +73,7 @@ public class RcfgPreferenceInitializer extends RcpPreferenceInitializer {
 	}
 
 	@Override
-	public String getPreferencePageTitle() {
+	public String getPreferenceTitle() {
 		return "RCFG Builder";
 	}
 	

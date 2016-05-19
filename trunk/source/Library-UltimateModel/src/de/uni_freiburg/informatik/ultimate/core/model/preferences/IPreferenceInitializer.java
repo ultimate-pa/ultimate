@@ -28,6 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.core.model.preferences;
 
 /**
+ * A {@link IPreferenceInitializer} contains all preferences (i.e., settings, options) that can be changed by a user to
+ * customize a plugin.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -42,15 +44,22 @@ public interface IPreferenceInitializer {
 	 */
 	void initializeDefaultPreferences();
 
-	void resetDefaults();
+	/**
+	 * Reset all preferences of this preference initializer to their default values.
+	 */
+	void resetToDefaults();
 
+	/**
+	 * @return An array of {@link BaseUltimatePreferenceItem}s that define the preferences of this
+	 *         {@link IPreferenceInitializer}.
+	 */
 	BaseUltimatePreferenceItem[] getDefaultPreferences();
 
 	/**
-	 * Should return the title of the preference page node
+	 * @return a human-readable string that is used as title for the group of preferences represented by this
+	 *         initializer.
 	 * 
-	 * @return
 	 */
-	String getPreferencePageTitle();
+	String getPreferenceTitle();
 
 }

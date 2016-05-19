@@ -57,24 +57,19 @@ public abstract class RcpPreferenceInitializer extends AbstractPreferenceInitial
 
 	@Override
 	public void initializeDefaultPreferences() {
-		IEclipsePreferences defaults = mPreferenceStore.getDefaultEclipsePreferences();
+		final IEclipsePreferences defaults = mPreferenceStore.getDefaultEclipsePreferences();
 		initializePreferences(defaults);
 	}
 
 	@Override
-	public void resetDefaults() {
+	public void resetToDefaults() {
 		initializePreferences(mPreferenceStore.getEclipsePreferences());
 	}
 
 	private void initializePreferences(IEclipsePreferences prefs) {
-		try {
-			prefs.flush();
-			prefs.sync();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-		}
+		flushEclipsePreferences(prefs);
 
-		for (BaseUltimatePreferenceItem prefItem : BaseUltimatePreferenceItem
+		for (final BaseUltimatePreferenceItem prefItem : BaseUltimatePreferenceItem
 				.constructFlattenedList(mPreferenceDescriptors)) {
 			if (prefItem instanceof UltimatePreferenceItem) {
 				UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
@@ -109,10 +104,14 @@ public abstract class RcpPreferenceInitializer extends AbstractPreferenceInitial
 				}
 			}
 		}
+		flushEclipsePreferences(prefs);
+	}
+
+	private void flushEclipsePreferences(final IEclipsePreferences prefs) {
 		try {
 			prefs.flush();
 			prefs.sync();
-		} catch (BackingStoreException e) {
+		} catch (final BackingStoreException e) {
 			e.printStackTrace();
 		}
 	}
@@ -142,6 +141,6 @@ public abstract class RcpPreferenceInitializer extends AbstractPreferenceInitial
 	protected abstract String getPlugID();
 
 	@Override
-	public abstract String getPreferencePageTitle();
+	public abstract String getPreferenceTitle();
 
 }

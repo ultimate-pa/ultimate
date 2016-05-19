@@ -61,7 +61,7 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 	}
 
 	@Override
-	public String getPreferencePageTitle() {
+	public String getPreferenceTitle() {
 		return "Block Encoding";
 	}
 

@@ -73,7 +73,7 @@ public class UltimatePreferencePageFactory {
 				continue;
 			}
 			final String parentNodeId = getParentNodeId(plugin);
-			createPreferencePage(plugin.getPluginID(), plugin.getPreferences().getPreferencePageTitle(),
+			createPreferencePage(plugin.getPluginID(), plugin.getPreferences().getPreferenceTitle(),
 					filterPreferences(preferenceItems), parentNodeId);
 		}
 	}
