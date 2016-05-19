@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -446,31 +447,26 @@ public class FlowSensitiveFaultLocalizer {
 			return false; 
 		}
 	}
+
+	
 	/**
-	 * Computes the corresponding BrancOut Location if "position" is at a Branch in Location.
-	 *  
-	 * bo.isBranchIn is false if the location is not a branch-in location.
+	 * Computes the corresponding branch-out position for a given branch-in 
+	 * position. 
+	 * @param branchInList branch-in positions in descending order 
+	 * @return the smallest element of the branchInList that is larger than 
+	 * start_location. Returns null if no such element exists.
 	 */
-	private branchOutInformation computeCorrespondingBranchOutLocation(List<Integer> branchIn,int position, int start_location, 
-			Map<Integer, List<Integer>> informationFromCFG)
-	{
-		branchOutInformation bo = new branchOutInformation();
-		if(branchIn != null && branchIn.size() > 0 )
-		{
-			
-			for(int i =branchIn.size()-1; i>=0; i--)
-			{
-				if(branchIn.get(i) > start_location)
-				{
-					bo.isBranchIn = true; 
-					bo.positionBranchOut = branchIn.get(i);
-					informationFromCFG.get(position).remove(i);
-					bo.informationFromCFG = informationFromCFG;
-					break;
-				}
+	private Integer computeCorrespondingBranchOutLocation(
+			final List<Integer> branchInList, final int start_location) {
+		assert (branchInList != null && branchInList.size() > 0);
+		final ListIterator<Integer> it = branchInList.listIterator();
+		while (it.hasPrevious()) {
+			final Integer branchIn = it.previous();
+			if (branchIn > start_location) {
+				return branchIn;
 			}
 		}
-		return bo;
+		return null;
 	}
 	
 
@@ -484,27 +480,31 @@ public class FlowSensitiveFaultLocalizer {
 		for (int position = end_location; position >= start_location; position--){
 			final CodeBlock statement = counterexampleWord.getSymbol(position);
 
-			List<Integer> branchIn = informationFromCFG.get(position);
-			branchOutInformation branchOutObject = computeCorrespondingBranchOutLocation(branchIn, position, start_location, informationFromCFG);			
-			IPredicate weakestPreconditionRight = weakestPreconditionLeft;
-			if(branchOutObject.isBranchIn){ // Branch IN Statement
-				
-				int positionBranchOut = branchOutObject.positionBranchOut;
-				informationFromCFG = branchOutObject.informationFromCFG;
+			final List<Integer> branchIn = informationFromCFG.get(position);
+			final Integer branchOutPosition;
+			if (branchIn != null && branchIn.size() > 0) {
+				// Branch IN Statement
+				 branchOutPosition = computeCorrespondingBranchOutLocation(
+					branchIn, position);
+			} else {
+				branchOutPosition = null;
+			}
+			final IPredicate weakestPreconditionRight = weakestPreconditionLeft;
+			if (branchOutPosition != null) {
 				int positionBranchIn = position;
-				position = positionBranchOut;
-				final TransFormula markhor = computeMarkhorFormula(positionBranchOut, positionBranchIn, counterexampleWord,informationFromCFG, smtManager);
+				position = branchOutPosition;
+				final TransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn, counterexampleWord,informationFromCFG, smtManager);
 				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, smtManager.getScript(), 
 						smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
 				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
 				// Check the relevance of the branch.
 				final boolean isRelevant =  checkBranchRelevance(
-						positionBranchOut,positionBranchIn,markhor,weakestPreconditionLeft, weakestPreconditionRight,counterexampleWord,
+						branchOutPosition,positionBranchIn,markhor,weakestPreconditionLeft, weakestPreconditionRight,counterexampleWord,
 						informationFromCFG,smtManager,modGlobVarManager);
 				if(isRelevant){ // If the branch is Relevant.
 					//Recursion
 					computeRelevantStatements_FlowSensitive(
-							counterexampleWord, positionBranchOut,positionBranchIn,
+							counterexampleWord, branchOutPosition,positionBranchIn,
 							weakestPreconditionRight,pt,rc,smtManager,modGlobVarManager,informationFromCFG);
 				} else{
 					// Don't do anything.
@@ -660,5 +660,6 @@ public class FlowSensitiveFaultLocalizer {
 		}
 		return Arrays.asList(m_RelevanceOfTrace);
 	}
+	
 	
 }
