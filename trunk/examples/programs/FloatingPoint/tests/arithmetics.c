@@ -17,22 +17,22 @@ int main()
     //@assert \false;
   } 
 
-  /*
+
   if ((x - y) != 1.0) {
     //@assert \false;
   }
 
-//  if ((x * y) != 2.0) {
+  if ((x * y) != 2.0) {
     //@assert \false;
-//  }
+  }
 
-//  if ((x / y) != 2.0) {
-//    //@assert \false;
-//  }
+  if ((x / y) != 2.0) {
+    //@assert \false;
+  }
 
 //  if ((x % y) != 0.0) {
 //    //@assert \false;
 //  }
-*/
+
   return 0;
 }
