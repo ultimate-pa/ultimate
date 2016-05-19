@@ -258,8 +258,11 @@ public final class ISOIEC9899TC3 {
 					throw new IllegalArgumentException();
 				}
 				Expression realValue = new RealLiteral(loc, floatVal.toString());
-				arguments = new Expression[] {eb, sb, roundingMode, realValue};
-				/*
+				arguments = new Expression[] {roundingMode, realValue};
+				
+				/* This way of calculating Floating Point Constants has an error in it and would need to be fixed
+				 * before it can be used
+				 * 
 				final BigDecimal twoPointZero = new BigDecimal("2.0");
 				// calculate exponent value and value of the significant
 				while (floatVal.compareTo(twoPointZero) == 1) {
