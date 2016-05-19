@@ -28,8 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;

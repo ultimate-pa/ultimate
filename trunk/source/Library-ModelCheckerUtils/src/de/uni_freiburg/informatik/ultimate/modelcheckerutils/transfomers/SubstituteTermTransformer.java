@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers;
 
 import java.util.HashMap;
+
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 

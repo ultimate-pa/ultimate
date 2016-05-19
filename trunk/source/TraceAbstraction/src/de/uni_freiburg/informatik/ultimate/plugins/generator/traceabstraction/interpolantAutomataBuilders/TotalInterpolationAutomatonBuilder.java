@@ -38,8 +38,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;

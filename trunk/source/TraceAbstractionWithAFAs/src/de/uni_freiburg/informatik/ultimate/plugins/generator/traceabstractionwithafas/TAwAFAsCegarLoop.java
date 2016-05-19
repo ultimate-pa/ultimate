@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
@@ -77,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -398,7 +398,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		alternatingAutomaton.setStateFinal(finalState);
 		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateCube(new IPredicate[]{initialState}, new IPredicate[0]));
 
-		IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(m_SmtManager);//TODO: switch to efficient htc later, perhaps
+		IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(m_SmtManager.getManagedScript(), m_ModGlobVarManager);//TODO: switch to efficient htc later, perhaps
 
 		//Build the automaton according to the structure of the DAG
 		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<DataflowDAG<TraceCodeBlock>>();
@@ -539,7 +539,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		final IHoareTripleChecker solverHtc;
 		switch (m_Pref.getHoareTripleChecks()) {
 		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(m_SmtManager);
+			solverHtc = new MonolithicHoareTripleChecker(m_SmtManager.getManagedScript(), m_ModGlobVarManager);
 			break;
 		case INCREMENTAL:
 			solverHtc = new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt());
@@ -559,7 +559,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 *  - the corresponding hoare triple of each transition is valid
 	 */
 	private boolean checkRAFA(AlternatingAutomaton<CodeBlock, IPredicate> afa) {
-		MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(m_SmtManager);
+		MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(m_SmtManager.getManagedScript(), m_ModGlobVarManager);
 		boolean result = true;
 		for (Entry<CodeBlock, BooleanExpression[]> entry : afa.getTransitionFunction().entrySet()) {
 			for(int i=0;i<afa.getStates().size();i++){

@@ -2,29 +2,29 @@
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
- * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
  * 
- * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  * 
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
  * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
@@ -47,10 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
@@ -80,10 +75,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	private final static boolean m_TestDataflow = false;
 	
 	
-	public MonolithicHoareTripleChecker(SmtManager smtManager) {
-		this(smtManager.getManagedScript(), smtManager.getModifiableGlobals());
-	}
-
 	public MonolithicHoareTripleChecker(
 			final ManagedScript managedScript, 
 			final ModifiableGlobalVariableManager modifiableGlobals) {
@@ -117,7 +108,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
 		m_HoareTripleCheckerStatistics.continueEdgeCheckerTime();
-		Validity result =  IHoareTripleChecker.lbool2validity(isInductiveCall(pre, (Call) act, succ));
+		Validity result =  IHoareTripleChecker.lbool2validity(isInductiveCall(pre, act, succ));
 		m_HoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -139,7 +130,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
 			IReturnAction act, IPredicate succ) {
 		m_HoareTripleCheckerStatistics.continueEdgeCheckerTime();
-		Validity result =  IHoareTripleChecker.lbool2validity(isInductiveReturn(preLin, preHier, (Return) act, succ));
+		Validity result =  IHoareTripleChecker.lbool2validity(isInductiveReturn(preLin, preHier, act, succ));
 		m_HoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -236,11 +227,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	public LBool isInductiveCall(IPredicate ps1, Call ta, IPredicate ps2) {
+	public LBool isInductiveCall(IPredicate ps1, ICallAction ta, IPredicate ps2) {
 		return isInductiveCall(ps1, ta, ps2, false);
 	}
 
-	public LBool isInductiveCall(IPredicate ps1, Call ta, IPredicate ps2, boolean expectUnsat) {
+	public LBool isInductiveCall(IPredicate ps1, ICallAction ta, IPredicate ps2, boolean expectUnsat) {
 		m_ManagedScript.lock(this);
 		long startTime = System.nanoTime();
 
@@ -265,7 +256,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 4, 0,
 				Integer.MIN_VALUE, null, -5, 0, m_IndexedConstants, m_ManagedScript.getScript(), modifiableGlobalsCaller);
 
-		TransFormula tf = ta.getTransitionFormula();
+		TransFormula tf = ta.getLocalVarsAssignment();
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
 		Term fTrans = PredicateUtils.formulaWithIndexedVars(tf, 0, 1, assignedVars, m_IndexedConstants, m_ManagedScript.getScript());
 
@@ -297,11 +288,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, Return ta, IPredicate ps2) {
+	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2) {
 		return isInductiveReturn(ps1, psk, ta, ps2, false);
 	}
 
-	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, Return ta, IPredicate ps2, boolean expectUnsat) {
+	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2, boolean expectUnsat) {
 		m_ManagedScript.lock(this);
 		long startTime = System.nanoTime();
 
@@ -319,15 +310,14 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 		m_ManagedScript.getScript().push(1);
 		m_IndexedConstants = new ScopedHashMap<String, Term>();
-		Call ca = ta.getCorrespondingCall();
 
-		TransFormula tfReturn = ta.getTransitionFormula();
+		TransFormula tfReturn = ta.getAssignmentOfReturn();
 		Set<BoogieVar> assignedVarsOnReturn = new HashSet<BoogieVar>();
 		Term fReturn = PredicateUtils.formulaWithIndexedVars(tfReturn, 1, 2, assignedVarsOnReturn, m_IndexedConstants,
 				m_ManagedScript.getScript());
 		// fReturn = (new FormulaUnLet()).unlet(fReturn);
 
-		TransFormula tfCall = ca.getTransitionFormula();
+		TransFormula tfCall = ta.getLocalVarsAssignmentOfCall();
 		Set<BoogieVar> assignedVarsOnCall = new HashSet<BoogieVar>();
 		Term fCall = PredicateUtils.formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, m_IndexedConstants,
 				m_ManagedScript.getScript());
@@ -375,7 +365,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			assert (result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN) :
 				("From " + ps1.getFormula().toStringDirect()) +
 				("Caller " + psk.getFormula().toStringDirect()) +
-				("Statements " + ta.getPrettyPrintedStatements()) +
+				("Statements " + ta) +
 				("To " + ps2.getFormula().toStringDirect()) +
 				("Not inductive!");
 
@@ -438,7 +428,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	// FIXME: remove once enough tested
-	private void testMyReturnDataflowCheck(IPredicate ps1, IPredicate psk, Return ta, IPredicate ps2, LBool result) {
+	private void testMyReturnDataflowCheck(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2, LBool result) {
 		if (ps2.getFormula() == m_ManagedScript.getScript().term("false")) {
 			return;
 		}
@@ -453,7 +443,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	// FIXME: remove once enough tested
-	private void testMyCallDataflowCheck(IPredicate ps1, Call ta, IPredicate ps2, LBool result) {
+	private void testMyCallDataflowCheck(IPredicate ps1, ICallAction ta, IPredicate ps2, LBool result) {
 		if (ps2.getFormula() == m_ManagedScript.getScript().term("false")) {
 			return;
 		}

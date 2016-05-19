@@ -2,29 +2,29 @@
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
- * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
  * 
- * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  * 
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
  * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Collections;
 import java.util.Set;
@@ -42,15 +42,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
 
 public class SdHoareTripleCheckerHelper {
 	
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	
-	private final HoareTripleCheckerStatisticsGenerator m_EdgeCheckerBenchmark;
+	private final HoareTripleCheckerStatisticsGenerator m_HoareTripleCheckerStatistics;
 	private final IPredicateCoverageChecker m_PredicateCoverageChecker;
 	
 	
@@ -60,9 +57,9 @@ public class SdHoareTripleCheckerHelper {
 		m_ModifiableGlobalVariableManager = modGlobVarManager;
 		m_PredicateCoverageChecker = predicateCoverageChecker;
 		if (edgeCheckerBenchmarkGenerator == null) {
-			m_EdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
+			m_HoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
 		} else {
-			m_EdgeCheckerBenchmark = edgeCheckerBenchmarkGenerator;
+			m_HoareTripleCheckerStatistics = edgeCheckerBenchmarkGenerator;
 		}
 	}
 	
@@ -73,7 +70,7 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return m_EdgeCheckerBenchmark;
+		return m_HoareTripleCheckerStatistics;
 	}
 	
 	
@@ -114,7 +111,7 @@ public class SdHoareTripleCheckerHelper {
 		Infeasibility infeasiblity = act.getTransformula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
 			if (varsDisjoinedFormInVars(pre, act.getTransformula())) {
-				m_EdgeCheckerBenchmark.getSDtfsCounter().incIn();
+				m_HoareTripleCheckerStatistics.getSDtfsCounter().incIn();
 				return Validity.INVALID;
 			} else  {
 				return null;
@@ -171,7 +168,7 @@ public class SdHoareTripleCheckerHelper {
 			Validity sat = m_PredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
 				if (Collections.disjoint(pre.getVars(), act.getTransformula().getAssignedVars())) {
-					m_EdgeCheckerBenchmark.getSDsluCounter().incIn();
+					m_HoareTripleCheckerStatistics.getSDsluCounter().incIn();
 					return Validity.VALID;
 				}
 			}
@@ -196,7 +193,7 @@ public class SdHoareTripleCheckerHelper {
 		if (m_PredicateCoverageChecker != null) {
 			Validity sat = m_PredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
-				m_EdgeCheckerBenchmark.getSDsluCounter().incIn();
+				m_HoareTripleCheckerStatistics.getSDsluCounter().incIn();
 				return Validity.VALID;
 			} else if (sat == Validity.UNKNOWN) {
 				return null;
@@ -217,7 +214,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
-		m_EdgeCheckerBenchmark.getSDsCounter().incIn();
+		m_HoareTripleCheckerStatistics.getSDsCounter().incIn();
 		return Validity.INVALID;
 	}
 	
@@ -244,7 +241,7 @@ public class SdHoareTripleCheckerHelper {
 				continue;
 			}
 			// occurs neither in pre not in codeBlock, probably unsat
-			m_EdgeCheckerBenchmark.getSdLazyCounter().incIn();
+			m_HoareTripleCheckerStatistics.getSdLazyCounter().incIn();
 			return Validity.INVALID;
 		}
 		return null;
@@ -255,7 +252,7 @@ public class SdHoareTripleCheckerHelper {
 		// there could be a contradiction if the Call is not a simple call
 		// but interprocedural sequential composition 			
 		if (act instanceof ICallAction) {
-			m_EdgeCheckerBenchmark.getSDtfsCounter().incCa();
+			m_HoareTripleCheckerStatistics.getSDtfsCounter().incCa();
 			return Validity.INVALID;
 		} else {
 			return null;
@@ -281,17 +278,17 @@ public class SdHoareTripleCheckerHelper {
 			return null;
 		}
 		if (preHierIndependent(post, pre, act.getLocalVarsAssignment(), act.getSucceedingProcedure())) {
-			m_EdgeCheckerBenchmark.getSDsCounter().incCa();
+			m_HoareTripleCheckerStatistics.getSDsCounter().incCa();
 			return Validity.INVALID;
 		}
 		return null;
 	}
 	
-	public Validity sdLazyEcCall(IPredicate pre, Call cb, IPredicate post) {
+	public Validity sdLazyEcCall(IPredicate pre, ICallAction cb, IPredicate post) {
 		if (isOrIteFormula(post)) {
 			return sdecCall(pre, cb, post);
 		}
-		TransFormula locVarAssignTf = cb.getTransitionFormula();
+		TransFormula locVarAssignTf = cb.getLocalVarsAssignment();
 		boolean argumentsRestrictedByPre = 
 				!varSetDisjoint(locVarAssignTf.getInVars().keySet(), pre.getVars());
 		for (BoogieVar bv : post.getVars()) {
@@ -304,7 +301,7 @@ public class SdHoareTripleCheckerHelper {
 					}
 				}
 			}
-			m_EdgeCheckerBenchmark.getSdLazyCounter().incCa();
+			m_HoareTripleCheckerStatistics.getSdLazyCounter().incCa();
 			return Validity.INVALID;
 		}
 		return null;
@@ -315,7 +312,7 @@ public class SdHoareTripleCheckerHelper {
 		if (hierPostIndependent(hier, ret, post) 
 				&& preHierIndependent(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPreceedingProcedure())
 				&& prePostIndependent(pre, ret, post)) {
-			m_EdgeCheckerBenchmark.getSDsCounter().incRe();
+			m_HoareTripleCheckerStatistics.getSDsCounter().incRe();
 			return Validity.INVALID;
 
 		}
@@ -395,7 +392,7 @@ public class SdHoareTripleCheckerHelper {
 					}
 				}
 			}
-			m_EdgeCheckerBenchmark.getSdLazyCounter().incRe();
+			m_HoareTripleCheckerStatistics.getSdLazyCounter().incRe();
 			return Validity.INVALID;
 		}
 		return null;
@@ -505,7 +502,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
-		m_EdgeCheckerBenchmark.getSDsluCounter().incIn();
+		m_HoareTripleCheckerStatistics.getSDsluCounter().incIn();
 		return Validity.VALID;
 	}
 	
@@ -523,7 +520,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
-		m_EdgeCheckerBenchmark.getSDsluCounter().incCa();
+		m_HoareTripleCheckerStatistics.getSDsluCounter().incCa();
 		return Validity.VALID;
 	}
 	
@@ -544,7 +541,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
-		m_EdgeCheckerBenchmark.getSDsluCounter().incRe();
+		m_HoareTripleCheckerStatistics.getSDsluCounter().incRe();
 		return Validity.VALID;
 	}
 	

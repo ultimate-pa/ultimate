@@ -39,10 +39,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
@@ -79,7 +79,8 @@ public class BestApproximationDeterminizer
 			NestedWordAutomaton<CodeBlock, IPredicate> mNwa,
 			StateFactory<IPredicate> stateFactory) {
 		super();
-		m_HoareTriplechecker = new MonolithicHoareTripleChecker(mSmtManager);
+		m_HoareTriplechecker = new MonolithicHoareTripleChecker(
+				mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());
 		m_TaPreferences = taPreferences;
 		m_StateFactory = stateFactory;
 		m_Nwa = mNwa;

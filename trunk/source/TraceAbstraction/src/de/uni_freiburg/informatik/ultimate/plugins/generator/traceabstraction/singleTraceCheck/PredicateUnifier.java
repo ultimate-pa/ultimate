@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Pre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
