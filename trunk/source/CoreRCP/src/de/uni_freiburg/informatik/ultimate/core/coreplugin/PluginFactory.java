@@ -159,7 +159,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 				return null;
 			}
 		}
-		mSettingsManager.checkPreferencesForActivePlugins(plugin.getPluginID(), plugin.getPluginName());
+		mSettingsManager.registerPlugin(plugin);
 		return plugin;
 	}
 
@@ -261,7 +261,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		IConfigurationElement controllerDescriptor = configElements.get(0);
 		IController<ToolchainListType> controller = createInstance(controllerDescriptor);
 		mGuiMode = new Boolean(controllerDescriptor.getAttribute("isGraphical")).booleanValue();
-		mSettingsManager.checkPreferencesForActivePlugins(controller.getPluginID(), controller.getPluginName());
+		mSettingsManager.registerPlugin(controller);
 
 		mLogger.info("Loaded " + (mGuiMode ? "graphical " : "") + "controller " + controller.getPluginName());
 		return controller;
@@ -288,7 +288,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 				try {
 					Class<?> myClass = Class.forName(className);
 					IServiceFactory<?> factory = createInstance(element);
-					mSettingsManager.checkPreferencesForActivePlugins(factory.getPluginID(), factory.getPluginName());
+					mSettingsManager.registerPlugin(factory);
 					mAvailableServicesByClassName.put(myClass, factory);
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();

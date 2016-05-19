@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
@@ -32,6 +33,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -50,19 +52,39 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
-class SettingsManager {
+/**
+ * The SettingsManager initializes the default settings of all plugins as well as loading and saving settings of an
+ * Ultimate instance.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+final class SettingsManager {
 
 	// TODO: Check if this works with multiple instances of plugins
 
 	private final ILogger mLogger;
-	private HashMap<String, LogPreferenceChangeListener> mActivePreferenceListener;
+	private final Map<String, LogPreferenceChangeListener> mActivePreferenceListener;
 
-	SettingsManager(ILogger logger) {
+	SettingsManager(final ILogger logger) {
 		mLogger = logger;
 		mActivePreferenceListener = new HashMap<String, LogPreferenceChangeListener>();
 	}
 
-	void checkPreferencesForActivePlugins(String pluginId, String pluginName) {
+	void registerPlugin(final IUltimatePlugin plugin) {
+		if (plugin == null) {
+			return;
+		}
+		final String pluginId = plugin.getPluginID();
+		final String pluginName = plugin.getPluginName();
+		final IPreferenceInitializer prefs = plugin.getPreferences();
+		if (prefs == null) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Plugin " + pluginName + " does not have preferences");
+			}
+			return;
+		}
+		prefs.initializeDefaultPreferences();
 		attachLogPreferenceChangeListenerToPlugin(pluginId, pluginName);
 		logDefaultPreferences(pluginId, pluginName);
 	}
@@ -149,7 +171,7 @@ class SettingsManager {
 			IPreferenceInitializer preferences = plugin.getPreferences();
 			if (preferences != null) {
 				mLogger.info("Resetting " + plugin.getPluginName() + " preferences to default values");
-				preferences.resetDefaults();
+				preferences.resetToDefaults();
 			} else {
 				mLogger.info(plugin.getPluginName() + " provides no preferences, ignoring...");
 			}
@@ -182,7 +204,9 @@ class SettingsManager {
 	 * @param pluginId
 	 */
 	private void attachLogPreferenceChangeListenerToPlugin(String pluginId, String pluginName) {
-
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Attaching preference change listener for plugin " + pluginName);
+		}
 		LogPreferenceChangeListener instanceListener = retrieveListener(pluginId, pluginName, "Instance");
 		LogPreferenceChangeListener configListener = retrieveListener(pluginId, pluginName, "Configuration");
 		LogPreferenceChangeListener defaultListener = retrieveListener(pluginId, pluginName, "Default");

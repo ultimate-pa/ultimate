@@ -224,7 +224,7 @@ public class UltimateCore implements IApplication, ICore<ToolchainListType>, IUl
 		// loading classes exported by plugins
 		mSettingsManager = new SettingsManager(mLogger);
 
-		mSettingsManager.checkPreferencesForActivePlugins(getPluginID(), getPluginName());
+		mSettingsManager.registerPlugin(this);
 
 		mPluginFactory = new PluginFactory(mSettingsManager, mLogger);
 		setCurrentController(mPluginFactory.getController());
