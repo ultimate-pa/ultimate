@@ -14,10 +14,14 @@
    </configIni>
 
    <launcherArgs>
-      <programArgs>-nosplash --console -consoleLog</programArgs>
-      <programArgsLin>-data @user.home/.ultimate</programArgsLin>
-      <programArgsWin>-data @user.home\ultimate-data</programArgsWin>
-      <vmArgs>-Xmx8g -Xms512M</vmArgs>
+      <programArgs>-nosplash --console -consoleLog
+      </programArgs>
+      <programArgsLin>-data @user.home/.ultimate
+      </programArgsLin>
+      <programArgsWin>-data @user.home\ultimate-data
+      </programArgsWin>
+      <vmArgs>-Xmx8g -Xms512M
+      </vmArgs>
    </launcherArgs>
 
    <windowImages/>
@@ -32,7 +36,6 @@
    </launcher>
 
    <vm>
-      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7</windows>
    </vm>
 
    <plugins>
