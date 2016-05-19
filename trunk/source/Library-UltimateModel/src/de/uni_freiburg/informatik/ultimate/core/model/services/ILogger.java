@@ -63,15 +63,18 @@ public interface ILogger {
 	void debug(Object msg);
 
 	static ILogger getLogger(String loggerName) {
-		throw new UnsupportedOperationException("You should never use the static logger method getLogger(String)! " + loggerName);
+		throw new UnsupportedOperationException(
+				"You should never use the static logger method getLogger(String)! " + loggerName);
 	}
 
 	static ILogger getLogger(Class<?> loggerName) {
-		throw new UnsupportedOperationException("You should never use the static logger method getLogger(Class)! " + loggerName);
+		throw new UnsupportedOperationException(
+				"You should never use the static logger method getLogger(Class)! " + loggerName);
 	}
 
 	static ILogger getRootLogger() {
-		throw new UnsupportedOperationException("You should never use the static logger method getRootLogger()!");
+		throw new UnsupportedOperationException(
+				"You should never use the static logger method getRootLogger()osgi.devosgi.devosgi.dev!");
 	}
 
 	default void addAppender(Object something) {
