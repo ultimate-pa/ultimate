@@ -66,7 +66,7 @@ public abstract class RcpPreferenceInitializer extends AbstractPreferenceInitial
 		initializePreferences(mPreferenceStore.getEclipsePreferences());
 	}
 
-	private void initializePreferences(IEclipsePreferences prefs) {
+	private void initializePreferences(final IEclipsePreferences prefs) {
 		flushEclipsePreferences(prefs);
 
 		for (final BaseUltimatePreferenceItem prefItem : BaseUltimatePreferenceItem
@@ -134,9 +134,7 @@ public abstract class RcpPreferenceInitializer extends AbstractPreferenceInitial
 	protected abstract BaseUltimatePreferenceItem[] initDefaultPreferences();
 
 	/**
-	 * Should return the ID of the implementing plugin.
-	 * 
-	 * @return
+	 * @return the ID of the implementing plugin.
 	 */
 	protected abstract String getPlugID();
 

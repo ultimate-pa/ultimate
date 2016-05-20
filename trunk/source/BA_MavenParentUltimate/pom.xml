@@ -61,7 +61,7 @@
 		<!-- Exclude completely from any sonar analysis (including coverage) -->
 		<sonar.exclusions>
 			src/jdd/**,
-			src/net/sf/javabdd/**
+			src/net/sf/javabdd/**,
 			src/srParse/ReqLexer.java,
 			src/srParse/ReqParser.java,
 			src/srParse/ReqSymbols.java,
