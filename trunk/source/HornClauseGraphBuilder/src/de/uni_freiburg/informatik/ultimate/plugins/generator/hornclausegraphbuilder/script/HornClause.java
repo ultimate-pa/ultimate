@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -36,7 +37,7 @@ public class HornClause {
 	 *   every argument position of the represented atom,
 	 *    which TermVariable in the transition formula represents that argument in the represented atom.
 	 */
-	Map<HornClausePredicateSymbol, Map<Integer, TermVariable>> m_BodyPredToPositionToTermVariable;
+	Map<HornClausePredicateSymbol, ArrayList<TermVariable>> m_BodyPredToTermVariables;
 	
 	/**
 	 * Stores for 
@@ -44,7 +45,8 @@ public class HornClause {
 	 *   every argument position of the represented atom,
 	 *    which TermVariable in the transition formula represents that argument in the represented atom.
 	 */
-	Map<Integer, TermVariable> m_HeadPredPositionToTermVariable;
+	ArrayList<TermVariable> m_HeadPredTermVariables;
+	HornClausePredicateSymbol m_HeadPredicate;
 	
 	Term m_TransitionFormula;
 }

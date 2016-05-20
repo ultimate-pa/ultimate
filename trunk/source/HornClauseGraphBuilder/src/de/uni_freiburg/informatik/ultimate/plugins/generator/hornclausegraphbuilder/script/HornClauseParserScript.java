@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbui
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -29,6 +31,10 @@ public class HornClauseParserScript extends NoopScript {
 	private Script m_BackendSmtSolver;
 	private String m_Logic;
 	private Settings m_SolverSettings;
+	private HashSet<String> m_DeclaredPredicateSymbols;
+	private HornClause m_CurrentHornClause;
+	private ArrayList<Term> m_currentPredicateAtoms;
+	private ArrayList<Term> m_currentTransitionAtoms;
 
 	public HornClauseParserScript(Script smtSolverScript, String logic, Settings settings) {
 		
@@ -88,6 +94,8 @@ public class HornClauseParserScript extends NoopScript {
 		//  to the theory of the backend solver
 //		mBackendSmtSolver.declareFun(fun, paramSorts, resultSort);
 		super.declareFun(fun, paramSorts, resultSort);
+		if (resultSort.getName() == "Bool")
+			m_DeclaredPredicateSymbols.add(fun);
 	}
 
 	@Override
@@ -98,6 +106,7 @@ public class HornClauseParserScript extends NoopScript {
 		//  -- identify the "statement"
 		// - compute a TransFormula from the above
 		// 
+		m_CurrentHornClause = new HornClause();
 		
         // for Horn clause solving we do no checks nothing until check-sat:
 		return LBool.UNKNOWN; 
@@ -141,8 +150,25 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public Term term(String funcname, BigInteger[] indices, Sort returnSort, Term... params) throws SMTLIBException {
+		
+		Term result = super.term(funcname, indices, returnSort, params);
+
+//		if (returnSort.getName().equals("Bool")) {
+//			
+//		}
+		
+		if (funcname.equals("=>")) {
+			int i = 0;
+			i++;
+			
+		} else if (m_DeclaredPredicateSymbols.contains(funcname)) {
+			m_currentPredicateAtoms.add(result);
+		} else {
+			m_currentTransitionAtoms.add(result);
+		}
+		
 //		return m_BackendSmtSolver.term(funcname, indices, returnSort, params);
-		return super.term(funcname, indices, returnSort, params);
+		return result;
 	}
 
 	@Override
