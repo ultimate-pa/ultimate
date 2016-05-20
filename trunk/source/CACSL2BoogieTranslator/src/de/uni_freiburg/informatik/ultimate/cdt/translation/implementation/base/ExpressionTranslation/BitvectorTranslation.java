@@ -107,7 +107,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	@Override
 	public RValue translateFloatingLiteral(ILocation loc, String val) {
-		declareFloatingPointFunction(loc, "to_fp", null, false, false, null, null);
+		declareFloatingPointConstructers(loc);
 		RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, m_TypeSizes, m_FunctionDeclarations);
 		return rVal;
 	}
@@ -335,29 +335,31 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			}
 			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, resultASTType, paramASTTypes);
-		} else if (smtlibFunctionName == "to_fp") {
-			ASTType[] paramASTTypes = new ASTType[2];
-			
-			CPrimitive result = new CPrimitive(PRIMITIVE.FLOAT);
-			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, result);
-			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, new int[]{8, 24});
-			paramASTTypes[0] = new NamedType(loc, "RoundingMode", new ASTType[0]);
-			paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
-			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareFloat", attributes, resultASTType, paramASTTypes);
-			
-			result = new CPrimitive(PRIMITIVE.DOUBLE);
-			attributes = generateAttributes(loc, smtlibFunctionName, new int[]{11, 53});
-			resultASTType = m_TypeHandler.ctype2asttype(loc, result);
-			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareDouble", attributes, resultASTType, paramASTTypes);
-			
-			result = new CPrimitive(PRIMITIVE.LONGDOUBLE);
-			attributes = generateAttributes(loc, smtlibFunctionName, new int[]{15, 113});
-			resultASTType = m_TypeHandler.ctype2asttype(loc, result);
-			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareLongDouble", attributes, resultASTType, paramASTTypes);
-		} else {
+		}  else {
 			Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
 			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
 		}
+	}
+	
+	private void declareFloatingPointConstructers(ILocation loc) {
+		ASTType[] paramASTTypes = new ASTType[2];
+		
+		CPrimitive result = new CPrimitive(PRIMITIVE.FLOAT);
+		ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, result);
+		Attribute[] attributes = generateAttributes(loc, "to_fp", new int[]{8, 24});
+		paramASTTypes[0] = new NamedType(loc, "RoundingMode", new ASTType[0]);
+		paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
+		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareFloat", attributes, resultASTType, paramASTTypes);
+		
+		result = new CPrimitive(PRIMITIVE.DOUBLE);
+		attributes = generateAttributes(loc, "to_fp", new int[]{11, 53});
+		resultASTType = m_TypeHandler.ctype2asttype(loc, result);
+		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareDouble", attributes, resultASTType, paramASTTypes);
+		
+		result = new CPrimitive(PRIMITIVE.LONGDOUBLE);
+		attributes = generateAttributes(loc, "to_fp", new int[]{15, 113});
+		resultASTType = m_TypeHandler.ctype2asttype(loc, result);
+		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "declareLongDouble", attributes, resultASTType, paramASTTypes);
 	}
 	/**
 	 * Generate the attributes for the Boogie code that make sure that we
