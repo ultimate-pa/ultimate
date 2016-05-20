@@ -46,6 +46,8 @@ public class ReplacementVarFactory {
 	private final IFreshTermVariableConstructor m_VariableManager;
 	private final Map<Term, ReplacementVar> m_RepVarMapping = 
 			new HashMap<Term, ReplacementVar>();
+	private final Map<Term, Map<Object, LocalReplacementVar>> m_LocalRepVarMapping = 
+			new HashMap<Term, Map<Object, LocalReplacementVar>>();
 	private final Map<String, TermVariable> m_AuxVarMapping = 
 			new HashMap<String, TermVariable>();
 	/**
@@ -71,6 +73,26 @@ public class ReplacementVarFactory {
 		}
 		return repVar;
 	}
+	
+	/**
+	 * Get the LocalReplacementVar that is used as a replacement for the Term
+	 * definition at the ProgramPoint location. 
+	 * Construct this LocalReplacementVar if it does not exist yet.
+	 */
+	public ReplacementVar getOrConstuctLocalReplacementVar(Term definition, Object location) {
+		Map<Object, LocalReplacementVar> locToRepVar = m_LocalRepVarMapping.get(definition);
+		if (definition == null) {
+			locToRepVar = new HashMap<Object, LocalReplacementVar>();
+			m_LocalRepVarMapping.put(definition, locToRepVar);
+		}
+		LocalReplacementVar repVar = locToRepVar.get(location);
+		if (repVar == null) {
+			repVar = new LocalReplacementVar(definition.toString(), definition, location);
+			locToRepVar.put(location, repVar);
+		}
+		return repVar;
+	}
+
 	
 	/**
 	 * Construct and return a unique TermVariable with the given name.
