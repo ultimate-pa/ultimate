@@ -11,30 +11,57 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuil
 import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.preferences.HornClauseGraphBuilderPreferenceInitializer;
 
 public class HCGBuilderHelper {
-	public static Script constructAndInitializeBackendSmtSolver(IUltimateServiceProvider services, IToolchainStorage storage,
-			String filename) {
-		final SolverMode solverMode = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
-				.getEnum(HornClauseGraphBuilderPreferenceInitializer.LABEL_Solver, SolverMode.class);
-		
-		final String commandExternalSolver = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
-				.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverCommand);
-		
-		final String logicForExternalSolver = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
-				.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverLogic);
+	
+	public static class ConstructAndInitializeBackendSmtSolver {
+	
+		private Settings m_SolverSettings;
+		private String m_LogicForExternalSolver;
+		private Script m_Script;
 
-		final Settings solverSettings = SolverBuilder.constructSolverSettings(
-				filename, solverMode, commandExternalSolver, false, null);
+		public ConstructAndInitializeBackendSmtSolver(IUltimateServiceProvider services, 
+				IToolchainStorage storage,
+				String filename) {
+			constructAndInitializeBackendSmtSolver(services, storage, filename);
+		}
 
-		return SolverBuilder.buildAndInitializeSolver(services, 
-				storage, 
-				solverMode, 
-				solverSettings, 
-//				dumpUsatCoreTrackBenchmark, 
-				false, 
-//				dumpMainTrackBenchmark,
-				false,
-				logicForExternalSolver, 
-				"HornClauseSolverBackendSolverScript");		
+		void constructAndInitializeBackendSmtSolver(
+				IUltimateServiceProvider services, 
+				IToolchainStorage storage,
+				String filename) {
+			final SolverMode solverMode = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
+					.getEnum(HornClauseGraphBuilderPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
+			final String commandExternalSolver = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
+					.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverCommand);
+
+			m_LogicForExternalSolver = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
+					.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverLogic);
+
+			m_SolverSettings = SolverBuilder.constructSolverSettings(
+					filename, solverMode, commandExternalSolver, false, null);
+
+			m_Script =  SolverBuilder.buildAndInitializeSolver(services, 
+					storage, 
+					solverMode, 
+					m_SolverSettings, 
+					//				dumpUsatCoreTrackBenchmark, 
+					false, 
+					//				dumpMainTrackBenchmark,
+					false,
+					m_LogicForExternalSolver, 
+					"HornClauseSolverBackendSolverScript");		
+		}
+
+		public Settings getSolverSettings() {
+			return m_SolverSettings;
+		}
+
+		public String getLogicForExternalSolver() {
+			return m_LogicForExternalSolver;
+		}
+
+		public Script getScript() {
+			return m_Script;
+		}
 	}
 }

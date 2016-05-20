@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 
 public class HornClauseParserScript extends NoopScript {
 	
@@ -25,12 +26,16 @@ public class HornClauseParserScript extends NoopScript {
 	 * Interface to the SMT solver that TreeAutomizer (or whoever else will used 
 	 * the HornClauseGraph) will use as a backend.
 	 */
-	private Script mBackendSmtSolver;
+	private Script m_BackendSmtSolver;
+	private String m_Logic;
+	private Settings m_SolverSettings;
 
-	public HornClauseParserScript(Script smtSolverScript) {
+	public HornClauseParserScript(Script smtSolverScript, String logic, Settings settings) {
 		
 		
-		mBackendSmtSolver = smtSolverScript;
+		m_BackendSmtSolver = smtSolverScript;
+		m_Logic = logic;
+		m_SolverSettings = settings;
 		setupBackendSolver();
 
 	}
@@ -53,24 +58,36 @@ public class HornClauseParserScript extends NoopScript {
 				+ "but the smt2 file sets the logic to something other than HORN";
 		if (!logic.equals("HORN"))  // TODO redundant with assertion
 			throw new UnsupportedOperationException();
+
+		super.setLogic(m_Logic);
+	}
+
+	@Override
+	public void setLogic(Logics logic) throws UnsupportedOperationException {
+		// TODO Auto-generated method stub
+		//		super.setLogic(logic);
+		super.setLogic(logic);
 	}
 
 	@Override
 	public void setOption(String opt, Object value) throws UnsupportedOperationException, SMTLIBException {
 		// just handing it over to the backend solver
-		mBackendSmtSolver.setOption(opt, value);
+		super.setOption(opt, value);
+//		m_BackendSmtSolver.setOption(opt, value);
 	}
 
 	@Override
 	public void declareSort(String sort, int arity) throws SMTLIBException {
-		mBackendSmtSolver.declareSort(sort, arity);
+		super.declareSort(sort, arity);
+//		mBackendSmtSolver.declareSort(sort, arity);
 	}
 
 	@Override
 	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort) throws SMTLIBException {
 		// TODO: probably track uninterpreted predicates, i.e., the predicates not known
 		//  to the theory of the backend solver
-		mBackendSmtSolver.declareFun(fun, paramSorts, resultSort);
+//		mBackendSmtSolver.declareFun(fun, paramSorts, resultSort);
+		super.declareFun(fun, paramSorts, resultSort);
 	}
 
 	@Override
@@ -100,39 +117,37 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public Sort sort(String sortname, Sort... params) throws SMTLIBException {
-		return mBackendSmtSolver.sort(sortname, params);
+		return super.sort(sortname, params);
+//		return mBackendSmtSolver.sort(sortname, params);
 	}
 
 	@Override
 	public Sort sort(String sortname, BigInteger[] indices, Sort... params) throws SMTLIBException {
-		return mBackendSmtSolver.sort(sortname, indices, params);
+		return super.sort(sortname, indices, params);
+//		return mBackendSmtSolver.sort(sortname, indices, params);
 	}
 
 	@Override
 	public Sort[] sortVariables(String... names) throws SMTLIBException {
-		return mBackendSmtSolver.sortVariables(names);
+//		return m_BackendSmtSolver.sortVariables(names);
+		return super.sortVariables(names);
 	}
 
 	@Override
 	public Term term(String funcname, Term... params) throws SMTLIBException {
-		return mBackendSmtSolver.term(funcname, params);
+//		return m_BackendSmtSolver.term(funcname, params);
+		return super.term(funcname, params);
 	}
 
 	@Override
 	public Term term(String funcname, BigInteger[] indices, Sort returnSort, Term... params) throws SMTLIBException {
-		return mBackendSmtSolver.term(funcname, indices, returnSort, params);
+//		return m_BackendSmtSolver.term(funcname, indices, returnSort, params);
+		return super.term(funcname, indices, returnSort, params);
 	}
 
 	@Override
 	public Theory getTheory() {
 		return null; //TODO: maybe return the theory of the backend solver
-	}
-
-	@Override
-	public void setLogic(Logics logic) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-//		super.setLogic(logic);
-		throw new UnsupportedOperationException("this should not be called here, only the other setLogic..");
 	}
 
 	@Override
@@ -143,7 +158,8 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public void defineSort(String sort, Sort[] sortParams, Sort definition) throws SMTLIBException {
-		mBackendSmtSolver.defineSort(sort, sortParams, definition);
+		super.defineSort(sort, sortParams, definition);
+//		m_BackendSmtSolver.defineSort(sort, sortParams, definition);
 	}
 
 	@Override
@@ -317,7 +333,8 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public TermVariable variable(String varname, Sort sort) throws SMTLIBException {
-		return mBackendSmtSolver.variable(varname, sort);
+//		return m_BackendSmtSolver.variable(varname, sort);
+		return super.variable(varname, sort);
 	}
 	
 	

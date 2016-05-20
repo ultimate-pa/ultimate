@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HCGBuilderHelper;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.script.HornClauseParserScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -172,8 +173,12 @@ public class SmtParser implements ISource {
 
 		if (inHornSolverMode) {
 			mLogger.info("Parsing .smt2 file as a set of Horn Clauses");
-			Script smtSolverScript = HCGBuilderHelper.constructAndInitializeBackendSmtSolver(mServices, mStorage, null);
-			script = new HornClauseParserScript(smtSolverScript);
+			ConstructAndInitializeBackendSmtSolver caibss = 
+					new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, mStorage, null);
+			script = new HornClauseParserScript(
+					caibss.getScript(), 
+					caibss.getLogicForExternalSolver(), 
+					caibss.getSolverSettings()); 
 		} else {
 			if (useExternalSolver) {
 				mLogger.info("Starting external SMT solver with command " + commandExternalSolver);
