@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa.DelayedNwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.nwa.DelayedNwaSimulation;
@@ -160,6 +161,10 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				long startTime = System.currentTimeMillis();
 				method = new ShrinkNwa<>(getServices(), stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
+			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
+				long startTime = System.currentTimeMillis();
+				method = new MinimizeNwaMaxSAT<>(getServices(), stateFactory, operand);
+				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (AutomataOperationCanceledException e) {
 			logger.info("Method timed out.");
@@ -202,6 +207,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, true, getServices(), timeOutMillis,
 				stateFactory, reachableOperand);
 		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, getServices(), timeOutMillis,
+				stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, true, getServices(), timeOutMillis,
 				stateFactory, reachableOperand);
 	}
 }

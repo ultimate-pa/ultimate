@@ -42,6 +42,10 @@ public enum ESimulationType {
 	 */
 	DIRECT,
 	/**
+	 * External minimization method, MinimizeNwaMaxSAT.
+	 */
+	EXT_MINIMIZENWAMAXSAT,
+	/**
 	 * External minimization method, MinimizeSevpa.
 	 */
 	EXT_MINIMIZESEVPA,

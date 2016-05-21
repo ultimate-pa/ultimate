@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.simulation.delayed.DelayedGameGraph;
@@ -872,6 +873,10 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 				long startTime = System.currentTimeMillis();
 				method = new ShrinkNwa<>(m_Services, stateFactory, operand);
 				m_ExternalOverallTime = System.currentTimeMillis() - startTime;
+			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
+				long startTime = System.currentTimeMillis();
+				method = new MinimizeNwaMaxSAT<>(m_Services, stateFactory, operand);
+				m_ExternalOverallTime = System.currentTimeMillis() - startTime;
 			}
 		} catch (AutomataOperationCanceledException e) {
 			m_Logger.info("Method timed out.");
@@ -933,6 +938,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<L
 		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, true, m_Services, timeOutMillis,
 				stateFactory, reachableOperand);
 		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, m_Services, timeOutMillis,
+				stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, true, m_Services, timeOutMillis,
 				stateFactory, reachableOperand);
 	}
 
