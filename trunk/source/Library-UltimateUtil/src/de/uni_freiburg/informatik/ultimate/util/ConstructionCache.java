@@ -58,8 +58,8 @@ public class ConstructionCache<K, V> {
 		public V constructValue(K key);
 	}
 	
-	public ConstructionCache(IValueConstruction<K, V> valueComputation) {
-		m_ValueComputation = valueComputation;
+	public ConstructionCache(IValueConstruction<K, V> valueConstruction) {
+		m_ValueComputation = valueConstruction;
 	}
 	
 	/**
