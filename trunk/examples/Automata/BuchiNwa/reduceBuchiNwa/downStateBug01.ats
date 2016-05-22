@@ -1,0 +1,96 @@
+// wrong merge result for direct simulation:
+// merges q0 and q3
+// 
+// date: 2016-05-22
+// author: Christian Schilling <schillic@informatik.uni-freiburg.de>, Daniel Tischner
+
+print(reduceNwaDirectSimulation(removeDeadEnds(nwa), false));
+//print(nwa);
+
+// The problematic automaton
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a1" "a2" "a3"},
+	returnAlphabet = {"r" },
+	states = {"q0" "q1" "q2" "q3" "qf"},
+	initialStates = {"q0"},
+	finalStates = {"qf"},
+	callTransitions = {
+		("q0" "c" "q1")
+		("q3" "c" "q1")
+	},
+	internalTransitions = {
+		("q1" "a1" "q2")
+		("q1" "a2" "q3")
+		("qf" "a3" "qf")
+	},
+	returnTransitions = {
+		("q2" "q3" "r" "qf")
+	}
+);
+
+// Its corresponding game graph
+/*
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {a},
+	returnAlphabet = { },
+	states = {"q1,q3,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null[SMiddle/1371766166]<0>{}" "qf,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q2,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q3,r<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,qf,r<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q3,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q1,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q2,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q0,q2<0>{[€,q0],[€,q3]}" "q2,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q0,q0<0>{[€,€]}" "null,null,SEntry/1371766166<0>{}" "q2,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,qf,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q0<0>{[q3,€],[q0,€]}" "q3,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q0,c<0>{[q3,€],[q0,€]}" "q2,q1,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q2,qf,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q2,q0,a1<0>{[q3,€],[q0,€]}" "null,null,SEntry/1802471249<0>{}" "null,null[SMiddle/1378877667]<0>{}" "qf,q1,r<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null,SEntry/1175274993<0>{}" "null,null,SExit/1371766166<0>{}" "null,null,SExit/1802471249<0>{}" "null,null,SExit/1378877667<0>{}" "q2,q2,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q0<0>{[q3,€],[q0,€]}" "null,null,SExit/1175274993<0>{}" "q1,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null[SMiddle/1175274993]<0>{}" "q2,q3,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q0,qf<0>{[€,q0],[€,q3]}" "qf,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null,SEntry/1378877667<0>{}" "null,null,Sink/513349596<0>{}" "null,null[Sink/513349596]<0>{}" "qf,q0,a3<0>{[q3,€],[q0,€]}" "qf,q0,r<0>{[q3,€],[q0,€]}" "q3,q0,a2<0>{[q3,€],[q0,€]}" "q0,q3<0>{[€,q0],[€,q3]}" "q2,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q0,q1<0>{[€,q0],[€,q3]}" "q2,q0<0>{[q3,€],[q0,€]}" "q1,qf,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q1,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q2,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,qf,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q3,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q1,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q2,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q0<0>{[q3,€],[q0,€]}" "qf,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null[SMiddle/1802471249]<0>{}"},
+	initialStates = {"q1,q3,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null[SMiddle/1371766166]<0>{}" "qf,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q2,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q3,r<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,qf,r<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q3,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q1,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q2,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q0,q2<0>{[€,q0],[€,q3]}" "q2,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q0,q0<0>{[€,€]}" "null,null,SEntry/1371766166<0>{}" "q2,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,qf,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q0<0>{[q3,€],[q0,€]}" "q3,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q0,c<0>{[q3,€],[q0,€]}" "q2,q1,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q2,qf,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q2,q0,a1<0>{[q3,€],[q0,€]}" "null,null,SEntry/1802471249<0>{}" "null,null[SMiddle/1378877667]<0>{}" "qf,q1,r<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null,SEntry/1175274993<0>{}" "null,null,SExit/1371766166<0>{}" "null,null,SExit/1802471249<0>{}" "null,null,SExit/1378877667<0>{}" "q2,q2,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q0<0>{[q3,€],[q0,€]}" "null,null,SExit/1175274993<0>{}" "q1,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null[SMiddle/1175274993]<0>{}" "q2,q3,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q0,qf<0>{[€,q0],[€,q3]}" "qf,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null,SEntry/1378877667<0>{}" "null,null,Sink/513349596<0>{}" "null,null[Sink/513349596]<0>{}" "qf,q0,a3<0>{[q3,€],[q0,€]}" "qf,q0,r<0>{[q3,€],[q0,€]}" "q3,q0,a2<0>{[q3,€],[q0,€]}" "q0,q3<0>{[€,q0],[€,q3]}" "q2,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q0,q1<0>{[€,q0],[€,q3]}" "q2,q0<0>{[q3,€],[q0,€]}" "q1,qf,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q1,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q2,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,qf,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q3,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "qf,q1,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q3,q2,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "q1,q0<0>{[q3,€],[q0,€]}" "qf,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "null,null[SMiddle/1802471249]<0>{}"},
+	finalStates = { },
+	callTransitions = { },
+	internalTransitions = {
+		("q1,q3,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q1,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("null,null[SMiddle/1371766166]<0>{}" "a" "null,null,SExit/1371766166<0>{}")
+		("q2,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "qf,qf,r<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q0,q2<0>{[€,q0],[€,q3]}" "a" "q1,q2,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q2,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "qf,q3,r<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q0,q0<0>{[€,€]}" "a" "q1,q0,c<0>{[q3,€],[q0,€]}")
+		("q0,q0<0>{[€,€]}" "a" "null,null,SEntry/1802471249<0>{}")
+		("null,null,SEntry/1371766166<0>{}" "a" "null,null[SMiddle/1371766166]<0>{}")
+		("q2,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "qf,q1,r<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("qf,qf,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "qf,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q3,q0<0>{[q3,€],[q0,€]}" "a" "q1,q0,c<0>{[q3,€],[q0,€]}")
+		("q3,q0<0>{[q3,€],[q0,€]}" "a" "null,null,SEntry/1378877667<0>{}")
+		("q3,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q1,q2,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q3,qf,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q2,qf,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,q0,c<0>{[q3,€],[q0,€]}" "a" "q1,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q2,q1,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q2,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("null,null,SEntry/1802471249<0>{}" "a" "null,null[SMiddle/1802471249]<0>{}")
+		("null,null[SMiddle/1378877667]<0>{}" "a" "null,null,SExit/1378877667<0>{}")
+		("null,null,SEntry/1175274993<0>{}" "a" "null,null[SMiddle/1175274993]<0>{}")
+		("null,null,SExit/1371766166<0>{}" "a" "qf,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("null,null,SExit/1802471249<0>{}" "a" "qf,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("null,null,SExit/1378877667<0>{}" "a" "qf,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q2,q3,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q3,q3,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("null,null,SExit/1175274993<0>{}" "a" "qf,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q3,q1,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q2,q1,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("null,null[SMiddle/1175274993]<0>{}" "a" "null,null,SExit/1175274993<0>{}")
+		("q0,qf<0>{[€,q0],[€,q3]}" "a" "q1,qf,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("null,null,SEntry/1378877667<0>{}" "a" "null,null[SMiddle/1378877667]<0>{}")
+		("null,null,Sink/513349596<0>{}" "a" "null,null[Sink/513349596]<0>{}")
+		("null,null[Sink/513349596]<0>{}" "a" "null,null,Sink/513349596<0>{}")
+		("q0,q3<0>{[€,q0],[€,q3]}" "a" "q1,q3,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q0,q3<0>{[€,q0],[€,q3]}" "a" "null,null,SEntry/1371766166<0>{}")
+		("q2,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "null,null,Sink/513349596<0>{}")
+		("q0,q1<0>{[€,q0],[€,q3]}" "a" "q1,q1,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q2,q0<0>{[q3,€],[q0,€]}" "a" "qf,q0,r<0>{[q3,€],[q0,€]}")
+		("q3,q1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q1,q1,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q3,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q1,q3,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q3,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "null,null,SEntry/1175274993<0>{}")
+		("q3,q1,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q3,q3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q3,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q1,qf,c<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q2,q2,a1<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,q2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "q3,q2,a2<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("q1,q0<0>{[q3,€],[q0,€]}" "a" "q3,q0,a2<0>{[q3,€],[q0,€]}")
+		("q1,q0<0>{[q3,€],[q0,€]}" "a" "q2,q0,a1<0>{[q3,€],[q0,€]}")
+		("qf,qf<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}" "a" "qf,qf,a3<0>{[q3,q3],[q0,q0],[q0,q3],[q3,q0]}")
+		("null,null[SMiddle/1802471249]<0>{}" "a" "null,null,SExit/1802471249<0>{}")
+	},
+	returnTransitions = {}
+);
+*/
