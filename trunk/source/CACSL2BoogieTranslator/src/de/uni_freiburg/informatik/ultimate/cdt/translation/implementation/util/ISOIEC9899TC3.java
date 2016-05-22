@@ -191,16 +191,18 @@ public final class ISOIEC9899TC3 {
 	public static final RValue handleFloatConstant(String val, ILocation loc,
 			boolean bitvectorTranslation, 
 			TypeSizes typeSizeConstants,
-			FunctionDeclarations functionDeclarations) {
+			FunctionDeclarations functionDeclarations,
+			Expression roundingMode) {
 		if (bitvectorTranslation) {
 			String value = val;
 			String floatType = null;
 			int exponentLength = 0;
 			int significantLength = 0;
-			int exponentValue = 0;
-			final Expression sign = new BitvecLiteral(loc, Integer.toString(0), 1);
-			final Expression significant;
-			final Expression exponent;			
+			if (roundingMode != null) {
+				if (!(roundingMode instanceof IdentifierExpression)) {
+					throw new IllegalArgumentException("not a rounding Mode");
+				}
+			}
 			
 
 			// if there is a float-suffix: throw it away
@@ -210,6 +212,15 @@ public final class ISOIEC9899TC3 {
 					floatType = s;
 				}
 			}
+			if (value.contains("e")) {
+				int eLocatation = value.indexOf("e");
+				String partA = value.substring(0, eLocatation);
+				String partB = value.substring(eLocatation + 1, value.length());
+				BigDecimal A = new BigDecimal(partA);
+				int B = Integer.valueOf(partB);
+				value = A.multiply(new BigDecimal("10").pow(B)).toString();
+			}
+			
 			BigDecimal floatVal = new BigDecimal(value);
 			
 			// Set floatIndices depending on the value of the val
@@ -244,10 +255,6 @@ public final class ISOIEC9899TC3 {
 				functionName = "+zero";
 				arguments = new Expression[] {eb, sb};
 			} else {
-				DeclarationInformation RoundingInfo = 
-						new DeclarationInformation(StorageClass.GLOBAL, null);
-				IdentifierExpression roundingMode = new IdentifierExpression(loc, "RNE");
-				roundingMode.setDeclarationInformation(RoundingInfo);
 				if (resultType.toString().equals("FLOAT")){
 					functionName = "declareFloat";
 				} else if (resultType.toString().equals("DOUBLE")) {

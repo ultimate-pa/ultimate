@@ -75,11 +75,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class BitvectorTranslation extends AExpressionTranslation {
 	
 	private final boolean m_OverapproximateFloatingPointOperations;
+	private Expression m_RoundingMode;
 
 	public BitvectorTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, 
 			POINTER_INTEGER_CONVERSION pointerIntegerConversion, boolean overapproximateFloatingPointOperations) {
 		super(m_TypeSizeConstants, typeHandler, pointerIntegerConversion);
 		m_OverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
+		IdentifierExpression roundingMode = new IdentifierExpression(null, "RNE");
+		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
+		m_RoundingMode = roundingMode;
 	}
 
 	@Override
@@ -108,7 +112,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	@Override
 	public RValue translateFloatingLiteral(ILocation loc, String val) {
 		declareFloatingPointConstructers(loc);
-		RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, m_TypeSizes, m_FunctionDeclarations);
+		RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, m_TypeSizes, m_FunctionDeclarations, getRoundingMode());
 		return rVal;
 	}
 	
@@ -596,12 +600,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		if (isRounded) {
-			DeclarationInformation RoundingInfo = 
-					new DeclarationInformation(StorageClass.GLOBAL, null);
-			IdentifierExpression roundingMode = new IdentifierExpression(loc, "RNE");
-			roundingMode.setDeclarationInformation(RoundingInfo);
 			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
-			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{roundingMode, exp1, exp2});
+			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{getRoundingMode(), exp1, exp2});
 		} else {
 			declareFloatingPointFunction(loc, funcname, funcname, false, isRounded, type1, null, (CPrimitive) type1, (CPrimitive) type2);
 			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{exp1, exp2});
@@ -688,5 +688,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		
 		FunctionApplication func = 	new FunctionApplication(loc,  SFO.AUXILIARY_FUNCTION_PREFIX + suffixedFunctionName, indices);
 		return new ExpressionResult(new RValue(func, new CPrimitive(PRIMITIVE.FLOAT)));
+	}
+
+	@Override
+	public Expression getRoundingMode() {
+		return m_RoundingMode;
 	}
 }

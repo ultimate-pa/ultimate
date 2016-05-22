@@ -122,7 +122,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	
 	@Override
 	public RValue translateFloatingLiteral(ILocation loc, String val) {
-		RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, m_TypeSizes, m_FunctionDeclarations);
+		RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, m_TypeSizes, m_FunctionDeclarations, null);
 		return rVal;
 	}
 
@@ -779,6 +779,10 @@ public class IntegerTranslation extends AExpressionTranslation {
 	
 	@Override
 	public ExpressionResult createNanOrInfinity(ILocation loc, String name) {
+		throw new UnsupportedOperationException();
+	}
+	@Override
+	public Expression getRoundingMode(){
 		throw new UnsupportedOperationException();
 	}
 }
