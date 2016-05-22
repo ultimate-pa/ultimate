@@ -141,7 +141,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	public Set<R> getImage(D domainElem) {
 		Set<R> set = m_Map.get(domainElem);
 		if (set == null) {
-			return null;
+			return Collections.emptySet();
 		} else {
 			return Collections.unmodifiableSet(m_Map.get(domainElem));
 		}
