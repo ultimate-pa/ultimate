@@ -114,6 +114,21 @@ public class UnionFind<E> {
 	public String toString() {
 		return m_Representative.toString();
 	}
+	
+	/**
+	 * Returns the representative of the equivalence class of element e.
+	 * If there is no equivalence class for e this equivalence class is
+	 * constructed.
+	 */
+	public E findAndConstructEquivalenceClassIfNeeded(E e) {
+		final E findResult = find(e);
+		if (findResult == null) {
+			makeEquivalenceClass(e);
+			return e;
+		} else {
+			return findResult;
+		}
+	}
 
 
 }
