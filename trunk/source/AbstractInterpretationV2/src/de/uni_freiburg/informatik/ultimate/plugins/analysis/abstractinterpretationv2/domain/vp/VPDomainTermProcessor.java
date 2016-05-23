@@ -50,10 +50,10 @@ public class VPDomainTermProcessor extends NonRecursive {
 		
 		@Override
 		public void walk(NonRecursive walker) {
-			if (m_Visited.contains(getTerm())) {
+			if (mVisited.contains(getTerm())) {
 				// do nothing
 			} else {
-				m_Visited.add(getTerm());
+				mVisited.add(getTerm());
 				super.walk(walker);
 			}
 		}
@@ -69,7 +69,7 @@ public class VPDomainTermProcessor extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
 			if (term.getFunction().getName() == "=") {
-				m_Result.add(term);
+				mResult.add(term);
 			}
 			for (Term t : term.getParameters()) {
 				walker.enqueueWalker(new VPDomainTermWalker(t));
@@ -93,18 +93,18 @@ public class VPDomainTermProcessor extends NonRecursive {
 		super();
 	}
 
-	private Set<ApplicationTerm> m_Result;
-	private Set<Term> m_Visited;
+	private Set<ApplicationTerm> mResult;
+	private Set<Term> mVisited;
 	
 	public Set<ApplicationTerm> processTerm(Term term) {
 		if (term == null) {
 			throw new NullPointerException();
 		}
-		m_Visited = new HashSet<>();
-		m_Result = new HashSet<ApplicationTerm>();
+		mVisited = new HashSet<>();
+		mResult = new HashSet<ApplicationTerm>();
 		run(new VPDomainTermWalker(term));
-		m_Visited = null;
-		return m_Result;
+		mVisited = null;
+		return mResult;
 	}
 
 }

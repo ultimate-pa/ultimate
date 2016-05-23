@@ -64,9 +64,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
@@ -98,9 +98,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatementAST;
 
 /**
- * This enum represents the current flow of the program. It could have the
- * values "NORMAL", "BREAK", "CONTINUE", and "RETURN". It is necessary to
- * implement the "continue" and "break" function for loops.
+ * This enum represents the current flow of the program. It could have the values "NORMAL", "BREAK", "CONTINUE", and
+ * "RETURN". It is necessary to implement the "continue" and "break" function for loops.
  * 
  * @author musab@informatik.uni-freiburg.de
  * 
@@ -110,10 +109,9 @@ enum Flow {
 }
 
 /**
- * This is the main class for interpreting automata script test files. It
- * fulfills the following tasks: - Interpreting automata definitions - Type
- * checking the automata script test file - Interpreting the automata script
- * test file - Generation and output of the results
+ * This is the main class for interpreting automata script test files. It fulfills the following tasks: - Interpreting
+ * automata definitions - Type checking the automata script test file - Interpreting the automata script test file -
+ * Generation and output of the results
  * 
  * @author musab@informatik.uni-freiburg.de
  * 
@@ -128,10 +126,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	class AutomataScriptTypeChecker {
 		/**
-		 * A map from variable names to the type they represent. This is needed
-		 * to check for type conformity, e.g. variable assignment.
+		 * A map from variable names to the type they represent. This is needed to check for type conformity, e.g.
+		 * variable assignment.
 		 */
-		private Map<String, Class<?>> m_localVariables = new HashMap<String, Class<?>>();
+		private Map<String, Class<?>> mLocalVariables = new HashMap<String, Class<?>>();
 
 		/**
 		 * Checks the test file for type errors and for undeclared variables.
@@ -142,7 +140,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 */
 		public void checkTestFile(AtsASTNode n) throws InterpreterException {
 			for (Map.Entry<String, Object> entry : mVariables.entrySet()) {
-				m_localVariables.put(entry.getKey(), entry.getValue().getClass());
+				mLocalVariables.put(entry.getKey(), entry.getValue().getClass());
 			}
 			checkType(n);
 		}
@@ -402,9 +400,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 			if (opName.equals("print"))
 				return;
 			/*
-			 * Set type of this operation, because until now, it didn't have any
-			 * type. It is not relevant for further type checking results, but
-			 * it avoids NullPointerExceptions.
+			 * Set type of this operation, because until now, it didn't have any type. It is not relevant for further
+			 * type checking results, but it avoids NullPointerExceptions.
 			 */
 			Set<Class<?>> types = getTypes(oe);
 			if (!types.isEmpty()) {
@@ -489,8 +486,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 
 		private void checkType(VariableExpressionAST v) throws InterpreterException {
 			ILocation errorLocation = v.getLocation();
-			if (m_localVariables.containsKey(v.getIdentifier())) {
-				v.setType(m_localVariables.get(v.getIdentifier()));
+			if (mLocalVariables.containsKey(v.getIdentifier())) {
+				v.setType(mLocalVariables.get(v.getIdentifier()));
 			} else {
 				String shortDescription = "Undeclared variable";
 				// String message = "Variable \"" + v.getIdentifier() +
@@ -510,7 +507,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new InterpreterException(errorLocation, longDescription);
 			}
 			for (String id : vd.getIdentifiers()) {
-				m_localVariables.put(id, vd.getExpectingType());
+				mLocalVariables.put(id, vd.getExpectingType());
 			}
 			// if the variable doesn't get assigned a value, then return.
 			if (children.size() == 0)
@@ -550,18 +547,15 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 
 		/**
-		 * Returns the possible types for the given AST node. Only operations
-		 * can potentially have more return types, because there could
-		 * operations with different return types, but with the same name.
+		 * Returns the possible types for the given AST node. Only operations can potentially have more return types,
+		 * because there could operations with different return types, but with the same name.
 		 * 
 		 * @param n
 		 *            the AtsAST node
-		 * @return a set of types, where the set could contain more than 1
-		 *         element if the given node represents an operation invocation,
-		 *         otherwise it contains only 1 element.
+		 * @return a set of types, where the set could contain more than 1 element if the given node represents an
+		 *         operation invocation, otherwise it contains only 1 element.
 		 * @throws UnsupportedOperationException
-		 *             if the operation was not found, or if the operation has
-		 *             no declared method called "getResult".
+		 *             if the operation was not found, or if the operation has no declared method called "getResult".
 		 */
 		private Set<Class<?>> getTypes(AtsASTNode n) throws UnsupportedOperationException {
 			if (n instanceof OperationInvocationExpressionAST) {
@@ -599,15 +593,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Contains the declared variables, automata variables too. It is a map from
-	 * variable name to the object it represents.
+	 * Contains the declared variables, automata variables too. It is a map from variable name to the object it
+	 * represents.
 	 */
 	private Map<String, Object> mVariables;
 	/**
-	 * Contains current existing automata operations. It is a map from operation
-	 * name to a set of class types, because there might be operations with the
-	 * same name, but with different parameter types and in different packages.
-	 * e.g. Accepts for NestedWord automata and Accepts for Petri nets.
+	 * Contains current existing automata operations. It is a map from operation name to a set of class types, because
+	 * there might be operations with the same name, but with different parameter types and in different packages. e.g.
+	 * Accepts for NestedWord automata and Accepts for Petri nets.
 	 */
 	private Map<String, Set<Class<?>>> mExistingOperations;
 	/**
@@ -628,8 +621,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private IAutomaton<?, ?> mLastPrintedAutomaton;
 	/**
-	 * Indicates whether the automaton, which is output by a print operation,
-	 * should also be printed to a .ats-file.
+	 * Indicates whether the automaton, which is output by a print operation, should also be printed to a .ats-file.
 	 */
 	private boolean mPrintAutomataToFile = false;
 	private PrintWriter mPrintWriter;
@@ -647,8 +639,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	public static final String s_AssertionViolatedMessage = "Assertion violated!";
 
 	/**
-	 * If an error occurred during the interpretation this is set to true and
-	 * further interpretation is aborted.
+	 * If an error occurred during the interpretation this is set to true and further interpretation is aborted.
 	 */
 	private final List<GenericResultAtElement<AtsASTNode>> mResultOfAssertStatements;
 	private IUltimateServiceProvider mServices;
@@ -690,16 +681,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Method to interpret an automatascript test file. The interpretation is
-	 * done in 4 steps. Step 1: Interpret automata defintions. Step 2: Check the
-	 * automatascript test file for correct types and undeclared variables.
-	 * (Type checking) Step 3: Interpret the automatascript test file. Step 4:
-	 * Report the results to the ILogger and to the web interface.
+	 * Method to interpret an automatascript test file. The interpretation is done in 4 steps. Step 1: Interpret
+	 * automata defintions. Step 2: Check the automatascript test file for correct types and undeclared variables. (Type
+	 * checking) Step 3: Interpret the automatascript test file. Step 4: Report the results to the ILogger and to the
+	 * web interface.
 	 * 
 	 * @param node
 	 *            the root node of the AST
-	 * @return the result of the automatascript test file, which is either an
-	 *         automaton or null.
+	 * @return the result of the automatascript test file, which is either an automaton or null.
 	 */
 	public Object interpretTestFile(AtsASTNode node) {
 		AutomataTestFileAST ats = null;
@@ -1098,28 +1087,29 @@ public class TestFileInterpreter implements IMessagePrinter {
 						try {
 							format = Format.valueOf((String) arguments.get(1));
 						} catch (Exception e) {
-							throw new InterpreterException(oe.getLocation(), 
+							throw new InterpreterException(oe.getLocation(),
 									"unknown format " + (String) arguments.get(1));
 						}
 					} else {
-						throw new InterpreterException(oe.getLocation(), 
+						throw new InterpreterException(oe.getLocation(),
 								"if first argument of print command is an "
-								+ "automaton second argument has to be a string "
-								+ "that defines an output format");
+										+ "automaton second argument has to be a string "
+										+ "that defines an output format");
 					}
 				} else {
-					throw new InterpreterException(oe.getLocation(), 
+					throw new InterpreterException(oe.getLocation(),
 							"if first argument of print command is an "
-							+ "automaton only two arguments are allowed");
+									+ "automaton only two arguments are allowed");
 				}
 				mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
-				text = (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "automaton", format, arguments.get(0)))
-							.getDefinitionAsString();
+				text = (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices),
+						"automaton", format, arguments.get(0)))
+								.getDefinitionAsString();
 			} else {
 				if (arguments.size() > 1) {
-					throw new InterpreterException(oe.getLocation(), 
+					throw new InterpreterException(oe.getLocation(),
 							"if first argument of print command is not an "
-							+ "automaton no second argument allowed");
+									+ "automaton no second argument allowed");
 				} else {
 					text = String.valueOf(arguments.get(0));
 				}
@@ -1141,12 +1131,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 			try {
 				format = Format.valueOf(formatAsString);
 			} catch (Exception e) {
-				throw new InterpreterException(oe.getLocation(), 
+				throw new InterpreterException(oe.getLocation(),
 						"unknown format " + (String) arguments.get(1));
 			}
 			String argsAsString = children.get(0).getAsString();
-			reportToLogger(LoggerSeverity.INFO, "Writing " + argsAsString + " to file " + filename + " in " + format + " format.");
-			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename, format, "hello", automaton);
+			reportToLogger(LoggerSeverity.INFO,
+					"Writing " + argsAsString + " to file " + filename + " in " + format + " format.");
+			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename,
+					format, "hello", automaton);
 		} else {
 			IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
@@ -1293,9 +1285,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Reports the results of assert statements to the ILogger and to Ultimate as
-	 * a GenericResult.
-	 * @param errorMessage 
+	 * Reports the results of assert statements to the ILogger and to Ultimate as a GenericResult.
+	 * 
+	 * @param errorMessage
 	 */
 	private void reportResult(Finished finished, String errorMessage) {
 		mLogger.info("----------------- Test Summary -----------------");
@@ -1344,8 +1336,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Reports the given string with the given severity to Ultimate as a
-	 * GenericResult
+	 * Reports the given string with the given severity to Ultimate as a GenericResult
 	 * 
 	 * @param sev
 	 *            the severity
@@ -1393,9 +1384,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Gets an object of an automata operation indicated by
-	 * OperationInvocationExpression, if the operation exists and all arguments
-	 * have correct type. Otherwise it returns null.
+	 * Gets an object of an automata operation indicated by OperationInvocationExpression, if the operation exists and
+	 * all arguments have correct type. Otherwise it returns null.
 	 * 
 	 * @param oe
 	 *            the automata operation
@@ -1483,10 +1473,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Prepend mServices to args if AutomataLibraryServices is the first
-	 * parameter of the constructor. FIXME: This is only a workaround! In the
-	 * future AutomataLibraryServices will be the first argument of each
-	 * IOperation and we will always prepend mServices
+	 * Prepend mServices to args if AutomataLibraryServices is the first parameter of the constructor. FIXME: This is
+	 * only a workaround! In the future AutomataLibraryServices will be the first argument of each IOperation and we
+	 * will always prepend mServices
 	 */
 	private Object[] prependAutomataLibraryServicesIfNecessary(Constructor<?> c, Object[] args) {
 		boolean firstParameterIsAutomataLibraryServices;
@@ -1509,8 +1498,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Return args.toArray(), but prepend a new StringFactory if the first
-	 * parameter of the Constructor c is a StateFacotry.
+	 * Return args.toArray(), but prepend a new StringFactory if the first parameter of the Constructor c is a
+	 * StateFacotry.
 	 */
 	private Object[] prependStateFactoryIfNecessary(Constructor<?> c, List<Object> args) {
 		boolean firstParameterIsStateFactory;
@@ -1539,8 +1528,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * TODO: get rid of this workaround Workaround that is necessary as long as
-	 * not all operations use Services as their first parameter.
+	 * TODO: get rid of this workaround Workaround that is necessary as long as not all operations use Services as their
+	 * first parameter.
 	 */
 	private boolean firstParameterIsServicesAndSecondParameterIsStateFactory(Constructor<?> c, Class<?> fstParam) {
 		boolean firstParameterIsServicesAndSecondParameterIsStateFactory;
@@ -1568,8 +1557,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 *            The constructor of the operation class.
 	 * @param arguments
 	 *            The arguments to check
-	 * @return true if and only if all arguments have the correct type.
-	 *         Otherwise false.
+	 * @return true if and only if all arguments have the correct type. Otherwise false.
 	 */
 	private boolean allArgumentsHaveCorrectTypeForThisConstructor(Constructor<?> c, Object[] arguments) {
 		if (arguments.length == c.getParameterTypes().length) {
@@ -1588,20 +1576,17 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Finds all automata operations implementing the IOperation interface. It
-	 * maps the operation names to set of class objects, because there may exist
-	 * different classes for the same operation. E.g. accepts-operation for
+	 * Finds all automata operations implementing the IOperation interface. It maps the operation names to set of class
+	 * objects, because there may exist different classes for the same operation. E.g. accepts-operation for
 	 * NestedWordAutomata and accepts-operations for PetriNets
 	 * 
-	 * @return A map from class names to set of class objects from classes found
-	 *         in the directories.
+	 * @return A map from class names to set of class objects from classes found in the directories.
 	 */
 	private Map<String, Set<Class<?>>> getOperationClasses() {
 		final Map<String, Set<Class<?>>> result = new HashMap<String, Set<Class<?>>>();
 		/*
-		 * NOTE: The following directories are scanned recursively. Hence, do
-		 * not add directories where one directory is a subdirectory of another
-		 * in the list to avoid unnecessary work.
+		 * NOTE: The following directories are scanned recursively. Hence, do not add directories where one directory is
+		 * a subdirectory of another in the list to avoid unnecessary work.
 		 */
 		final String[] packages = { "de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations",
 				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi",
@@ -1652,12 +1637,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Tries to resolve the fully qualified name from the package name and the
-	 * found file.
+	 * Tries to resolve the fully qualified name from the package name and the found file.
 	 * 
-	 * If the package is a.b.c.d and we found a class with the path
-	 * /foo/bar/a/b/c/d/huh/OurClass.class, then the fully qualified name is
-	 * a.b.c.d.huh.OurClass
+	 * If the package is a.b.c.d and we found a class with the path /foo/bar/a/b/c/d/huh/OurClass.class, then the fully
+	 * qualified name is a.b.c.d.huh.OurClass
 	 * 
 	 * @param packageName
 	 * @param file
@@ -1685,8 +1668,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * 
 	 * @param c
 	 *            the class object to check
-	 * @return true if and only if the class object c implements the IOperation
-	 *         interface. Otherwise false.
+	 * @return true if and only if the class object c implements the IOperation interface. Otherwise false.
 	 */
 	private static boolean classImplementsIOperationInterface(Class<?> c) {
 		final Class<?>[] implementedInterfaces = c.getInterfaces();
@@ -1699,10 +1681,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Return the filenames of the files in the given directory. We use the
-	 * classloader to get the URL of this folder. We support only URLs with
-	 * protocol <i>file</i> and <i>bundleresource</i>. At the moment these are
-	 * the only ones that occur in Website and WebsiteEclipseBridge.
+	 * Return the filenames of the files in the given directory. We use the classloader to get the URL of this folder.
+	 * We support only URLs with protocol <i>file</i> and <i>bundleresource</i>. At the moment these are the only ones
+	 * that occur in Website and WebsiteEclipseBridge.
 	 */
 	private Collection<File> filesInDirectory(String dir) {
 		final URL dirURL = IOperation.class.getClassLoader().getResource(dir);
@@ -1749,9 +1730,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Exception that is thrown if the interpreter has found an error in the ats
-	 * file. m_ShortDescription may be null which means that no shortDescription
-	 * is provided.
+	 * Exception that is thrown if the interpreter has found an error in the ats file. The short description may be null
+	 * which means that no short description is provided.
 	 * 
 	 */
 	private static class InterpreterException extends Exception {

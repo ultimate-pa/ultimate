@@ -41,7 +41,7 @@ public class Activator extends Plugin {
 	// The plug-in name
 	public static final String s_PLUGIN_NAME = "AutomataScriptInterpreter";
 	// The shared instance
-	private static Activator m_Plugin;
+	private static Activator mPlugin;
 
 	/**
 	 * The constructor
@@ -57,7 +57,7 @@ public class Activator extends Plugin {
 	 */
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
-		m_Plugin = this;
+		mPlugin = this;
 	}
 
 	/*
@@ -67,7 +67,7 @@ public class Activator extends Plugin {
 	 * org.eclipse.core.runtime.Plugin#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext context) throws Exception {
-		m_Plugin = null;
+		mPlugin = null;
 		super.stop(context);
 	}
 
@@ -77,7 +77,7 @@ public class Activator extends Plugin {
 	 * @return the shared instance
 	 */
 	public static Activator getDefault() {
-		return m_Plugin;
+		return mPlugin;
 	}
 
 }

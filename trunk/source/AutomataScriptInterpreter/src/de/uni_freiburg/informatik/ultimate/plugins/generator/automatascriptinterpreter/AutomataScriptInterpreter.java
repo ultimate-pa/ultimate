@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinter
  */
 public class AutomataScriptInterpreter implements IGenerator {
 
-	private AutomataScriptInterpreterObserver m_Observer;
-	private ModelType m_InputDefinition;
+	private AutomataScriptInterpreterObserver mObserver;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 
 	@Override
@@ -79,13 +79,13 @@ public class AutomataScriptInterpreter implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		this.mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new AutomataScriptInterpreterObserver(mServices);
-		return Collections.singletonList((IObserver) m_Observer);
+		mObserver = new AutomataScriptInterpreterObserver(mServices);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
@@ -94,12 +94,12 @@ public class AutomataScriptInterpreter implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
 	public IElement getModel() {
-		return m_Observer.getUltimateModelOfLastPrintedAutomaton();
+		return mObserver.getUltimateModelOfLastPrintedAutomaton();
 	}
 
 	@Override

@@ -40,16 +40,16 @@ import java.util.Set;
  */
 public class ListExistingOperations {
 	
-	private Map<String, Set<Class<?>>> m_ExistingOperations;
-	private List<String> m_OperationList = new ArrayList<String>();
+	private Map<String, Set<Class<?>>> mExistingOperations;
+	private List<String> mOperationList = new ArrayList<String>();
 
 	public ListExistingOperations(
 			Map<String, Set<Class<?>>> existingOperations) {
-		m_ExistingOperations = existingOperations;
-		for (String operation : m_ExistingOperations.keySet()) {
-			for (Class<?> clazz : m_ExistingOperations.get(operation)) {
+		mExistingOperations = existingOperations;
+		for (String operation : mExistingOperations.keySet()) {
+			for (Class<?> clazz : mExistingOperations.get(operation)) {
 				for (Constructor<?> constructor : clazz.getConstructors()) {
-					m_OperationList.add(constructorStringRepresentation(constructor));
+					mOperationList.add(constructorStringRepresentation(constructor));
 				}
 			}
 		}
@@ -76,7 +76,7 @@ public class ListExistingOperations {
 	 */
 	public String prettyPrint() {
 		StringBuilder result = new StringBuilder();
-		String[] sorted = m_OperationList.toArray(new String[0]);
+		String[] sorted = mOperationList.toArray(new String[0]);
 		Arrays.sort(sorted);
 		for(String op : sorted) {
 			result.append(op);
