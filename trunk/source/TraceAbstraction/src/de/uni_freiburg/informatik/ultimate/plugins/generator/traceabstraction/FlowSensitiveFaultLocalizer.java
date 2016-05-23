@@ -391,24 +391,24 @@ public class FlowSensitiveFaultLocalizer {
 		TransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(startPosition).getTransitionFormula();
 		for(int i = startPosition+1; i<= endPosition; i++){
 			boolean subBranch=false;
-			int branchOut = 0;
-			int branchIn = 0;
-			
-			
+			int branchOut=0;
+			int branchIn=0;
+			//Find out if the current position is a branchOut position.
 			for(Integer brachInPosition:informationFromCFG.keySet()){
 				if(informationFromCFG.get(brachInPosition).contains(i)){
 					subBranch = true;
 					branchOut = i;
 					branchIn = brachInPosition -1;
 					i = branchIn;
+					break;
 				}
 			}
-			
-			if(subBranch){ // The current statement is a branch out and it's branch-in is with in the current branch. 
+			if(subBranch){
+				 // The current statement is a branch out and it's branch-in is with in the current branch.
 				TransFormula sub_markhor = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,informationFromCFG,smtManager);
 				combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,sub_markhor);
-			}
-			else{ // It is a normal statement.
+			} else{ 
+				// It is a normal statement.
 				final CodeBlock Statement = counterexampleWord.getSymbol(i);
 				final TransFormula TransitionFormula = Statement.getTransitionFormula();
 				combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,TransitionFormula);
@@ -431,7 +431,7 @@ public class FlowSensitiveFaultLocalizer {
 	 * @return
 	 */
 	private boolean checkBranchRelevance(int startPosition, int endPosition, TransFormula markhor,IPredicate weakestPreconditionLeft, IPredicate weakestPreconditionRight, NestedWord<CodeBlock> counterexampleWord, 
-			Map<Integer, List<Integer>> informationFromCFG, SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager){
+			SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager){
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionLeft));
@@ -500,7 +500,7 @@ public class FlowSensitiveFaultLocalizer {
 				// Check the relevance of the branch.
 				final boolean isRelevant =  checkBranchRelevance(
 						branchOutPosition,positionBranchIn,markhor,weakestPreconditionLeft, weakestPreconditionRight,counterexampleWord,
-						informationFromCFG,smtManager,modGlobVarManager);
+						smtManager,modGlobVarManager);
 				if(isRelevant){ // If the branch is Relevant.
 					//Recursion
 					computeRelevantStatements_FlowSensitive(
@@ -533,7 +533,7 @@ public class FlowSensitiveFaultLocalizer {
 				RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
 						((RelevanceInformation) m_RelevanceOfTrace[position]).getCriterion1UC() , 
-						((RelevanceInformation) m_RelevanceOfTrace[position]).getCriterion1GF(), relevanceCriterion2uc, relevanceCriterion2gf);	
+						((RelevanceInformation) m_RelevanceOfTrace[position]).getCriterion1GF(), relevanceCriterion2uc, relevanceCriterion2gf);
 				m_RelevanceOfTrace[position] = ri;
 			}
 		}
@@ -549,16 +549,13 @@ public class FlowSensitiveFaultLocalizer {
 			IPredicate weakestPreconditionLeft, InterpolantsPreconditionPostcondition weakestPreconditionSequence, NestedWord<CodeBlock> counterexampleWord, 
 			FaultLocalizationRelevanceChecker rc, SmtManager smtManager){
 		ERelevanceStatus relevance;
-		if(action instanceof IInternalAction)
-		{
+		if(action instanceof IInternalAction){
 			final IInternalAction internal = (IInternalAction) counterexampleWord.getSymbolAt(position);
 			relevance = rc.relevanceInternal(pre, internal, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionRight)));
-		}
-		else if(action instanceof ICallAction){
+		}else if(action instanceof ICallAction){
 			ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(position);
 			relevance = rc.relevanceCall(pre, call, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionRight)));
-		}
-		else if(action instanceof IReturnAction){
+		}else if(action instanceof IReturnAction){
 			IReturnAction ret = (IReturnAction) counterexampleWord.getSymbolAt(position);
 			assert counterexampleWord.isReturnPosition(position);
 			assert !counterexampleWord.isPendingReturn(position) : "pending returns not supported";
@@ -575,8 +572,6 @@ public class FlowSensitiveFaultLocalizer {
 			throw new AssertionError("Unknown Action " +
 					action.getClass().getSimpleName());
 		}
-		
-		
 		return relevance;		
 	}
 	
