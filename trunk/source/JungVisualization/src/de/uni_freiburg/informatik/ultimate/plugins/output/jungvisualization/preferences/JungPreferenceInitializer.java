@@ -24,14 +24,15 @@
  * licensors of the ULTIMATE JungVisualization plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences;
 
 import org.eclipse.jface.resource.StringConverter;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool.ModelQuery;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues.EdgeLabels;
 
@@ -40,7 +41,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.pref
  * @author dietsch
  * 
  */
-public class JungPreferenceInitializer extends RcpPreferenceInitializer {
+public class JungPreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public JungPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -69,15 +74,4 @@ public class JungPreferenceInitializer extends RcpPreferenceInitializer {
 						PreferenceType.Combo, ModelQuery.values()) 
 						};
 	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return Activator.PLUGIN_NAME;
-	}
-
 }

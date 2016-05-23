@@ -36,24 +36,11 @@ package de.uni_freiburg.informatik.ultimate.core.model.preferences;
  */
 public interface IPreferenceInitializer {
 
-	/***
-	 * This method is called by the preference initializer to initialize default preference values.
-	 * 
-	 * Note: Clients should not call this method. It will be called automatically by the preference initializer when the
-	 * appropriate default preference node is accessed.
-	 */
-	void initializeDefaultPreferences();
-
-	/**
-	 * Reset all preferences of this preference initializer to their default values.
-	 */
-	void resetToDefaults();
-
 	/**
 	 * @return An array of {@link BaseUltimatePreferenceItem}s that define the preferences of this
 	 *         {@link IPreferenceInitializer}.
 	 */
-	BaseUltimatePreferenceItem[] getDefaultPreferences();
+	BaseUltimatePreferenceItem[] getPreferenceItems();
 
 	/**
 	 * @return a human-readable string that is used as title for the group of preferences represented by this
@@ -62,4 +49,8 @@ public interface IPreferenceInitializer {
 	 */
 	String getPreferenceTitle();
 
+	/**
+	 * @return the Id of the plugin that is initialized by this preference initializer.
+	 */
+	String getPluginID();
 }

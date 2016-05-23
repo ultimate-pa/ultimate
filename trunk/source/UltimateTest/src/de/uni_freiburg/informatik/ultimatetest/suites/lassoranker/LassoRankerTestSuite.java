@@ -114,7 +114,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 
 		File toolchainFile = new File(TestUtil.getPathFromTrunk(s_toolchain));
 		File settingsFile = new File(TestUtil.getPathFromTrunk(s_settings_file));
-		String logPattern = new RcpPreferenceProvider(Activator.s_PLUGIN_ID)
+		String logPattern = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);

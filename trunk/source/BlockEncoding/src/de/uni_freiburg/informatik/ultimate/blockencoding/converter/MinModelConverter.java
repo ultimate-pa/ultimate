@@ -79,7 +79,7 @@ public class MinModelConverter {
 	 */
 	public MinModelConverter(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	/**
@@ -125,7 +125,7 @@ public class MinModelConverter {
 	 * @return gets the rating boundary
 	 */
 	private IRatingHeuristic getRatingHeuristic() {
-		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		String prefValue = prefs.getString(PreferenceInitializer.LABEL_RATINGBOUND);
 		RatingStrategy strategy = prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class);
 		// if there is no boundary value given, we do Large Block Encoding

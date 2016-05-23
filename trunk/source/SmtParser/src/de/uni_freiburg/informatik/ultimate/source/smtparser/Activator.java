@@ -36,5 +36,7 @@ public class Activator extends Plugin {
 
 	// The plug-in ID
 	public static final String PLUGIN_ID = SmtParser.class.getPackage().getName();
+	
+	public static final String PLUGIN_NAME = "SMT Parser";
 
 }

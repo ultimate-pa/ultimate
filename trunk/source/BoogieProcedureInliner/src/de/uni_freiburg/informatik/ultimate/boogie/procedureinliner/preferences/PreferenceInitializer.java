@@ -24,21 +24,26 @@
  * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 
 /**
  * Initializes the preferences using {@link PreferenceItem}.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class PreferenceInitializer extends RcpPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -48,15 +53,4 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 		}
 		return prefItems.toArray(new UltimatePreferenceItem<?>[prefItems.size()]);
 	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return Activator.PLUGIN_NAME;
-	}
-
 }

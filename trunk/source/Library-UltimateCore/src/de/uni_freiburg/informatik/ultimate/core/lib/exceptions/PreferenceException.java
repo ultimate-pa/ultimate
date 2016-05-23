@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
  * 
@@ -28,33 +28,24 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.exceptions;
 
 /**
+ * Exception that can be thrown during handling of preferences.
  * 
- * @author dietsch@informatik.uni-freiburg.de
- * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
-public class ToolchainExceptionWrapper extends RuntimeException {
+public class PreferenceException extends ToolchainExceptionWrapper {
 
-	private static final long serialVersionUID = 4879856463210906523L;
+	private static final long serialVersionUID = -4155941712528716475L;
 
-	private final Throwable mRealReason;
-	private final String mPluginId;
-
-	public ToolchainExceptionWrapper(String pluginId, Throwable t) {
-		mPluginId = pluginId;
-		mRealReason = t;
+	/**
+	 * Wrap a low-level exception that occurs during handling of preferences with this exception.
+	 * 
+	 * @param pluginId
+	 *            The plugin that has to handle the exception.
+	 * @param throwable
+	 *            The original exception.
+	 */
+	public PreferenceException(final String pluginId, final Throwable throwable) {
+		super(pluginId, throwable);
 	}
-
-	@Override
-	public String toString() {
-		return mPluginId + ": " + mRealReason.toString();
-	}
-
-	public Throwable getWrappedThrowable() {
-		return mRealReason;
-	}
-
-	public String getPluginId() {
-		return mPluginId;
-	}
-
 }

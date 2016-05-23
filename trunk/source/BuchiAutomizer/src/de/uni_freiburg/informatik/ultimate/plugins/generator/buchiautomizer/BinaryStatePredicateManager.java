@@ -111,7 +111,7 @@ public class BinaryStatePredicateManager {
 	public BinaryStatePredicateManager(SmtManager smtManager, 
 			IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
 		Boogie2SMT boogie2Smt = smtManager.getBoogie2Smt();

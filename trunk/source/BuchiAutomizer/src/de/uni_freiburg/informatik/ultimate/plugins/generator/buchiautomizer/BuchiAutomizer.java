@@ -53,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
  */
 public class BuchiAutomizer implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
+	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private ILogger mLogger;
 
@@ -111,7 +111,7 @@ public class BuchiAutomizer implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
@@ -151,7 +151,7 @@ public class BuchiAutomizer implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 	}
 

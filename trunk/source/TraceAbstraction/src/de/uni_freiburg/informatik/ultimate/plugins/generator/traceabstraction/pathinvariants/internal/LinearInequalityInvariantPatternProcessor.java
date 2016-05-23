@@ -144,7 +144,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		super(predicateUnifier, smtManager);
 		this.services = services;
 		logger = services.getLoggingService().getLogger(
-				Activator.s_PLUGIN_ID);
+				Activator.PLUGIN_ID);
 		this.solver = solver;
 		this.strategy = strategy;
 		this.cfg = cfg;

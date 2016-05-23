@@ -330,7 +330,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 
 		// Retrieve settings from the Preferences Page
 		RcpPreferenceProvider prefs = new RcpPreferenceProvider(
-				Activator.s_PLUGIN_ID);
+				Activator.PLUGIN_ID);
 
 		trimAfterWrap = prefs.getBoolean(PreferenceInitializer.LABEL_TRIMWRAP,
 				trimAfterWrap);

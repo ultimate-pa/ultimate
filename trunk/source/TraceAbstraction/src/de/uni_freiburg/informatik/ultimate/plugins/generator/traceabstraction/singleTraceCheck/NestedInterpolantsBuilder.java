@@ -119,7 +119,7 @@ public class NestedInterpolantsBuilder {
 			IUltimateServiceProvider services,
 			TraceChecker traceChecker, SmtManager smtManagerPredicates, boolean instantiateArrayExt) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_TreeInterpolation = treeInterpolation;
 		m_ScriptTc = smtManagerTc.getScript();
 		m_SmtManagerTc = smtManagerTc;

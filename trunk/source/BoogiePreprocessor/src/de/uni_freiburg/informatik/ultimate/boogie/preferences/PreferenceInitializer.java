@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preferences;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 /**
  * 
@@ -41,7 +41,13 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitial
  * @author dietsch
  * 
  */
-public class PreferenceInitializer extends RcpPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public static final String LABEL_SHOWALLANNOTATIONS = "Show all Annotations";
+	
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -49,17 +55,4 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<Boolean>(
 				LABEL_SHOWALLANNOTATIONS, false, PreferenceType.Boolean) };
 	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return "Boogie Preprocessor";
-	}
-
-	public static final String LABEL_SHOWALLANNOTATIONS = "Show all Annotations";
-
 }

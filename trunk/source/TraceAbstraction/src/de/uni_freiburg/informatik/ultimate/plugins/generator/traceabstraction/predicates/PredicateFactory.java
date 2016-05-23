@@ -81,7 +81,7 @@ public class PredicateFactory {
 
 	public PredicateFactory(IUltimateServiceProvider services, Boogie2SMT boogie2smt) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Boogie2Smt = boogie2smt;

@@ -61,7 +61,7 @@ public final class CFGInvariantsGenerator {
 	public CFGInvariantsGenerator(final IUltimateServiceProvider services,
 			final ModifiableGlobalVariableManager modGlobVarManager) {
 		pmService = services.getProgressMonitorService();
-		logService = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		logService = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	/**

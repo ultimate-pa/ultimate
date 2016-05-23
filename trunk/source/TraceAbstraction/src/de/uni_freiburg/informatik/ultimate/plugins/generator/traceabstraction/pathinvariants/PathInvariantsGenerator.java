@@ -168,7 +168,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		m_PredicateUnifier = predicateUnifier;
 
 		final ILogger logService = services.getLoggingService().getLogger(
-				Activator.s_PLUGIN_ID);
+				Activator.PLUGIN_ID);
 
 		logger = logService;
 

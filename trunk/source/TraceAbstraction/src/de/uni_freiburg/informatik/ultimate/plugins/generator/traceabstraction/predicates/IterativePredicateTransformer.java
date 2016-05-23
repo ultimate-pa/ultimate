@@ -87,7 +87,7 @@ public class IterativePredicateTransformer {
 			SortedMap<Integer, IPredicate> pendingContexts,
 			IPredicate falsePredicate) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Boogie2SMT = boogie2smt;
 		m_ModifiedGlobals = modifiableGlobalVariableManager;
 		m_PredicateTransformer = new PredicateTransformer(variableManager, 

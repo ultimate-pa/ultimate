@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
  * 
@@ -25,30 +25,22 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.core.preferences;
-
-import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+package de.uni_freiburg.informatik.ultimate.core.lib.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.util.RcpPreferenceBinder;
 
 /**
- * UltimatePreferenceInitializer implements an AbstractPreferenceInitializer for Ultimate. It initializes the default
- * values for preferences and provides access to the preferences for Ultimate.
- * 
- * Clients should derive from this class and contribute to the extension point
- * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml of CoreRCP for an example)
+ * UltimatePreferenceInitializer implements an {@link IPreferenceInitializer} for Ultimate plugins that does not depend
+ * on RCP. It provides definitions and default values for preferences and can be used by UltimateCore.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public abstract class RcpPreferenceInitializer extends AbstractPreferenceInitializer implements IPreferenceInitializer {
+public abstract class UltimatePreferenceInitializer implements IPreferenceInitializer {
 
 	private final BaseUltimatePreferenceItem[] mPreferenceDescriptors;
-	private final RcpPreferenceProvider mPreferenceStore;
 	private final String mPluginId;
 	private final String mPreferencePageTitle;
 
@@ -60,17 +52,10 @@ public abstract class RcpPreferenceInitializer extends AbstractPreferenceInitial
 	 *            {@link IController} plugins to generate descriptions.
 	 * 
 	 */
-	protected RcpPreferenceInitializer(final String pluginId, final String preferencePageTitle) {
+	protected UltimatePreferenceInitializer(final String pluginId, final String preferencePageTitle) {
 		mPreferenceDescriptors = initDefaultPreferences();
-		mPreferenceStore = new RcpPreferenceProvider(pluginId);
 		mPluginId = pluginId;
 		mPreferencePageTitle = preferencePageTitle;
-	}
-
-	@Override
-	public void initializeDefaultPreferences() {
-		final IEclipsePreferences defaults = mPreferenceStore.getDefaultEclipsePreferences();
-		RcpPreferenceBinder.initializePreferences(defaults, mPreferenceDescriptors);
 	}
 
 	@Override

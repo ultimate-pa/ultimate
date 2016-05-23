@@ -26,28 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.preferences;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.Activator;
 
 /**
  * @author dietsch
  * 
  */
-public class ReachingDefinitionsPreferenceInitializer extends RcpPreferenceInitializer {
+public class ReachingDefinitionsPreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public ReachingDefinitionsPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return null;
 	}
 
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return Activator.PLUGIN_NAME;
-	}
 }

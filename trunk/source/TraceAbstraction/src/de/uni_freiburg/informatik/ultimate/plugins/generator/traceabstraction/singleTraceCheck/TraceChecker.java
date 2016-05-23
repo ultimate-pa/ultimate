@@ -406,7 +406,7 @@ public class TraceChecker {
 			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
 			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat, SmtManager tcSmtManager) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_SmtManager = smtManager;
 		m_VariableManager = smtManager.getVariableManager();
 		m_ManagedScript = smtManager.getManagedScript();

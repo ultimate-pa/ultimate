@@ -102,7 +102,7 @@ public class PredicateUnifier {
 		m_PredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
 		m_SmtManager = smtManager;
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Term2Predicates = new HashMap<Term, IPredicate>();
 		Term trueTerm = m_SmtManager.getScript().term("true");
 		IPredicate truePredicate = null;

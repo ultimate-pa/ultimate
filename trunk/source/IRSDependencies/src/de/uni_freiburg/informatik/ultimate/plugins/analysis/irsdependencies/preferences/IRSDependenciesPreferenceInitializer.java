@@ -24,40 +24,35 @@
  * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
 
 /**
- * @author Dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class IRSDependenciesPreferenceInitializer extends RcpPreferenceInitializer {
-
-	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem[] {
-				new UltimatePreferenceItem<Mode>(sMode, Mode.Default, PreferenceType.Combo, Mode.values()), };
-	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return Activator.PLUGIN_NAME;
-	}
+public class IRSDependenciesPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	private static final String sMode = "Mode";
 
 	public enum Mode {
 		Default
+	}
+
+	public IRSDependenciesPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
+
+	@Override
+	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+		return new UltimatePreferenceItem[] {
+				new UltimatePreferenceItem<Mode>(sMode, Mode.Default, PreferenceType.Combo, Mode.values()), };
 	}
 
 	public static Mode getMode() {

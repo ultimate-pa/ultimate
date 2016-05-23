@@ -92,7 +92,7 @@ public class BlockEncoder {
 		// initialize the statistics
 		EncodingStatistics.init();
 		// We need to know, which rating strategy should be chosen
-		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		RatingFactory.getInstance().setRatingStrategy(
 				prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class));
 		shouldMinimizeCallReturn = prefs.getBoolean(PreferenceInitializer.LABEL_CALLMINIMIZE);

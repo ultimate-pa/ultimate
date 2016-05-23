@@ -76,7 +76,7 @@ public class LoopCannibalizer {
 			IUltimateServiceProvider services) {
 		super();
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Counterexample = counterexample;
 		m_Bspm = bspm;
 		m_PredicateUnifier = predicateUnifier;

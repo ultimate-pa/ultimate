@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
@@ -42,7 +42,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
  * @see LassoRankerPreferences
  * @author Jan Leike
  */
-public class PreferencesInitializer extends RcpPreferenceInitializer {
+public class PreferencesInitializer extends UltimatePreferenceInitializer {
+
+	public PreferencesInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 	/*
 	 * Default values for GUI-only preferences
 	 */
@@ -261,7 +265,7 @@ public class PreferencesInitializer extends RcpPreferenceInitializer {
 		LassoRankerPreferences preferences = new LassoRankerPreferences();
 		
 		RcpPreferenceProvider store =
-				new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+				new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		preferences.enable_partitioneer = store.getBoolean(
 				LABEL_enable_partitioneer
 		);
@@ -294,7 +298,7 @@ public class PreferencesInitializer extends RcpPreferenceInitializer {
 		TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
 		
 		RcpPreferenceProvider store =
-				new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+				new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		settings.analysis =
 				store.getEnum(LABEL_termination_analysis,
 						AnalysisType.class);
@@ -326,7 +330,7 @@ public class PreferencesInitializer extends RcpPreferenceInitializer {
 				new NonTerminationAnalysisSettings();
 		
 		RcpPreferenceProvider store =
-				new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+				new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		settings.analysis =
 				store.getEnum(LABEL_nontermination_analysis,
 						AnalysisType.class);
@@ -334,15 +338,5 @@ public class PreferencesInitializer extends RcpPreferenceInitializer {
 		settings.nilpotent_components = store.getBoolean(LABEL_nontermination_nilpotent_components);
 		settings.allowBounded = store.getBoolean(LABEL_nontermination_bounded_executions);
 		return settings;
-	}
-	
-	@Override
-	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
-	}
-	
-	@Override
-	public String getPreferenceTitle() {
-		return Activator.s_PLUGIN_NAME;
 	}
 }

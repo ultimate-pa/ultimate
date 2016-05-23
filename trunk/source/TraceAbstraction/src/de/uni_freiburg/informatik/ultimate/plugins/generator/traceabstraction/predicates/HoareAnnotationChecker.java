@@ -70,7 +70,7 @@ public class HoareAnnotationChecker {
 	public HoareAnnotationChecker(IUltimateServiceProvider services, RootNode rootNode, SmtManager smtManager) {
 		super();
 		m_Services = services;
-		mLogger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_RootNode = rootNode;
 		m_HoareTripleChecker = new MonolithicHoareTripleChecker(smtManager.getManagedScript(), 
 				smtManager.getModifiableGlobals());

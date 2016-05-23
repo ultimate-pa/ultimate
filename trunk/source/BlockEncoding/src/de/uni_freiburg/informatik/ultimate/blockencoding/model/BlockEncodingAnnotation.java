@@ -56,13 +56,13 @@ public class BlockEncodingAnnotation extends AbstractAnnotations {
 	}
 
 	public static void addAnnotation(IElement elem, IAnnotations annot) {
-		elem.getPayload().getAnnotations().put(Activator.s_PLUGIN_ID, annot);
+		elem.getPayload().getAnnotations().put(Activator.PLUGIN_ID, annot);
 	}
 
 	public static BlockEncodingAnnotation getAnnotation(IElement elem) {
 		if (elem.hasPayload()) {
 			IAnnotations rtr = elem.getPayload().getAnnotations()
-					.get(Activator.s_PLUGIN_ID);
+					.get(Activator.PLUGIN_ID);
 			if (rtr != null) {
 				return (BlockEncodingAnnotation) rtr;
 			}

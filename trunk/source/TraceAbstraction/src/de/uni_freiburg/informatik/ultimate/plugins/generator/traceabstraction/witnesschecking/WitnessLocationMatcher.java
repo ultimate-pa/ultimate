@@ -67,7 +67,7 @@ public class WitnessLocationMatcher {
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		partitionEdges(witnessAutomaton.getInternalAlphabet());
 		matchLocations(controlFlowAutomaton.getInternalAlphabet());
 		matchLocations(controlFlowAutomaton.getCallAlphabet());

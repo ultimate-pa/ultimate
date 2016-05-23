@@ -240,7 +240,7 @@ public class BuchiCegarLoop {
 		mLTLMode = false;
 		m_Services = services;
 		mStorage = storage;
-		mLogger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_MDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(m_Services.getBacktranslationService());
 		m_Name = "BuchiCegarLoop";
 		m_RootNode = rootNode;
@@ -261,7 +261,7 @@ public class BuchiCegarLoop {
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(m_RootNode.getRootAnnot().getProgramPoints(),
 				m_SmtManager, m_Pref, m_Pref.computeHoareAnnotation(), m_Haf, null);
 
-		RcpPreferenceProvider baPref = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider baPref = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 
 		m_UseDoubleDeckers = !baPref.getBoolean(PreferenceInitializer.LABEL_IgnoreDownStates);
 		m_Difference = baPref.getBoolean(PreferenceInitializer.LABEL_DeterminizationOnDemand);
@@ -286,7 +286,7 @@ public class BuchiCegarLoop {
 		m_CannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
 		m_Interpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				INTERPOLATION.class);
-		InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, m_Interpolation);
+		InterpolationPreferenceChecker.check(Activator.PLUGIN_NAME, m_Interpolation);
 		m_ConstructTermcompProof = baPref.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
 		if (m_ConstructTermcompProof) {
 			m_TermcompProofBenchmark = new TermcompProofBenchmark(m_Services);
@@ -870,7 +870,7 @@ public class BuchiCegarLoop {
 			++i;
 		}
 		TerminationArgumentResult<RcfgElement, Expression> result = new TerminationArgumentResult<RcfgElement, Expression>(
-				honda, Activator.s_PLUGIN_NAME,
+				honda, Activator.PLUGIN_NAME,
 				rf.asLexExpression(m_SmtManager.getScript(),
 						m_RootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression()),
 				rf.getName(), supporting_invariants, m_Services.getBacktranslationService(), Expression.class);

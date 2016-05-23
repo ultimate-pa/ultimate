@@ -168,7 +168,11 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String ALL_PLUGINS_PRESENT = "All entered plugins are in fact present!";
 	public static final String PLUGINS_NOT_PRESENT = "The following plugins are not present at the moment: \n";
 	public static final String EMPTY_STRING = "";
-	
+
+	public CorePreferenceInitializer() {
+		super(Activator.PLUGIN_ID, "General");
+	}
+
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem[] {
@@ -224,18 +228,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)),
 		};
 	}
-	
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
 
-	@Override
-	public String getPreferenceTitle() {
-		return "General";
-	}
-	
-	private final static class LogLevelValidator implements IUltimatePreferenceItemValidator<String> {
+	private static final class LogLevelValidator implements IUltimatePreferenceItemValidator<String> {
 		@Override
 		public boolean isValid(String value) {
 			final String upper = value.toUpperCase();

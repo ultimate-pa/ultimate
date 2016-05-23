@@ -29,23 +29,16 @@
 /**
  * The activator class controls the plug-in life cycle
  */
-package de.uni_freiburg.informatik.ultimate.boogie.printer;
 
-import org.eclipse.core.runtime.Plugin;
+package de.uni_freiburg.informatik.ultimate.boogie.printer;
 
 /**
  * @author hoenicke
  */
-public class Activator extends Plugin {
-	/**
-	 * The plug-in ID
-	 */
-	public static final String s_PLUGIN_ID = BoogiePrinter.class.getPackage().getName();
+public class Activator {
 
-	/**
-	 * The constructor
-	 */
-	public Activator() {
-	}
+	public static final String PLUGIN_ID = BoogiePrinter.class.getPackage().getName();
+
+	public static final String PLUGIN_NAME = "Boogie Printer";
 
 }

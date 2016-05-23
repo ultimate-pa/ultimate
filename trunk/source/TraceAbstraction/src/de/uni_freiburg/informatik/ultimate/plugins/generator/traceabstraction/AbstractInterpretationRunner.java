@@ -48,7 +48,7 @@ public class AbstractInterpretationRunner {
 			final CegarLoopStatisticsGenerator benchmark, final RootNode root) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRoot = root;
 		mAbsIntResult = null;
 		mSkipIteration = false;

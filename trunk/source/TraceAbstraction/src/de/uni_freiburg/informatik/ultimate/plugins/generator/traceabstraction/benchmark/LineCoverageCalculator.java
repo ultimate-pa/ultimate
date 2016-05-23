@@ -80,7 +80,7 @@ public class LineCoverageCalculator {
 			LineCoverageCalculator relative) {
 		mServices = services;
 		mRelative = relative;
-		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		mLinenumbers = calculateLineNumbers(automaton);
 	}
@@ -103,8 +103,8 @@ public class LineCoverageCalculator {
 	}
 
 	private void reportResult(int current, int total, String description) {
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new BenchmarkResult<>(Activator.s_PLUGIN_ID, description, new LineCoverageResult(total, current)));
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new BenchmarkResult<>(Activator.PLUGIN_ID, description, new LineCoverageResult(total, current)));
 	}
 
 	private int getLineCount() {

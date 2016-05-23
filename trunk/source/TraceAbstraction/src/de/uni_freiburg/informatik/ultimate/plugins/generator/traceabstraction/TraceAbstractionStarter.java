@@ -92,7 +92,7 @@ public class TraceAbstractionStarter {
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		m_Services = services;
 		m_ToolchainStorage = storage;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
 	}
 
@@ -152,7 +152,7 @@ public class TraceAbstractionStarter {
 			} else {
 				longDescription = errNodesOfAllProc.size() + " specifications checked. All of them hold";
 			}
-			AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME,
+			AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_NAME,
 					longDescription);
 			reportResult(result);
 		}
@@ -178,7 +178,7 @@ public class TraceAbstractionStarter {
 					final Term formula = hoare.getFormula();
 					final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
 					final InvariantResult<RcfgElement, Expression> invResult = new InvariantResult<RcfgElement, Expression>(
-							Activator.s_PLUGIN_NAME, locNode, backTranslatorService, expr);
+							Activator.PLUGIN_NAME, locNode, backTranslatorService, expr);
 					reportResult(invResult);
 
 					if (!formula.equals(trueterm)) {
@@ -199,7 +199,7 @@ public class TraceAbstractionStarter {
 					final Term formula = hoare.getFormula();
 					final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
 					final ProcedureContractResult<RcfgElement, Expression> result = new ProcedureContractResult<RcfgElement, Expression>(
-							Activator.s_PLUGIN_NAME, finalNode, backTranslatorService, proc, expr);
+							Activator.PLUGIN_NAME, finalNode, backTranslatorService, proc, expr);
 
 					reportResult(result);
 					// TODO: Add setting that controls the generation of those witness invariants; for now, just
@@ -258,7 +258,7 @@ public class TraceAbstractionStarter {
 			TraceAbstractionBenchmarks taBenchmark, Collection<ProgramPoint> errorLocs,
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		BasicCegarLoop basicCegarLoop;
-		LanguageOperation languageOperation = (new RcpPreferenceProvider(Activator.s_PLUGIN_ID))
+		LanguageOperation languageOperation = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
@@ -350,7 +350,7 @@ public class TraceAbstractionStarter {
 
 	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
-			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME, errorLoc,
+			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.PLUGIN_NAME, errorLoc,
 					m_Services.getBacktranslationService());
 			reportResult(pResult);
 		}
@@ -362,7 +362,7 @@ public class TraceAbstractionStarter {
 			return;
 		}
 		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe),
-				Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(), pe));
+				Activator.PLUGIN_NAME, m_Services.getBacktranslationService(), pe));
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs,
@@ -377,7 +377,7 @@ public class TraceAbstractionStarter {
 				timeOutMessage += " " + toolchainCanceledException.prettyPrint();
 			}
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(), timeOutMessage);
+					Activator.PLUGIN_NAME, m_Services.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			// s_Logger.warn(timeOutMessage);
 		}
@@ -386,13 +386,13 @@ public class TraceAbstractionStarter {
 	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
+				Activator.PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
 	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
 		String shortDescription = "Ultimate Automizer benchmark data";
-		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
+		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
@@ -403,7 +403,7 @@ public class TraceAbstractionStarter {
 	}
 
 	private void reportResult(IResult res) {
-		m_Services.getResultService().reportResult(Activator.s_PLUGIN_ID, res);
+		m_Services.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
 	/**

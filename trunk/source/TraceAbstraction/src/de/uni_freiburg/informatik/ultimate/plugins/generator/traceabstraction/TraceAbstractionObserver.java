@@ -59,7 +59,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	public TraceAbstractionObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
 		m_Services = services;
 		m_Storage = storage;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override

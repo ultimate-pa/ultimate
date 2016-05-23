@@ -84,7 +84,7 @@ public class AnnotateAndAsserter {
 			AnnotateAndAssertCodeBlocks aaacb, 
 			TraceCheckerBenchmarkGenerator tcbg, IUltimateServiceProvider services) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_SmtManager = smtManager;
 		m_Script = smtManager.getScript();
 		m_Trace = nestedSSA.getTrace();

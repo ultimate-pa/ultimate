@@ -24,15 +24,20 @@
  * licensors of the ULTIMATE HornClauseGraphBuilder plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.Activator;
 
-public class HornClauseGraphBuilderPreferenceInitializer extends RcpPreferenceInitializer {
+public class HornClauseGraphBuilderPreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public HornClauseGraphBuilderPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -46,16 +51,6 @@ public class HornClauseGraphBuilderPreferenceInitializer extends RcpPreferenceIn
 		};
 	}
 
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return "Horn Clause Graph Builder";
-	}
-	
 	// some solver commands
 	public static final String Z3_NO_EXTENSIONAL_ARRAYS = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.array.extensional=false";
 	public static final String Z3_NO_MBQI = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";

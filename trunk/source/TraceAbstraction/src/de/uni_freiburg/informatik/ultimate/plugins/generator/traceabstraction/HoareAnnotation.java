@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class HoareAnnotation extends SPredicate {
 
 	//DD: Matthias, do you really want to save only one annotation?
-	private static final String KEY = Activator.s_PLUGIN_ID;
+	private static final String KEY = Activator.PLUGIN_ID;
 	private static final long serialVersionUID = 72852101509650437L;
 	
 	private final ILogger mLogger;
@@ -101,7 +101,7 @@ public class HoareAnnotation extends SPredicate {
 			IUltimateServiceProvider services) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, boogie2smt.getScript().term(
 				"true"), new HashSet<BoogieVar>(), null);
-		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Services = services;
 		m_Boogie2Smt = boogie2smt;
 		m_PredicateFactory = predicateFactory;

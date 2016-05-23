@@ -27,13 +27,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.ltl2aut.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.Activator;
 
-public class PreferenceInitializer extends RcpPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	/*
 	 * labels for the different preferencess
@@ -63,16 +67,6 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_PPROPERTY, DEF_PPROPERTY, PreferenceType.MultilineString),
 				new UltimatePreferenceItem<Boolean>(LABEL_OPTIMIZE_SBE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_OPTIMIZE_REWRITEASSUME, false, PreferenceType.Boolean), };
-	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return Activator.PLUGIN_NAME;
 	}
 
 	public static boolean readPropertyFromFile() {

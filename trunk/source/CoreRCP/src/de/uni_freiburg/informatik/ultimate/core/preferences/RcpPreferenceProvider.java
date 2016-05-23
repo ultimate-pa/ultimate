@@ -48,8 +48,8 @@ import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.service.prefs.BackingStoreException;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.PreferenceException;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * 
@@ -58,15 +58,16 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  */
 public class RcpPreferenceProvider implements IPreferenceProvider {
 
-	private final String mPluginID;
+	static {
+		sActiveListener = new HashMap<String, Set<IPreferenceChangeListener>>();
+	}
 
-	private static Map<String, Set<IPreferenceChangeListener>> sActiveListener = new HashMap<String, Set<IPreferenceChangeListener>>();
+	private final String mPluginID;
+	private static final Map<String, Set<IPreferenceChangeListener>> sActiveListener;
 
 	public RcpPreferenceProvider(String pluginID) {
 		mPluginID = pluginID;
 	}
-
-	/*********************************** Getter ***********************************/
 
 	/**
 	 * Retrieves a preference value of type boolean from the store. If the key is neither in the current store nor in
@@ -109,10 +110,9 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	 * @param key
 	 * @param enumType
 	 * @return
-	 * @throws UnknownFormatConversionException
 	 */
 	@Override
-	public <T extends Enum<T>> T getEnum(String key, Class<T> enumType) throws UnknownFormatConversionException {
+	public <T extends Enum<T>> T getEnum(String key, Class<T> enumType) {
 		final String strValue = getString(key);
 		if (strValue.isEmpty()) {
 			throw new UnknownFormatConversionException(
@@ -226,21 +226,15 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		return getInstance().getLong(key, getDefault().getLong(key, defaultValue));
 	}
 
-	/*********************************** End Getter ***********************************/
-
-	/*********************************** Setter ***********************************/
-
 	@Override
 	public void put(String key, String value) {
 		getInstance().put(key, value);
 		try {
 			getInstance().flush();
 		} catch (BackingStoreException e) {
-			e.printStackTrace();
+			throw new PreferenceException(mPluginID, e);
 		}
 	}
-
-	/*********************************** End Setter ***********************************/
 
 	public void addPreferenceChangeListener(IPreferenceChangeListener iPreferenceChangeListener) {
 		addPreferenceChangeListener(mPluginID, iPreferenceChangeListener);
@@ -295,34 +289,6 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		return status;
 	}
 
-	private String getDefaultPreferencesString() {
-		final StringBuilder sb = new StringBuilder();
-		try {
-			final String br = CoreUtil.getPlatformLineSeparator();
-			for (final String key : getDefault().keys()) {
-				sb.append(key).append("=").append(getDefault().get(key, "NO DEFAULT SET")).append(br);
-			}
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-			return "";
-		}
-		return sb.toString();
-	}
-
-	private String getCurrentPreferencesString() {
-		final StringBuilder sb = new StringBuilder();
-		try {
-			final String br = CoreUtil.getPlatformLineSeparator();
-			for (final String key : getDefault().keys()) {
-				sb.append(key).append("=").append(getString(key, "NO DEFAULT SET")).append(br);
-			}
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-			return "";
-		}
-		return sb.toString();
-	}
-
 	/**
 	 * Get an array of strings were each entry represents all preferences that differ from their default values.
 	 * 
@@ -341,8 +307,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 				}
 			}
 		} catch (BackingStoreException e) {
-			e.printStackTrace();
-			return null;
+			throw new PreferenceException(mPluginID, e);
 		}
 
 		return rtr.toArray(new String[rtr.size()]);

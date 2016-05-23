@@ -36,7 +36,7 @@ public class AbstractInterpretationAutomatonGenerator {
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predUnifier, final SmtManager smtManager) {
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
 
 		mResult = getTermAutomaton(oldAbstraction, aiResult.getTerms(), predUnifier);

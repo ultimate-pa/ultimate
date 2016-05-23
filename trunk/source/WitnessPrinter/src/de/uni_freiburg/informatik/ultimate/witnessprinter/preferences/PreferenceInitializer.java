@@ -27,10 +27,10 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessprinter.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.Activator;
 
@@ -39,7 +39,8 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.Activator;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class PreferenceInitializer extends RcpPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
 
 	public enum WitnessVerifierType {
 		CPACHECKER
@@ -96,14 +97,8 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 						PreferenceType.Boolean, new WitnessVerifierValidator()), };
 	}
 
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return Activator.PLUGIN_NAME;
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 
 	private class WitnessVerifierValidator implements IUltimatePreferenceItemValidator<Boolean> {

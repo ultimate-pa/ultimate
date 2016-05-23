@@ -25,17 +25,28 @@
  * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator;
 
 /**
  * Class used to initialize default preference values.
  */
-public class PreferenceInitializer extends RcpPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public static final String Name_WriteToFile = "Write results of print operation to file";
+	public static final boolean Default_WriteToFile = false;
+
+	public static final String Name_Path = "Directory";
+	public static final String Default_Path = ".";
+
+	public PreferenceInitializer() {
+		super(Activator.s_PLUGIN_ID, Activator.s_PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -46,21 +57,4 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 						PreferenceType.Directory)
 		};
 	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return "Automata Script Interpreter";
-	}
-
-	public static final String Name_WriteToFile = "Write results of print operation to file";
-	public static final boolean Default_WriteToFile = false;
-
-	public static final String Name_Path = "Directory";
-	public static final String Default_Path = ".";
-
 }

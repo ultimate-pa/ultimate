@@ -28,10 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -39,8 +39,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 
-public class TraceAbstractionPreferenceInitializer extends RcpPreferenceInitializer {
+public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceInitializer {
 
+	public TraceAbstractionPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, "Automizer (Trace Abstraction)");
+	}
+	
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
@@ -97,16 +101,6 @@ public class TraceAbstractionPreferenceInitializer extends RcpPreferenceInitiali
 				new UltimatePreferenceItem<Boolean>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS, DEF_ERROR_TRACE_RELEVANCE_ANALYSIS, PreferenceType.Boolean),
 
 		};
-	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return "Automizer (Trace Abstraction)";
 	}
 
 	/*

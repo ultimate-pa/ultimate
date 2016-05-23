@@ -115,7 +115,7 @@ public class LassoRankerStarter {
 	public LassoRankerStarter(RootNode rootNode, IUltimateServiceProvider services, IToolchainStorage storage)
 			throws IOException {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		m_RootAnnot = rootNode.getRootAnnot();
 		// Omit check to enable Stefans BlockEncoding
@@ -276,7 +276,7 @@ public class LassoRankerStarter {
 	 * @return the templates specified in the preferences
 	 */
 	private RankingTemplate[] getTemplates() {
-		RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		List<RankingTemplate> templates = new ArrayList<RankingTemplate>();
 
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_affine_template)) {
@@ -336,7 +336,7 @@ public class LassoRankerStarter {
 	 * @return the templates specified in the preferences
 	 */
 	private RankingTemplate[] getTemplatesExactly() {
-		RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		List<RankingTemplate> templates = new ArrayList<RankingTemplate>();
 
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_affine_template)) {
@@ -416,7 +416,7 @@ public class LassoRankerStarter {
 		}
 
 		TerminationArgumentResult<RcfgElement, Expression> result = new TerminationArgumentResult<RcfgElement, Expression>(
-				m_Honda, Activator.s_PLUGIN_NAME, rf.asLexExpression(script, term2expression), rf.getName(),
+				m_Honda, Activator.PLUGIN_NAME, rf.asLexExpression(script, term2expression), rf.getName(),
 				supporting_invariants, getTranslatorSequence(), Expression.class);
 		reportResult(result);
 	}
@@ -438,7 +438,7 @@ public class LassoRankerStarter {
 		List<Map<Expression, Rational>> initHondaRays = BacktranslationUtil.rank2Boogie(term2expression, states);
 
 		NonTerminationArgumentResult<RcfgElement, Expression> result = new NonTerminationArgumentResult<RcfgElement, Expression>(
-				m_Honda, Activator.s_PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
+				m_Honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
 				initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(), nta.getNus(), getTranslatorSequence(),
 				Expression.class);
 		reportResult(result);
@@ -451,7 +451,7 @@ public class LassoRankerStarter {
 	 *            the current preferences
 	 */
 	private void reportNoResult(RankingTemplate[] templates) {
-		NoResult<RcfgElement> result = new NoResult<RcfgElement>(m_Honda, Activator.s_PLUGIN_NAME,
+		NoResult<RcfgElement> result = new NoResult<RcfgElement>(m_Honda, Activator.PLUGIN_NAME,
 				getTranslatorSequence());
 		result.setShortDescription("LassoRanker could not prove termination");
 		StringBuilder sb = new StringBuilder();
@@ -474,7 +474,7 @@ public class LassoRankerStarter {
 	 *            the current preferences
 	 */
 	private void reportFailBecauseOfOverapproximationResult() {
-		NoResult<RcfgElement> result = new NoResult<RcfgElement>(m_Honda, Activator.s_PLUGIN_NAME,
+		NoResult<RcfgElement> result = new NoResult<RcfgElement>(m_Honda, Activator.PLUGIN_NAME,
 				getTranslatorSequence());
 		result.setShortDescription("LassoRanker could not prove termination");
 		StringBuilder sb = new StringBuilder();
@@ -499,7 +499,7 @@ public class LassoRankerStarter {
 			sb.append(template.getClass().getSimpleName());
 		}
 		TimeoutResultAtElement<RcfgElement> result = new TimeoutResultAtElement<RcfgElement>(m_Honda,
-				Activator.s_PLUGIN_NAME, getTranslatorSequence(), sb.toString());
+				Activator.PLUGIN_NAME, getTranslatorSequence(), sb.toString());
 		mLogger.info(sb.toString());
 		reportResult(result);
 	}
@@ -515,7 +515,7 @@ public class LassoRankerStarter {
 	private void reportUnuspportedSyntax(RcfgElement position, String message) {
 		mLogger.error(message);
 		UnsupportedSyntaxResult<RcfgElement> result = new UnsupportedSyntaxResult<RcfgElement>(position,
-				Activator.s_PLUGIN_NAME, getTranslatorSequence(), message);
+				Activator.PLUGIN_NAME, getTranslatorSequence(), message);
 		reportResult(result);
 	}
 
@@ -526,7 +526,7 @@ public class LassoRankerStarter {
 	 *            the result
 	 */
 	private void reportResult(IResult result) {
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
 	// FIXME: allow also Stefans BlockEncoding

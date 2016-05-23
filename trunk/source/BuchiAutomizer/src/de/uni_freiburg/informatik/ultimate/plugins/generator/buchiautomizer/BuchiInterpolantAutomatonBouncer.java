@@ -111,7 +111,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			PredicateFactoryForInterpolantAutomata predicateFactory, PredicateUnifier stemPU, PredicateUnifier loopPU,
 			IPredicate falsePredicate, IUltimateServiceProvider services) {
 		super(services, smtManager, bhtc, false, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
-				Activator.s_PLUGIN_ID));
+				Activator.PLUGIN_ID));
 		mServices = services;
 		m_Bspm = bspm;
 		m_StemPU = new PredicateUnifier(mServices, m_SmtManager, falsePredicate);

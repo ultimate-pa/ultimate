@@ -27,12 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.boogie.printer.preferences;
 
 import de.uni_freiburg.informatik.ultimate.boogie.printer.Activator;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 
-public class PreferenceInitializer extends RcpPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -54,33 +58,23 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 		};
 	}
 
-	@Override
-	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return "Boogie Printer";
-	}
-
 	public static String getDumpPath() {
-		return new RcpPreferenceProvider(Activator.s_PLUGIN_ID)
+		return new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(DUMP_PATH_LABEL);
 	}
 
 	public static String getFilename() {
-		return new RcpPreferenceProvider(Activator.s_PLUGIN_ID)
+		return new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(FILE_NAME_LABEL);
 	}
 
 	public static boolean getUseUniqueFilename() {
-		return new RcpPreferenceProvider(Activator.s_PLUGIN_ID)
+		return new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(UNIQUE_NAME_LABEL);
 	}
 
 	public static boolean getSaveInSourceDirectory() {
-		return new RcpPreferenceProvider(Activator.s_PLUGIN_ID)
+		return new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(SAVE_IN_SOURCE_DIRECTORY_LABEL);
 	}
 

@@ -118,20 +118,20 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
-		IResult benchDecomp = new BenchmarkResult<String>(Activator.s_PLUGIN_ID, "Constructed decomposition of program",
+		IResult benchDecomp = new BenchmarkResult<String>(Activator.PLUGIN_ID, "Constructed decomposition of program",
 				bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 
-		boolean constructTermcompProof = (new RcpPreferenceProvider(Activator.s_PLUGIN_ID))
+		boolean constructTermcompProof = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
 		if (constructTermcompProof) {
-			IResult termcompProof = new BenchmarkResult<Double>(Activator.s_PLUGIN_ID,
+			IResult termcompProof = new BenchmarkResult<Double>(Activator.PLUGIN_ID,
 					"Constructed termination proof in form of nested word automata", bcl.getTermcompProofBenchmark());
 			reportResult(termcompProof);
 		}
 
 		BuchiAutomizerTimingBenchmark timingBenchmark = new BuchiAutomizerTimingBenchmark(benchGen);
-		IResult benchTiming = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "Timing statistics", timingBenchmark);
+		IResult benchTiming = new BenchmarkResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
 		reportResult(benchTiming);
 
 		interpretAndReportResult(bcl, result);
@@ -153,7 +153,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final List<Map<Expression, Rational>> initHondaRays = BacktranslationUtil.rank2Boogie(term2expression, states);
 
 		final NonTerminationArgumentResult<RcfgElement, Expression> result = new NonTerminationArgumentResult<RcfgElement, Expression>(
-				honda, Activator.s_PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
+				honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
 				initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(), nta.getNus(),
 				getBacktranslationService(), Expression.class);
 		reportResult(result);
@@ -185,7 +185,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		if (result == Result.TERMINATING) {
 			String longDescr = "Buchi Automizer proved that your program is terminating";
-			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.TERMINATING,
+			IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.TERMINATING,
 					longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.UNKNOWN) {
@@ -198,19 +198,19 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			longDescr.append(System.getProperty("line.separator"));
 			longDescr.append("Loop: ");
 			longDescr.append(counterexample.getLoop().getWord());
-			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.UNKNOWN,
+			IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.UNKNOWN,
 					longDescr.toString());
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
 			ProgramPoint position = mRootAnnot.getEntryNodes().values().iterator().next();
 			String longDescr = "Timeout while trying to prove " + whatToProve + ". "
 					+ bcl.getToolchainCancelledException().prettyPrint();
-			IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.s_PLUGIN_ID,
+			IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {
 			String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
-			IResult reportRes = new TerminationAnalysisResult(Activator.s_PLUGIN_ID, TERMINATION.NONTERMINATING,
+			IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.NONTERMINATING,
 					longDescr);
 			reportResult(reportRes);
 
@@ -219,7 +219,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(honda, nta);
-			reportResult(new BenchmarkResult<String>(Activator.s_PLUGIN_NAME, "NonterminationBenchmark",
+			reportResult(new BenchmarkResult<String>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
 					new NonterminationBenchmark(nta)));
 
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
@@ -230,7 +230,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().lettersAsList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
 			IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, RCFGEdge, Expression>(honda,
-					Activator.s_PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
+					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
 					honda.getPayload().getLocation());
 			reportResult(ntreportRes);
 		} else {
@@ -239,7 +239,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	private void reportLTLPropertyHolds(BuchiCegarLoop bcl, LTLPropertyCheck ltlAnnot) {
-		IResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_ID,
+		IResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
 				"Buchi Automizer proved that the LTL property " + ltlAnnot.getLTLProperty() + " holds");
 		reportResult(result);
 	}
@@ -268,7 +268,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			@SuppressWarnings("unchecked")
 			RcfgProgramExecution cex = new RcfgProgramExecution(combined, partialProgramStateMapping,
 					new Map[combined.size()]);
-			reportResult(new LTLFiniteCounterExampleResult<>(position, Activator.s_PLUGIN_ID,
+			reportResult(new LTLFiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), cex, ltlAnnot));
 		} else {
 			// TODO: Make some attempt at getting the values
@@ -280,7 +280,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			@SuppressWarnings("unchecked")
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(loop, partialProgramStateMapping,
 					new Map[loop.size()]);
-			reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.s_PLUGIN_ID,
+			reportResult(new LTLInfiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, position.getPayload().getLocation(),
 					ltlAnnot.getLTLProperty()));
 		}
@@ -312,7 +312,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	void reportResult(IResult res) {
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, res);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
 	@Override

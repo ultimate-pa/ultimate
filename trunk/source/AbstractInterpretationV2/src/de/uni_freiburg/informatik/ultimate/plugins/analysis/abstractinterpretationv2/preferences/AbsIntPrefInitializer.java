@@ -30,12 +30,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomainPreferences;
@@ -56,11 +56,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class AbsIntPrefInitializer extends RcpPreferenceInitializer {
+public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
-	        SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(),
-	        VPDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(), CompoundDomain.class.getSimpleName() };
+			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(),
+			VPDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(),
+			CompoundDomain.class.getSimpleName() };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
@@ -77,23 +78,27 @@ public class AbsIntPrefInitializer extends RcpPreferenceInitializer {
 
 	public static final String INDENT = "   ";
 
+	public AbsIntPrefInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
+
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		final ArrayList<BaseUltimatePreferenceItem> rtr = new ArrayList<>();
 		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS_UNTIL_WIDENING, DEF_ITERATIONS_UNTIL_WIDENING,
-		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_MAX_PARALLEL_STATES, DEF_STATES_UNTIL_MERGE,
-		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
-		        TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
+				TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
 
 		// Abstract Domains Container
 		final UltimatePreferenceItemContainer abstractDomainContainer = new UltimatePreferenceItemContainer(
-		        "Abstract Domains");
+				"Abstract Domains");
 		abstractDomainContainer.addItem(
-		        new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
+				new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<String>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN,
-		        PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN));
+				PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN));
 
 		// Interval Domain
 		abstractDomainContainer.addAbstractItems(IntervalDomainPreferences.getPreferences());
@@ -106,23 +111,12 @@ public class AbsIntPrefInitializer extends RcpPreferenceInitializer {
 
 		// Compound Domain
 		abstractDomainContainer.addAbstractItems(CompoundDomainPreferences.getPreferences());
-		
+
 		rtr.add(abstractDomainContainer);
 
 		// LPSolver Preferences
 		rtr.addAll(LpSolverPreferences.getPreferences());
-		
+
 		return rtr.toArray(new BaseUltimatePreferenceItem[rtr.size()]);
 	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return Activator.PLUGIN_NAME;
-	}
-
 }

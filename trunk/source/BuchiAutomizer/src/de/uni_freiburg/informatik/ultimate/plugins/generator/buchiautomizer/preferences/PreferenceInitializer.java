@@ -26,16 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
-public class PreferenceInitializer extends RcpPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -107,16 +111,6 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 						PreferenceType.Combo,
 						AutomataMinimization.values()),
 		};
-	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return "Buchi Automizer (Termination Analysis)";
 	}
 	
 	public static final String LABEL_IgnoreDownStates = "Ignore down states";

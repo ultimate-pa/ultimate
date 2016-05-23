@@ -74,7 +74,7 @@ public class PredicateTransformer {
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
 			IUltimateServiceProvider services) {
 		m_Services = services;
-		mLogger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Script = script;
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		m_VariableManager = variableManager;

@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 public class DSITransformer implements IGenerator {
 
 	private static final String s_PLUGIN_NAME = "DSITransformer";
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private DSITransformerObserver mObserver;
 	private ModelType mInputType;

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.preferences.util.RcpPreferenceBinder;
 
 /**
  * The SettingsManager initializes the default settings of all plugins as well as loading and saving settings of an
@@ -63,6 +64,7 @@ final class SettingsManager {
 
 	// TODO: Check if this works with multiple instances of plugins
 
+	private static final String SAVING_PREFERENCES_FAILED_WITH_EXCEPTION = "Saving preferences failed with exception: ";
 	private final ILogger mLogger;
 	private final Map<String, LogPreferenceChangeListener> mActivePreferenceListener;
 
@@ -75,7 +77,7 @@ final class SettingsManager {
 		if (plugin == null) {
 			return;
 		}
-		final String pluginId = plugin.getPluginID();
+		
 		final String pluginName = plugin.getPluginName();
 		final IPreferenceInitializer prefs = plugin.getPreferences();
 		if (prefs == null) {
@@ -84,7 +86,8 @@ final class SettingsManager {
 			}
 			return;
 		}
-		prefs.initializeDefaultPreferences();
+		final String pluginId = plugin.getPluginID();
+		RcpPreferenceBinder.registerDefaultPreferences(pluginId, prefs.getPreferenceItems());
 		attachLogPreferenceChangeListenerToPlugin(pluginId, pluginName);
 		logDefaultPreferences(pluginId, pluginName);
 	}
@@ -109,7 +112,7 @@ final class SettingsManager {
 				}
 				mLogger.info("Preferences different from defaults after loading the file:");
 				logPreferencesDifferentFromDefaults(core);
-			} catch (Exception e) {
+			} catch (IOException | CoreException e) {
 				mLogger.error("Could not load preferences because of exception: ", e);
 				mLogger.warn("Did not attach debug property logger");
 			} finally {
@@ -157,21 +160,21 @@ final class SettingsManager {
 			fis.flush();
 			fis.close();
 		} catch (FileNotFoundException e) {
-			mLogger.error("Saving preferences failed with exception: ", e);
+			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
 		} catch (IOException e) {
-			mLogger.error("Saving preferences failed with exception: ", e);
+			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
 		} catch (CoreException e) {
-			mLogger.error("Saving preferences failed with exception: ", e);
+			mLogger.error(SAVING_PREFERENCES_FAILED_WITH_EXCEPTION, e);
 		}
 	}
 
-	void resetPreferences(ICore<ToolchainListType> core) {
+	void resetPreferences(final ICore<ToolchainListType> core) {
 		mLogger.info("Resetting all preferences to default values...");
-		for (IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
-			IPreferenceInitializer preferences = plugin.getPreferences();
+		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
+			final IPreferenceInitializer preferences = plugin.getPreferences();
 			if (preferences != null) {
 				mLogger.info("Resetting " + plugin.getPluginName() + " preferences to default values");
-				preferences.resetToDefaults();
+				RcpPreferenceBinder.resetToDefaultPreferences(plugin.getPluginID(), preferences.getPreferenceItems());
 			} else {
 				mLogger.info(plugin.getPluginName() + " provides no preferences, ignoring...");
 			}
@@ -180,20 +183,19 @@ final class SettingsManager {
 		mLogger.info("Finished resetting all preferences to default values...");
 	}
 
-	private void logDefaultPreferences(String pluginID, String pluginName) {
+	private void logDefaultPreferences(final String pluginID, final String pluginName) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
-		RcpPreferenceProvider ups = new RcpPreferenceProvider(pluginID);
+		final RcpPreferenceProvider ups = new RcpPreferenceProvider(pluginID);
 		try {
-			IEclipsePreferences defaults = ups.getDefaultEclipsePreferences();
-			String prefix = "[" + pluginName + " (Current)] Preference \"";
-			for (String key : defaults.keys()) {
+			final IEclipsePreferences defaults = ups.getDefaultEclipsePreferences();
+			final String prefix = "[" + pluginName + " (Current)] Preference \"";
+			for (final String key : defaults.keys()) {
 				mLogger.debug(prefix + key + "\" = " + ups.getString(key, "NOT DEFINED"));
 			}
-		} catch (BackingStoreException e) {
-			mLogger.debug("An exception occurred during printing of default preferences for plugin " + pluginName + ":"
-					+ e.getMessage());
+		} catch (final BackingStoreException e) {
+			mLogger.fatal("An exception occurred during printing of default preferences for plugin " + pluginName, e);
 		}
 	}
 

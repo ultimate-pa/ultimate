@@ -68,7 +68,7 @@ public class UltimatePreferencePageFactory {
 			if (plugin.getPreferences() == null) {
 				continue;
 			}
-			final BaseUltimatePreferenceItem[] preferenceItems = plugin.getPreferences().getDefaultPreferences();
+			final BaseUltimatePreferenceItem[] preferenceItems = plugin.getPreferences().getPreferenceItems();
 			if (preferenceItems == null) {
 				continue;
 			}

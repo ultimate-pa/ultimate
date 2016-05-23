@@ -132,7 +132,7 @@ public class SmtManager {
 	public SmtManager(Script script, Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
 			IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded, ManagedScript managedScript) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_InterpolationModeSwitchNeeded = interpolationModeSwitchNeeded;
 		m_Boogie2Smt = boogie2smt;
 		m_Script = script;

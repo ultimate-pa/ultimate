@@ -77,7 +77,7 @@ public class TAPreferences {
 
 	public TAPreferences() {
 
-		m_Prefs = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		m_Prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 
 		m_Interprocedural = m_Prefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDUTAL);

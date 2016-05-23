@@ -28,11 +28,15 @@ package de.uni_freiburg.informatik.ultimate.cdt.parser.preferences;
 
 
 import de.uni_freiburg.informatik.ultimate.cdt.parser.Activator;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
-public class PreferenceInitializer extends RcpPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, "CDT Parser");
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -41,17 +45,6 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 		};
 	}
 
-	
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return "CDT Parser";
-	}
-	
 	public static final String INCLUDE_PATHS = "Please specify include paths that will be parsed with the given C-File";
 
 }

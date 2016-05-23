@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences;
 
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
-public class PreferenceInitializer extends RcpPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum MinimizeStates {
 		NONE, SINGLE, SINGLE_NODE_MULTI_EDGE, MULTI
@@ -49,6 +49,10 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS = "Rewrite not equals when simplifying assume statements with SBE";
 	public static final String OPTIMIZE_UNTIL_FIXPOINT = "Apply product optimizations until nothing changes";
 	public static final String OPTIMIZE_MAX_ITERATIONS = "Optimize not more than (<=0 means until nothing changes)";
+	
+	public PreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
@@ -73,15 +77,5 @@ public class PreferenceInitializer extends RcpPreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(OPTIMIZE_MAX_ITERATIONS, 0, PreferenceType.Integer),
 
 		};
-	}
-
-	@Override
-	protected String getPlugID() {
-		return Activator.PLUGIN_ID;
-	}
-
-	@Override
-	public String getPreferenceTitle() {
-		return Activator.PLUGIN_NAME;
 	}
 }

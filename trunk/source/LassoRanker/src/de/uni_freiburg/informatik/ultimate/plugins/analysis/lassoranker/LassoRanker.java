@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
  */
 public class LassoRanker implements IAnalysis {
 
-	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
+	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 	
 	private LassoRankerObserver m_Observer;
 	private ModelType m_InputDefinition;
@@ -105,7 +105,7 @@ public class LassoRanker implements IAnalysis {
 		 * TODO This generated method body only assumes a standard case.
 		 * Adapt it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID,
+		return new ModelType(Activator.PLUGIN_ID,
 				m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
 	

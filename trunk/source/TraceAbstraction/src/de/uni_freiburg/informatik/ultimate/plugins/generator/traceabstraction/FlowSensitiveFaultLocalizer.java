@@ -99,7 +99,7 @@ public class FlowSensitiveFaultLocalizer {
 			SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier) {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_RelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
 
 		doNonFlowSensitiveAnalysis((NestedWord<CodeBlock>) counterexample.getWord(),

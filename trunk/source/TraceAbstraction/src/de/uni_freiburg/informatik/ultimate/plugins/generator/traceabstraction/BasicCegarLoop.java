@@ -167,8 +167,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			IUltimateServiceProvider services, IToolchainStorage storage) {
 
 		super(services, storage, name, rootNode, smtManager, taPrefs, errorLocs,
-				services.getLoggingService().getLogger(Activator.s_PLUGIN_ID));
-		m_UseInterpolantConsolidation = new RcpPreferenceProvider(Activator.s_PLUGIN_ID)
+				services.getLoggingService().getLogger(Activator.PLUGIN_ID));
+		m_UseInterpolantConsolidation = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
 		if (m_FallbackToFpIfInterprocedural && rootNode.getRootAnnot().getEntryNodes().size() > 1) {
 			if (interpolation == INTERPOLATION.FPandBP) {
@@ -200,7 +200,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_HoareAnnotationPositions);
 		m_PredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(super.m_SmtManager, m_Pref);
 
-		m_AssertCodeBlocksIncrementally = (new RcpPreferenceProvider(Activator.s_PLUGIN_ID)).getEnum(
+		m_AssertCodeBlocksIncrementally = (new RcpPreferenceProvider(Activator.PLUGIN_ID)).getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
 				AssertCodeBlockOrder.class);
 
@@ -209,13 +209,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_CegarLoopBenchmark = new CegarLoopStatisticsGenerator();
 		m_CegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
-		RcpPreferenceProvider m_Prefs = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider m_Prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		m_UnsatCores = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		m_UseLiveVariables = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
 		m_DoFaultLocalization = m_Prefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS);
 
-		if (new RcpPreferenceProvider(Activator.s_PLUGIN_ID)
+		if (new RcpPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION)) {
 			mAbsIntRunner = new AbstractInterpretationRunner(services, m_CegarLoopBenchmark, rootNode);
 		} else {

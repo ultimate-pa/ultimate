@@ -84,7 +84,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	public TraceAbstractionConcurrentObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
 		m_Services = services;
 		m_ToolchainStorage = storage;
-		mLogger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -221,12 +221,12 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (ProgramPoint errorLoc : errorLocs) {
-				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME, errorLoc,
+				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.PLUGIN_NAME, errorLoc,
 						m_Services.getBacktranslationService());
 				reportResult(pResult);
 			}
 		}
-		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, longDescription);
+		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, longDescription);
 		reportResult(result);
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
@@ -237,7 +237,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			return;
 		}
 		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe),
-				Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(), pe));
+				Activator.PLUGIN_NAME, m_Services.getBacktranslationService(), pe));
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
@@ -248,7 +248,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			String timeOutMessage = "Timeout! Unable to prove that " + check.getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(), timeOutMessage);
+					Activator.PLUGIN_NAME, m_Services.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			mLogger.warn(timeOutMessage);
 		}
@@ -257,20 +257,20 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
+				Activator.PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
 	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
 		String shortDescription = "Ultimate Automizer benchmark data";
-		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
+		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
 	}
 
 	private void reportResult(IResult res) {
-		m_Services.getResultService().reportResult(Activator.s_PLUGIN_ID, res);
+		m_Services.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
 	/**

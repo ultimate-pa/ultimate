@@ -262,8 +262,8 @@ public class LassoChecker {
 			IToolchainStorage storage) throws IOException {
 		mServices = services;
 		mStorage = storage;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		RcpPreferenceProvider baPref = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		RcpPreferenceProvider baPref = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		m_ExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
 		m_ExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
 		m_ExternalSolver_GntaSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverGNTA);
@@ -640,7 +640,7 @@ public class LassoChecker {
 		default:
 			throw new AssertionError();
 		}
-		RcpPreferenceProvider baPref = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider baPref = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
 		pref.path_of_dumped_script = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
 		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
@@ -815,8 +815,8 @@ public class LassoChecker {
 				m_TerminationAnalysisBenchmarks.addAll(benchs);
 				if (m_TemplateBenchmarkMode) {
 					for (TerminationAnalysisBenchmark bench : benchs) {
-						IResult benchmarkResult = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", bench);
-						mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, benchmarkResult);
+						IResult benchmarkResult = new BenchmarkResult<>(Activator.PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", bench);
+						mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 					}
 				}
 			} catch (SMTLIBException e) {

@@ -53,7 +53,7 @@ public class BoogiePrinter implements IOutput {
 	/**
 	 * Holds the plugin's ID.
 	 */
-	private static final String sPLUGIN_ID = Activator.s_PLUGIN_ID;
+	private static final String sPLUGIN_ID = Activator.PLUGIN_ID;
 	/**
 	 * The observer for this instance.
 	 */
