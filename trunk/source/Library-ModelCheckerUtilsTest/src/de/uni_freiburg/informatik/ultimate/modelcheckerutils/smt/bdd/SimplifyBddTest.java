@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
 
 /**
@@ -43,12 +44,11 @@ public class SimplifyBddTest {
 	
 	@Test
 	public void testA() {
-		final IUltimateServiceProvider services = null;
+		final IUltimateServiceProvider services = new UltimateServiceProviderMock();
 		final Script script = new SMTInterpol();
 		final IFreshTermVariableConstructor freshTermVariableConstructor = null;
 		final SimplifyBdd simplifyBdd = new SimplifyBdd(services, script, freshTermVariableConstructor);
 		Assert.assertTrue(!false);
-		
 	}
 
 }

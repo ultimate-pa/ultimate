@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE JUnit Helper Library.
  * 
@@ -25,8 +25,24 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.test.junitextension.categories;
+package de.uni_freiburg.informatik.ultimate.test.mocks;
 
-public interface ExampleCategory {
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+
+final class ResultServiceMock implements IResultService {
+
+	@Override
+	public Map<String, List<IResult>> getResults() {
+		return Collections.emptyMap();
+	}
+
+	@Override
+	public void reportResult(String pluginId, IResult result) {
+
+	}
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE JUnit Helper Library.
  * 
@@ -25,8 +25,45 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.test.junitextension.categories;
+package de.uni_freiburg.informatik.ultimate.test.mocks;
 
-public interface ExampleCategory {
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+final class ProgressMonitorServiceMock implements IProgressMonitorService {
+
+	@Override
+	public boolean continueProcessing() {
+		return true;
+	}
+
+	@Override
+	public IProgressAwareTimer getChildTimer(long timeout) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public IProgressAwareTimer getChildTimer(double percentage) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setSubtask(String task) {
+
+	}
+
+	@Override
+	public void setDeadline(long date) {
+
+	}
+
+	@Override
+	public void cancelToolchain() {
+		
+	}
 }
