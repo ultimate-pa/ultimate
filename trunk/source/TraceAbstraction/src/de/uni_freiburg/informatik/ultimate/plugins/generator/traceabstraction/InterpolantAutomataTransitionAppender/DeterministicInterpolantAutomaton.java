@@ -63,23 +63,23 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
  */
 public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantAutomaton {
 	
-	private final Map<Set<IPredicate>, IPredicate> m_InputPreds2ResultPreds = 
+	private final Map<Set<IPredicate>, IPredicate> mInputPreds2ResultPreds = 
 			new HashMap<Set<IPredicate>, IPredicate>();
-	private final HashRelation<IPredicate, IPredicate> m_ResPred2InputPreds = 
+	private final HashRelation<IPredicate, IPredicate> mResPred2InputPreds = 
 			new HashRelation<IPredicate, IPredicate>();
 
 
-	protected final Set<IPredicate> m_NonTrivialPredicates;
+	protected final Set<IPredicate> mNonTrivialPredicates;
 	
 	/**
 	 * Split up predicates in their conjuncts. 
 	 * First experiments on few examples showed that this is decreasing the
 	 * performance.
 	 */
-	private final boolean m_Cannibalize;
-	private final boolean m_SplitNumericEqualities = true;
-	private final boolean m_DivisibilityPredicates = false;
-	private final boolean m_ConservativeSuccessorCandidateSelection;
+	private final boolean mCannibalize;
+	private final boolean mSplitNumericEqualities = true;
+	private final boolean mDivisibilityPredicates = false;
+	private final boolean mConservativeSuccessorCandidateSelection;
 	
 
 	
@@ -94,14 +94,14 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		super(services, smtManager, hoareTripleChecker, true, abstraction, 
 				predicateUnifier, 
 				interpolantAutomaton, logger);
-		m_Cannibalize = cannibalize;
-		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
-		if (m_ConservativeSuccessorCandidateSelection && m_Cannibalize) {
+		mCannibalize = cannibalize;
+		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
+		if (mConservativeSuccessorCandidateSelection && mCannibalize) {
 			throw new IllegalArgumentException("ConservativeSuccessorCandidateSelection and Cannibalize are incompatible");
 		}
 		Collection<IPredicate> allPredicates;
-		if (m_Cannibalize ) {
-			allPredicates = m_PredicateUnifier.cannibalizeAll(m_SplitNumericEqualities, interpolantAutomaton.getStates().toArray(new IPredicate[0]));
+		if (mCannibalize ) {
+			allPredicates = mPredicateUnifier.cannibalizeAll(mSplitNumericEqualities, interpolantAutomaton.getStates().toArray(new IPredicate[0]));
 			for (IPredicate pred : allPredicates) {
 				if (!interpolantAutomaton.getStates().contains(pred)) {
 					interpolantAutomaton.addState(false, false, pred);
@@ -110,9 +110,9 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		} else {
 			allPredicates = interpolantAutomaton.getStates(); 
 		}
-		if (m_DivisibilityPredicates) {
+		if (mDivisibilityPredicates) {
 			allPredicates = new ArrayList<IPredicate>(allPredicates);
-			DivisibilityPredicateGenerator dpg = new DivisibilityPredicateGenerator(m_SmtManager, m_PredicateUnifier);
+			DivisibilityPredicateGenerator dpg = new DivisibilityPredicateGenerator(mSmtManager, mPredicateUnifier);
 			Collection<IPredicate> divPreds = dpg.divisibilityPredicates(allPredicates);
 			allPredicates.addAll(divPreds);
 			for (IPredicate pred : divPreds) {
@@ -122,20 +122,20 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 			}
 		}
 		
-		assert m_IaTrueState.getFormula().toString().equals("true");
-		assert allPredicates.contains(m_IaTrueState);
-		m_AlreadyConstrucedAutomaton.addState(true, false, m_IaTrueState);
-		m_ResPred2InputPreds.addPair(m_IaTrueState, m_IaTrueState);
-		assert m_IaFalseState.getFormula().toString().equals("false");
-		assert allPredicates.contains(m_IaFalseState);
-		m_AlreadyConstrucedAutomaton.addState(false, true, m_IaFalseState);
-		m_ResPred2InputPreds.addPair(m_IaFalseState, m_IaFalseState);
+		assert mIaTrueState.getFormula().toString().equals("true");
+		assert allPredicates.contains(mIaTrueState);
+		mAlreadyConstrucedAutomaton.addState(true, false, mIaTrueState);
+		mResPred2InputPreds.addPair(mIaTrueState, mIaTrueState);
+		assert mIaFalseState.getFormula().toString().equals("false");
+		assert allPredicates.contains(mIaFalseState);
+		mAlreadyConstrucedAutomaton.addState(false, true, mIaFalseState);
+		mResPred2InputPreds.addPair(mIaFalseState, mIaFalseState);
 
-		m_NonTrivialPredicates = new HashSet<IPredicate>();
+		mNonTrivialPredicates = new HashSet<IPredicate>();
 		for (IPredicate state : allPredicates) {
-			if (state != m_IaTrueState && state != m_IaFalseState) {
+			if (state != mIaTrueState && state != mIaFalseState) {
 				processResPredInputPredsMapping(state);
-				m_NonTrivialPredicates.add(state);
+				mNonTrivialPredicates.add(state);
 			}
 		}
 
@@ -145,16 +145,16 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	/**
 	 * Add add input states that are 
 	 * 1. implied by resPred
-	 * 2. contained in m_InterpolantAutomaton
+	 * 2. contained in mInterpolantAutomaton
 	 * 3. different from "true"
-	 * to the  m_ResPred2InputPreds Map
+	 * to the  mResPred2InputPreds Map
 	 */
 	private void processResPredInputPredsMapping(IPredicate resPred) {
 		Set<IPredicate> impliedPredicates = 
-				m_PredicateUnifier.getCoverageRelation().getCoveringPredicates(resPred);
+				mPredicateUnifier.getCoverageRelation().getCoveringPredicates(resPred);
 		for (IPredicate impliedPredicate : impliedPredicates) {
-			if (impliedPredicate != m_IaTrueState && m_InputInterpolantAutomaton.getStates().contains(impliedPredicate)) {
-				m_ResPred2InputPreds.addPair(resPred, impliedPredicate);
+			if (impliedPredicate != mIaTrueState && mInputInterpolantAutomaton.getStates().contains(impliedPredicate)) {
+				mResPred2InputPreds.addPair(resPred, impliedPredicate);
 			}
 		}
 	}
@@ -164,7 +164,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		StringBuilder sb = new StringBuilder();
 		sb.append("Constructing interpolant automaton ");
 		sb.append("starting with ");
-		sb.append(m_NonTrivialPredicates.size() + 2);
+		sb.append(mNonTrivialPredicates.size() + 2);
 		sb.append(" interpolants.");
 		return sb.toString();
 	}
@@ -173,7 +173,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	protected String switchToReadonlyMessage() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Switched to read-only mode: deterministic interpolant automaton has ");
-		sb.append(m_AlreadyConstrucedAutomaton.size()).append(" states. ");
+		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 	
@@ -181,7 +181,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	protected String switchToOnTheFlyConstructionMessage() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Switched to On-DemandConstruction mode: deterministic interpolant automaton has ");
-		sb.append(m_AlreadyConstrucedAutomaton.size()).append(" states. ");
+		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 
@@ -201,7 +201,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	}
 	
 	private Set<IPredicate> selectSuccessorCandidates(IPredicate resPred, IPredicate resHier) {
-		if (m_ConservativeSuccessorCandidateSelection ) {
+		if (mConservativeSuccessorCandidateSelection ) {
 			return selectSuccessorCandidates_TryConservative(resPred, resHier);
 		} else {
 			return selectSuccessorCandidates_TryAll();
@@ -212,16 +212,16 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		Set<IPredicate> succCands;
 		if (resHier != null) {
 			succCands = new HashSet<IPredicate>();
-			succCands.addAll(m_ResPred2InputPreds.getImage(resPred));
-			succCands.addAll(m_ResPred2InputPreds.getImage(resHier));
+			succCands.addAll(mResPred2InputPreds.getImage(resPred));
+			succCands.addAll(mResPred2InputPreds.getImage(resHier));
 		} else {
-			succCands = m_ResPred2InputPreds.getImage(resPred);
+			succCands = mResPred2InputPreds.getImage(resPred);
 		}
 		return succCands;
 	}
 	
 	private Set<IPredicate> selectSuccessorCandidates_TryAll() {
-		return m_NonTrivialPredicates;		
+		return mNonTrivialPredicates;		
 	}
 
 
@@ -234,20 +234,20 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	protected void addInputAutomatonSuccs(
 			IPredicate resPred, IPredicate resHier, CodeBlock letter,
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
-		Set<IPredicate> resPredConjuncts = m_ResPred2InputPreds.getImage(resPred);
-		assert m_Cannibalize || resPredConjuncts != null;
+		Set<IPredicate> resPredConjuncts = mResPred2InputPreds.getImage(resPred);
+		assert mCannibalize || resPredConjuncts != null;
 		if (resPredConjuncts == null) {
 			resPredConjuncts = Collections.emptySet();
 		}
 		final IterableWithAdditionalElement<IPredicate> resPredConjunctsWithTrue = 
-				new IterableWithAdditionalElement<IPredicate>(resPredConjuncts, m_IaTrueState);
+				new IterableWithAdditionalElement<IPredicate>(resPredConjuncts, mIaTrueState);
 		final IterableWithAdditionalElement<IPredicate> resHierConjunctsWithTrue;
 		if (resHier == null) {
 			resHierConjunctsWithTrue = null;
 		} else {
 			Set<IPredicate> resHierConjuncts;
-			resHierConjuncts = m_ResPred2InputPreds.getImage(resHier);
-			resHierConjunctsWithTrue = new IterableWithAdditionalElement<IPredicate>(resHierConjuncts, m_IaTrueState);
+			resHierConjuncts = mResPred2InputPreds.getImage(resHier);
+			resHierConjunctsWithTrue = new IterableWithAdditionalElement<IPredicate>(resHierConjuncts, mIaTrueState);
 		}
 		for (IPredicate inputPred : resPredConjunctsWithTrue) {
 			if (resHier == null) {
@@ -266,30 +266,30 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 
 
 	private IPredicate getOrConstructPredicate(Set<IPredicate> succs) {
-//		assert m_InterpolantAutomaton.getStates().containsAll(succs);
+//		assert mInterpolantAutomaton.getStates().containsAll(succs);
 		final IPredicate result;
 		if (succs.isEmpty()) {
-			result = m_IaTrueState;
+			result = mIaTrueState;
 		} else if (succs.size() == 1) {
 			result = succs.iterator().next();
-			if (!m_AlreadyConstrucedAutomaton.contains(result)) {
-				m_AlreadyConstrucedAutomaton.addState(false, false, result);
+			if (!mAlreadyConstrucedAutomaton.contains(result)) {
+				mAlreadyConstrucedAutomaton.addState(false, false, result);
 			}
 		} else {
-			IPredicate resSucc = m_InputPreds2ResultPreds.get(succs);
+			IPredicate resSucc = mInputPreds2ResultPreds.get(succs);
 			if (resSucc == null) {
-				resSucc = m_PredicateUnifier.getOrConstructPredicateForConjunction(succs);
-				m_InputPreds2ResultPreds.put(succs, resSucc);
+				resSucc = mPredicateUnifier.getOrConstructPredicateForConjunction(succs);
+				mInputPreds2ResultPreds.put(succs, resSucc);
 				for (IPredicate succ : succs) {
-					assert m_AlreadyConstrucedAutomaton.contains(succ) || 
-						m_InputInterpolantAutomaton.getStates().contains(succ) : "unknown state " + succ; 
-					if (m_NonTrivialPredicates.contains(succ)) {
-						m_ResPred2InputPreds.addPair(resSucc, succ);
+					assert mAlreadyConstrucedAutomaton.contains(succ) || 
+						mInputInterpolantAutomaton.getStates().contains(succ) : "unknown state " + succ; 
+					if (mNonTrivialPredicates.contains(succ)) {
+						mResPred2InputPreds.addPair(resSucc, succ);
 					}
 				}
-				if (!m_AlreadyConstrucedAutomaton.contains(resSucc)) {
+				if (!mAlreadyConstrucedAutomaton.contains(resSucc)) {
 					processResPredInputPredsMapping(resSucc);
-					m_AlreadyConstrucedAutomaton.addState(false, false, resSucc);
+					mAlreadyConstrucedAutomaton.addState(false, false, resSucc);
 				}
 			} 
 			result = resSucc;

@@ -49,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * 
  */
 public class AffineTermTransformer extends TermTransformer {
-	private final Script m_Script;
+	private final Script mScript;
 
 	public AffineTermTransformer(Script script) {
-		m_Script = script;
+		mScript = script;
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class AffineTermTransformer extends TermTransformer {
 			} else if (funName.equals("mod")) {
 				final AffineTerm result;
 				Term simplified = SmtUtils.termWithLocalSimplification(
-						m_Script, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
+						mScript, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
 				if (simplified instanceof ApplicationTerm) {
 					result = new AffineTerm((ApplicationTerm) simplified);
 				} else if (simplified instanceof ConstantTerm) {

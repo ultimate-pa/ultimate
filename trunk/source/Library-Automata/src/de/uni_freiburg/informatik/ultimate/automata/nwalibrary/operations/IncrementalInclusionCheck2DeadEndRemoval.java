@@ -57,9 +57,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 
 public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends AbstractIncrementalInclusionCheck<LETTER,STATE> implements IOperation<LETTER, STATE>  {
 	public int counter_run = 0, counter_total_nodes = 0 ;
-	private INestedWordAutomatonSimple<LETTER, STATE> local_m_A;
-	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_m_B;
-	private List<INestedWordAutomatonSimple<LETTER,STATE>> local_m_B2;
+	private INestedWordAutomatonSimple<LETTER, STATE> local_mA;
+	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
+	private List<INestedWordAutomatonSimple<LETTER,STATE>> local_mB2;
 	private StateFactory<STATE> localStateFactory;
 	private AutomataLibraryServices localServiceProvider;
 	public HashSet<NodeData<LETTER,STATE>> allNodes;
@@ -102,12 +102,12 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 	}
 	@Override
 	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
-		m_Logger.info(startMessage());
+		mLogger.info(startMessage());
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		INestedWordAutomatonSimple<LETTER, STATE> tempB = (new RemoveDeadEnds(localServiceProvider, nwa)).getResult();
 		super.addSubtrahend(tempB);
-		local_m_B.add(tempB);
-		local_m_B2.add(tempB);
+		local_mB.add(tempB);
+		local_mB2.add(tempB);
 		LinkedList<NodeData<LETTER,STATE>> bufferedTree = null;
 		/*counter_total_nodes = 0;
 		if(result!=null){
@@ -123,7 +123,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 					//}
 					break;
 				}
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
 	                throw new AutomataOperationCanceledException(this.getClass());
 				}
 				bufferedTree = null;
@@ -132,7 +132,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 				exceptionRun();
 			}while(true);
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public IncrementalInclusionCheck2DeadEndRemoval(AutomataLibraryServices services, StateFactory<STATE> sf,
@@ -141,10 +141,10 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		IncrementalInclusionCheck2DeadEndRemoval.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
 		localStateFactory = sf;
-		m_Logger.info(startMessage());
-		local_m_A =  (new RemoveDeadEnds(localServiceProvider, a)).getResult();
-		local_m_B = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		local_m_B2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
+		mLogger.info(startMessage());
+		local_mA =  (new RemoveDeadEnds(localServiceProvider, a)).getResult();
+		local_mB = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
+		local_mB2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
 		for(INestedWordAutomatonSimple<LETTER,STATE> bn : b){
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			INestedWordAutomatonSimple<LETTER, STATE> tempB = (new RemoveDeadEnds(localServiceProvider, bn)).getResult();
@@ -154,17 +154,17 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			local_m_B.add(tempB);
-			local_m_B2.add(tempB);
+			local_mB.add(tempB);
+			local_mB2.add(tempB);
 		}
 		run();
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	/*
 	@SuppressWarnings("unchecked")
 	public void run() throws AutomataLibraryException{
 		/*try {
-			local_m_A = (new Determinize<LETTER,STATE> (localServiceProvider,localStateFactory,local_m_A)).getResult();
+			local_mA = (new Determinize<LETTER,STATE> (localServiceProvider,localStateFactory,local_mA)).getResult();
 		} catch (OperationCanceledException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -176,9 +176,9 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		errorNodes = new LinkedList<NodeData<LETTER,STATE>>();
 		completeTree = null;
 		currentTree = null;
-		for(INestedWordAutomatonSimple<LETTER,STATE> B:local_m_B){
-			if(!local_m_A.getAlphabet().containsAll(B.getAlphabet())){
-				m_Logger.info("Alphabet inconsistent");
+		for(INestedWordAutomatonSimple<LETTER,STATE> B:local_mB){
+			if(!local_mA.getAlphabet().containsAll(B.getAlphabet())){
+				mLogger.info("Alphabet inconsistent");
 				return;
 			}
 		}
@@ -195,11 +195,11 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 				}
 			}
 			else{
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
 		                throw new OperationCanceledException(this.getClass());
 		        }
 				bufferedTree = null;
-				for(LETTER alphabet:local_m_A.getAlphabet()){
+				for(LETTER alphabet:local_mA.getAlphabet()){
 					if(bufferedTree ==null){
 						bufferedTree = expand(alphabet);
 					}
@@ -230,17 +230,17 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		/*Set<STATE> newBState;
 		boolean getConflict = false;
 		boolean nextRun;
-		for(INestedWordAutomaton<LETTER,STATE> B:local_m_B){
-			if(!local_m_A.getAlphabet().containsAll(B.getAlphabet())){
-				m_Logger.info("Alphabet inconsistent");
+		for(INestedWordAutomaton<LETTER,STATE> B:local_mB){
+			if(!local_mA.getAlphabet().containsAll(B.getAlphabet())){
+				mLogger.info("Alphabet inconsistent");
 				return;
 			}
 		}
 		currentTree = new HashMap<STATE,NodeData<LETTER,STATE>>();
-		for(STATE state:local_m_A.getInitialStates()){
+		for(STATE state:local_mA.getInitialStates()){
 			currentTree.put(state, new NodeData<LETTER,STATE>(new HashMap<INestedWordAutomaton<LETTER,STATE>,HashSet<STATE>>(), new NestedRun<LETTER,STATE>(state)));
 		}
-		for(INestedWordAutomaton<LETTER,STATE> automata:local_m_B){
+		for(INestedWordAutomaton<LETTER,STATE> automata:local_mB){
 			for(STATE state:automata.getInitialStates()){
 				for(STATE key:currentTree.keySet()){
 					if(!currentTree.get(key).bStates.containsKey(automata)){
@@ -250,7 +250,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 				}
 			}
 		}
-		for(STATE state:local_m_A.getFinalStates()){
+		for(STATE state:local_mA.getFinalStates()){
 			if(currentTree.keySet().contains(state)){
 				getConflict = true;
 				for(INestedWordAutomaton<LETTER, STATE> automata:currentTree.get(state).bStates.keySet()){
@@ -275,13 +275,13 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		}
 		nextTree = new HashMap<STATE,NodeData<LETTER,STATE>>();
 		for(STATE state : currentTree.keySet()){
-			for(LETTER alphabet:local_m_A.getAlphabet()){
-				for(OutgoingInternalTransition<LETTER, STATE> successingState:local_m_A.internalSuccessors(state, alphabet)){
+			for(LETTER alphabet:local_mA.getAlphabet()){
+				for(OutgoingInternalTransition<LETTER, STATE> successingState:local_mA.internalSuccessors(state, alphabet)){
 					nextTree.put(successingState.getSucc(), new NodeData<LETTER, STATE>(new NestedRun<LETTER, STATE>(state,alphabet,0,successingState.getSucc())));
 					for(INestedWordAutomaton<LETTER, STATE> automata: currentTree.get(state).bStates.keySet()){
 						newBState = new HashSet<STATE>();
 						for(STATE orginalBState:currentTree.get(state).bStates.get(automata)){
-							for(OutgoingInternalTransition<LETTER, STATE> successingBState:local_m_B.get(local_m_B.indexOf(orginalBState)).internalSuccessors(orginalBState, alphabet)){
+							for(OutgoingInternalTransition<LETTER, STATE> successingBState:local_mB.get(local_mB.indexOf(orginalBState)).internalSuccessors(orginalBState, alphabet)){
 								newBState.add(successingBState.getSucc());
 							}
 						}
@@ -296,7 +296,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 	@SuppressWarnings("unchecked")
 	public void run() throws AutomataLibraryException{
 		/*try {
-			local_m_A = (new Determinize<LETTER,STATE> (localServiceProvider,localStateFactory,local_m_A)).getResult();
+			local_mA = (new Determinize<LETTER,STATE> (localServiceProvider,localStateFactory,local_mA)).getResult();
 		} catch (OperationCanceledException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -308,9 +308,9 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		errorNodes = new LinkedList<NodeData<LETTER,STATE>>();
 		completeTree = null;
 		currentTree = null;
-		for(INestedWordAutomatonSimple<LETTER,STATE> B:local_m_B){
-			if(!local_m_A.getAlphabet().containsAll(B.getAlphabet())){
-				m_Logger.info("Alphabet inconsistent");
+		for(INestedWordAutomatonSimple<LETTER,STATE> B:local_mB){
+			if(!local_mA.getAlphabet().containsAll(B.getAlphabet())){
+				mLogger.info("Alphabet inconsistent");
 				return;
 			}
 		}
@@ -327,7 +327,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 				}
 			}
 			else{
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
 		                throw new AutomataOperationCanceledException(this.getClass());
 		        }
 				bufferedTree = expand(false);
@@ -345,17 +345,17 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		/*Set<STATE> newBState;
 		boolean getConflict = false;
 		boolean nextRun;
-		for(INestedWordAutomaton<LETTER,STATE> B:local_m_B){
-			if(!local_m_A.getAlphabet().containsAll(B.getAlphabet())){
-				m_Logger.info("Alphabet inconsistent");
+		for(INestedWordAutomaton<LETTER,STATE> B:local_mB){
+			if(!local_mA.getAlphabet().containsAll(B.getAlphabet())){
+				mLogger.info("Alphabet inconsistent");
 				return;
 			}
 		}
 		currentTree = new HashMap<STATE,NodeData<LETTER,STATE>>();
-		for(STATE state:local_m_A.getInitialStates()){
+		for(STATE state:local_mA.getInitialStates()){
 			currentTree.put(state, new NodeData<LETTER,STATE>(new HashMap<INestedWordAutomaton<LETTER,STATE>,HashSet<STATE>>(), new NestedRun<LETTER,STATE>(state)));
 		}
-		for(INestedWordAutomaton<LETTER,STATE> automata:local_m_B){
+		for(INestedWordAutomaton<LETTER,STATE> automata:local_mB){
 			for(STATE state:automata.getInitialStates()){
 				for(STATE key:currentTree.keySet()){
 					if(!currentTree.get(key).bStates.containsKey(automata)){
@@ -365,7 +365,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 				}
 			}
 		}
-		for(STATE state:local_m_A.getFinalStates()){
+		for(STATE state:local_mA.getFinalStates()){
 			if(currentTree.keySet().contains(state)){
 				getConflict = true;
 				for(INestedWordAutomaton<LETTER, STATE> automata:currentTree.get(state).bStates.keySet()){
@@ -390,13 +390,13 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		}
 		nextTree = new HashMap<STATE,NodeData<LETTER,STATE>>();
 		for(STATE state : currentTree.keySet()){
-			for(LETTER alphabet:local_m_A.getAlphabet()){
-				for(OutgoingInternalTransition<LETTER, STATE> successingState:local_m_A.internalSuccessors(state, alphabet)){
+			for(LETTER alphabet:local_mA.getAlphabet()){
+				for(OutgoingInternalTransition<LETTER, STATE> successingState:local_mA.internalSuccessors(state, alphabet)){
 					nextTree.put(successingState.getSucc(), new NodeData<LETTER, STATE>(new NestedRun<LETTER, STATE>(state,alphabet,0,successingState.getSucc())));
 					for(INestedWordAutomaton<LETTER, STATE> automata: currentTree.get(state).bStates.keySet()){
 						newBState = new HashSet<STATE>();
 						for(STATE orginalBState:currentTree.get(state).bStates.get(automata)){
-							for(OutgoingInternalTransition<LETTER, STATE> successingBState:local_m_B.get(local_m_B.indexOf(orginalBState)).internalSuccessors(orginalBState, alphabet)){
+							for(OutgoingInternalTransition<LETTER, STATE> successingBState:local_mB.get(local_mB.indexOf(orginalBState)).internalSuccessors(orginalBState, alphabet)){
 								newBState.add(successingBState.getSucc());
 							}
 						}
@@ -417,14 +417,14 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		if(init==true){
 			tempHash = 0;
 			bStates = new HashMap<INestedWordAutomatonSimple<LETTER,STATE>,HashSet<STATE>>();
-			for(INestedWordAutomatonSimple<LETTER,STATE> automata:local_m_B){
+			for(INestedWordAutomatonSimple<LETTER,STATE> automata:local_mB){
 				bStates.put(automata, new HashSet<STATE>());
 				for(STATE Bstate:automata.getInitialStates()){
 					bStates.get(automata).add(Bstate);
 					tempHash = tempHash | Bstate.hashCode();
 				}
 			}
-			for(STATE state:local_m_A.getInitialStates()){
+			for(STATE state:local_mA.getInitialStates()){
 				tempNodeData = new NodeData<LETTER,STATE>(new NestedRun<LETTER,STATE>(state));
 				tempNodeData.parentNode = null;
 				tempNodeData.hash = tempHash;
@@ -437,7 +437,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		}
 		else{
 			for(NodeData<LETTER,STATE> currentNodeSet:currentTree){
-				for(OutgoingInternalTransition<LETTER, STATE> ATransition:local_m_A.internalSuccessors(currentNodeSet.aState)){
+				for(OutgoingInternalTransition<LETTER, STATE> ATransition:local_mA.internalSuccessors(currentNodeSet.aState)){
 					boolean alreadyExisted = false;
 					tempHash = 0;
 					bStates = new HashMap<INestedWordAutomatonSimple<LETTER,STATE>,HashSet<STATE>>();
@@ -493,14 +493,14 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		if(alp==null){
 			tempHash = 0;
 			bStates = new HashMap<INestedWordAutomatonSimple<LETTER,STATE>,HashSet<STATE>>();
-			for(INestedWordAutomatonSimple<LETTER,STATE> automata:local_m_B){
+			for(INestedWordAutomatonSimple<LETTER,STATE> automata:local_mB){
 				bStates.put(automata, new HashSet<STATE>());
 				for(STATE Bstate:automata.getInitialStates()){
 					bStates.get(automata).add(Bstate);
 					tempHash = tempHash | Bstate.hashCode();
 				}
 			}
-			for(STATE state:local_m_A.getInitialStates()){
+			for(STATE state:local_mA.getInitialStates()){
 				nextNodes.put(state, new LinkedList<NodeData<LETTER,STATE>>());
 				tempBNodeData = new NodeData<LETTER,STATE>(new NestedRun<LETTER,STATE>(state));
 				tempBNodeData.parentNode = null;
@@ -526,7 +526,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 							}
 						}
 					}
-					for(OutgoingInternalTransition<LETTER, STATE> ATransition:local_m_A.internalSuccessors(state,alp)){
+					for(OutgoingInternalTransition<LETTER, STATE> ATransition:local_mA.internalSuccessors(state,alp)){
 						@SuppressWarnings("unchecked")
 						ArrayList<STATE> newStateSequence = (ArrayList<STATE>) currentNodeSet.word.getStateSequence().clone();
 						newStateSequence.add(ATransition.getSucc());
@@ -705,7 +705,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 	private boolean exceptionRun(){
 		boolean foundFinal = false;
 		for(NodeData<LETTER,STATE> currentNodeSet:currentTree){
-			if(local_m_A.isFinal(currentNodeSet.aState)){
+			if(local_mA.isFinal(currentNodeSet.aState)){
 				foundFinal = false;
 				for(INestedWordAutomatonSimple<LETTER,STATE> bn:currentNodeSet.bStates.keySet()){
 					for(STATE bnState:currentNodeSet.bStates.get(bn)){
@@ -734,7 +734,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		HashMap<STATE,HashSet<NodeData<LETTER,STATE>>> toBeDeleteed = new HashMap<STATE,HashSet<NodeData<LETTER,STATE>>>();
 		for(STATE currentAState : currentTree.keySet()){
 			for(NodeData<LETTER,STATE> currentNodeSet1:currentTree.get(currentAState)){
-				if(local_m_A.isFinal(currentAState)){
+				if(local_mA.isFinal(currentAState)){
 					foundFinal = false;
 					for(INestedWordAutomatonSimple<LETTER,STATE> bn:currentNodeSet1.bStates.keySet()){
 						for(STATE bnState:currentNodeSet1.bStates.get(bn)){
@@ -850,13 +850,13 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 	@Override
 	public String exitMessage() {
 		if(errorNodes.peekFirst()!=null){
-			m_Logger.info("counterExample: "+errorNodes.peekFirst().word.getWord().toString());
+			mLogger.info("counterExample: "+errorNodes.peekFirst().word.getWord().toString());
 		}
-		m_Logger.info("Total error: "+errorNodes.size()+" errors");
-		m_Logger.info("total:"+counter_total_nodes+"nodes");
-		m_Logger.info("total:"+allNodes.size()+"nodes");
-		m_Logger.info(completeTree.size()+"nodes in the end");
-		m_Logger.info("total:"+counter_run+"runs");
+		mLogger.info("Total error: "+errorNodes.size()+" errors");
+		mLogger.info("total:"+counter_total_nodes+"nodes");
+		mLogger.info("total:"+allNodes.size()+"nodes");
+		mLogger.info(completeTree.size()+"nodes in the end");
+		mLogger.info("total:"+counter_run+"runs");
 		return "Exit " + operationName();
 	}
 	public Boolean getResult(){
@@ -868,14 +868,14 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		boolean checkResult;
 		if(errorNodes.peekFirst() != null){
 			checkResult = compareInclusionCheckResult(localServiceProvider, 
-					localStateFactory, local_m_A, local_m_B2, errorNodes.peekFirst().word);
+					localStateFactory, local_mA, local_mB2, errorNodes.peekFirst().word);
 		}
 		else{
 			checkResult = compareInclusionCheckResult(localServiceProvider, 
-					localStateFactory, local_m_A, local_m_B2, null);
+					localStateFactory, local_mA, local_mB2, null);
 		}
 		return checkResult;
-//		if(((result==null)&&(new IncrementalInclusionCheck2DeadEndRemovalDeadEndRemoval<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2).getResult()==null))||((result!=null)&&(new IncrementalInclusionCheck2DeadEndRemovalDeadEndRemoval<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2).getResult()!=null))){
+//		if(((result==null)&&(new IncrementalInclusionCheck2DeadEndRemovalDeadEndRemoval<LETTER, STATE>(localServiceProvider,localStateFactory,local_mA,local_mB2).getResult()==null))||((result!=null)&&(new IncrementalInclusionCheck2DeadEndRemovalDeadEndRemoval<LETTER, STATE>(localServiceProvider,localStateFactory,local_mA,local_mB2).getResult()!=null))){
 //			return true;
 //		}
 //		else{
@@ -955,7 +955,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 	}
 	private HashSet<NodeData<LETTER,STATE>> toBeKeepedNodes;
 	private void deadEndRemove(){
-		m_Logger.info("Node size before delete: "+completeTree.size());
+		mLogger.info("Node size before delete: "+completeTree.size());
 		nodeNumberBeforeDelete = completeTree.size();
 		toBeKeepedNodes = new HashSet<NodeData<LETTER,STATE>>();
 		int i = 0;
@@ -987,8 +987,8 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 			}
 		}
 		allNodes.removeAll(toBeDeletedNodes);
-		m_Logger.info("DeadEndRemove removes " + i + "nodes.");
-		m_Logger.info("Node size after delete: "+completeTree.size());
+		mLogger.info("DeadEndRemove removes " + i + "nodes.");
+		mLogger.info("Node size after delete: "+completeTree.size());
 		toBeDeletedNodes = null;
 		toBeKeepedNodes = null;
 	}

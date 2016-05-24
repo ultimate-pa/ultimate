@@ -44,99 +44,99 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Trans
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 class LassoConstructor<LETTER, STATE> {
-	private final AutomataLibraryServices m_Services;
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
-    private final StateContainer<LETTER,STATE> m_Goal;
-    private final Set<StateContainer<LETTER,STATE>> m_Visited =
+	private final AutomataLibraryServices mServices;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mNwars;
+    private final StateContainer<LETTER,STATE> mGoal;
+    private final Set<StateContainer<LETTER,STATE>> mVisited =
                     new HashSet<StateContainer<LETTER,STATE>>();
-    private final ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>> m_SuccInfos = 
+    private final ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>> mSuccInfos = 
     		new ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>>();
-    private final StronglyConnectedComponent<StateContainer<LETTER, STATE>> m_Scc;
-    private final boolean m_FindAcceptingSummary;
-    private int m_Iteration;
-    private boolean m_GoalFound = false;
-    private NestedRun<LETTER, STATE> m_Loop;
-    private NestedRun<LETTER, STATE> m_Stem;
-    private NestedLassoRun<LETTER, STATE> m_Lasso;
+    private final StronglyConnectedComponent<StateContainer<LETTER, STATE>> mScc;
+    private final boolean mFindAcceptingSummary;
+    private int mIteration;
+    private boolean mGoalFound = false;
+    private NestedRun<LETTER, STATE> mLoop;
+    private NestedRun<LETTER, STATE> mStem;
+    private NestedLassoRun<LETTER, STATE> mLasso;
     
 	public LassoConstructor(AutomataLibraryServices services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
 			StateContainer<LETTER, STATE> goal, StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc) throws AutomataOperationCanceledException {
-		m_Services = services;
-		m_Nwars = nwars;
-		m_Goal = goal;
-		m_Scc = scc;
-		m_FindAcceptingSummary = false;
+		mServices = services;
+		mNwars = nwars;
+		mGoal = goal;
+		mScc = scc;
+		mFindAcceptingSummary = false;
 		//first, find a run, while doing a backward breadth first search
 		{
-			m_Iteration = 0;
+			mIteration = 0;
 			Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
-			m_SuccInfos.add(map);
-			addPredecessors(m_Goal, map);
+			mSuccInfos.add(map);
+			addPredecessors(mGoal, map);
 		}
 		findRunBackwards();
 		constructRunOfLoop();
-		m_Stem = (new RunConstructor<LETTER, STATE>(m_Services, m_Nwars, m_Goal)).constructRun();
-		m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
+		mStem = (new RunConstructor<LETTER, STATE>(mServices, mNwars, mGoal)).constructRun();
+		mLasso = new NestedLassoRun<LETTER, STATE>(mStem, mLoop);
 	}
 	
 	public LassoConstructor(AutomataLibraryServices services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
 			Summary<LETTER, STATE> summary, StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc) throws AutomataOperationCanceledException {
-		m_Services = services;
-		m_Nwars = nwars;
-		m_Goal = summary.getSucc();
-		m_Scc = scc;
-		m_FindAcceptingSummary = true;
+		mServices = services;
+		mNwars = nwars;
+		mGoal = summary.getSucc();
+		mScc = scc;
+		mFindAcceptingSummary = true;
 		//first, find a run, while doing a backward breadth first search
 		{
-			m_Iteration = 0;
+			mIteration = 0;
 			Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
-			m_SuccInfos.add(map);
+			mSuccInfos.add(map);
 			SuccessorInfo succInfo = new SuccessorInfo(
-					summary.obtainIncomingReturnTransition(m_Nwars), m_Goal);
+					summary.obtainIncomingReturnTransition(mNwars), mGoal);
 			map.put(summary.getHierPred(), succInfo);
-//			addPredecessors(m_Goal, map);
+//			addPredecessors(mGoal, map);
 		}
 		findRunBackwards();
 		constructRunOfLoop();
-		m_Stem = (new RunConstructor<LETTER, STATE>(m_Services, m_Nwars, m_Goal)).constructRun();
-		m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
+		mStem = (new RunConstructor<LETTER, STATE>(mServices, mNwars, mGoal)).constructRun();
+		mLasso = new NestedLassoRun<LETTER, STATE>(mStem, mLoop);
 	}
 
 	
 	/**
-	 * Check iteratively precedessors and add SuccInfos to m_SuccInfos
+	 * Check iteratively precedessors and add SuccInfos to mSuccInfos
 	 */
 	private void findRunBackwards() {
-		while (!m_GoalFound) {
-			if (m_Iteration > m_Scc.getNumberOfStates()) {
+		while (!mGoalFound) {
+			if (mIteration > mScc.getNumberOfStates()) {
 				throw new AssertionError("unable to find state in SCC");
 			}
-			assert m_SuccInfos.size() == m_Iteration + 1;
-			m_Iteration++;
+			assert mSuccInfos.size() == mIteration + 1;
+			mIteration++;
 			Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
 					new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
-			m_SuccInfos.add(map);
-			for (StateContainer<LETTER, STATE> sc  : m_SuccInfos.get(m_Iteration-1).keySet()) {
+			mSuccInfos.add(map);
+			for (StateContainer<LETTER, STATE> sc  : mSuccInfos.get(mIteration-1).keySet()) {
 				addPredecessors(sc, map);
 			}
 		}
 	}
 
 	/**
-	 * Use m_SuccInfos to construct a run for a loop that has been found.
+	 * Use mSuccInfos to construct a run for a loop that has been found.
 	 * @throws AutomataOperationCanceledException 
 	 */
 	private void constructRunOfLoop() throws AutomataOperationCanceledException {
 		//then we reconstruct the run
-		m_Loop = new NestedRun<LETTER, STATE>(m_Goal.getState());
-		StateContainer<LETTER, STATE> current = m_Goal;
-		for (int i=m_Iteration; i>=0; i--) {
+		mLoop = new NestedRun<LETTER, STATE>(mGoal.getState());
+		StateContainer<LETTER, STATE> current = mGoal;
+		for (int i=mIteration; i>=0; i--) {
 			NestedRun<LETTER, STATE> newSuffix;
-			SuccessorInfo info = m_SuccInfos.get(i).get(current);
+			SuccessorInfo info = mSuccInfos.get(i).get(current);
 			if (info.getTransition() instanceof IncomingInternalTransition) {
 				IncomingInternalTransition<LETTER, STATE> inTrans = (IncomingInternalTransition<LETTER, STATE>) info.getTransition();
 				newSuffix = new NestedRun<LETTER, STATE>(current.getState(), inTrans.getLetter(), NestedWord.INTERNAL_POSITION, info.getSuccessor().getState());
@@ -145,26 +145,26 @@ class LassoConstructor<LETTER, STATE> {
 				newSuffix = new NestedRun<LETTER, STATE>(current.getState(), inTrans.getLetter(), NestedWord.PLUS_INFINITY, info.getSuccessor().getState());
 			} else if (info.getTransition() instanceof IncomingReturnTransition) {
 				IncomingReturnTransition<LETTER, STATE> inTrans = (IncomingReturnTransition<LETTER, STATE>) info.getTransition();
-				StateContainer<LETTER, STATE> returnPredSc = m_Nwars.obtainSC(inTrans.getLinPred());
+				StateContainer<LETTER, STATE> returnPredSc = mNwars.obtainSC(inTrans.getLinPred());
 				assert current.getState().equals(inTrans.getHierPred());
 				Summary<LETTER,STATE> summary = new Summary<LETTER, STATE>(
 						current,
 						returnPredSc,
 						inTrans.getLetter(),
 						info.getSuccessor());
-				boolean summaryMustContainAccepting = m_FindAcceptingSummary && i == 0;
-				newSuffix = (new RunConstructor<LETTER, STATE>(m_Services, m_Nwars, summary, summaryMustContainAccepting)).constructRun();
+				boolean summaryMustContainAccepting = mFindAcceptingSummary && i == 0;
+				newSuffix = (new RunConstructor<LETTER, STATE>(mServices, mNwars, summary, summaryMustContainAccepting)).constructRun();
 				assert newSuffix != null : "no run for summary found";
 			} else {
 				throw new AssertionError("unsupported transition");
 			}
-			m_Loop = m_Loop.concatenate(newSuffix);
+			mLoop = mLoop.concatenate(newSuffix);
 			current = info.getSuccessor();
 		}
 	}
     
     public NestedLassoRun<LETTER, STATE> getNestedLassoRun() {
-		return m_Lasso;
+		return mLasso;
 	}
 
     /**
@@ -172,16 +172,16 @@ class LassoConstructor<LETTER, STATE> {
      * successor information to map.
      */
 	private void addPredecessors(StateContainer<LETTER,STATE> sc, Map<StateContainer<LETTER,STATE>,SuccessorInfo> succInfo) {
-		for (IncomingReturnTransition<LETTER, STATE> inTrans : m_Nwars.returnPredecessors(sc.getState())) {
-			StateContainer<LETTER, STATE> predSc = m_Nwars.obtainSC(inTrans.getHierPred());
+		for (IncomingReturnTransition<LETTER, STATE> inTrans : mNwars.returnPredecessors(sc.getState())) {
+			StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getHierPred());
 			checkAndAddPredecessor(sc, succInfo, inTrans, predSc);
 		}
-		for (IncomingCallTransition<LETTER, STATE> inTrans : m_Nwars.callPredecessors(sc.getState())) {
-			StateContainer<LETTER, STATE> predSc = m_Nwars.obtainSC(inTrans.getPred());
+		for (IncomingCallTransition<LETTER, STATE> inTrans : mNwars.callPredecessors(sc.getState())) {
+			StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
 			checkAndAddPredecessor(sc, succInfo, inTrans, predSc);
 		}
-		for (IncomingInternalTransition<LETTER, STATE> inTrans : m_Nwars.internalPredecessors(sc.getState())) {
-			StateContainer<LETTER, STATE> predSc = m_Nwars.obtainSC(inTrans.getPred());
+		for (IncomingInternalTransition<LETTER, STATE> inTrans : mNwars.internalPredecessors(sc.getState())) {
+			StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
 			checkAndAddPredecessor(sc, succInfo, inTrans, predSc);
 		}
     }
@@ -194,12 +194,12 @@ class LassoConstructor<LETTER, STATE> {
 			Map<StateContainer<LETTER, STATE>, SuccessorInfo> succInfo,
 			Transitionlet<LETTER, STATE> inTrans,
 			StateContainer<LETTER, STATE> predSc) {
-		if (m_Scc.getNodes().contains(predSc) && !m_Visited.contains(predSc)) {
-			m_Visited.add(predSc);
+		if (mScc.getNodes().contains(predSc) && !mVisited.contains(predSc)) {
+			mVisited.add(predSc);
 			SuccessorInfo info = new SuccessorInfo(inTrans, sc);
 			succInfo.put(predSc, info);
-			if (m_Goal.equals(predSc)) {
-				m_GoalFound = true;
+			if (mGoal.equals(predSc)) {
+				mGoalFound = true;
 			}
 		}
 	}
@@ -207,18 +207,18 @@ class LassoConstructor<LETTER, STATE> {
 	
 	
 	private class SuccessorInfo {
-		private final Transitionlet<LETTER, STATE> m_Transition;
-		private final StateContainer<LETTER,STATE> m_Successor;
+		private final Transitionlet<LETTER, STATE> mTransition;
+		private final StateContainer<LETTER,STATE> mSuccessor;
 		public SuccessorInfo(Transitionlet<LETTER, STATE> transition, StateContainer<LETTER, STATE> successor) {
 			super();
-			m_Transition = transition;
-			m_Successor = successor;
+			mTransition = transition;
+			mSuccessor = successor;
 		}
 		public Transitionlet<LETTER, STATE> getTransition() {
-			return m_Transition;
+			return mTransition;
 		}
 		public StateContainer<LETTER, STATE> getSuccessor() {
-			return m_Successor;
+			return mSuccessor;
 		}
 		
 	}

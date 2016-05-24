@@ -89,24 +89,24 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class FlowSensitiveFaultLocalizer {
 
-	private final IUltimateServiceProvider m_Services;
-	private final ILogger m_Logger;
-	private final IRelevanceInformation[] m_RelevanceOfTrace;
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+	private final IRelevanceInformation[] mRelevanceOfTrace;
 	/**
 	 * Apply quantifier elimination during the computation of pre and wp.
 	 * If set to true, there is a higher risk that we run into a timeout.
 	 * If set to false, there is a higher risk that the SMT solver returns 
 	 * unknown.
 	 */
-	private final boolean m_ApplyQuantifierElimination = true;
+	private final boolean mApplyQuantifierElimination = true;
 
 	public FlowSensitiveFaultLocalizer(IRun<CodeBlock, IPredicate> counterexample,
 			INestedWordAutomaton<CodeBlock, IPredicate> cfg, IUltimateServiceProvider services,
 			SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_RelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mRelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
 
 		doNonFlowSensitiveAnalysis((NestedWord<CodeBlock>) counterexample.getWord(),
 				predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager);
@@ -152,7 +152,7 @@ public class FlowSensitiveFaultLocalizer {
 		final Map<Integer, List<Integer>> result = new HashMap<Integer, List<Integer>>();
 
 		
-		// Create a Map of Program_points in the CFG to States of the CFG.
+		// Create a Map of Programpoints in the CFG to States of the CFG.
 		final Map <ProgramPoint,IPredicate> programPoint_StateMap = new HashMap<>();
 		for (IPredicate cfgState : cfg.getStates()) {
 			final ISLPredicate islState  = (ISLPredicate) cfgState;
@@ -317,7 +317,7 @@ public class FlowSensitiveFaultLocalizer {
 	
 	private void doNonFlowSensitiveAnalysis(NestedWord<CodeBlock> counterexampleWord,
 		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager) {
-		m_Logger.info("Starting non-flow-sensitive error relevancy analysis");
+		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
 		
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
 				smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
@@ -327,7 +327,7 @@ public class FlowSensitiveFaultLocalizer {
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
 				smtManager.getPredicateFactory(), smtManager.getVariableManager(), 
 				smtManager.getScript(), smtManager.getBoogie2Smt(), modGlobVarManager, 
-				m_Services, counterexampleWord, null, falsePredicate, null, 
+				mServices, counterexampleWord, null, falsePredicate, null, 
 				smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)));
 		
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, 
@@ -336,9 +336,9 @@ public class FlowSensitiveFaultLocalizer {
 		
 		
 		final List<PredicatePostprocessor> postprocessors;
-		if (m_ApplyQuantifierElimination) {
+		if (mApplyQuantifierElimination) {
 			final QuantifierEliminationPostprocessor qePostproc = 
-					new QuantifierEliminationPostprocessor(m_Services, m_Logger, 
+					new QuantifierEliminationPostprocessor(mServices, mLogger, 
 							smtManager.getBoogie2Smt(), smtManager.getPredicateFactory());
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
@@ -369,20 +369,20 @@ public class FlowSensitiveFaultLocalizer {
 				final RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
 						relevanceCriterion1uc, 
-						relevanceCriterion1gf, ((RelevanceInformation) m_RelevanceOfTrace[i]).getCriterion2UC(),
-						((RelevanceInformation) m_RelevanceOfTrace[i]).getCriterion2GF());
+						relevanceCriterion1gf, ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC(),
+						((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF());
 						
-				m_RelevanceOfTrace[i] = ri;
+				mRelevanceOfTrace[i] = ri;
 		}
 		
-		if (m_Logger.isDebugEnabled()) {
-			m_Logger.debug("- - - - - - [Non-Flow Sensitive Analysis with statments + pre/wp information]- - - - - -");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("- - - - - - [Non-Flow Sensitive Analysis with statments + pre/wp information]- - - - - -");
 			for (int i=0; i<counterexampleWord.length(); i++) {
-				m_Logger.debug(weakestPreconditionSequence.getInterpolant(i));
-				m_Logger.debug(m_RelevanceOfTrace[i]);
+				mLogger.debug(weakestPreconditionSequence.getInterpolant(i));
+				mLogger.debug(mRelevanceOfTrace[i]);
 			}
-			m_Logger.debug(weakestPreconditionSequence.getInterpolant(counterexampleWord.length()));
-			m_Logger.debug("------------------------------------------------------------------------------------------");
+			mLogger.debug(weakestPreconditionSequence.getInterpolant(counterexampleWord.length()));
+			mLogger.debug("------------------------------------------------------------------------------------------");
 		}
 	}
 	
@@ -414,18 +414,18 @@ public class FlowSensitiveFaultLocalizer {
 				 // The current statement is a branch out and it's branch-in is with in the current branch.
 				TransFormula subBranchMarkhorFormula = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,
 						informationFromCFG,smtManager);
-				combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, 
+				combinedTransitionFormula = TransFormula.sequentialComposition(mLogger, mServices, 
 						smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,subBranchMarkhorFormula);
 			} else{ 
 				// It is a normal statement.
 				final CodeBlock statement = counterexampleWord.getSymbol(i);
 				final TransFormula transitionFormula = statement.getTransitionFormula();
-				combinedTransitionFormula = TransFormula.sequentialComposition(m_Logger, m_Services, 
+				combinedTransitionFormula = TransFormula.sequentialComposition(mLogger, mServices, 
 						smtManager.getBoogie2Smt(), false, false, false, combinedTransitionFormula,transitionFormula);
 			}
 		}
 		final TransFormula markhor = TransFormula.computeMarkhorTransFormula(combinedTransitionFormula, 
-				smtManager.getBoogie2Smt(), m_Services, m_Logger);
+				smtManager.getBoogie2Smt(), mServices, mLogger);
 		return markhor;
 	}
 	
@@ -505,7 +505,7 @@ public class FlowSensitiveFaultLocalizer {
 				final TransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn, 
 						counterexampleWord,informationFromCFG, smtManager);
 				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, smtManager.getScript(), 
-						smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
+						smtManager.getVariableManager(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
 				// Check the relevance of the branch.
 				final boolean isRelevant =  checkBranchRelevance(
@@ -519,7 +519,7 @@ public class FlowSensitiveFaultLocalizer {
 							weakestPreconditionRight,pt,rc,smtManager,modGlobVarManager,informationFromCFG);
 				} else{
 					// Don't do anything.
-					m_Logger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:"+ markhor + " ]");
+					mLogger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:"+ markhor + " ]");
 				}
 
 			} else { 
@@ -527,16 +527,16 @@ public class FlowSensitiveFaultLocalizer {
 				
 				final TransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
 				final Term wpTerm = computeWp(weakestPreconditionRight, tf, smtManager.getScript(), 
-						smtManager.getVariableManager(), pt, m_ApplyQuantifierElimination);
+						smtManager.getVariableManager(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
 				final IPredicate pre = smtManager.getPredicateFactory().newPredicate(
 						smtManager.getPredicateFactory().not(weakestPreconditionLeft));
-				if (m_Logger.isDebugEnabled()) {
-					m_Logger.debug(" ");
-					m_Logger.debug("WP -- > " + weakestPreconditionRight);
-					m_Logger.debug(" Statement -- > " + statement);
-					m_Logger.debug("Pre --> " +  pre);
-					m_Logger.debug(" " );
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(" ");
+					mLogger.debug("WP -- > " + weakestPreconditionRight);
+					mLogger.debug(" Statement -- > " + statement);
+					mLogger.debug("Pre --> " +  pre);
+					mLogger.debug(" " );
 				}
 				final IAction action = counterexampleWord.getSymbolAt(position);
 				final ERelevanceStatus relevance = computeRelevance(position,action,pre,weakestPreconditionRight,
@@ -547,10 +547,10 @@ public class FlowSensitiveFaultLocalizer {
 				final boolean relevanceCriterion2gf = relevanceCriterionVariables[1];
 				RelevanceInformation ri = new RelevanceInformation(
 						Collections.singletonList(action), 
-						((RelevanceInformation) m_RelevanceOfTrace[position]).getCriterion1UC(), 
-						((RelevanceInformation) m_RelevanceOfTrace[position]).getCriterion1GF(), 
+						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1UC(), 
+						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1GF(), 
 						relevanceCriterion2uc, relevanceCriterion2gf);
-				m_RelevanceOfTrace[position] = ri;
+				mRelevanceOfTrace[position] = ri;
 			}
 		}
 	}
@@ -608,8 +608,8 @@ public class FlowSensitiveFaultLocalizer {
 			PredicateTransformer pt, boolean applyQuantifierElimination) {
 		Term result = pt.weakestPrecondition(successor, tf);
 		if (applyQuantifierElimination) {
-			result = PartialQuantifierElimination.tryToEliminate(m_Services, 
-					m_Logger, script, freshTermVariableConstructor, result);
+			result = PartialQuantifierElimination.tryToEliminate(mServices, 
+					mLogger, script, freshTermVariableConstructor, result);
 		}
 		return result;
 	}
@@ -618,11 +618,11 @@ public class FlowSensitiveFaultLocalizer {
 			INestedWordAutomaton<CodeBlock, IPredicate> cfg,
 			ModifiableGlobalVariableManager modGlobVarManager, 
 			SmtManager smtManager){
-		m_Logger.info("Starting flow-sensitive error relevancy analysis");
+		mLogger.info("Starting flow-sensitive error relevancy analysis");
 		final Map<Integer, List<Integer>> informationFromCFG = computeInformationFromCFG(counterexample, cfg); 
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the branch.
 		final PredicateTransformer pt = new PredicateTransformer(smtManager.getVariableManager(), 
-				smtManager.getScript(), modGlobVarManager, m_Services);
+				smtManager.getScript(), modGlobVarManager, mServices);
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
 				smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		final int startLocation = 0;
@@ -651,7 +651,7 @@ public class FlowSensitiveFaultLocalizer {
 			IPredicate parent_state, Set<IPredicate> possibleEndPoints, INestedWordAutomaton<CodeBlock, 
 			IPredicate> cfg) {
 		try {
-			return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), cfg, 
+			return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), cfg, 
 					Collections.singleton(startPoint), Collections.singleton(parent_state), possibleEndPoints)).getNestedRun();
 		} catch (AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass());
@@ -663,14 +663,14 @@ public class FlowSensitiveFaultLocalizer {
 	 * {@link CodeBlock} in the counterexample.
 	 */
 	public List<IRelevanceInformation> getRelevanceInformation() {
-		if (m_Logger.isDebugEnabled()) {
-			m_Logger.debug("- - - - - - - -");
-			for(int i= 0; i <m_RelevanceOfTrace.length; i++) {
-				m_Logger.debug(((RelevanceInformation) m_RelevanceOfTrace[i]).getActions() + 
-						" | " +m_RelevanceOfTrace[i].getShortString());
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("- - - - - - - -");
+			for(int i= 0; i <mRelevanceOfTrace.length; i++) {
+				mLogger.debug(((RelevanceInformation) mRelevanceOfTrace[i]).getActions() + 
+						" | " +mRelevanceOfTrace[i].getShortString());
 			}
 		}
-		return Arrays.asList(m_RelevanceOfTrace);
+		return Arrays.asList(mRelevanceOfTrace);
 	}
 	
 	

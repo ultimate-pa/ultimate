@@ -357,41 +357,41 @@ public class BitvectorUtils {
 	
 	private static class RegularBitvectorOperation_BitvectorResult extends RegularBitvectorOperation {
 		
-		private final String m_Name;
-		private final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> m_Function;
+		private final String mName;
+		private final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> mFunction;
 		public RegularBitvectorOperation_BitvectorResult(String name,
 				Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> function) {
 			super();
-			m_Name = name;
-			m_Function = function;
+			mName = name;
+			mFunction = function;
 		}
 		@Override
 		public String getFunctionName() {
-			return m_Name;
+			return mName;
 		}
 		@Override
 		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
-			return constructTerm(script, m_Function.apply(bvs[0]).apply(bvs[1]));
+			return constructTerm(script, mFunction.apply(bvs[0]).apply(bvs[1]));
 		}
 	}
 	
 	private static class RegularBitvectorOperation_BooleanResult extends RegularBitvectorOperation {
 		
-		private final String m_Name;
-		private final Function<BitvectorConstant, Function<BitvectorConstant, Boolean>> m_Function;
+		private final String mName;
+		private final Function<BitvectorConstant, Function<BitvectorConstant, Boolean>> mFunction;
 		public RegularBitvectorOperation_BooleanResult(String name,
 				Function<BitvectorConstant, Function<BitvectorConstant, Boolean>> function) {
 			super();
-			m_Name = name;
-			m_Function = function;
+			mName = name;
+			mFunction = function;
 		}
 		@Override
 		public String getFunctionName() {
-			return m_Name;
+			return mName;
 		}
 		@Override
 		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
-			return script.term(String.valueOf(m_Function.apply(bvs[0]).apply(bvs[1])));
+			return script.term(String.valueOf(mFunction.apply(bvs[0]).apply(bvs[1])));
 		}
 	}
 	

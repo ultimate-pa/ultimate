@@ -44,9 +44,9 @@ public class ReqLocation implements Serializable, ILocation {
      */
     private static final long serialVersionUID = -194821240021400957L;
     /**
-     * The m_CheckedSpecification of check/assertion applied to this node.
+     * The mCheckedSpecification of check/assertion applied to this node.
      */
-    protected ReqCheck m_CheckedSpecification;
+    protected ReqCheck mCheckedSpecification;
 
     /**
      * Constructor.
@@ -57,7 +57,7 @@ public class ReqLocation implements Serializable, ILocation {
      *            the type of check/assertion
      */
     public ReqLocation(ReqCheck checkNode) {
-        this.m_CheckedSpecification = checkNode;
+        this.mCheckedSpecification = checkNode;
     }
 
     /*
@@ -67,7 +67,7 @@ public class ReqLocation implements Serializable, ILocation {
      */
     @Override
     public String toString() {
-    	return m_CheckedSpecification.toString();
+    	return mCheckedSpecification.toString();
     }
 
     /*
@@ -77,7 +77,7 @@ public class ReqLocation implements Serializable, ILocation {
      */
     @Override
     public int getStartLine() {
-    	return m_CheckedSpecification.getStartLine();
+    	return mCheckedSpecification.getStartLine();
     }
 
     /*
@@ -87,7 +87,7 @@ public class ReqLocation implements Serializable, ILocation {
      */
     @Override
     public int getEndLine() {
-    	return m_CheckedSpecification.getEndLine();
+    	return mCheckedSpecification.getEndLine();
     }
 
     /*
@@ -117,7 +117,7 @@ public class ReqLocation implements Serializable, ILocation {
      */
     @Override
     public String getFileName() {
-    	return m_CheckedSpecification.getFileName();
+    	return mCheckedSpecification.getFileName();
     }
 
     /*
@@ -138,7 +138,7 @@ public class ReqLocation implements Serializable, ILocation {
      */
     @Override
     public Check getCheck() {
-    	return m_CheckedSpecification;
+    	return mCheckedSpecification;
     }
 
     @Override

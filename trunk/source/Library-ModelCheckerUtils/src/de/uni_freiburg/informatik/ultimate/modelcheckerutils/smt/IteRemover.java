@@ -49,11 +49,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  *
  */
 public class IteRemover extends NonCoreBooleanSubTermTransformer {
-	private final Script m_Script;
+	private final Script mScript;
 
 	public IteRemover(Script script) {
 		super();
-		m_Script = script;
+		mScript = script;
 	}
 
 	@Override
@@ -68,7 +68,7 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 			iteSubterms = (new ApplicationTermFinder("ite", false)).findMatchingSubterms(result);
 		}
 		assert doesNotContainIteTerm(result) : "not all ite terms were removed";
-		assert (Util.checkSat(m_Script, m_Script.term("distinct", 
+		assert (Util.checkSat(mScript, mScript.term("distinct", 
 				term, result)) != LBool.SAT);
 		return result;
 	}
@@ -88,18 +88,18 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 			Map<Term, Term> substitutionMapping = 
 					Collections.singletonMap((Term) iteTerm, ifTerm);
 			replacedWithIf = (new SafeSubstitutionWithLocalSimplification(
-					m_Script, substitutionMapping)).transform(term);
+					mScript, substitutionMapping)).transform(term);
 		}
 		Term replacedWithElse;
 		{
 			Map<Term, Term> substitutionMapping = 
 					Collections.singletonMap((Term) iteTerm, elseTerm);
 			replacedWithElse = (new SafeSubstitutionWithLocalSimplification(
-					m_Script, substitutionMapping)).transform(term);
+					mScript, substitutionMapping)).transform(term);
 		}
-		Term withoutThisIte = Util.or(m_Script, 
-				Util.and(m_Script, condition, replacedWithIf), 
-				Util.and(m_Script, SmtUtils.not(m_Script, condition), replacedWithElse)
+		Term withoutThisIte = Util.or(mScript, 
+				Util.and(mScript, condition, replacedWithIf), 
+				Util.and(mScript, SmtUtils.not(mScript, condition), replacedWithElse)
 				);
 		return withoutThisIte;
 	}

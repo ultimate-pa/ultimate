@@ -298,17 +298,17 @@ public final class SFO {
 		 */
 		MEMSETRES("memset");
 
-		String m_Id;
+		String mId;
 
 		AUXVAR(String id) {
-			m_Id = id;
+			mId = id;
 		}
 
 		/**
 		 * @return Identifier used in the variable name.
 		 */
 		public String getId() {
-			return m_Id;
+			return mId;
 		}
 
 	}

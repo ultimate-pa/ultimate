@@ -83,7 +83,7 @@ public class SymbolTableValue {
 //     */
 //    private final boolean isStatic;
     
-    private final IASTNode m_DeclarationNode;
+    private final IASTNode mDeclarationNode;
 
     /**
      * Constructor.
@@ -113,7 +113,7 @@ public class SymbolTableValue {
 //        this.storageClass = sc;
 //        this.cvar = cvar;
 //        this.isStatic = isStatic;
-        m_DeclarationNode = declNode;
+        mDeclarationNode = declNode;
     }
 
     /**
@@ -165,7 +165,7 @@ public class SymbolTableValue {
 //    }
 
 	public IASTNode getDeclarationNode() {
-		return m_DeclarationNode;
+		return mDeclarationNode;
 	}
     
     

@@ -38,10 +38,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICallAction;
  * Opposed to a Summary this represents only the execution from the position
  * directly before the call statement to the initial position of the called
  * procedure. A Call object provides two auxiliary TransitionFormulas
- * m_OldVarsAssignment and m_GlobalVarsAssignment which are used for computing
+ * mOldVarsAssignment and mGlobalVarsAssignment which are used for computing
  * nested interpolants. Let g_1,...,g_n be the global variables modified by the
- * called procedure, then m_OldVarsAssignment represents the update old(g_1),
- * ... old(g_n):=g_1,...,g_n and m_GlobalVarsAssignment represents the update
+ * called procedure, then mOldVarsAssignment represents the update old(g_1),
+ * ... old(g_n):=g_1,...,g_n and mGlobalVarsAssignment represents the update
  * g_1,...,g_n:=old(g_1), ... old(g_n)
  * 
  * @author heizmann@informatik.uni-freiburg.de
@@ -50,8 +50,8 @@ public class Call extends CodeBlock implements ICallAction {
 
 	private static final long serialVersionUID = 5047439633229508126L;
 
-	protected CallStatement m_CallStatement;
-	protected String m_PrettyPrintedStatements;
+	protected CallStatement mCallStatement;
+	protected String mPrettyPrintedStatements;
 
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
@@ -62,8 +62,8 @@ public class Call extends CodeBlock implements ICallAction {
 
 	Call(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st, ILogger logger) {
 		super(serialNumber, source, target, logger);
-		m_CallStatement = st;
-		m_PrettyPrintedStatements = BoogiePrettyPrinter.print(st);
+		mCallStatement = st;
+		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 	}
 	
 	@Override
@@ -74,25 +74,25 @@ public class Call extends CodeBlock implements ICallAction {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "CallStatement") {
-			return m_CallStatement;
+			return mCallStatement;
 		} else if (field == "PrettyPrintedStatements") {
-			return m_PrettyPrintedStatements;
+			return mPrettyPrintedStatements;
 		} else {
 			return super.getFieldValue(field);
 		}
 	}
 
 	public CallStatement getCallStatement() {
-		return m_CallStatement;
+		return mCallStatement;
 	}
 
 	public String getPrettyPrintedStatements() {
-		return m_PrettyPrintedStatements;
+		return mPrettyPrintedStatements;
 	}
 
 	@Override
 	public String toString() {
-		return BoogiePrettyPrinter.print(m_CallStatement);
+		return BoogiePrettyPrinter.print(mCallStatement);
 	}
 
 	@Override

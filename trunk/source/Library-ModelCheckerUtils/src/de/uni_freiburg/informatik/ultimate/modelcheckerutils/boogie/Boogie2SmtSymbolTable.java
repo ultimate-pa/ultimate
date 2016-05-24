@@ -76,40 +76,40 @@ public class Boogie2SmtSymbolTable {
 	
 	private static final String s_INDICESIDENTIFIER = "indices";
 	
-	private final BoogieDeclarations m_BoogieDeclarations;
-	private final Script m_Script; 
-	private final TypeSortTranslator m_TypeSortTranslator;
+	private final BoogieDeclarations mBoogieDeclarations;
+	private final Script mScript; 
+	private final TypeSortTranslator mTypeSortTranslator;
 	private final Map<String, BoogieNonOldVar> mGlobals = 
 			new HashMap<String, BoogieNonOldVar>();
-	private final Map<String, BoogieVar> m_OldGlobals = 
+	private final Map<String, BoogieVar> mOldGlobals = 
 			new HashMap<String, BoogieVar>();
-	private final Map<String, Map<String, BoogieVar>> m_SpecificationInParam = 
+	private final Map<String, Map<String, BoogieVar>> mSpecificationInParam = 
 			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> m_SpecificationOutParam = 
+	private final Map<String, Map<String, BoogieVar>> mSpecificationOutParam = 
 			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> m_ImplementationInParam = 
+	private final Map<String, Map<String, BoogieVar>> mImplementationInParam = 
 			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> m_ImplementationOutParam = 
+	private final Map<String, Map<String, BoogieVar>> mImplementationOutParam = 
 			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> m_ImplementationLocals = 
+	private final Map<String, Map<String, BoogieVar>> mImplementationLocals = 
 			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, BoogieConst> m_Constants = 
+	private final Map<String, BoogieConst> mConstants = 
 			new HashMap<String, BoogieConst>();
 	
-	private final Map<TermVariable,BoogieVar> m_SmtVar2BoogieVar = 
+	private final Map<TermVariable,BoogieVar> mSmtVar2BoogieVar = 
 			new HashMap<TermVariable,BoogieVar>();
-	private final Map<BoogieVar,DeclarationInformation> m_BoogieVar2DeclarationInformation = 
+	private final Map<BoogieVar,DeclarationInformation> mBoogieVar2DeclarationInformation = 
 			new HashMap<BoogieVar,DeclarationInformation>();
-	private final Map<BoogieVar, BoogieASTNode> m_BoogieVar2AstNode = 
+	private final Map<BoogieVar, BoogieASTNode> mBoogieVar2AstNode = 
 			new HashMap<BoogieVar, BoogieASTNode>();
-	private final Map<ApplicationTerm, BoogieConst> m_SmtConst2BoogieConst = 
+	private final Map<ApplicationTerm, BoogieConst> mSmtConst2BoogieConst = 
 			new HashMap<ApplicationTerm,BoogieConst>();
 	
-	final Map<String,String> m_BoogieFunction2SmtFunction = 
+	final Map<String,String> mBoogieFunction2SmtFunction = 
 			new HashMap<String,String>();
-	final Map<String,String> m_SmtFunction2BoogieFunction = 
+	final Map<String,String> mSmtFunction2BoogieFunction = 
 			new HashMap<String,String>();
-	final Map<String, Map<String, Expression[]>> m_BoogieFunction2Attributes =
+	final Map<String, Map<String, Expression[]>> mBoogieFunction2Attributes =
 			new HashMap<String, Map<String,Expression[]>>();
 
 	
@@ -118,39 +118,39 @@ public class Boogie2SmtSymbolTable {
 			Script script,
 			TypeSortTranslator typeSortTranslator) {
 		super();
-		m_Script = script;
-		m_TypeSortTranslator = typeSortTranslator;
-		m_BoogieDeclarations = boogieDeclarations;
+		mScript = script;
+		mTypeSortTranslator = typeSortTranslator;
+		mBoogieDeclarations = boogieDeclarations;
 		
-		m_Script.echo(new QuotedObject("Start declaration of constants"));
-		for (ConstDeclaration decl : m_BoogieDeclarations.getConstDeclarations()) {
+		mScript.echo(new QuotedObject("Start declaration of constants"));
+		for (ConstDeclaration decl : mBoogieDeclarations.getConstDeclarations()) {
 			declareConstants(decl);
 		}
-		m_Script.echo(new QuotedObject("Finished declaration of constants"));
+		mScript.echo(new QuotedObject("Finished declaration of constants"));
 		
-		m_Script.echo(new QuotedObject("Start declaration of functions"));
-		for (FunctionDeclaration decl : m_BoogieDeclarations.getFunctionDeclarations()) {
+		mScript.echo(new QuotedObject("Start declaration of functions"));
+		for (FunctionDeclaration decl : mBoogieDeclarations.getFunctionDeclarations()) {
 			declareFunction(decl);
 		}
-		m_Script.echo(new QuotedObject("Finished declaration of functions"));
+		mScript.echo(new QuotedObject("Finished declaration of functions"));
 		
-		m_Script.echo(new QuotedObject("Start declaration of global variables"));
-		for (VariableDeclaration decl : m_BoogieDeclarations.getGlobalVarDeclarations()) {
+		mScript.echo(new QuotedObject("Start declaration of global variables"));
+		for (VariableDeclaration decl : mBoogieDeclarations.getGlobalVarDeclarations()) {
 			declareGlobalVariables(decl);
 		}
-		m_Script.echo(new QuotedObject("Finished declaration global variables"));
+		mScript.echo(new QuotedObject("Finished declaration global variables"));
 		
-		m_Script.echo(new QuotedObject("Start declaration of local variables"));
-		for (String procId : m_BoogieDeclarations.getProcSpecification().keySet()) {
-			Procedure procSpec = m_BoogieDeclarations.getProcSpecification().get(procId);
-			Procedure procImpl = m_BoogieDeclarations.getProcImplementation().get(procId);
+		mScript.echo(new QuotedObject("Start declaration of local variables"));
+		for (String procId : mBoogieDeclarations.getProcSpecification().keySet()) {
+			Procedure procSpec = mBoogieDeclarations.getProcSpecification().get(procId);
+			Procedure procImpl = mBoogieDeclarations.getProcImplementation().get(procId);
 			if (procImpl == null) {
 				declareSpec(procSpec);
 			} else {
 				declareSpecImpl(procSpec, procImpl);
 			}
 		}
-		m_Script.echo(new QuotedObject("Finished declaration local variables"));
+		mScript.echo(new QuotedObject("Finished declaration local variables"));
 	}
 
 	private void putNew(String procId, String varId, BoogieVar bv, Map<String, Map<String, BoogieVar>> map) {
@@ -186,7 +186,7 @@ public class Boogie2SmtSymbolTable {
 	}
 	
 	public Script getScript() {
-		return m_Script;
+		return mScript;
 	}
 
 	public BoogieVar getBoogieVar(String varId, DeclarationInformation declarationInformation, boolean inOldContext) {
@@ -196,25 +196,25 @@ public class Boogie2SmtSymbolTable {
 		switch (storageClass) {
 		case GLOBAL:
 			if (inOldContext) {
-				result = m_OldGlobals.get(varId);
+				result = mOldGlobals.get(varId);
 			} else {
 				result = mGlobals.get(varId);
 			}
 			break;
 		case PROC_FUNC_INPARAM:
-//			result = get(varId, procedure, m_SpecificationInParam);
+//			result = get(varId, procedure, mSpecificationInParam);
 //			break;
 		case IMPLEMENTATION_INPARAM:
-			result = get(varId, procedure, m_ImplementationInParam);
+			result = get(varId, procedure, mImplementationInParam);
 			break;
 		case PROC_FUNC_OUTPARAM:
-//			result = get(varId, procedure, m_SpecificationOutParam);
+//			result = get(varId, procedure, mSpecificationOutParam);
 //			break;
 		case IMPLEMENTATION_OUTPARAM:
-			result = get(varId, procedure, m_ImplementationOutParam);
+			result = get(varId, procedure, mImplementationOutParam);
 			break;
 		case LOCAL:
-			result = get(varId, procedure, m_ImplementationLocals);
+			result = get(varId, procedure, mImplementationLocals);
 			break;
 		case IMPLEMENTATION:
 		case PROC_FUNC:
@@ -226,22 +226,22 @@ public class Boogie2SmtSymbolTable {
 	}
 	
 	public BoogieVar getBoogieVar(TermVariable tv) {
-		return m_SmtVar2BoogieVar.get(tv);
+		return mSmtVar2BoogieVar.get(tv);
 	}
 	
 	public DeclarationInformation getDeclarationInformation(BoogieVar bv) {
-		return m_BoogieVar2DeclarationInformation.get(bv);
+		return mBoogieVar2DeclarationInformation.get(bv);
 	}
 	
 	public BoogieASTNode getAstNode(BoogieVar bv) {
-		return m_BoogieVar2AstNode.get(bv);
+		return mBoogieVar2AstNode.get(bv);
 	}
 	
 	private void declareConstants(ConstDeclaration constdecl) {
 		VarList varlist = constdecl.getVarList();
 		Sort[] paramTypes = new Sort[0];
 		IType iType = varlist.getType().getBoogieType();
-		Sort sort = m_TypeSortTranslator.getSort(iType, varlist);
+		Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 
 		Map<String, Expression[]> attributes = extractAttributes(constdecl);
 		if (attributes != null) {
@@ -254,40 +254,40 @@ public class Boogie2SmtSymbolTable {
 							+ "used we support only one constant per const declaration");
 				}
 				String constId = varlist.getIdentifiers()[0];
-				ApplicationTerm constant = (ApplicationTerm) m_Script.term(attributeDefinedIdentifier, indices, null);
+				ApplicationTerm constant = (ApplicationTerm) mScript.term(attributeDefinedIdentifier, indices, null);
 				BoogieConst boogieConst = new BoogieConst(constId, iType, constant);
-				BoogieConst previousValue = m_Constants.put(constId, boogieConst);
+				BoogieConst previousValue = mConstants.put(constId, boogieConst);
 				assert previousValue == null : "constant already contained";
-				m_SmtConst2BoogieConst.put(constant, boogieConst);
+				mSmtConst2BoogieConst.put(constant, boogieConst);
 				return;
 			} 
 		}
 		for (String constId : varlist.getIdentifiers()) {
-			m_Script.declareFun(constId, paramTypes, sort);
-			ApplicationTerm constant = (ApplicationTerm) m_Script.term(constId);
+			mScript.declareFun(constId, paramTypes, sort);
+			ApplicationTerm constant = (ApplicationTerm) mScript.term(constId);
 			BoogieConst boogieConst = new BoogieConst(constId, iType, constant);
-			BoogieConst previousValue = m_Constants.put(constId, boogieConst);
+			BoogieConst previousValue = mConstants.put(constId, boogieConst);
 			assert previousValue == null : "constant already contained";
-			m_SmtConst2BoogieConst.put(constant, boogieConst);
+			mSmtConst2BoogieConst.put(constant, boogieConst);
 		}
 	}
 	
 	public BoogieConst getBoogieConst(String constId) {
-		return m_Constants.get(constId);
+		return mConstants.get(constId);
 	}
 	
 	public BoogieConst getBoogieConst(ApplicationTerm smtConstant) {
-		return m_SmtConst2BoogieConst.get(smtConstant);
+		return mSmtConst2BoogieConst.get(smtConstant);
 	}
 	
 	public Map<String, Expression[]> getAttributes(String boogieFunctionId) {
-		return Collections.unmodifiableMap(m_BoogieFunction2Attributes.get(boogieFunctionId));
+		return Collections.unmodifiableMap(mBoogieFunction2Attributes.get(boogieFunctionId));
 	}
 	
 	private void declareFunction(FunctionDeclaration funcdecl) {
 		Map<String, Expression[]> attributes = extractAttributes(funcdecl);
 		String id = funcdecl.getIdentifier();
-		m_BoogieFunction2Attributes.put(id, attributes);
+		mBoogieFunction2Attributes.put(id, attributes);
 		String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(attributes, s_BUILTINIDENTIFIER);
 		String smtID;
 		if (attributeDefinedIdentifier == null) {
@@ -309,19 +309,19 @@ public class Boogie2SmtSymbolTable {
 				ids = 1;
 			}
 			IType paramType = vl.getType().getBoogieType();
-			Sort paramSort = m_TypeSortTranslator.getSort(paramType, funcdecl);
+			Sort paramSort = mTypeSortTranslator.getSort(paramType, funcdecl);
 			for (int i = 0; i < ids; i++) {
 				paramSorts[paramNr++] = paramSort;
 			}
 		}
 		IType resultType = funcdecl.getOutParam().getType().getBoogieType();
-		Sort resultSort = m_TypeSortTranslator.getSort(resultType, funcdecl);
+		Sort resultSort = mTypeSortTranslator.getSort(resultType, funcdecl);
 		if (attributeDefinedIdentifier == null) {
 			// no builtin function, we have to declare it
-			m_Script.declareFun(smtID, paramSorts, resultSort);
+			mScript.declareFun(smtID, paramSorts, resultSort);
 		}
-		m_BoogieFunction2SmtFunction.put(id, smtID);
-		m_SmtFunction2BoogieFunction.put(smtID, id);
+		mBoogieFunction2SmtFunction.put(id, smtID);
+		mSmtFunction2BoogieFunction.put(smtID, id);
 	}
 
 	
@@ -383,11 +383,11 @@ public class Boogie2SmtSymbolTable {
 	}
 	
 	public Map<String, String> getSmtFunction2BoogieFunction() {
-		return Collections.unmodifiableMap(m_SmtFunction2BoogieFunction);
+		return Collections.unmodifiableMap(mSmtFunction2BoogieFunction);
 	}
 	
 	public Map<String, String> getBoogieFunction2SmtFunction() {
-		return Collections.unmodifiableMap(m_BoogieFunction2SmtFunction);
+		return Collections.unmodifiableMap(mBoogieFunction2SmtFunction);
 	}
 	
 	
@@ -399,7 +399,7 @@ public class Boogie2SmtSymbolTable {
 						id, type, vl);
 				putNew(id, global, mGlobals);
 				BoogieVar oldGlobal = global.getOldVar();
-				putNew(id, oldGlobal, m_OldGlobals);
+				putNew(id, oldGlobal, mOldGlobals);
 			}
 		}
 	}
@@ -415,7 +415,7 @@ public class Boogie2SmtSymbolTable {
 	 * Return global constants;
 	 */
 	public Map<String, BoogieConst> getConsts() {
-		return Collections.unmodifiableMap(m_Constants);
+		return Collections.unmodifiableMap(mConstants);
 	}
 	
 	private void declareSpecImpl(Procedure spec, Procedure impl) {
@@ -437,10 +437,10 @@ public class Boogie2SmtSymbolTable {
 			
 		}
 		declareParams(procId, spec.getInParams(), impl.getInParams(), 
-				m_SpecificationInParam, m_ImplementationInParam, 
+				mSpecificationInParam, mImplementationInParam, 
 				declInfoInParam);
 		declareParams(procId, spec.getOutParams(), impl.getOutParams(), 
-				m_SpecificationOutParam, m_ImplementationOutParam, 
+				mSpecificationOutParam, mImplementationOutParam, 
 				declInfoOutParam);
 		declareLocals(impl);
 	}
@@ -459,9 +459,9 @@ public class Boogie2SmtSymbolTable {
 		assert isSpecification(spec) : "no specification";
 		assert !isImplementation(spec) : "is implementation";
 		String procId = spec.getIdentifier();
-		declareParams(procId, spec.getInParams(), m_SpecificationInParam,
+		declareParams(procId, spec.getInParams(), mSpecificationInParam,
 				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procId));
-		declareParams(procId, spec.getOutParams(), m_SpecificationOutParam,
+		declareParams(procId, spec.getOutParams(), mSpecificationOutParam,
 				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procId));
 	}
 	
@@ -530,7 +530,7 @@ public class Boogie2SmtSymbolTable {
 						IType type = vl.getType().getBoogieType();
 						BoogieVar bv = constructLocalBoogieVar(id, proc.getIdentifier(),
 								type, vl, declarationInformation);
-						putNew(proc.getIdentifier(), id, bv, m_ImplementationLocals);
+						putNew(proc.getIdentifier(), id, bv, mImplementationLocals);
 					}
 				}
 			}
@@ -554,12 +554,12 @@ public class Boogie2SmtSymbolTable {
 	private LocalBoogieVar constructLocalBoogieVar(String identifier, 
 			String procedure, IType iType, VarList varList, 
 			DeclarationInformation declarationInformation) {
-		Sort sort = m_TypeSortTranslator.getSort(iType, varList);
+		Sort sort = mTypeSortTranslator.getSort(iType, varList);
 
 		String name = constructBoogieVarName(identifier, procedure,
 				false, false);
 
-		TermVariable termVariable = m_Script.variable(name, sort);
+		TermVariable termVariable = mScript.variable(name, sort);
 
 		ApplicationTerm defaultConstant = constructDefaultConstant(sort, name);
 		ApplicationTerm primedConstant = constructPrimedConstant(sort, name);
@@ -567,9 +567,9 @@ public class Boogie2SmtSymbolTable {
 		LocalBoogieVar bv = new LocalBoogieVar(identifier, procedure, iType,
 				termVariable, defaultConstant, primedConstant);
 		
-		m_SmtVar2BoogieVar.put(termVariable, bv);
-		m_BoogieVar2DeclarationInformation.put(bv, declarationInformation);
-		m_BoogieVar2AstNode.put(bv, varList);
+		mSmtVar2BoogieVar.put(termVariable, bv);
+		mBoogieVar2DeclarationInformation.put(bv, declarationInformation);
+		mBoogieVar2AstNode.put(bv, varList);
 		return bv;
 	}
 	
@@ -583,7 +583,7 @@ public class Boogie2SmtSymbolTable {
 	 */
 	private BoogieNonOldVar constructGlobalBoogieVar(String identifier,
 			IType iType, VarList varlist) {
-		Sort sort = m_TypeSortTranslator.getSort(iType, varlist);
+		Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 		String procedure = null;
 		DeclarationInformation declarationInformation = 
 				new DeclarationInformation(StorageClass.GLOBAL, null);
@@ -593,30 +593,30 @@ public class Boogie2SmtSymbolTable {
 			boolean isOldVar = true;
 			String name = constructBoogieVarName(identifier, procedure,
 					true, isOldVar);
-			TermVariable termVariable = m_Script.variable(name, sort);
+			TermVariable termVariable = mScript.variable(name, sort);
 			ApplicationTerm defaultConstant = constructDefaultConstant(sort, name);
 			ApplicationTerm primedConstant = constructPrimedConstant(sort, name);
 
 			oldVar = new BoogieOldVar(identifier, iType,
 					isOldVar, termVariable, defaultConstant, primedConstant);
-			m_SmtVar2BoogieVar.put(termVariable, oldVar);
-			m_BoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
-			m_BoogieVar2AstNode.put(oldVar, varlist);
+			mSmtVar2BoogieVar.put(termVariable, oldVar);
+			mBoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
+			mBoogieVar2AstNode.put(oldVar, varlist);
 		}
 		BoogieNonOldVar nonOldVar;
 		{
 			boolean isOldVar = false;
 			String name = constructBoogieVarName(identifier, procedure,
 					true, isOldVar);
-			TermVariable termVariable = m_Script.variable(name, sort);
+			TermVariable termVariable = mScript.variable(name, sort);
 			ApplicationTerm defaultConstant = constructDefaultConstant(sort, name);
 			ApplicationTerm primedConstant = constructPrimedConstant(sort, name);
 
 			nonOldVar = new BoogieNonOldVar(identifier, iType,
 					termVariable, defaultConstant, primedConstant, oldVar);
-			m_SmtVar2BoogieVar.put(termVariable, nonOldVar);
-			m_BoogieVar2DeclarationInformation.put(nonOldVar, declarationInformation);
-			m_BoogieVar2AstNode.put(nonOldVar, varlist);
+			mSmtVar2BoogieVar.put(termVariable, nonOldVar);
+			mBoogieVar2DeclarationInformation.put(nonOldVar, declarationInformation);
+			mBoogieVar2AstNode.put(nonOldVar, varlist);
 		}
 		oldVar.setNonOldVar(nonOldVar);
 		return nonOldVar;
@@ -627,8 +627,8 @@ public class Boogie2SmtSymbolTable {
 		ApplicationTerm primedConstant;
 		{
 			String primedConstantName = "c_" + name + "_primed";
-			m_Script.declareFun(primedConstantName, new Sort[0], sort);
-			primedConstant = (ApplicationTerm) m_Script.term(primedConstantName);
+			mScript.declareFun(primedConstantName, new Sort[0], sort);
+			primedConstant = (ApplicationTerm) mScript.term(primedConstantName);
 		}
 		return primedConstant;
 	}
@@ -637,8 +637,8 @@ public class Boogie2SmtSymbolTable {
 		ApplicationTerm defaultConstant;
 		{
 			String defaultConstantName = "c_" + name;
-			m_Script.declareFun(defaultConstantName, new Sort[0], sort);
-			defaultConstant = (ApplicationTerm) m_Script.term(defaultConstantName);
+			mScript.declareFun(defaultConstantName, new Sort[0], sort);
+			defaultConstant = (ApplicationTerm) mScript.term(defaultConstantName);
 		}
 		return defaultConstant;
 	}
@@ -664,7 +664,7 @@ public class Boogie2SmtSymbolTable {
 			IType iType, VarList varList) {
 		BoogieNonOldVar bv = constructGlobalBoogieVar(identifier, iType, varList);
 		mGlobals.put(identifier, bv);
-		m_OldGlobals.put(identifier, bv.getOldVar());
+		mOldGlobals.put(identifier, bv.getOldVar());
 		return bv;
 	}
 	

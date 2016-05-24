@@ -54,23 +54,23 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class AffineTerm implements Serializable {
 	private static final long serialVersionUID = -4454719554662175493L;
 	
-	private Rational m_Constant;
-	private final Map<Term, Rational> m_Coefficients;
+	private Rational mConstant;
+	private final Map<Term, Rational> mCoefficients;
 	
 	/**
 	 * Construct the affine term 0
 	 */
 	public AffineTerm() {
-		m_Coefficients = new LinkedHashMap<Term, Rational>();
-		m_Constant = Rational.ZERO;
+		mCoefficients = new LinkedHashMap<Term, Rational>();
+		mConstant = Rational.ZERO;
 	}
 	
 	/**
 	 * Copy constructor
 	 */
 	public AffineTerm(AffineTerm at) {
-		m_Constant = at.m_Constant;
-		m_Coefficients = new LinkedHashMap<Term, Rational>(at.m_Coefficients);
+		mConstant = at.mConstant;
+		mCoefficients = new LinkedHashMap<Term, Rational>(at.mCoefficients);
 	}
 	
 	/**
@@ -78,7 +78,7 @@ public class AffineTerm implements Serializable {
 	 */
 	public AffineTerm(BigInteger i) {
 		this();
-		m_Constant = Rational.valueOf(i, BigInteger.ONE);
+		mConstant = Rational.valueOf(i, BigInteger.ONE);
 	}
 	
 	/**
@@ -86,7 +86,7 @@ public class AffineTerm implements Serializable {
 	 */
 	public AffineTerm(Rational r) {
 		this();
-		m_Constant = r;
+		mConstant = r;
 	}
 	
 	/**
@@ -94,51 +94,51 @@ public class AffineTerm implements Serializable {
 	 */
 	public AffineTerm(Term var, Rational r) {
 		this();
-		m_Coefficients.put(var, r);
+		mCoefficients.put(var, r);
 	}
 	
 	/**
 	 * @return whether this is just a rational constant
 	 */
 	public boolean isConstant() {
-		return m_Coefficients.isEmpty();
+		return mCoefficients.isEmpty();
 	}
 	
 	/**
 	 * @return whether this is zero
 	 */
 	public boolean isZero() {
-		return m_Coefficients.isEmpty() && m_Constant.equals(Rational.ZERO);
+		return mCoefficients.isEmpty() && mConstant.equals(Rational.ZERO);
 	}
 	
 	/**
 	 * @return the affine constant c
 	 */
 	public Rational getConstant() {
-		return m_Constant;
+		return mConstant;
 	}
 	
 	/**
 	 * Add a rational to this
 	 */
 	public void add(Rational r) {
-		m_Constant = m_Constant.add(r);
+		mConstant = mConstant.add(r);
 	}
 	
 	/**
 	 * Add a variable-coefficient pair to this
 	 */
 	public void add(Term var, Rational c) {
-		if (m_Coefficients.containsKey(var)) {
-			Rational r = m_Coefficients.get(var).add(c);
+		if (mCoefficients.containsKey(var)) {
+			Rational r = mCoefficients.get(var).add(c);
 			if (!r.equals(Rational.ZERO)) {
-				m_Coefficients.put(var, r);
+				mCoefficients.put(var, r);
 			} else {
-				m_Coefficients.remove(var);
+				mCoefficients.remove(var);
 			}
 		} else {
 			if (!c.equals(Rational.ZERO)) {
-				m_Coefficients.put(var, c);
+				mCoefficients.put(var, c);
 			}
 		}
 	}
@@ -147,8 +147,8 @@ public class AffineTerm implements Serializable {
 	 * Add another affine term to this.
 	 */
 	public void add(AffineTerm p) {
-		this.add(p.m_Constant);
-		for (Map.Entry<Term, Rational> entry : p.m_Coefficients.entrySet()) {
+		this.add(p.mConstant);
+		for (Map.Entry<Term, Rational> entry : p.mCoefficients.entrySet()) {
 			this.add(entry.getKey(), entry.getValue());
 		}
 	}
@@ -157,9 +157,9 @@ public class AffineTerm implements Serializable {
 	 * Multiply this with a Rational
 	 */
 	public void mult(Rational r) {
-		m_Constant = m_Constant.mul(r);
-		for (Term var : m_Coefficients.keySet()) {
-			m_Coefficients.put(var, m_Coefficients.get(var).mul(r));
+		mConstant = mConstant.mul(r);
+		for (Term var : mCoefficients.keySet()) {
+			mCoefficients.put(var, mCoefficients.get(var).mul(r));
 		}
 	}
 	
@@ -168,14 +168,14 @@ public class AffineTerm implements Serializable {
 	 * @return this as a term of sort "Real"
 	 */
 	public Term asRealTerm(Script script) {
-		Term[] summands = new Term[m_Coefficients.size() + 1];
+		Term[] summands = new Term[mCoefficients.size() + 1];
 		int i = 0;
-		for (Map.Entry<Term, Rational> entry : m_Coefficients.entrySet()) {
+		for (Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
 			Term coeff = entry.getValue().toTerm(script.sort("Real")); 
 			summands[i] = script.term("*", coeff, entry.getKey());
 			++i;
 		}
-		summands[i] = m_Constant.toTerm(script.sort("Real"));
+		summands[i] = mConstant.toTerm(script.sort("Real"));
 		return SmtUtils.sum(script, script.sort("Real"), summands);
 	}
 	
@@ -184,16 +184,16 @@ public class AffineTerm implements Serializable {
 	 * @return the affine term as a term of sort "Int"
 	 */
 	public Term asIntTerm(Script script) {
-		Term[] summands = new Term[m_Coefficients.size() + 1];
+		Term[] summands = new Term[mCoefficients.size() + 1];
 		int i = 0;
-		for (Map.Entry<Term, Rational> entry : m_Coefficients.entrySet()) {
+		for (Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
 			assert entry.getValue().isIntegral();
 			Term coeff = script.numeral(entry.getValue().numerator());
 			summands[i] = script.term("*", coeff, entry.getKey());
 			++i;
 		}
-		assert m_Constant.isIntegral();
-		summands[i] = script.numeral(m_Constant.numerator());
+		assert mConstant.isIntegral();
+		summands[i] = script.numeral(mConstant.numerator());
 		return SmtUtils.sum(script, script.sort("Int"), summands);
 	}
 	
@@ -201,7 +201,7 @@ public class AffineTerm implements Serializable {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (Map.Entry<Term, Rational> entry : m_Coefficients.entrySet()) {
+		for (Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
 			if (entry.getValue().isNegative() || !first) {
 				if (!first) {
 					sb.append(" ");
@@ -211,14 +211,14 @@ public class AffineTerm implements Serializable {
 			sb.append(entry.getValue().abs() + "*" + entry.getKey());
 			first = false;
 		}
-		if (!m_Constant.equals(Rational.ZERO) || sb.length() == 0) {
-			if (m_Constant.isNegative() || !first) {
+		if (!mConstant.equals(Rational.ZERO) || sb.length() == 0) {
+			if (mConstant.isNegative() || !first) {
 				if (!first) {
 					sb.append(" ");
 				}
-				sb.append(m_Constant.isNegative() ? "- " : "+ ");
+				sb.append(mConstant.isNegative() ? "- " : "+ ");
 			}
-			sb.append(m_Constant.abs());
+			sb.append(mConstant.abs());
 		}
 		return sb.toString();
 	}

@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	final private Collection<Condition<S, C>> conditions;
 	final private Collection<Event<S, C>> events;
@@ -57,14 +57,14 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 
 	private PetriNetJulian<S, C> net;
 	
-	private final Order<S,C> m_Order;
+	private final Order<S,C> mOrder;
 
 	public BranchingProcess(AutomataLibraryServices services,
 			PetriNetJulian<S, C> net, Order<S, C> order) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.net = net;
-		this.m_Order = order;
+		this.mOrder = order;
 		this.place2cond = new HashMap<Place<S, C>, Set<Condition<S, C>>>();
 		for (Place<S, C> p : net.getPlaces()) {
 			place2cond.put(p, new HashSet<Condition<S, C>>());
@@ -121,7 +121,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 					.get(condition.getPlace());
 			for (Condition<S, C> c : existing) {
 				if (c != condition && isInCoRelation(c, condition)) {
-					m_Logger.debug(c+" in coRelation with "+condition+" but they belong to the same place.");
+					mLogger.debug(c+" in coRelation with "+condition+" but they belong to the same place.");
 					return false;
 				}
 			}
@@ -401,7 +401,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	public Order<S,C> getOrder() {
-		return m_Order;
+		return mOrder;
 	}
 
 	@Override

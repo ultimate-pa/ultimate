@@ -55,15 +55,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 public class TransFormulaBuilder {
 
 	// We use Boogie2SMT to translate boogie Statements to SMT formulas
-	private final Boogie2SMT m_Boogie2smt;
-	private final boolean m_SimplifyCodeBlocks;
+	private final Boogie2SMT mBoogie2smt;
+	private final boolean mSimplifyCodeBlocks;
 
 	private final IUltimateServiceProvider mServices;
 
 	public TransFormulaBuilder(Boogie2SMT boogie2smt, IUltimateServiceProvider services) {
 		mServices = services;
-		m_Boogie2smt = boogie2smt;
-		m_SimplifyCodeBlocks = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		mBoogie2smt = boogie2smt;
+		mSimplifyCodeBlocks = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 	}
 
@@ -94,7 +94,7 @@ public class TransFormulaBuilder {
 
 		TranslationResult tlres = null;
 		try {
-			tlres = m_Boogie2smt.getStatements2TransFormula().statementSequence(m_SimplifyCodeBlocks, procId, statements);
+			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(mSimplifyCodeBlocks, procId, statements);
 		} catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				reportUnsupportedSyntax(cb, e.getMessage());

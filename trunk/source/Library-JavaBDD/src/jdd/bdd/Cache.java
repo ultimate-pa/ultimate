@@ -16,10 +16,10 @@ import jdd.util.math.*;
 public final class Cache {
 	private CacheEntry [] entries;
 	private int cache_bits, cache_size, cache_mask;
-	private long num_access, last_access;
-	private int num_clears, num_partial_clears, members, num_grows, possible_bins_count;
+	private long numaccess, last_access;
+	private int numclears, numpartial_clears, members, numgrows, possible_bins_count;
 
-	// private int num_cols, num_inserts, cache_hits, cache_misses;
+	// private int numcols, numinserts, cache_hits, cache_misses;
 
 	public Cache(int size, int members) {
 		Test.check(members >= 1, "Cache members must be greater than 0");
@@ -29,10 +29,10 @@ public final class Cache {
 		this.cache_size = (1 << cache_bits);
 		this.cache_mask = cache_size -1;
 		this.members = members;
-		this.num_grows = 0;
-		this.last_access = this.num_access = 0;
+		this.numgrows = 0;
+		this.last_access = this.numaccess = 0;
 		this.possible_bins_count = 0;
-		this.num_clears =  num_partial_clears = 0;
+		this.numclears =  numpartial_clears = 0;
 
 		entries = new CacheEntry[cache_size];
 		for(int i = 0; i < cache_size; i++) entries[i] = new CacheEntry();
@@ -54,7 +54,7 @@ public final class Cache {
 	public void invalidate_cache(NodeTable nt, int size) {
 
 		if(possible_bins_count == 0) return;
-		num_partial_clears++;
+		numpartial_clears++;
 
 		int ok = 0;
 		if(members == 1) {
@@ -78,7 +78,7 @@ public final class Cache {
 	}
 
 	public void free_or_grow(NodeTable nt) {
-		if(num_grows < Configuration.maxCacheGrows) {
+		if(numgrows < Configuration.maxCacheGrows) {
 			if(computeLoadFactor() > Configuration.minCacheLoadfactorToGrow) {
 				grow_and_invalidate_cache(nt);
 				return;
@@ -92,7 +92,7 @@ public final class Cache {
 		int size = 1 << cache_bits;
 		cache_mask = size - 1;
 
-		num_grows++;
+		numgrows++;
 		CacheEntry [] tmp = new CacheEntry[size];
 		for(int i = 0; i < cache_size; i++) tmp[i] = entries[i];
 		invalidate_cache(nt, cache_size);
@@ -108,14 +108,14 @@ public final class Cache {
 	/* just wipe the cache */
 	public void invalidate_cache() {
 		if(possible_bins_count == 0) return;
-		num_clears++;
+		numclears++;
 
 		for(int i = 0; i < cache_size; i++) entries[i].clear();
 		possible_bins_count = 0;
 	}
 
 	public void free_or_grow() {
-		if(num_grows < Configuration.maxCacheGrows) {
+		if(numgrows < Configuration.maxCacheGrows) {
 			if(computeLoadFactor() > Configuration.minCacheLoadfactorToGrow) {
 				grow_and_invalidate_cache();
 				return;
@@ -131,7 +131,7 @@ public final class Cache {
 		cache_mask = size - 1;
 
 
-		num_grows++;
+		numgrows++;
 		CacheEntry [] tmp = new CacheEntry[size];
 		for(int i = 0; i < cache_size; i++){
 			tmp[i] = entries[i];
@@ -165,19 +165,19 @@ public final class Cache {
 
 
 	public CacheEntry access3(int type, int op1, int op2) {
-		num_access++;
+		numaccess++;
 		possible_bins_count++;
 		return entries[ hash3(type, op1,op2)];
 	}
 
 	public CacheEntry access2(int op1, int op2) {
-		num_access++;
+		numaccess++;
 		possible_bins_count++;
 		return entries[hash2(op1, op2) ];
 	}
 
 	public CacheEntry access1(int x ) {
-		num_access++;
+		numaccess++;
 		possible_bins_count++;
 		return entries[x & cache_mask];
 	}
@@ -233,23 +233,23 @@ public final class Cache {
 	public double computeHitRate() {
 		long hits = 0;
 		for( int i = 0; i < cache_size; i++)  hits +=  entries[i].found;
-		return ((int)( (hits * 10000) / ( num_access ))) / 100.0;
+		return ((int)( (hits * 10000) / ( numaccess ))) / 100.0;
 	}
 
 	// public int getHitRate() { return (cache_hits + cache_misses) > 0 ? 100 * cache_hits / (cache_hits + cache_misses) : 0; }
-	// public int getCollisionRate() {return (num_inserts) > 0 ? 100 * num_cols / (num_inserts) : 0;}
+	// public int getCollisionRate() {return (numinserts) > 0 ? 100 * numcols / (numinserts) : 0;}
 
 	public void showStats(String type) {
-		if(num_access != 0) {
+		if(numaccess != 0) {
 			JDDConsole.out.print(type + "-cache ");
 			JDDConsole.out.print("ld=" + computeLoadFactor() + "% ");
 			JDDConsole.out.print("sz="); 	Digits.printNumber(cache_size);
 
-			JDDConsole.out.print("accs=");	Digits.printNumber(num_access);
-			JDDConsole.out.print("clrs=" + num_clears+ "/" + num_partial_clears + " ");
+			JDDConsole.out.print("accs=");	Digits.printNumber(numaccess);
+			JDDConsole.out.print("clrs=" + numclears+ "/" + numpartial_clears + " ");
 
 			JDDConsole.out.print("hitr=" + computeHitRate() + "% ");
-			if(num_grows > 0) JDDConsole.out.print("grws=" + num_grows + " ");
+			if(numgrows > 0) JDDConsole.out.print("grws=" + numgrows + " ");
 
 
 			showDeviation();
@@ -272,7 +272,7 @@ public final class Cache {
 		meansq /= cache_size;
 
 		double stddev = Math.sqrt( meansq  - mean * mean);
-		double e_stddev = Math.sqrt(( 1.0 - 1.0 / cache_size) * num_access / cache_size);
+		double e_stddev = Math.sqrt(( 1.0 - 1.0 / cache_size) * numaccess / cache_size);
 		JDDConsole.out.print("use/exp=" + (100 * used / cache_size) + "/" +
 			(int)(100 * (1 - Math.pow(Math.E, -mean))) + "%");
 

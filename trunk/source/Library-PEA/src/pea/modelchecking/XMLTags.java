@@ -64,13 +64,13 @@ public class XMLTags {
     public static final String FORBIDDENEVENT_TAG = "forbiddenEvent";
 
     public static final String MCFORMS_TAG = "mcForms";
-    public static final String MCFORM_TAG = "mcForm";
+    public static final String MCFORmTAG = "mcForm";
     public static final String MCTRACE_TAG = "mcTrace";
 
     public static final String ENTRYSYNC_TAG = "entrySync";
     public static final String EXITSYNC_TAG = "exitSync";
 
-    public static final String TESTFORM_TAG = "testForm";
+    public static final String TESTFORmTAG = "testForm";
     public static final String TFTREE_TAG = "tfTree";
 
     public static final String OPERATOR_TAG = "operator";

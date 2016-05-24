@@ -28,20 +28,20 @@ public class HornClauseParserScript extends NoopScript {
 	 * Interface to the SMT solver that TreeAutomizer (or whoever else will used 
 	 * the HornClauseGraph) will use as a backend.
 	 */
-	private Script m_BackendSmtSolver;
-	private String m_Logic;
-	private Settings m_SolverSettings;
-	private HashSet<String> m_DeclaredPredicateSymbols;
-	private HornClause m_CurrentHornClause;
-	private ArrayList<Term> m_currentPredicateAtoms;
-	private ArrayList<Term> m_currentTransitionAtoms;
+	private Script mBackendSmtSolver;
+	private String mLogic;
+	private Settings mSolverSettings;
+	private HashSet<String> mDeclaredPredicateSymbols;
+	private HornClause mCurrentHornClause;
+	private ArrayList<Term> mcurrentPredicateAtoms;
+	private ArrayList<Term> mcurrentTransitionAtoms;
 
 	public HornClauseParserScript(Script smtSolverScript, String logic, Settings settings) {
 		
 		
-		m_BackendSmtSolver = smtSolverScript;
-		m_Logic = logic;
-		m_SolverSettings = settings;
+		mBackendSmtSolver = smtSolverScript;
+		mLogic = logic;
+		mSolverSettings = settings;
 		setupBackendSolver();
 
 	}
@@ -65,7 +65,7 @@ public class HornClauseParserScript extends NoopScript {
 		if (!logic.equals("HORN"))  // TODO redundant with assertion
 			throw new UnsupportedOperationException();
 
-		super.setLogic(m_Logic);
+		super.setLogic(mLogic);
 	}
 
 	@Override
@@ -79,7 +79,7 @@ public class HornClauseParserScript extends NoopScript {
 	public void setOption(String opt, Object value) throws UnsupportedOperationException, SMTLIBException {
 		// just handing it over to the backend solver
 		super.setOption(opt, value);
-//		m_BackendSmtSolver.setOption(opt, value);
+//		mBackendSmtSolver.setOption(opt, value);
 	}
 
 	@Override
@@ -95,7 +95,7 @@ public class HornClauseParserScript extends NoopScript {
 //		mBackendSmtSolver.declareFun(fun, paramSorts, resultSort);
 		super.declareFun(fun, paramSorts, resultSort);
 		if (resultSort.getName() == "Bool")
-			m_DeclaredPredicateSymbols.add(fun);
+			mDeclaredPredicateSymbols.add(fun);
 	}
 
 	@Override
@@ -106,7 +106,7 @@ public class HornClauseParserScript extends NoopScript {
 		//  -- identify the "statement"
 		// - compute a TransFormula from the above
 		// 
-		m_CurrentHornClause = new HornClause();
+		mCurrentHornClause = new HornClause();
 		
         // for Horn clause solving we do no checks nothing until check-sat:
 		return LBool.UNKNOWN; 
@@ -138,13 +138,13 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public Sort[] sortVariables(String... names) throws SMTLIBException {
-//		return m_BackendSmtSolver.sortVariables(names);
+//		return mBackendSmtSolver.sortVariables(names);
 		return super.sortVariables(names);
 	}
 
 	@Override
 	public Term term(String funcname, Term... params) throws SMTLIBException {
-//		return m_BackendSmtSolver.term(funcname, params);
+//		return mBackendSmtSolver.term(funcname, params);
 		return super.term(funcname, params);
 	}
 
@@ -161,13 +161,13 @@ public class HornClauseParserScript extends NoopScript {
 			int i = 0;
 			i++;
 			
-		} else if (m_DeclaredPredicateSymbols.contains(funcname)) {
-			m_currentPredicateAtoms.add(result);
+		} else if (mDeclaredPredicateSymbols.contains(funcname)) {
+			mcurrentPredicateAtoms.add(result);
 		} else {
-			m_currentTransitionAtoms.add(result);
+			mcurrentTransitionAtoms.add(result);
 		}
 		
-//		return m_BackendSmtSolver.term(funcname, indices, returnSort, params);
+//		return mBackendSmtSolver.term(funcname, indices, returnSort, params);
 		return result;
 	}
 
@@ -185,7 +185,7 @@ public class HornClauseParserScript extends NoopScript {
 	@Override
 	public void defineSort(String sort, Sort[] sortParams, Sort definition) throws SMTLIBException {
 		super.defineSort(sort, sortParams, definition);
-//		m_BackendSmtSolver.defineSort(sort, sortParams, definition);
+//		mBackendSmtSolver.defineSort(sort, sortParams, definition);
 	}
 
 	@Override
@@ -359,7 +359,7 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public TermVariable variable(String varname, Sort sort) throws SMTLIBException {
-//		return m_BackendSmtSolver.variable(varname, sort);
+//		return mBackendSmtSolver.variable(varname, sort);
 		return super.variable(varname, sort);
 	}
 	

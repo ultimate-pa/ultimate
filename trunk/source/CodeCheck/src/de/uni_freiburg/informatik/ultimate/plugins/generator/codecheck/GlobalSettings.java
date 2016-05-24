@@ -40,7 +40,7 @@ public class GlobalSettings {
 	public static GlobalSettings _instance;
 	
 		//default configuration
-//	String m_dotGraphPath = "C:/temp/codeCheckGraphs";
+//	String mdotGraphPath = "C:/temp/codeCheckGraphs";
 	
 	
 //    boolean svcomp2014Mode = false; //TODO: this is only hardcoded??

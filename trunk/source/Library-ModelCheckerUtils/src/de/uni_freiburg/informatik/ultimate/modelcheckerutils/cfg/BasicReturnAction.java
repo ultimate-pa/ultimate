@@ -34,23 +34,23 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  *
  */
 public class BasicReturnAction extends AbstractBasicAction implements IReturnAction {
-	private final TransFormula m_AssignmentOfReturn;
-	private final TransFormula m_LocalVarsAssignment;
+	private final TransFormula mAssignmentOfReturn;
+	private final TransFormula mLocalVarsAssignment;
 	
 	public BasicReturnAction(String preceedingProcedure, String succeedingProcedure, 
 			TransFormula assignmentOfReturn, TransFormula localVarsAssignmentOfCall) {
 		super(preceedingProcedure, succeedingProcedure);
-		m_AssignmentOfReturn = assignmentOfReturn;
-		m_LocalVarsAssignment = localVarsAssignmentOfCall;
+		mAssignmentOfReturn = assignmentOfReturn;
+		mLocalVarsAssignment = localVarsAssignmentOfCall;
 	}
 
 	@Override
 	public TransFormula getAssignmentOfReturn() {
-		return m_AssignmentOfReturn;
+		return mAssignmentOfReturn;
 	}
 
 	@Override
 	public TransFormula getLocalVarsAssignmentOfCall() {
-		return m_LocalVarsAssignment;
+		return mLocalVarsAssignment;
 	}
 }

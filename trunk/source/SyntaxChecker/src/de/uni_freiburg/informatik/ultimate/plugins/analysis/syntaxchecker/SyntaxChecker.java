@@ -62,7 +62,7 @@ public class SyntaxChecker implements IAnalysis {
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 	
-	private final FilenameExtractionObserver m_FilenameExtractionObserver = 
+	private final FilenameExtractionObserver mFilenameExtractionObserver = 
 			new FilenameExtractionObserver();
 	
 	@Override
@@ -90,7 +90,7 @@ public class SyntaxChecker implements IAnalysis {
 	}
 	@Override
 	public List<IObserver> getObservers() {
-		return Arrays.asList((new IObserver[]{ m_FilenameExtractionObserver }));
+		return Arrays.asList((new IObserver[]{ mFilenameExtractionObserver }));
 	}
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
@@ -118,7 +118,7 @@ public class SyntaxChecker implements IAnalysis {
 	private void doSyntaxCheck() throws IOException {
 		final String toolCommandError = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
-		final String filename = m_FilenameExtractionObserver.getFilename();
+		final String filename = mFilenameExtractionObserver.getFilename();
 		
 		final boolean removeFilename = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_RemoveFilename);
@@ -223,7 +223,7 @@ public class SyntaxChecker implements IAnalysis {
 
 	@Override
 	public String getFileName() {
-		return m_FilenameExtractionObserver.getFilename();
+		return mFilenameExtractionObserver.getFilename();
 	}
 
 	@Override

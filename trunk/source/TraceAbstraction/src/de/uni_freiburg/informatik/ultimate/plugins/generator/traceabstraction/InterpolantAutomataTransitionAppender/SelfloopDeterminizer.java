@@ -54,39 +54,39 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class SelfloopDeterminizer 
 					implements IStateDeterminizer<CodeBlock, IPredicate> {
 
-	IHoareTripleChecker m_HoareTriplechecker;
-	PowersetDeterminizer<CodeBlock, IPredicate> m_PowersetDeterminizer;
+	IHoareTripleChecker mHoareTriplechecker;
+	PowersetDeterminizer<CodeBlock, IPredicate> mPowersetDeterminizer;
 	
-	INestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
-	private final StateFactory<IPredicate> m_StateFactory;
-	IPredicate m_InterpolantAutomatonFinalState;
+	INestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
+	private final StateFactory<IPredicate> mStateFactory;
+	IPredicate mInterpolantAutomatonFinalState;
 	
-	DeterminizedState<CodeBlock, IPredicate> m_ResultFinalState;
+	DeterminizedState<CodeBlock, IPredicate> mResultFinalState;
 	
-	public int m_InternalSelfloop = 0;
-	public int m_InternalNonSelfloop = 0;
+	public int mInternalSelfloop = 0;
+	public int mInternalNonSelfloop = 0;
 
-	public int m_CallSelfloop = 0;
-	public int m_CallNonSelfloop = 0;
+	public int mCallSelfloop = 0;
+	public int mCallNonSelfloop = 0;
 
-	public int m_ReturnSelfloop = 0;
-	public int m_ReturnNonSelfloop = 0;
+	public int mReturnSelfloop = 0;
+	public int mReturnNonSelfloop = 0;
 	
 	public SelfloopDeterminizer(SmtManager mSmtManager,
 			TAPreferences taPreferences,
 			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom,
 			StateFactory<IPredicate> stateFactory) {
 		super();
-		m_HoareTriplechecker = new MonolithicHoareTripleChecker(
+		mHoareTriplechecker = new MonolithicHoareTripleChecker(
 				mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());
-		m_InterpolantAutomaton = interpolantAutom;
-		m_StateFactory = stateFactory;
-		m_PowersetDeterminizer = 
-			new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolantAutomaton, true, m_StateFactory);
-		for (IPredicate state : m_InterpolantAutomaton.getStates()) {
-			if (m_InterpolantAutomatonFinalState == null) {
-				if (m_InterpolantAutomaton.isFinal(state)) {
-					m_InterpolantAutomatonFinalState = state;
+		mInterpolantAutomaton = interpolantAutom;
+		mStateFactory = stateFactory;
+		mPowersetDeterminizer = 
+			new PowersetDeterminizer<CodeBlock, IPredicate>(mInterpolantAutomaton, true, mStateFactory);
+		for (IPredicate state : mInterpolantAutomaton.getStates()) {
+			if (mInterpolantAutomatonFinalState == null) {
+				if (mInterpolantAutomaton.isFinal(state)) {
+					mInterpolantAutomatonFinalState = state;
 				}
 			}
 			else {
@@ -94,15 +94,15 @@ public class SelfloopDeterminizer
 						" must have one final state");
 			}
 		}
-		m_ResultFinalState = 
-			new DeterminizedState<CodeBlock, IPredicate>(m_InterpolantAutomaton);
-		m_ResultFinalState.addPair(m_InterpolantAutomaton.getEmptyStackState(),
-											m_InterpolantAutomatonFinalState, m_InterpolantAutomaton);
+		mResultFinalState = 
+			new DeterminizedState<CodeBlock, IPredicate>(mInterpolantAutomaton);
+		mResultFinalState.addPair(mInterpolantAutomaton.getEmptyStackState(),
+											mInterpolantAutomatonFinalState, mInterpolantAutomaton);
 	}
 	
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate> initialState() {
-		return m_PowersetDeterminizer.initialState();
+		return mPowersetDeterminizer.initialState();
 	}
 	
 
@@ -110,26 +110,26 @@ public class SelfloopDeterminizer
 	public DeterminizedState<CodeBlock, IPredicate> internalSuccessor(
 						DeterminizedState<CodeBlock, IPredicate> detState,
 						CodeBlock symbol) {
-		if (detState == m_ResultFinalState) {
-			m_InternalSelfloop++;
-			return m_ResultFinalState;
+		if (detState == mResultFinalState) {
+			mInternalSelfloop++;
+			return mResultFinalState;
 		}
 		DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
-					m_PowersetDeterminizer.internalSuccessor(detState, symbol);
+					mPowersetDeterminizer.internalSuccessor(detState, symbol);
 		if (containsFinal(powersetSucc)) {
-			m_InternalNonSelfloop++;
-			return m_ResultFinalState;
+			mInternalNonSelfloop++;
+			return mResultFinalState;
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
 			IPredicate detStateContent = getState(detState);
-			Validity isInductive = m_HoareTriplechecker.checkInternal(detStateContent,
+			Validity isInductive = mHoareTriplechecker.checkInternal(detStateContent,
 													   (IInternalAction) symbol, detStateContent);
 			if (isInductive == Validity.VALID) {
-				m_InternalSelfloop++;
+				mInternalSelfloop++;
 				return detState;
 			}
 		}
-		m_InternalNonSelfloop++;
+		mInternalNonSelfloop++;
 		return powersetSucc;
 	}
 	
@@ -138,26 +138,26 @@ public class SelfloopDeterminizer
 	public DeterminizedState<CodeBlock, IPredicate> callSuccessor(
 						DeterminizedState<CodeBlock, IPredicate> detState,
 						CodeBlock symbol) {
-		if (detState == m_ResultFinalState) {
-			m_CallSelfloop++;
-			return m_ResultFinalState;
+		if (detState == mResultFinalState) {
+			mCallSelfloop++;
+			return mResultFinalState;
 		}
 		DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
-					m_PowersetDeterminizer.callSuccessor(detState, symbol);
+					mPowersetDeterminizer.callSuccessor(detState, symbol);
 		if (containsFinal(powersetSucc)) {
-			m_CallNonSelfloop++;
-			return m_ResultFinalState;
+			mCallNonSelfloop++;
+			return mResultFinalState;
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
 			IPredicate detStateContent = getState(detState);
-			Validity isInductive = m_HoareTriplechecker.checkCall(detStateContent,
+			Validity isInductive = mHoareTriplechecker.checkCall(detStateContent,
 										   (Call) symbol, detStateContent);
 			if (isInductive == Validity.VALID) {
-				m_CallSelfloop++;
+				mCallSelfloop++;
 				return detState;
 			}
 		}
-		m_CallNonSelfloop++;
+		mCallNonSelfloop++;
 		return powersetSucc;
 	}
 
@@ -167,30 +167,30 @@ public class SelfloopDeterminizer
 			DeterminizedState<CodeBlock, IPredicate> detState,
 			DeterminizedState<CodeBlock, IPredicate> derHier,
 			CodeBlock symbol) {
-		if (detState == m_ResultFinalState) {
-			m_ReturnSelfloop++;
-			return m_ResultFinalState;
+		if (detState == mResultFinalState) {
+			mReturnSelfloop++;
+			return mResultFinalState;
 		}
-		if (derHier == m_ResultFinalState) {
+		if (derHier == mResultFinalState) {
 			throw new AssertionError("I guess this never happens");
 		}		
 		DeterminizedState<CodeBlock, IPredicate> powersetSucc = 
-			m_PowersetDeterminizer.returnSuccessor(detState, derHier, symbol);
+			mPowersetDeterminizer.returnSuccessor(detState, derHier, symbol);
 		if (containsFinal(powersetSucc)) {
-			m_ReturnNonSelfloop++;
-			return m_ResultFinalState;
+			mReturnNonSelfloop++;
+			return mResultFinalState;
 		}
 		if (powersetSucc.isSubsetOf(detState)) {
 			IPredicate detStateContent = getState(detState);
 			IPredicate detHierContent = getState(derHier);
-			Validity isInductive = m_HoareTriplechecker.checkReturn(detStateContent, 
+			Validity isInductive = mHoareTriplechecker.checkReturn(detStateContent, 
 						detHierContent, (Return) symbol, detStateContent);
 			if (isInductive == Validity.VALID) {
-				m_ReturnSelfloop++;
+				mReturnSelfloop++;
 				return detState;
 			}
 		}
-		m_ReturnNonSelfloop++;
+		mReturnNonSelfloop++;
 		return powersetSucc;
 	}
 	
@@ -201,7 +201,7 @@ public class SelfloopDeterminizer
 						DeterminizedState<CodeBlock, IPredicate> detState) {
 		for (IPredicate down : detState.getDownStates()) {
 			for (IPredicate up : detState.getUpStates(down)) {
-				if (up == m_InterpolantAutomatonFinalState) {
+				if (up == mInterpolantAutomatonFinalState) {
 					return true;
 				}
 			}
@@ -223,7 +223,7 @@ public class SelfloopDeterminizer
 	@Override
 	public IPredicate getState(
 			DeterminizedState<CodeBlock, IPredicate> determinizedState) {
-		return determinizedState.getContent(m_StateFactory);
+		return determinizedState.getContent(mStateFactory);
 	}
 
 }

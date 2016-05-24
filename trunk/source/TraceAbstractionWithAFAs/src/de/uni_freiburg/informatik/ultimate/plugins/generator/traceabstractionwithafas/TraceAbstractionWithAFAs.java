@@ -50,10 +50,10 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
 	
-	private TraceAbstractionWithAFAsObserver m_Observer;
-	private ModelType m_InputDefinition;
+	private TraceAbstractionWithAFAsObserver mObserver;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider 		mServices;
-	private IToolchainStorage m_ToolchainStorage;
+	private IToolchainStorage mToolchainStorage;
 	
 	
 	@Override
@@ -83,13 +83,13 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		this.mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new TraceAbstractionWithAFAsObserver(mServices, m_ToolchainStorage);
-		return Collections.singletonList((IObserver) m_Observer);
+		mObserver = new TraceAbstractionWithAFAsObserver(mServices, mToolchainStorage);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 	
 	public ModelType getOutputDefinition() {
@@ -98,12 +98,12 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 		 * Adapt it if necessary. Otherwise remove this todo-tag.
 		 */
 		return new ModelType(Activator.s_PLUGIN_ID,
-				m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+				mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 	
 	@Override
 	public IElement getModel() {
-		return this.m_Observer.getRoot();
+		return this.mObserver.getRoot();
 	}
 	
 	@Override
@@ -119,7 +119,7 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
-		m_ToolchainStorage = storage;
+		mToolchainStorage = storage;
 		
 	}
 

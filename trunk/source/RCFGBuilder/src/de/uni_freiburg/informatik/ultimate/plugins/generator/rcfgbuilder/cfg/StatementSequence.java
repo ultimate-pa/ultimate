@@ -61,14 +61,14 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 		ENSURES, REQUIRES, IMPLEMENTATION, ASSERT
 	};
 
-	private final List<Statement> m_Statements = new ArrayList<Statement>();
-	private String m_PrettyPrintedStatements = "";
+	private final List<Statement> mStatements = new ArrayList<Statement>();
+	private String mPrettyPrintedStatements = "";
 	/**
-	 * m_Origin stores the origin of this InternalEdge, which could be either be
+	 * mOrigin stores the origin of this InternalEdge, which could be either be
 	 * the ensures specification, the requires specification or the
 	 * implementation of a program.
 	 */
-	private final Origin m_Origin;
+	private final Origin mOrigin;
 
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
@@ -79,24 +79,24 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, ILogger logger) {
 		super(serialNumber, source, target, logger);
-		m_Origin = Origin.IMPLEMENTATION;
+		mOrigin = Origin.IMPLEMENTATION;
 		this.addStatement(st);
 	}
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Origin origin, ILogger logger) {
 		super(serialNumber, source, target, logger);
-		m_Origin = origin;
+		mOrigin = origin;
 		this.addStatement(st);
 	}
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
 			ILogger logger) {
 		super(serialNumber, source, target, logger);
-		m_Statements.addAll(stmts);
-		m_Origin = origin;
-		m_PrettyPrintedStatements = "";
+		mStatements.addAll(stmts);
+		mOrigin = origin;
+		mPrettyPrintedStatements = "";
 		for (Statement st : stmts) {
-			m_PrettyPrintedStatements += BoogiePrettyPrinter.print(st);
+			mPrettyPrintedStatements += BoogiePrettyPrinter.print(st);
 		}
 	}
 	
@@ -108,13 +108,13 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "Statements") {
-			return m_Statements;
+			return mStatements;
 		} else if (field == "PrettyPrintedStatements") {
-			return m_PrettyPrintedStatements;
+			return mPrettyPrintedStatements;
 		} else if (field == "TransitionFormula") {
-			return m_TransitionFormula;
+			return mTransitionFormula;
 		} else if (field == "OccurenceInCounterexamples") {
-			return m_OccurenceInCounterexamples;
+			return mOccurenceInCounterexamples;
 		} else {
 			throw new UnsupportedOperationException("Unknown field " + field);
 		}
@@ -126,26 +126,26 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 			throw new IllegalArgumentException("Only Assignment, Assume and"
 					+ " HavocStatement allowed in InternalEdge.");
 		}
-		m_Statements.add(st);
-		m_PrettyPrintedStatements += BoogiePrettyPrinter.print(st);
+		mStatements.add(st);
+		mPrettyPrintedStatements += BoogiePrettyPrinter.print(st);
 	}
 
 	public List<Statement> getStatements() {
-		return m_Statements;
+		return mStatements;
 	}
 
 	public String getPrettyPrintedStatements() {
-		return m_PrettyPrintedStatements;
+		return mPrettyPrintedStatements;
 	}
 
 	public Origin getOrigin() {
-		return m_Origin;
+		return mOrigin;
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		for (Statement st : m_Statements) {
+		for (Statement st : mStatements) {
 			sb.append(BoogiePrettyPrinter.print(st));
 		}
 		return sb.toString();

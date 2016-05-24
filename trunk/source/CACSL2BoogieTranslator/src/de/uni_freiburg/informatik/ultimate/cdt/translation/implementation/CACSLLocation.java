@@ -42,7 +42,7 @@ public abstract class CACSLLocation implements Serializable, ILocation {
 	private static final long serialVersionUID = -5505219183722347819L;
 
 	/**
-	 * The m_CheckedSpecification of check/assertion applied to this node.
+	 * The mCheckedSpecification of check/assertion applied to this node.
 	 */
 	private final Check mCheckedSpecification;
 

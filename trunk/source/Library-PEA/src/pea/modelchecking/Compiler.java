@@ -90,8 +90,8 @@ import pea.Transition;
  */
 public class Compiler {
 
-    public static final String TESTFORM_FILE_ARG = "-tf";
-    public static final String MCFORM_FILE_ARG = "-mc";
+    public static final String TESTFORmFILE_ARG = "-tf";
+    public static final String MCFORmFILE_ARG = "-mc";
     public static final String PEA_ARG = "-pea";
     public static final String PEANET_ARG = "-net";
     public static final String PARALLEL_ARG = "-parallel";
@@ -267,7 +267,7 @@ public class Compiler {
         long durNormalForm = System.currentTimeMillis() - startTime;
 
         NodeList mcFormNodes = document
-                .getElementsByTagName(XMLTags.MCFORM_TAG);
+                .getElementsByTagName(XMLTags.MCFORmTAG);
         int mcFormsCount = mcFormNodes.getLength();
         for (int i = 0; i < mcFormsCount; i++) {
             MCTrace[] traces = traceConverter.convert((Element) mcFormNodes
@@ -402,9 +402,9 @@ public class Compiler {
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals(Compiler.LOG_CONFIG_FILE_ARG)) {
                 logConfigFile = args[++i];
-            } else if (args[i].equals(Compiler.TESTFORM_FILE_ARG)) {
+            } else if (args[i].equals(Compiler.TESTFORmFILE_ARG)) {
                 testFormFile = args[++i];
-            } else if (args[i].equals(Compiler.MCFORM_FILE_ARG)) {
+            } else if (args[i].equals(Compiler.MCFORmFILE_ARG)) {
                 mcFormFile = args[++i];
             } else if (args[i].equals(Compiler.PEA_ARG)) {
                 pea = args[++i];
@@ -462,9 +462,9 @@ public class Compiler {
      */
     private static void printUse() {
         System.out.println("Usage: java Compiler ["
-                + Compiler.TESTFORM_FILE_ARG
+                + Compiler.TESTFORmFILE_ARG
                 + " <File of test formula to compile>]\n"
-                + "                     [" + Compiler.MCFORM_FILE_ARG
+                + "                     [" + Compiler.MCFORmFILE_ARG
                 + " <File of compiled formula in model checkable form>]\n"
                 + "                     [" + Compiler.PEA_ARG
                 + " <Prefix for peas in peaNet files>]\n"
@@ -474,7 +474,7 @@ public class Compiler {
                 + " <true, if parallel composition needs to be computed>]\n" + "                     ["
                 + Compiler.LOG_CONFIG_FILE_ARG + " <Log configuration file>]\n"
                 + "                     [" + Compiler.HELP_ARG + "]");
-        System.out.println("Argument " + Compiler.TESTFORM_FILE_ARG
+        System.out.println("Argument " + Compiler.TESTFORmFILE_ARG
                 + " required");
     }
 }

@@ -116,39 +116,39 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 	/**
 	 * Holds information about the performance of the simulation after usage.
 	 */
-	private final SimulationPerformance m_Performance;
+	private final SimulationPerformance mPerformance;
 	/**
 	 * Timer used for responding to timeouts and operation cancellation.
 	 */
-	private final IProgressAwareTimer m_ProgressTimer;
+	private final IProgressAwareTimer mProgressTimer;
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
+	private INestedWordAutomatonOldApi<LETTER, STATE> mResult;
 	/**
 	 * The object that computes the SCCs of a given buechi automaton.
 	 */
-	private SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> m_SccComp;
+	private SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> mSccComp;
 	/**
 	 * The state factory used for creating states.
 	 */
-	private final StateFactory<STATE> m_StateFactory;
+	private final StateFactory<STATE> mStateFactory;
 	/**
 	 * If the simulation calculation should be optimized using SCC, Strongly
 	 * Connected Components.
 	 */
-	private boolean m_UseSCCs;
+	private boolean mUseSCCs;
 	/**
 	 * Comparator that compares two given vertices by their progress measure
 	 * whereas a higher measure gets favored before a smaller.<br/>
-	 * This is used to implement the @link {@link #m_WorkingList working list}
+	 * This is used to implement the @link {@link #mWorkingList working list}
 	 * as a priority queue that first works vertices with high measures.
 	 */
-	private VertexPmReverseComparator<LETTER, STATE> m_VertexComp;
+	private VertexPmReverseComparator<LETTER, STATE> mVertexComp;
 	/**
 	 * The internal working list of the simulation that, in general, gets
 	 * initiated with vertices that have priority 1. It contains vertices that
@@ -157,7 +157,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * The list is implemented as priority queue that first works vertices with
 	 * the highest progress measure.
 	 */
-	private PriorityQueue<Vertex<LETTER, STATE>> m_WorkingList;
+	private PriorityQueue<Vertex<LETTER, STATE>> mWorkingList;
 
 	/**
 	 * Creates a new simulation that initiates all needed data structures and
@@ -181,15 +181,15 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final ESimulationType simType) throws AutomataOperationCanceledException {
-		m_ProgressTimer = progressTimer;
-		m_Logger = logger;
-		m_UseSCCs = useSCCs;
-		m_StateFactory = stateFactory;
-		m_VertexComp = new VertexPmReverseComparator<>();
+		mProgressTimer = progressTimer;
+		mLogger = logger;
+		mUseSCCs = useSCCs;
+		mStateFactory = stateFactory;
+		mVertexComp = new VertexPmReverseComparator<>();
 
-		m_SccComp = null;
+		mSccComp = null;
 
-		m_Performance = new SimulationPerformance(simType, useSCCs);
+		mPerformance = new SimulationPerformance(simType, useSCCs);
 	}
 
 	/**
@@ -203,19 +203,19 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             framework.
 	 */
 	public void doSimulation() throws AutomataOperationCanceledException {
-		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL);
-		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
+		mPerformance.startTimeMeasure(ETimeMeasure.OVERALL);
+		mPerformance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
-		if (m_UseSCCs) { // calculate reduction with SCC
-			m_Performance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
+		if (mUseSCCs) { // calculate reduction with SCC
+			mPerformance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(getGameGraph());
-			m_SccComp = new SccComputation<>(m_Logger, succProvider, sccFactory, getGameGraph().getSize(),
+			mSccComp = new SccComputation<>(mLogger, succProvider, sccFactory, getGameGraph().getSize(),
 					getGameGraph().getVertices());
 
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
-					m_SccComp.getSCCs()).iterator();
-			m_Performance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
+					mSccComp.getSCCs()).iterator();
+			mPerformance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
 			int amountOfSCCs = 0;
 			while (iter.hasNext()) {
 				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
@@ -223,27 +223,27 @@ public abstract class ASimulation<LETTER, STATE> {
 				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
 				amountOfSCCs++;
 			}
-			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSCCs);
+			mPerformance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSCCs);
 		} else { // calculate reduction w/o SCCs
 			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
-			m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
-			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
+			mPerformance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			mPerformance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
-		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
-		m_Result = getGameGraph().generateAutomatonFromGraph();
+		mPerformance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
+		mResult = getGameGraph().generateAutomatonFromGraph();
 
-		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL);
+		long duration = mPerformance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = m_Performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
+		long durationGraph = mPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
-			m_Performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
+			mPerformance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
 		}
-		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
-		m_Performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
+		mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, getGameGraph().getSize());
+		mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
 
-		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
+		mLogger.info((this.mUseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
 
 	/**
@@ -252,7 +252,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return The resulting possible reduced buechi automaton.
 	 */
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 	/**
@@ -261,7 +261,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return The performance of the simulation.
 	 */
 	public SimulationPerformance getSimulationPerformance() {
-		return m_Performance;
+		return mPerformance;
 	}
 
 	/**
@@ -270,7 +270,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return The state factory used for creating states.
 	 */
 	public StateFactory<STATE> getStateFactory() {
-		return m_StateFactory;
+		return mStateFactory;
 	}
 
 	/*
@@ -358,7 +358,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            Vertex to add
 	 */
 	protected void addVertexToWorkingList(final Vertex<LETTER, STATE> vertex) {
-		m_WorkingList.add(vertex);
+		mWorkingList.add(vertex);
 		vertex.setInWL(true);
 	}
 
@@ -538,7 +538,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * Creates and sets a new working list.
 	 */
 	protected void createWorkingList() {
-		m_WorkingList = new PriorityQueue<>(m_VertexComp);
+		mWorkingList = new PriorityQueue<>(mVertexComp);
 	}
 
 	/**
@@ -594,7 +594,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Initialize working list and the C value of all vertices
 		createWorkingList();
-		if (m_UseSCCs) {
+		if (mUseSCCs) {
 			for (Vertex<LETTER, STATE> v : scc) {
 				initWorkingListAndCWithVertex(v, localInfinity, scc);
 			}
@@ -608,8 +608,8 @@ public abstract class ASimulation<LETTER, STATE> {
 		}
 
 		// Work through the working list until its empty
-		while (!m_WorkingList.isEmpty()) {
-			m_Performance.increaseCountingMeasure(ECountingMeasure.SIMULATION_STEPS);
+		while (!mWorkingList.isEmpty()) {
+			mPerformance.increaseCountingMeasure(ECountingMeasure.SIMULATION_STEPS);
 
 			// Poll the current working vertex
 			Vertex<LETTER, STATE> v = pollVertexFromWorkingList();
@@ -644,7 +644,7 @@ public abstract class ASimulation<LETTER, STATE> {
 				predecessorsToConsider.addAll(game.getPushOverPredecessors(v));
 			}
 			for (Vertex<LETTER, STATE> w : predecessorsToConsider) {
-				if (m_UseSCCs && !scc.contains(w)) {
+				if (mUseSCCs && !scc.contains(w)) {
 					continue;
 				}
 
@@ -680,8 +680,8 @@ public abstract class ASimulation<LETTER, STATE> {
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
-				m_Logger.debug("Stopped in efficientLiftingAlgorithm");
+			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+				mLogger.debug("Stopped in efficientLiftingAlgorithm");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -700,7 +700,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return The logger used by the Ultimate framework.
 	 */
 	protected ILogger getLogger() {
-		return m_Logger;
+		return mLogger;
 	}
 
 	/**
@@ -711,7 +711,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *         cancellation.
 	 */
 	protected IProgressAwareTimer getProgressTimer() {
-		return m_ProgressTimer;
+		return mProgressTimer;
 	}
 
 	/**
@@ -722,7 +722,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *         automaton.
 	 */
 	protected SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> getSccComp() {
-		return m_SccComp;
+		return mSccComp;
 	}
 
 	/**
@@ -731,7 +731,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return The current working list of the simulation.
 	 */
 	protected PriorityQueue<Vertex<LETTER, STATE>> getWorkingList() {
-		return m_WorkingList;
+		return mWorkingList;
 	}
 
 	/**
@@ -804,7 +804,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		}
 
 		// Initialize C value of vertex
-		if (m_UseSCCs) {
+		if (mUseSCCs) {
 			vertex.setC(calcNghbCounter(vertex, localInfinity, scc));
 		} else {
 			if (getGameGraph().hasSuccessors(vertex)) {
@@ -824,7 +824,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *         false if not.
 	 */
 	protected boolean isUsingSCCs() {
-		return m_UseSCCs;
+		return mUseSCCs;
 	}
 
 	/**
@@ -834,7 +834,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return The head of the working list, or <tt>null</tt> if it is empty.
 	 */
 	protected Vertex<LETTER, STATE> pollVertexFromWorkingList() {
-		Vertex<LETTER, STATE> polledVertex = m_WorkingList.poll();
+		Vertex<LETTER, STATE> polledVertex = mWorkingList.poll();
 		if (polledVertex != null) {
 			polledVertex.setInWL(false);
 		}
@@ -850,7 +850,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            buechi automaton.
 	 */
 	protected void setResult(final INestedWordAutomatonOldApi<LETTER, STATE> result) {
-		m_Result = result;
+		mResult = result;
 	}
 
 	/**
@@ -862,7 +862,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected void setSccComp(
 			final SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> sccComp) {
-		m_SccComp = sccComp;
+		mSccComp = sccComp;
 	}
 
 	/**
@@ -874,7 +874,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            SCC, false if not.
 	 */
 	protected void setUseSCCs(final boolean useSCCs) {
-		m_UseSCCs = useSCCs;
+		mUseSCCs = useSCCs;
 	}
 
 	/**

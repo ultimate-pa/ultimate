@@ -47,12 +47,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_Input;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mInput;
+	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has
@@ -66,12 +66,12 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	public RemoveUnreachable(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa)
 			throws AutomataOperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Input = nwa;
-		m_Logger.info(startMessage());
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Input);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mInput = nwa;
+		mLogger.info(startMessage());
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mInput);
+		mLogger.info(exitMessage());
 	}
 	
 
@@ -83,80 +83,80 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Input "
-				+ m_Input.sizeInformation();
+				+ mInput.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
-				+ m_Result.sizeInformation();
+				+ mResult.sizeInformation();
 	}
 
 
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
-		return m_Result;
+		return mResult;
 	}
 
 	
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
-		if (m_Input instanceof INestedWordAutomatonOldApi) {
-			m_Logger.info("Start testing correctness of " + operationName());
-			// correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result)
+		if (mInput instanceof INestedWordAutomatonOldApi) {
+			mLogger.info("Start testing correctness of " + operationName());
+			// correct &= (ResultChecker.nwaLanguageInclusion(mInput, mResult)
 			// == null);
-			// correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Input)
+			// correct &= (ResultChecker.nwaLanguageInclusion(mResult, mInput)
 			// == null);
 			assert correct;
 			DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = 
 					(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(
-					m_Services, (INestedWordAutomatonOldApi) m_Input, false, false, false,
+					mServices, (INestedWordAutomatonOldApi) mInput, false, false, false,
 					false)).getResult();
 			correct &=
-			ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
+			ResultChecker.isSubset(reachalbeStatesCopy.getStates(),mResult.getStates());
 			assert correct;
 			correct &=
-			ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
+			ResultChecker.isSubset(mResult.getStates(),reachalbeStatesCopy.getStates());
 			assert correct;
 			for (STATE state : reachalbeStatesCopy.getStates()) {
 				for (OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
-					correct &= m_Result.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					correct &= mResult.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
 				for (OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
-					correct &= m_Result.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					correct &= mResult.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
 				for (OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
-					correct &= m_Result.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+					correct &= mResult.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
-				for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Result.internalSuccessors(state)) {
+				for (OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
 					correct &= reachalbeStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
-				for (OutgoingCallTransition<LETTER, STATE> outTrans : m_Result.callSuccessors(state)) {
+				for (OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
 					correct &= reachalbeStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
-				for (OutgoingReturnTransition<LETTER, STATE> outTrans : m_Result.returnSuccessors(state)) {
+				for (OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
 					correct &= reachalbeStatesCopy.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 					assert correct;
 				}
 				Set<STATE> rCSdownStates = reachalbeStatesCopy
 						.getDownStates(state);
-				Set<STATE> rCAdownStates = m_Result.getDownStates(state);
+				Set<STATE> rCAdownStates = mResult.getDownStates(state);
 				correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 				assert correct;
 				correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
 				assert correct;
 			}
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(m_Services, 
-						operationName() + "Failed", "", m_Input);
+				ResultChecker.writeToFileIfPreferred(mServices, 
+						operationName() + "Failed", "", mInput);
 			}
-			m_Logger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + operationName());
 		}
 		return correct;
 	}

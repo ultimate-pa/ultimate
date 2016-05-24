@@ -44,45 +44,45 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  */
 public class TraceAbstractionObserver implements IUnmanagedObserver {
 
-	private final ILogger m_Logger;
-	private final IUltimateServiceProvider m_Services;
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 	
-	private RootNode m_RcfgRootNode;
-	private RootNode m_BlockEncodedRcfgRootNode;
-	private IElement m_RootOfNewModel;
-	private WitnessNode m_WitnessNode;
-	private boolean m_LastModel = false;
-	private IToolchainStorage m_Storage;
-	private ModelType m_CurrentGraphType;
+	private RootNode mRcfgRootNode;
+	private RootNode mBlockEncodedRcfgRootNode;
+	private IElement mRootOfNewModel;
+	private WitnessNode mWitnessNode;
+	private boolean mLastModel = false;
+	private IToolchainStorage mStorage;
+	private ModelType mCurrentGraphType;
 
 
 	public TraceAbstractionObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
-		m_Services = services;
-		m_Storage = storage;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mServices = services;
+		mStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof RootNode) {
-			if (isOriginalRcfg(m_CurrentGraphType)) {
-				if (m_RcfgRootNode == null) {
-					m_RcfgRootNode = (RootNode) root;
+			if (isOriginalRcfg(mCurrentGraphType)) {
+				if (mRcfgRootNode == null) {
+					mRcfgRootNode = (RootNode) root;
 				} else {
 					throw new UnsupportedOperationException("two RCFG models form same source");
 				}
 			} 
-			if (isBlockEncodingRcfg(m_CurrentGraphType)) {
-				if (m_BlockEncodedRcfgRootNode == null) {
-					m_BlockEncodedRcfgRootNode = (RootNode) root;
+			if (isBlockEncodingRcfg(mCurrentGraphType)) {
+				if (mBlockEncodedRcfgRootNode == null) {
+					mBlockEncodedRcfgRootNode = (RootNode) root;
 				} else {
 					throw new UnsupportedOperationException("two RCFG models form same source");
 				}
 			}
 		}
-		if (m_CurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
-			if (m_WitnessNode == null) {
-				m_WitnessNode = (WitnessNode) root;
+		if (mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
+			if (mWitnessNode == null) {
+				mWitnessNode = (WitnessNode) root;
 			} else {
 				throw new UnsupportedOperationException("two witness models");
 			}
@@ -100,26 +100,26 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-		if (m_LastModel) {
+		if (mLastModel) {
 			final RootNode rcfgRootNode;
-			if (m_BlockEncodedRcfgRootNode != null) {
-				rcfgRootNode = m_BlockEncodedRcfgRootNode;
+			if (mBlockEncodedRcfgRootNode != null) {
+				rcfgRootNode = mBlockEncodedRcfgRootNode;
 			} else {
-				rcfgRootNode = m_RcfgRootNode;
+				rcfgRootNode = mRcfgRootNode;
 			}
 			
 			if (rcfgRootNode == null) {
 				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
 			} else {
 				NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
-				if (m_WitnessNode == null) {
+				if (mWitnessNode == null) {
 					witnessAutomaton = null;
 				} else {
-					m_Logger.warn("Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
-					witnessAutomaton = (new WitnessModelToAutomatonTransformer(m_WitnessNode, m_Services)).getResult();
+					mLogger.warn("Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+					witnessAutomaton = (new WitnessModelToAutomatonTransformer(mWitnessNode, mServices)).getResult();
 				}
-				TraceAbstractionStarter tas = new TraceAbstractionStarter(m_Services, m_Storage, rcfgRootNode, witnessAutomaton);
-				m_RootOfNewModel = tas.getRootOfNewModel();
+				TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode, witnessAutomaton);
+				mRootOfNewModel = tas.getRootOfNewModel();
 			}
 		}
 	}
@@ -128,14 +128,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	 * @return the root of the CFG.
 	 */
 	public IElement getRootOfNewModel() {
-		return m_RootOfNewModel;
+		return mRootOfNewModel;
 	}
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
-		m_CurrentGraphType = modelType;
+		mCurrentGraphType = modelType;
 		if (currentModelIndex == numberOfModels -1) {
-			m_LastModel = true;
+			mLastModel = true;
 		}
 	}
 

@@ -44,22 +44,22 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerator {
 	
-	int[] m_NontrivialModuleStages = new int[5];
-	LassoAnalysisResults m_LassoAnalysisResults = new LassoAnalysisResults();
-	private BackwardCoveringInformation m_BciFinite = new BackwardCoveringInformation(0, 0);
-	private BackwardCoveringInformation m_BciBuchi = new BackwardCoveringInformation(0, 0);
-	private int m_HighestRank = 0;
+	int[] mNontrivialModuleStages = new int[5];
+	LassoAnalysisResults mLassoAnalysisResults = new LassoAnalysisResults();
+	private BackwardCoveringInformation mBciFinite = new BackwardCoveringInformation(0, 0);
+	private BackwardCoveringInformation mBciBuchi = new BackwardCoveringInformation(0, 0);
+	private int mHighestRank = 0;
 	
-	private final List<PreprocessingBenchmark> m_PreprocessingBenchmarks = 
+	private final List<PreprocessingBenchmark> mPreprocessingBenchmarks = 
 			new ArrayList<PreprocessingBenchmark>();
-	private final List<TerminationAnalysisBenchmark> m_TerminationAnalysisBenchmarks =
+	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks =
 			new ArrayList<>();
-	private final List<NonterminationAnalysisBenchmark> m_NonterminationAnalysisBenchmarks =
+	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks =
 			new ArrayList<>();
-	private int m_LassoNonterminationAnalysisSAT = 0;
-	private int m_LassoNonterminationAnalysisUNSAT = 0;
-	private int m_LassoNonterminationAnalysisUNKOWN = 0;
-	private long m_LassoNonterminationAnalysisTime = 0;
+	private int mLassoNonterminationAnalysisSAT = 0;
+	private int mLassoNonterminationAnalysisUNSAT = 0;
+	private int mLassoNonterminationAnalysisUNKOWN = 0;
+	private long mLassoNonterminationAnalysisTime = 0;
 
 	
 	@Override
@@ -79,15 +79,15 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 	}
 
 	public void announceSuccessfullRefinementStage(int stage) {
-		m_NontrivialModuleStages[stage]++;
+		mNontrivialModuleStages[stage]++;
 	}
 	
 	public void addBackwardCoveringInformationFinite(BackwardCoveringInformation bci) {
-		m_BciFinite = new BackwardCoveringInformation(m_BciFinite, bci);
+		mBciFinite = new BackwardCoveringInformation(mBciFinite, bci);
 	}
 	
 	public void addBackwardCoveringInformationBuchi(BackwardCoveringInformation bci) {
-		m_BciBuchi = new BackwardCoveringInformation(m_BciBuchi, bci);
+		mBciBuchi = new BackwardCoveringInformation(mBciBuchi, bci);
 	}
 
 	@Override
@@ -102,27 +102,27 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 				throw new AssertionError("clock still running: " + key);
 			}
 		case BuchiCegarLoopBenchmark.s_HighestRank:
-			return m_HighestRank;
+			return mHighestRank;
 		case BuchiCegarLoopBenchmark.s_NontrivialModuleStages:
-			return m_NontrivialModuleStages;
+			return mNontrivialModuleStages;
 		case BuchiCegarLoopBenchmark.s_LassoAnalysisResults:
-			return m_LassoAnalysisResults;
+			return mLassoAnalysisResults;
 		case BuchiCegarLoopBenchmark.s_InterpolantCoveringCapabilityFinite:
-			return m_BciFinite;
+			return mBciFinite;
 		case BuchiCegarLoopBenchmark.s_InterpolantCoveringCapabilityBuchi:
-			return m_BciBuchi;
+			return mBciBuchi;
 		case BuchiCegarLoopBenchmark.s_LassoPreprocessingBenchmarks:
-			return m_PreprocessingBenchmarks;
+			return mPreprocessingBenchmarks;
 		case BuchiCegarLoopBenchmark.s_LassoTerminationAnalysisBenchmarks:
-			return m_TerminationAnalysisBenchmarks;
+			return mTerminationAnalysisBenchmarks;
 		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisSAT:
-			return m_LassoNonterminationAnalysisSAT;
+			return mLassoNonterminationAnalysisSAT;
 		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisUNSAT:
-			return m_LassoNonterminationAnalysisUNSAT;
+			return mLassoNonterminationAnalysisUNSAT;
 		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisUNKNOWN:
-			return m_LassoNonterminationAnalysisUNKOWN;
+			return mLassoNonterminationAnalysisUNKOWN;
 		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisTIME:
-			return m_LassoNonterminationAnalysisTime;
+			return mLassoNonterminationAnalysisTime;
 		default:
 			return super.getValue(key);
 		}
@@ -130,68 +130,68 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 
 	public void reportLassoAnalysis(LassoChecker lassoChecker) {
 		LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
-		m_PreprocessingBenchmarks.addAll(lassoChecker.getPreprocessingBenchmarks());
-		m_TerminationAnalysisBenchmarks.addAll(lassoChecker.getTerminationAnalysisBenchmarks());
-		m_NonterminationAnalysisBenchmarks.addAll(lassoChecker.getNonterminationAnalysisBenchmarks());
-		for (NonterminationAnalysisBenchmark nab : m_NonterminationAnalysisBenchmarks) {
+		mPreprocessingBenchmarks.addAll(lassoChecker.getPreprocessingBenchmarks());
+		mTerminationAnalysisBenchmarks.addAll(lassoChecker.getTerminationAnalysisBenchmarks());
+		mNonterminationAnalysisBenchmarks.addAll(lassoChecker.getNonterminationAnalysisBenchmarks());
+		for (NonterminationAnalysisBenchmark nab : mNonterminationAnalysisBenchmarks) {
 			switch (nab.getConstraintsSatisfiability()) {
 			case SAT:
-				m_LassoNonterminationAnalysisSAT++;
+				mLassoNonterminationAnalysisSAT++;
 				break;
 			case UNKNOWN:
-				m_LassoNonterminationAnalysisUNKOWN++;
+				mLassoNonterminationAnalysisUNKOWN++;
 				break;
 			case UNSAT:
-				m_LassoNonterminationAnalysisUNSAT++;
+				mLassoNonterminationAnalysisUNSAT++;
 				break;
 			default:
 				throw new AssertionError();
 			}
-			m_LassoNonterminationAnalysisTime += nab.getTime();
+			mLassoNonterminationAnalysisTime += nab.getTime();
 		}
 		ContinueDirective cd = lcr.getContinueDirective();
 		switch (cd) {
 
 		case REFINE_BOTH:
 			if (lcr.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
-				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopTerminating);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopTerminating);
 			} else {
 				assert (lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE);
 				assert (lcr.getLoopTermination() == SynthesisResult.TERMINATING);
-				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatInfeasibleLoopTerminating);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatInfeasibleLoopTerminating);
 			}
 			break;
 		case REFINE_BUCHI:
 			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
 			if (lcr.getLoopTermination() == SynthesisResult.TERMINATING) {
-				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopTerminating);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopTerminating);
 			} else {
 				assert lcr.getLassoTermination() == SynthesisResult.TERMINATING;
-				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_LassoTerminating);
+				mLassoAnalysisResults.increment(LassoAnalysisResults.s_LassoTerminating);
 			}
 			break;
 		case REFINE_FINITE:
 			if (lcr.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 				if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopInfeasible);
+					mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopInfeasible);
 				} else {
 					if (lcr.getLoopTermination() == SynthesisResult.NONTERMINATING) {
-						m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopNonterminating);
+						mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopNonterminating);
 					} else {
 						assert lcr.getLoopFeasibility() == TraceCheckResult.UNCHECKED
 								|| lcr.getLoopFeasibility() == TraceCheckResult.UNKNOWN
 								|| lcr.getLoopTermination() == SynthesisResult.UNCHECKED
 								|| lcr.getLoopTermination() == SynthesisResult.UNKNOWN
 								: "lasso checking: illegal case";
-						m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopUnknown);
+						mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopUnknown);
 					}
 				}
 			} else {
 				if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
-					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopInfeasible);
+					mLassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopInfeasible);
 				} else {
 					assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
-					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatenationInfeasible);
+					mLassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatenationInfeasible);
 				}
 			}
 			break;
@@ -201,7 +201,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lassoChecker.getNonTerminationArgument() != null;
 			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
-			m_LassoAnalysisResults.increment(LassoAnalysisResults.s_LassoNonterminating);
+			mLassoAnalysisResults.increment(LassoAnalysisResults.s_LassoNonterminating);
 			break;
 		case REPORT_UNKNOWN:
 			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
@@ -209,7 +209,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lassoChecker.getNonTerminationArgument() == null;
 			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
-			m_LassoAnalysisResults.increment(LassoAnalysisResults.s_TerminationUnknown);
+			mLassoAnalysisResults.increment(LassoAnalysisResults.s_TerminationUnknown);
 			break;
 		default:
 			throw new AssertionError("unknown case");
@@ -217,7 +217,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 	}
 
 	public void reportHighestRank(int highestRank) {
-		m_HighestRank = Math.max(m_HighestRank, highestRank);
+		mHighestRank = Math.max(mHighestRank, highestRank);
 	}
 	
 }

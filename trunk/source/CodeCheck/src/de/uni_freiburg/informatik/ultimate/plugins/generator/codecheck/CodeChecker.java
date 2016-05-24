@@ -48,13 +48,13 @@ import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
 
 public abstract class CodeChecker {
 
-	protected RootNode m_originalRoot;
-	protected SmtManager m_smtManager;
-	protected ImpRootNode m_graphRoot;
+	protected RootNode moriginalRoot;
+	protected SmtManager msmtManager;
+	protected ImpRootNode mgraphRoot;
 
 
 	protected IHoareTripleChecker _edgeChecker;
-	protected PredicateUnifier m_predicateUnifier;
+	protected PredicateUnifier mpredicateUnifier;
 
 	/*
 	 * Maps for storing edge check results. Not that in case of ImpulseChecker these really are valid, not sat, triples.
@@ -76,12 +76,12 @@ public abstract class CodeChecker {
 	public CodeChecker(IElement root, SmtManager smtManager, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
 			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
 		mLogger = logger;
-		this.m_smtManager = smtManager;
-		this.m_originalRoot = originalRoot;
-		this.m_graphRoot = graphRoot;
+		this.msmtManager = smtManager;
+		this.moriginalRoot = originalRoot;
+		this.mgraphRoot = graphRoot;
 
 		this._edgeChecker = edgeChecker;
-		this.m_predicateUnifier = predicateUnifier;
+		this.mpredicateUnifier = predicateUnifier;
 
 		this._graphWriter = graphWriter;
 	}
@@ -110,8 +110,8 @@ public abstract class CodeChecker {
 	 *            : The second Predicate.
 	 */
 	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
-		Term tvp = m_smtManager.getPredicateFactory().and(a, b);
-		return m_predicateUnifier.getOrConstructPredicate(tvp);
+		Term tvp = msmtManager.getPredicateFactory().and(a, b);
+		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
 	/**
@@ -121,8 +121,8 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicate(IPredicate a) {
-		Term tvp = m_smtManager.getPredicateFactory().not(a);
-		return m_predicateUnifier.getOrConstructPredicate(tvp);
+		Term tvp = msmtManager.getPredicateFactory().not(a);
+		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
 	/**
@@ -133,8 +133,8 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicateNoPU(IPredicate a) {
-		final Term negation = m_smtManager.getPredicateFactory().not(a);
-		return m_smtManager.getPredicateFactory().newPredicate(negation);
+		final Term negation = msmtManager.getPredicateFactory().not(a);
+		return msmtManager.getPredicateFactory().newPredicate(negation);
 	}
 
 
@@ -150,7 +150,7 @@ public abstract class CodeChecker {
 
 	public void debug() {
 		visited.clear();
-		dfs(m_graphRoot);
+		dfs(mgraphRoot);
 	}
 
 	protected boolean debugNode(AnnotatedProgramPoint node) {
@@ -172,15 +172,15 @@ public abstract class CodeChecker {
 		 * node.getOutgoingNodes()); display +=
 		 * String.format("connected Fr: %s\n", node.getIncomingNodes());
 		 */
-		// if (node.m_outgoingReturnCallPreds != null &&
-		// node.m_outgoingReturnCallPreds.size() > 0) {
+		// if (node.moutgoingReturnCallPreds != null &&
+		// node.moutgoingReturnCallPreds.size() > 0) {
 		// display += String.format("outGoing: %s\n",
-		// node.m_outgoingReturnCallPreds);
+		// node.moutgoingReturnCallPreds);
 		// }
-		// if (node.m_nodesThatThisIsReturnCallPredOf != null &&
-		// node.m_nodesThatThisIsReturnCallPredOf.size() > 0) {
+		// if (node.mnodesThatThisIsReturnCallPredOf != null &&
+		// node.mnodesThatThisIsReturnCallPredOf.size() > 0) {
 		// display += String.format("inHyperEdges: %s\n",
-		// node.m_nodesThatThisIsReturnCallPredOf);
+		// node.mnodesThatThisIsReturnCallPredOf);
 		// }
 		if (display.length() > 0) {
 			display = String.format("%s\nNode %s:\n", message, node) + display;

@@ -52,13 +52,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	protected final AutomataLibraryServices m_Services;
-	protected final ILogger m_Logger;
+	protected final AutomataLibraryServices mServices;
+	protected final ILogger mLogger;
 	
-	private final Set<STATE> m_NondeterministicSuccessorOfAccepting = new HashSet<>();
+	private final Set<STATE> mNondeterministicSuccessorOfAccepting = new HashSet<>();
 
-	private boolean m_Result;
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwa;
+	private boolean mResult;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mNwa;
 	
 	
 	@Override
@@ -70,32 +70,32 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_Nwa.sizeInformation();
+			mNwa.sizeInformation();
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Operand is " 
-					+ (m_Result ? "" : "not") + "semideterministic."
-					+ " There are " + m_NondeterministicSuccessorOfAccepting + 
+					+ (mResult ? "" : "not") + "semideterministic."
+					+ " There are " + mNondeterministicSuccessorOfAccepting + 
 					"nondeterministic non-strict successor of accepting states."; 
 	}
 	
 	
 	public IsSemiDeterministic(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		if (input instanceof NestedWordAutomatonReachableStates) {
-			m_Nwa = (NestedWordAutomatonReachableStates<LETTER, STATE>) input;
+			mNwa = (NestedWordAutomatonReachableStates<LETTER, STATE>) input;
 		} else {
-			m_Nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, input);
+			mNwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, input);
 		}
-		m_Logger.info(startMessage());
+		mLogger.info(startMessage());
 		iterate();
-		m_Result = m_NondeterministicSuccessorOfAccepting.isEmpty();
-		m_Logger.info(exitMessage());
+		mResult = mNondeterministicSuccessorOfAccepting.isEmpty();
+		mLogger.info(exitMessage());
 	}
 	
 	public void iterate() {
@@ -111,10 +111,10 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 		}
 		while (!worklist.isEmpty()) {
 			DoubleDecker<STATE> dd = worklist.remove();
-			if (isNondeterministic(dd, m_Nwa)) {
-				m_NondeterministicSuccessorOfAccepting.add(dd.getUp());
+			if (isNondeterministic(dd, mNwa)) {
+				mNondeterministicSuccessorOfAccepting.add(dd.getUp());
 			}
-			Set<DoubleDecker<STATE>> succs = getNonCallSuccessors(dd, m_Nwa);
+			Set<DoubleDecker<STATE>> succs = getNonCallSuccessors(dd, mNwa);
 			for (DoubleDecker<STATE> succ : succs) {
 				if (!visited.contains(succ)) {
 					worklist.add(succ);
@@ -130,10 +130,10 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 		}
 		while (!worklist.isEmpty()) {
 			DoubleDecker<STATE> dd = worklist.remove();
-			if (isNondeterministic(dd, m_Nwa)) {
-				m_NondeterministicSuccessorOfAccepting.add(dd.getUp());
+			if (isNondeterministic(dd, mNwa)) {
+				mNondeterministicSuccessorOfAccepting.add(dd.getUp());
 			}
-			Set<DoubleDecker<STATE>> succs = getNonReturnSuccessors(dd, m_Nwa);
+			Set<DoubleDecker<STATE>> succs = getNonReturnSuccessors(dd, mNwa);
 			for (DoubleDecker<STATE> succ : succs) {
 				if (!visited.contains(succ)) {
 					worklist.add(succ);
@@ -146,8 +146,8 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 	
 	private Set<DoubleDecker<STATE>> getFinalDoubleDeckers() {
 		Set<DoubleDecker<STATE>> result = new HashSet<>();
-		for (STATE fin : m_Nwa.getFinalStates()) {
-			for (STATE down : m_Nwa.getDownStates(fin)) {
+		for (STATE fin : mNwa.getFinalStates()) {
+			for (STATE down : mNwa.getDownStates(fin)) {
 				result.add(new DoubleDecker<STATE>(down, fin));
 			}
 		}
@@ -253,7 +253,7 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 	
 	@Override
 	public Boolean getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 

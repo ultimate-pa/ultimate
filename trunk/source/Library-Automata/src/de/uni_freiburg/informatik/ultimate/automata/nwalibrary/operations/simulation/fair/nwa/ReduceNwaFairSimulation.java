@@ -60,7 +60,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
@@ -139,7 +139,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 						new FairNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
-		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 
 	/*
@@ -151,12 +151,12 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 */
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
 		// Simply returns true in any case. The only method that currently
 		// exists for checking the result needs very long and we do not want to
 		// slow progress.
 		boolean correct = true;
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 

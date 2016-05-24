@@ -50,17 +50,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
 
 public class IndexAnalyzer2 {
-	private final ILogger m_Logger;
-	private final boolean m_IsStem;
+	private final ILogger mLogger;
+	private final boolean mIsStem;
 	private final SetOfDoubletons<Term> neitherInvarNorOutvarDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> inVarDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> outVarDoubletons = new SetOfDoubletons<>();
-	private final Term m_Term;
-	private final Script m_Script;
-	private final Boogie2SMT m_boogie2smt;
-	private final TransFormulaLR m_TransFormula;
-	private final ArrayList<Term> m_AdditionalEqualities;
-	private final ArrayList<Term> m_AdditionalNotequals;
+	private final Term mTerm;
+	private final Script mScript;
+	private final Boogie2SMT mboogie2smt;
+	private final TransFormulaLR mTransFormula;
+	private final ArrayList<Term> mAdditionalEqualities;
+	private final ArrayList<Term> mAdditionalNotequals;
 	
 	private final SetOfDoubletons<Term> distinctDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> equalDoubletons = new SetOfDoubletons<>();
@@ -70,40 +70,40 @@ public class IndexAnalyzer2 {
 	 */
 	private final SetOfDoubletons<Term> ignoredDoubletons = new SetOfDoubletons<>();
 	
-	private final IndexSupportingInvariantAnalysis m_IndexSupportingInvariantAnalysis;
+	private final IndexSupportingInvariantAnalysis mIndexSupportingInvariantAnalysis;
 	
-	private final boolean m_UseArrayIndexSupportingInvariants = true;
+	private final boolean mUseArrayIndexSupportingInvariants = true;
 	
 	public IndexAnalyzer2(Term term, HashRelation<TermVariable, 
 			ArrayIndex> array2Indices, 
 			Boogie2SMT boogie2smt, TransFormulaLR tf, 
 			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, boolean isStem, ILogger logger) {
 		super();
-		m_Logger = logger;
-		m_IsStem = isStem;
-		m_Term = term;
-		m_boogie2smt = boogie2smt;
-		m_Script = boogie2smt.getScript();
-		m_TransFormula = tf;
-		m_IndexSupportingInvariantAnalysis = indexSupportingInvariantAnalysis;
-		m_AdditionalEqualities = new ArrayList<>();
-		m_AdditionalNotequals = new ArrayList<>();
+		mLogger = logger;
+		mIsStem = isStem;
+		mTerm = term;
+		mboogie2smt = boogie2smt;
+		mScript = boogie2smt.getScript();
+		mTransFormula = tf;
+		mIndexSupportingInvariantAnalysis = indexSupportingInvariantAnalysis;
+		mAdditionalEqualities = new ArrayList<>();
+		mAdditionalNotequals = new ArrayList<>();
 		analyze(array2Indices);
-		m_Logger.info(equalDoubletons.size() + " equalDoubletons");
-		m_Logger.info(distinctDoubletons.size() + " distinctDoubletons");
-		m_Logger.info(unknownDoubletons.size() + " unknownDoubletons");
-		m_Logger.info(ignoredDoubletons.size() + " ignoredDoubletons");
+		mLogger.info(equalDoubletons.size() + " equalDoubletons");
+		mLogger.info(distinctDoubletons.size() + " distinctDoubletons");
+		mLogger.info(unknownDoubletons.size() + " unknownDoubletons");
+		mLogger.info(ignoredDoubletons.size() + " ignoredDoubletons");
 	}
 	
 	
 	private void addDistinctDoubleton(Doubleton<Term> doubleton) {
 		distinctDoubletons.addDoubleton(doubleton);
-		m_AdditionalNotequals.add(notEqualTerm(doubleton));
+		mAdditionalNotequals.add(notEqualTerm(doubleton));
 	}
 	
 	private void addEqualDoubleton(Doubleton<Term> doubleton) {
 		equalDoubletons.addDoubleton(doubleton);
-		m_AdditionalEqualities.add(equalTerm(doubleton));
+		mAdditionalEqualities.add(equalTerm(doubleton));
 	}
 	
 	private void addUnknownDoubleton(Doubleton<Term> doubleton) {
@@ -112,10 +112,10 @@ public class IndexAnalyzer2 {
 	
 	void analyze(HashRelation<TermVariable, ArrayIndex> array2Indices) {
 		Term termWithAdditionalInvariants;
-		if (m_UseArrayIndexSupportingInvariants) { 
-			termWithAdditionalInvariants = Util.and(m_Script, m_Term, getAdditionalConjunctsEqualities(), getAdditionalConjunctsNotEquals());
+		if (mUseArrayIndexSupportingInvariants) { 
+			termWithAdditionalInvariants = Util.and(mScript, mTerm, getAdditionalConjunctsEqualities(), getAdditionalConjunctsNotEquals());
 		} else {
-			termWithAdditionalInvariants = m_Term;
+			termWithAdditionalInvariants = mTerm;
 		}
 		Set<TermVariable> varsInTerm = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
 		
@@ -142,13 +142,13 @@ public class IndexAnalyzer2 {
 				}
 			}
 		}
-		if (!m_IsStem) {
+		if (!mIsStem) {
 			processDoubletonsWithArrayIndexInvariants(inVarDoubletons);
 		}
 		processDoubletonsWithArrayIndexInvariants(outVarDoubletons);
 		
 
-		if (m_IsStem) {
+		if (mIsStem) {
 			processDoubletonsWithOwnAnalysis(inVarDoubletons, termWithAdditionalInvariants);
 		} else {
 			// there are equal outVar doubletons that are not loop invariants
@@ -163,18 +163,18 @@ public class IndexAnalyzer2 {
 
 	private boolean isInvarPair(ArrayIndex fstIndex, ArrayIndex sndIndex) {
 		boolean fstIndexIsInvarIndex = 
-				TransFormulaUtils.allVariablesAreInVars(fstIndex, m_TransFormula);
+				TransFormulaUtils.allVariablesAreInVars(fstIndex, mTransFormula);
 		boolean sndIndexIsInvarIndex = 
-				TransFormulaUtils.allVariablesAreInVars(sndIndex, m_TransFormula);
+				TransFormulaUtils.allVariablesAreInVars(sndIndex, mTransFormula);
 		boolean isInvarPair = fstIndexIsInvarIndex && sndIndexIsInvarIndex;
 		return isInvarPair;
 	}
 	
 	private boolean isOutvarPair(ArrayIndex fstIndex, ArrayIndex sndIndex) {
 		boolean fstIndexIsOutvarIndex = 
-				TransFormulaUtils.allVariablesAreOutVars(fstIndex, m_TransFormula);
+				TransFormulaUtils.allVariablesAreOutVars(fstIndex, mTransFormula);
 		boolean sndIndexIsOutvarIndex = 
-				TransFormulaUtils.allVariablesAreOutVars(sndIndex, m_TransFormula);
+				TransFormulaUtils.allVariablesAreOutVars(sndIndex, mTransFormula);
 		boolean isOutvarPair = fstIndexIsOutvarIndex && sndIndexIsOutvarIndex;
 		return isOutvarPair;
 	}
@@ -182,30 +182,30 @@ public class IndexAnalyzer2 {
 
 
 	private void processDoubletonsWithOwnAnalysis(SetOfDoubletons<Term> doubletons, Term termWithAdditionalInvariants) {
-		m_Script.push(1);
+		mScript.push(1);
 		Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
-		allTvs.addAll(Utils.filter(m_TransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
-		allTvs.addAll(Utils.filter(m_TransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
-		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(m_Script, m_boogie2smt.getVariableManager(), allTvs);
-		SafeSubstitution subst = new SafeSubstitution(m_Script, substitutionMapping);
-		m_Script.assertTerm(subst.transform(termWithAdditionalInvariants));
+		allTvs.addAll(Utils.filter(mTransFormula.getInVarsReverseMapping().keySet(), TermVariable.class));
+		allTvs.addAll(Utils.filter(mTransFormula.getOutVarsReverseMapping().keySet(), TermVariable.class));
+		Map<Term, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, mboogie2smt.getVariableManager(), allTvs);
+		SafeSubstitution subst = new SafeSubstitution(mScript, substitutionMapping);
+		mScript.assertTerm(subst.transform(termWithAdditionalInvariants));
 		for (Doubleton<Term> Doubleton : doubletons.elements()) {
 			//todo ignore doubletons that are already there
 			Term equal = subst.transform(
-					SmtUtils.binaryEquality(m_Script, 
+					SmtUtils.binaryEquality(mScript, 
 							Doubleton.getOneElement(), Doubleton.getOtherElement()));
-			m_Script.push(1);
-			m_Script.assertTerm(equal);
-			LBool lbool = m_Script.checkSat();
-			m_Script.pop(1);
+			mScript.push(1);
+			mScript.assertTerm(equal);
+			LBool lbool = mScript.checkSat();
+			mScript.pop(1);
 			if (lbool == LBool.UNSAT) {
 				addDistinctDoubleton(Doubleton);
 			} else {
-				Term notEqual = SmtUtils.not(m_Script, equal);
-				m_Script.push(1);
-				m_Script.assertTerm(notEqual);
-				lbool = m_Script.checkSat();
-				m_Script.pop(1);
+				Term notEqual = SmtUtils.not(mScript, equal);
+				mScript.push(1);
+				mScript.assertTerm(notEqual);
+				lbool = mScript.checkSat();
+				mScript.pop(1);
 				if (lbool == LBool.UNSAT) {
 					addEqualDoubleton(Doubleton);
 				} else {
@@ -213,7 +213,7 @@ public class IndexAnalyzer2 {
 				}
 			}
 		}
-		m_Script.pop(1);
+		mScript.pop(1);
 	}
 	
 
@@ -224,11 +224,11 @@ public class IndexAnalyzer2 {
 			if (definingDoubleton.getOneElement() == definingDoubleton.getOtherElement()) {
 				// trivially equal
 				addEqualDoubleton(doubleton);
-			} else if (m_IndexSupportingInvariantAnalysis.isEqualDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
+			} else if (mIndexSupportingInvariantAnalysis.isEqualDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
 				addEqualDoubleton(doubleton);
-			} else if (m_IndexSupportingInvariantAnalysis.isDistinctDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
+			} else if (mIndexSupportingInvariantAnalysis.isDistinctDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
 				addDistinctDoubleton(doubleton);
-			} else if (m_IndexSupportingInvariantAnalysis.isUnknownDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
+			} else if (mIndexSupportingInvariantAnalysis.isUnknownDoubleton(definingDoubleton.getOneElement(), definingDoubleton.getOtherElement())) {
 				addUnknownDoubleton(doubleton);
 			} else {
 				throw new AssertionError("inVar (or outVar) doulbeton has to be in invariant anlysis");
@@ -239,11 +239,11 @@ public class IndexAnalyzer2 {
 
 
 	private Term equalTerm(Doubleton<Term> Doubleton) {
-		return SmtUtils.binaryEquality(m_Script, Doubleton.getOneElement(), Doubleton.getOtherElement());
+		return SmtUtils.binaryEquality(mScript, Doubleton.getOneElement(), Doubleton.getOtherElement());
 	}
 
 	private Term notEqualTerm(Doubleton<Term> Doubleton) {
-		return SmtUtils.not(m_Script, equalTerm(Doubleton));
+		return SmtUtils.not(mScript, equalTerm(Doubleton));
 	}
 	
 	
@@ -251,9 +251,9 @@ public class IndexAnalyzer2 {
 		Term oneElement = inVarDoubleton.getOneElement();
 		Term otherElement = inVarDoubleton.getOtherElement();
 		Term translatedOne = TransFormulaUtils.translateTermVariablesToDefinitions(
-				m_Script, m_TransFormula, oneElement);
+				mScript, mTransFormula, oneElement);
 		Term translatedOther = TransFormulaUtils.translateTermVariablesToDefinitions(
-				m_Script, m_TransFormula, otherElement);
+				mScript, mTransFormula, otherElement);
 		return new Doubleton<Term>(translatedOne, translatedOther);
 		
 	}
@@ -329,10 +329,10 @@ public class IndexAnalyzer2 {
 	}
 
 	public Term getAdditionalConjunctsEqualities() {
-		return Util.and(m_Script, m_AdditionalEqualities.toArray(new Term[m_AdditionalEqualities.size()]));
+		return Util.and(mScript, mAdditionalEqualities.toArray(new Term[mAdditionalEqualities.size()]));
 	}
 	
 	public Term getAdditionalConjunctsNotEquals() {
-		return Util.and(m_Script, m_AdditionalNotequals.toArray(new Term[m_AdditionalNotequals.size()]));
+		return Util.and(mScript, mAdditionalNotequals.toArray(new Term[mAdditionalNotequals.size()]));
 	}
 }

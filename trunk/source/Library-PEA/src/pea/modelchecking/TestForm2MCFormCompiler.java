@@ -207,7 +207,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
         this.logger.info("Starting compilation");
 
         NodeList testForms = this.document
-                .getElementsByTagName(XMLTags.TESTFORM_TAG);
+                .getElementsByTagName(XMLTags.TESTFORmTAG);
         if (testForms.getLength() != 1) {
             throw new RuntimeException("Testform count != 1 is not allowed");
         }
@@ -387,7 +387,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
         }
         Element node = (Element) actNode;
 
-        if (node.getNodeName().equals(XMLTags.TESTFORM_TAG)) {
+        if (node.getNodeName().equals(XMLTags.TESTFORmTAG)) {
             this.logger.debug("TestForm node, finding mcForm in children...");
             NodeList childList = node.getChildNodes();
             for (int i = 0; i < childList.getLength(); i++) {
@@ -477,7 +477,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
 
         if (!mcTraceNodeList.isEmpty()) {
             Element mcFormNode = this.document
-                    .createElement(XMLTags.MCFORM_TAG);
+                    .createElement(XMLTags.MCFORmTAG);
             Iterator mcTraceNodeIterator = mcTraceNodeList.iterator();
             while (mcTraceNodeIterator.hasNext()) {
                 Element actMCTraceNode = (Element) mcTraceNodeIterator.next();
@@ -506,7 +506,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
     protected Element createMCTrace(Element trace, String commonExitSync) {
         Element parentNode1 = (Element) trace.getParentNode();
         Element parentNode2 = null;
-        if (!parentNode1.getNodeName().equals(XMLTags.TESTFORM_TAG)) {
+        if (!parentNode1.getNodeName().equals(XMLTags.TESTFORmTAG)) {
             parentNode2 = (Element) parentNode1.getParentNode();
         }
         boolean traceIsFirstChild = this.isFirstChild(trace);
@@ -658,7 +658,7 @@ public class TestForm2MCFormCompiler extends Formula2NFCompiler {
     }
 
     protected boolean isFormulaElement(Node node) {
-        return node.getNodeName().equals(XMLTags.TESTFORM_TAG);
+        return node.getNodeName().equals(XMLTags.TESTFORmTAG);
     }
 
     protected boolean isCorrectOperator(String operator) {

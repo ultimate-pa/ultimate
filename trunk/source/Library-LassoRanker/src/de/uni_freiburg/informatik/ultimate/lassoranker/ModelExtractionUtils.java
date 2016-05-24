@@ -64,7 +64,7 @@ public class ModelExtractionUtils {
 	
 	public static final long s_randomSeed = 80085;
 
-	protected static final int s_num_of_simultaneous_simplification_tests = 4;
+	protected static final int s_numof_simultaneous_simplification_tests = 4;
 	
 	/**
 	 * Convert a constant term retrieved from a model valuation to a Rational
@@ -135,7 +135,7 @@ public class ModelExtractionUtils {
 	 *             if valuation generation or conversion fails
 	 */
 	public static Map<Term, Rational> getValuation(Script script, Collection<Term> vars) throws TermException {
-		// assert m_script.checkSat() == LBool.SAT;
+		// assert mscript.checkSat() == LBool.SAT;
 		Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
 		if (!vars.isEmpty()) {
 			Map<Term, Term> val = script.getValue(vars.toArray(new Term[vars.size()]));
@@ -167,7 +167,7 @@ public class ModelExtractionUtils {
 	 *            the list of variables that can be set to 0
 	 * @param logger
 	 * 			ILogger to which we write information about the simplification.
-	 * @return the number of pops required on m_script
+	 * @return the number of pops required on mscript
 	 */
 	@Deprecated
 	protected int simplifyAssignment(Script script, ArrayList<Term> variables, ILogger logger) {
@@ -237,7 +237,7 @@ public class ModelExtractionUtils {
 					not_zero_vars.remove(entry.getKey());
 				}
 			}
-			if (not_zero_vars.size() <= s_num_of_simultaneous_simplification_tests) {
+			if (not_zero_vars.size() <= s_numof_simultaneous_simplification_tests) {
 				break;
 			}
 			if (!services.getProgressMonitorService().continueProcessing()) {
@@ -253,8 +253,8 @@ public class ModelExtractionUtils {
 				// Shuffle the variable list for better effect
 				Collections.shuffle(vars, rnd);
 
-				Term[] disj = new Term[s_num_of_simultaneous_simplification_tests];
-				for (int j = 0; j < s_num_of_simultaneous_simplification_tests; ++j) {
+				Term[] disj = new Term[s_numof_simultaneous_simplification_tests];
+				for (int j = 0; j < s_numof_simultaneous_simplification_tests; ++j) {
 					disj[j] = script.term("=", vars.get(j), zero);
 				}
 				script.assertTerm(Util.or(script, disj));
@@ -281,13 +281,13 @@ public class ModelExtractionUtils {
 
 		// Send stats to the logger
 		logger.info("Simplification made " + checkSat_calls + " calls to the SMT solver.");
-		int num_zero_vars = 0;
+		int numzero_vars = 0;
 		for (Map.Entry<Term, Rational> entry : val.entrySet()) {
 			if (entry.getValue().equals(Rational.ZERO)) {
-				++num_zero_vars;
+				++numzero_vars;
 			}
 		}
-		logger.info("Setting " + num_zero_vars + " variables to zero.");
+		logger.info("Setting " + numzero_vars + " variables to zero.");
 
 		return val;
 	}

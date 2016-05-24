@@ -40,19 +40,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 public class TerminationAnalysisResult extends AbstractResult implements
 		IResultWithSeverity {
 	
-	private final TERMINATION m_Termination;
-	private final String m_LongDescription;
+	private final TERMINATION mTermination;
+	private final String mLongDescription;
 	
 	public TerminationAnalysisResult(String plugin, TERMINATION termination,
 			String longDescription) {
 		super(plugin);
-		m_Termination = termination;
-		m_LongDescription = longDescription;
+		mTermination = termination;
+		mLongDescription = longDescription;
 	}
 	
 
 	public TERMINATION getTermination() {
-		return m_Termination;
+		return mTermination;
 	}
 
 	public enum TERMINATION {
@@ -64,7 +64,7 @@ public class TerminationAnalysisResult extends AbstractResult implements
 	@Override
 	public String getShortDescription() {
 		final String shortDescription;
-		switch (m_Termination) {
+		switch (mTermination) {
 		case NONTERMINATING:
 			shortDescription = "Nontermination possible";
 			break;
@@ -82,13 +82,13 @@ public class TerminationAnalysisResult extends AbstractResult implements
 
 	@Override
 	public String getLongDescription() {
-		return m_LongDescription;
+		return mLongDescription;
 	}
 
 	@Override
 	public Severity getSeverity() {
 		Severity severity;
-		switch (m_Termination) {
+		switch (mTermination) {
 		case NONTERMINATING:
 			severity = Severity.ERROR;
 			break;

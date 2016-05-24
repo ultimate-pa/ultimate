@@ -40,14 +40,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  */
 public abstract class NonCoreBooleanSubTermTransformer {
 	
-	private NonCoreBooleanSubtermTransformerHelper m_TransformerHelper;
+	private NonCoreBooleanSubtermTransformerHelper mTransformerHelper;
 	
 	public Term transform(Term term) {
 		if (!term.getSort().getName().equals("Bool")) {
 			throw new IllegalArgumentException("Input term of sort Bool");
 		}
-		m_TransformerHelper = new NonCoreBooleanSubtermTransformerHelper();
-		Term result = m_TransformerHelper.transform(term);
+		mTransformerHelper = new NonCoreBooleanSubtermTransformerHelper();
+		Term result = mTransformerHelper.transform(term);
 		return result;
 	}
 

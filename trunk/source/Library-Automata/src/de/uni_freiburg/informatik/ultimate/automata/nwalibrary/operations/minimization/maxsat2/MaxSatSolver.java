@@ -16,23 +16,23 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
 
 public class MaxSatSolver<V> {
 	
-	private final Map<V,VariableStatus> m_Variables = new HashMap<V,VariableStatus>();
-	private final Set<V> m_UnsetVariables = new LinkedHashSet<V>();
-	private final LinkedHashSet<Clause> m_ClausesWithOneUnsetVariable = new LinkedHashSet<>();
+	private final Map<V,VariableStatus> mVariables = new HashMap<V,VariableStatus>();
+	private final Set<V> mUnsetVariables = new LinkedHashSet<V>();
+	private final LinkedHashSet<Clause> mClausesWithOneUnsetVariable = new LinkedHashSet<>();
 	
-	private final HashRelation<V, Clause> m_OccursPositive = new HashRelation<>();
-	private final HashRelation<V, Clause> m_OccursNegative = new HashRelation<>();
-	private int m_Decisions = 0;
-	private boolean m_ConjunctionEquivalentToFalse = false;
-	private List<Clause> m_ClausesMarkedForRemoval = new ArrayList<>();
-	private int m_WrongDecisions = 0;
+	private final HashRelation<V, Clause> mOccursPositive = new HashRelation<>();
+	private final HashRelation<V, Clause> mOccursNegative = new HashRelation<>();
+	private int mDecisions = 0;
+	private boolean mConjunctionEquivalentToFalse = false;
+	private List<Clause> mClausesMarkedForRemoval = new ArrayList<>();
+	private int mWrongDecisions = 0;
 	
 	public void addVariable(V var) {
-		VariableStatus oldValue = m_Variables.put(var, VariableStatus.UNSET);
+		VariableStatus oldValue = mVariables.put(var, VariableStatus.UNSET);
 		if (oldValue != null) {
 			throw new IllegalArgumentException("variable already added " + var);
 		}
-		m_UnsetVariables.add(var);
+		mUnsetVariables.add(var);
 	}
 	
 	public void addHornClause(V[] negativeAtoms, V positiveAtom) {
@@ -44,25 +44,25 @@ public class MaxSatSolver<V> {
 		}
 		final Clause clause = new Clause(positiveAtoms, negativeAtoms);
 				
-		if (m_Decisions > 0) {
+		if (mDecisions > 0) {
 			throw new UnsupportedOperationException("only legal before decisions were made");
 		}
 		if (clause.isEquivalentToTrue()) {
 			// clause is true and can be ignored if we will never backtrack
 		} else {
 			if (clause.isEquivalentToFalse()) {
-				m_ConjunctionEquivalentToFalse = true;
+				mConjunctionEquivalentToFalse = true;
 				throw new UnsupportedOperationException("clause set is equivalent to false");
 			} else  {
 				assert clause.getUnsetAtoms() > 0;
 				for (V var :clause.getNegativeAtoms()) {
-					m_OccursNegative.addPair(var, clause);
+					mOccursNegative.addPair(var, clause);
 				}
 				for (V var :clause.getPositiveAtoms()) {
-					m_OccursPositive.addPair(var, clause);
+					mOccursPositive.addPair(var, clause);
 				}
 				if (clause.getUnsetAtoms() == 1) {
-					m_ClausesWithOneUnsetVariable.add(clause);
+					mClausesWithOneUnsetVariable.add(clause);
 				}
 			}
 		}
@@ -71,9 +71,9 @@ public class MaxSatSolver<V> {
 	public void solve() {
 		propagateAll();
 		makeClauseRemovalPersistent();
-		while(!m_UnsetVariables.isEmpty()) {
+		while(!mUnsetVariables.isEmpty()) {
 			decideOne();
-			if (m_ConjunctionEquivalentToFalse == true) {
+			if (mConjunctionEquivalentToFalse == true) {
 				throw new AssertionError("unsolvable");
 			}
 		}
@@ -82,23 +82,23 @@ public class MaxSatSolver<V> {
 	
 	
 	public Map<V, VariableStatus> getValues() {
-		return Collections.unmodifiableMap(m_Variables);
+		return Collections.unmodifiableMap(mVariables);
 	}
 
 	public void decideOne() {
-		m_Decisions++;
-		Iterator<V> it = m_UnsetVariables.iterator();
+		mDecisions++;
+		Iterator<V> it = mUnsetVariables.iterator();
 		V var = it.next();
 		it.remove();
 		setVariable(var, true, false);
-		if (m_ConjunctionEquivalentToFalse) {
+		if (mConjunctionEquivalentToFalse) {
 			backtrack(var);
-			m_Variables.put(var, VariableStatus.FALSE);
+			mVariables.put(var, VariableStatus.FALSE);
 		} else {
 			propagateAll();
-			if (m_ConjunctionEquivalentToFalse) {
+			if (mConjunctionEquivalentToFalse) {
 				backtrack(var);
-				m_Variables.put(var, VariableStatus.FALSE);
+				mVariables.put(var, VariableStatus.FALSE);
 			} else {
 				makeClauseRemovalPersistent();
 			}
@@ -107,26 +107,26 @@ public class MaxSatSolver<V> {
 	}
 	
 	private void makeClauseRemovalPersistent() {
-		removeClauses(m_ClausesMarkedForRemoval);
-		m_ClausesMarkedForRemoval = new ArrayList<>();
+		removeClauses(mClausesMarkedForRemoval);
+		mClausesMarkedForRemoval = new ArrayList<>();
 	}
 
 	private void backtrack(V var) {
-		m_WrongDecisions ++;
-		m_ClausesMarkedForRemoval = new ArrayList<>();
-		m_ConjunctionEquivalentToFalse = false;
+		mWrongDecisions ++;
+		mClausesMarkedForRemoval = new ArrayList<>();
+		mConjunctionEquivalentToFalse = false;
 		setVariable(var, false, true);
-		assert (m_ConjunctionEquivalentToFalse == false) : "resetting variable did not help";
+		assert (mConjunctionEquivalentToFalse == false) : "resetting variable did not help";
 	}
 
 	public void propagateAll() {
-		while (!m_ClausesWithOneUnsetVariable.isEmpty() && !m_ConjunctionEquivalentToFalse) {
+		while (!mClausesWithOneUnsetVariable.isEmpty() && !mConjunctionEquivalentToFalse) {
 			propagateOne();
 		}
 	}
 	
 	public void propagateOne() {
-		final Iterator<MaxSatSolver<V>.Clause> it = m_ClausesWithOneUnsetVariable.iterator();
+		final Iterator<MaxSatSolver<V>.Clause> it = mClausesWithOneUnsetVariable.iterator();
 		final Clause clause = it.next();
 		it.remove();
 		final Pair<V, Boolean> unsetAtom = clause.getUnsetAtom();
@@ -140,7 +140,7 @@ public class MaxSatSolver<V> {
 		} else {
 			newStatus = VariableStatus.FALSE;
 		}
-		final VariableStatus oldStatus = m_Variables.put(var, newStatus);
+		final VariableStatus oldStatus = mVariables.put(var, newStatus);
 		if (oldStatus == null) {
 			throw new IllegalArgumentException("unknown variable " + var);
 		} else if (oldStatus != VariableStatus.UNSET) {
@@ -150,32 +150,32 @@ public class MaxSatSolver<V> {
 				throw new IllegalArgumentException("variable already set " + var);
 			}
 		}
-		m_UnsetVariables.remove(var);
-		for (Clause clause : m_OccursPositive.getImage(var)) {
+		mUnsetVariables.remove(var);
+		for (Clause clause : mOccursPositive.getImage(var)) {
 			clause.updateClauseStatus();
 			if (clause.isEquivalentToFalse()) {
-				m_ConjunctionEquivalentToFalse = true;
+				mConjunctionEquivalentToFalse = true;
 			} else if (clause.isEquivalentToTrue()) {
-				m_ClausesMarkedForRemoval.add(clause);
-				m_ClausesWithOneUnsetVariable.remove(clause);
+				mClausesMarkedForRemoval.add(clause);
+				mClausesWithOneUnsetVariable.remove(clause);
 			} else {
 				if (clause.getUnsetAtoms() == 1) {
-					m_ClausesWithOneUnsetVariable.add(clause);
+					mClausesWithOneUnsetVariable.add(clause);
 				} else {
 					assert clause.getUnsetAtoms() > 1;
 				}
 			}
 		}
-		for (Clause clause : m_OccursNegative.getImage(var)) {
+		for (Clause clause : mOccursNegative.getImage(var)) {
 			clause.updateClauseStatus();
 			if (clause.isEquivalentToFalse()) {
-				m_ConjunctionEquivalentToFalse = true;
+				mConjunctionEquivalentToFalse = true;
 			} else if (clause.isEquivalentToTrue()) {
-				m_ClausesMarkedForRemoval.add(clause);
-				m_ClausesWithOneUnsetVariable.remove(clause);
+				mClausesMarkedForRemoval.add(clause);
+				mClausesWithOneUnsetVariable.remove(clause);
 			} else {
 				if (clause.getUnsetAtoms() == 1) {
-					m_ClausesWithOneUnsetVariable.add(clause);
+					mClausesWithOneUnsetVariable.add(clause);
 				} else {
 					assert clause.getUnsetAtoms() > 1;
 				}
@@ -191,12 +191,12 @@ public class MaxSatSolver<V> {
 	
 
 	public void removeClause(Clause clause) {
-		m_ClausesWithOneUnsetVariable.remove(clause);
-		for (V var : clause.m_PositiveAtoms) {
-			m_OccursPositive.removePair(var, clause);
+		mClausesWithOneUnsetVariable.remove(clause);
+		for (V var : clause.mPositiveAtoms) {
+			mOccursPositive.removePair(var, clause);
 		}
-		for (V var : clause.m_NegativeAtoms) {
-			m_OccursNegative.removePair(var, clause);
+		for (V var : clause.mNegativeAtoms) {
+			mOccursNegative.removePair(var, clause);
 		}
 
 	}
@@ -206,15 +206,15 @@ public class MaxSatSolver<V> {
 	enum ClauseStatus { TRUE, FALSE, NEITHER }
 	
 	private class Clause {
-		private final V[] m_PositiveAtoms;
-		private final V[] m_NegativeAtoms;
-		private ClauseStatus m_ClauseStatus;
-		private int m_UnsetAtoms;
+		private final V[] mPositiveAtoms;
+		private final V[] mNegativeAtoms;
+		private ClauseStatus mClauseStatus;
+		private int mUnsetAtoms;
 		
 		public Clause(V[] positiveAtoms, V[] negativeAtoms) {
 			super();
-			m_PositiveAtoms = positiveAtoms;
-			m_NegativeAtoms = negativeAtoms;
+			mPositiveAtoms = positiveAtoms;
+			mNegativeAtoms = negativeAtoms;
 			updateClauseStatus();
 		}
 		
@@ -222,72 +222,72 @@ public class MaxSatSolver<V> {
 		 * TODO: do update only for newly changed variable
 		 */
 		public void updateClauseStatus() {
-			m_ClauseStatus = ClauseStatus.NEITHER;
-			m_UnsetAtoms = 0;
-			for (V var : m_PositiveAtoms) {
-				VariableStatus status = m_Variables.get(var);
+			mClauseStatus = ClauseStatus.NEITHER;
+			mUnsetAtoms = 0;
+			for (V var : mPositiveAtoms) {
+				VariableStatus status = mVariables.get(var);
 				switch (status) {
 				case FALSE:
 					// do nothing
 					break;
 				case TRUE:
-					m_ClauseStatus = ClauseStatus.TRUE;
+					mClauseStatus = ClauseStatus.TRUE;
 					break;
 				case UNSET:
-					m_UnsetAtoms++;
+					mUnsetAtoms++;
 					break;
 				default:
 					throw new AssertionError();
 				}
 			}
-			for (V var : m_NegativeAtoms) {
-				VariableStatus status = m_Variables.get(var);
+			for (V var : mNegativeAtoms) {
+				VariableStatus status = mVariables.get(var);
 				switch (status) {
 				case FALSE:
-					m_ClauseStatus = ClauseStatus.TRUE;
+					mClauseStatus = ClauseStatus.TRUE;
 					break;
 				case TRUE:
 					// do nothing
 					break;
 				case UNSET:
-					m_UnsetAtoms++;
+					mUnsetAtoms++;
 					break;
 				default:
 					throw new AssertionError();
 				}
 			}
-			assert m_UnsetAtoms >= 0 && m_UnsetAtoms <= m_PositiveAtoms.length + m_NegativeAtoms.length;
-			if (m_UnsetAtoms == 0 && m_ClauseStatus != ClauseStatus.TRUE) {
-				m_ClauseStatus = ClauseStatus.FALSE;
+			assert mUnsetAtoms >= 0 && mUnsetAtoms <= mPositiveAtoms.length + mNegativeAtoms.length;
+			if (mUnsetAtoms == 0 && mClauseStatus != ClauseStatus.TRUE) {
+				mClauseStatus = ClauseStatus.FALSE;
 			}
 		}
 		
 		public boolean isEquivalentToFalse() {
-			return m_ClauseStatus == ClauseStatus.FALSE;
+			return mClauseStatus == ClauseStatus.FALSE;
 		}
 		
 		public boolean isEquivalentToTrue() {
-			return m_ClauseStatus == ClauseStatus.TRUE;
+			return mClauseStatus == ClauseStatus.TRUE;
 		}
 		
 		public int getUnsetAtoms() {
-			return m_UnsetAtoms;
+			return mUnsetAtoms;
 		}
 
 		public V[] getPositiveAtoms() {
-			return m_PositiveAtoms;
+			return mPositiveAtoms;
 		}
 
 		public V[] getNegativeAtoms() {
-			return m_NegativeAtoms;
+			return mNegativeAtoms;
 		}
 		
 		public Pair<V,Boolean> getUnsetAtom() {
-			if (m_UnsetAtoms != 1) {
+			if (mUnsetAtoms != 1) {
 				throw new IllegalArgumentException("not only one unset Atom");
 			} else {
-				for (V var : m_PositiveAtoms) {
-					VariableStatus status = m_Variables.get(var);
+				for (V var : mPositiveAtoms) {
+					VariableStatus status = mVariables.get(var);
 					switch (status) {
 					case TRUE:
 					case FALSE:
@@ -299,8 +299,8 @@ public class MaxSatSolver<V> {
 						throw new AssertionError();
 					}
 				}
-				for (V var : m_NegativeAtoms) {
-					VariableStatus status = m_Variables.get(var);
+				for (V var : mNegativeAtoms) {
+					VariableStatus status = mVariables.get(var);
 					switch (status) {
 					case TRUE:
 					case FALSE:
@@ -319,20 +319,20 @@ public class MaxSatSolver<V> {
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
-			Iterator<V> it = Arrays.asList(m_NegativeAtoms).iterator();
+			Iterator<V> it = Arrays.asList(mNegativeAtoms).iterator();
 			while(it.hasNext()) {
 				sb.append(it.next());
 				if (it.hasNext()) {
 					sb.append(" /\\ ");
 				}
 			}
-			if (m_NegativeAtoms.length > 0 && m_PositiveAtoms.length > 0) {
+			if (mNegativeAtoms.length > 0 && mPositiveAtoms.length > 0) {
 				sb.append(" --> ");
 			}
-			if (m_PositiveAtoms.length == 0) {
+			if (mPositiveAtoms.length == 0) {
 				// do nothing
-			} else if (m_PositiveAtoms.length == 1) {
-				sb.append(m_PositiveAtoms[0]);
+			} else if (mPositiveAtoms.length == 1) {
+				sb.append(mPositiveAtoms[0]);
 			} else {
 				throw new UnsupportedOperationException(
 						"more than one positive literal is not supported at the moment");

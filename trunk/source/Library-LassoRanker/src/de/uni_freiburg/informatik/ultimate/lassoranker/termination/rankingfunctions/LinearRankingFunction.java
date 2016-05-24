@@ -47,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class LinearRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = 5376322220596462295L;
 	
-	private final AffineFunction m_ranking;
+	private final AffineFunction mranking;
 	
 	public LinearRankingFunction(AffineFunction ranking) {
-		m_ranking = ranking;
+		mranking = ranking;
 	}
 	
 	@Override
@@ -60,21 +60,21 @@ public class LinearRankingFunction extends RankingFunction {
 	
 	@Override
 	public Set<RankVar> getVariables() {
-		return Collections.unmodifiableSet(m_ranking.getVariables());
+		return Collections.unmodifiableSet(mranking.getVariables());
 	}
 	
 	public AffineFunction getComponent() {
-		return m_ranking;
+		return mranking;
 	}
 	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("f");
-		if (!m_ranking.isConstant()) {
+		if (!mranking.isConstant()) {
 			sb.append("(");
 			boolean first = true;
-			for (RankVar var : m_ranking.getVariables()) {
+			for (RankVar var : mranking.getVariables()) {
 				if (!first) {
 					sb.append(", ");
 				}
@@ -84,18 +84,18 @@ public class LinearRankingFunction extends RankingFunction {
 			sb.append(")");
 		}
 		sb.append(" = ");
-		sb.append(m_ranking);
+		sb.append(mranking);
 		return sb.toString();
 	}
 	
 	@Override
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
-		return new Term[] { m_ranking.asTerm(script) };
+		return new Term[] { mranking.asTerm(script) };
 	}
 	
 	@Override
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
-		BigInteger i = m_ranking.evaluate(assignment).ceil().numerator();
+		BigInteger i = mranking.evaluate(assignment).ceil().numerator();
 		if (i.compareTo(BigInteger.ZERO) < 0) {
 			i = BigInteger.ZERO;
 		}

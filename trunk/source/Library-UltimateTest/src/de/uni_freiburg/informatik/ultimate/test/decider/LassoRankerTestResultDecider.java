@@ -64,19 +64,19 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 		IGNORE, TERMINATION, TERMINATIONDERIVABLE, NONTERMINATION, NONTERMINATIONDERIVABLE, UNKNOWN, ERROR, UNSPECIFIED
 	}
 
-	private String m_input_file_name;
-	private ExpectedResult m_expected_result;
+	private String minput_file_name;
+	private ExpectedResult mexpected_result;
 
 	public LassoRankerTestResultDecider(File inputFile) {
-		m_input_file_name = inputFile.getName();
-		m_expected_result = checkExpectedResult(inputFile);
+		minput_file_name = inputFile.getName();
+		mexpected_result = checkExpectedResult(inputFile);
 	}
 
 	/**
 	 * Return the expected result
 	 */
 	public ExpectedResult getExpectedResult() {
-		return m_expected_result;
+		return mexpected_result;
 	}
 
 	/**
@@ -129,20 +129,20 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 		boolean fail = false;
 
 		String result = "";
-		if (m_expected_result == null) {
+		if (mexpected_result == null) {
 			customMessages.add("Could not understand the specification of the " + "results.");
 			fail = true;
-		} else if (m_expected_result == ExpectedResult.UNSPECIFIED) {
+		} else if (mexpected_result == ExpectedResult.UNSPECIFIED) {
 			customMessages.add("No expected results defined in the input file");
 		} else {
 			Map<String, List<IResult>> resultMap = resultService.getResults();
 			List<IResult> results = resultMap.get("de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker");
 			if (results != null) {
 				IResult lastResult = results.get(results.size() - 1);
-				customMessages.add("Expected Result: " + m_expected_result.toString());
+				customMessages.add("Expected Result: " + mexpected_result.toString());
 				customMessages.add("Results: " + results.toString());
 
-				switch (m_expected_result) {
+				switch (mexpected_result) {
 				case TERMINATION:
 					fail = lastResult instanceof NonTerminationArgumentResult;
 					break;
@@ -171,9 +171,9 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 			}
 		}
 
-		setResultCategory(result + " (Expected: " + m_expected_result + ")");
+		setResultCategory(result + " (Expected: " + mexpected_result + ")");
 		setResultMessage(customMessages.toString());
-		TestUtil.logResults(logger, m_input_file_name, fail, customMessages, resultService);
+		TestUtil.logResults(logger, minput_file_name, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 

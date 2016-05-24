@@ -59,30 +59,30 @@ public class SingleUpdateNormalFormTransformer {
 	
 	static final String s_AuxArray = "auxArray";
 	
-	private final List<ArrayUpdate> m_ArrayUpdates;
-	private List<Term> m_RemainderTerms;
-	private Map<Term, Term> m_Store2TermVariable;
-	private final Script m_Script;
-	private final FreshAuxVarGenerator m_FreshAuxVarGenerator;
+	private final List<ArrayUpdate> mArrayUpdates;
+	private List<Term> mRemainderTerms;
+	private Map<Term, Term> mStore2TermVariable;
+	private final Script mScript;
+	private final FreshAuxVarGenerator mFreshAuxVarGenerator;
 	
 	public SingleUpdateNormalFormTransformer(final Term input, Script script,
 			FreshAuxVarGenerator freshAuxVarGenerator) {
-		m_Script = script;
-		m_FreshAuxVarGenerator = freshAuxVarGenerator;
-		m_ArrayUpdates = new ArrayList<ArrayUpdate>();
+		mScript = script;
+		mFreshAuxVarGenerator = freshAuxVarGenerator;
+		mArrayUpdates = new ArrayList<ArrayUpdate>();
 		Term[] conjuncts = SmtUtils.getConjuncts(input);
 		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
-		m_RemainderTerms = aue.getRemainingTerms();
-		m_ArrayUpdates.addAll(aue.getArrayUpdates());
-		m_Store2TermVariable = aue.getStore2TermVariable();
+		mRemainderTerms = aue.getRemainingTerms();
+		mArrayUpdates.addAll(aue.getArrayUpdates());
+		mStore2TermVariable = aue.getStore2TermVariable();
 		
 		while(true) {
-			if (!m_Store2TermVariable.isEmpty()) {
+			if (!mStore2TermVariable.isEmpty()) {
 				processNewArrayUpdates();
 			} else {
 				// add only one new update in one iteration since there
 				// might be terms of the form (store ...) = (store ...)
-				MultiDimensionalStore mdStore = extractStore(m_ArrayUpdates, m_RemainderTerms);
+				MultiDimensionalStore mdStore = extractStore(mArrayUpdates, mRemainderTerms);
 				if (mdStore == null) {
 					break;
 				} else {
@@ -90,27 +90,27 @@ public class SingleUpdateNormalFormTransformer {
 				}
 			}
 		}
-		assert m_Store2TermVariable.isEmpty();
+		assert mStore2TermVariable.isEmpty();
 	}
 	
 	/**
 	 * Construct auxiliary variable a_aux for store term.
-	 * Add array update a_aux = mdStore to m_ArrayUpdates
-	 * set m_Store2TermVariable to (mdStore, a_aux);
+	 * Add array update a_aux = mdStore to mArrayUpdates
+	 * set mStore2TermVariable to (mdStore, a_aux);
 	 */
 	private void processNewStore(
 			MultiDimensionalStore mdStore) {
 		Term oldArray = mdStore.getArray();
 		TermVariable auxArray;
-		auxArray = m_FreshAuxVarGenerator.constructFreshCopy(oldArray); 
-		assert m_Store2TermVariable.isEmpty();
-		m_Store2TermVariable = 
+		auxArray = mFreshAuxVarGenerator.constructFreshCopy(oldArray); 
+		assert mStore2TermVariable.isEmpty();
+		mStore2TermVariable = 
 				Collections.singletonMap((Term) mdStore.getStoreTerm(), (Term) auxArray);
 		{
-			Term newUpdate = m_Script.term("=", auxArray, mdStore.getStoreTerm());
+			Term newUpdate = mScript.term("=", auxArray, mdStore.getStoreTerm());
 			ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, newUpdate);
 			assert aue.getArrayUpdates().size() == 1;
-			m_ArrayUpdates.add(aue.getArrayUpdates().get(0));
+			mArrayUpdates.add(aue.getArrayUpdates().get(0));
 		}
 	}
 	
@@ -145,8 +145,8 @@ public class SingleUpdateNormalFormTransformer {
 	}
 	
 	private void processNewArrayUpdates() {
-		SafeSubstitution subst = new SafeSubstitution(m_Script, m_Store2TermVariable);
-		for (ArrayUpdate au : m_ArrayUpdates) {
+		SafeSubstitution subst = new SafeSubstitution(mScript, mStore2TermVariable);
+		for (ArrayUpdate au : mArrayUpdates) {
 			for (Term entry : au.getIndex()) {
 				Term newEntry = subst.transform(entry);
 				if (newEntry != entry) {
@@ -160,27 +160,27 @@ public class SingleUpdateNormalFormTransformer {
 		}
 		ArrayList<Term> newRemainderTerms = new ArrayList<Term>();
 		Map<Term, Term> newStore2TermVariable = new HashMap<Term, Term>();
-		for (Term term : m_RemainderTerms) {
+		for (Term term : mRemainderTerms) {
 			Term newTerm = subst.transform(term);
 			ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, newTerm);
 			assert aue.getArrayUpdates().size() == 0 || aue.getArrayUpdates().size() == 1;
 			if (aue.getArrayUpdates().isEmpty()) {
 				newRemainderTerms.add(newTerm);
 			} else {
-				m_ArrayUpdates.addAll(aue.getArrayUpdates());
+				mArrayUpdates.addAll(aue.getArrayUpdates());
 				newStore2TermVariable.putAll(aue.getStore2TermVariable());
 			}
 		}
-		m_RemainderTerms = newRemainderTerms;
-		m_Store2TermVariable = newStore2TermVariable;
+		mRemainderTerms = newRemainderTerms;
+		mStore2TermVariable = newStore2TermVariable;
 		
 	}
 	
 	private MultiDimensionalStore getNonUpdateStore(Term term) {
 		Term[] conjuncts = SmtUtils.getConjuncts(term);
 		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
-		Term remainder = Util.and(m_Script, aue.getRemainingTerms().toArray(new Term[0]));
-		remainder = (new SafeSubstitution(m_Script, aue.getStore2TermVariable())).transform(remainder);
+		Term remainder = Util.and(mScript, aue.getRemainingTerms().toArray(new Term[0]));
+		remainder = (new SafeSubstitution(mScript, aue.getStore2TermVariable())).transform(remainder);
 		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresDeep(remainder);
 		if (mdStores.isEmpty()) {
 			return null;
@@ -195,48 +195,48 @@ public class SingleUpdateNormalFormTransformer {
 //		auxArray = constructAuxiliaryVariable(oldArray);
 //		Map<Term, Term> substitutionMapping = 
 //				Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
-//		Term newTerm = (new SafeSubstitution(m_Script, substitutionMapping)).transform(term);
-//		return Util.and(m_Script, newTerm, m_Script.term("=", auxArray, arraryStore.getStoreTerm()));
+//		Term newTerm = (new SafeSubstitution(mScript, substitutionMapping)).transform(term);
+//		return Util.and(mScript, newTerm, mScript.term("=", auxArray, arraryStore.getStoreTerm()));
 //	}
 
 	public List<ArrayUpdate> getArrayUpdates() {
-		return Collections.unmodifiableList(m_ArrayUpdates);
+		return Collections.unmodifiableList(mArrayUpdates);
 	}
 
 	public Term getRemainderTerm() {
-		return Util.and(m_Script, m_RemainderTerms.toArray(new Term[m_RemainderTerms.size()]));
+		return Util.and(mScript, mRemainderTerms.toArray(new Term[mRemainderTerms.size()]));
 	}
 	
 	public Set<TermVariable> getAuxVars() {
-		return m_FreshAuxVarGenerator.getAuxVars();
+		return mFreshAuxVarGenerator.getAuxVars();
 	}
 	
 	public static class FreshAuxVarGenerator {
-		private final Map<TermVariable, Term> m_FreshCopyToOriginal = new HashMap<TermVariable, Term>();
-		private final MultiElementCounter<Term> m_FreshCopyCounter = new MultiElementCounter<>();
-		private final ReplacementVarFactory m_ReplacementVarFactory;
+		private final Map<TermVariable, Term> mFreshCopyToOriginal = new HashMap<TermVariable, Term>();
+		private final MultiElementCounter<Term> mFreshCopyCounter = new MultiElementCounter<>();
+		private final ReplacementVarFactory mReplacementVarFactory;
 		
 		public FreshAuxVarGenerator(ReplacementVarFactory replacementVarFactory) {
 			super();
-			m_ReplacementVarFactory = replacementVarFactory;
+			mReplacementVarFactory = replacementVarFactory;
 		}
 
 		TermVariable constructFreshCopy(Term term) {
-			Term original = m_FreshCopyToOriginal.get(term);
+			Term original = mFreshCopyToOriginal.get(term);
 			if (original == null) {
 				// no original Term known use term itself as original
 				original = term;
 			}
-			Integer numberOfFreshCopy = m_FreshCopyCounter.increase(original);
+			Integer numberOfFreshCopy = mFreshCopyCounter.increase(original);
 			String nameOfFreshCopy = SmtUtils.removeSmtQuoteCharacters(original.toString()) + s_AuxArray + numberOfFreshCopy;
-			TermVariable freshCopy = m_ReplacementVarFactory.getOrConstructAuxVar(nameOfFreshCopy, term.getSort());
-			m_FreshCopyToOriginal.put(freshCopy, original);
+			TermVariable freshCopy = mReplacementVarFactory.getOrConstructAuxVar(nameOfFreshCopy, term.getSort());
+			mFreshCopyToOriginal.put(freshCopy, original);
 			return freshCopy;
 			
 		}
 		
 		public Set<TermVariable> getAuxVars() {
-			return m_FreshCopyToOriginal.keySet();
+			return mFreshCopyToOriginal.keySet();
 		}
 	}
 }

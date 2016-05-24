@@ -47,12 +47,12 @@ import java.util.Set;
  */
 public class NwaCacheBookkeeping<LETTER,STATE> {
 	
-	private final Map<STATE,Set<LETTER>> m_CachedInternal = new HashMap<STATE,Set<LETTER>>();
-	private final Map<STATE,Set<LETTER>> m_CachedCall = new HashMap<STATE,Set<LETTER>>();
-	private final Map<STATE,Map<STATE,Set<LETTER>>> m_CachedReturn = new HashMap<STATE,Map<STATE,Set<LETTER>>>();
+	private final Map<STATE,Set<LETTER>> mCachedInternal = new HashMap<STATE,Set<LETTER>>();
+	private final Map<STATE,Set<LETTER>> mCachedCall = new HashMap<STATE,Set<LETTER>>();
+	private final Map<STATE,Map<STATE,Set<LETTER>>> mCachedReturn = new HashMap<STATE,Map<STATE,Set<LETTER>>>();
 	
 	public boolean isCachedInternal(STATE state, LETTER letter) {
-		Set<LETTER> cbs = m_CachedInternal.get(state);
+		Set<LETTER> cbs = mCachedInternal.get(state);
 		if (cbs == null) {
 			return false;
 		} else {
@@ -61,7 +61,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 	}
 	
 	public boolean isCachedCall(STATE state, LETTER letter) {
-		Set<LETTER> cbs = m_CachedCall.get(state);
+		Set<LETTER> cbs = mCachedCall.get(state);
 		if (cbs == null) {
 			return false;
 		} else {
@@ -70,7 +70,7 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 	}
 	
 	public boolean isCachedReturn(STATE state, STATE hier, LETTER letter) {
-		Map<STATE, Set<LETTER>> hier2cbs = m_CachedReturn.get(state);
+		Map<STATE, Set<LETTER>> hier2cbs = mCachedReturn.get(state);
 		if (hier2cbs == null) {
 			return false;
 		} else {
@@ -84,30 +84,30 @@ public class NwaCacheBookkeeping<LETTER,STATE> {
 	}
 	
 	public void reportCachedInternal(STATE state, LETTER letter) {
-		Set<LETTER> cbs = m_CachedInternal.get(state);
+		Set<LETTER> cbs = mCachedInternal.get(state);
 		if (cbs == null) {
 			cbs = new HashSet<LETTER>();
-			m_CachedInternal.put(state, cbs);
+			mCachedInternal.put(state, cbs);
 		}
 		boolean modified = cbs.add(letter);
 		assert modified : "added to cache twice";
 	}
 	
 	public void reportCachedCall(STATE state, LETTER letter) {
-		Set<LETTER> cbs = m_CachedCall.get(state);
+		Set<LETTER> cbs = mCachedCall.get(state);
 		if (cbs == null) {
 			cbs = new HashSet<LETTER>();
-			m_CachedCall.put(state, cbs);
+			mCachedCall.put(state, cbs);
 		}
 		boolean modified = cbs.add(letter);
 		assert modified : "added to cache twice";
 	}
 	
 	public void reportCachedReturn(STATE state, STATE hier, LETTER letter) {
-		Map<STATE, Set<LETTER>> hier2cbs = m_CachedReturn.get(state);
+		Map<STATE, Set<LETTER>> hier2cbs = mCachedReturn.get(state);
 		if (hier2cbs == null) {
 			hier2cbs = new HashMap<STATE, Set<LETTER>>();
-			m_CachedReturn.put(state, hier2cbs);
+			mCachedReturn.put(state, hier2cbs);
 		}
 		Set<LETTER> cbs = hier2cbs.get(hier);
 		if (cbs == null) {

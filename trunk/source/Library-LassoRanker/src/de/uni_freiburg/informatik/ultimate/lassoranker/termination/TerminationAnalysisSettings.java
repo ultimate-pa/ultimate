@@ -60,9 +60,9 @@ public class TerminationAnalysisSettings implements Serializable {
 	 * supporting invariants.  Note that increasing this number will
 	 * dramatically increase runtime!
 	 * 
-	 * @see num_non_strict_invariants
+	 * @see numnon_strict_invariants
 	 */
-	public int num_strict_invariants = 1; // Default: 1
+	public int numstrict_invariants = 1; // Default: 1
 	
 	/**
 	 * Number of non-strict supporting invariants for each Motzkin
@@ -73,9 +73,9 @@ public class TerminationAnalysisSettings implements Serializable {
 	 * supporting invariants.  Note that increasing this number will
 	 * dramatically increase runtime!
 	 * 
-	 * @see num_strict_invariants
+	 * @see numstrict_invariants
 	 */
-	public int num_non_strict_invariants = 0; // Default: 0
+	public int numnon_strict_invariants = 0; // Default: 0
 	
 	/**
 	 * Consider only non-decreasing invariants?
@@ -117,8 +117,8 @@ public class TerminationAnalysisSettings implements Serializable {
 	 */
 	public TerminationAnalysisSettings(TerminationAnalysisSettings other) {
 		this.analysis = other.analysis;
-		this.num_strict_invariants = other.num_strict_invariants;
-		this.num_non_strict_invariants = other.num_non_strict_invariants;
+		this.numstrict_invariants = other.numstrict_invariants;
+		this.numnon_strict_invariants = other.numnon_strict_invariants;
 		this.nondecreasing_invariants = other.nondecreasing_invariants;
 		this.simplify_termination_argument =
 				other.simplify_termination_argument;
@@ -129,8 +129,8 @@ public class TerminationAnalysisSettings implements Serializable {
 	 * Only makes assertion calls.
 	 */
 	public void checkSanity() {
-		assert this.num_strict_invariants >= 0;
-		assert this.num_non_strict_invariants >= 0;
+		assert this.numstrict_invariants >= 0;
+		assert this.numnon_strict_invariants >= 0;
 	}
 	
 	/**
@@ -141,9 +141,9 @@ public class TerminationAnalysisSettings implements Serializable {
 		sb.append("Termination analysis: ");
 		sb.append(this.analysis);
 		sb.append("\nNumber of strict supporting invariants: ");
-		sb.append(this.num_strict_invariants);
+		sb.append(this.numstrict_invariants);
 		sb.append("\nNumber of non-strict supporting invariants: ");
-		sb.append(this.num_non_strict_invariants);
+		sb.append(this.numnon_strict_invariants);
 		sb.append("\nConsider only non-deceasing supporting invariants: ");
 		sb.append(this.nondecreasing_invariants);
 		sb.append("\nSimplify termination arguments: ");

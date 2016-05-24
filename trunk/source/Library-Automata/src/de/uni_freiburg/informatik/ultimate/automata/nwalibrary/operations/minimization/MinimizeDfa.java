@@ -57,22 +57,22 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @date 13.11.2011
  */
 public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
     /*_______________________________________________________________________*\
     \* FIELDS / ATTRIBUTES                                                   */
     
     /**
      * The jLogger instance.
      */
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
     /**
      * The resulting automaton.
      */
-    private NestedWordAutomaton<LETTER,STATE> m_Result;
+    private NestedWordAutomaton<LETTER,STATE> mResult;
     /**
      * The input automaton.
      */
-    private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
+    private INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
 
     /*_______________________________________________________________________*\
     \* CONSTRUCTORS                                                          */
@@ -86,26 +86,26 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
     public MinimizeDfa(AutomataLibraryServices services, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws AutomataLibraryException {
-    	m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-        if (new HasUnreachableStates<LETTER,STATE>(m_Services, operand)
+    	mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+        if (new HasUnreachableStates<LETTER,STATE>(mServices, operand)
 				.result()) {
 			throw new IllegalArgumentException("No unreachalbe states allowed");
 		}
-		m_Operand = operand;
-		m_Logger.info(startMessage());
+		mOperand = operand;
+		mLogger.info(startMessage());
 
 		ArrayList<STATE> states = new ArrayList<STATE>();
-		states.addAll(m_Operand.getStates());
+		states.addAll(mOperand.getStates());
 		boolean[][] table = initializeTable(states);
 		calculateTable(states, table);
 
-		if (m_Logger.isDebugEnabled()) {
+		if (mLogger.isDebugEnabled()) {
 			printTable(states, table);
 		}
 		generateResultAutomaton(states, table);
 
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	/*_______________________________________________________________________*\
@@ -130,7 +130,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			for (int i = 0; i < states.size(); i++) {
 				for (int j = 0; j < i; j++) { // for each (i, j)
 					if (!table[i][j]) { // if (i, j) not marked
-						for (LETTER s : m_Operand.getInternalAlphabet()) {
+						for (LETTER s : mOperand.getInternalAlphabet()) {
 							ArrayList<STATE> first = getSuccessors(states, s, i);
 							ArrayList<STATE> second = getSuccessors(states, s, j);
 							// if either i or j has no successors, for k mark
@@ -150,8 +150,8 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 						}
 					}
 				}
-				if (m_Services.getProgressMonitorService() != null
-						&& !m_Services.getProgressMonitorService().continueProcessing()) {
+				if (mServices.getProgressMonitorService() != null
+						&& !mServices.getProgressMonitorService().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
@@ -185,7 +185,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		// check successor pairs (i', j') for each k
 		// all successors of i for symbol k
 		ArrayList<STATE> first = new ArrayList<STATE>();
-		for(STATE state : m_Operand.succInternal(states.get(i), s)) {
+		for(STATE state : mOperand.succInternal(states.get(i), s)) {
 			first.add(state);
 		}
 		return first;
@@ -206,8 +206,8 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		for (int r = 0; r < states.size(); r++) {
 			for (int c = 0; c < r; c++) {
 				if (!table[r][c]
-						&& (m_Operand.getFinalStates().contains(states.get(r)) !=
-						m_Operand.getFinalStates().contains(states.get(c)))) {
+						&& (mOperand.getFinalStates().contains(states.get(r)) !=
+						mOperand.getFinalStates().contains(states.get(c)))) {
 					mark(table, r, c);
 				}
 			}
@@ -231,10 +231,10 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		Set<STATE> temp = new HashSet<STATE>();
 		HashMap<STATE,STATE> oldSNames2newSNames = new HashMap<STATE,STATE>();
 		@SuppressWarnings("unchecked")
-		StateFactory<STATE> snf = m_Operand.getStateFactory();
-        m_Result = new NestedWordAutomaton<LETTER,STATE>(
-        		m_Services, 
-                m_Operand.getInternalAlphabet(), null, null, snf);
+		StateFactory<STATE> snf = mOperand.getStateFactory();
+        mResult = new NestedWordAutomaton<LETTER,STATE>(
+        		mServices, 
+                mOperand.getInternalAlphabet(), null, null, snf);
 
 		for (int i = 0; i < states.size(); i++) {
 			if (marker[i]) {
@@ -249,10 +249,10 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					temp.add(states.get(j));
 					marker[j] = true;
                     if (!isFinal) {
-                        isFinal = m_Operand.isFinal(states.get(j));
+                        isFinal = mOperand.isFinal(states.get(j));
                     }
                     if (!isInitial) {
-                        isInitial = m_Operand.isInitial(states.get(j));
+                        isInitial = mOperand.isInitial(states.get(j));
                     }
 				}
 			}
@@ -260,17 +260,17 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			for (STATE c : temp) {
 				oldSNames2newSNames.put(c, minimizedStateName);
 			}
-			m_Result.addState(isInitial, isFinal, minimizedStateName);
+			mResult.addState(isInitial, isFinal, minimizedStateName);
 			marker[i] = true;
 		}
 
 		// add edges
-		for (STATE c : m_Operand.getStates()) {
-			for (LETTER s : m_Operand.getInternalAlphabet()) {
-				for (STATE succ : m_Operand.succInternal(c, s)) {
+		for (STATE c : mOperand.getStates()) {
+			for (LETTER s : mOperand.getInternalAlphabet()) {
+				for (STATE succ : mOperand.succInternal(c, s)) {
 					STATE newPred = oldSNames2newSNames.get(c);
 					STATE newSucc = oldSNames2newSNames.get(succ);
-					m_Result.addInternalTransition(newPred, s, newSucc);
+					mResult.addInternalTransition(newPred, s, newSucc);
 				}
 			}
 		}
@@ -289,13 +289,13 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		sb.append(" \t");
 		for (int i = 0; i < st.size(); i++)
 			sb.append(st.get(i) + "\t");
-		m_Logger.debug(sb.toString());
+		mLogger.debug(sb.toString());
 		sb = new StringBuilder();
 		for (int i = 0; i < st.size(); i++) {
 			sb.append(st.get(i) + "\t");
 			for (int j = 0; j < st.size(); j++)
 				sb.append(t[i][j] ? "X\t" : " \t");
-			m_Logger.debug(sb.toString());
+			mLogger.debug(sb.toString());
 			sb = new StringBuilder();
 		}
 	}
@@ -311,7 +311,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		        for (STATE succ : nwa.succInternal(c, s)) {
 		        	msg = new StringBuilder(c.toString());
 		            msg.append(" ").append(s).append(" ").append(succ);
-		            m_Logger.debug(msg);
+		            mLogger.debug(msg);
 		        }
 	}
 
@@ -358,19 +358,19 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
     @Override
     public String startMessage() {
-    	m_Logger.info("Starting DFA Minimizer");
+    	mLogger.info("Starting DFA Minimizer");
         StringBuilder msg = new StringBuilder("Start ");
 		msg.append(operationName()).append(" Operand ")
-				.append(m_Operand.sizeInformation());
-        m_Logger.info(msg.toString());
+				.append(mOperand.sizeInformation());
+        mLogger.info(msg.toString());
 
-        if (m_Logger.isDebugEnabled()) {
-            printTransitions(m_Operand);
+        if (mLogger.isDebugEnabled()) {
+            printTransitions(mOperand);
         }
         
-        if (!m_Operand.isDeterministic()) {
-            m_Logger.info("Given automaton is not deterministic!");
-            m_Logger.info("Automaton will not be minimized, but only reduced.");
+        if (!mOperand.isDeterministic()) {
+            mLogger.info("Given automaton is not deterministic!");
+            mLogger.info("Automaton will not be minimized, but only reduced.");
         }
         
         return "Starting to minimize...";
@@ -378,33 +378,33 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     
     @Override
     public String exitMessage() {
-        if (m_Logger.isDebugEnabled()) {
-        	printTransitions(m_Result);
+        if (mLogger.isDebugEnabled()) {
+        	printTransitions(mResult);
         }
         StringBuilder msg = new StringBuilder();
         msg.append("Finished ").append(operationName()).append(" Result ")
-                .append(m_Result.sizeInformation());
-        m_Logger.info(msg.toString());
+                .append(mResult.sizeInformation());
+        mLogger.info(msg.toString());
 
         return "Exiting DFA minimization";
     }
 
     @Override
     public  INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
-        return m_Result;
+        return mResult;
     }
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Operand, m_Result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, m_Operand, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mOperand, mResult, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, mOperand, stateFactory) == null);
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 		}
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
     

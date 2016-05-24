@@ -51,9 +51,9 @@ public class TraceAbstraction implements IGenerator {
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
-	private TraceAbstractionObserver m_Observer;
-	private List<IObserver> m_Observers;
-	private ModelType m_InputDefinition;
+	private TraceAbstractionObserver mObserver;
+	private List<IObserver> mObservers;
+	private ModelType mInputDefinition;
 	private IToolchainStorage mStorage;
 	private IUltimateServiceProvider mServices;
 
@@ -69,8 +69,8 @@ public class TraceAbstraction implements IGenerator {
 
 	@Override
 	public void init() {
-		m_Observer = new TraceAbstractionObserver(mServices, mStorage);
-		m_Observers = Collections.singletonList((IObserver) m_Observer);
+		mObserver = new TraceAbstractionObserver(mServices, mStorage);
+		mObservers = Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
@@ -86,12 +86,12 @@ public class TraceAbstraction implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		this.mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		return m_Observers;
+		return mObservers;
 	}
 
 	public ModelType getOutputDefinition() {
@@ -99,12 +99,12 @@ public class TraceAbstraction implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
 	public IElement getModel() {
-		return this.m_Observer.getRootOfNewModel();
+		return this.mObserver.getRootOfNewModel();
 	}
 
 	@Override

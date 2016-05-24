@@ -46,20 +46,20 @@ public class ContextPath {
 	}
 
 	static public class ContextPathNode {
-		private FormulaType m_FormulaType;
-		private String m_Path;
+		private FormulaType mFormulaType;
+		private String mPath;
 
 		public FormulaType getFormulaType() {
-			return this.m_FormulaType;
+			return this.mFormulaType;
 		}
 
 		public String getPath() {
-			return this.m_Path;
+			return this.mPath;
 		}
 
 		public ContextPathNode(FormulaType type, String path) {
-			this.m_FormulaType = type;
-			this.m_Path = path;
+			this.mFormulaType = type;
+			this.mPath = path;
 		}
 
 		/**
@@ -68,17 +68,17 @@ public class ContextPath {
 		 * @return
 		 */
 		public boolean isTemporal() {
-			if (this.m_FormulaType == FormulaType.AF)
+			if (this.mFormulaType == FormulaType.AF)
 				return true;
-			if (this.m_FormulaType == FormulaType.AG)
+			if (this.mFormulaType == FormulaType.AG)
 				return true;
-			if (this.m_FormulaType == FormulaType.AW)
+			if (this.mFormulaType == FormulaType.AW)
 				return true;
 			return false;
 		}
 
 		public boolean isAtom() {
-			if (this.m_FormulaType == FormulaType.Alpha)
+			if (this.mFormulaType == FormulaType.Alpha)
 				return true;
 			return false;
 		}
@@ -90,15 +90,15 @@ public class ContextPath {
 	}
 
 	static public class ContextPathAlphaNode extends ContextPathNode {
-		private Expression m_Expression;
+		private Expression mExpression;
 
 		public Expression getExpression() {
-			return this.m_Expression;
+			return this.mExpression;
 		}
 
 		public ContextPathAlphaNode(String path, Expression content) {
 			super(FormulaType.Alpha, path);
-			this.m_Expression = content;
+			this.mExpression = content;
 		}
 	}
 

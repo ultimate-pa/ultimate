@@ -51,13 +51,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class TerminationArgument implements Serializable {
 	private static final long serialVersionUID = 3480670605705583627L;
 	
-	private final RankingFunction m_ranking_function;
-	private final Collection<SupportingInvariant> m_supporting_invariants;
+	private final RankingFunction mranking_function;
+	private final Collection<SupportingInvariant> msupporting_invariants;
 	
 	/**
 	 * Set of supporting invariants that were discovered during preprocessing.
 	 */
-	private final Set<Term> m_ArrayIndexSupportingInvariants;
+	private final Set<Term> mArrayIndexSupportingInvariants;
 	
 	/**
 	 * Construct a termination argument
@@ -70,46 +70,46 @@ public class TerminationArgument implements Serializable {
 			Collection<SupportingInvariant> supporting_invariants, 
 			Set<Term> arrayIndexSupportingInvariants) {
 		assert(ranking_function != null);
-		m_ranking_function = ranking_function;
+		mranking_function = ranking_function;
 		assert(supporting_invariants != null);
 		
 		// Add only non-trivial supporting invariants
-		m_supporting_invariants = new ArrayList<SupportingInvariant>();
+		msupporting_invariants = new ArrayList<SupportingInvariant>();
 		for (SupportingInvariant si : supporting_invariants) {
 			if (!si.isTrue()) {
-				m_supporting_invariants.add(si);
+				msupporting_invariants.add(si);
 			}
 		}
-		m_ArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
+		mArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
 	}
 	
 	/**
 	 * @return the ranking function
 	 */
 	public RankingFunction getRankingFunction() {
-		return m_ranking_function;
+		return mranking_function;
 	}
 	
 	/**
 	 * @return the supporting invariants
 	 */
 	public Collection<SupportingInvariant> getSupportingInvariants() {
-		return Collections.unmodifiableCollection(m_supporting_invariants);
+		return Collections.unmodifiableCollection(msupporting_invariants);
 	}
 	
 	public Collection<Term> getArrayIndexSupportingInvariants() {
 		return Collections.unmodifiableCollection(
-											m_ArrayIndexSupportingInvariants);
+											mArrayIndexSupportingInvariants);
 	}
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Termination argument consisting of:\n");
 		sb.append("Ranking function ");
-		sb.append(m_ranking_function);
+		sb.append(mranking_function);
 		sb.append("\n");
 		sb.append("Supporting invariants ");
-		sb.append(m_supporting_invariants);
+		sb.append(msupporting_invariants);
 		return sb.toString();
 	}
 }

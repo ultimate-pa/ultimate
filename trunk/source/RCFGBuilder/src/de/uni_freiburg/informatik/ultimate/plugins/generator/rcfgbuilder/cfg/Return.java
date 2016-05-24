@@ -46,15 +46,15 @@ public class Return extends CodeBlock implements IReturnAction {
 
 	private static final long serialVersionUID = 3561826943033450950L;
 
-	private final Call m_CorrespondingCall;
+	private final Call mCorrespondingCall;
 
 	Return(int serialNumber, ProgramPoint source, ProgramPoint target, Call correspondingCall, ILogger logger) {
 		super(serialNumber, source, target, logger);
-		m_CorrespondingCall = correspondingCall;
+		mCorrespondingCall = correspondingCall;
 	}
 
 	public Call getCorrespondingCall() {
-		return m_CorrespondingCall;
+		return mCorrespondingCall;
 	}
 
 	public ProgramPoint getCallerProgramPoint() {
@@ -76,20 +76,20 @@ public class Return extends CodeBlock implements IReturnAction {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "CallStatement") {
-			return m_CorrespondingCall.getCallStatement();
+			return mCorrespondingCall.getCallStatement();
 		} else if (field == "PrettyPrintedStatements") {
-			return m_CorrespondingCall.getPrettyPrintedStatements();
+			return mCorrespondingCall.getPrettyPrintedStatements();
 		} else {
 			return super.getFieldValue(field);
 		}
 	}
 
 	public String getPrettyPrintedStatements() {
-		return "Return - Corresponding call: " + m_CorrespondingCall.getPrettyPrintedStatements();
+		return "Return - Corresponding call: " + mCorrespondingCall.getPrettyPrintedStatements();
 	}
 
 	public CallStatement getCallStatement() {
-		return m_CorrespondingCall.getCallStatement();
+		return mCorrespondingCall.getCallStatement();
 	}
 
 	@Override

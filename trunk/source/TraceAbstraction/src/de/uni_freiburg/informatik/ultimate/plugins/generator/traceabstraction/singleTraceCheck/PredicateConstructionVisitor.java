@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * Traverse a Term top-down and replace all subterms which occur as key of
  * the Map term2BoogieVars by the value of term2BoogieVars.
- * Furthermore all replaced BoogieVars are stored in m_Vars and if the BoogieVar
- * has a procedure, the procedure is stored in m_Procedure.
+ * Furthermore all replaced BoogieVars are stored in mVars and if the BoogieVar
+ * has a procedure, the procedure is stored in mProcedure.
  * 
  * This may only applied to formulas such that the result contains only global
  * BoogieVars and BoogieVars of a single procedure.
@@ -53,30 +53,30 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class PredicateConstructionVisitor implements SymbolVisitor {
 
-	Map<Term, BoogieVar> m_term2BoogieVars;
+	Map<Term, BoogieVar> mterm2BoogieVars;
 	
-	Set<BoogieVar> m_Vars;
-	Set<String> m_Procedures;
+	Set<BoogieVar> mVars;
+	Set<String> mProcedures;
 	
 	
 	public PredicateConstructionVisitor(Map<Term, BoogieVar> term2BoogieVars)
 	{
-		m_term2BoogieVars = term2BoogieVars;
-		m_Vars = null;
-		m_Procedures = new HashSet<String>();
+		mterm2BoogieVars = term2BoogieVars;
+		mVars = null;
+		mProcedures = new HashSet<String>();
 	}
 
 	public void clearVarsAndProc() {
-		m_Vars = new HashSet<BoogieVar>();
-		m_Procedures = new HashSet<String>();
+		mVars = new HashSet<BoogieVar>();
+		mProcedures = new HashSet<String>();
 	}
 	
 	public Set<BoogieVar> getVars() {
-		return m_Vars;
+		return mVars;
 	}
 	
 	public Set<String> getProcedure() {
-		return m_Procedures;
+		return mProcedures;
 	}
 	
 	
@@ -87,13 +87,13 @@ public class PredicateConstructionVisitor implements SymbolVisitor {
 
 	@Override
 	public Term term (Term input) {
-		if (m_term2BoogieVars.containsKey(input)) {
-			BoogieVar bv = m_term2BoogieVars.get(input);
+		if (mterm2BoogieVars.containsKey(input)) {
+			BoogieVar bv = mterm2BoogieVars.get(input);
 			assert bv != null;
 			if (bv.getProcedure() != null) {
-				m_Procedures.add(bv.getProcedure());
+				mProcedures.add(bv.getProcedure());
 			}
-			m_Vars.add(bv);
+			mVars.add(bv);
 			Term termVariable = bv.getTermVariable();
 			return termVariable;
 		}

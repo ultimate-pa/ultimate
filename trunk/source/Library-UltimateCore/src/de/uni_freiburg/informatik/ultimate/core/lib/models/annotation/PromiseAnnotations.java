@@ -56,14 +56,14 @@ public class PromiseAnnotations implements IAnnotations {
 		Object evaluate(PromiseAnnotations pa);
 	}
 	private static class MemberPromise implements IPromise {
-		Field m_target;
+		Field mtarget;
 		public MemberPromise(Field f) {
-			m_target = f;
-			m_target.setAccessible(true);
+			mtarget = f;
+			mtarget.setAccessible(true);
 		}
 		public Object evaluate(PromiseAnnotations pa) {
 			try {
-				return m_target.get(pa);
+				return mtarget.get(pa);
 			} catch (IllegalArgumentException e) {
 				e.printStackTrace(System.err);
 			} catch (IllegalAccessException e) {
@@ -73,14 +73,14 @@ public class PromiseAnnotations implements IAnnotations {
 		}
 	}
 	private static class MemfunPromise implements IPromise {
-		Method m_target;
+		Method mtarget;
 		public MemfunPromise(Method ma) {
-			m_target = ma;
-			m_target.setAccessible(true);
+			mtarget = ma;
+			mtarget.setAccessible(true);
 		}
 		public Object evaluate(PromiseAnnotations pa) {
 			try {
-				return m_target.invoke(pa, (Object[])null);
+				return mtarget.invoke(pa, (Object[])null);
 			} catch (IllegalArgumentException e) {
 				e.printStackTrace(System.err);
 			} catch (IllegalAccessException e) {
@@ -94,12 +94,12 @@ public class PromiseAnnotations implements IAnnotations {
 	/**
 	 * Backing store for the representation.
 	 */
-	private Map<String, IPromise> m_rep;
+	private Map<String, IPromise> mrep;
 	/**
 	 * Default constructor to initialize the internal representation.
 	 */
 	public PromiseAnnotations() {
-		m_rep = new HashMap<String, IPromise>();
+		mrep = new HashMap<String, IPromise>();
 	}
 	/**
 	 * Map a member variable to a key. This variable might have any access
@@ -111,7 +111,7 @@ public class PromiseAnnotations implements IAnnotations {
 	public void registerVariable(String key,String varname) {
 		try {
 			Field f = getClass().getDeclaredField(varname);
-			m_rep.put(key, new MemberPromise(f));
+			mrep.put(key, new MemberPromise(f));
 		} catch (SecurityException e) {
 			throw new RuntimeException(e);
 		} catch (NoSuchFieldException e) {
@@ -127,7 +127,7 @@ public class PromiseAnnotations implements IAnnotations {
 	public void registerFunction(String key,String funname) {
 		try {
 			Method m = getClass().getDeclaredMethod(funname, (Class[])null);
-			m_rep.put(key, new MemfunPromise(m));
+			mrep.put(key, new MemfunPromise(m));
 		} catch (SecurityException e) {
 			throw new RuntimeException(e);
 		} catch (NoSuchMethodException e) {
@@ -147,28 +147,28 @@ public class PromiseAnnotations implements IAnnotations {
 			// Remove coding convention prefix
 			if (key.length() > 2 && key.charAt(1) == '_')
 				key = key.substring(2);
-			m_rep.put(key,new MemberPromise(f));
+			mrep.put(key,new MemberPromise(f));
 		}
 	}
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
 		return new AbstractMap<String, Object>() {
-			private Set<Entry<String, Object>> m_entrySet = 
+			private Set<Entry<String, Object>> mentrySet = 
 				new AbstractSet<Entry<String, Object>>() {
 
 				@Override
 				public Iterator<Entry<String, Object>> iterator() {
 					return new Iterator<Entry<String,Object>>() {
-						private Iterator<Entry<String,IPromise>> m_it = 
-							m_rep.entrySet().iterator(); 
+						private Iterator<Entry<String,IPromise>> mit = 
+							mrep.entrySet().iterator(); 
 						@Override
 						public boolean hasNext() {
-							return m_it.hasNext();
+							return mit.hasNext();
 						}
 
 						@Override
 						public Entry<String, Object> next() {
-							Entry<String, IPromise> n = m_it.next();
+							Entry<String, IPromise> n = mit.next();
 							return 
 								new AbstractMap.SimpleImmutableEntry<String,Object>(
 										n.getKey(),
@@ -186,13 +186,13 @@ public class PromiseAnnotations implements IAnnotations {
 				@Override
 				public int size() {
 					// TODO Auto-generated method stub
-					return m_rep.size();
+					return mrep.size();
 				}
 				
 			};
 			@Override
 			public Set<java.util.Map.Entry<String, Object>> entrySet() {
-				return m_entrySet;
+				return mentrySet;
 			}
 			
 		};

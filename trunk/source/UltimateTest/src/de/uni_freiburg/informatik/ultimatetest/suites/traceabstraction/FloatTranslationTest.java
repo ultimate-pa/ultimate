@@ -42,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
  */
 public class FloatTranslationTest extends AbstractTraceAbstractionTestSuite {
 	
-//	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int m_FilesPerDirectoryLimit = 20;
+//	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int mFilesPerDirectoryLimit = 20;
 	
-	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
+	private static final DirectoryFileEndingsPair[] mSVCOMP_Examples = {
 	};
 	
 	
-	private static final String[] m_UltimateRepository = {
+	private static final String[] mUltimateRepository = {
 		"examples/programs/FloatingPoint/",
 	};
 	
@@ -61,7 +61,7 @@ public class FloatTranslationTest extends AbstractTraceAbstractionTestSuite {
 	 * because we assume that all settings files are in this folder.
 	 * 
 	 */
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"automizer/FloatTranslation.epf",
 	};
 	
@@ -73,33 +73,33 @@ public class FloatTranslationTest extends AbstractTraceAbstractionTestSuite {
 		return 10 * 1000;
 	}
 	
-	private static final String[] m_BoogieToolchains = {
+	private static final String[] mBoogieToolchains = {
 		"AutomizerBpl.xml",
 //		"AutomizerBplInline.xml",
 	};
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
 	};
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_SVCOMP_Examples);
+		for (String setting : mSettings) {
+			for (String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mSVCOMP_Examples);
 			}
 		}
 		
-		for (String setting : m_Settings) {
-			for (String toolchain : m_BoogieToolchains) {
-				addTestCase(toolchain, setting, m_UltimateRepository, 
+		for (String setting : mSettings) {
+			for (String toolchain : mBoogieToolchains) {
+				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_UltimateRepository, 
+		for (String setting : mSettings) {
+			for (String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".c", ".i"});
 			}
 		}

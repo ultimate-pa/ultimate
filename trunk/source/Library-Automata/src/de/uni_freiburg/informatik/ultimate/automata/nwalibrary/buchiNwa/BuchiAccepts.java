@@ -55,16 +55,16 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	/**
 	 * stem of the nested lasso word whose acceptance is checked 
 	 */
-	NestedWord<LETTER> m_Stem;
+	NestedWord<LETTER> mStem;
 	
 	/**
 	 * loop of the nested lasso word whose acceptance is checked 
 	 */
-	NestedWord<LETTER> m_Loop;
+	NestedWord<LETTER> mLoop;
 	
 	
-	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Nwa;
-	private boolean m_Accepted;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> mNwa;
+	private boolean mAccepted;
 
 	
 
@@ -78,9 +78,9 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand " + m_Nwa.sizeInformation() 
-				+ " Stem has " + m_Stem.length() + " letters." 
-				+ " Loop has " + m_Loop.length() + " letters.";
+		return "Start " + operationName() + " Operand " + mNwa.sizeInformation() 
+				+ " Stem has " + mStem.length() + " letters." 
+				+ " Loop has " + mLoop.length() + " letters.";
 	}
 	
 	
@@ -94,7 +94,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 
 	@Override
 	public Boolean getResult() {
-		return m_Accepted;
+		return mAccepted;
 	}
 
 
@@ -109,37 +109,37 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 */
 	public BuchiAccepts(AutomataLibraryServices services, INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws AutomataLibraryException{
 		super(services);
-		m_Nwa = nwa;
-		m_Stem = nlw.getStem();
-		m_Loop = nlw.getLoop();
+		mNwa = nwa;
+		mStem = nlw.getStem();
+		mLoop = nlw.getLoop();
 		
-		m_Logger.info(startMessage());
+		mLogger.info(startMessage());
 		
-		if (m_Stem.containsPendingReturns()) {
-			m_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
+		if (mStem.containsPendingReturns()) {
+			mLogger.warn("This implementation of Buchi acceptance rejects lasso" +
 					" words, where the stem contains pending returns.");
-			m_Accepted = false;
+			mAccepted = false;
 			return;
 		}
 		
-		if (m_Loop.containsPendingReturns()) {
-			m_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
+		if (mLoop.containsPendingReturns()) {
+			mLogger.warn("This implementation of Buchi acceptance rejects lasso" +
 					" words, where the loop contains pending returns.");
-			m_Accepted = false;
+			mAccepted = false;
 			return;
 
 		}
 		
-		if (m_Loop.length() ==0) {
-			m_Logger.debug("LassoWords with empty lasso are rejected by every Büchi" +
+		if (mLoop.length() ==0) {
+			mLogger.debug("LassoWords with empty lasso are rejected by every Büchi" +
 					" automaton");
-			m_Accepted = false;
+			mAccepted = false;
 			return;
 		}
 
 
-		m_Accepted = buchiAccepts();
-		m_Logger.info(exitMessage());
+		mAccepted = buchiAccepts();
+		mLogger.info(exitMessage());
 	}
 
 	private boolean buchiAccepts() throws AutomataLibraryException {
@@ -149,11 +149,11 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		// Therefore we call theses stats Honda states.
 		Set<STATE> hondaStates;
 		{
-			Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(m_Nwa.getInitialStates());
-			for (int i = 0; i < m_Stem.length(); i++) {
-				currentConfigs = successorConfigurations(currentConfigs, m_Stem, i,
-						m_Nwa, false);
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(mNwa.getInitialStates());
+			for (int i = 0; i < mStem.length(); i++) {
+				currentConfigs = successorConfigurations(currentConfigs, mStem, i,
+						mNwa, false);
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
@@ -164,10 +164,10 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		do {
 			hondaStates.addAll(newHondaStates);
 			Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(hondaStates);
-			for (int i = 0; i < m_Loop.length(); i++) {
+			for (int i = 0; i < mLoop.length(); i++) {
 				currentConfigs = successorConfigurations(
-						currentConfigs, m_Loop, i, m_Nwa, false);
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+						currentConfigs, mLoop, i, mNwa, false);
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
@@ -183,7 +183,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	}
 	
 	/**
-	 * Compute for each hondaState if processing m_Loop repeatedly can lead to
+	 * Compute for each hondaState if processing mLoop repeatedly can lead to
 	 * a run that contains an accepting state and brings the automaton back to
 	 * the honda state.
 	 * @throws AutomataLibraryException 
@@ -204,18 +204,18 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		Set<Stack<STATE>> singletonConfigSet = 
 				emptyStackConfiguration(singletonStateSet);
 		currentConfigsVisitedAccepting = 
-				removeAcceptingConfigurations(singletonConfigSet, m_Nwa);
+				removeAcceptingConfigurations(singletonConfigSet, mNwa);
 		currentConfigsNotVisitedAccepting = singletonConfigSet;
 		while (!currentConfigsNotVisitedAccepting.isEmpty() || !currentConfigsVisitedAccepting.isEmpty()) {
-			for (int i = 0; i < m_Loop.length(); i++) {
+			for (int i = 0; i < mLoop.length(); i++) {
 				currentConfigsVisitedAccepting = successorConfigurations(
-						currentConfigsVisitedAccepting, m_Loop, i, m_Nwa, false);
+						currentConfigsVisitedAccepting, mLoop, i, mNwa, false);
 				currentConfigsNotVisitedAccepting = successorConfigurations(
-						currentConfigsNotVisitedAccepting, m_Loop, i, m_Nwa, false);
+						currentConfigsNotVisitedAccepting, mLoop, i, mNwa, false);
 				Set<Stack<STATE>> justVisitedAccepting = 
-						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, m_Nwa);
+						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, mNwa);
 				currentConfigsVisitedAccepting.addAll(justVisitedAccepting);
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}

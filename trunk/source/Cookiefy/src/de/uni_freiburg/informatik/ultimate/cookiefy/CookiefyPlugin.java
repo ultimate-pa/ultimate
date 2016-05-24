@@ -43,14 +43,14 @@ public class CookiefyPlugin implements IGenerator {
 	private static final String s_PLUGIN_NAME = "Cookiefy";
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
-	private CookiefyAlgorithm m_CookiefyAlgorithm;
-	private ModelType m_InputType;
+	private CookiefyAlgorithm mCookiefyAlgorithm;
+	private ModelType mInputType;
 	private ILogger mLogger;
 
 	@Override
 	public ModelType getOutputDefinition() {
 		try {
-			return new ModelType(getPluginID(), ModelType.Type.AST, m_InputType.getFileNames());
+			return new ModelType(getPluginID(), ModelType.Type.AST, mInputType.getFileNames());
 		} catch (Exception e) {
 			return null;
 		}
@@ -58,7 +58,7 @@ public class CookiefyPlugin implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return this.m_CookiefyAlgorithm.getRoot();
+		return this.mCookiefyAlgorithm.getRoot();
 	}
 
 	@Override
@@ -79,7 +79,7 @@ public class CookiefyPlugin implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputType = graphType;
+		this.mInputType = graphType;
 	}
 
 	@Override
@@ -88,11 +88,11 @@ public class CookiefyPlugin implements IGenerator {
 		// Attention: Every observer here operates on the input
 		// model given to the plugin - not the resulting model
 		// of the Cookiefy algorithm, even if the observer follows the
-		// m_CookiefyAlgorithm observer!
+		// mCookiefyAlgorithm observer!
 		// If you want to print the AST use the BoogiePrinter in the
 		// toolchain.
-		m_CookiefyAlgorithm = new CookiefyAlgorithm(mLogger);
-		observers.add(m_CookiefyAlgorithm);
+		mCookiefyAlgorithm = new CookiefyAlgorithm(mLogger);
+		observers.add(mCookiefyAlgorithm);
 		return observers;
 	}
 

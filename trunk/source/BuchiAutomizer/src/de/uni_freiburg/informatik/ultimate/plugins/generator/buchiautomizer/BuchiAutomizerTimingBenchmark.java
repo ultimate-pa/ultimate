@@ -32,20 +32,20 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class BuchiAutomizerTimingBenchmark implements ICsvProviderProvider<Object>{
-	private StatisticsData m_BenchmarkData;
+	private StatisticsData mBenchmarkData;
 	
 	public BuchiAutomizerTimingBenchmark(BuchiCegarLoopBenchmarkGenerator benchGen) {
-		m_BenchmarkData = new StatisticsData();
-		m_BenchmarkData.aggregateBenchmarkData(benchGen);
+		mBenchmarkData = new StatisticsData();
+		mBenchmarkData.aggregateBenchmarkData(benchGen);
 	}
 
 	@Override
 	public String toString() {
-		return m_BenchmarkData.toString();
+		return mBenchmarkData.toString();
 	}
 
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {
-		return m_BenchmarkData.createCvsProvider();
+		return mBenchmarkData.createCvsProvider();
 	}
 }

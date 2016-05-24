@@ -45,21 +45,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 
 public class SdHoareTripleCheckerHelper {
 	
-	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
+	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 	
-	private final HoareTripleCheckerStatisticsGenerator m_HoareTripleCheckerStatistics;
-	private final IPredicateCoverageChecker m_PredicateCoverageChecker;
+	private final HoareTripleCheckerStatisticsGenerator mHoareTripleCheckerStatistics;
+	private final IPredicateCoverageChecker mPredicateCoverageChecker;
 	
 	
 	public SdHoareTripleCheckerHelper(ModifiableGlobalVariableManager modGlobVarManager, 
 			IPredicateCoverageChecker predicateCoverageChecker, 
 			HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
-		m_ModifiableGlobalVariableManager = modGlobVarManager;
-		m_PredicateCoverageChecker = predicateCoverageChecker;
+		mModifiableGlobalVariableManager = modGlobVarManager;
+		mPredicateCoverageChecker = predicateCoverageChecker;
 		if (edgeCheckerBenchmarkGenerator == null) {
-			m_HoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
+			mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
 		} else {
-			m_HoareTripleCheckerStatistics = edgeCheckerBenchmarkGenerator;
+			mHoareTripleCheckerStatistics = edgeCheckerBenchmarkGenerator;
 		}
 	}
 	
@@ -70,7 +70,7 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return m_HoareTripleCheckerStatistics;
+		return mHoareTripleCheckerStatistics;
 	}
 	
 	
@@ -111,7 +111,7 @@ public class SdHoareTripleCheckerHelper {
 		Infeasibility infeasiblity = act.getTransformula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
 			if (varsDisjoinedFormInVars(pre, act.getTransformula())) {
-				m_HoareTripleCheckerStatistics.getSDtfsCounter().incIn();
+				mHoareTripleCheckerStatistics.getSDtfsCounter().incIn();
 				return Validity.INVALID;
 			} else  {
 				return null;
@@ -164,11 +164,11 @@ public class SdHoareTripleCheckerHelper {
 	 * infeasibility flag of TransFormula.
 	 */
 	public Validity sdecInteral(IPredicate pre, IInternalAction act, IPredicate post) {
-		if (m_PredicateCoverageChecker != null) {
-			Validity sat = m_PredicateCoverageChecker.isCovered(pre, post);
+		if (mPredicateCoverageChecker != null) {
+			Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
 				if (Collections.disjoint(pre.getVars(), act.getTransformula().getAssignedVars())) {
-					m_HoareTripleCheckerStatistics.getSDsluCounter().incIn();
+					mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
 					return Validity.VALID;
 				}
 			}
@@ -190,10 +190,10 @@ public class SdHoareTripleCheckerHelper {
 		}
 		// now, we know that vars of pre and post are both disjoint from the
 		/// vars of cb. Edge is inductive iff pre implies post
-		if (m_PredicateCoverageChecker != null) {
-			Validity sat = m_PredicateCoverageChecker.isCovered(pre, post);
+		if (mPredicateCoverageChecker != null) {
+			Validity sat = mPredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
-				m_HoareTripleCheckerStatistics.getSDsluCounter().incIn();
+				mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
 				return Validity.VALID;
 			} else if (sat == Validity.UNKNOWN) {
 				return null;
@@ -202,8 +202,8 @@ public class SdHoareTripleCheckerHelper {
 			} else if (sat == Validity.INVALID) {
 				String proc = act.getPreceedingProcedure();
 				assert proc.equals(act.getSucceedingProcedure()) : "internal statement must not change procedure";
-				if (m_ModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, proc) || 
-						m_ModifiableGlobalVariableManager.containsNonModifiableOldVars(post, proc)) {
+				if (mModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, proc) || 
+						mModifiableGlobalVariableManager.containsNonModifiableOldVars(post, proc)) {
 					return null;
 				} else {
 					//continue and return Validity.INVALID
@@ -214,7 +214,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
-		m_HoareTripleCheckerStatistics.getSDsCounter().incIn();
+		mHoareTripleCheckerStatistics.getSDsCounter().incIn();
 		return Validity.INVALID;
 	}
 	
@@ -241,7 +241,7 @@ public class SdHoareTripleCheckerHelper {
 				continue;
 			}
 			// occurs neither in pre not in codeBlock, probably unsat
-			m_HoareTripleCheckerStatistics.getSdLazyCounter().incIn();
+			mHoareTripleCheckerStatistics.getSdLazyCounter().incIn();
 			return Validity.INVALID;
 		}
 		return null;
@@ -252,7 +252,7 @@ public class SdHoareTripleCheckerHelper {
 		// there could be a contradiction if the Call is not a simple call
 		// but interprocedural sequential composition 			
 		if (act instanceof ICallAction) {
-			m_HoareTripleCheckerStatistics.getSDtfsCounter().incCa();
+			mHoareTripleCheckerStatistics.getSDtfsCounter().incCa();
 			return Validity.INVALID;
 		} else {
 			return null;
@@ -278,7 +278,7 @@ public class SdHoareTripleCheckerHelper {
 			return null;
 		}
 		if (preHierIndependent(post, pre, act.getLocalVarsAssignment(), act.getSucceedingProcedure())) {
-			m_HoareTripleCheckerStatistics.getSDsCounter().incCa();
+			mHoareTripleCheckerStatistics.getSDsCounter().incCa();
 			return Validity.INVALID;
 		}
 		return null;
@@ -301,7 +301,7 @@ public class SdHoareTripleCheckerHelper {
 					}
 				}
 			}
-			m_HoareTripleCheckerStatistics.getSdLazyCounter().incCa();
+			mHoareTripleCheckerStatistics.getSdLazyCounter().incCa();
 			return Validity.INVALID;
 		}
 		return null;
@@ -312,7 +312,7 @@ public class SdHoareTripleCheckerHelper {
 		if (hierPostIndependent(hier, ret, post) 
 				&& preHierIndependent(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPreceedingProcedure())
 				&& prePostIndependent(pre, ret, post)) {
-			m_HoareTripleCheckerStatistics.getSDsCounter().incRe();
+			mHoareTripleCheckerStatistics.getSDsCounter().incRe();
 			return Validity.INVALID;
 
 		}
@@ -336,7 +336,7 @@ public class SdHoareTripleCheckerHelper {
 		if (!varSetDisjoint(parameters, pre.getVars())) {
 			for (BoogieVar bv : arguments.keySet()) {
 				if (post.getVars().contains(bv) && !assignedVars.contains(bv)) {
-					m_LazyEdgeCheckQueries++;
+					mLazyEdgeCheckQueries++;
 					return null;
 				}
 			}
@@ -350,7 +350,7 @@ public class SdHoareTripleCheckerHelper {
 
 		String proc = ret.getPreceedingProcedure();
 		Set<BoogieVar> modifiableGlobals = 
-				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
+				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		boolean assignedVarsRestrictedByPre = 
 				!varSetDisjoint(ret.getAssignmentOfReturn().getInVars().keySet(), pre.getVars());
 		for (BoogieVar bv : post.getVars()) {
@@ -392,7 +392,7 @@ public class SdHoareTripleCheckerHelper {
 					}
 				}
 			}
-			m_HoareTripleCheckerStatistics.getSdLazyCounter().incRe();
+			mHoareTripleCheckerStatistics.getSdLazyCounter().incRe();
 			return Validity.INVALID;
 		}
 		return null;
@@ -419,7 +419,7 @@ public class SdHoareTripleCheckerHelper {
 		// cases where pre and hier share non-modifiable var g, or
 		// g occurs in hier, and old(g) occurs in pre.
 		Set<BoogieVar> modifiableGlobals = 
-				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
+				mModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
 
 		
 		for (BoogieVar bv : pre.getVars()) {
@@ -467,7 +467,7 @@ public class SdHoareTripleCheckerHelper {
 		
 		String proc = ret.getPreceedingProcedure();
 		Set<BoogieVar> modifiableGlobals = 
-				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
+				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		
 		for (BoogieVar bv : post.getVars()) {
 			if (modifiableGlobals.contains(bv)) {
@@ -502,7 +502,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
-		m_HoareTripleCheckerStatistics.getSDsluCounter().incIn();
+		mHoareTripleCheckerStatistics.getSDsluCounter().incIn();
 		return Validity.VALID;
 	}
 	
@@ -520,7 +520,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
-		m_HoareTripleCheckerStatistics.getSDsluCounter().incCa();
+		mHoareTripleCheckerStatistics.getSDsluCounter().incCa();
 		return Validity.VALID;
 	}
 	
@@ -541,7 +541,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
-		m_HoareTripleCheckerStatistics.getSDsluCounter().incRe();
+		mHoareTripleCheckerStatistics.getSDsluCounter().incRe();
 		return Validity.VALID;
 	}
 	
@@ -550,7 +550,7 @@ public class SdHoareTripleCheckerHelper {
 		Set<BoogieVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		String proc = ret.getPreceedingProcedure();
 		Set<BoogieVar> modifiableGlobals = 
-				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
+				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 
 		for (BoogieVar bv : p.getVars()) {
 			if (modifiableGlobals.contains(bv)) {

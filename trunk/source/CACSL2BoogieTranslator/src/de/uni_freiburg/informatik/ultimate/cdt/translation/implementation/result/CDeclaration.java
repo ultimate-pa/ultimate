@@ -40,7 +40,7 @@ public class CDeclaration {
 
 	boolean mIsOnHeap;
 	boolean mIsInitializerTranslated;
-	private CStorageClass m_storageClass;
+	private CStorageClass mstorageClass;
 
 //	public CDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
 //		mType = type;
@@ -68,7 +68,7 @@ public class CDeclaration {
 		assert cAstInitializer == null || initializer == null;
 		mIsOnHeap = onHeap;//TODO actually make use of this flag
 		mIsInitializerTranslated = false;
-		m_storageClass = storageClass;
+		mstorageClass = storageClass;
 	}
 	
 //	public CDeclaration(CType type, String name, ResultExpression initializer) {
@@ -132,14 +132,14 @@ public class CDeclaration {
 	}
 	
 	public boolean isStatic() {
-    	return m_storageClass == CStorageClass.STATIC;
+    	return mstorageClass == CStorageClass.STATIC;
     }
 
     public boolean isExtern() {
-    	return m_storageClass == CStorageClass.EXTERN;
+    	return mstorageClass == CStorageClass.EXTERN;
     }
 
 	public void setStorageClass(CStorageClass storageClass) {
-		m_storageClass = storageClass;
+		mstorageClass = storageClass;
 	}
 }

@@ -53,7 +53,7 @@ public class RelationWithTreeSet<D, R> extends AbstractRelation<D, R, HashMap<D,
 
 	@Override
 	public Set<R> getImage(D domainElem) {
-		return m_Map.get(domainElem);
+		return mMap.get(domainElem);
 	}
 
 

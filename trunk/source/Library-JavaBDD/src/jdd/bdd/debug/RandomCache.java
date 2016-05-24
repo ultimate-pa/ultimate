@@ -23,8 +23,8 @@ import jdd.util.math.*;
 	private int togo, p1, p2, p3;
 
 	private int cache_bits, shift_bits, cache_size, cache_mask;
-	private int bdds, num_clears, num_grows;
-	private long  num_access;
+	private int bdds, numclears, numgrows;
+	private long  numaccess;
 	private long hit,miss, last_hit, last_access; // cache hits and misses, hit/acces-count since last grow
 
 	/**
@@ -40,11 +40,11 @@ import jdd.util.math.*;
 		this.cache_size = (1 << cache_bits);
 		this.cache_mask = cache_size -1;
 
-		num_grows = 0;
-		num_access = 0;
+		numgrows = 0;
+		numaccess = 0;
 		hit = miss = last_hit = last_access = 0;
 
-		this.num_clears = 0;
+		this.numclears = 0;
 
 		in1 = Allocator.allocateIntArray(cache_size);
 		in2 = (members >= 2) ? Allocator.allocateIntArray(cache_size) : null;
@@ -76,14 +76,14 @@ import jdd.util.math.*;
 
 	/**
 	 * see if we are allowed to grow this cache.
-	 * We grow the cache if (num_grows < MAX_SIMPLECACHE_GROWS) and the hit-rate since the last
+	 * We grow the cache if (numgrows < MAX_SIMPLECACHE_GROWS) and the hit-rate since the last
 	 * grow is larger than MIN_SIMPLECACHE_HITRATE_TO_GROW.
 	 *
 	 */
 
 	private boolean may_grow() {
-		if(num_grows < Configuration.maxSimplecacheGrows) {
-			long acs = (num_access - last_access);
+		if(numgrows < Configuration.maxSimplecacheGrows) {
+			long acs = (numaccess - last_access);
 
 			// only when we have "MIN_SIMPLECACHE_ACCESS_TO_GROW %" or more access', we have enough information to decide
 			// whether we can grow cache or not (beside, if acs == 0, we will get a div by 0 below :)
@@ -96,10 +96,10 @@ import jdd.util.math.*;
 			if(rate > Configuration.minSimplecacheHitrateToGrow) {
 				// store information needed to compute the next after-last-grow-hitrate
 				last_hit = hit;
-				last_access = num_access;
+				last_access = numaccess;
 
 				// register a grow and return true
-				num_grows ++;
+				numgrows ++;
 				return true;
 			}
 		}
@@ -111,7 +111,7 @@ import jdd.util.math.*;
 	/** just wipe the cache */
 	public void invalidate_cache() {
 		Array.set(in1, -1);
-		num_clears++;
+		numclears++;
 	}
 
 
@@ -136,7 +136,7 @@ import jdd.util.math.*;
 		if(in3 != null) { in3 = null;	in3 = Allocator.allocateIntArray(cache_size); }
 
 		Array.set(in1, -1);
-		num_clears++;
+		numclears++;
 	}
 
 	// ---[ these operations clean only invalid nodes ] ----------------------
@@ -214,7 +214,7 @@ import jdd.util.math.*;
 		hash_check();
 
 
-		num_access++;
+		numaccess++;
 		int hash = a & cache_mask;
 		if(in1[hash] == a){
 			hit++;
@@ -238,7 +238,7 @@ import jdd.util.math.*;
 		hash_check();
 
 
-		num_access++;
+		numaccess++;
 		int hash = good_hash(a,b);
 		if(in1[hash] == a && in2[hash] == b){
 			hit++;
@@ -261,7 +261,7 @@ import jdd.util.math.*;
 	public final boolean lookup(int a, int b, int c) {
 		hash_check();
 
-		num_access++;
+		numaccess++;
 
 		int hash = good_hash(a,b,c);
 		if(in1[hash] == a && in2[hash] == b && in3[hash] == c){
@@ -301,12 +301,12 @@ import jdd.util.math.*;
 	}
 
 	public double computeHitRate() { // hit-rate since the last clear
-		if(num_access == 0) return 0;
-		return ((int)((hit * 10000) / ( num_access ))) / 100.0;
+		if(numaccess == 0) return 0;
+		return ((int)((hit * 10000) / ( numaccess ))) / 100.0;
 	}
 
 	public long getAccessCount() {
-		return num_access;
+		return numaccess;
 	}
 
 	public int getCacheSize() {
@@ -314,7 +314,7 @@ import jdd.util.math.*;
 	}
 
 	public int getNumberOfClears() {
-		return num_clears;
+		return numclears;
 	}
 
 	public int getNumberOfPartialClears() {
@@ -322,19 +322,19 @@ import jdd.util.math.*;
 	}
 
 	public int getNumberOfGrows() {
-		return num_grows;
+		return numgrows;
 	}
 	// --------------------------------------------------------------
 
 	public void showStats() {
-		if(num_access != 0) {
+		if(numaccess != 0) {
 			JDDConsole.out.print(getName() + "-cache ");
 			JDDConsole.out.print("ld=" + computeLoadFactor() + "% ");
 			JDDConsole.out.print("sz="); Digits.printNumber(cache_size);
-			JDDConsole.out.print("accs="); Digits.printNumber(num_access);
-			JDDConsole.out.print("clrs=" + num_clears+ "/0 ");
+			JDDConsole.out.print("accs="); Digits.printNumber(numaccess);
+			JDDConsole.out.print("clrs=" + numclears+ "/0 ");
 			JDDConsole.out.print("hitr=" + computeHitRate() + "% ");
-			if(num_grows > 0) JDDConsole.out.print("grws=" + num_grows + " ");
+			if(numgrows > 0) JDDConsole.out.print("grws=" + numgrows + " ");
 
 			JDDConsole.out.println();
 		}

@@ -56,18 +56,18 @@ public class SupportingInvariant extends AffineFunction {
 	 * Construct a supporting invariant from an AffineFunction
 	 */
 	public SupportingInvariant(AffineFunction f) {
-		m_coefficients.putAll(f.m_coefficients);
-		m_constant = f.m_constant;
+		mcoefficients.putAll(f.mcoefficients);
+		mconstant = f.mconstant;
 	}
 	
 	/**
 	 * Check whether this supporting invariant is equivalent to false.
 	 */
 	public boolean isFalse() {
-		if (!m_coefficients.isEmpty()) {
+		if (!mcoefficients.isEmpty()) {
 			return false;
 		}
-		int cmp = m_constant.compareTo(BigInteger.ZERO);
+		int cmp = mconstant.compareTo(BigInteger.ZERO);
 		return (cmp <= 0 && strict) || (cmp < 0 && !strict);
 	}
 	
@@ -75,10 +75,10 @@ public class SupportingInvariant extends AffineFunction {
 	 * Check whether this supporting invariant is equivalent to true.
 	 */
 	public boolean isTrue() {
-		if (!m_coefficients.isEmpty()) {
+		if (!mcoefficients.isEmpty()) {
 			return false;
 		}
-		int cmp = m_constant.compareTo(BigInteger.ZERO);
+		int cmp = mconstant.compareTo(BigInteger.ZERO);
 		return (cmp > 0 && strict) || (cmp >= 0 && !strict);
 	}
 	

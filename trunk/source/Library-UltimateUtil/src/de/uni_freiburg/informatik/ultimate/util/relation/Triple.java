@@ -34,36 +34,36 @@ package de.uni_freiburg.informatik.ultimate.util.relation;
  */
 public class Triple<E1, E2, E3> {
 
-	private final E1 m_FirstElement;
-	private final E2 m_SecondElement;
-	private final E3 m_ThirdElement;
+	private final E1 mFirstElement;
+	private final E2 mSecondElement;
+	private final E3 mThirdElement;
 
 	public Triple(E1 first, E2 second, E3 third) {
 		super();
-		m_FirstElement = first;
-		m_SecondElement = second;
-		m_ThirdElement = third;
+		mFirstElement = first;
+		mSecondElement = second;
+		mThirdElement = third;
 	}
 
 	public E1 getFirst() {
-		return m_FirstElement;
+		return mFirstElement;
 	}
 
 	public E2 getSecond() {
-		return m_SecondElement;
+		return mSecondElement;
 	}
 
 	public E3 getThird() {
-		return m_ThirdElement;
+		return mThirdElement;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + m_FirstElement.hashCode();
-		result = prime * result + m_SecondElement.hashCode();
-		result = prime * result + m_ThirdElement.hashCode();
+		result = prime * result + mFirstElement.hashCode();
+		result = prime * result + mSecondElement.hashCode();
+		result = prime * result + mThirdElement.hashCode();
 		return result;
 	}
 
@@ -76,27 +76,27 @@ public class Triple<E1, E2, E3> {
 		if (getClass() != obj.getClass())
 			return false;
 		Triple other = (Triple) obj;
-		if (m_FirstElement == null) {
-			if (other.m_FirstElement != null)
+		if (mFirstElement == null) {
+			if (other.mFirstElement != null)
 				return false;
-		} else if (!m_FirstElement.equals(other.m_FirstElement))
+		} else if (!mFirstElement.equals(other.mFirstElement))
 			return false;
-		if (m_SecondElement == null) {
-			if (other.m_SecondElement != null)
+		if (mSecondElement == null) {
+			if (other.mSecondElement != null)
 				return false;
-		} else if (!m_SecondElement.equals(other.m_SecondElement))
+		} else if (!mSecondElement.equals(other.mSecondElement))
 			return false;
-		if (m_ThirdElement == null) {
-			if (other.m_ThirdElement != null)
+		if (mThirdElement == null) {
+			if (other.mThirdElement != null)
 				return false;
-		} else if (!m_ThirdElement.equals(other.m_ThirdElement))
+		} else if (!mThirdElement.equals(other.mThirdElement))
 			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "[" + m_FirstElement + ", " + m_SecondElement + ", " + m_ThirdElement + "]";
+		return "[" + mFirstElement + ", " + mSecondElement + ", " + mThirdElement + "]";
 	}
 
 }

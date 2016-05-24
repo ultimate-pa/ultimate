@@ -48,11 +48,11 @@ public class AutomatonAST extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = -5781432895026883308L;
 	// The variable which is associated with this automaton
-	protected String m_Name;
+	protected String mName;
 	
 
 	public String getName() {
-		return m_Name;
+		return mName;
 	}
 
 
@@ -60,7 +60,7 @@ public class AutomatonAST extends AtsASTNode {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 7;
-		result = prime * result + ((m_Name == null) ? 0 : m_Name.hashCode());
+		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
 		return result;
 	}
 
@@ -74,10 +74,10 @@ public class AutomatonAST extends AtsASTNode {
 		if (getClass() != obj.getClass())
 			return false;
 		AutomatonAST other = (AutomatonAST) obj;
-		if (m_Name == null) {
-			if (other.m_Name != null)
+		if (mName == null) {
+			if (other.mName != null)
 				return false;
-		} else if (!m_Name.equals(other.m_Name))
+		} else if (!mName.equals(other.mName))
 			return false;
 		return true;
 	}

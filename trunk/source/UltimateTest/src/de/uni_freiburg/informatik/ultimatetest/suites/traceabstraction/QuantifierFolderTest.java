@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
  */
 public class QuantifierFolderTest extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { 
+	private static final String[] mDirectories = { 
 		"examples/programs/quantifier/regression" 
 		};
 	
@@ -61,14 +61,14 @@ public class QuantifierFolderTest extends
 			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".bpl"});
 		} 
 		if (s_C) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();

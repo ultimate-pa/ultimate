@@ -51,14 +51,14 @@ public class Overapprox extends AbstractAnnotations {
 		return Overapprox.class.getName();
 	}
 	
-	private final Map<String, ILocation> m_Reason2Loc;
+	private final Map<String, ILocation> mReason2Loc;
 	
 	public Overapprox(Map<String, ILocation> reason2Loc) {
-		m_Reason2Loc = reason2Loc;
+		mReason2Loc = reason2Loc;
 	}
 	
 	public Overapprox(String reason, ILocation loc) {
-        m_Reason2Loc = Collections.singletonMap(reason, loc);
+        mReason2Loc = Collections.singletonMap(reason, loc);
     }
 
 	private static final long serialVersionUID = -575969312624287029L;
@@ -79,9 +79,9 @@ public class Overapprox extends AbstractAnnotations {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field.equals(s_REASON_FOR_OVERAPPROXIMATION))
-			return m_Reason2Loc.keySet();
+			return mReason2Loc.keySet();
 		else if (field.equals(s_LOCATION_MAPPING))
-			return m_Reason2Loc;
+			return mReason2Loc;
 		else
 			throw new UnsupportedOperationException("Unknown field "+field);
 	}

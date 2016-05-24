@@ -65,11 +65,11 @@ public class RewriteTrueFalse extends TransformerPreprocessor {
 	
 	private class RewriteTrueFalseTransformer extends TermTransformer {
 		
-		private final Script m_Script;
+		private final Script mScript;
 		
 		RewriteTrueFalseTransformer(Script script) {
 			assert script != null;
-			m_Script = script;
+			mScript = script;
 		}
 		
 		@Override
@@ -78,14 +78,14 @@ public class RewriteTrueFalse extends TransformerPreprocessor {
 				ApplicationTerm appt = (ApplicationTerm) term;
 				if (appt.getFunction().getName().equals("true")) {
 					assert(appt.getParameters().length == 0);
-					setResult(m_Script.term(">=", m_Script.decimal("0"),
-							m_Script.decimal("0")));
+					setResult(mScript.term(">=", mScript.decimal("0"),
+							mScript.decimal("0")));
 					return;
 				}
 				if (appt.getFunction().getName().equals("false")) {
 					assert(appt.getParameters().length == 0);
-					setResult(m_Script.term(">=", m_Script.decimal("0"),
-							m_Script.decimal("1")));
+					setResult(mScript.term(">=", mScript.decimal("0"),
+							mScript.decimal("1")));
 					return;
 				}
 			}

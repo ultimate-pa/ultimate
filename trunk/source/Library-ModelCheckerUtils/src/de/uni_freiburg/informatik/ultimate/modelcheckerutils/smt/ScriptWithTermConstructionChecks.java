@@ -54,170 +54,170 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
  */
 public class ScriptWithTermConstructionChecks implements Script {
 	
-	private final Script m_Script;
+	private final Script mScript;
 	
 	
 
 	public ScriptWithTermConstructionChecks(Script script) {
 		super();
-		m_Script = script;
+		mScript = script;
 	}
 
 
 
 	public void setLogic(String logic) throws UnsupportedOperationException,
 			SMTLIBException {
-		m_Script.setLogic(logic);
+		mScript.setLogic(logic);
 	}
 
 
 
 	public void setLogic(Logics logic) throws UnsupportedOperationException,
 			SMTLIBException {
-		m_Script.setLogic(logic);
+		mScript.setLogic(logic);
 	}
 
 
 
 	public void setOption(String opt, Object value)
 			throws UnsupportedOperationException, SMTLIBException {
-		m_Script.setOption(opt, value);
+		mScript.setOption(opt, value);
 	}
 
 
 
 	public void setInfo(String info, Object value) {
-		m_Script.setInfo(info, value);
+		mScript.setInfo(info, value);
 	}
 
 
 
 	public void declareSort(String sort, int arity) throws SMTLIBException {
-		m_Script.declareSort(sort, arity);
+		mScript.declareSort(sort, arity);
 	}
 
 
 
 	public void defineSort(String sort, Sort[] sortParams, Sort definition)
 			throws SMTLIBException {
-		m_Script.defineSort(sort, sortParams, definition);
+		mScript.defineSort(sort, sortParams, definition);
 	}
 
 
 
 	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort)
 			throws SMTLIBException {
-		m_Script.declareFun(fun, paramSorts, resultSort);
+		mScript.declareFun(fun, paramSorts, resultSort);
 	}
 
 
 
 	public void defineFun(String fun, TermVariable[] params, Sort resultSort,
 			Term definition) throws SMTLIBException {
-		m_Script.defineFun(fun, params, resultSort, definition);
+		mScript.defineFun(fun, params, resultSort, definition);
 	}
 
 
 
 	public void push(int levels) throws SMTLIBException {
-		m_Script.push(levels);
+		mScript.push(levels);
 	}
 
 
 
 	public void pop(int levels) throws SMTLIBException {
-		m_Script.pop(levels);
+		mScript.pop(levels);
 	}
 
 
 
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		return m_Script.assertTerm(term);
+		return mScript.assertTerm(term);
 	}
 
 
 
 	public LBool checkSat() throws SMTLIBException {
-		return m_Script.checkSat();
+		return mScript.checkSat();
 	}
 
 
 
 	public Term[] getAssertions() throws SMTLIBException {
-		return m_Script.getAssertions();
+		return mScript.getAssertions();
 	}
 
 
 
 	public Term getProof() throws SMTLIBException,
 			UnsupportedOperationException {
-		return m_Script.getProof();
+		return mScript.getProof();
 	}
 
 
 
 	public Term[] getUnsatCore() throws SMTLIBException,
 			UnsupportedOperationException {
-		return m_Script.getUnsatCore();
+		return mScript.getUnsatCore();
 	}
 
 
 
 	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException,
 			UnsupportedOperationException {
-		return m_Script.getValue(terms);
+		return mScript.getValue(terms);
 	}
 
 
 
 	public Assignments getAssignment() throws SMTLIBException,
 			UnsupportedOperationException {
-		return m_Script.getAssignment();
+		return mScript.getAssignment();
 	}
 
 
 
 	public Object getOption(String opt) throws UnsupportedOperationException {
-		return m_Script.getOption(opt);
+		return mScript.getOption(opt);
 	}
 
 
 
 	public Object getInfo(String info) throws UnsupportedOperationException,
 			SMTLIBException {
-		return m_Script.getInfo(info);
+		return mScript.getInfo(info);
 	}
 
 
 
 	public void exit() {
-		m_Script.exit();
+		mScript.exit();
 	}
 
 
 
 	public Sort sort(String sortname, Sort... params) throws SMTLIBException {
-		return m_Script.sort(sortname, params);
+		return mScript.sort(sortname, params);
 	}
 
 
 
 	public Sort sort(String sortname, BigInteger[] indices, Sort... params)
 			throws SMTLIBException {
-		return m_Script.sort(sortname, indices, params);
+		return mScript.sort(sortname, indices, params);
 	}
 
 
 
 	public Sort[] sortVariables(String... names) throws SMTLIBException {
-		return m_Script.sortVariables(names);
+		return mScript.sortVariables(names);
 	}
 
 
 
 	public Term term(String funcname, Term... params) throws SMTLIBException {
 		checkIfsomeParamUsesDifferentTheory(params);
-		return m_Script.term(funcname, params);
+		return mScript.term(funcname, params);
 	}
 
 
@@ -239,7 +239,7 @@ public class ScriptWithTermConstructionChecks implements Script {
 	}
 	
 	private Theory getThisScriptsTheory() {
-		return m_Script.sort("Bool").getTheory();
+		return mScript.sort("Bool").getTheory();
 	}
 
 
@@ -247,129 +247,129 @@ public class ScriptWithTermConstructionChecks implements Script {
 	public Term term(String funcname, BigInteger[] indices, Sort returnSort,
 			Term... params) throws SMTLIBException {
 		checkIfsomeParamUsesDifferentTheory(params);
-		return m_Script.term(funcname, indices, returnSort, params);
+		return mScript.term(funcname, indices, returnSort, params);
 	}
 
 
 
 	public TermVariable variable(String varname, Sort sort)
 			throws SMTLIBException {
-		return m_Script.variable(varname, sort);
+		return mScript.variable(varname, sort);
 	}
 
 
 
 	public Term quantifier(int quantor, TermVariable[] vars, Term body,
 			Term[]... patterns) throws SMTLIBException {
-		return m_Script.quantifier(quantor, vars, body, patterns);
+		return mScript.quantifier(quantor, vars, body, patterns);
 	}
 
 
 
 	public Term let(TermVariable[] vars, Term[] values, Term body)
 			throws SMTLIBException {
-		return m_Script.let(vars, values, body);
+		return mScript.let(vars, values, body);
 	}
 
 
 
 	public Term annotate(Term t, Annotation... annotations)
 			throws SMTLIBException {
-		return m_Script.annotate(t, annotations);
+		return mScript.annotate(t, annotations);
 	}
 
 
 
 	public Term numeral(String num) throws SMTLIBException {
-		return m_Script.numeral(num);
+		return mScript.numeral(num);
 	}
 
 
 
 	public Term numeral(BigInteger num) throws SMTLIBException {
-		return m_Script.numeral(num);
+		return mScript.numeral(num);
 	}
 
 
 
 	public Term decimal(String decimal) throws SMTLIBException {
-		return m_Script.decimal(decimal);
+		return mScript.decimal(decimal);
 	}
 
 
 
 	public Term decimal(BigDecimal decimal) throws SMTLIBException {
-		return m_Script.decimal(decimal);
+		return mScript.decimal(decimal);
 	}
 
 
 
 	public Term hexadecimal(String hex) throws SMTLIBException {
-		return m_Script.hexadecimal(hex);
+		return mScript.hexadecimal(hex);
 	}
 
 
 
 	public Term binary(String bin) throws SMTLIBException {
-		return m_Script.binary(bin);
+		return mScript.binary(bin);
 	}
 
 
 
 	public Term string(String str) throws SMTLIBException {
-		return m_Script.string(str);
+		return mScript.string(str);
 	}
 
 
 
 	public Term simplify(Term term) throws SMTLIBException {
-		return m_Script.simplify(term);
+		return mScript.simplify(term);
 	}
 
 
 
 	public void reset() {
-		m_Script.reset();
+		mScript.reset();
 	}
 
 
 
 	public Term[] getInterpolants(Term[] partition) throws SMTLIBException,
 			UnsupportedOperationException {
-		return m_Script.getInterpolants(partition);
+		return mScript.getInterpolants(partition);
 	}
 
 
 
 	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree)
 			throws SMTLIBException, UnsupportedOperationException {
-		return m_Script.getInterpolants(partition, startOfSubtree);
+		return mScript.getInterpolants(partition, startOfSubtree);
 	}
 
 
 
 	public Model getModel() throws SMTLIBException,
 			UnsupportedOperationException {
-		return m_Script.getModel();
+		return mScript.getModel();
 	}
 
 
 
 	public Iterable<Term[]> checkAllsat(Term[] predicates)
 			throws SMTLIBException, UnsupportedOperationException {
-		return m_Script.checkAllsat(predicates);
+		return mScript.checkAllsat(predicates);
 	}
 
 
 
 	public Term[] findImpliedEquality(Term[] x, Term[] y) {
-		return m_Script.findImpliedEquality(x, y);
+		return mScript.findImpliedEquality(x, y);
 	}
 
 
 
 	public QuotedObject echo(QuotedObject msg) {
-		return m_Script.echo(msg);
+		return mScript.echo(msg);
 	}
 	
 	

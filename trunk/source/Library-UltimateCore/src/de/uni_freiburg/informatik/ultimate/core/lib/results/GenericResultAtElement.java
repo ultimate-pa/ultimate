@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 public class GenericResultAtElement<ELEM extends IElement> 
 		extends AbstractResultAtElement<ELEM> implements IResultWithSeverity {
 
-	private final String m_ShortDescription;
-	private final String m_LongDescription;
-	private final Severity m_Severity;
+	private final String mShortDescription;
+	private final String mLongDescription;
+	private final Severity mSeverity;
 	
 
 	public GenericResultAtElement(ELEM element, String plugin,
@@ -50,24 +50,24 @@ public class GenericResultAtElement<ELEM extends IElement>
 			String shortDescription, String longDescription,
 			Severity severity) {
 		super(element, plugin, translatorSequence);
-		m_ShortDescription = shortDescription;
-		m_LongDescription = longDescription;
-		m_Severity = severity;
+		mShortDescription = shortDescription;
+		mLongDescription = longDescription;
+		mSeverity = severity;
 	}
 
 	@Override
 	public String getShortDescription() {
-		return m_ShortDescription;
+		return mShortDescription;
 	}
 
 	@Override
 	public String getLongDescription() {
-		return m_LongDescription;
+		return mLongDescription;
 	}
 
 	@Override
 	public Severity getSeverity() {
-		return m_Severity;
+		return mSeverity;
 	}
 
 }

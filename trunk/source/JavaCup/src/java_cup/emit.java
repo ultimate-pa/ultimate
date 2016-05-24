@@ -84,7 +84,7 @@ import java.util.Date;
    scan_code               - user supplied code to get the next Symbol.
    start_production        - the start production for the grammar.
    import_list             - list of imports for use with action class.
-   num_conflicts           - number of conflicts detected. 
+   numconflicts           - number of conflicts detected. 
    nowarn                  - true if we are not to issue warning messages.
    not_reduced             - count of number of productions that never reduce.
    unused_term             - count of unused terminal symbols.
@@ -235,12 +235,12 @@ public class emit {
    *  if they have been requested.  
    * @param out            stream to produce output on.
    * @param emit_non_terms do we emit constants for non terminals?
-   * @param sym_interface  should we emit an interface, rather than a class?
+   * @param syminterface  should we emit an interface, rather than a class?
    */
   public void symbols(PrintWriter out, Grammar grammar, 
-			     boolean emit_non_terms, boolean sym_interface)
+			     boolean emit_non_terms, boolean syminterface)
     {
-      String class_or_interface = (sym_interface)?"interface":"class";
+      String class_or_interface = (syminterface)?"interface":"class";
 
       long start_time = System.currentTimeMillis();
 
@@ -587,7 +587,7 @@ public class emit {
     {
       long start_time = System.currentTimeMillis();
 
-      short[] prod_table = new short[2*grammar.num_actions()];
+      short[] prod_table = new short[2*grammar.numactions()];
       for (production prod : grammar.actions())
 	{
 	  prod_table[2*prod.action_index()+0] = (short) prod.lhs().index();

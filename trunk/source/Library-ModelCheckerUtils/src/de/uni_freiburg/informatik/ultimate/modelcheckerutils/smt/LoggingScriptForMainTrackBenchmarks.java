@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncrementalBenchmarks {
 	
-	private int m_WrittenScriptCounter = 0;
+	private int mWrittenScriptCounter = 0;
 	
-	private final int m_BenchmarkTooSimpleThreshold = 10 * 1000;
-	private final boolean m_WriteUnsolvedBenchmarks = true;
+	private final int mBenchmarkTooSimpleThreshold = 10 * 1000;
+	private final boolean mWriteUnsolvedBenchmarks = true;
 
 	public LoggingScriptForMainTrackBenchmarks(Script script,
 			String baseFilename, String directory) {
@@ -56,12 +56,12 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 		final LBool sat = super.mScript.checkSat();
 		final long durationInMilliseconds = (System.nanoTime() - timeBefore)/1000/1000;
 		final boolean solved = (sat == LBool.SAT || sat == LBool.UNSAT);
-		if (solved && durationInMilliseconds >= m_BenchmarkTooSimpleThreshold 
-				|| !solved && m_WriteUnsolvedBenchmarks) {
-			final File file = constructFile("_" + String.valueOf(m_WrittenScriptCounter));
-			final List<ArrayList<ISmtCommand>> processedCommandStack = process(m_CommandStack, sat);
+		if (solved && durationInMilliseconds >= mBenchmarkTooSimpleThreshold 
+				|| !solved && mWriteUnsolvedBenchmarks) {
+			final File file = constructFile("_" + String.valueOf(mWrittenScriptCounter));
+			final List<ArrayList<ISmtCommand>> processedCommandStack = process(mCommandStack, sat);
 			writeCommandStackToFile(file, processedCommandStack);
-			m_WrittenScriptCounter++;
+			mWrittenScriptCounter++;
 		}
 		return sat;
 	}

@@ -42,33 +42,33 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 
 public class TermVarsProc {
-	private final Term m_Term;
-	private final Set<BoogieVar> m_Vars;
-	private final String[] m_Procedures;
-	private final Term m_ClosedTerm;
+	private final Term mTerm;
+	private final Set<BoogieVar> mVars;
+	private final String[] mProcedures;
+	private final Term mClosedTerm;
 	
 	public TermVarsProc(Term term, Set<BoogieVar> vars,
 			String[] procedures, Term closedTerm) {
-		m_Term = term;
-		m_Vars = vars;
-		m_Procedures = procedures;
-		m_ClosedTerm = closedTerm;
+		mTerm = term;
+		mVars = vars;
+		mProcedures = procedures;
+		mClosedTerm = closedTerm;
 	}
 
 	public String[] getProcedures() {
-		return m_Procedures;
+		return mProcedures;
 	}
 
 	public Term getFormula() {
-		return m_Term;
+		return mTerm;
 	}
 
 	public Term getClosedFormula() {
-		return m_ClosedTerm;
+		return mClosedTerm;
 	}
 
 	public Set<BoogieVar> getVars() {
-		return m_Vars;
+		return mVars;
 	}
 	
 	

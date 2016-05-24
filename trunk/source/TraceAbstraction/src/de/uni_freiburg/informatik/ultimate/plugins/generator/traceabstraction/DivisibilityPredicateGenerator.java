@@ -53,15 +53,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public class DivisibilityPredicateGenerator {
-	private final Script m_Script;
-	private final PredicateUnifier m_PredicateUnifier;
+	private final Script mScript;
+	private final PredicateUnifier mPredicateUnifier;
 	private final Boogie2SMT boogie2smt;
 
 	public DivisibilityPredicateGenerator(SmtManager smtManger,
 			PredicateUnifier predicateUnifier) {
 		super();
-		m_Script = smtManger.getScript();
-		m_PredicateUnifier = predicateUnifier;
+		mScript = smtManger.getScript();
+		mPredicateUnifier = predicateUnifier;
 		boogie2smt = smtManger.getBoogie2Smt();
 	}
 
@@ -80,7 +80,7 @@ public class DivisibilityPredicateGenerator {
 			for (MultiDimensionalSelect mds : mdsList) {
 				if (isLengthArray(mds.getArray())) {
 					Term term = getDivisibilityTerm(mds.getSelectTerm(), Integer.valueOf(4));
-					IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(term);
+					IPredicate unified = mPredicateUnifier.getOrConstructPredicate(term);
 					result.add(unified);
 				}
 			}
@@ -88,7 +88,7 @@ public class DivisibilityPredicateGenerator {
 		}
 		for (Entry<BoogieVar, Integer> entry  : offsetVar2size.entrySet()) {
 			Term term = getDivisibilityTerm(entry.getKey().getTermVariable(), entry.getValue());
-			IPredicate unified = m_PredicateUnifier.getOrConstructPredicate(term);
+			IPredicate unified = mPredicateUnifier.getOrConstructPredicate(term);
 			result.add(unified);
 		}
 		return result;
@@ -120,9 +120,9 @@ public class DivisibilityPredicateGenerator {
 	}
 
 	private Term getDivisibilityTerm(Term term, Integer value) {
-		Term divisor = m_Script.numeral(BigInteger.valueOf(value));
-		Term zero = m_Script.numeral(BigInteger.ZERO);
-		Term divisible = m_Script.term("=", m_Script.term("mod", term, divisor), zero); 
+		Term divisor = mScript.numeral(BigInteger.valueOf(value));
+		Term zero = mScript.numeral(BigInteger.ZERO);
+		Term divisible = mScript.term("=", mScript.term("mod", term, divisor), zero); 
 		return divisible;
 	}
 

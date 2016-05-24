@@ -38,24 +38,24 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfo
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 	
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 
-	private final PetriNetJulian<LETTER,STATE> m_Operand;
-	private final Boolean m_Result;
+	private final PetriNetJulian<LETTER,STATE> mOperand;
+	private final Boolean mResult;
 	
 	public IsEmpty(AutomataLibraryServices services, 
 			PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Operand = operand;
-		m_Logger.info(startMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
 		PetriNetUnfolder<LETTER,STATE> unf = 
-				new PetriNetUnfolder<LETTER,STATE>(m_Services, operand, order.ERV, false, true);
+				new PetriNetUnfolder<LETTER,STATE>(mServices, operand, order.ERV, false, true);
 		PetriNetRun<LETTER,STATE> run = unf.getAcceptingRun();
-		m_Result = (run == null);
-		m_Logger.info(exitMessage());
+		mResult = (run == null);
+		mLogger.info(exitMessage());
 	}
 	
 	@Override
@@ -66,26 +66,26 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() +
-			"Operand " + m_Operand.sizeInformation();
+			"Operand " + mOperand.sizeInformation();
 	}
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() +
-			" language " + (m_Result ? "is empty" : "is not emtpy");
+			" language " + (mResult ? "is empty" : "is not emtpy");
 	}
 
 	@Override
 	public Boolean getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		INestedWordAutomatonOldApi<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(m_Services, m_Operand)).getResult();
-		boolean automatonEmpty = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty<LETTER, STATE>(m_Services, finiteAutomaton)).getResult();
-		return (m_Result == automatonEmpty);
+		INestedWordAutomatonOldApi<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
+		boolean automatonEmpty = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty<LETTER, STATE>(mServices, finiteAutomaton)).getResult();
+		return (mResult == automatonEmpty);
 	}
 
 }

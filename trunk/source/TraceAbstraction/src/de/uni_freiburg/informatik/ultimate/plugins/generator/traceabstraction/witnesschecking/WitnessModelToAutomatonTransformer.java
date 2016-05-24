@@ -40,33 +40,33 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
 public class WitnessModelToAutomatonTransformer {
-	private final NestedWordAutomaton<WitnessEdge, WitnessNode> m_Result;
-	private final WitnessNode m_WitnessRoot;
+	private final NestedWordAutomaton<WitnessEdge, WitnessNode> mResult;
+	private final WitnessNode mWitnessRoot;
 	private final ArrayDeque<WitnessNode> worklist = new ArrayDeque<WitnessNode>();
 	
 	public WitnessModelToAutomatonTransformer(WitnessNode witnessRoot, IUltimateServiceProvider services) {
 		super();
-		m_WitnessRoot = witnessRoot;
+		mWitnessRoot = witnessRoot;
 		Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
 		Set<WitnessEdge> callAlphabet = Collections.emptySet();
 		Set<WitnessEdge> returnAlphabet = Collections.emptySet();
 		StateFactory<WitnessNode> stateFactory = new StateFactory<WitnessNode>() {
 		};
-		m_Result = new NestedWordAutomaton<WitnessEdge, WitnessNode>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+		mResult = new NestedWordAutomaton<WitnessEdge, WitnessNode>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		constructAutomaton(internalAlphabet);
 	}
 
 	private void constructAutomaton(Set<WitnessEdge> internalAlphabet) {
-		addNewState(m_WitnessRoot);
+		addNewState(mWitnessRoot);
 		while (!worklist.isEmpty()) {
 			WitnessNode current = worklist.removeFirst();
 			for (WitnessEdge we : current.getOutgoingEdges()) {
 				WitnessNode successor = we.getTarget();
-				if (!m_Result.getStates().contains(successor)) {
+				if (!mResult.getStates().contains(successor)) {
 					addNewState(successor);
 				}
 				internalAlphabet.add(we);
-				m_Result.addInternalTransition(current, we, successor);
+				mResult.addInternalTransition(current, we, successor);
 			}
 		}
 	}
@@ -75,11 +75,11 @@ public class WitnessModelToAutomatonTransformer {
 		WitnessNodeAnnotation annotation = WitnessNodeAnnotation.getAnnotation(successor);
 		boolean isInitial = (annotation != null && annotation.isInitial());
 		boolean isFinal = (annotation != null && annotation.isError());
-		m_Result.addState(isInitial, isFinal, successor);
+		mResult.addState(isInitial, isFinal, successor);
 		worklist.add(successor);
 	}
 
 	public NestedWordAutomaton<WitnessEdge, WitnessNode> getResult() {
-		return m_Result;
+		return mResult;
 	}
 }

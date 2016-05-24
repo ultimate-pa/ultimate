@@ -45,22 +45,22 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	
-	protected final AutomataLibraryServices m_Services;
-	protected final ILogger m_Logger;
+	protected final AutomataLibraryServices mServices;
+	protected final ILogger mLogger;
 	
-	private final INestedWordAutomatonSimple<LETTER, STATE> m_A;
-	private final List<INestedWordAutomatonSimple<LETTER, STATE>> m_B = new ArrayList<>();
+	private final INestedWordAutomatonSimple<LETTER, STATE> mA;
+	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mB = new ArrayList<>();
 	
 	
 	public AbstractIncrementalInclusionCheck(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> a) {
 		super();
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		if (a == null) {
 			throw new NullPointerException("automaton A must not be null");
 		} else {
-			m_A = a;
+			mA = a;
 		}
 	}
 
@@ -80,12 +80,12 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	 * @throws AutomataLibraryException 
 	 */
 	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException, AutomataLibraryException {
-		m_B.add(nwa);
+		mB.add(nwa);
 	}
 
 
 	public INestedWordAutomatonSimple<LETTER, STATE> getA() {
-		return m_A;
+		return mA;
 	}
 	
 	

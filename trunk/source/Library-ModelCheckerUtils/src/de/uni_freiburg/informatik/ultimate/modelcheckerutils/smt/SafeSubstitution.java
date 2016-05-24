@@ -58,9 +58,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
  */
 public class SafeSubstitution extends TermTransformer {
 	
-	protected final Script m_Script;
-	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
-	private final ScopedHashMap<Term,Term> m_ScopedSubstitutionMapping;
+	protected final Script mScript;
+	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
+	private final ScopedHashMap<Term,Term> mScopedSubstitutionMapping;
 	
 	public SafeSubstitution(Script script, 
 			Map<Term, Term> substitutionMapping) {
@@ -71,19 +71,19 @@ public class SafeSubstitution extends TermTransformer {
 			IFreshTermVariableConstructor freshTermVariableConstructor,
 			Map<Term, Term> substitutionMapping) {
 		super();
-		m_Script = script;
-		m_FreshTermVariableConstructor = freshTermVariableConstructor;
-		m_ScopedSubstitutionMapping = new ScopedHashMap<Term, Term>();
-		m_ScopedSubstitutionMapping.putAll(substitutionMapping);
+		mScript = script;
+		mFreshTermVariableConstructor = freshTermVariableConstructor;
+		mScopedSubstitutionMapping = new ScopedHashMap<Term, Term>();
+		mScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
 
 	@Override
 	protected void convert(Term term) {
-		if (m_ScopedSubstitutionMapping.containsKey(term)) {
-			setResult(m_ScopedSubstitutionMapping.get(term));
+		if (mScopedSubstitutionMapping.containsKey(term)) {
+			setResult(mScopedSubstitutionMapping.get(term));
 		} else {
 			if (term instanceof QuantifiedFormula) {
-				m_ScopedSubstitutionMapping.beginScope();
+				mScopedSubstitutionMapping.beginScope();
 				QuantifiedFormula qFormula = (QuantifiedFormula) term;
 				removeQuantifiedVarContainingKeys(qFormula);
 				term = renameQuantifiedVarsThatOccurInValues(qFormula);
@@ -104,19 +104,19 @@ public class SafeSubstitution extends TermTransformer {
 	 */
 	private Term renameQuantifiedVarsThatOccurInValues(QuantifiedFormula qFormula) {
 		Set<TermVariable> toRename = 
-				varsOccuringInValues(qFormula.getVariables(), m_ScopedSubstitutionMapping);
+				varsOccuringInValues(qFormula.getVariables(), mScopedSubstitutionMapping);
 		if (toRename.isEmpty()) {
 			return qFormula;
 		} else {
-			if (m_FreshTermVariableConstructor == null) {
+			if (mFreshTermVariableConstructor == null) {
 				throw new UnsupportedOperationException(
 						"Substitution in quantified formula such that substitute "
 						+ "containes quantified variable. This (rare) case is "
 						+ "only supported if you call substitution with fresh "
 						+ "variable construction.");
 			} else {
-				final Term result = SmtUtils.renameQuantifiedVariables(m_Script, 
-						m_FreshTermVariableConstructor, qFormula, toRename, "subst");
+				final Term result = SmtUtils.renameQuantifiedVariables(mScript, 
+						mFreshTermVariableConstructor, qFormula, toRename, "subst");
 				return result;
 			}
 		}
@@ -135,7 +135,7 @@ public class SafeSubstitution extends TermTransformer {
 	private void removeQuantifiedVarContainingKeys(QuantifiedFormula qFormula) {
 
 		Iterator<Entry<Term, Term>> it = 
-				m_ScopedSubstitutionMapping.entrySet().iterator();
+				mScopedSubstitutionMapping.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<Term, Term> entry = it.next();
 			List<TermVariable> quantifiedVars = Arrays.asList(qFormula.getVariables());
@@ -190,7 +190,7 @@ public class SafeSubstitution extends TermTransformer {
 									new TermVariable[old.getVariables().length];
 		boolean quantifiedVariablesChanged = false;
 		for (int i=0; i<old.getVariables().length; i++) {
-			if (m_ScopedSubstitutionMapping.containsKey(old.getVariables()[i])) {
+			if (mScopedSubstitutionMapping.containsKey(old.getVariables()[i])) {
 				newQuantifiedVars[i] = old.getVariables()[i];
 				quantifiedVariablesChanged = true;
 			} else {
@@ -205,15 +205,15 @@ public class SafeSubstitution extends TermTransformer {
 				// reuse old array
 				newQuantifiedVars = old.getVariables();
 			}
-			result = m_Script.quantifier(old.getQuantifier(), newQuantifiedVars, newBody);
+			result = mScript.quantifier(old.getQuantifier(), newQuantifiedVars, newBody);
 		}
-		m_ScopedSubstitutionMapping.endScope();
+		mScopedSubstitutionMapping.endScope();
 		setResult(result);
 	}
 	
 	@Override
 	public String toString() {
-		return "Substitution " + m_ScopedSubstitutionMapping.toString();
+		return "Substitution " + mScopedSubstitutionMapping.toString();
 	}
 	
 	/**

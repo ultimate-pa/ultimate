@@ -42,20 +42,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends LevelRankingConstraint<LETTER, STATE>> {
 
-	protected final AutomataLibraryServices m_Services;
-	protected final ILogger m_Logger;
-	protected final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
-	protected final int m_UserDefinedMaxRank;
+	protected final AutomataLibraryServices mServices;
+	protected final ILogger mLogger;
+	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	protected final int mUserDefinedMaxRank;
 
 	public LevelRankingGenerator(
 			AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand,
 			int userDefinedMaxRank) {
 		super();
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Operand = operand;
-		m_UserDefinedMaxRank = userDefinedMaxRank;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mUserDefinedMaxRank = userDefinedMaxRank;
 	}
 	
 	

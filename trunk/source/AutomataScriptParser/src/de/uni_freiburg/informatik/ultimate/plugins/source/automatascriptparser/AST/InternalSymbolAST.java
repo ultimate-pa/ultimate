@@ -34,12 +34,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
  *
  */
 public class InternalSymbolAST {
-	private String m_Symbol;
+	private String mSymbol;
 	public InternalSymbolAST(String sym) {
-		m_Symbol = sym;
+		mSymbol = sym;
 	}
 	
 	public String getSymbol() {
-		return m_Symbol;
+		return mSymbol;
 	}
 }

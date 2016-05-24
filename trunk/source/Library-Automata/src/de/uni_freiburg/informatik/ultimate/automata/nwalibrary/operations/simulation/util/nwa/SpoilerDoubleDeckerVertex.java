@@ -62,17 +62,17 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 * The sink this vertex belongs to if it is generated as a shadow vertex for
 	 * such, <tt>null</tt> if not set.
 	 */
-	private final DuplicatorWinningSink<LETTER, STATE> m_Sink;
+	private final DuplicatorWinningSink<LETTER, STATE> mSink;
 	/**
 	 * The summarize edge this vertex belongs to if it is generated as a shadow
 	 * vertex for such, <tt>null</tt> if not set.
 	 */
-	private final SummarizeEdge<LETTER, STATE> m_SummarizeEdge;
+	private final SummarizeEdge<LETTER, STATE> mSummarizeEdge;
 	/**
 	 * Internal map of all down state configurations of the vertex and if they
 	 * are marked as safe.
 	 */
-	private final HashMap<VertexDownState<STATE>, Boolean> m_VertexDownStates;
+	private final HashMap<VertexDownState<STATE>, Boolean> mVertexDownStates;
 
 	/**
 	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
@@ -175,9 +175,9 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	private SpoilerDoubleDeckerVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final SummarizeEdge<LETTER, STATE> summarizeEdge, final DuplicatorWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1);
-		m_VertexDownStates = new HashMap<>();
-		m_SummarizeEdge = summarizeEdge;
-		m_Sink = sink;
+		mVertexDownStates = new HashMap<>();
+		mSummarizeEdge = summarizeEdge;
+		mSink = sink;
 	}
 
 	/**
@@ -190,8 +190,8 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 *         was not already present.
 	 */
 	public boolean addVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		if (!m_VertexDownStates.containsKey(vertexDownState)) {
-			m_VertexDownStates.put(vertexDownState, false);
+		if (!mVertexDownStates.containsKey(vertexDownState)) {
+			mVertexDownStates.put(vertexDownState, false);
 			return true;
 		}
 		return false;
@@ -214,18 +214,18 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 			return false;
 		}
 		SpoilerDoubleDeckerVertex<?, ?> other = (SpoilerDoubleDeckerVertex<?, ?>) obj;
-		if (m_Sink == null) {
-			if (other.m_Sink != null) {
+		if (mSink == null) {
+			if (other.mSink != null) {
 				return false;
 			}
-		} else if (!m_Sink.equals(other.m_Sink)) {
+		} else if (!mSink.equals(other.mSink)) {
 			return false;
 		}
-		if (m_SummarizeEdge == null) {
-			if (other.m_SummarizeEdge != null) {
+		if (mSummarizeEdge == null) {
+			if (other.mSummarizeEdge != null) {
 				return false;
 			}
-		} else if (!m_SummarizeEdge.equals(other.m_SummarizeEdge)) {
+		} else if (!mSummarizeEdge.equals(other.mSummarizeEdge)) {
 			return false;
 		}
 		return true;
@@ -241,16 +241,16 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	public String getName() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getQ0() + "," + getQ1());
-		if (m_SummarizeEdge != null) {
-			sb.append("[SMiddle/").append(m_SummarizeEdge.hashCode() + "]");
+		if (mSummarizeEdge != null) {
+			sb.append("[SMiddle/").append(mSummarizeEdge.hashCode() + "]");
 		}
-		if (m_Sink != null) {
-			sb.append("[Sink/").append(m_Sink.hashCode() + "]");
+		if (mSink != null) {
+			sb.append("[Sink/").append(mSink.hashCode() + "]");
 		}
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates.keySet()) {
+		for (VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
@@ -267,7 +267,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 * @return The sink this vertex belongs to or <tt>null</tt> if not set.
 	 */
 	public DuplicatorWinningSink<LETTER, STATE> getSink() {
-		return m_Sink;
+		return mSink;
 	}
 
 	/**
@@ -278,7 +278,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 *         set.
 	 */
 	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
-		return m_SummarizeEdge;
+		return mSummarizeEdge;
 	}
 
 	/*
@@ -289,7 +289,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	@Override
 	public Set<VertexDownState<STATE>> getVertexDownStates() {
-		return Collections.unmodifiableSet(m_VertexDownStates.keySet());
+		return Collections.unmodifiableSet(mVertexDownStates.keySet());
 	}
 
 	/*
@@ -301,8 +301,8 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((m_Sink == null) ? 0 : m_Sink.hashCode());
-		result = prime * result + ((m_SummarizeEdge == null) ? 0 : m_SummarizeEdge.hashCode());
+		result = prime * result + ((mSink == null) ? 0 : mSink.hashCode());
+		result = prime * result + ((mSummarizeEdge == null) ? 0 : mSummarizeEdge.hashCode());
 		return result;
 	}
 
@@ -328,7 +328,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	@Override
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return m_VertexDownStates.containsKey(vertexDownState);
+		return mVertexDownStates.containsKey(vertexDownState);
 	}
 
 	/*
@@ -341,7 +341,7 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	@Override
 	public Boolean isVertexDownStateSafe(final VertexDownState<STATE> vertexDownState) {
-		return m_VertexDownStates.get(vertexDownState);
+		return mVertexDownStates.get(vertexDownState);
 	}
 
 	/*
@@ -354,8 +354,8 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 	 */
 	@Override
 	public void setVertexDownStateSafe(final VertexDownState<STATE> vertexDownState, final boolean isSafe) {
-		if (m_VertexDownStates.containsKey(vertexDownState)) {
-			m_VertexDownStates.put(vertexDownState, isSafe);
+		if (mVertexDownStates.containsKey(vertexDownState)) {
+			mVertexDownStates.put(vertexDownState, isSafe);
 		}
 	}
 
@@ -369,16 +369,16 @@ public final class SpoilerDoubleDeckerVertex<LETTER, STATE> extends SpoilerVerte
 		StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1());
-		if (m_SummarizeEdge != null) {
-			sb.append("[SMiddle/").append(m_SummarizeEdge.hashCode() + "]");
+		if (mSummarizeEdge != null) {
+			sb.append("[SMiddle/").append(mSummarizeEdge.hashCode() + "]");
 		}
-		if (m_Sink != null) {
-			sb.append("[Sink/").append(m_Sink.hashCode() + "]");
+		if (mSink != null) {
+			sb.append("[Sink/").append(mSink.hashCode() + "]");
 		}
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates.keySet()) {
+		for (VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}

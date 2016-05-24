@@ -56,10 +56,10 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	 * present is contained in the image of caller.  
 	 */
 	private final Map<STATE,Set<STATE>> caller2presents;
-	private boolean m_ConstructionFinished;
-	private int m_HashCode;
+	private boolean mConstructionFinished;
+	private int mHashCode;
 	private boolean containsFinal = false;
-	private STATE m_CachedResultingState = null;
+	private STATE mCachedResultingState = null;
 	
 	public DeterminizedState(INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		caller2presents = new HashMap<STATE,Set<STATE>>();
@@ -106,10 +106,10 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	 * By the contentFactory created content for the determinized state.
 	 */
 	public STATE getContent(StateFactory<STATE> stateFactory) {
-		if (m_CachedResultingState == null) {
-			m_CachedResultingState = stateFactory.determinize(caller2presents);
+		if (mCachedResultingState == null) {
+			mCachedResultingState = stateFactory.determinize(caller2presents);
 		}
-		return m_CachedResultingState;
+		return mCachedResultingState;
 	}
 
 
@@ -117,7 +117,7 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	 * Add the pair (caller,present) to the set. 
 	 */
 	public void addPair(STATE caller, STATE present, INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-		if (m_ConstructionFinished) {
+		if (mConstructionFinished) {
 			throw new IllegalArgumentException("Construction finished must not add pairs.");
 		}
 		if (nwa.isFinal(present)) {
@@ -151,11 +151,11 @@ public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTE
 	
 	@Override
 	public int hashCode() {
-		if (!m_ConstructionFinished) {
-			m_HashCode = caller2presents.hashCode();
-			m_ConstructionFinished = true;
+		if (!mConstructionFinished) {
+			mHashCode = caller2presents.hashCode();
+			mConstructionFinished = true;
 		}
-		return m_HashCode;
+		return mHashCode;
 	}
 	
 

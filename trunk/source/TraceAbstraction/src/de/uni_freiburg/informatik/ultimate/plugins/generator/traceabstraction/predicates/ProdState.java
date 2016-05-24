@@ -42,11 +42,11 @@ public class ProdState extends BasicPredicate {
 	 */
 	private static final long serialVersionUID = -8826942011742605334L;
 	
-	List<IPredicate> m_Predicates = new ArrayList<IPredicate>();
+	List<IPredicate> mPredicates = new ArrayList<IPredicate>();
 	
 	protected ProdState(int serialNumber, List<IPredicate> mPredicates, Term term, Set<BoogieVar> vars) {
 		super(serialNumber, null, term, vars, null);
-		m_Predicates = mPredicates;
+		mPredicates = mPredicates;
 	}
 
 	/**
@@ -65,17 +65,17 @@ public class ProdState extends BasicPredicate {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "Predicates")
-			return m_Predicates;
+			return mPredicates;
 		else 
 			return super.getFieldValue(field);
 	}
 
 	public void addPredicate(IPredicate Predicate) {
-		m_Predicates.add(Predicate);
+		mPredicates.add(Predicate);
 	}
 	
 	public List<IPredicate> getPredicates() {
-		return m_Predicates;
+		return mPredicates;
 	}
 
 	/* (non-Javadoc)
@@ -84,10 +84,10 @@ public class ProdState extends BasicPredicate {
 	@Override
 	public String toString() {
 //		StringBuilder result = new StringBuilder();
-//		for (Predicate pp : m_Predicates)
+//		for (Predicate pp : mPredicates)
 //			result.append(pp.getPosition()  + ",");
 //		return result.toString();
-		return m_Predicates.toString();
+		return mPredicates.toString();
 	}
 	
 	

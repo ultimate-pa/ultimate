@@ -48,8 +48,8 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult
 //		SYNTAX_ERROR
 	}
 	
-	private final OverallResult m_OverallResult;
-	private final String m_ErrorMessage;
+	private final OverallResult mOverallResult;
+	private final String mErrorMessage;
 	
 	public AutomataScriptInterpreterOverallResult(String plugin, OverallResult overallResult, String errorMessage) {
 		super(plugin);
@@ -59,13 +59,13 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult
 		if (errorMessage != null && overallResult != OverallResult.EXCEPTION_OR_ERROR) {
 			throw new UnsupportedOperationException("provide error message only if there was an error");
 		}
-		m_OverallResult = overallResult;
-		m_ErrorMessage = errorMessage;
+		mOverallResult = overallResult;
+		mErrorMessage = errorMessage;
 	}
 
 	@Override
 	public String getShortDescription() {
-		switch (m_OverallResult) {
+		switch (mOverallResult) {
 		case ALL_ASSERTIONS_HOLD:
 			return "Finished interpretation of automata script.";
 		case EXCEPTION_OR_ERROR:
@@ -86,7 +86,7 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult
 
 	@Override
 	public String getLongDescription() {
-		switch (m_OverallResult) {
+		switch (mOverallResult) {
 		case ALL_ASSERTIONS_HOLD:
 			return "All assert statements have been evaluated to true.";
 		case NO_ASSERTION:
@@ -99,7 +99,7 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult
 
 	@Override
 	public Severity getSeverity() {
-		switch (m_OverallResult) {
+		switch (mOverallResult) {
 		case ALL_ASSERTIONS_HOLD:
 			return Severity.INFO;
 		case EXCEPTION_OR_ERROR:
@@ -119,14 +119,14 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult
 	}
 
 	public OverallResult getOverallResult() {
-		return m_OverallResult;
+		return mOverallResult;
 	}
 
 	public String getErrorMessage() {
-		if (m_ErrorMessage == null) {
+		if (mErrorMessage == null) {
 			throw new UnsupportedOperationException("there is no error message, because there was no error");
 		} else {
-			return m_ErrorMessage;
+			return mErrorMessage;
 		}
 	}
 	

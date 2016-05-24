@@ -84,24 +84,24 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
  * @author musab@informatik.uni-freiburg.de
  */
 public class InterpolantConsolidation implements IInterpolantGenerator {
-	private InterpolatingTraceChecker m_InterpolatingTraceChecker;
-	private final IPredicate m_Precondition;
-	private final IPredicate m_Postcondition;
-	private final SortedMap<Integer, IPredicate> m_PendingContexts;
-	private IPredicate[] m_ConsolidatedInterpolants;
-	private TAPreferences m_TaPrefs;
-	private final NestedWord<CodeBlock> m_Trace;
-	private final IUltimateServiceProvider m_Services;
-	private final SmtManager m_SmtManager;
-	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
-	private final PredicateUnifier m_PredicateUnifier;
-	private final ILogger m_Logger;
-	private final CachingHoareTripleChecker m_HoareTripleChecker;
+	private InterpolatingTraceChecker mInterpolatingTraceChecker;
+	private final IPredicate mPrecondition;
+	private final IPredicate mPostcondition;
+	private final SortedMap<Integer, IPredicate> mPendingContexts;
+	private IPredicate[] mConsolidatedInterpolants;
+	private TAPreferences mTaPrefs;
+	private final NestedWord<CodeBlock> mTrace;
+	private final IUltimateServiceProvider mServices;
+	private final SmtManager mSmtManager;
+	private final ModifiableGlobalVariableManager mModifiedGlobals;
+	private final PredicateUnifier mPredicateUnifier;
+	private final ILogger mLogger;
+	private final CachingHoareTripleChecker mHoareTripleChecker;
 
-	protected final InterpolantConsolidationBenchmarkGenerator m_InterpolantConsolidationBenchmarkGenerator;
-	private boolean m_printDebugInformation = !false;
-	private boolean m_printAutomataOfDifference = !false;
-	private boolean m_InterpolantsConsolidationSuccessful = false;
+	protected final InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationBenchmarkGenerator;
+	private boolean mprintDebugInformation = !false;
+	private boolean mprintAutomataOfDifference = !false;
+	private boolean mInterpolantsConsolidationSuccessful = false;
 	private boolean useConsolidationInNonEmptyCase = false;
 
 	public InterpolantConsolidation(IPredicate precondition,
@@ -114,54 +114,54 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			PredicateUnifier predicateUnifier,
 			InterpolatingTraceChecker tc,
 			TAPreferences taPrefs) throws AutomataOperationCanceledException {
-		m_Precondition = precondition;
-		m_Postcondition = postcondition;
-		m_PendingContexts = pendingContexts;
-		m_Trace = trace;
-		m_SmtManager = smtManager;
-		m_ModifiedGlobals = modifiedGlobals;
-		m_Services = services;
-		m_Logger = logger;
-		m_PredicateUnifier = predicateUnifier;
-		m_InterpolatingTraceChecker = tc;
-		m_ConsolidatedInterpolants = new IPredicate[m_Trace.length() - 1];
-		m_TaPrefs = taPrefs;
-		m_InterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
+		mPrecondition = precondition;
+		mPostcondition = postcondition;
+		mPendingContexts = pendingContexts;
+		mTrace = trace;
+		mSmtManager = smtManager;
+		mModifiedGlobals = modifiedGlobals;
+		mServices = services;
+		mLogger = logger;
+		mPredicateUnifier = predicateUnifier;
+		mInterpolatingTraceChecker = tc;
+		mConsolidatedInterpolants = new IPredicate[mTrace.length() - 1];
+		mTaPrefs = taPrefs;
+		mInterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
 		
 		IHoareTripleChecker ehtc = BasicCegarLoop.getEfficientHoareTripleChecker(services, TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, 
-				m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier);
-		m_HoareTripleChecker = new CachingHoareTripleChecker(ehtc, m_PredicateUnifier);
+				mSmtManager, mModifiedGlobals, mPredicateUnifier);
+		mHoareTripleChecker = new CachingHoareTripleChecker(ehtc, mPredicateUnifier);
 
 
-		if (m_InterpolatingTraceChecker.isCorrect() == LBool.UNSAT) {
+		if (mInterpolatingTraceChecker.isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers());
 		}
 	}
 
 	protected void computeInterpolants(Set<Integer> interpolatedPositions) throws AutomataOperationCanceledException {
 		// Start the stopwatch to measure the time we need for interpolant consolidation
-		m_InterpolantConsolidationBenchmarkGenerator.start(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
+		mInterpolantConsolidationBenchmarkGenerator.start(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 
-		// 1. Build the path automaton for the given trace m_Trace
+		// 1. Build the path automaton for the given trace mTrace
 		PathProgramAutomatonConstructor ppc = new PathProgramAutomatonConstructor();
-		INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(m_Trace, m_Services, m_SmtManager, m_TaPrefs);
+		INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(mTrace, mServices, mSmtManager, mTaPrefs);
 
 
 
 
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
-		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(m_Trace, m_SmtManager, m_TaPrefs, m_Services, m_InterpolatingTraceChecker); 
+		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(mTrace, mSmtManager, mTaPrefs, mServices, mInterpolatingTraceChecker); 
 		// 3. Determinize the finite automaton from step 2.
 		DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
-				m_Services, m_SmtManager, m_ModifiedGlobals, m_HoareTripleChecker, pathprogramautomaton, interpolantAutomaton,
-				m_PredicateUnifier, m_Logger, false ,// PREDICATE_ABSTRACTION_CONSERVATIVE = false (default) 
+				mServices, mSmtManager, mModifiedGlobals, mHoareTripleChecker, pathprogramautomaton, interpolantAutomaton,
+				mPredicateUnifier, mLogger, false ,// PREDICATE_ABSTRACTION_CONSERVATIVE = false (default) 
 				false //PREDICATE_ABSTRACTION_CANNIBALIZE = false  (default) 
 				); 
 
 
-		PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(m_SmtManager, m_TaPrefs);
+		PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(mSmtManager, mTaPrefs);
 
-		PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(m_SmtManager, m_TaPrefs);
+		PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mSmtManager, mTaPrefs);
 
 		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				interpolantAutomatonDeterminized, true, predicateFactoryInterpolantAutomata);
@@ -170,30 +170,30 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		try {
 			// 4. Compute the difference between the path automaton and the determinized
 			//    finite automaton (from step 3)
-			Difference<CodeBlock, IPredicate> diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
+			Difference<CodeBlock, IPredicate> diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 					(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) pathprogramautomaton,
 					interpolantAutomatonDeterminized, psd2,
 					pfconsol /* PredicateFactory for Refinement */, false /*explointSigmaStarConcatOfIA*/ );
-			if (m_printAutomataOfDifference) {
+			if (mprintAutomataOfDifference) {
 				// Needed for debug
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> pathAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "PathAutomaton", Format.ATS, pathprogramautomaton);
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "InterpolantAutomatonNonDet", Format.ATS, interpolantAutomaton);
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinterDet = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> pathAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "PathAutomaton", Format.ATS, pathprogramautomaton);
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "InterpolantAutomatonNonDet", Format.ATS, interpolantAutomaton);
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinterDet = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> diffAutomaton = diff.getResult();
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> diffAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "DifferenceAutomaton", Format.ATS, diffAutomaton);
-				m_Logger.debug(pathAutomatonPrinter.getDefinitionAsString());
-				m_Logger.debug(interpolantAutomatonPrinter.getDefinitionAsString());
-				m_Logger.debug(interpolantAutomatonPrinterDet.getDefinitionAsString());
-				m_Logger.debug(diffAutomatonPrinter.getDefinitionAsString());
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> diffAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "DifferenceAutomaton", Format.ATS, diffAutomaton);
+				mLogger.debug(pathAutomatonPrinter.getDefinitionAsString());
+				mLogger.debug(interpolantAutomatonPrinter.getDefinitionAsString());
+				mLogger.debug(interpolantAutomatonPrinterDet.getDefinitionAsString());
+				mLogger.debug(diffAutomatonPrinter.getDefinitionAsString());
 			}
-			m_HoareTripleChecker.releaseLock();
+			mHoareTripleChecker.releaseLock();
 			// 5. Check if difference is empty
-			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), diff.getResult());
+			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), diff.getResult());
 			if (!empty.getResult()) {
 				if (!useConsolidationInNonEmptyCase) {
-					m_ConsolidatedInterpolants = m_InterpolatingTraceChecker.getInterpolants();
+					mConsolidatedInterpolants = mInterpolatingTraceChecker.getInterpolants();
 					// Stop the time for interpolant consolidation
-					m_InterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
+					mInterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 					return;
 				} else {
 					Collection<IPredicate> pathautomatonFinalStates = pathprogramautomaton.getFinalStates();
@@ -210,10 +210,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					IPredicate specialState = pfconsol.getIntersectedPredicate(pathautomatonFinalState[0], interpolantautomatonFinalState[0]);
 					 Map<IPredicate, Integer> stateToLevel = new HashMap<IPredicate, Integer>();
 					Set<IPredicate> goodStates = getDiffAutomatonGoodStates(diff.getResult(), specialState, stateToLevel);
-					if (m_printDebugInformation) {
-						m_Logger.debug("Printing good states...");
+					if (mprintDebugInformation) {
+						mLogger.debug("Printing good states...");
 						for (IPredicate p : goodStates) {
-							m_Logger.debug(p);
+							mLogger.debug(p);
 						}
 
 					}
@@ -228,7 +228,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		} catch (AutomataLibraryException e) {
 			if (e instanceof AutomataOperationCanceledException) {
-				m_Logger.info("Timeout while computing interpolants");
+				mLogger.info("Timeout while computing interpolants");
 			}
 			throw ((AutomataOperationCanceledException)e);
 		}
@@ -240,28 +240,28 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		Set<IPredicate> interpolantsBeforeConsolidation = interpolantAutomaton.getStates();
 		Set<IPredicate> interpolantsAfterConsolidation = new HashSet<IPredicate>();
 
-		m_InterpolantConsolidationBenchmarkGenerator.incrementDiffAutomatonEmpty_Counter();
+		mInterpolantConsolidationBenchmarkGenerator.incrementDiffAutomatonEmpty_Counter();
 
-		m_ConsolidatedInterpolants = new IPredicate[m_Trace.length() - 1];
+		mConsolidatedInterpolants = new IPredicate[mTrace.length() - 1];
 
 		computeConsolidatedInterpolants(pathPositionsToLocations, locationsToSetOfPredicates, interpolantsBeforeConsolidation, 
-				m_InterpolatingTraceChecker.getInterpolants(),
-				interpolantsAfterConsolidation, m_HoareTripleChecker);
+				mInterpolatingTraceChecker.getInterpolants(),
+				interpolantsAfterConsolidation, mHoareTripleChecker);
 
-		assert TraceCheckerUtils.checkInterpolantsInductivityBackward(Arrays.asList(m_ConsolidatedInterpolants), 
-				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
-				m_ModifiedGlobals, m_Logger, m_SmtManager.getManagedScript(), m_SmtManager.getVariableManager()) : "invalid Hoare triple in consolidated interpolants";
-		int numOfDisjunctionsGreaterOne = (int) m_InterpolantConsolidationBenchmarkGenerator.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
+		assert TraceCheckerUtils.checkInterpolantsInductivityBackward(Arrays.asList(mConsolidatedInterpolants), 
+				mTrace, mPrecondition, mPostcondition, mPendingContexts, "CP", 
+				mModifiedGlobals, mLogger, mSmtManager.getManagedScript(), mSmtManager.getVariableManager()) : "invalid Hoare triple in consolidated interpolants";
+		int numOfDisjunctionsGreaterOne = (int) mInterpolantConsolidationBenchmarkGenerator.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
 		// InterpolantConsolidation was successful only if there was at least one consolidation with at least two predicates.
 		if (numOfDisjunctionsGreaterOne	> 0) {
-			m_InterpolantsConsolidationSuccessful = true;
+			mInterpolantsConsolidationSuccessful = true;
 		}
 
 
-		if (m_printDebugInformation ) {
-			m_Logger.debug("Interpolants before consolidation:");
+		if (mprintDebugInformation ) {
+			mLogger.debug("Interpolants before consolidation:");
 			printArray(interpolantAutomaton.getStates().toArray(new IPredicate[interpolantAutomaton.getStates().size()]));
-			m_Logger.debug("Interpolants after consolidation:");
+			mLogger.debug("Interpolants after consolidation:");
 			printArray(interpolantsAfterConsolidation.toArray(new IPredicate[interpolantsAfterConsolidation.size()]));
 		}
 
@@ -359,8 +359,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		int newlyCreatedInterpolants = 0;
 		// Init it with max. number of interpolants and decrement it every time you encounter an interpolant that
 		// has existed before consolidation.
-		int interpolantsDropped = m_Trace.length() - 1; 
-		for (int i = 0; i < m_ConsolidatedInterpolants.length; i++) {
+		int interpolantsDropped = mTrace.length() - 1; 
+		for (int i = 0; i < mConsolidatedInterpolants.length; i++) {
 			IPredicate loc = pathPositionsToLocations.get(i+1);
 			if (!locationsToConsolidatedInterpolants.containsKey(loc)) {
 				// Compute the disjunction of the predicates for location i
@@ -376,76 +376,76 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					// Update benchmarks
 					disjunctionsGreaterOneCounter++;
 
-//					TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.getPredicateFactory().or(predicatesForThisLocationAsArray);
+//					TermVarsProc predicatesForThisLocationConsolidated = mSmtManager.getPredicateFactory().or(predicatesForThisLocationAsArray);
 //					// Store the consolidated (the disjunction of the predicates for the current location)
-//					m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated);
-					m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicateForDisjunction(predicatesForThisLocation);
+//					mConsolidatedInterpolants[i] = mPredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated);
+					mConsolidatedInterpolants[i] = mPredicateUnifier.getOrConstructPredicateForDisjunction(predicatesForThisLocation);
 
-					if (!interpolantsBeforeConsolidation.contains(m_ConsolidatedInterpolants[i])) {
+					if (!interpolantsBeforeConsolidation.contains(mConsolidatedInterpolants[i])) {
 
 						// If the consolidated interpolant is not contained in the interpolants before consolidation, then
 						// the consolidated interpolant is new.
 						newlyCreatedInterpolants++;
 					}
-					locationsToConsolidatedInterpolants.put(loc, m_ConsolidatedInterpolants[i]);
+					locationsToConsolidatedInterpolants.put(loc, mConsolidatedInterpolants[i]);
 
 				} else {
-					m_ConsolidatedInterpolants[i] = predicatesForThisLocationAsArray[0];
+					mConsolidatedInterpolants[i] = predicatesForThisLocationAsArray[0];
 				}
-				if (interpolantsBeforeConsolidation.contains(m_ConsolidatedInterpolants[i]))  {
+				if (interpolantsBeforeConsolidation.contains(mConsolidatedInterpolants[i]))  {
 					// If current interpolant is contained in the interpolants before consolidation, then the number of
 					// interpolants dropped decreases.
 					interpolantsDropped--;
 				}
-				interpolantsAfterConsolidation.add(m_ConsolidatedInterpolants[i]);
+				interpolantsAfterConsolidation.add(mConsolidatedInterpolants[i]);
 				
 			} else {
-				m_ConsolidatedInterpolants[i] = locationsToConsolidatedInterpolants.get(loc);
+				mConsolidatedInterpolants[i] = locationsToConsolidatedInterpolants.get(loc);
 			}
 
 		}
 		int differenceOfInterpolantsBeforeAfter = interpolantsBeforeConsolidation.size() - interpolantsAfterConsolidation.size();
-		m_InterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(disjunctionsGreaterOneCounter, newlyCreatedInterpolants, interpolantsDropped, differenceOfInterpolantsBeforeAfter,
+		mInterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(disjunctionsGreaterOneCounter, newlyCreatedInterpolants, interpolantsDropped, differenceOfInterpolantsBeforeAfter,
 				htc.getEdgeCheckerBenchmark());
 		// Stop the time for interpolant consolidation
-		m_InterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
+		mInterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 	}
 
 	private void printArray(IPredicate[] interpolants) {
 		for (int i = 0; i < interpolants.length; i++) {
-			m_Logger.debug(Integer.toString(i) + ". " + interpolants[i].toString());
+			mLogger.debug(Integer.toString(i) + ". " + interpolants[i].toString());
 		}
 
 	}
 
 	public List<IPredicate> getInterpolantsOfType_I() {
-		if (m_InterpolatingTraceChecker instanceof TraceCheckerSpWp) {
-			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) m_InterpolatingTraceChecker;
+		if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
+			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) mInterpolatingTraceChecker;
 			if (tcspwp.forwardsPredicatesComputed()) {
 				return tcspwp.getForwardPredicates();
 			} else {
 				return Arrays.asList(tcspwp.getInterpolants());
 			}
 		} else {
-			return Arrays.asList(m_InterpolatingTraceChecker.getInterpolants());
+			return Arrays.asList(mInterpolatingTraceChecker.getInterpolants());
 		}
 	}
 
 	public List<IPredicate> getInterpolantsOfType_II() {
-		if (m_InterpolatingTraceChecker instanceof TraceCheckerSpWp) {
-			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) m_InterpolatingTraceChecker;
+		if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
+			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) mInterpolatingTraceChecker;
 			if (tcspwp.backwardsPredicatesComputed()) {
 				return tcspwp.getBackwardPredicates();
 			} else {
 				return Arrays.asList(tcspwp.getInterpolants());
 			}
 		} else {
-			return Arrays.asList(m_InterpolatingTraceChecker.getInterpolants());
+			return Arrays.asList(mInterpolatingTraceChecker.getInterpolants());
 		}
 	}
 
 	public boolean consolidationSuccessful() {
-		return m_InterpolantsConsolidationSuccessful;
+		return mInterpolantsConsolidationSuccessful;
 	}
 
 	/**
@@ -548,44 +548,44 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	@Override
 	public IPredicate[] getInterpolants() {
-		return m_ConsolidatedInterpolants;
+		return mConsolidatedInterpolants;
 	}
 
 	@Override
 	public Word<CodeBlock> getTrace() {
-		return m_Trace;
+		return mTrace;
 	}
 
 	@Override
 	public IPredicate getPrecondition() {
-		return m_Precondition;
+		return mPrecondition;
 	}
 
 	@Override
 	public IPredicate getPostcondition() {
-		return m_Postcondition;
+		return mPostcondition;
 	}
 
 	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
-		return m_PendingContexts;
+		return mPendingContexts;
 	}
 
 	public InterpolatingTraceChecker getInterpolatingTraceChecker() {
-		return m_InterpolatingTraceChecker;
+		return mInterpolatingTraceChecker;
 	}
 
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
-		return m_PredicateUnifier;
+		return mPredicateUnifier;
 	}
 
 	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationBenchmarks() {
-		return m_InterpolantConsolidationBenchmarkGenerator;
+		return mInterpolantConsolidationBenchmarkGenerator;
 	}
 	
 	public CachingHoareTripleChecker getHoareTripleChecker() {
-		return m_HoareTripleChecker;
+		return mHoareTripleChecker;
 	}
 
 	// Benchmarks Section
@@ -688,31 +688,31 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	}
 
 	public class InterpolantConsolidationBenchmarkGenerator extends StatisticsGeneratorWithStopwatches implements 	IStatisticsDataProvider {
-		private int m_DisjunctionsGreaterOneCounter = 0;
-		private int m_DifferenceBeforeAfter = 0;
-		private int m_NewlyCreatedInterpolants = 0;
-		private int m_InterpolantsDropped = 0;
+		private int mDisjunctionsGreaterOneCounter = 0;
+		private int mDifferenceBeforeAfter = 0;
+		private int mNewlyCreatedInterpolants = 0;
+		private int mInterpolantsDropped = 0;
 		// Contains the number of hoare triple checks (i.e. num of sats + num of unsats + num of unknowns)
 		// that are made by the interpolant consolidation
-		private InCaReCounter m_NumOfHoareTripleChecks = new InCaReCounter();
-		private int m_DiffAutomatonEmpty_Counter = 0;
+		private InCaReCounter mNumOfHoareTripleChecks = new InCaReCounter();
+		private int mDiffAutomatonEmpty_Counter = 0;
 
 
 
 		public void setInterpolantConsolidationData(int disjunctionsGreaterOneCounter, int newlyCreatedInterpolants, int interpolantsDropped,
 				int differenceOfNumOfInterpolantsBeforeAfter,
 				HoareTripleCheckerStatisticsGenerator htcbg) {
-			m_DisjunctionsGreaterOneCounter  = disjunctionsGreaterOneCounter;
-			m_DifferenceBeforeAfter = differenceOfNumOfInterpolantsBeforeAfter;
-			m_NumOfHoareTripleChecks = htcbg.getSolverCounterSat();
-			m_NumOfHoareTripleChecks.add(htcbg.getSolverCounterUnsat());
-			m_NumOfHoareTripleChecks.add(htcbg.getSolverCounterUnknown());
-			m_NewlyCreatedInterpolants = newlyCreatedInterpolants;
-			m_InterpolantsDropped = interpolantsDropped;
+			mDisjunctionsGreaterOneCounter  = disjunctionsGreaterOneCounter;
+			mDifferenceBeforeAfter = differenceOfNumOfInterpolantsBeforeAfter;
+			mNumOfHoareTripleChecks = htcbg.getSolverCounterSat();
+			mNumOfHoareTripleChecks.add(htcbg.getSolverCounterUnsat());
+			mNumOfHoareTripleChecks.add(htcbg.getSolverCounterUnknown());
+			mNewlyCreatedInterpolants = newlyCreatedInterpolants;
+			mInterpolantsDropped = interpolantsDropped;
 		}
 
 		public void incrementDiffAutomatonEmpty_Counter() {
-			m_DiffAutomatonEmpty_Counter ++;
+			mDiffAutomatonEmpty_Counter ++;
 		}
 
 		@Override
@@ -724,15 +724,15 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		public Object getValue(String key) {
 			switch (key) {
 			case InterpolantConsolidationBenchmarkType.s_NewlyCreatedInterpolants:
-				return m_NewlyCreatedInterpolants;
+				return mNewlyCreatedInterpolants;
 			case InterpolantConsolidationBenchmarkType.s_InterpolantsDropped:
-				return m_InterpolantsDropped;
+				return mInterpolantsDropped;
 			case InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter:
-				return m_DisjunctionsGreaterOneCounter;
+				return mDisjunctionsGreaterOneCounter;
 			case InterpolantConsolidationBenchmarkType.s_DifferenceBeforeAfter:
-				return m_DifferenceBeforeAfter;
+				return mDifferenceBeforeAfter;
 			case InterpolantConsolidationBenchmarkType.s_NumberOfHoareTripleChecks:
-				return m_NumOfHoareTripleChecks;
+				return mNumOfHoareTripleChecks;
 			case InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation:
 				try {
 					return getElapsedTime(key);
@@ -740,7 +740,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					throw new AssertionError("clock still running: " + key);
 				}
 			case InterpolantConsolidationBenchmarkType.s_DifferenceAutomatonEmptyCounter:
-				return m_DiffAutomatonEmpty_Counter;
+				return mDiffAutomatonEmpty_Counter;
 			default:
 				throw new AssertionError("unknown data");
 			}

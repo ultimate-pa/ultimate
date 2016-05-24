@@ -65,12 +65,12 @@ public class Lasso implements Serializable {
 	/**
 	 * The stem transition
 	 */
-	private final LinearTransition m_stem;
+	private final LinearTransition mstem;
 	
 	/**
 	 * The loop transition
 	 */
-	private final LinearTransition m_loop;
+	private final LinearTransition mloop;
 	
 	/**
 	 * Construct a new lasso program
@@ -81,8 +81,8 @@ public class Lasso implements Serializable {
 	public Lasso(LinearTransition stem, LinearTransition loop) {
 		stem = balanceVariablesStem(stem, loop);
 		loop = balanceVariablesLoop(stem, loop);
-		m_stem = stem == null ? LinearTransition.getTranstionTrue() : stem;
-		m_loop = loop == null ? LinearTransition.getTranstionTrue() : loop;
+		mstem = stem == null ? LinearTransition.getTranstionTrue() : stem;
+		mloop = loop == null ? LinearTransition.getTranstionTrue() : loop;
 		
 	}
 	
@@ -90,16 +90,16 @@ public class Lasso implements Serializable {
 	 * @return the stem (is never null)
 	 */
 	public LinearTransition getStem() {
-		assert m_stem != null;
-		return m_stem;
+		assert mstem != null;
+		return mstem;
 	}
 	
 	/**
 	 * @return the loop (is never null)
 	 */
 	public LinearTransition getLoop() {
-		assert m_loop != null;
-		return m_loop;
+		assert mloop != null;
+		return mloop;
 	}
 	
 	/**
@@ -107,7 +107,7 @@ public class Lasso implements Serializable {
 	 *         transition
 	 */
 	public int getLoopVarNum() {
-		return m_loop.getVariables().size();
+		return mloop.getVariables().size();
 	}
 	
 	/**
@@ -115,7 +115,7 @@ public class Lasso implements Serializable {
 	 *         transition
 	 */
 	public int getStemVarNum() {
-		return m_stem.getVariables().size();
+		return mstem.getVariables().size();
 	}
 	
 	/**
@@ -123,7 +123,7 @@ public class Lasso implements Serializable {
 	 *         preprocessing
 	 */
 	public int getLoopDisjuncts() {
-		return m_loop.getNumPolyhedra();
+		return mloop.getNumPolyhedra();
 	}
 	
 	/**
@@ -131,7 +131,7 @@ public class Lasso implements Serializable {
 	 *         preprocessing
 	 */
 	public int getStemDisjuncts() {
-		return m_stem.getNumPolyhedra();
+		return mstem.getNumPolyhedra();
 	}
 	
 	
@@ -140,10 +140,10 @@ public class Lasso implements Serializable {
 	 */
 	public Collection<RankVar> getAllRankVars() {
 		Collection<RankVar> rankVars = new LinkedHashSet<RankVar>();
-		rankVars.addAll(m_stem.getInVars().keySet());
-		rankVars.addAll(m_stem.getOutVars().keySet());
-		rankVars.addAll(m_loop.getInVars().keySet());
-		rankVars.addAll(m_loop.getOutVars().keySet());
+		rankVars.addAll(mstem.getInVars().keySet());
+		rankVars.addAll(mstem.getOutVars().keySet());
+		rankVars.addAll(mloop.getInVars().keySet());
+		rankVars.addAll(mloop.getOutVars().keySet());
 		return rankVars;
 	}
 	
@@ -172,7 +172,7 @@ public class Lasso implements Serializable {
 		Set<Rational> motzkin_coeffs = new HashSet<Rational>();
 		motzkin_coeffs.add(Rational.ZERO);
 		motzkin_coeffs.add(Rational.ONE);
-		for (List<LinearInequality> polyhedron : m_loop.getPolyhedra()) {
+		for (List<LinearInequality> polyhedron : mloop.getPolyhedra()) {
 			// Find aliases for variables
 			Map<Term, Set<Term>> aliases = new HashMap<Term, Set<Term>>();
 			for (LinearInequality li : polyhedron) {
@@ -203,16 +203,16 @@ public class Lasso implements Serializable {
 				}
 			}
 			
-			for (Map.Entry<RankVar, Term> entry : m_loop.getOutVars().entrySet()) {
+			for (Map.Entry<RankVar, Term> entry : mloop.getOutVars().entrySet()) {
 				RankVar rkVar = entry.getKey();
 				Term outVar = entry.getValue();
 				
 				// Find possible aliases
-				if (!m_loop.getInVars().containsKey(rkVar)) {
+				if (!mloop.getInVars().containsKey(rkVar)) {
 					continue;
 				}
 				List<Term> possible_inVars = new ArrayList<Term>();
-				Term inVar = m_loop.getInVars().get(rkVar);
+				Term inVar = mloop.getInVars().get(rkVar);
 				possible_inVars.add(inVar);
 				if (aliases.containsKey(inVar)) {
 					for (Term aliasVar : aliases.get(inVar)) {
@@ -318,9 +318,9 @@ public class Lasso implements Serializable {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Stem: ");
-		sb.append(m_stem);
+		sb.append(mstem);
 		sb.append("\nLoop: ");
-		sb.append(m_loop);
+		sb.append(mloop);
 		return sb.toString();
 	}
 }

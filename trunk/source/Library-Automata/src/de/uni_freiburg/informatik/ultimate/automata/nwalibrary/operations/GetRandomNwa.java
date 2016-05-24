@@ -53,18 +53,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class GetRandomNwa implements IOperation<String,String> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	private final Random m_Random;
-	private final NestedWordAutomaton<String,String> m_Result;
+	private final Random mRandom;
+	private final NestedWordAutomaton<String,String> mResult;
 	
-	int m_alphabetSize; 
-	int m_size;
-	double m_internalTransitionDensity;
-	double m_callTransitionProbability;
-	double m_returnTransitionProbability;
-	double m_acceptanceDensity;
+	int malphabetSize; 
+	int msize;
+	double minternalTransitionDensity;
+	double mcallTransitionProbability;
+	double mreturnTransitionProbability;
+	double macceptanceDensity;
 	
 	/**
 	 * See generateAutomaton.
@@ -81,20 +81,20 @@ public class GetRandomNwa implements IOperation<String,String> {
 			double callTransitionProbability,
 			double returnTransitionProbability,
 			double acceptanceDensity) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Random = new Random();
-		m_alphabetSize = alphabetSize;
-		m_size = size;
-		m_internalTransitionDensity = internalTransitionDensity;
-		m_callTransitionProbability = callTransitionProbability;
-		m_returnTransitionProbability = returnTransitionProbability;
-		m_acceptanceDensity = acceptanceDensity;
-		m_Result = generateAutomaton(m_alphabetSize, m_size, 
-				m_internalTransitionDensity, 
-				m_callTransitionProbability, 
-				m_returnTransitionProbability, 
-				m_acceptanceDensity);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mRandom = new Random();
+		malphabetSize = alphabetSize;
+		msize = size;
+		minternalTransitionDensity = internalTransitionDensity;
+		mcallTransitionProbability = callTransitionProbability;
+		mreturnTransitionProbability = returnTransitionProbability;
+		macceptanceDensity = acceptanceDensity;
+		mResult = generateAutomaton(malphabetSize, msize, 
+				minternalTransitionDensity, 
+				mcallTransitionProbability, 
+				mreturnTransitionProbability, 
+				macceptanceDensity);
 	}
 	
 	/**
@@ -113,20 +113,20 @@ public class GetRandomNwa implements IOperation<String,String> {
 			int callTransitionProbability,
 			int returnTransitionProbability,
 			int acceptanceDensity) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Random = new Random();
-		m_alphabetSize = alphabetSize;
-		m_size = size;
-		m_internalTransitionDensity = ((double) internalTransitionDensity) / 1000.0;
-		m_callTransitionProbability = ((double) callTransitionProbability) / 1000.0;
-		m_returnTransitionProbability = ((double) returnTransitionProbability) / 1000.0;
-		m_acceptanceDensity = ((double) acceptanceDensity) / 1000.0;
-		m_Result = generateAutomaton(m_alphabetSize, m_size, 
-				m_internalTransitionDensity, 
-				m_callTransitionProbability, 
-				m_returnTransitionProbability, 
-				m_acceptanceDensity);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mRandom = new Random();
+		malphabetSize = alphabetSize;
+		msize = size;
+		minternalTransitionDensity = ((double) internalTransitionDensity) / 1000.0;
+		mcallTransitionProbability = ((double) callTransitionProbability) / 1000.0;
+		mreturnTransitionProbability = ((double) returnTransitionProbability) / 1000.0;
+		macceptanceDensity = ((double) acceptanceDensity) / 1000.0;
+		mResult = generateAutomaton(malphabetSize, msize, 
+				minternalTransitionDensity, 
+				mcallTransitionProbability, 
+				mreturnTransitionProbability, 
+				macceptanceDensity);
 	}
 	
 	
@@ -141,20 +141,20 @@ public class GetRandomNwa implements IOperation<String,String> {
 		return MessageFormat.format("Start {0}. Alphabet size {1} Number of states {2} " +
 				"Density internal transition {3} Probability call transition {4} " +
 				"Probability return transition {5} Acceptance density {6}", 
-				operationName(), m_alphabetSize, m_size, m_internalTransitionDensity,
-				m_callTransitionProbability, m_returnTransitionProbability, 
-				m_acceptanceDensity);
+				operationName(), malphabetSize, msize, minternalTransitionDensity,
+				mcallTransitionProbability, mreturnTransitionProbability, 
+				macceptanceDensity);
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + 
-				m_Result.sizeInformation() + ".";
+				mResult.sizeInformation() + ".";
 	}
 	
 	@Override
 	public NestedWordAutomaton<String, String> getResult() {
-		return m_Result;
+		return mResult;
 	}
 	
 	
@@ -201,7 +201,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 		int numOfTransitions =
 					(int) Math.round(internalTransitionDensity * maxNumOfTransitions);
 		if (numOfTransitions < size - 1) {
-			m_Logger.warn("You specified density " + internalTransitionDensity 
+			mLogger.warn("You specified density " + internalTransitionDensity 
 					+ " for internal transition. This is not sufficient to" +
 					" connect all states with internal transitions.");
 		}
@@ -231,11 +231,11 @@ public class GetRandomNwa implements IOperation<String,String> {
 		NestedWordAutomaton<String,String> result;
 		if (isFiniteAutomaton) {
 			result = new NestedWordAutomaton<String,String>(
-					m_Services, 
+					mServices, 
 					new HashSet<String>(num2Letter), null, null,	stateFactory);			
 		} else {
 			result = new NestedWordAutomaton<String,String>(
-					m_Services, 
+					mServices, 
 					new HashSet<String>(num2Letter),
 					new HashSet<String>(num2Letter), 
 					new HashSet<String>(num2Letter),	stateFactory);						
@@ -245,7 +245,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 		// Add the states to the result automaton.
 		//
 		List<String> shuffledStateList = new ArrayList<String>(num2State);
-		Collections.shuffle(shuffledStateList, m_Random);
+		Collections.shuffle(shuffledStateList, mRandom);
 		// • Accepting states:
 		for (int i = 0; i < numOfAccStates; ++i) {
 			String state = shuffledStateList.get(i);
@@ -300,15 +300,15 @@ public class GetRandomNwa implements IOperation<String,String> {
 		for (int stateNb = 1; stateNb < size; ++stateNb) {
 			shuffledStateNbList.add(stateNb);
 		}
-		Collections.shuffle(shuffledStateNbList, m_Random);
+		Collections.shuffle(shuffledStateNbList, mRandom);
 		
 		// Transition numbers that will not be used again:
 		Set<Integer> usedTransitionNbs = new HashSet<Integer>(size - 1);
 		
 		for (int i = 0; i < shuffledStateNbList.size(); ++i) {
 			int predStateNb =  // random reached state
-					reachedStateNbs.get(m_Random.nextInt(reachedStateNbs.size()));
-			int letterNb = m_Random.nextInt(alphabetSize);  // random letter
+					reachedStateNbs.get(mRandom.nextInt(reachedStateNbs.size()));
+			int letterNb = mRandom.nextInt(alphabetSize);  // random letter
 			int succStateNb = shuffledStateNbList.get(i);   // rd. isolated state
 			reachedStateNbs.add(succStateNb);
 			int transitionNb = predStateNb * alphabetSize * size
@@ -330,7 +330,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 			if (!usedTransitionNbs.contains(transNb))
 				shuffledTransitionNbList.add(transNb);	
 		}
-		Collections.shuffle(shuffledTransitionNbList, m_Random);
+		Collections.shuffle(shuffledTransitionNbList, mRandom);
 		
 		int remainingNumOfTransitions = numOfTransitions - size + 1;
 		for (int i = 0; i < remainingNumOfTransitions; ++i) {
@@ -350,7 +350,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 			for (String pred : num2State) {
 				for (String letter : num2Letter) {
 					for (String succ : num2State) {
-						if (m_Random.nextFloat() < callTransitionProbability) {
+						if (mRandom.nextFloat() < callTransitionProbability) {
 							result.addCallTransition(pred, letter, succ);
 						}
 					}
@@ -361,7 +361,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 				for (String hier : num2State) {
 					for (String letter : num2Letter) {
 						for (String succ : num2State) {
-							if (m_Random.nextFloat() < returnTransitionProbability) {
+							if (mRandom.nextFloat() < returnTransitionProbability) {
 								result.addReturnTransition(pred, hier, letter, succ);
 							}
 						}

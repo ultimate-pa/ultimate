@@ -42,12 +42,12 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE> extends Inclusio
 			INestedWordAutomatonSimple<LETTER, STATE> a, 
 			List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services,stateFactory,a);
-		m_Logger.info(startMessage());
+		mLogger.info(startMessage());
 		for (INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
 			addSubtrahend(bi);
 		}
 		// obtain counterexample, counterexample is null if inclusion holds
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	public String operationName() {
 		return "IncrementalInclusionCheckDifference";

@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	private Map<Macrostate,STATE> macrostate2detState =
 		new HashMap<Macrostate, STATE>();
@@ -55,7 +55,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private Map<STATE,Set<STATE>> summary = 
 		new HashMap<STATE, Set<STATE>>();
 	private final STATE auxilliaryEmptyStackState;
-	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> mOperand;
 	private final NestedWordAutomaton<LETTER,STATE> result;
 	
 	private final List<StatePair> queue = new LinkedList<StatePair>();
@@ -75,7 +75,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_Operand.sizeInformation();
+			mOperand.sizeInformation();
 	}
 	
 	
@@ -89,19 +89,19 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public DeterminizeSadd(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Operand = nwa;
-		m_Logger.info(startMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = nwa;
+		mLogger.info(startMessage());
 		result = new NestedWordAutomaton<LETTER,STATE>(
-				m_Services, 
-				m_Operand.getInternalAlphabet(),
-				m_Operand.getCallAlphabet(),
-				m_Operand.getReturnAlphabet(),
-				m_Operand.getStateFactory());
-		auxilliaryEmptyStackState = m_Operand.getEmptyStackState();
+				mServices, 
+				mOperand.getInternalAlphabet(),
+				mOperand.getCallAlphabet(),
+				mOperand.getReturnAlphabet(),
+				mOperand.getStateFactory());
+		auxilliaryEmptyStackState = mOperand.getEmptyStackState();
 		determinize();
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
@@ -157,10 +157,10 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	private void determinize() {
-		m_Logger.debug("Starting determinizeSadd. Operand " + m_Operand.sizeInformation());
+		mLogger.debug("Starting determinizeSadd. Operand " + mOperand.sizeInformation());
 		Macrostate initialMacroState = new Macrostate();
 
-		for (STATE state : m_Operand.getInitialStates()) {
+		for (STATE state : mOperand.getInitialStates()) {
 			initialMacroState.addPair(state, auxilliaryEmptyStackState);
 		}
 		STATE initialDetState = initialMacroState.getContent();
@@ -171,7 +171,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		while(!queue.isEmpty()) {
 			StatePair statePair = queue.remove(0);
-//			m_Logger.debug("Processing: "+ statePair);
+//			mLogger.debug("Processing: "+ statePair);
 			processStatePair(statePair);
 			if (summary.containsKey(statePair.state)) {
 				for (STATE summarySucc : summary.get(statePair.state)) {
@@ -193,7 +193,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		Set<LETTER> symbolsInternal = new HashSet<LETTER>();
 		for (STATE state : macrostate.getStates()) {
-			symbolsInternal.addAll(m_Operand.lettersInternal(state));
+			symbolsInternal.addAll(mOperand.lettersInternal(state));
 		}
 		for (LETTER symbol : symbolsInternal) {
 			Macrostate succMacrostate = internalSuccMacrostate(macrostate, symbol);
@@ -212,7 +212,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		Set<LETTER> symbolsCall = new HashSet<LETTER>();
 		for (STATE state : macrostate.getStates()) {
-			symbolsCall.addAll(m_Operand.lettersCall(state));
+			symbolsCall.addAll(mOperand.lettersCall(state));
 		}
 		for (LETTER symbol : symbolsCall) {
 			Macrostate succMacrostate = callSuccMacrostate(macrostate, symbol);
@@ -233,7 +233,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 			Set<LETTER> symbolsReturn = new HashSet<LETTER>();
 			for (STATE state : macrostate.getStates()) {
-				symbolsReturn.addAll(m_Operand.lettersReturn(state));
+				symbolsReturn.addAll(mOperand.lettersReturn(state));
 			}
 			for (LETTER symbol : symbolsReturn) {
 				Macrostate linPredMacrostate = detState2macrostate.get(detLinPred);
@@ -268,7 +268,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private Macrostate internalSuccMacrostate(Macrostate macrostate, LETTER symbol) {
 		Macrostate succMacrostate = new Macrostate();
 		for (STATE state : macrostate.getStates()) {
-			for (STATE succ : m_Operand.succInternal(state, symbol)) {
+			for (STATE succ : mOperand.succInternal(state, symbol)) {
 				Set<STATE> callerStates = macrostate.getCallerStates(state);
 				succMacrostate.addPairs(succ,callerStates);
 			}
@@ -283,7 +283,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private Macrostate callSuccMacrostate(Macrostate macrostate, LETTER symbol) {
 		Macrostate succMacrostate = new Macrostate();
 		for (STATE state : macrostate.getStates()) {
-			for (STATE succ : m_Operand.succCall(state, symbol)) {
+			for (STATE succ : mOperand.succCall(state, symbol)) {
 				succMacrostate.addPair(succ,state);
 			}
 		}
@@ -300,7 +300,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		Macrostate succMacrostate = new Macrostate();
 		for (STATE state : macrostate.getStates()) {
 			for (STATE linPred : macrostate.getCallerStates(state)) {
-				for (STATE succ : m_Operand.succReturn(state, linPred, symbol)) {
+				for (STATE succ : mOperand.succReturn(state, linPred, symbol)) {
 					Set<STATE> callerStates = 
 						linPredMacrostate.getCallerStates(linPred);
 					if (callerStates != null) {
@@ -318,11 +318,11 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private class StatePair {
 		private final STATE state;
 		private final STATE callerState;
-		private final int m_hashCode;
+		private final int mhashCode;
 		public StatePair(STATE state, STATE callerState) {
 			this.state = state;
 			this.callerState = callerState;
-			m_hashCode = computeHashCode();; 
+			mhashCode = computeHashCode();; 
 		}
 
 
@@ -354,7 +354,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		@Override
 		public int hashCode() {
-			return m_hashCode;
+			return mhashCode;
 		}
 
 
@@ -409,7 +409,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		
 		private void addPair(STATE state, STATE callerState) {
-			if (m_Operand.isFinal(state)) {
+			if (mOperand.isFinal(state)) {
 				isFinal = true;
 			}
 			Set<STATE> callerStates = pairList.get(state);
@@ -422,7 +422,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		private void addPairs(STATE state, 
 											Set<STATE> newCallerStates){
-			if (m_Operand.isFinal(state)) {
+			if (mOperand.isFinal(state)) {
 				isFinal = true;
 			}
 			Set<STATE> callerStates = pairList.get(state);
@@ -459,12 +459,12 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		m_Logger.info("Testing correctness of determinization");
+		mLogger.info("Testing correctness of determinization");
 		boolean correct = true;
-		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(m_Services, stateFactory, m_Operand)).getResult();
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultDD,result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, result,resultDD, stateFactory) == null);
-		m_Logger.info("Finished testing correctness of determinization");
+		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(mServices, stateFactory, mOperand)).getResult();
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultDD,result, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, result,resultDD, stateFactory) == null);
+		mLogger.info("Finished testing correctness of determinization");
 		return correct;
 	}
 	

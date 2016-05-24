@@ -108,11 +108,11 @@ public class TypeHandler implements ITypeHandler {
      * Maps the cIdentifier of a struct, enumeration, or union (when this is
      *  implemented) to the ResultType that represents this type at the moment
      */
-    private final LinkedScopedHashMap<String, TypesResult> m_DefinedTypes;
+    private final LinkedScopedHashMap<String, TypesResult> mDefinedTypes;
     /**
      * Undefined struct types.
      */
-    private LinkedHashSet<String> m_IncompleteType;
+    private LinkedHashSet<String> mIncompleteType;
     /**
      * counting levels of struct declaration.
      */
@@ -121,35 +121,35 @@ public class TypeHandler implements ITypeHandler {
     /**
      * Contains all primitive types that occurred in program.
      */
-    private final Set<CPrimitive.PRIMITIVE> m_OccurredPrimitiveTypes = new HashSet<>();
+    private final Set<CPrimitive.PRIMITIVE> mOccurredPrimitiveTypes = new HashSet<>();
     
     /**
      * if true we translate CPrimitives whose general type is INT to int.
      * If false we translate CPrimitives whose general type is INT to 
      * identically named types,
      */
-    private final boolean m_UseIntForAllIntegerTypes;
+    private final boolean mUseIntForAllIntegerTypes;
     
     /**
      * States if an ASTNode for the pointer type was constructed and hence
      * this type has to be declared.
      */
-	private boolean m_PointerTypeNeeded = false;
+	private boolean mPointerTypeNeeded = false;
 	
 	/**
 	 * Is true iff we yet processed a floating type.
 	 * (And hence floating types have to be added to Boogie).
 	 */
-	private boolean m_FloatingTypesNeeded = false;
+	private boolean mFloatingTypesNeeded = false;
     
     
 
     public Set<CPrimitive.PRIMITIVE> getOccurredPrimitiveTypes() {
-		return m_OccurredPrimitiveTypes;
+		return mOccurredPrimitiveTypes;
 	}
 
 	public boolean useIntForAllIntegerTypes() {
-		return m_UseIntForAllIntegerTypes;
+		return mUseIntForAllIntegerTypes;
 	}
 
 	/**
@@ -157,9 +157,9 @@ public class TypeHandler implements ITypeHandler {
 	 * @param useIntForAllIntegerTypes 
      */
     public TypeHandler(boolean useIntForAllIntegerTypes) {
-    	this.m_UseIntForAllIntegerTypes = useIntForAllIntegerTypes;
-        this.m_DefinedTypes = new LinkedScopedHashMap<String, TypesResult>();
-        this.m_IncompleteType = new LinkedHashSet<String>();
+    	this.mUseIntForAllIntegerTypes = useIntForAllIntegerTypes;
+        this.mDefinedTypes = new LinkedScopedHashMap<String, TypesResult>();
+        this.mIncompleteType = new LinkedHashSet<String>();
     }
 
     @Override
@@ -269,7 +269,7 @@ public class TypeHandler implements ITypeHandler {
             String cId = node.getName().toString();
             String bId = main.cHandler.getSymbolTable().get(cId, loc).getBoogieName();
             return new TypesResult(new NamedType(loc, bId, null), false, false, //TODO: replace constants
-            		new CNamed(bId, m_DefinedTypes.get(bId).cType));
+            		new CNamed(bId, mDefinedTypes.get(bId).cType));
         }
         String msg = "Unknown or unsupported type! " + node.toString();
         throw new UnsupportedSyntaxException(loc, msg);
@@ -304,9 +304,9 @@ public class TypeHandler implements ITypeHandler {
         TypesResult result = new TypesResult(at, false, false, cEnum);
        
         String incompleteTypeName = "ENUM~" + cId;
-        if (m_IncompleteType.contains(incompleteTypeName)) {
-            m_IncompleteType.remove(incompleteTypeName);
-            TypesResult incompleteType = m_DefinedTypes.get(cId);
+        if (mIncompleteType.contains(incompleteTypeName)) {
+            mIncompleteType.remove(incompleteTypeName);
+            TypesResult incompleteType = mDefinedTypes.get(cId);
             CEnum incompleteEnum = (CEnum) incompleteType.cType;
             //search for any typedefs that were made for the incomplete type
             //typedefs are made globally, so the CHandler has to do this
@@ -316,7 +316,7 @@ public class TypeHandler implements ITypeHandler {
         }
 
         if (!enumId.equals(SFO.EMPTY)) {
-            m_DefinedTypes.put(cId, result);
+            mDefinedTypes.put(cId, result);
         }
         
         return result;
@@ -331,8 +331,8 @@ public class TypeHandler implements ITypeHandler {
     		String type = node.getName().toString();
     		
 
-    		//            if (m_DefinedTypes.containsKey(type)) {
-    		TypesResult originalType = m_DefinedTypes.get(type);
+    		//            if (mDefinedTypes.containsKey(type)) {
+    		TypesResult originalType = mDefinedTypes.get(type);
 //    		if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
 //    			// --> we have an incomplete enum --> do nothing 
 //    			//(i cannot think of an effect of an incomplete enum declaration right now..)
@@ -354,7 +354,7 @@ public class TypeHandler implements ITypeHandler {
     				incompleteTypeName = "ENUM~" + type; 
     			}
 
-    			m_IncompleteType.add(incompleteTypeName);
+    			mIncompleteType.add(incompleteTypeName);
     			// 			FIXME : not sure, if null is a good idea!
     			//            ResultTypes r = new ResultTypes(new NamedType(loc, name,
     			//                    new ASTType[0]), false, false, null);
@@ -370,7 +370,7 @@ public class TypeHandler implements ITypeHandler {
     					new ASTType[0]), false, false, ctype);
 
 
-    			m_DefinedTypes.put(type, r);
+    			mDefinedTypes.put(type, r);
 
     			return r;
     		}
@@ -429,9 +429,9 @@ public class TypeHandler implements ITypeHandler {
         ASTType type = namedType;
         TypesResult result = new TypesResult(type, false, false, cvar);
        
-        if (m_IncompleteType.contains(name)) {
-            m_IncompleteType.remove(name);
-            TypesResult incompleteType = m_DefinedTypes.get(cId);
+        if (mIncompleteType.contains(name)) {
+            mIncompleteType.remove(name);
+            TypesResult incompleteType = mDefinedTypes.get(cId);
             CStruct incompleteStruct = (CStruct) incompleteType.cType;
             //search for any typedefs that were made for the incomplete type
             //typedefs are made globally, so the CHandler has to do this
@@ -441,7 +441,7 @@ public class TypeHandler implements ITypeHandler {
         }
         
         if (!cId.equals(SFO.EMPTY)) {
-            m_DefinedTypes.put(cId, result);
+            mDefinedTypes.put(cId, result);
         }
         return result;
     }
@@ -465,12 +465,12 @@ public class TypeHandler implements ITypeHandler {
     @Override
     public InferredType visit(Dispatcher main, ITypedef type) {
     	assert false : "I don't think this should still be used";
-        if (!m_DefinedTypes.containsKey(type.getName())) {
+        if (!mDefinedTypes.containsKey(type.getName())) {
             String msg = "Unknown C typedef: " + type.getName();
             // TODO : no idea what location should be set to ...
             throw new IncorrectSyntaxException(null, msg);
         }
-        return new InferredType(m_DefinedTypes.get(type.getName()).getType());
+        return new InferredType(mDefinedTypes.get(type.getName()).getType());
     }
 
     @Override
@@ -552,12 +552,12 @@ public class TypeHandler implements ITypeHandler {
     
     @Override
     public  LinkedScopedHashMap<String,TypesResult> getDefinedTypes() {
-        return m_DefinedTypes;
+        return mDefinedTypes;
     }
     
     @Override
     public Set<String> getUndefinedTypes() {
-        return m_IncompleteType;
+        return mIncompleteType;
     }
 
     @Override
@@ -604,14 +604,14 @@ public class TypeHandler implements ITypeHandler {
 		case VOID:
 			return null; //(alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
 		case INTTYPE:
-			if (m_UseIntForAllIntegerTypes) {
+			if (mUseIntForAllIntegerTypes) {
 				return new PrimitiveType(loc, SFO.INT);
 			} else {
 				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			}
 		case FLOATTYPE:
-			m_FloatingTypesNeeded = true;
-			if (m_UseIntForAllIntegerTypes) {
+			mFloatingTypesNeeded = true;
+			if (mUseIntForAllIntegerTypes) {
 				return new PrimitiveType(loc, SFO.REAL);
 			} else {
 				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
@@ -626,7 +626,7 @@ public class TypeHandler implements ITypeHandler {
 		case VOID:
 			throw new UnsupportedOperationException();
 		case INTTYPE:
-			if (m_UseIntForAllIntegerTypes) {
+			if (mUseIntForAllIntegerTypes) {
 				return new PrimitiveType(loc, SFO.INT);
 			} else {
 				final int  bitsize = bytesize * 8;
@@ -642,21 +642,21 @@ public class TypeHandler implements ITypeHandler {
     }
     
     public void beginScope() {
-    	m_DefinedTypes.beginScope();
+    	mDefinedTypes.beginScope();
     }
     
     public void endScope() {
-    	m_DefinedTypes.endScope();
+    	mDefinedTypes.endScope();
     }
     
     @Override
     public void addDefinedType(String id, TypesResult type) {
-    	m_DefinedTypes.put(id, type);
+    	mDefinedTypes.put(id, type);
     }
 
 	@Override
 	public ASTType constructPointerType(ILocation loc) {
-		m_PointerTypeNeeded = true;
+		mPointerTypeNeeded = true;
 		return new NamedType(null, SFO.POINTER, new ASTType[0]);
 	}
 	
@@ -667,7 +667,7 @@ public class TypeHandler implements ITypeHandler {
 	public ArrayList<Declaration> constructTranslationDefiniedDelarations(ILocation tuLoc, 
 			AExpressionTranslation expressionTranslation) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		if (m_PointerTypeNeeded) {
+		if (mPointerTypeNeeded) {
 			VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE }, 
 					ctype2asttype(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
 			VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET }, 
@@ -682,7 +682,7 @@ public class TypeHandler implements ITypeHandler {
 	}
 	
 	public boolean areFloatingTypesNeeded() {
-		return m_FloatingTypesNeeded;
+		return mFloatingTypesNeeded;
 	}
 	
 	

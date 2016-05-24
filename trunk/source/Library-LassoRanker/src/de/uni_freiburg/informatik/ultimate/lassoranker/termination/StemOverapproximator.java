@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  * @author Jan Leike
  */
 class StemOverapproximator {
-	private boolean m_annotate_terms;
+	private boolean mannotate_terms;
 
 	/**
 	 * This setting makes the overapproximation somewhat better but also much
@@ -78,7 +78,7 @@ class StemOverapproximator {
 	/**
 	 * This script is a new script of QF_LRA that belongs only to this object
 	 */
-	private Script m_script;
+	private Script mscript;
 
 	/**
 	 * Create a new StemOverapproximator
@@ -89,18 +89,18 @@ class StemOverapproximator {
 	 */
 	public StemOverapproximator(LassoRankerPreferences preferences, IUltimateServiceProvider services,
 			IToolchainStorage storage) throws IOException {
-		m_annotate_terms = preferences.annotate_terms;
+		mannotate_terms = preferences.annotate_terms;
 
 		// Create a new QF_LRA script
-		m_script = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);
-		m_script.setLogic(Logics.QF_LRA);
+		mscript = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);
+		mscript.setLogic(Logics.QF_LRA);
 	}
 
 	@Override
 	protected void finalize() throws Throwable {
-		if (m_script != null) {
-			m_script.exit();
-			m_script = null;
+		if (mscript != null) {
+			mscript.exit();
+			mscript = null;
 		}
 		super.finalize();
 	}
@@ -125,21 +125,21 @@ class StemOverapproximator {
 		List<LinearInequality> new_stem = new ArrayList<LinearInequality>();
 		for (LinearInequality candidate_li : candidate_lis) {
 			// Check if stem -> candidate_li
-			m_script.push(1);
+			mscript.push(1);
 			for (List<LinearInequality> polyhedron : stem.getPolyhedra()) {
-				MotzkinTransformation motzkin = new MotzkinTransformation(m_script, AnalysisType.Linear,
-						m_annotate_terms);
+				MotzkinTransformation motzkin = new MotzkinTransformation(mscript, AnalysisType.Linear,
+						mannotate_terms);
 				motzkin.add_inequalities(polyhedron);
 				LinearInequality li = new LinearInequality(candidate_li);
 				li.negate();
 				motzkin.add_inequality(li);
 				motzkin.annotation = "stem implies candidate linear inequality";
-				m_script.assertTerm(motzkin.transform(new Rational[0]));
+				mscript.assertTerm(motzkin.transform(new Rational[0]));
 			}
-			if (m_script.checkSat().equals(LBool.SAT)) {
+			if (mscript.checkSat().equals(LBool.SAT)) {
 				new_stem.add(candidate_li);
 			}
-			m_script.pop(1);
+			mscript.pop(1);
 		}
 
 		if (new_stem.isEmpty()) {

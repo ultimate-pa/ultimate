@@ -49,15 +49,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
  * This is data structure is a wrapper for such a nested select expression which
  * allows you to directly access the array and the indices.
  * This data structure allows also multidimensional arrays of dimension 0. In
- * this case, m_Array is null, m_Index is empty and m_SelectTerm is some term.
+ * this case, mArray is null, mIndex is empty and mSelectTerm is some term.
  * @author Matthias Heizmann
  *
  */
 public class MultiDimensionalSelect {
 
-	private final Term m_Array;
-	private final ArrayIndex m_Index;
-	private final ApplicationTerm m_SelectTerm;
+	private final Term mArray;
+	private final ArrayIndex mIndex;
+	private final ApplicationTerm mSelectTerm;
 	
 	/**
 	 * Translate a (possibly) nested SMT term into this data structure.
@@ -65,7 +65,7 @@ public class MultiDimensionalSelect {
 	 * index i2.
 	 */
 	public MultiDimensionalSelect(Term term) {
-		m_SelectTerm = (ApplicationTerm) term;
+		mSelectTerm = (ApplicationTerm) term;
 		ArrayList<Term> index = new ArrayList<Term>();
 		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
@@ -79,41 +79,41 @@ public class MultiDimensionalSelect {
 			index.add(0,appTerm.getParameters()[1]);
 			term = appTerm.getParameters()[0];
 		}
-		m_Index = new ArrayIndex(index);
-		m_Array = term;
+		mIndex = new ArrayIndex(index);
+		mArray = term;
 		assert classInvariant();
 	}
 	
 	private boolean classInvariant() {
-		if (m_Array == null) {
-			return m_Index.size() == 0;
+		if (mArray == null) {
+			return mIndex.size() == 0;
 		} else {
 			return MultiDimensionalSort.
-					areDimensionsConsistent(m_Array, m_Index, m_SelectTerm);
+					areDimensionsConsistent(mArray, mIndex, mSelectTerm);
 		}
 	}
 	
 	public Term getArray() {
-		return m_Array;
+		return mArray;
 	}
 
 	public ArrayIndex getIndex() {
-		return m_Index;
+		return mIndex;
 	}
 
 	public ApplicationTerm getSelectTerm() {
-		return m_SelectTerm;
+		return mSelectTerm;
 	}
 	
 	@Override
 	public String toString() {
-		return m_SelectTerm.toString();
+		return mSelectTerm.toString();
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof MultiDimensionalSelect) {
-			return m_SelectTerm.equals(((MultiDimensionalSelect) obj).getSelectTerm());
+			return mSelectTerm.equals(((MultiDimensionalSelect) obj).getSelectTerm());
 		} else {
 			return false;
 		}
@@ -121,7 +121,7 @@ public class MultiDimensionalSelect {
 
 	@Override
 	public int hashCode() {
-		return m_SelectTerm.hashCode();
+		return mSelectTerm.hashCode();
 	}
 	
 	

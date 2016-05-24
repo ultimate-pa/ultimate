@@ -56,7 +56,7 @@ public class XJunction {
 	/**
 	 * Maps atoms to POSITIVE/NEGATIVE
 	 */
-	private final Map<Term, Polarity> m_PolarityMap;
+	private final Map<Term, Polarity> mPolarityMap;
 	
 	
 	
@@ -66,7 +66,7 @@ public class XJunction {
 	 * negative in terms.
 	 */
 	public XJunction(Term[] terms) throws AtomAndNegationException {
-		m_PolarityMap = new HashMap<Term, Polarity>(terms.length);
+		mPolarityMap = new HashMap<Term, Polarity>(terms.length);
 		for (Term term : terms) {
 			addTermWithUnknownPolarity(term);
 		}
@@ -76,14 +76,14 @@ public class XJunction {
 	 * Copy constructor
 	 */
 	public XJunction(XJunction xJunction) {
-		m_PolarityMap = new HashMap<Term, Polarity>(xJunction.m_PolarityMap);
+		mPolarityMap = new HashMap<Term, Polarity>(xJunction.mPolarityMap);
 	}
 
 	/**
 	 * Constructs an empty XJunction.
 	 */
 	public XJunction() {
-		m_PolarityMap = new HashMap<Term, Polarity>();
+		mPolarityMap = new HashMap<Term, Polarity>();
 	}
 	
 	/**
@@ -91,8 +91,8 @@ public class XJunction {
 	 * (atom, polarity).
 	 */
 	public XJunction(Term atom, Polarity polarity) {
-		m_PolarityMap = new HashMap<Term, Polarity>();
-		m_PolarityMap.put(atom, polarity);
+		mPolarityMap = new HashMap<Term, Polarity>();
+		mPolarityMap.put(atom, polarity);
 	}
 
 
@@ -119,7 +119,7 @@ public class XJunction {
 			// param contained φ as well as (not φ), we return null
 			throw new AtomAndNegationException();
 		} else {
-			return m_PolarityMap.put(atom, polarity) == null;
+			return mPolarityMap.put(atom, polarity) == null;
 		}
 	}
 	
@@ -128,7 +128,7 @@ public class XJunction {
 	 * (atom, polarity).
 	 */
 	public boolean contains(Term atom, Polarity polarity) {
-		return m_PolarityMap.get(atom) == polarity;
+		return mPolarityMap.get(atom) == polarity;
 	}
 
 	/**
@@ -136,7 +136,7 @@ public class XJunction {
 	 * given by the pair (atom, polarity).
 	 */
 	public boolean containsNegation(Term term, Polarity polarity) {
-		Polarity existing = m_PolarityMap.get(term);
+		Polarity existing = mPolarityMap.get(term);
 		if (existing != null) {
 			if (existing == polarity) {
 				return false;
@@ -156,8 +156,8 @@ public class XJunction {
 	 * this XJunction.
 	 */
 	public List<Term> toTermList(Script script) {
-		List<Term> result = new ArrayList<Term>(m_PolarityMap.size());
-		for (Entry<Term, Polarity> entry : m_PolarityMap.entrySet()) {
+		List<Term> result = new ArrayList<Term>(mPolarityMap.size());
+		for (Entry<Term, Polarity> entry : mPolarityMap.entrySet()) {
 			if (entry.getValue() == Polarity.POSITIVE) {
 				result.add(entry.getKey());
 			} else {
@@ -180,10 +180,10 @@ public class XJunction {
 		if (getClass() != obj.getClass())
 			return false;
 		XJunction other = (XJunction) obj;
-		if (m_PolarityMap == null) {
-			if (other.m_PolarityMap != null)
+		if (mPolarityMap == null) {
+			if (other.mPolarityMap != null)
 				return false;
-		} else if (!m_PolarityMap.equals(other.m_PolarityMap))
+		} else if (!mPolarityMap.equals(other.mPolarityMap))
 			return false;
 		return true;
 	}
@@ -194,7 +194,7 @@ public class XJunction {
 	 */
 	@Override
 	public int hashCode() {
-		return m_PolarityMap.hashCode();
+		return mPolarityMap.hashCode();
 	}
 
 
@@ -202,7 +202,7 @@ public class XJunction {
 	 * @return All literals of this XJunction as (atom,polarity) pairs.
 	 */
 	public Set<Entry<Term, Polarity>> entrySet() {
-		return Collections.unmodifiableSet(m_PolarityMap.entrySet());
+		return Collections.unmodifiableSet(mPolarityMap.entrySet());
 	}
 
 
@@ -210,7 +210,7 @@ public class XJunction {
 	 * @return numer of literals of this XJunction.
 	 */
 	public int size() {
-		return m_PolarityMap.size();
+		return mPolarityMap.size();
 	}
 
 	/**
@@ -218,7 +218,7 @@ public class XJunction {
 	 * atom is contained.
 	 */
 	public Polarity getPolarity(Term atom) {
-		return m_PolarityMap.get(atom);
+		return mPolarityMap.get(atom);
 	}
 
 
@@ -228,13 +228,13 @@ public class XJunction {
 	 * this atom was contained.
 	 */
 	public Polarity remove(Term atom) {
-		return m_PolarityMap.remove(atom);
+		return mPolarityMap.remove(atom);
 	}
 
 
 	@Override
 	public String toString() {
-		return m_PolarityMap.toString();
+		return mPolarityMap.toString();
 	}
 	
 	/**
@@ -245,8 +245,8 @@ public class XJunction {
 		if (xjunction.size() < size()) {
 			return false;
 		} else {
-		return xjunction.m_PolarityMap.entrySet().containsAll(
-				this.m_PolarityMap.entrySet());
+		return xjunction.mPolarityMap.entrySet().containsAll(
+				this.mPolarityMap.entrySet());
 		}
 	}
 

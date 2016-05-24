@@ -48,12 +48,12 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		IZ3, PRINCESS, SMTINTERPOL
 	};
 
-	private final ExternalInterpolator m_ExternalInterpolator;
+	private final ExternalInterpolator mExternalInterpolator;
 
 	public ScriptorWithGetInterpolants(String command, ILogger logger, IUltimateServiceProvider services,
 			IToolchainStorage storage, ExternalInterpolator externalInterpolator, String name) throws IOException {
 		super(command, logger, services, storage, name);
-		m_ExternalInterpolator = externalInterpolator;
+		mExternalInterpolator = externalInterpolator;
 	}
 
 	@Override
@@ -76,7 +76,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 	private void sendInterpolationCommand(Term[] partition) throws AssertionError {
 		StringBuilder command = new StringBuilder();
 		PrintTerm pt = new PrintTerm();
-		switch (m_ExternalInterpolator) {
+		switch (mExternalInterpolator) {
 		case IZ3:
 			command.append("(get-interpolant ");
 			break;
@@ -85,7 +85,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 			command.append("(get-interpolants ");
 			break;
 		default:
-			throw new AssertionError("unknown m_ExternalInterpolator");
+			throw new AssertionError("unknown mExternalInterpolator");
 		}
 		String sep = "";
 		for (Term t : partition) {
@@ -100,7 +100,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 	private void sendInterpolationCommand(Term[] partition, int[] startOfSubtree) throws AssertionError {
 		StringBuilder command = new StringBuilder();
 		PrintTerm pt = new PrintTerm();
-		switch (m_ExternalInterpolator) {
+		switch (mExternalInterpolator) {
 		case IZ3:
 			command.append("(get-interpolant ");
 			break;
@@ -109,7 +109,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 			command.append("(get-interpolants ");
 			break;
 		default:
-			throw new AssertionError("unknown m_ExternalInterpolator");
+			throw new AssertionError("unknown mExternalInterpolator");
 		}
 		pt.append(command, partition[0]);
 		for (int i = 1; i < partition.length; ++i) {
@@ -129,7 +129,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 
 	private Term[] readInterpolants(int numberOfInterpolants) throws AssertionError {
 		Term[] interpolants;
-		switch (m_ExternalInterpolator) {
+		switch (mExternalInterpolator) {
 		case IZ3:
 			interpolants = new Term[numberOfInterpolants];
 			for (int i = 0; i < interpolants.length; i++) {
@@ -141,7 +141,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 			interpolants = super.mExecutor.parseGetAssertionsResult();
 			break;
 		default:
-			throw new AssertionError("unknown m_ExternalInterpolator");
+			throw new AssertionError("unknown mExternalInterpolator");
 		}
 		return interpolants;
 	}

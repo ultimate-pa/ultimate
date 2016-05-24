@@ -84,19 +84,19 @@ public class LetTerm extends Term {
 	}
 	
 	@Override
-	public void toStringHelper(ArrayDeque<Object> m_Todo) {
+	public void toStringHelper(ArrayDeque<Object> mTodo) {
 		// Add subterm to stack.
-		m_Todo.addLast(")");
-		m_Todo.addLast(getSubTerm());
-		m_Todo.addLast(")) ");
+		mTodo.addLast(")");
+		mTodo.addLast(getSubTerm());
+		mTodo.addLast(")) ");
 		// Add assigned values to stack
 		TermVariable[] vars = getVariables();
 		Term[] values = getValues();
 		for (int i = values.length - 1; i > 0; i--) {
-			m_Todo.addLast(values[i]);
-			m_Todo.addLast(") (" + vars[i].toString() + " ");
+			mTodo.addLast(values[i]);
+			mTodo.addLast(") (" + vars[i].toString() + " ");
 		}	
-		m_Todo.addLast(values[0]);
-		m_Todo.addLast("(let ((" + vars[0].toString() + " ");
+		mTodo.addLast(values[0]);
+		mTodo.addLast("(let ((" + vars[0].toString() + " ");
 	}
 }

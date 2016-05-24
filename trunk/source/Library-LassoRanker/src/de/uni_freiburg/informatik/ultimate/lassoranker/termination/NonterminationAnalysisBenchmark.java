@@ -54,47 +54,47 @@ public class NonterminationAnalysisBenchmark
 	public static final String s_Label_DisjunctsStem = "DisjunctsStem";
 	public static final String s_Label_DisjunctsLoop = "DisjunctsLoop";
 	
-	private final LBool m_ConstraintsSatisfiability;
-	private final int m_VariablesStem;
-	private final int m_VariablesLoop;
-	private final int m_DisjunctsStem;
-	private final int m_DisjunctsLoop;
-	private final long m_Time;
+	private final LBool mConstraintsSatisfiability;
+	private final int mVariablesStem;
+	private final int mVariablesLoop;
+	private final int mDisjunctsStem;
+	private final int mDisjunctsLoop;
+	private final long mTime;
 	
 	public NonterminationAnalysisBenchmark(
 			LBool constraintsSatisfiability, int variablesStem,
 			int variablesLoop, int disjunctsStem, int disjunctsLoop,
 			long time) {
-		m_ConstraintsSatisfiability = constraintsSatisfiability;
-		m_VariablesStem = variablesStem;
-		m_VariablesLoop = variablesLoop;
-		m_DisjunctsStem = disjunctsStem;
-		m_DisjunctsLoop = disjunctsLoop;
-		m_Time = time;
+		mConstraintsSatisfiability = constraintsSatisfiability;
+		mVariablesStem = variablesStem;
+		mVariablesLoop = variablesLoop;
+		mDisjunctsStem = disjunctsStem;
+		mDisjunctsLoop = disjunctsLoop;
+		mTime = time;
 	}
 	
 	public LBool getConstraintsSatisfiability() {
-		return m_ConstraintsSatisfiability;
+		return mConstraintsSatisfiability;
 	}
 	
 	public int getVariablesStem() {
-		return m_VariablesStem;
+		return mVariablesStem;
 	}
 	
 	public int getVariablesLoop() {
-		return m_VariablesLoop;
+		return mVariablesLoop;
 	}
 	
 	public int getDisjunctsStem() {
-		return m_DisjunctsStem;
+		return mDisjunctsStem;
 	}
 	
 	public int getDisjunctsLoop() {
-		return m_DisjunctsLoop;
+		return mDisjunctsLoop;
 	}
 	
 	public long getTime() {
-		return m_Time;
+		return mTime;
 	}
 	
 	public String toString() {
@@ -122,12 +122,12 @@ public class NonterminationAnalysisBenchmark
 	
 	public Map<String, Object> getKeyValueMap() {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
-		result.put(s_Label_ConstraintsSatisfiability, m_ConstraintsSatisfiability);
-		result.put(s_Label_Time, m_Time);
-		result.put(s_Label_VariablesStem, m_VariablesStem);
-		result.put(s_Label_VariablesLoop, m_VariablesLoop);
-		result.put(s_Label_DisjunctsStem, m_DisjunctsStem);
-		result.put(s_Label_DisjunctsLoop, m_DisjunctsLoop);
+		result.put(s_Label_ConstraintsSatisfiability, mConstraintsSatisfiability);
+		result.put(s_Label_Time, mTime);
+		result.put(s_Label_VariablesStem, mVariablesStem);
+		result.put(s_Label_VariablesLoop, mVariablesLoop);
+		result.put(s_Label_DisjunctsStem, mDisjunctsStem);
+		result.put(s_Label_DisjunctsLoop, mDisjunctsLoop);
 		return Collections.unmodifiableMap(result);
 	}
 	

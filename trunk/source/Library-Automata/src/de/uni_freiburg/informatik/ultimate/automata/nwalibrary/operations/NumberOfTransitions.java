@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  */
 public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	INestedWordAutomaton<LETTER, STATE> m_Nwa;
+	INestedWordAutomaton<LETTER, STATE> mNwa;
 	
 	public NumberOfTransitions(INestedWordAutomaton<LETTER, STATE> nwa) {
-		m_Nwa = nwa;
+		mNwa = nwa;
 	}
 
 	@Override
@@ -65,8 +65,8 @@ public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STA
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
 		int number = 0;
-		for (STATE state : m_Nwa.getStates()) {
-			for (@SuppressWarnings("unused") OutgoingInternalTransition<LETTER, STATE> trans : m_Nwa.internalSuccessors(state)) {
+		for (STATE state : mNwa.getStates()) {
+			for (@SuppressWarnings("unused") OutgoingInternalTransition<LETTER, STATE> trans : mNwa.internalSuccessors(state)) {
 				number++;
 			}
 		}

@@ -52,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 public class ParallelComposition extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = -221110423926589618L;
-	private final List<CodeBlock> m_CodeBlocks;
-	private final String m_PrettyPrinted;
-	private final Map<TermVariable, CodeBlock> m_BranchIndicator2CodeBlock = new HashMap<TermVariable, CodeBlock>();
+	private final List<CodeBlock> mCodeBlocks;
+	private final String mPrettyPrinted;
+	private final Map<TermVariable, CodeBlock> mBranchIndicator2CodeBlock = new HashMap<TermVariable, CodeBlock>();
 	private final IUltimateServiceProvider mServices;
 
 	/**
@@ -72,13 +72,13 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "CodeBlocks (Parallely Composed)") {
-			return m_CodeBlocks;
+			return mCodeBlocks;
 		} else if (field == "PrettyPrintedStatements") {
-			return m_PrettyPrinted;
+			return mPrettyPrinted;
 		} else if (field == "TransitionFormula") {
-			return m_TransitionFormula;
+			return mTransitionFormula;
 		} else if (field == "OccurenceInCounterexamples") {
-			return m_OccurenceInCounterexamples;
+			return mOccurenceInCounterexamples;
 		} else {
 			throw new UnsupportedOperationException("Unknown field " + field);
 		}
@@ -89,7 +89,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mServices = services;
 		Script script = boogie2smt.getScript();
-		m_CodeBlocks = codeBlocks;
+		mCodeBlocks = codeBlocks;
 
 		String prettyPrinted = "";
 
@@ -111,30 +111,30 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 			Sort boolSort = script.sort("Bool");
 			TermVariable tv = script.variable(varname, boolSort);
 			branchIndicator[i] = tv;
-			m_BranchIndicator2CodeBlock.put(branchIndicator[i], codeBlocks.get(i));
+			mBranchIndicator2CodeBlock.put(branchIndicator[i], codeBlocks.get(i));
 			ModelUtils.copyAnnotations(codeBlocks.get(i), this);
 		}
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, m_Annotation);
-		m_PrettyPrinted = prettyPrinted;
+		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
+		mPrettyPrinted = prettyPrinted;
 
 		boolean s_TransformToCNF = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
-		m_TransitionFormula = TransFormula.parallelComposition(mLogger, mServices, getSerialNumer(), boogie2smt,
+		mTransitionFormula = TransFormula.parallelComposition(mLogger, mServices, getSerialNumer(), boogie2smt,
 				null, s_TransformToCNF, transFormulas);
-		m_TransitionFormulaWithBranchEncoders = TransFormula.parallelComposition(mLogger, mServices,
+		mTransitionFormulaWithBranchEncoders = TransFormula.parallelComposition(mLogger, mServices,
 				getSerialNumer(), boogie2smt, branchIndicator, s_TransformToCNF, transFormulasWithBranchEncoders);
 	}
 
 	@Override
 	public String getPrettyPrintedStatements() {
-		return m_PrettyPrinted;
+		return mPrettyPrinted;
 	}
 
 	public Map<TermVariable, CodeBlock> getBranchIndicator2CodeBlock() {
-		return m_BranchIndicator2CodeBlock;
+		return mBranchIndicator2CodeBlock;
 	}
 
 	@Override
@@ -146,16 +146,16 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("BeginParallelComposition{");
-		for (int i = 0; i < m_CodeBlocks.size(); i++) {
+		for (int i = 0; i < mCodeBlocks.size(); i++) {
 			sb.append("ParallelCodeBlock" + i + ": ");
-			sb.append(m_CodeBlocks.get(i));
+			sb.append(mCodeBlocks.get(i));
 		}
 		sb.append("}EndParallelComposition");
 		return sb.toString();
 	}
 
 	public List<CodeBlock> getCodeBlocks() {
-		return Collections.unmodifiableList(m_CodeBlocks);
+		return Collections.unmodifiableList(mCodeBlocks);
 	}
 
 	@Override

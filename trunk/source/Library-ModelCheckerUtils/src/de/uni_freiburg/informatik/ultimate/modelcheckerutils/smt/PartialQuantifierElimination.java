@@ -73,7 +73,7 @@ public class PartialQuantifierElimination {
 	static final boolean USE_TIR = true;
 	static final boolean USE_SOS = true;
 	static final boolean USE_USR = !true;
-	private static boolean m_PushPull = true;
+	private static boolean mPushPull = true;
 	
 	
 	public static Term tryToEliminate(IUltimateServiceProvider services, ILogger logger, Script script, 
@@ -187,7 +187,7 @@ public class PartialQuantifierElimination {
 			return body;
 		}
 		Term elim = body;
-		if (m_PushPull ) {
+		if (mPushPull ) {
 			int quantBefore = varSet.size();
 			//		Set<TermVariable> varSet = new HashSet<TermVariable>(Arrays.asList(vars));
 			elim = elimPushPull(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);

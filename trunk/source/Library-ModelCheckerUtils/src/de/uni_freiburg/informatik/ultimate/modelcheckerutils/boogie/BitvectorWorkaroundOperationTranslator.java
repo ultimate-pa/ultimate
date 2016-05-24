@@ -144,10 +144,10 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 			} else if (funcIdentifier.equals("~shiftRight")) {
 				return "bvashr";
 			} else {
-				return m_Boogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
+				return mBoogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
 			}
 		} else {
-			return m_Boogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
+			return mBoogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
 		}
 	}
 	
@@ -155,6 +155,6 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	public Term integerTranslation(IntegerLiteral exp) {
 		BigInteger[] indices = { BigInteger.valueOf(32) };
 		
-		return m_Script.term("bv" + ((IntegerLiteral) exp).getValue(), indices, null);
+		return mScript.term("bv" + ((IntegerLiteral) exp).getValue(), indices, null);
 	}
 }

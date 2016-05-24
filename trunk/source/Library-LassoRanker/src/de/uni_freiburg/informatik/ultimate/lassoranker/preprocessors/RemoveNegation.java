@@ -69,12 +69,12 @@ public class RemoveNegation extends TransformerPreprocessor {
 	
 	private class RemoveNegationTransformer extends TermTransformer {
 		
-		private final Script m_Script;
+		private final Script mScript;
 		
 		RemoveNegationTransformer(Script script) {
 			super();
 			assert script != null;
-			m_Script = script;
+			mScript = script;
 		}
 		
 		@Override
@@ -87,13 +87,13 @@ public class RemoveNegation extends TransformerPreprocessor {
 					assert(param instanceof ApplicationTerm);
 					ApplicationTerm appt2 = (ApplicationTerm)param;
 					if (appt2.getFunction().getName().equals("<=")) {
-						setResult(m_Script.term(">", appt2.getParameters()));
+						setResult(mScript.term(">", appt2.getParameters()));
 					} else if (appt2.getFunction().getName().equals("<")) {
-						setResult(m_Script.term(">=", appt2.getParameters()));
+						setResult(mScript.term(">=", appt2.getParameters()));
 					} else if (appt2.getFunction().getName().equals(">=")) {
-						setResult(m_Script.term("<", appt2.getParameters()));
+						setResult(mScript.term("<", appt2.getParameters()));
 					} else if (appt2.getFunction().getName().equals(">")) {
-						setResult(m_Script.term("<=", appt2.getParameters()));
+						setResult(mScript.term("<=", appt2.getParameters()));
 					} else {
 						assert(false);
 					}

@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
  */
 public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	
-	private final HeapDataArray m_DataArray;
-	private final int m_Resolution;
+	private final HeapDataArray mDataArray;
+	private final int mResolution;
 	
 	public MemoryModel_SingleBitprecise(int memoryModelResolution, TypeSizes typeSizes, TypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
@@ -59,8 +59,8 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 
 		ASTType intArrayType = typeHandler.bytesize2asttype(ignoreLoc, GENERALPRIMITIVE.INTTYPE, memoryModelResolution);
 		
-        m_Resolution = memoryModelResolution;
-		m_DataArray = new HeapDataArray(SFO.INT, intArrayType, memoryModelResolution);
+        mResolution = memoryModelResolution;
+		mDataArray = new HeapDataArray(SFO.INT, intArrayType, memoryModelResolution);
 	}
        	
 	@Override
@@ -69,21 +69,21 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 			throw new UnsupportedOperationException("Floating types are not yet supported in "
 						+ this.getClass().getSimpleName());
 		}
-		return m_DataArray.getName() + m_TypeSizes.getSize(primitive);
+		return mDataArray.getName() + mTypeSizes.getSize(primitive);
 
 	}
 
 
 	@Override
 	public HeapDataArray getDataHeapArray(PRIMITIVE primitive) {
-		return m_DataArray;
+		return mDataArray;
 	}
 	
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, PRIMITIVE> bytesizes2primitives = new HashRelation<>();
 		for (PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
-			final int bytesize = m_TypeSizes.getSize(primitive);
+			final int bytesize = mTypeSizes.getSize(primitive);
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
 			}
@@ -92,7 +92,7 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 		for (Integer bytesize : bytesizes2primitives.getDomain()) {
 			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = m_TypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
+			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
 		}
 		return result;
@@ -100,11 +100,11 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	
 	@Override
 	protected int bytesizeOfStoredPointerComponents() {
-		return m_TypeSizes.getSizeOfPointer();
+		return mTypeSizes.getSizeOfPointer();
 	}
 
 	public int getResolution() {
-		return m_Resolution;
+		return mResolution;
 	}
 
 

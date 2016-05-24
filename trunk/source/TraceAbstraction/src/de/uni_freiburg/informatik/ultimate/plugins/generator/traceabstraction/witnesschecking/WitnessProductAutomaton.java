@@ -64,56 +64,56 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
 public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
-	private final SmtManager m_SmtManager;
-	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> m_ControlFlowAutomaton;
-	private final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> m_WitnessAutomaton;
+	private final SmtManager mSmtManager;
+	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> mControlFlowAutomaton;
+	private final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	
-	private final NestedMap3<IPredicate, WitnessNode, Integer, ProductState> m_Cfg2Witness2Result = new NestedMap3<IPredicate, WitnessNode, Integer, WitnessProductAutomaton.ProductState>();
-	private final Map<IPredicate, ProductState> m_Result2Product = new HashMap<IPredicate, WitnessProductAutomaton.ProductState>();
-	private final IPredicate m_EmptyStackState;
-	private final Set<IPredicate> m_InitialStates;
-	private final Set<IPredicate> m_FinalStates;
-	private final Integer m_StutteringStepsLimit = 10;
-	private final WitnessLocationMatcher m_WitnessLocationMatcher;
-	private final LinkedHashSet<WitnessEdge> m_BadWitnessEdges = new LinkedHashSet<WitnessEdge>();
-	private final Set<WitnessEdge> m_GoodWitnessEdges = new HashSet<WitnessEdge>();
+	private final NestedMap3<IPredicate, WitnessNode, Integer, ProductState> mCfg2Witness2Result = new NestedMap3<IPredicate, WitnessNode, Integer, WitnessProductAutomaton.ProductState>();
+	private final Map<IPredicate, ProductState> mResult2Product = new HashMap<IPredicate, WitnessProductAutomaton.ProductState>();
+	private final IPredicate mEmptyStackState;
+	private final Set<IPredicate> mInitialStates;
+	private final Set<IPredicate> mFinalStates;
+	private final Integer mStutteringStepsLimit = 10;
+	private final WitnessLocationMatcher mWitnessLocationMatcher;
+	private final LinkedHashSet<WitnessEdge> mBadWitnessEdges = new LinkedHashSet<WitnessEdge>();
+	private final Set<WitnessEdge> mGoodWitnessEdges = new HashSet<WitnessEdge>();
 	
 	private class ProductState {
-		private final IPredicate m_CfgAutomatonState;
-		private final WitnessNode m_WitnessNode;
-		private final Integer m_StutteringSteps;
-		private ISLPredicate m_ResultState;
+		private final IPredicate mCfgAutomatonState;
+		private final WitnessNode mWitnessNode;
+		private final Integer mStutteringSteps;
+		private ISLPredicate mResultState;
 
 		
 		public ProductState(IPredicate cfgAutomatonState,
 				WitnessNode witnessAutomatonState,
 				Integer stutteringSteps) {
 			super();
-			m_CfgAutomatonState = cfgAutomatonState;
-			m_WitnessNode = witnessAutomatonState;
-			m_StutteringSteps = stutteringSteps;
-			m_ResultState = constructNewResultState(cfgAutomatonState, witnessAutomatonState, stutteringSteps);
+			mCfgAutomatonState = cfgAutomatonState;
+			mWitnessNode = witnessAutomatonState;
+			mStutteringSteps = stutteringSteps;
+			mResultState = constructNewResultState(cfgAutomatonState, witnessAutomatonState, stutteringSteps);
 		}
 		private ISLPredicate constructNewResultState(IPredicate cfgAutomatonState, WitnessNode witnessNode, Integer stutteringSteps) {
-			return m_SmtManager.getPredicateFactory().newTrueSLPredicateWithWitnessNode(
+			return mSmtManager.getPredicateFactory().newTrueSLPredicateWithWitnessNode(
 					((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode, stutteringSteps); 
 		}
 		
 		public IPredicate getCfgAutomatonState() {
-			return m_CfgAutomatonState;
+			return mCfgAutomatonState;
 		}
 		public WitnessNode getWitnessNode() {
-			return m_WitnessNode;
+			return mWitnessNode;
 		}
 		public Integer getStutteringSteps() {
-			return m_StutteringSteps;
+			return mStutteringSteps;
 		}
 		public ISLPredicate getResultState() {
-			return m_ResultState;
+			return mResultState;
 		}
 		@Override
 		public String toString() {
-			return m_ResultState.toString();
+			return mResultState.toString();
 		}
 	}
 	
@@ -122,26 +122,26 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton,
 			SmtManager smtManager) {
-		m_WitnessLocationMatcher = new WitnessLocationMatcher(services, controlFlowAutomaton, witnessAutomaton);
-		m_ControlFlowAutomaton = controlFlowAutomaton;
-		m_WitnessAutomaton = witnessAutomaton;
-		m_SmtManager = smtManager;
-		m_InitialStates = constructInitialStates();
-		m_FinalStates = new HashSet<IPredicate>();
-		m_EmptyStackState = m_ControlFlowAutomaton.getStateFactory().createEmptyStackState();
+		mWitnessLocationMatcher = new WitnessLocationMatcher(services, controlFlowAutomaton, witnessAutomaton);
+		mControlFlowAutomaton = controlFlowAutomaton;
+		mWitnessAutomaton = witnessAutomaton;
+		mSmtManager = smtManager;
+		mInitialStates = constructInitialStates();
+		mFinalStates = new HashSet<IPredicate>();
+		mEmptyStackState = mControlFlowAutomaton.getStateFactory().createEmptyStackState();
 	}
 
 	private ProductState getOrConstructProductState(
 			IPredicate cfgAutomatonState, 
 			WitnessNode witnessAutomatonState,
 			Integer stutteringSteps) {
-		ProductState productState = m_Cfg2Witness2Result.get(cfgAutomatonState, witnessAutomatonState, stutteringSteps);
+		ProductState productState = mCfg2Witness2Result.get(cfgAutomatonState, witnessAutomatonState, stutteringSteps);
 		if (productState == null) {
 			productState = new ProductState(cfgAutomatonState, witnessAutomatonState, stutteringSteps);
-			m_Cfg2Witness2Result.put(cfgAutomatonState, witnessAutomatonState, stutteringSteps, productState);
-			m_Result2Product.put(productState.getResultState(), productState);
-			if (m_ControlFlowAutomaton.isFinal(cfgAutomatonState) && m_WitnessAutomaton.isFinal(witnessAutomatonState)) {
-				m_FinalStates.add(productState.getResultState());
+			mCfg2Witness2Result.put(cfgAutomatonState, witnessAutomatonState, stutteringSteps, productState);
+			mResult2Product.put(productState.getResultState(), productState);
+			if (mControlFlowAutomaton.isFinal(cfgAutomatonState) && mWitnessAutomaton.isFinal(witnessAutomatonState)) {
+				mFinalStates.add(productState.getResultState());
 			}
 		}
 		return productState;
@@ -165,33 +165,33 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 
 	@Override
 	public Set<CodeBlock> getInternalAlphabet() {
-		return m_ControlFlowAutomaton.getInternalAlphabet();
+		return mControlFlowAutomaton.getInternalAlphabet();
 	}
 
 	@Override
 	public Set<CodeBlock> getCallAlphabet() {
-		return m_ControlFlowAutomaton.getCallAlphabet();
+		return mControlFlowAutomaton.getCallAlphabet();
 	}
 
 	@Override
 	public Set<CodeBlock> getReturnAlphabet() {
-		return m_ControlFlowAutomaton.getReturnAlphabet();
+		return mControlFlowAutomaton.getReturnAlphabet();
 	}
 
 	@Override
 	public StateFactory<IPredicate> getStateFactory() {
-		return m_ControlFlowAutomaton.getStateFactory();
+		return mControlFlowAutomaton.getStateFactory();
 	}
 
 	@Override
 	public IPredicate getEmptyStackState() {
-		return m_EmptyStackState;
+		return mEmptyStackState;
 	}
 	
 	private Set<IPredicate> constructInitialStates() {
 		Set<IPredicate> result = new HashSet<IPredicate>();
-		for (IPredicate cfg : m_ControlFlowAutomaton.getInitialStates()) {
-			for (WitnessNode wa : m_WitnessAutomaton.getInitialStates()) {
+		for (IPredicate cfg : mControlFlowAutomaton.getInitialStates()) {
+			for (WitnessNode wa : mWitnessAutomaton.getInitialStates()) {
 				ProductState ps = getOrConstructProductState(cfg, wa, 0);
 				result.add(ps.getResultState());
 			}
@@ -202,8 +202,8 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	@Override
 	public Iterable<IPredicate> getInitialStates() {
 		ArrayList<IPredicate> result = new ArrayList<>();
-		for (IPredicate cfg : m_ControlFlowAutomaton.getInitialStates()) {
-			for (WitnessNode wa : m_WitnessAutomaton.getInitialStates()) {
+		for (IPredicate cfg : mControlFlowAutomaton.getInitialStates()) {
+			for (WitnessNode wa : mWitnessAutomaton.getInitialStates()) {
 				ProductState ps = getOrConstructProductState(cfg, wa, 0);
 				result.add(ps.getResultState());
 			}
@@ -213,38 +213,38 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 
 	@Override
 	public boolean isInitial(IPredicate state) {
-		return m_InitialStates.contains(state);
+		return mInitialStates.contains(state);
 	}
 
 	@Override
 	public boolean isFinal(IPredicate state) {
-		assert m_Result2Product.keySet().contains(state) : "unknown state";
-		return m_FinalStates.contains(state);
+		assert mResult2Product.keySet().contains(state) : "unknown state";
+		return mFinalStates.contains(state);
 	}
 
 	@Override
 	public Set<CodeBlock> lettersInternal(IPredicate state) {
-		ProductState ps = m_Result2Product.get(state);
-		return m_ControlFlowAutomaton.lettersInternal(ps.getCfgAutomatonState());
+		ProductState ps = mResult2Product.get(state);
+		return mControlFlowAutomaton.lettersInternal(ps.getCfgAutomatonState());
 	}
 
 	@Override
 	public Set<CodeBlock> lettersCall(IPredicate state) {
-		ProductState ps = m_Result2Product.get(state);
-		return m_ControlFlowAutomaton.lettersCall(ps.getCfgAutomatonState());
+		ProductState ps = mResult2Product.get(state);
+		return mControlFlowAutomaton.lettersCall(ps.getCfgAutomatonState());
 	}
 
 	@Override
 	public Set<CodeBlock> lettersReturn(IPredicate state) {
-		ProductState ps = m_Result2Product.get(state);
-		return m_ControlFlowAutomaton.lettersReturn(ps.getCfgAutomatonState());
+		ProductState ps = mResult2Product.get(state);
+		return mControlFlowAutomaton.lettersReturn(ps.getCfgAutomatonState());
 	}
 
 	public Collection<OutgoingInternalTransition<CodeBlock, IPredicate>> constructInternalSuccessors(
 			IPredicate state, CodeBlock letter) {
-		ProductState ps = m_Result2Product.get(state);
+		ProductState ps = mResult2Product.get(state);
 		Collection<OutgoingInternalTransition<CodeBlock, IPredicate>> result = new ArrayList<OutgoingInternalTransition<CodeBlock,IPredicate>>();
-		for (OutgoingInternalTransition<CodeBlock, IPredicate> cfgOut : m_ControlFlowAutomaton.internalSuccessors(ps.getCfgAutomatonState(), letter)) {
+		for (OutgoingInternalTransition<CodeBlock, IPredicate> cfgOut : mControlFlowAutomaton.internalSuccessors(ps.getCfgAutomatonState(), letter)) {
 			Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
 			for (IPredicate succ : succs) {
 				result.add(new OutgoingInternalTransition<CodeBlock, IPredicate>(letter, succ));
@@ -271,9 +271,9 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	
 	public Collection<OutgoingCallTransition<CodeBlock, IPredicate>> constructCallSuccessors(
 			IPredicate state, CodeBlock letter) {
-		ProductState ps = m_Result2Product.get(state);
+		ProductState ps = mResult2Product.get(state);
 		Collection<OutgoingCallTransition<CodeBlock, IPredicate>> result = new ArrayList<OutgoingCallTransition<CodeBlock,IPredicate>>();
-		for (OutgoingCallTransition<CodeBlock, IPredicate> cfgOut : m_ControlFlowAutomaton.callSuccessors(ps.getCfgAutomatonState(), letter)) {
+		for (OutgoingCallTransition<CodeBlock, IPredicate> cfgOut : mControlFlowAutomaton.callSuccessors(ps.getCfgAutomatonState(), letter)) {
 			Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
 			for (IPredicate succ : succs) {
 				result.add(new OutgoingCallTransition<CodeBlock, IPredicate>(letter, succ));
@@ -316,10 +316,10 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	
 	public Collection<OutgoingReturnTransition<CodeBlock, IPredicate>> constructReturnSuccessors(
 			IPredicate state, IPredicate hier, CodeBlock letter) {
-		ProductState ps = m_Result2Product.get(state);
-		ProductState psHier = m_Result2Product.get(hier);
+		ProductState ps = mResult2Product.get(state);
+		ProductState psHier = mResult2Product.get(hier);
 		Collection<OutgoingReturnTransition<CodeBlock, IPredicate>> result = new ArrayList<OutgoingReturnTransition<CodeBlock,IPredicate>>();
-		for (OutgoingReturnTransition<CodeBlock, IPredicate> cfgOut : m_ControlFlowAutomaton.returnSucccessors(ps.getCfgAutomatonState(), psHier.getCfgAutomatonState(), letter)) {
+		for (OutgoingReturnTransition<CodeBlock, IPredicate> cfgOut : mControlFlowAutomaton.returnSucccessors(ps.getCfgAutomatonState(), psHier.getCfgAutomatonState(), letter)) {
 			Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
 			for (IPredicate succ : succs) {
 				result.add(new OutgoingReturnTransition<CodeBlock, IPredicate>(hier, letter, succ));
@@ -337,7 +337,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		wsSuccStates.addAll(skipNonCodeBlockEdges(ps.getWitnessNode()));
 		while (!wsSuccStates.isEmpty()) {
 			WitnessNode ws = wsSuccStates.removeFirst();
-			for (OutgoingInternalTransition<WitnessEdge, WitnessNode> out : m_WitnessAutomaton.internalSuccessors(ws)) {
+			for (OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton.internalSuccessors(ws)) {
 				for (WitnessNode succ : skipNonCodeBlockEdges(out.getSucc())) {
 					if (!visited.contains(succ)) {
 						visited.add(succ);
@@ -345,21 +345,21 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 							// successor is sink, do nothing
 						} else {
 							if (isCompatible(cb, out.getLetter())) {
-								m_GoodWitnessEdges.add(out.getLetter());
+								mGoodWitnessEdges.add(out.getLetter());
 								ProductState succProd = getOrConstructProductState(cfgSucc, succ, 0);
 								result.add(succProd.getResultState());
 								wsSuccStates.addLast(succ);
 							} else {
-								m_BadWitnessEdges.add(out.getLetter());
+								mBadWitnessEdges.add(out.getLetter());
 							}
 						}
 					}
 				}
 			}
 		}
-		if (ps.getStutteringSteps() < m_StutteringStepsLimit) {
+		if (ps.getStutteringSteps() < mStutteringStepsLimit) {
 			final int stutteringStepsCounter;
-			if (isStateOfInitFunction(ps.m_CfgAutomatonState)) {
+			if (isStateOfInitFunction(ps.mCfgAutomatonState)) {
 				stutteringStepsCounter = ps.getStutteringSteps();
 			} else {
 				stutteringStepsCounter = ps.getStutteringSteps() + 1;
@@ -395,7 +395,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	private Collection<WitnessNode> skipNonCodeBlockEdges(WitnessNode node) {
 		Set<WitnessNode> result = new HashSet<WitnessNode>();
 		boolean hasOutgoingNodes = false;
-		for (OutgoingInternalTransition<WitnessEdge, WitnessNode> out : m_WitnessAutomaton.internalSuccessors(node)) {
+		for (OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton.internalSuccessors(node)) {
 			hasOutgoingNodes = true;
 			if (isCodeBlockEdge(out.getLetter())) {
 				result.add(node);
@@ -410,7 +410,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 	
 	private boolean isCodeBlockEdge(WitnessEdge edge) {
-		return m_WitnessLocationMatcher.isMatchedWitnessEdge(edge);
+		return mWitnessLocationMatcher.isMatchedWitnessEdge(edge);
 //		if (edge.isPureAssumptionEdge()) {
 //			return true;
 //		} else if (edge.isProbalyDeclaration()) {
@@ -512,12 +512,12 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	
 
 	private boolean isCompatible(ILocation location, WitnessEdge we) {
-		return m_WitnessLocationMatcher.isCompatible(location, we);
+		return mWitnessLocationMatcher.isCompatible(location, we);
 	}
 	
 	private LinkedHashSet<WitnessEdge> getBadWitnessEdges() {
-		LinkedHashSet<WitnessEdge> result = new LinkedHashSet<WitnessEdge>(m_BadWitnessEdges);
-		result.removeAll(m_GoodWitnessEdges);
+		LinkedHashSet<WitnessEdge> result = new LinkedHashSet<WitnessEdge>(mBadWitnessEdges);
+		result.removeAll(mGoodWitnessEdges);
 		return result;
 	}
 	
@@ -527,7 +527,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			return "no bad witness edges";
 		} else {
 			WitnessEdge firstBad = allBad.iterator().next();
-			Set<ILocation> correspondingLocations = m_WitnessLocationMatcher.getCorrespondingLocations(firstBad);
+			Set<ILocation> correspondingLocations = mWitnessLocationMatcher.getCorrespondingLocations(firstBad);
 			StringBuilder sb = new StringBuilder();
 			sb.append(allBad.size());
 			sb.append(" bad witness edges. ");

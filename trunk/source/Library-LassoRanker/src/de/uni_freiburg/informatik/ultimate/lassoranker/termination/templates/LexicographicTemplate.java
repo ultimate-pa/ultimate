@@ -67,24 +67,24 @@ public class LexicographicTemplate extends RankingTemplate {
 	private static final String s_name_delta = "delta";
 	private static final String s_name_function = "rank";
 	
-	private Term[] m_deltas;
-	private AffineFunctionGenerator[] m_fgens;
+	private Term[] mdeltas;
+	private AffineFunctionGenerator[] mfgens;
 	
 	/**
-	 * @param num_functions number of lexicographic components
+	 * @param numfunctions number of lexicographic components
 	 */
-	public LexicographicTemplate(int num_lex) {
-		assert(num_lex > 1);
-		size = num_lex;
-		m_deltas = new Term[size];
-		m_fgens = new AffineFunctionGenerator[size];
+	public LexicographicTemplate(int numlex) {
+		assert(numlex > 1);
+		size = numlex;
+		mdeltas = new Term[size];
+		mfgens = new AffineFunctionGenerator[size];
 	}
 	
 	@Override
 	protected void _init() {
 		for (int i = 0; i < size; ++i) {
-			m_deltas[i] = newDelta(s_name_delta + i);
-			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
+			mdeltas[i] = newDelta(s_name_delta + i);
+			mfgens[i] = new AffineFunctionGenerator(mscript, mvariables,
 					s_name_function + i);
 		}
 	}
@@ -132,7 +132,7 @@ public class LexicographicTemplate extends RankingTemplate {
 		
 		// /\_i f_i(x) > 0
 		for (int i = 0; i < size; ++i) {
-			LinearInequality li = m_fgens[i].generate(inVars);
+			LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
 			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
@@ -143,8 +143,8 @@ public class LexicographicTemplate extends RankingTemplate {
 		for (int i = 0; i < size - 1; ++i) {
 			List<LinearInequality> disjunction =
 					new ArrayList<LinearInequality>();
-			LinearInequality li = m_fgens[i].generate(inVars);
-			LinearInequality li2 = m_fgens[i].generate(outVars);
+			LinearInequality li = mfgens[i].generate(inVars);
+			LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
@@ -154,11 +154,11 @@ public class LexicographicTemplate extends RankingTemplate {
 			disjunction.add(li);
 			
 			for (int j = i - 1; j >= 0; --j) {
-				li = m_fgens[j].generate(inVars);
-				LinearInequality li3 = m_fgens[j].generate(outVars);
+				li = mfgens[j].generate(inVars);
+				LinearInequality li3 = mfgens[j].generate(outVars);
 				li3.negate();
 				li.add(li3);
-				AffineTerm a = new AffineTerm(m_deltas[j], Rational.MONE);
+				AffineTerm a = new AffineTerm(mdeltas[j], Rational.MONE);
 				li.add(a);
 				li.setStrict(true);
 				li.motzkin_coefficient = sRedAtoms && j == 0 ?
@@ -172,11 +172,11 @@ public class LexicographicTemplate extends RankingTemplate {
 		// \/_i f_i(x') < f_i(x) - δ_i
 		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
 		for (int i = 0; i < size; ++i) {
-			LinearInequality li = m_fgens[i].generate(inVars);
-			LinearInequality li2 = m_fgens[i].generate(outVars);
+			LinearInequality li = mfgens[i].generate(inVars);
+			LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
+			AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
 			li.motzkin_coefficient = (sRedAtoms && i == 0) || (sBlueAtoms && i == size - 1) ?
@@ -194,8 +194,8 @@ public class LexicographicTemplate extends RankingTemplate {
 	public Collection<Term> getVariables() {
 		Collection<Term> list = new ArrayList<Term>();
 		for (int i = 0; i < size; ++i) {
-			list.addAll(m_fgens[i].getVariables());
-			list.add(m_deltas[i]);
+			list.addAll(mfgens[i].getVariables());
+			list.add(mdeltas[i]);
 		}
 		return list;
 	}
@@ -205,7 +205,7 @@ public class LexicographicTemplate extends RankingTemplate {
 			throws SMTLIBException {
 		RankingFunction[] rfs = new RankingFunction[size];
 		for (int i = 0; i < size; ++i) {
-			AffineFunction af = m_fgens[i].extractAffineFunction(val);
+			AffineFunction af = mfgens[i].extractAffineFunction(val);
 			rfs[i] = new LinearRankingFunction(af);
 		}
 		return new LexicographicRankingFunction(rfs);

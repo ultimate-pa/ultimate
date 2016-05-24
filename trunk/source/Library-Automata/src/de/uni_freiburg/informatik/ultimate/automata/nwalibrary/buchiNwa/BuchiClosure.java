@@ -49,11 +49,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
-	private final INestedWordAutomaton<LETTER,STATE> m_Operand;
-	private final INestedWordAutomaton<LETTER, STATE> m_Result;
+	private final INestedWordAutomaton<LETTER,STATE> mOperand;
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	
 	
 	
@@ -66,16 +66,16 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_Operand.sizeInformation() + " thereof " + 
-			m_Operand.getFinalStates().size() + " accepting";
+			mOperand.sizeInformation() + " thereof " + 
+			mOperand.getFinalStates().size() + " accepting";
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Start " + operationName() + " Operand " + 
-				m_Result.sizeInformation() + " thereof " + 
-				m_Result.getFinalStates().size() + " accepting";
+				mResult.sizeInformation() + " thereof " + 
+				mResult.getFinalStates().size() + " accepting";
 	}
 
 
@@ -83,12 +83,12 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	public BuchiClosure(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> input) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.m_Operand = input;
-		m_Logger.info(startMessage());
-		m_Result = new BuchiClosureNwa<LETTER, STATE>(m_Services, (INestedWordAutomatonOldApi) m_Operand);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		this.mOperand = input;
+		mLogger.info(startMessage());
+		mResult = new BuchiClosureNwa<LETTER, STATE>(mServices, (INestedWordAutomatonOldApi) mOperand);
+		mLogger.info(exitMessage());
 	}
 	
 	
@@ -100,23 +100,23 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean correct = true;
-		m_Logger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
 		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
-				ResultChecker.getOldApiNwa(m_Services, m_Operand);
+				ResultChecker.getOldApiNwa(mServices, mOperand);
 		List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, operandOldApi);
+		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, operandOldApi);
 		boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Result);
+		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(mServices, mResult);
 		boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
 		correct &= (operandEmpty == resultEmpty);
 		assert correct;
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	
@@ -125,7 +125,7 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 

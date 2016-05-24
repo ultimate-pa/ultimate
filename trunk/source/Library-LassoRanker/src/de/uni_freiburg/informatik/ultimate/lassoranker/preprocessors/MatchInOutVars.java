@@ -54,11 +54,11 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	/**
 	 * Factory for construction of auxVars.
 	 */
-	private final IFreshTermVariableConstructor m_VariableManager;
+	private final IFreshTermVariableConstructor mVariableManager;
 	
 	public MatchInOutVars(IFreshTermVariableConstructor variableManager) {
 		super();
-		m_VariableManager = variableManager;
+		mVariableManager = variableManager;
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	private void addMissingInVars(TransFormulaLR tf) {
 		for (Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
-				TermVariable inVar = m_VariableManager.constructFreshTermVariable(
+				TermVariable inVar = mVariableManager.constructFreshTermVariable(
 						entry.getKey().getGloballyUniqueId(),
 						entry.getValue().getSort()
 				);
@@ -89,7 +89,7 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	private void addMissingOutVars(TransFormulaLR tf) {
 		for (Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
-				TermVariable inVar = m_VariableManager.constructFreshTermVariable(
+				TermVariable inVar = mVariableManager.constructFreshTermVariable(
 						entry.getKey().getGloballyUniqueId(),
 						entry.getValue().getSort()
 				);

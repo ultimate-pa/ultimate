@@ -41,20 +41,20 @@ import java.util.Set;
  */
 public class NestedMap3<K1, K2, K3, V> {
 	
-	private final Map<K1, NestedMap2<K2, K3, V>> m_K1ToK2ToK3V = 
+	private final Map<K1, NestedMap2<K2, K3, V>> mK1ToK2ToK3V = 
 			new HashMap<K1, NestedMap2<K2, K3, V>>();
 	
 	public V put(K1 key1, K2 key2, K3 key3, V value) {
-		NestedMap2<K2, K3, V> k2tok3toV = m_K1ToK2ToK3V.get(key1);
+		NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3V.get(key1);
 		if (k2tok3toV == null) {
 			k2tok3toV = new NestedMap2<>();
-			m_K1ToK2ToK3V.put(key1, k2tok3toV);
+			mK1ToK2ToK3V.put(key1, k2tok3toV);
 		}
 		return k2tok3toV.put(key2, key3, value);
 	}
 	
 	public V get(K1 key1, K2 key2, K3 key3) {
-		NestedMap2<K2, K3, V> k2tok3toV = m_K1ToK2ToK3V.get(key1);
+		NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3V.get(key1);
 		if (k2tok3toV == null) {
 			return null;
 		} else {
@@ -63,7 +63,7 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 	
 	public Map<K3, V> get(K1 key1, K2 key2) {
-		NestedMap2<K2, K3, V> k2toV = m_K1ToK2ToK3V.get(key1);
+		NestedMap2<K2, K3, V> k2toV = mK1ToK2ToK3V.get(key1);
 		if (k2toV == null) {
 			return null;
 		} else {
@@ -72,14 +72,14 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 	
 	public NestedMap2<K2, K3, V> get(K1 key1) {
-		return m_K1ToK2ToK3V.get(key1);
+		return mK1ToK2ToK3V.get(key1);
 	}
 	
 	public Set<K1> keySet() {
-		return m_K1ToK2ToK3V.keySet();
+		return mK1ToK2ToK3V.keySet();
 	}
 	
 	public void clear() {
-		m_K1ToK2ToK3V.clear();
+		mK1ToK2ToK3V.clear();
 	}
 }

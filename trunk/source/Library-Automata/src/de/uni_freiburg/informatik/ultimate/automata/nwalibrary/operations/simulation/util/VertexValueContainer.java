@@ -69,26 +69,26 @@ public final class VertexValueContainer {
 	/**
 	 * The best neighbor measure.
 	 */
-	private int m_BestNeighborMeasure;
+	private int mBestNeighborMeasure;
 
 	/**
 	 * The neighbor counter.
 	 */
-	private int m_NeighborCounter;
+	private int mNeighborCounter;
 
 	/**
 	 * The progress measure.
 	 */
-	private int m_ProgressMeasure;
+	private int mProgressMeasure;
 
 	/**
 	 * Creates a new vertex value container where all values are
 	 * {@link #NO_VALUE}.
 	 */
 	public VertexValueContainer() {
-		m_BestNeighborMeasure = NO_VALUE;
-		m_NeighborCounter = NO_VALUE;
-		m_ProgressMeasure = NO_VALUE;
+		mBestNeighborMeasure = NO_VALUE;
+		mNeighborCounter = NO_VALUE;
+		mProgressMeasure = NO_VALUE;
 	}
 
 	/**
@@ -111,21 +111,21 @@ public final class VertexValueContainer {
 	 * @return the bestNeighborMeasure
 	 */
 	public int getBestNeighborMeasure() {
-		return m_BestNeighborMeasure;
+		return mBestNeighborMeasure;
 	}
 
 	/**
 	 * @return the neighborCounter
 	 */
 	public int getNeighborCounter() {
-		return m_NeighborCounter;
+		return mNeighborCounter;
 	}
 
 	/**
 	 * @return the progressMeasure
 	 */
 	public int getProgressMeasure() {
-		return m_ProgressMeasure;
+		return mProgressMeasure;
 	}
 
 	/**
@@ -134,7 +134,7 @@ public final class VertexValueContainer {
 	 */
 	public void setBestNeighborMeasure(final int bestNeighborMeasure) {
 		ensureValueIsValid(bestNeighborMeasure);
-		this.m_BestNeighborMeasure = bestNeighborMeasure;
+		this.mBestNeighborMeasure = bestNeighborMeasure;
 	}
 
 	/**
@@ -143,7 +143,7 @@ public final class VertexValueContainer {
 	 */
 	public void setNeighborCounter(final int neighborCounter) {
 		ensureValueIsValid(neighborCounter);
-		this.m_NeighborCounter = neighborCounter;
+		this.mNeighborCounter = neighborCounter;
 	}
 
 	/**
@@ -152,6 +152,6 @@ public final class VertexValueContainer {
 	 */
 	public void setProgressMeasure(final int progressMeasure) {
 		ensureValueIsValid(progressMeasure);
-		this.m_ProgressMeasure = progressMeasure;
+		this.mProgressMeasure = progressMeasure;
 	}
 }

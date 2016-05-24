@@ -64,40 +64,40 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class AffineFunction implements Serializable {
 	private static final long serialVersionUID = -3142354398708751882L;
 	
-	protected final Map<RankVar, BigInteger> m_coefficients;
-	protected BigInteger m_constant;
+	protected final Map<RankVar, BigInteger> mcoefficients;
+	protected BigInteger mconstant;
 	
 	public AffineFunction() {
-		m_coefficients = new LinkedHashMap<RankVar, BigInteger>();
-		m_constant = BigInteger.ZERO;
+		mcoefficients = new LinkedHashMap<RankVar, BigInteger>();
+		mconstant = BigInteger.ZERO;
 	}
 	
 	/**
 	 * @return whether this function is a constant function
 	 */
 	public boolean isConstant() {
-		return m_coefficients.isEmpty();
+		return mcoefficients.isEmpty();
 	}
 	
 	/**
 	 * @return the constant
 	 */
 	public BigInteger getConstant() {
-		return m_constant;
+		return mconstant;
 	}
 	
 	/**
 	 * @param c set the constant to c
 	 */
 	public void setConstant(BigInteger c) {
-		m_constant = c;
+		mconstant = c;
 	}
 	
 	/**
 	 * @return the set of RankVar's that occur in this function
 	 */
 	public Set<RankVar> getVariables() {
-		return m_coefficients.keySet();
+		return mcoefficients.keySet();
 	}
 	
 //	/**
@@ -105,7 +105,7 @@ public class AffineFunction implements Serializable {
 //	 */
 //	public Set<BoogieVar> getBoogieVariables() {
 //		Set<BoogieVar> result = new LinkedHashSet<BoogieVar>();
-//		for (RankVar rkVar : m_coefficients.keySet()) {
+//		for (RankVar rkVar : mcoefficients.keySet()) {
 //			BoogieVar boogieVar = rkVar.getAssociatedBoogieVar();
 //			if (boogieVar != null) {
 //				result.add(boogieVar);
@@ -119,7 +119,7 @@ public class AffineFunction implements Serializable {
 	 * @return the coefficient of to this variable
 	 */
 	public BigInteger get(RankVar var) {
-		return m_coefficients.get(var);
+		return mcoefficients.get(var);
 	}
 	
 	/**
@@ -129,9 +129,9 @@ public class AffineFunction implements Serializable {
 	 */
 	public void put(RankVar var, BigInteger coeff) {
 		if (coeff.equals(BigInteger.ZERO)) {
-			m_coefficients.remove(var);
+			mcoefficients.remove(var);
 		} else {
-			m_coefficients.put(var, coeff);
+			mcoefficients.put(var, coeff);
 		}
 	}
 	
@@ -139,7 +139,7 @@ public class AffineFunction implements Serializable {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (Map.Entry<RankVar, BigInteger> entry : m_coefficients.entrySet()) {
+		for (Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
 			if (!first) {
 				sb.append(entry.getValue().compareTo(BigInteger.ZERO) < 0
 						? " - " : " + ");
@@ -153,13 +153,13 @@ public class AffineFunction implements Serializable {
 			sb.append(entry.getKey());
 			first = false;
 		}
-		if (!m_constant.equals(BigInteger.ZERO) || first) {
+		if (!mconstant.equals(BigInteger.ZERO) || first) {
 			if (!first) {
-				sb.append(m_constant.compareTo(BigInteger.ZERO) < 0
+				sb.append(mconstant.compareTo(BigInteger.ZERO) < 0
 						? " - " : " + ");
-				sb.append(m_constant.abs());
+				sb.append(mconstant.abs());
 			} else {
-				sb.append(m_constant);
+				sb.append(mconstant);
 			}
 		}
 		return sb.toString();
@@ -182,11 +182,11 @@ public class AffineFunction implements Serializable {
 	 */
 	public Term asTerm(Script script) throws SMTLIBException {
 		ArrayList<Term> summands = new ArrayList<Term>();
-		for (Map.Entry<RankVar, BigInteger> entry : m_coefficients.entrySet()) {
+		for (Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
 			summands.add(constructSummand(script,
 					entry.getKey().getDefinition(), entry.getValue()));
 		}
-		summands.add(script.numeral(m_constant));
+		summands.add(script.numeral(mconstant));
 		return SmtUtils.sum(script, script.sort("Real"),
 				summands.toArray(new Term[0]));
 	}
@@ -210,14 +210,14 @@ public class AffineFunction implements Serializable {
 	public Rational evaluate(Map<RankVar, Rational> assignment) {
 		Rational r = Rational.ZERO;
 		for (Map.Entry<RankVar, BigInteger> entry
-				: m_coefficients.entrySet()) {
+				: mcoefficients.entrySet()) {
 			Rational val = assignment.get(entry.getKey());
 			if (val == null) {
 				val = Rational.ZERO;
 			}
 			r.add(val.mul(entry.getValue()));
 		}
-		r.add(Rational.valueOf(m_constant, BigInteger.ONE));
+		r.add(Rational.valueOf(mconstant, BigInteger.ONE));
 		return r;
 	}
 }

@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.heapseparator.preferences.PreferenceI
  */
 public class HeapSeparator implements IGenerator {
 
-	private ILogger m_logger;
-	private IToolchainStorage m_storage;
-	private HeapSeparatorObserver m_observer;
-	private IUltimateServiceProvider m_services;
+	private ILogger mlogger;
+	private IToolchainStorage mstorage;
+	private HeapSeparatorObserver mobserver;
+	private IUltimateServiceProvider mservices;
 
 	@Override
 	public ModelType getOutputDefinition() {
@@ -81,8 +81,8 @@ public class HeapSeparator implements IGenerator {
 	}
 	@Override
 	public List<IObserver> getObservers() {
-		m_observer = new HeapSeparatorObserver(m_services);
-		return Collections.singletonList(m_observer);
+		mobserver = new HeapSeparatorObserver(mservices);
+		return Collections.singletonList(mobserver);
 	}
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
@@ -91,7 +91,7 @@ public class HeapSeparator implements IGenerator {
 	}
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
-		m_services = services;
+		mservices = services;
 	}
 
 	@Override
@@ -118,7 +118,7 @@ public class HeapSeparator implements IGenerator {
 	}
 	@Override
 	public IElement getModel() {
-		return m_observer.getModel();
+		return mobserver.getModel();
 	}
 
 }

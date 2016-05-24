@@ -60,7 +60,7 @@ public class SafeSubstitutionWithLocalSimplification extends SafeSubstitution {
 			result = appTerm;
 		} else {
 			String funcname = appTerm.getFunction().getName();
-			result = SmtUtils.termWithLocalSimplification(m_Script, 
+			result = SmtUtils.termWithLocalSimplification(mScript, 
 					funcname, appTerm.getFunction().getIndices(), newArgs);
 		}
 		setResult(result);

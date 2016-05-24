@@ -83,7 +83,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 			final Set<TermVariable> connectedVars = SmtUtils.getFreeVars(connectedTerms);
 			final boolean isSuperfluous;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				final Term simplified = isSuperfluousConjunction(m_Script, connectedTerms, connectedVars, eliminatees);
+				final Term simplified = isSuperfluousConjunction(mScript, connectedTerms, connectedVars, eliminatees);
 				if (SmtUtils.isTrue(simplified)) {
 					isSuperfluous = true;
 				} else if (SmtUtils.isFalse(simplified)) {
@@ -94,7 +94,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 					throw new AssertionError("illegal case");
 				}
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				final Term simplified = isSuperfluousDisjunction(m_Script, connectedTerms, connectedVars, eliminatees);
+				final Term simplified = isSuperfluousDisjunction(mScript, connectedTerms, connectedVars, eliminatees);
 				if (SmtUtils.isFalse(simplified)) {
 					isSuperfluous = true;
 				} else if (SmtUtils.isTrue(simplified)) {
@@ -119,11 +119,11 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 		assert occuringVars.size() == removeableTvs.size() + unremoveableTvs.size();
 		assert parameters.length == removeableTerms.size() + unremoveableTerms.size() + termsWithoutTvs.size();
 		for (Term termWithoutTvs : termsWithoutTvs) {
-			LBool sat = Util.checkSat(m_Script, termWithoutTvs);
+			LBool sat = Util.checkSat(mScript, termWithoutTvs);
 			if (sat == LBool.UNSAT) {
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					eliminatees.clear();
-					return new Term[] { m_Script.term("false") };
+					return new Term[] { mScript.term("false") };
 				} else if (quantifier == QuantifiedFormula.FORALL) {
 					// we drop this term its equivalent to false
 				} else {
@@ -134,7 +134,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 					// we drop this term its equivalent to true
 				} else if (quantifier == QuantifiedFormula.FORALL) {
 					eliminatees.clear();
-					return new Term[] { m_Script.term("true") };
+					return new Term[] { mScript.term("true") };
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
@@ -143,17 +143,17 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 			}
 		}
 		if (removeableTerms.isEmpty()) {
-			m_Logger.debug(new DebugMessage("not eliminated quantifier via UPD for {0}", occuringVars));
+			mLogger.debug(new DebugMessage("not eliminated quantifier via UPD for {0}", occuringVars));
 			return parameters;
 		} else {
 			eliminatees.removeAll(removeableTvs);
-			m_Logger.debug(new DebugMessage("eliminated quantifier via UPD for {0}", removeableTvs));
+			mLogger.debug(new DebugMessage("eliminated quantifier via UPD for {0}", removeableTvs));
 			final Term[] result;
 			if (unremoveableTerms.isEmpty()) {
 				if (quantifier == QuantifiedFormula.EXISTS) {
-					result = new Term[] { m_Script.term("true") };
+					result = new Term[] { mScript.term("true") };
 				} else if (quantifier == QuantifiedFormula.FORALL) {
-					result = new Term[] { m_Script.term("false") };
+					result = new Term[] { mScript.term("false") };
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}

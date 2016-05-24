@@ -9,7 +9,7 @@ import jdd.util.*;
  */
 public final class Prime {
 
-	private static final int NUM_TRIALS = 8;
+	private static final int NUmTRIALS = 8;
 
 	private static final long witness(long a, long i, long n) {
 		if(i == 0) return 1;
@@ -37,7 +37,7 @@ public final class Prime {
 			return false;
 
 		// ... not? take out the big guns now:
-		for(int c = 0; c < NUM_TRIALS; c++)
+		for(int c = 0; c < NUmTRIALS; c++)
 			if( witness( 2 + (long)( Math.random() * (n -2)), n-1, n) != 1)
 				return false;
 

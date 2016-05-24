@@ -45,21 +45,21 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class ContainsSubterm extends NonRecursive {
 	
-	private Set<Term> m_TermsInWhichWeAlreadyDescended;
+	private Set<Term> mTermsInWhichWeAlreadyDescended;
 	
 	class MyWalker extends TermWalker {
 		MyWalker(Term term) { super(term); }
 		
 		@Override
 		public void walk(NonRecursive walker) {
-			if (m_FoundInCurrentSeach) {
+			if (mFoundInCurrentSeach) {
 				// do nothing
 			} else {
-				if (m_TermsInWhichWeAlreadyDescended.contains(getTerm())) {
+				if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
 					// do nothing
 				} else {
-					if (m_GivenSubterm.equals(getTerm())) {
-						m_FoundInCurrentSeach = true;
+					if (mGivenSubterm.equals(getTerm())) {
+						mFoundInCurrentSeach = true;
 						reset();
 					} else {
 						super.walk(walker);
@@ -77,12 +77,12 @@ public class ContainsSubterm extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			m_TermsInWhichWeAlreadyDescended.add(term);
+			mTermsInWhichWeAlreadyDescended.add(term);
 			walker.enqueueWalker(new MyWalker(term.getSubterm()));
 		}
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			m_TermsInWhichWeAlreadyDescended.add(term);
+			mTermsInWhichWeAlreadyDescended.add(term);
 			for (Term t : term.getParameters()) {
 				walker.enqueueWalker(new MyWalker(t));
 			}
@@ -101,12 +101,12 @@ public class ContainsSubterm extends NonRecursive {
 		}
 	}
 	
-	private final Term m_GivenSubterm;
-	private boolean m_FoundInCurrentSeach;
+	private final Term mGivenSubterm;
+	private boolean mFoundInCurrentSeach;
 	
 	public ContainsSubterm(Term givenSubterm) {
 		super();
-		m_GivenSubterm = givenSubterm;
+		mGivenSubterm = givenSubterm;
 	}
 
 	/**
@@ -114,10 +114,10 @@ public class ContainsSubterm extends NonRecursive {
 	 * object.
 	 */
 	public boolean containsSubterm(Term term) {
-		m_FoundInCurrentSeach = false;
-		m_TermsInWhichWeAlreadyDescended = new HashSet<>();
+		mFoundInCurrentSeach = false;
+		mTermsInWhichWeAlreadyDescended = new HashSet<>();
 		run(new MyWalker(term));
-		m_TermsInWhichWeAlreadyDescended = null;
-		return m_FoundInCurrentSeach;
+		mTermsInWhichWeAlreadyDescended = null;
+		return mFoundInCurrentSeach;
 	}
 }

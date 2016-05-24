@@ -43,40 +43,40 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IAction;
 public class RelevanceInformation implements IRelevanceInformation 
 {
 
-	private final List<IAction> m_Actions;
-	private final boolean m_Criterion1UC;
-	private final boolean m_Criterion1GF;
-	private final boolean m_Criterion2UC;
-	private final boolean m_Criterion2GF;	
+	private final List<IAction> mActions;
+	private final boolean mCriterion1UC;
+	private final boolean mCriterion1GF;
+	private final boolean mCriterion2UC;
+	private final boolean mCriterion2GF;	
 	
 	
 	public RelevanceInformation(List<IAction> actions, boolean criterion1uc, 
 			boolean criterion1gf, boolean criterion2uc, boolean criterion2gf) {
 		super();
-		m_Actions = actions;
-		m_Criterion1UC = criterion1uc;
-		m_Criterion1GF = criterion1gf;
-		m_Criterion2UC = criterion2uc;
-		m_Criterion2GF = criterion2gf;
+		mActions = actions;
+		mCriterion1UC = criterion1uc;
+		mCriterion1GF = criterion1gf;
+		mCriterion2UC = criterion2uc;
+		mCriterion2GF = criterion2gf;
 	}
 	
 	public List<IAction> getActions() {
-		return m_Actions;
+		return mActions;
 	}
 
 	public boolean getCriterion1UC() {
-		return m_Criterion1UC;
+		return mCriterion1UC;
 	}
 
 	public boolean getCriterion1GF() {
-		return m_Criterion1GF;
+		return mCriterion1GF;
 	}
 
 	public boolean getCriterion2UC() {
-		return m_Criterion2UC;
+		return mCriterion2UC;
 	}
 	public boolean getCriterion2GF(){
-		return m_Criterion2GF;
+		return mCriterion2GF;
 	}
 	
 

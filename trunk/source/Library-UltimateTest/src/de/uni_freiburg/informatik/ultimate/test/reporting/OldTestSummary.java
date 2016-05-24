@@ -45,13 +45,13 @@ public abstract class OldTestSummary implements ITestSummary {
 	private HashMap<String, Summary> mSuccess;
 	private HashMap<String, Summary> mUnknown;
 	private HashMap<String, Summary> mFailure;
-	private Class<? extends UltimateTestSuite> m_UltimateTestSuite;
+	private Class<? extends UltimateTestSuite> mUltimateTestSuite;
 
 	public OldTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		mSuccess = new HashMap<String, Summary>();
 		mFailure = new HashMap<String, Summary>();
 		mUnknown = new HashMap<String, Summary>();
-		m_UltimateTestSuite = ultimateTestSuite;
+		mUltimateTestSuite = ultimateTestSuite;
 	}
 
 	@Override
@@ -74,7 +74,7 @@ public abstract class OldTestSummary implements ITestSummary {
 
 	@Override
 	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
-		return m_UltimateTestSuite;
+		return mUltimateTestSuite;
 	}
 
 	public StringBuilder generateCanonicalSummary() {

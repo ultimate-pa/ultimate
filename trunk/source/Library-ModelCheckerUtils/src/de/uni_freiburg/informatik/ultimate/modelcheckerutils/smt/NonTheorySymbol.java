@@ -42,15 +42,15 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public abstract class NonTheorySymbol<SYMBOL> {
-	private final SYMBOL m_Symbol;
+	private final SYMBOL mSymbol;
 
 	private NonTheorySymbol(SYMBOL symbol) {
 		super();
-		m_Symbol = symbol;
+		mSymbol = symbol;
 	}
 
 	public SYMBOL getSymbol() {
-		return m_Symbol;
+		return mSymbol;
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public abstract class NonTheorySymbol<SYMBOL> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((m_Symbol == null) ? 0 : m_Symbol.hashCode());
+				+ ((mSymbol == null) ? 0 : mSymbol.hashCode());
 		return result;
 	}
 
@@ -71,10 +71,10 @@ public abstract class NonTheorySymbol<SYMBOL> {
 		if (getClass() != obj.getClass())
 			return false;
 		NonTheorySymbol other = (NonTheorySymbol) obj;
-		if (m_Symbol == null) {
-			if (other.m_Symbol != null)
+		if (mSymbol == null) {
+			if (other.mSymbol != null)
 				return false;
-		} else if (!m_Symbol.equals(other.m_Symbol))
+		} else if (!mSymbol.equals(other.mSymbol))
 			return false;
 		return true;
 	}
@@ -83,7 +83,7 @@ public abstract class NonTheorySymbol<SYMBOL> {
 	
 	@Override
 	public final String toString() {
-		return m_Symbol.toString();
+		return mSymbol.toString();
 	}
 
 	public static Set<NonTheorySymbol<?>> extractNonTheorySymbols(Term term) {

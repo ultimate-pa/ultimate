@@ -46,10 +46,10 @@ public class SMTPrettyPrinter {
 	private static final String[] s_infix_functions =
 		{"+", "-", "*", "/", "=", ">=", "<=", ">", "<"};
 	
-	private final Term m_Term;
+	private final Term mTerm;
 	
 	public SMTPrettyPrinter(Term term) {
-		m_Term = term;
+		mTerm = term;
 	}
 	
 	private static void indent(StringBuilder sb, int indentation) {
@@ -147,6 +147,6 @@ public class SMTPrettyPrinter {
 
 	@Override
 	public String toString() {
-		return print(m_Term, 0);
+		return print(mTerm, 0);
 	}
 }

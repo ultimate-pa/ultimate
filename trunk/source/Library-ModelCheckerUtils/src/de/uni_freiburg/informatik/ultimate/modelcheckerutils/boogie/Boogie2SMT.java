@@ -55,73 +55,73 @@ public class Boogie2SMT {
 	/**
 	 * if set to true array access returns arbitrary values array store returns arbitrary arrays
 	 */
-	private final boolean m_BlackHoleArrays;
+	private final boolean mBlackHoleArrays;
 
-	private final BoogieDeclarations m_BoogieDeclarations;
-	private Script m_Script;
+	private final BoogieDeclarations mBoogieDeclarations;
+	private Script mScript;
 
-	private final TypeSortTranslator m_TypeSortTranslator;
-	private final IOperationTranslator m_OperationTranslator;
-	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
-	private final VariableManager m_VariableManager;
-	private final Expression2Term m_Expression2Term;
-	private final Term2Expression m_Term2Expression;
+	private final TypeSortTranslator mTypeSortTranslator;
+	private final IOperationTranslator mOperationTranslator;
+	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final VariableManager mVariableManager;
+	private final Expression2Term mExpression2Term;
+	private final Term2Expression mTerm2Expression;
 
-	private final Statements2TransFormula m_Statements2TransFormula;
+	private final Statements2TransFormula mStatements2TransFormula;
 
-	private final ConstOnlyIdentifierTranslator m_ConstOnlyIdentifierTranslator;
+	private final ConstOnlyIdentifierTranslator mConstOnlyIdentifierTranslator;
 
-	private final Collection<Term> m_Axioms;
+	private final Collection<Term> mAxioms;
 
 	private IUltimateServiceProvider mServices;
 
 	public Boogie2SMT(Script script, BoogieDeclarations boogieDeclarations, boolean blackHoleArrays,
 			boolean bitvectorInsteadOfInt, IUltimateServiceProvider services) {
 		mServices = services;
-		m_BlackHoleArrays = blackHoleArrays;
-		m_BoogieDeclarations = boogieDeclarations;
-		m_Script = script;
-		m_VariableManager = new VariableManager(m_Script, mServices);
+		mBlackHoleArrays = blackHoleArrays;
+		mBoogieDeclarations = boogieDeclarations;
+		mScript = script;
+		mVariableManager = new VariableManager(mScript, mServices);
 
 		if (bitvectorInsteadOfInt) {
-			m_TypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
-					m_Script, m_BlackHoleArrays, mServices);
-			m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, m_Script, m_TypeSortTranslator);
-			m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
-			m_OperationTranslator = new BitvectorWorkaroundOperationTranslator(m_Boogie2SmtSymbolTable, m_Script);
-			m_Expression2Term = new Expression2Term(mServices, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable,
-					m_OperationTranslator, m_VariableManager);
+			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
+					mScript, mBlackHoleArrays, mServices);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
+			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+			mOperationTranslator = new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, mScript);
+			mExpression2Term = new Expression2Term(mServices, mScript, mTypeSortTranslator, mBoogie2SmtSymbolTable,
+					mOperationTranslator, mVariableManager);
 		} else {
-			m_TypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), m_Script,
-					m_BlackHoleArrays, mServices);
-			m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, m_Script, m_TypeSortTranslator);
+			mTypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript,
+					mBlackHoleArrays, mServices);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 
-			m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
-			m_OperationTranslator = new DefaultOperationTranslator(m_Boogie2SmtSymbolTable, m_Script);
-			m_Expression2Term = new Expression2Term(mServices, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable,
-					m_OperationTranslator, m_VariableManager);
+			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript);
+			mExpression2Term = new Expression2Term(mServices, mScript, mTypeSortTranslator, mBoogie2SmtSymbolTable,
+					mOperationTranslator, mVariableManager);
 		}
 
-		m_Axioms = new ArrayList<Term>(boogieDeclarations.getAxioms().size());
+		mAxioms = new ArrayList<Term>(boogieDeclarations.getAxioms().size());
 		for (Axiom decl : boogieDeclarations.getAxioms()) {
-			Term term = declareAxiom(decl, m_Expression2Term);
-			m_Axioms.add(term);
+			Term term = declareAxiom(decl, mExpression2Term);
+			mAxioms.add(term);
 		}
-		m_Statements2TransFormula = new Statements2TransFormula(this, mServices, m_Expression2Term);
-		m_Term2Expression = new Term2Expression(m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
+		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term);
+		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable);
 
 	}
 
 	public VariableManager getVariableManager() {
-		return m_VariableManager;
+		return mVariableManager;
 	}
 
 	public Script getScript() {
-		return m_Script;
+		return mScript;
 	}
 
 	public Term2Expression getTerm2Expression() {
-		return m_Term2Expression;
+		return mTerm2Expression;
 	}
 
 	static String quoteId(String id) {
@@ -130,33 +130,33 @@ public class Boogie2SMT {
 	}
 
 	public Boogie2SmtSymbolTable getBoogie2SmtSymbolTable() {
-		return m_Boogie2SmtSymbolTable;
+		return mBoogie2SmtSymbolTable;
 	}
 
 	public Statements2TransFormula getStatements2TransFormula() {
-		return m_Statements2TransFormula;
+		return mStatements2TransFormula;
 	}
 
 	public BoogieDeclarations getBoogieDeclarations() {
-		return m_BoogieDeclarations;
+		return mBoogieDeclarations;
 	}
 
 	public TypeSortTranslator getTypeSortTranslator() {
-		return m_TypeSortTranslator;
+		return mTypeSortTranslator;
 	}
 
 	ConstOnlyIdentifierTranslator getConstOnlyIdentifierTranslator() {
-		return m_ConstOnlyIdentifierTranslator;
+		return mConstOnlyIdentifierTranslator;
 	}
 
 	public Collection<Term> getAxioms() {
-		return m_Axioms;
+		return mAxioms;
 	}
 
 	private Term declareAxiom(Axiom ax, Expression2Term expression2term) {
 		IdentifierTranslator[] its = new IdentifierTranslator[] { getConstOnlyIdentifierTranslator() };
 		Term term = expression2term.translateToTerm(its, ax.getFormula()).getTerm();
-		m_Script.assertTerm(term);
+		mScript.assertTerm(term);
 		return term;
 	}
 
@@ -176,7 +176,7 @@ public class Boogie2SMT {
 	public BoogieNonOldVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure, IType iType,
 			VarList varList) {
 
-		return m_Boogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);
+		return mBoogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);
 	}
 
 	class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
@@ -187,7 +187,7 @@ public class Boogie2SMT {
 			if (declInfo.getStorageClass() != StorageClass.GLOBAL) {
 				throw new AssertionError();
 			}
-			Term result = m_Boogie2SmtSymbolTable.getBoogieConst(id).getDefaultConstant();
+			Term result = mBoogie2SmtSymbolTable.getBoogieConst(id).getDefaultConstant();
 			if (result == null) {
 				throw new AssertionError();
 			}

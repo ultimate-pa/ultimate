@@ -69,27 +69,27 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class NestedInterpolantsBuilder {
 
-	private final  IUltimateServiceProvider m_Services;
-	private final ILogger m_Logger;
+	private final  IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 
-	final Script m_ScriptTc;
-	final SmtManager m_SmtManagerTc;
-	final SmtManager m_SmtManagerPredicates;
+	final Script mScriptTc;
+	final SmtManager mSmtManagerTc;
+	final SmtManager mSmtManagerPredicates;
 
-	Term[] m_CraigInterpolants;
-	final PrintWriter m_IterationPW = null;
-	// final int m_Iteration =-1;
-	// int m_InterpolationProblem = 0;
+	Term[] mCraigInterpolants;
+	final PrintWriter mIterationPW = null;
+	// final int mIteration =-1;
+	// int mInterpolationProblem = 0;
 
-	private IPredicate[] m_Interpolants;
+	private IPredicate[] mInterpolants;
 
-	// private TAPreferences m_Pref = null;
+	// private TAPreferences mPref = null;
 
-	private NestedFormulas<Term, Term> m_AnnotSSA;
+	private NestedFormulas<Term, Term> mAnnotSSA;
 
-	private final PredicateUnifier m_PredicateBuilder;
+	private final PredicateUnifier mPredicateBuilder;
 
-	private Set<Integer> m_InterpolatedPositions;
+	private Set<Integer> mInterpolatedPositions;
 
 	private ArrayList<Term> interpolInput;
 
@@ -99,56 +99,56 @@ public class NestedInterpolantsBuilder {
 
 	private int startOfCurrentSubtree;
 
-	private final NestedWord<? extends IAction> m_Trace;
+	private final NestedWord<? extends IAction> mTrace;
 
-	private int m_stackHeightAtLastInterpolatedPosition;
+	private int mstackHeightAtLastInterpolatedPosition;
 
-	private Stack<Integer> m_startOfSubtreeStack;
+	private Stack<Integer> mstartOfSubtreeStack;
 
-	private final boolean m_TreeInterpolation;
+	private final boolean mTreeInterpolation;
 	
-	private final TermTransformer m_Const2RepTvSubst;
+	private final TermTransformer mConst2RepTvSubst;
 
-	private final boolean m_InstantiateArrayExt;
+	private final boolean mInstantiateArrayExt;
 
 
 
 	public NestedInterpolantsBuilder(SmtManager smtManagerTc, NestedFormulas<Term, Term> annotatdSsa,
-			Map<Term, BoogieVar> m_constants2BoogieVar, PredicateUnifier predicateBuilder,
+			Map<Term, BoogieVar> mconstants2BoogieVar, PredicateUnifier predicateBuilder,
 			Set<Integer> interpolatedPositions, boolean treeInterpolation,
 			IUltimateServiceProvider services,
 			TraceChecker traceChecker, SmtManager smtManagerPredicates, boolean instantiateArrayExt) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_TreeInterpolation = treeInterpolation;
-		m_ScriptTc = smtManagerTc.getScript();
-		m_SmtManagerTc = smtManagerTc;
-		m_SmtManagerPredicates = smtManagerPredicates;
-		m_PredicateBuilder = predicateBuilder;
-		m_AnnotSSA = annotatdSsa;
-		m_CraigInterpolants = new Term[m_AnnotSSA.getTrace().length() - 1];
-		m_InterpolatedPositions = interpolatedPositions;
-		m_Trace = annotatdSsa.getTrace();
-		m_InstantiateArrayExt = instantiateArrayExt;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mTreeInterpolation = treeInterpolation;
+		mScriptTc = smtManagerTc.getScript();
+		mSmtManagerTc = smtManagerTc;
+		mSmtManagerPredicates = smtManagerPredicates;
+		mPredicateBuilder = predicateBuilder;
+		mAnnotSSA = annotatdSsa;
+		mCraigInterpolants = new Term[mAnnotSSA.getTrace().length() - 1];
+		mInterpolatedPositions = interpolatedPositions;
+		mTrace = annotatdSsa.getTrace();
+		mInstantiateArrayExt = instantiateArrayExt;
 		HashMap<Term, Term> const2RepTv = new HashMap<Term, Term>();
-		for (Entry<Term, BoogieVar> entry : m_constants2BoogieVar.entrySet()) {
+		for (Entry<Term, BoogieVar> entry : mconstants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
-		if (m_SmtManagerTc != smtManagerPredicates) {
-			m_Const2RepTvSubst = new TermTransferrer(m_SmtManagerPredicates.getScript(), const2RepTv);
+		if (mSmtManagerTc != smtManagerPredicates) {
+			mConst2RepTvSubst = new TermTransferrer(mSmtManagerPredicates.getScript(), const2RepTv);
 		} else {
-			m_Const2RepTvSubst = new SafeSubstitution(m_SmtManagerPredicates.getScript(), const2RepTv);
+			mConst2RepTvSubst = new SafeSubstitution(mSmtManagerPredicates.getScript(), const2RepTv);
 		}
 
 		computeCraigInterpolants();
 		traceChecker.unlockSmtManager();
-		for (int i = 0; i < m_CraigInterpolants.length; i++) {
-			m_Logger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, m_CraigInterpolants[i]));
+		for (int i = 0; i < mCraigInterpolants.length; i++) {
+			mLogger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, mCraigInterpolants[i]));
 		}
-		m_Interpolants = computePredicates();
-		assert m_Interpolants != null;
-		// if (m_Pref.dumpFormulas()) {
-		// dumpNestedStateFormulas(m_Interpolants, m_Trace, m_IterationPW);
+		mInterpolants = computePredicates();
+		assert mInterpolants != null;
+		// if (mPref.dumpFormulas()) {
+		// dumpNestedStateFormulas(mInterpolants, mTrace, mIterationPW);
 	}
 
 	public void computeCraigInterpolants() {
@@ -156,39 +156,39 @@ public class NestedInterpolantsBuilder {
 		treeStructure = new ArrayList<Integer>();
 		craigInt2interpolantIndex = new ArrayList<Integer>();
 		startOfCurrentSubtree = 0;
-		m_startOfSubtreeStack = new Stack<Integer>();
-		m_stackHeightAtLastInterpolatedPosition = 0;
+		mstartOfSubtreeStack = new Stack<Integer>();
+		mstackHeightAtLastInterpolatedPosition = 0;
 		boolean startNewFormula = true;
 
-		for (int i = 0; i < m_AnnotSSA.getTrace().length(); i++) {
+		for (int i = 0; i < mAnnotSSA.getTrace().length(); i++) {
 			// if last position was interpolated position we add new formula to
 			// interpol input
 			if (startNewFormula) {
-				if (m_Trace.isInternalPosition(i)) {
+				if (mTrace.isInternalPosition(i)) {
 					newInterpolInputFormula(i);
-				} else if (m_Trace.isCallPosition(i)) {
-					if (!m_Trace.isPendingCall(i)) {
+				} else if (mTrace.isCallPosition(i)) {
+					if (!mTrace.isPendingCall(i)) {
 						int nextPosition = interpolInput.size();
-						m_startOfSubtreeStack.push(startOfCurrentSubtree);
+						mstartOfSubtreeStack.push(startOfCurrentSubtree);
 						startOfCurrentSubtree = nextPosition;
 					}
 					newInterpolInputFormula(i);
-					if (m_Trace.isPendingCall(i)) {
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
+					if (mTrace.isPendingCall(i)) {
+						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(i));
+						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
 					}
-				} else if (m_Trace.isReturnPosition(i)) {
-					if (m_Trace.isPendingReturn(i)) {
+				} else if (mTrace.isReturnPosition(i)) {
+					if (mTrace.isPendingReturn(i)) {
 						newInterpolInputFormula(i);
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getPendingContext(i));
+						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(i));
+						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
+						addToLastInterpolInputFormula(mAnnotSSA.getPendingContext(i));
 					} else {
-						startOfCurrentSubtree = m_startOfSubtreeStack.pop();
+						startOfCurrentSubtree = mstartOfSubtreeStack.pop();
 						newInterpolInputFormula(i);
-						int correspondingCallPosition = m_Trace.getCallPosition(i);
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(correspondingCallPosition));
-						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(correspondingCallPosition));
+						int correspondingCallPosition = mTrace.getCallPosition(i);
+						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(correspondingCallPosition));
+						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(correspondingCallPosition));
 					}
 
 				} else {
@@ -196,30 +196,30 @@ public class NestedInterpolantsBuilder {
 				}
 
 			} else {
-				if (m_Trace.isInternalPosition(i)) {
-					addToLastInterpolInputFormula(m_AnnotSSA.getFormulaFromNonCallPos(i));
-				} else if (m_Trace.isCallPosition(i)) {
-					if (!m_Trace.isPendingCall(i)) {
-						m_startOfSubtreeStack.push(startOfCurrentSubtree);
+				if (mTrace.isInternalPosition(i)) {
+					addToLastInterpolInputFormula(mAnnotSSA.getFormulaFromNonCallPos(i));
+				} else if (mTrace.isCallPosition(i)) {
+					if (!mTrace.isPendingCall(i)) {
+						mstartOfSubtreeStack.push(startOfCurrentSubtree);
 						startOfCurrentSubtree = -23;
 					}
-					addToLastInterpolInputFormula(m_AnnotSSA.getGlobalVarAssignment(i));
-					if (m_Trace.isPendingCall(i)) {
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
+					addToLastInterpolInputFormula(mAnnotSSA.getGlobalVarAssignment(i));
+					if (mTrace.isPendingCall(i)) {
+						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(i));
+						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
 					}
-				} else if (m_Trace.isReturnPosition(i)) {
-					if (m_Trace.isPendingReturn(i)) {
-						addToLastInterpolInputFormula(m_AnnotSSA.getFormulaFromNonCallPos(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getPendingContext(i));
+				} else if (mTrace.isReturnPosition(i)) {
+					if (mTrace.isPendingReturn(i)) {
+						addToLastInterpolInputFormula(mAnnotSSA.getFormulaFromNonCallPos(i));
+						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(i));
+						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
+						addToLastInterpolInputFormula(mAnnotSSA.getPendingContext(i));
 					} else {
-						startOfCurrentSubtree = m_startOfSubtreeStack.pop();
-						addToLastInterpolInputFormula(m_AnnotSSA.getFormulaFromNonCallPos(i));
-						int correspondingCallPosition = m_Trace.getCallPosition(i);
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(correspondingCallPosition));
-						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(correspondingCallPosition));
+						startOfCurrentSubtree = mstartOfSubtreeStack.pop();
+						addToLastInterpolInputFormula(mAnnotSSA.getFormulaFromNonCallPos(i));
+						int correspondingCallPosition = mTrace.getCallPosition(i);
+						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(correspondingCallPosition));
+						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(correspondingCallPosition));
 					}
 				} else {
 					throw new AssertionError();
@@ -227,7 +227,7 @@ public class NestedInterpolantsBuilder {
 			}
 			startNewFormula = isInterpolatedPositio(i);
 			if (isInterpolatedPositio(i)) {
-				m_stackHeightAtLastInterpolatedPosition = m_startOfSubtreeStack.size();
+				mstackHeightAtLastInterpolatedPosition = mstartOfSubtreeStack.size();
 				craigInt2interpolantIndex.add(i);
 			}
 
@@ -236,30 +236,30 @@ public class NestedInterpolantsBuilder {
 		// add precondition to first term
 		// special case: if first position is non pending call, then we add the
 		// precondition to the corresponding return.
-		if (m_Trace.isCallPosition(0) && !m_Trace.isPendingCall(0)) {
-			final int correspondingReturn = m_Trace.getReturnPosition(0);
+		if (mTrace.isCallPosition(0) && !mTrace.isPendingCall(0)) {
+			final int correspondingReturn = mTrace.getReturnPosition(0);
 			// if we do not interpolate at each position
 			// interpolInput[correspondingReturn] might be the wrong position
 			int interpolInputPositionOfReturn = 0;
 			for (int i = 0; i < correspondingReturn; i++) {
-				if (m_InterpolatedPositions.contains(i)) {
+				if (mInterpolatedPositions.contains(i)) {
 					interpolInputPositionOfReturn++;
 				}
 			}
-			interpolInput[interpolInputPositionOfReturn] = Util.and(m_ScriptTc,
-					interpolInput[interpolInputPositionOfReturn], m_AnnotSSA.getPrecondition());
+			interpolInput[interpolInputPositionOfReturn] = Util.and(mScriptTc,
+					interpolInput[interpolInputPositionOfReturn], mAnnotSSA.getPrecondition());
 		} else {
-			interpolInput[0] = Util.and(m_ScriptTc, interpolInput[0], m_AnnotSSA.getPrecondition());
+			interpolInput[0] = Util.and(mScriptTc, interpolInput[0], mAnnotSSA.getPrecondition());
 		}
 		// add negated postcondition to last term
-		interpolInput[interpolInput.length - 1] = Util.and(m_ScriptTc, interpolInput[interpolInput.length - 1],
-				m_AnnotSSA.getPostcondition());
+		interpolInput[interpolInput.length - 1] = Util.and(mScriptTc, interpolInput[interpolInput.length - 1],
+				mAnnotSSA.getPostcondition());
 
 		int[] startOfSubtree = integerListToIntArray(this.treeStructure);
-		if (m_TreeInterpolation) {
-			m_CraigInterpolants = m_SmtManagerTc.computeInterpolants(interpolInput, startOfSubtree);
+		if (mTreeInterpolation) {
+			mCraigInterpolants = mSmtManagerTc.computeInterpolants(interpolInput, startOfSubtree);
 		} else {
-			m_CraigInterpolants = m_SmtManagerTc.computeInterpolants(interpolInput);
+			mCraigInterpolants = mSmtManagerTc.computeInterpolants(interpolInput);
 		}
 
 	}
@@ -273,15 +273,15 @@ public class NestedInterpolantsBuilder {
 	}
 
 	private void newInterpolInputFormula(int i) {
-		if (m_stackHeightAtLastInterpolatedPosition == m_startOfSubtreeStack.size()) {
+		if (mstackHeightAtLastInterpolatedPosition == mstartOfSubtreeStack.size()) {
 			// everything ok
 		} else {
-			if (m_stackHeightAtLastInterpolatedPosition + 1 == m_startOfSubtreeStack.size()
-					&& m_Trace.isCallPosition(i) && (i == 0 || isInterpolatedPositio(i - 1))) {
+			if (mstackHeightAtLastInterpolatedPosition + 1 == mstartOfSubtreeStack.size()
+					&& mTrace.isCallPosition(i) && (i == 0 || isInterpolatedPositio(i - 1))) {
 				// everything ok
 			} else {
-				if (m_stackHeightAtLastInterpolatedPosition - 1 == m_startOfSubtreeStack.size()
-						&& m_Trace.isReturnPosition(i) && isInterpolatedPositio(i - 1)) {
+				if (mstackHeightAtLastInterpolatedPosition - 1 == mstartOfSubtreeStack.size()
+						&& mTrace.isReturnPosition(i) && isInterpolatedPositio(i - 1)) {
 					// everything ok
 				} else {
 					throw new IllegalArgumentException(
@@ -290,10 +290,10 @@ public class NestedInterpolantsBuilder {
 			}
 		}
 		Term term;
-		if (m_Trace.isCallPosition(i)) {
-			term = m_AnnotSSA.getGlobalVarAssignment(i);
+		if (mTrace.isCallPosition(i)) {
+			term = mAnnotSSA.getGlobalVarAssignment(i);
 		} else {
-			term = m_AnnotSSA.getFormulaFromNonCallPos(i);
+			term = mAnnotSSA.getFormulaFromNonCallPos(i);
 		}
 		interpolInput.add(term);
 		// the interpolant between last formula and this new formula can be
@@ -305,41 +305,41 @@ public class NestedInterpolantsBuilder {
 
 	private void addToLastInterpolInputFormula(Term term) {
 		int lastPosition = interpolInput.size() - 1;
-		Term newFormula = Util.and(m_ScriptTc, interpolInput.get(lastPosition), term);
+		Term newFormula = Util.and(mScriptTc, interpolInput.get(lastPosition), term);
 		assert newFormula != null : "newFormula must be != null";
 		interpolInput.set(lastPosition, newFormula);
 	}
 
 	public boolean isInterpolatedPositio(int i) {
 		assert i >= 0;
-		assert i < m_Trace.length();
-		if (i == m_Trace.length() - 1) {
+		assert i < mTrace.length();
+		if (i == mTrace.length() - 1) {
 			return false;
 		}
-		if (m_InterpolatedPositions == null) {
+		if (mInterpolatedPositions == null) {
 			return true;
 		} else {
-			return m_InterpolatedPositions.contains(i);
+			return mInterpolatedPositions.contains(i);
 		}
 	}
 
 	public IPredicate[] getNestedInterpolants() {
-		for (int j = 0; j < m_Interpolants.length; j++) {
-			m_Logger.debug(new DebugMessage("Interpolant {0}: {1}", j, m_Interpolants[j]));
+		for (int j = 0; j < mInterpolants.length; j++) {
+			mLogger.debug(new DebugMessage("Interpolant {0}: {1}", j, mInterpolants[j]));
 		}
-		return m_Interpolants;
+		return mInterpolants;
 	}
 
 	// /**
 	// * Compute nested interpolants for given SSA. The result are the Craig
 	// * interpolants for the SSA given as formula, the interpolants contain the
 	// * variables with indices as they occur in the SSA. The result is written
-	// * to m_CraigInterpolants.
+	// * to mCraigInterpolants.
 	// */
 	// private void computeCraigInterpolants() {
-	// // m_CraigInterpolants[0] = m_SmtManager.getScript().term("true");
-	// // m_CraigInterpolants[m_CraigInterpolants.length-1] =
-	// m_SmtManager.getScript().term("false");
+	// // mCraigInterpolants[0] = mSmtManager.getScript().term("true");
+	// // mCraigInterpolants[mCraigInterpolants.length-1] =
+	// mSmtManager.getScript().term("false");
 	// List<Integer> interpolProbStartPositions =
 	// getInterpolProbStartPositions();
 	// for (Integer k: interpolProbStartPositions) {
@@ -359,9 +359,9 @@ public class NestedInterpolantsBuilder {
 	// */
 	// private List<Integer> getInterpolProbStartPositions() {
 	// List<Integer> interpolProbStartPos = new LinkedList<Integer>();
-	// // if (m_Pref.interprocedural()) {
-	// for (int i=0; i<m_Trace.length(); i++) {
-	// if (m_Trace.isCallPosition(i) && !m_Trace.isPendingCall(i)) {
+	// // if (mPref.interprocedural()) {
+	// for (int i=0; i<mTrace.length(); i++) {
+	// if (mTrace.isCallPosition(i) && !mTrace.isPendingCall(i)) {
 	// interpolProbStartPos.add(i);
 	// }
 	// }
@@ -378,7 +378,7 @@ public class NestedInterpolantsBuilder {
 
 	// /**
 	// * Given the SSA compute interpolants for a subsequence starting from
-	// * position k and write the result to m_CraigInterpolants.
+	// * position k and write the result to mCraigInterpolants.
 	// * If k is a non-pending call position the end of the sequence is the
 	// * corresponding return position. Otherwise k = 0 and the end position is
 	// * the last position of the SSA.
@@ -386,32 +386,32 @@ public class NestedInterpolantsBuilder {
 	// * subsequence. If k!=0, we add two additional conjuncts. First the
 	// * k-th interpolant (which has been computed yet). Second, the negation of
 	// * the 'sequence end position'-th interpolant.
-	// * @param k a non-pending call position of the m_run or 0
+	// * @param k a non-pending call position of the mrun or 0
 	// * @return true iff the interpolation subsequence is satisfiable
 	// * @throws ölö
 	// */
 	// private boolean computeInterpolantSubsequence(int k) {
 	// int endPos;
 	// if (k==0) {
-	// endPos = m_AnnotSSA.getTerms().length-1;
+	// endPos = mAnnotSSA.getTerms().length-1;
 	// }
 	// else {
-	// assert (m_Trace.isCallPosition(k) &&
-	// !m_Trace.isPendingCall(k));
-	// endPos = m_Trace.getReturnPosition(k);
+	// assert (mTrace.isCallPosition(k) &&
+	// !mTrace.isPendingCall(k));
+	// endPos = mTrace.getReturnPosition(k);
 	// }
 	// ArrayList<Term> interpolProb = new ArrayList<Term>();
 	// ArrayList<Integer> indexTranslation = new ArrayList<Integer>();
 	// Term interproceduralLinkPendingCalls =
-	// m_SmtManager.getScript().term("true");
+	// mSmtManager.getScript().term("true");
 	// int j=0;
 	// interpolProb.add(j, getFormulaforPos(k));
 	// for (int i=k+1; i<= endPos; i++) {
 	// Term iFormu = getFormulaforPos(i);
-	// if (m_Trace.isPendingCall(i)) {
-	// interproceduralLinkPendingCalls = Util.and(m_Script,
+	// if (mTrace.isPendingCall(i)) {
+	// interproceduralLinkPendingCalls = Util.and(mScript,
 	// interproceduralLinkPendingCalls,
-	// m_AnnotSSA.getTerms()[i]);
+	// mAnnotSSA.getTerms()[i]);
 	// }
 	// if (isInterpolatedPosition(i)) {
 	// j++;
@@ -420,74 +420,74 @@ public class NestedInterpolantsBuilder {
 	// }
 	// else {
 	// Term jFormu = interpolProb.get(j);
-	// interpolProb.set(j,Util.and(m_Script,jFormu,iFormu));
+	// interpolProb.set(j,Util.and(mScript,jFormu,iFormu));
 	// }
 	// }
 	// Term lastTerm = interpolProb.get(j);
 	//
 	// if (k !=0 ) {
 	// for (int i = 0; i<k; i++) {
-	// if (m_Trace.isPendingCall(i)) {
-	// interproceduralLinkPendingCalls = Util.and(m_Script,
+	// if (mTrace.isPendingCall(i)) {
+	// interproceduralLinkPendingCalls = Util.and(mScript,
 	// interproceduralLinkPendingCalls,
-	// m_AnnotSSA.getTerms()[i]);
+	// mAnnotSSA.getTerms()[i]);
 	// }
-	// lastTerm = Util.and(m_Script,lastTerm, getFormulaforPos(i));
+	// lastTerm = Util.and(mScript,lastTerm, getFormulaforPos(i));
 	// }
-	// for (int i=endPos+1; i<m_AnnotSSA.length(); i++) {
-	// if (m_Trace.isPendingCall(i)) {
-	// interproceduralLinkPendingCalls = Util.and(m_Script,
+	// for (int i=endPos+1; i<mAnnotSSA.length(); i++) {
+	// if (mTrace.isPendingCall(i)) {
+	// interproceduralLinkPendingCalls = Util.and(mScript,
 	// interproceduralLinkPendingCalls,
-	// m_AnnotSSA.getTerms()[i]);
+	// mAnnotSSA.getTerms()[i]);
 	// }
-	// lastTerm = Util.and(m_Script,lastTerm, getFormulaforPos(i));
+	// lastTerm = Util.and(mScript,lastTerm, getFormulaforPos(i));
 	// }
 	// }
 	// else {
-	// lastTerm = Util.and(m_Script,lastTerm, interproceduralLinkPendingCalls);
+	// lastTerm = Util.and(mScript,lastTerm, interproceduralLinkPendingCalls);
 	// }
 	// interpolProb.set(j,lastTerm);
 	// assert (interpolProb.size()-1 == indexTranslation.size());
 	//
 	// Term[] interpolInput = interpolProb.toArray(new Term[0]);
 	//
-	// if (m_IterationPW != null) {
+	// if (mIterationPW != null) {
 	// String line;
 	// line = "=====InterpolationProblem starting from position " + k;
 	// s_Logger.debug(line);
-	// m_IterationPW.println(line);
+	// mIterationPW.println(line);
 	// // dumpInterpolationInput(k, interpolInput, indexTranslation,
-	// (NestedRun<CodeBlock, Predicate>) m_Run, m_Script, m_IterationPW);
-	// // SmtManager.dumpInterpolProblem(interpolInput, m_Iteration, k,
-	// m_Pref.dumpPath(), m_Script);
+	// (NestedRun<CodeBlock, Predicate>) mRun, mScript, mIterationPW);
+	// // SmtManager.dumpInterpolProblem(interpolInput, mIteration, k,
+	// mPref.dumpPath(), mScript);
 	// }
 	// Term[] interpolOutput = null;
 	// if (interpolInput.length > 1) {
-	// interpolOutput = m_SmtManager.computeInterpolants(interpolInput);
+	// interpolOutput = mSmtManager.computeInterpolants(interpolInput);
 	// }
 	//
 	//
-	// if (m_IterationPW != null) {
+	// if (mIterationPW != null) {
 	// // dumpInterpolationOutput(k, interpolOutput,
-	// indexTranslation,m_Run.getWord(), m_IterationPW);
+	// indexTranslation,mRun.getWord(), mIterationPW);
 	// }
 	//
 	// for (int jj = 0; jj<indexTranslation.size(); jj++) {
-	// m_CraigInterpolants[indexTranslation.get(jj)-1] = interpolOutput[jj];
+	// mCraigInterpolants[indexTranslation.get(jj)-1] = interpolOutput[jj];
 	// }
 	// return false;
 	// }
 
 	// private Term getFormulaforPos(int i) {
 	// Term iFormu;
-	// if (m_Trace.isInternalPosition(i)) {
-	// iFormu = m_AnnotSSA.getTerms()[i];
-	// } else if (m_Trace.isCallPosition(i)) {
-	// iFormu = m_SmtManager.getScript().term("true");
-	// } else if (m_Trace.isReturnPosition(i)) {
-	// iFormu = m_AnnotSSA.getTerms()[i];
-	// int callPos = m_Trace.getCallPosition(i);
-	// Util.and(m_Script, iFormu, m_AnnotSSA.getTerms()[callPos]);
+	// if (mTrace.isInternalPosition(i)) {
+	// iFormu = mAnnotSSA.getTerms()[i];
+	// } else if (mTrace.isCallPosition(i)) {
+	// iFormu = mSmtManager.getScript().term("true");
+	// } else if (mTrace.isReturnPosition(i)) {
+	// iFormu = mAnnotSSA.getTerms()[i];
+	// int callPos = mTrace.getCallPosition(i);
+	// Util.and(mScript, iFormu, mAnnotSSA.getTerms()[callPos]);
 	// } else {
 	// throw new AssertionError();
 	// }
@@ -496,49 +496,49 @@ public class NestedInterpolantsBuilder {
 
 	// //FIXME wrong - fixed?
 	// private boolean isInterpolatedPosition(int i) {
-	// if (m_InterpolatedPositions == null) {
+	// if (mInterpolatedPositions == null) {
 	// return true;
 	// }
 	// //interpolate for cutpoint positions
-	// // if (m_cutpoints.contains(((NestedRun<CodeBlock, Predicate>)
-	// m_Run).getStateAtPosition(i).getProgramPoint())) {
+	// // if (mcutpoints.contains(((NestedRun<CodeBlock, Predicate>)
+	// mRun).getStateAtPosition(i).getProgramPoint())) {
 	// // return true;
 	// // }
 	// //interpolate before calls
-	// if (m_Trace.isCallPosition(i)) {
+	// if (mTrace.isCallPosition(i)) {
 	// return true;
 	// }
 	// //interpolate after returns
-	// if (i>0 && m_Trace.isReturnPosition(i-1)) {
+	// if (i>0 && mTrace.isReturnPosition(i-1)) {
 	// return true;
 	// }
 	// return false;
 	// }
 
 	private IPredicate[] computePredicates() {
-		IPredicate[] result = new IPredicate[m_Trace.length() - 1];
-		assert m_CraigInterpolants.length == craigInt2interpolantIndex.size();
-		// assert m_InterpolatedPositions.size() == m_CraigInterpolants.length;
+		IPredicate[] result = new IPredicate[mTrace.length() - 1];
+		assert mCraigInterpolants.length == craigInt2interpolantIndex.size();
+		// assert mInterpolatedPositions.size() == mCraigInterpolants.length;
 
 		Map<Term, IPredicate> withIndices2Predicate = new HashMap<Term, IPredicate>();
 
 		int craigInterpolPos = 0;
-		for (int resultPos = 0; resultPos < m_Trace.length() - 1; resultPos++) {
+		for (int resultPos = 0; resultPos < mTrace.length() - 1; resultPos++) {
 			checkTimeout();
 			int positionOfThisCraigInterpolant;
-			if (craigInterpolPos == m_CraigInterpolants.length) {
+			if (craigInterpolPos == mCraigInterpolants.length) {
 				// special case where trace ends with return
 				// we already added all CraigInterpolants
 				// remaining interpolants are "unknown" and the implicit given
 				// false at the end
-				assert m_Trace.isReturnPosition(m_Trace.length() - 1);
+				assert mTrace.isReturnPosition(mTrace.length() - 1);
 				positionOfThisCraigInterpolant = Integer.MAX_VALUE;
 			} else {
 				positionOfThisCraigInterpolant = craigInt2interpolantIndex.get(craigInterpolPos);
 			}
 			assert positionOfThisCraigInterpolant >= resultPos;
 			if (isInterpolatedPositio(resultPos)) {
-				Term withIndices = m_CraigInterpolants[craigInterpolPos];
+				Term withIndices = mCraigInterpolants[craigInterpolPos];
 				assert resultPos == craigInt2interpolantIndex.get(craigInterpolPos);
 				craigInterpolPos++;
 				result[resultPos] = withIndices2Predicate.get(withIndices);
@@ -548,29 +548,29 @@ public class NestedInterpolantsBuilder {
 					 * better solution: implement support for let terms in SafeSubstitution
 					 */
 					withIndices = (new FormulaUnLet()).transform(withIndices);
-					Term withoutIndices = m_Const2RepTvSubst.transform(withIndices);
-					if (m_InstantiateArrayExt ) {
+					Term withoutIndices = mConst2RepTvSubst.transform(withIndices);
+					if (mInstantiateArrayExt ) {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
 					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(
-							m_Services, m_Logger, m_SmtManagerPredicates.getScript(), 
-							m_SmtManagerPredicates.getVariableManager(),
+							mServices, mLogger, mSmtManagerPredicates.getScript(), 
+							mSmtManagerPredicates.getVariableManager(),
 							withoutIndices);
-					result[resultPos] = m_PredicateBuilder.getOrConstructPredicate(lessQuantifiers);
+					result[resultPos] = mPredicateBuilder.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
 			} else {
-				result[resultPos] = m_SmtManagerPredicates.getPredicateFactory().newDontCarePredicate(null);
+				result[resultPos] = mSmtManagerPredicates.getPredicateFactory().newDontCarePredicate(null);
 			}
 		}
-		assert craigInterpolPos == m_CraigInterpolants.length;
+		assert craigInterpolPos == mCraigInterpolants.length;
 		return result;
 	}
 
 	private void checkTimeout() {
-		if (!m_Services.getProgressMonitorService().continueProcessing()) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(this.getClass(),
-					"constructing predicates for " + (m_Trace.length() - 1) 
+					"constructing predicates for " + (mTrace.length() - 1) 
 					+ " interpolants");
 		}
 	}
@@ -583,11 +583,11 @@ public class NestedInterpolantsBuilder {
 	 * it for each occurrence.
 	 */
 	private Term instantiateArrayExt(Term interpolantWithoutIndices) {
-		Term nnf = (new Nnf(m_SmtManagerPredicates.getScript(), m_Services, 
-				m_SmtManagerPredicates.getVariableManager(), QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
+		Term nnf = (new Nnf(mSmtManagerPredicates.getScript(), mServices, 
+				mSmtManagerPredicates.getVariableManager(), QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
 //		not needed, at the moment our NNF transformation also produces 		
-//		Term prenex = (new PrenexNormalForm(m_SmtManagerPredicates.getScript(), m_SmtManagerPredicates.getVariableManager())).transform(nnf);
-		QuantifierSequence qs = new QuantifierSequence(m_SmtManagerPredicates.getScript(), nnf);
+//		Term prenex = (new PrenexNormalForm(mSmtManagerPredicates.getScript(), mSmtManagerPredicates.getVariableManager())).transform(nnf);
+		QuantifierSequence qs = new QuantifierSequence(mSmtManagerPredicates.getScript(), nnf);
 //		The quantifier-free part of of formula in prenex normal form is called
 //		matrix
 		Term matrix = qs.getInnerTerm();
@@ -608,62 +608,62 @@ public class NestedInterpolantsBuilder {
 			substitutionMapping.put(aet.getArrayExtTerm(), aet.getReplacementTermVariable());
 			offset++;
 		}
-		Term result = (new SafeSubstitution(m_SmtManagerPredicates.getScript(), substitutionMapping)).transform(matrix);
-		result = Util.and(m_SmtManagerPredicates.getScript(), result, Util.and(m_SmtManagerPredicates.getScript(), implications));
-		result = m_SmtManagerPredicates.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
-		result = QuantifierSequence.prependQuantifierSequence(m_SmtManagerPredicates.getScript(), qs.getQuantifierBlocks(), result);
-//		Term pushed = new QuantifierPusher(m_SmtManagerPredicates.getScript(), m_Services).transform(result);
+		Term result = (new SafeSubstitution(mSmtManagerPredicates.getScript(), substitutionMapping)).transform(matrix);
+		result = Util.and(mSmtManagerPredicates.getScript(), result, Util.and(mSmtManagerPredicates.getScript(), implications));
+		result = mSmtManagerPredicates.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
+		result = QuantifierSequence.prependQuantifierSequence(mSmtManagerPredicates.getScript(), qs.getQuantifierBlocks(), result);
+//		Term pushed = new QuantifierPusher(mSmtManagerPredicates.getScript(), mServices).transform(result);
 		return result;
 	}
 	
 	private class ArrayExtTerm {
-		private final ApplicationTerm m_ArrayExtTerm;
-		private final Term m_FirstArray;
-		private final Term m_SecondArray;
-		private final TermVariable m_ReplacementTermVariable;
-		private final Term m_Implication;
+		private final ApplicationTerm mArrayExtTerm;
+		private final Term mFirstArray;
+		private final Term mSecondArray;
+		private final TermVariable mReplacementTermVariable;
+		private final Term mImplication;
 		
 		public ArrayExtTerm(ApplicationTerm arrayExtTerm) {
-			m_ArrayExtTerm = arrayExtTerm;
-			if (!m_ArrayExtTerm.getFunction().getName().equals("array-ext")) {
+			mArrayExtTerm = arrayExtTerm;
+			if (!mArrayExtTerm.getFunction().getName().equals("array-ext")) {
 				throw new IllegalArgumentException("no array-ext Term");
 			}
-			if (m_ArrayExtTerm.getParameters().length != 2) {
+			if (mArrayExtTerm.getParameters().length != 2) {
 				throw new IllegalArgumentException("expected two params");
 			}
-			m_FirstArray = m_ArrayExtTerm.getParameters()[0];
-			m_SecondArray = m_ArrayExtTerm.getParameters()[1];
-			m_ReplacementTermVariable = arrayExtTerm.getTheory().createFreshTermVariable("arrExt", arrayExtTerm.getSort());
-			m_Implication = constructImplication();
+			mFirstArray = mArrayExtTerm.getParameters()[0];
+			mSecondArray = mArrayExtTerm.getParameters()[1];
+			mReplacementTermVariable = arrayExtTerm.getTheory().createFreshTermVariable("arrExt", arrayExtTerm.getSort());
+			mImplication = constructImplication();
 		}
 
 		private Term constructImplication() {
-			Term arraysDistinct = m_SmtManagerPredicates.getScript().term("distinct", m_FirstArray, m_SecondArray);
-			Term firstSelect = m_SmtManagerPredicates.getScript().term("select", m_FirstArray, m_ReplacementTermVariable);
-			Term secondSelect = m_SmtManagerPredicates.getScript().term("select", m_SecondArray, m_ReplacementTermVariable);
-			Term selectDistinct = m_SmtManagerPredicates.getScript().term("distinct", firstSelect, secondSelect);
-			Term implication = Util.implies(m_SmtManagerPredicates.getScript(), arraysDistinct, selectDistinct);
+			Term arraysDistinct = mSmtManagerPredicates.getScript().term("distinct", mFirstArray, mSecondArray);
+			Term firstSelect = mSmtManagerPredicates.getScript().term("select", mFirstArray, mReplacementTermVariable);
+			Term secondSelect = mSmtManagerPredicates.getScript().term("select", mSecondArray, mReplacementTermVariable);
+			Term selectDistinct = mSmtManagerPredicates.getScript().term("distinct", firstSelect, secondSelect);
+			Term implication = Util.implies(mSmtManagerPredicates.getScript(), arraysDistinct, selectDistinct);
 			return implication;
 		}
 
 		public ApplicationTerm getArrayExtTerm() {
-			return m_ArrayExtTerm;
+			return mArrayExtTerm;
 		}
 
 		public Term getFirstArray() {
-			return m_FirstArray;
+			return mFirstArray;
 		}
 
 		public Term getSecondArray() {
-			return m_SecondArray;
+			return mSecondArray;
 		}
 
 		public TermVariable getReplacementTermVariable() {
-			return m_ReplacementTermVariable;
+			return mReplacementTermVariable;
 		}
 
 		public Term getImplication() {
-			return m_Implication;
+			return mImplication;
 		}
 		
 		

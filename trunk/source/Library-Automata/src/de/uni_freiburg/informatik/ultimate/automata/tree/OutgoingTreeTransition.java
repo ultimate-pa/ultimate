@@ -12,20 +12,20 @@ import java.text.MessageFormat;
  */
 public class OutgoingTreeTransition<LETTER, STATE> implements OutgoingTransitionlet<LETTER, STATE> {
 	
-		private final LETTER m_Letter; 
-		private final STATE m_Succ;
+		private final LETTER mLetter; 
+		private final STATE mSucc;
 		
 		public OutgoingTreeTransition(LETTER letter, STATE succ) {
-			m_Letter = letter;
-			m_Succ = succ;
+			mLetter = letter;
+			mSucc = succ;
 		}
 		
 		public LETTER getLetter() {
-			return m_Letter;
+			return mLetter;
 		}
 		
 		public STATE getSucc() {
-			return m_Succ;
+			return mSucc;
 		}
 		
 		public String toString() {

@@ -29,31 +29,31 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesA
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 
 class Summary<LETTER, STATE> {
-	private final StateContainer<LETTER, STATE> m_HierPred;
-	private final StateContainer<LETTER, STATE> m_LinPred;
-	private final LETTER m_Letter;
-	private final StateContainer<LETTER, STATE> m_Succ;
+	private final StateContainer<LETTER, STATE> mHierPred;
+	private final StateContainer<LETTER, STATE> mLinPred;
+	private final LETTER mLetter;
+	private final StateContainer<LETTER, STATE> mSucc;
 	public Summary(StateContainer<LETTER, STATE> hierPred, 
 			StateContainer<LETTER, STATE> linPred,
 			LETTER letter,
 			StateContainer<LETTER, STATE> succ) {
 		super();
-		m_HierPred = hierPred;
-		m_LinPred = linPred;
-		m_Letter = letter;
-		m_Succ = succ;
+		mHierPred = hierPred;
+		mLinPred = linPred;
+		mLetter = letter;
+		mSucc = succ;
 	}
 	public StateContainer<LETTER, STATE> getHierPred() {
-		return m_HierPred;
+		return mHierPred;
 	}
 	public StateContainer<LETTER, STATE> getLinPred() {
-		return m_LinPred;
+		return mLinPred;
 	}
 	public LETTER getLetter() {
-		return m_Letter;
+		return mLetter;
 	}
 	public StateContainer<LETTER, STATE> getSucc() {
-		return m_Succ;
+		return mSucc;
 	}
 	
 
@@ -74,11 +74,11 @@ class Summary<LETTER, STATE> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((m_HierPred == null) ? 0 : m_HierPred.hashCode());
+				+ ((mHierPred == null) ? 0 : mHierPred.hashCode());
 		result = prime * result
-				+ ((m_LinPred == null) ? 0 : m_LinPred.hashCode());
+				+ ((mLinPred == null) ? 0 : mLinPred.hashCode());
 		result = prime * result
-				+ ((m_Succ == null) ? 0 : m_Succ.hashCode());
+				+ ((mSucc == null) ? 0 : mSucc.hashCode());
 		return result;
 	}
 	@Override
@@ -90,26 +90,26 @@ class Summary<LETTER, STATE> {
 		if (getClass() != obj.getClass())
 			return false;
 		Summary other = (Summary) obj;
-		if (m_HierPred == null) {
-			if (other.m_HierPred != null)
+		if (mHierPred == null) {
+			if (other.mHierPred != null)
 				return false;
-		} else if (!m_HierPred.equals(other.m_HierPred))
+		} else if (!mHierPred.equals(other.mHierPred))
 			return false;
-		if (m_LinPred == null) {
-			if (other.m_LinPred != null)
+		if (mLinPred == null) {
+			if (other.mLinPred != null)
 				return false;
-		} else if (!m_LinPred.equals(other.m_LinPred))
+		} else if (!mLinPred.equals(other.mLinPred))
 			return false;
-		if (m_Succ == null) {
-			if (other.m_Succ != null)
+		if (mSucc == null) {
+			if (other.mSucc != null)
 				return false;
-		} else if (!m_Succ.equals(other.m_Succ))
+		} else if (!mSucc.equals(other.mSucc))
 			return false;
 		return true;
 	}
 	@Override
 	public String toString() {
-		return "(" + m_HierPred + ", " + m_LinPred + ", " + m_Succ + ")";
+		return "(" + mHierPred + ", " + mLinPred + ", " + mSucc + ")";
 	}
 	
 	

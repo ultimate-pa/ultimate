@@ -47,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	BranchingProcess<L, C> m_Input;
-	PetriNetJulian<L, C> m_Net;
+	BranchingProcess<L, C> mInput;
+	PetriNetJulian<L, C> mNet;
 	private UnionFind<Condition<L, C>> representatives;
 
 	@Override
@@ -61,18 +61,18 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + "Input " + m_Input.sizeInformation();
+		return "Start " + operationName() + "Input " + mInput.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
-				+ m_Net.sizeInformation();
+				+ mNet.sizeInformation();
 	}
 
 	@Override
 	public PetriNetJulian<L, C> getResult() throws AutomataLibraryException {
-		return m_Net;
+		return mNet;
 	}
 	
 	
@@ -87,25 +87,25 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
 	public FinitePrefix2PetriNet(AutomataLibraryServices services, 
 			BranchingProcess<L, C> bp) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		// TODO implement merging for markings?
-		m_Input = bp;
-		m_Logger.info(startMessage());
+		mInput = bp;
+		mLogger.info(startMessage());
 
 		Map<Condition<L, C>, Place<L, C>> placeMap = new HashMap<Condition<L, C>, Place<L, C>>();
 		Map<Event<L, C>, Transition<L, C>> transitionMap = new HashMap<Event<L, C>, Transition<L, C>>();
 
-		m_Logger.debug("CONDITIONS:");
+		mLogger.debug("CONDITIONS:");
 		for (Condition<L, C> c : bp.getConditions())
-			m_Logger.debug(c);
-		m_Logger.debug("EVENTS:");
+			mLogger.debug(c);
+		mLogger.debug("EVENTS:");
 		for (Event<L, C> e : bp.getEvents())
-			m_Logger.debug(e.getPredecessorConditions() + " || " + e + " || "
+			mLogger.debug(e.getPredecessorConditions() + " || " + e + " || "
 					+ e.getSuccessorConditions());
 
-		PetriNetJulian<L, C> old_net = m_Input.getNet();
-		m_Net = new PetriNetJulian<L, C>(m_Services, old_net.getAlphabet(),
+		PetriNetJulian<L, C> old_net = mInput.getNet();
+		mNet = new PetriNetJulian<L, C>(mServices, old_net.getAlphabet(),
 				old_net.getStateFactory(), false);
 		
 		
@@ -172,7 +172,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 		for (Condition c : bp.getConditions()) {
 			assert representatives.find(c) != null;
 			if (c == representatives.find(c)) {
-				Place<L, C> place = m_Net.addPlace(old_net.getStateFactory()
+				Place<L, C> place = mNet.addPlace(old_net.getStateFactory()
 						.finitePrefix2net(c), bp.initialConditions()
 						.contains(c), bp.isAccepting(c));
 				placeMap.put(c, place);
@@ -196,9 +196,9 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 				succs.add(placeMap.get(representative));
 			}
 			transitionSet.addTransition(e.getTransition().getSymbol(), preds, succs);
-			//	m_Net.addTransition(e.getTransition().getSymbol(), preds, succs);
+			//	mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
 		}
-		transitionSet.addAllTransitionsToNet(m_Net);
+		transitionSet.addAllTransitionsToNet(mNet);
 		
 		
 		
@@ -206,15 +206,15 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 		
 //		for (Condition<L, C> c : bp.getConditions()) {
 //			if (!c.getPredecessorEvent().isCutoffEvent()) {
-//				Place<L, C> place = m_Net.addPlace(old_net.getStateFactory()
+//				Place<L, C> place = mNet.addPlace(old_net.getStateFactory()
 //						.finitePrefix2net(c), bp.initialConditions()
 //						.contains(c), bp.isAccepting(c));
 //				placeMap.put(c, place);
 //			}
 //		}
-//		m_Logger.debug("CONDITIONS TO PLACE:");
+//		mLogger.debug("CONDITIONS TO PLACE:");
 //		for (Map.Entry<Condition<L, C>, Place<L, C>> en : placeMap.entrySet())
-//			m_Logger.debug(en);
+//			mLogger.debug(en);
 //		for (Event<L, C> e : bp.getEvents()) {
 //			if (e.getTransition() == null)
 //				continue;
@@ -232,14 +232,14 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 //				assert placeMap.containsKey(sc);
 //				succs.add(placeMap.get(sc));
 //			}
-//			Transition<L, C> transition = m_Net.addTransition(e.getTransition()
+//			Transition<L, C> transition = mNet.addTransition(e.getTransition()
 //					.getSymbol(), preds, succs);
 //			transitionMap.put(e, transition);
 //		}
 
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 		try {
-			assert ResultChecker.petriNetLanguageEquivalence(m_Services, old_net, m_Net) : 
+			assert ResultChecker.petriNetLanguageEquivalence(mServices, old_net, mNet) : 
 				"The language recognized by the FinitePrefix2PetriNet is not equal to the language of the original net.";
 		} catch (AutomataLibraryException e1) {
 			e1.printStackTrace();
@@ -272,14 +272,14 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 	
 	
 	class TransitionSet {
-		Map<L, Map< Set<Place<L, C>>, Set<Set<Place<L, C>>>>> m_Letter2Predset2Succsets = 
+		Map<L, Map< Set<Place<L, C>>, Set<Set<Place<L, C>>>>> mLetter2Predset2Succsets = 
 				new HashMap<L, Map< Set<Place<L, C>>, Set<Set<Place<L, C>>>>>();
 		
 		void addTransition(L letter, Set<Place<L, C>> predset, Set<Place<L, C>> succset) {
-			Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = m_Letter2Predset2Succsets.get(letter);
+			Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = mLetter2Predset2Succsets.get(letter);
 			if (predsets2succsets == null) {
 				predsets2succsets = new HashMap<Set<Place<L, C>>, Set<Set<Place<L, C>>>>();
-				m_Letter2Predset2Succsets.put(letter, predsets2succsets);
+				mLetter2Predset2Succsets.put(letter, predsets2succsets);
 			}
 			Set<Set<Place<L, C>>> succsets = predsets2succsets.get(predset);
 			if (succsets == null) {
@@ -290,8 +290,8 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 		}
 		
 		void addAllTransitionsToNet(PetriNetJulian<L,C> net) {
-			for (L letter : m_Letter2Predset2Succsets.keySet()) {
-				Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = m_Letter2Predset2Succsets.get(letter);
+			for (L letter : mLetter2Predset2Succsets.keySet()) {
+				Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = mLetter2Predset2Succsets.get(letter);
 				for (Set<Place<L,C>> predset : predsets2succsets.keySet()) {
 					Set<Set<Place<L, C>>> succsets = predsets2succsets.get(predset);
 					for (Set<Place<L, C>> succset : succsets) {

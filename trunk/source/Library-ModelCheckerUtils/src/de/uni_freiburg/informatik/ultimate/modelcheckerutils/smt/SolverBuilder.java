@@ -158,67 +158,67 @@ public class SolverBuilder {
 				ExternalInterpolator externalInterpolator, boolean dumpSmtScriptToFile, String pathOfDumpedScript,
 				String baseNameOfDumpedScript) {
 			super();
-			m_UseExternalSolver = useExternalSolver;
-			m_CommandExternalSolver = commandExternalSolver;
-			m_TimeoutSmtInterpol = timeoutSmtInterpol;
-			m_ExternalInterpolator = externalInterpolator;
-			m_DumpSmtScriptToFile = dumpSmtScriptToFile;
-			m_PathOfDumpedScript = pathOfDumpedScript;
-			m_BaseNameOfDumpedScript = baseNameOfDumpedScript;
+			mUseExternalSolver = useExternalSolver;
+			mCommandExternalSolver = commandExternalSolver;
+			mTimeoutSmtInterpol = timeoutSmtInterpol;
+			mExternalInterpolator = externalInterpolator;
+			mDumpSmtScriptToFile = dumpSmtScriptToFile;
+			mPathOfDumpedScript = pathOfDumpedScript;
+			mBaseNameOfDumpedScript = baseNameOfDumpedScript;
 		}
 
-		private final boolean m_UseExternalSolver;
+		private final boolean mUseExternalSolver;
 
 		/**
 		 * What shell command should be used to call the external smt solver?
 		 */
-		private final String m_CommandExternalSolver;
+		private final String mCommandExternalSolver;
 
-		private final long m_TimeoutSmtInterpol;
+		private final long mTimeoutSmtInterpol;
 
-		private final ExternalInterpolator m_ExternalInterpolator;
+		private final ExternalInterpolator mExternalInterpolator;
 
 		/**
 		 * Write SMT solver script to file.
 		 */
-		private final boolean m_DumpSmtScriptToFile;
+		private final boolean mDumpSmtScriptToFile;
 
 		/**
 		 * Path to which the SMT solver script is written.
 		 */
-		private final String m_PathOfDumpedScript;
+		private final String mPathOfDumpedScript;
 
 		/**
 		 * Base name (without path and without file ending) of the file to which the SMT solver script is written.
 		 */
-		private final String m_BaseNameOfDumpedScript;
+		private final String mBaseNameOfDumpedScript;
 
 		public boolean useExternalSolver() {
-			return m_UseExternalSolver;
+			return mUseExternalSolver;
 		}
 
 		public String getCommandExternalSolver() {
-			return m_CommandExternalSolver;
+			return mCommandExternalSolver;
 		}
 
 		public long getTimeoutSmtInterpol() {
-			return m_TimeoutSmtInterpol;
+			return mTimeoutSmtInterpol;
 		}
 
 		public ExternalInterpolator getExternalInterpolator() {
-			return m_ExternalInterpolator;
+			return mExternalInterpolator;
 		}
 
 		public boolean dumpSmtScriptToFile() {
-			return m_DumpSmtScriptToFile;
+			return mDumpSmtScriptToFile;
 		}
 
 		public String getPathOfDumpedScript() {
-			return m_PathOfDumpedScript;
+			return mPathOfDumpedScript;
 		}
 
 		public String getBaseNameOfDumpedScript() {
-			return m_BaseNameOfDumpedScript;
+			return mBaseNameOfDumpedScript;
 		}
 
 		public String constructFullPathOfDumpedScript() {
@@ -354,10 +354,10 @@ public class SolverBuilder {
 			result.setOption(":produce-interpolants", true);
 			result.setOption(":interpolant-check-mode", true);
 			result.setOption(":proof-transformation", "LU");
-			// m_Script.setOption(":proof-transformation", "RPI");
-			// m_Script.setOption(":proof-transformation", "LURPI");
-			// m_Script.setOption(":proof-transformation", "RPILU");
-			// m_Script.setOption(":verbosity", 0);
+			// mScript.setOption(":proof-transformation", "RPI");
+			// mScript.setOption(":proof-transformation", "LURPI");
+			// mScript.setOption(":proof-transformation", "RPILU");
+			// mScript.setOption(":verbosity", 0);
 			result.setLogic("QF_AUFLIRA");
 			break;
 		default:

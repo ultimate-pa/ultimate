@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 /**
  * Result that should be used to report benchmark informations like (e.g.,
  * runtime, number of iterations, size of automata, size of predicates, ...).
- * These benchmark informations are stored in the m_Benchmark object. The
+ * These benchmark informations are stored in the mBenchmark object. The
  * toString() method of this object has to return the benchmark results in human
  * readable form.
  * 
@@ -41,27 +41,27 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  */
 public class BenchmarkResult<T> extends AbstractResult {
 
-	private final String m_ShortDescrption;
-	private final ICsvProviderProvider<T> m_Benchmark;
+	private final String mShortDescrption;
+	private final ICsvProviderProvider<T> mBenchmark;
 
-	public BenchmarkResult(String plugin, String shortDescrption, ICsvProviderProvider<T> m_Benchmark) {
+	public BenchmarkResult(String plugin, String shortDescrption, ICsvProviderProvider<T> mBenchmark) {
 		super(plugin);
-		this.m_ShortDescrption = shortDescrption;
-		this.m_Benchmark = m_Benchmark;
+		this.mShortDescrption = shortDescrption;
+		this.mBenchmark = mBenchmark;
 	}
 
 	@Override
 	public String getShortDescription() {
-		return m_ShortDescrption;
+		return mShortDescrption;
 	}
 
 	@Override
 	public String getLongDescription() {
-		return m_Benchmark.toString();
+		return mBenchmark.toString();
 	}
 
 	public ICsvProviderProvider<T> getBenchmark() {
-		return m_Benchmark;
+		return mBenchmark;
 	}
 
 }

@@ -35,7 +35,7 @@ public class ZDD  extends NodeTable  {
 	private static final int CACHE_SUBSET0 = 0, CACHE_SUBSET1 = 1, CACHE_CHANGE = 2,
 							CACHE_UNION = 3, CACHE_INTERSECT = 4, CACHE_DIFF = 5;
 
-	protected int num_vars; /** number of Z-BDD variables */
+	protected int numvars; /** number of Z-BDD variables */
 	private int node_count_int; /** internal variable used by nodeCount */
 	private OptimizedCache unary_cache;		// for unary stuff. (ZDD, variable, op) => ZDD
 	private OptimizedCache binary_cache;	// for binary operations. (ZDD, ZDD, op) => ZDD
@@ -105,13 +105,13 @@ public class ZDD  extends NodeTable  {
 	// -------------------------------------------
     /** create a new ZDD variable */
 	public int createVar() {
-		int ret = num_vars++;
+		int ret = numvars++;
 		// we want to keep the work stack at least so large
-		int need = 5 * num_vars + 3;
+		int need = 5 * numvars + 3;
 		if(work_stack.length < need)
 			work_stack = Array.resize(work_stack, work_stack_tos, need);
 
-		tree_depth_changed(num_vars); // MUST be called
+		tree_depth_changed(numvars); // MUST be called
 		return ret;
 	}
 	// --------------------------------------------------------
@@ -127,7 +127,7 @@ public class ZDD  extends NodeTable  {
 
 	public final int universe() {
 		int last = 1;
-		for(int i = 0; i < num_vars; i++) {
+		for(int i = 0; i < numvars; i++) {
 			work_stack[work_stack_tos++] = last;
 			last = mk(i, last, last);
 			work_stack_tos--;
@@ -220,7 +220,7 @@ public class ZDD  extends NodeTable  {
 	//-----------------------------------------------
 	/** var is a variable, NOT a tree */
 	public final int subset1(int zdd, int var) {
-		if(var < 0 || var >= num_vars) return -1; // INVALID VARIABLE!
+		if(var < 0 || var >= numvars) return -1; // INVALID VARIABLE!
 
 		if(getVar(zdd) < var) return 0;
 		if(getVar(zdd) == var) return getHigh(zdd);
@@ -241,7 +241,7 @@ public class ZDD  extends NodeTable  {
 
 	/** var is a variable, NOT a tree */
 	public final int subset0(int zdd, int var) {
-		if(var < 0 || var >= num_vars) return -1; // INVALID VARIABLE!
+		if(var < 0 || var >= numvars) return -1; // INVALID VARIABLE!
 
 		if(getVar(zdd) < var) return zdd;
 		if(getVar(zdd) == var) return getLow(zdd);
@@ -259,7 +259,7 @@ public class ZDD  extends NodeTable  {
 	}
 
 	public final int change(int zdd, int var) {
-		if(var < 0 || var >= num_vars) return -1; // INVALID VARIABLE!
+		if(var < 0 || var >= numvars) return -1; // INVALID VARIABLE!
 
 
 		if(getVar(zdd) < var) return mk(var, 0, zdd);
@@ -390,7 +390,7 @@ public class ZDD  extends NodeTable  {
 	/** Returns a satisfying boolean assignment, null if none<br>XXX: this code is still untested! */
 	public boolean [] satOne(int zdd, boolean [] vec) {
 		if(zdd == 0) return null;
-		if(vec == null) vec = new boolean[num_vars];
+		if(vec == null) vec = new boolean[numvars];
 		Array.set(vec, false);
 		if(zdd != 1) satOne_rec(zdd, vec);
 		return vec;

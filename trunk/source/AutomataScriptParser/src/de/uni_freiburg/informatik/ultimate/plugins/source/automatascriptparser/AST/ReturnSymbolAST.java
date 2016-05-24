@@ -34,12 +34,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
  *
  */
 public class ReturnSymbolAST {
-	private String m_Symbol;
+	private String mSymbol;
 	public ReturnSymbolAST(String sym) {
-		m_Symbol = sym;
+		mSymbol = sym;
 	}
 	
 	public String getSymbol() {
-		return m_Symbol;
+		return mSymbol;
 	}
 }

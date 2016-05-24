@@ -24,17 +24,17 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 	public static Function<String, Function<Object,String>> s_TimeBeforeKey = 
 			key -> time -> prettyprintNanoseconds( (Long) time) + " " + key;
 	
-	private final Class<T> m_Keys;
+	private final Class<T> mKeys;
 	
 	public AStatisticsType(Class<T> keys) {
 		super();
-		m_Keys = keys;
+		mKeys = keys;
 	}
 
 	@Override
 	public Collection<String> getKeys() {
 		List<String> result = new ArrayList<>();
-		for (Enum<?> test : m_Keys.getEnumConstants()) {
+		for (Enum<?> test : mKeys.getEnumConstants()) {
 			result.add(test.toString());
 		}
 		return result;
@@ -42,7 +42,7 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 
 	@Override
 	public Object aggregate(String key, Object value1, Object value2) {
-		T keyEnum = (T) Enum.valueOf(m_Keys, key);
+		T keyEnum = (T) Enum.valueOf(mKeys, key);
 		Object result = keyEnum.aggregate(value1, value2);
 		return result;
 	}
@@ -58,7 +58,7 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 				sb.append(", ");
 			}
 			Object value = benchmarkData.getValue(key);
-			T keyE = (T) Enum.valueOf(m_Keys, key);
+			T keyE = (T) Enum.valueOf(mKeys, key);
 			sb.append(keyE.prettyprint(value));
 		}
 		return sb.toString();

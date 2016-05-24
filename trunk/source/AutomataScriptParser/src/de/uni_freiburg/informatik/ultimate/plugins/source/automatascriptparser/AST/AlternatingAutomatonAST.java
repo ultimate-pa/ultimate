@@ -45,7 +45,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 	
 	public AlternatingAutomatonAST(ILocation loc, String name){
 		super(loc);
-		m_Name = name;
+		mName = name;
 	}
 	
 	public void setAlphabet(List<String> alphabet){
@@ -99,7 +99,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 	@Override
 	public String toString(){
 		StringBuilder builder = new StringBuilder();
-		builder.append("AlternatingAutomaton(" + m_Name + "): + [");
+		builder.append("AlternatingAutomaton(" + mName + "): + [");
 		builder.append(" #int_alph: ");
 		builder.append(alphabet.size());
 		builder.append(" #States: ");

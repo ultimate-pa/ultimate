@@ -58,7 +58,7 @@ public class RootAnnot extends AbstractAnnotations {
 	 */
 	private static final long serialVersionUID = -221145005712480077L;
 
-	private final BoogieDeclarations m_BoogieDeclarations;
+	private final BoogieDeclarations mBoogieDeclarations;
 
 	/**
 	 * Maps a procedure name to the entry node of that procedure. The entry node
@@ -68,7 +68,7 @@ public class RootAnnot extends AbstractAnnotations {
 	 * clause and reach the initial node.
 	 * 
 	 */
-	final Map<String, ProgramPoint> m_entryNode = new HashMap<String, ProgramPoint>();
+	final Map<String, ProgramPoint> mentryNode = new HashMap<String, ProgramPoint>();
 
 	/**
 	 * Maps a procedure name to the final node of that procedure. The final node
@@ -80,7 +80,7 @@ public class RootAnnot extends AbstractAnnotations {
 	 * exit node of the procedure.
 	 * 
 	 */
-	final Map<String, ProgramPoint> m_finalNode = new HashMap<String, ProgramPoint>();
+	final Map<String, ProgramPoint> mfinalNode = new HashMap<String, ProgramPoint>();
 
 	/**
 	 * Maps a procedure name to the the exit node of that procedure. The exit
@@ -88,27 +88,27 @@ public class RootAnnot extends AbstractAnnotations {
 	 * after assuming the ensures part of the specification. This locNode is the
 	 * source of ReturnEdges which lead to the callers of this procecure.
 	 */
-	final Map<String, ProgramPoint> m_exitNode = new HashMap<String, ProgramPoint>();
+	final Map<String, ProgramPoint> mexitNode = new HashMap<String, ProgramPoint>();
 
 	/**
 	 * Maps the pair of procedure name location name to the LocNode that
 	 * represents this location.
 	 */
-	final Map<String, Map<String, ProgramPoint>> m_LocNodes = new HashMap<String, Map<String, ProgramPoint>>();
+	final Map<String, Map<String, ProgramPoint>> mLocNodes = new HashMap<String, Map<String, ProgramPoint>>();
 
 	/**
 	 * Maps a procedure name to error locations generated for this procedure.
 	 */
-	final Map<String, Collection<ProgramPoint>> m_ErrorNodes = new HashMap<String, Collection<ProgramPoint>>();
+	final Map<String, Collection<ProgramPoint>> mErrorNodes = new HashMap<String, Collection<ProgramPoint>>();
 	/**
 	 * Maps a {@code LocNode}s to the while loop that it represents
 	 */
-	final HashMap<ProgramPoint, ILocation> m_LoopLocations = new HashMap<ProgramPoint, ILocation>();
+	final HashMap<ProgramPoint, ILocation> mLoopLocations = new HashMap<ProgramPoint, ILocation>();
 
-	private final Boogie2SMT m_Boogie2SMT;
-	private final ManagedScript m_ManagedScript;
-	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
-	private final CodeBlockFactory m_CodeBlockFactory;
+	private final Boogie2SMT mBoogie2SMT;
+	private final ManagedScript mManagedScript;
+	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
+	private final CodeBlockFactory mCodeBlockFactory;
 
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
@@ -116,14 +116,14 @@ public class RootAnnot extends AbstractAnnotations {
 	 */
 	private final static String[] s_AttribFields = { "locNodes", "loopEntry" };
 
-	public RootAnnot(IUltimateServiceProvider services, BoogieDeclarations boogieDeclarations, Boogie2SMT m_Boogie2smt,
+	public RootAnnot(IUltimateServiceProvider services, BoogieDeclarations boogieDeclarations, Boogie2SMT mBoogie2smt,
 			RCFGBacktranslator backtranslator) {
-		m_BoogieDeclarations = boogieDeclarations;
-		m_Boogie2SMT = m_Boogie2smt;
-		m_ManagedScript = new ManagedScript(services, m_Boogie2smt.getScript());
-		m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(m_BoogieDeclarations.getModifiedVars(),
-				m_Boogie2smt);
-		m_CodeBlockFactory = new CodeBlockFactory(services, m_Boogie2SMT, m_ModifiableGlobalVariableManager);
+		mBoogieDeclarations = boogieDeclarations;
+		mBoogie2SMT = mBoogie2smt;
+		mManagedScript = new ManagedScript(services, mBoogie2smt.getScript());
+		mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(mBoogieDeclarations.getModifiedVars(),
+				mBoogie2smt);
+		mCodeBlockFactory = new CodeBlockFactory(services, mBoogie2SMT, mModifiableGlobalVariableManager);
 	}
 
 	@Override
@@ -134,15 +134,15 @@ public class RootAnnot extends AbstractAnnotations {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "locNodes")
-			return m_LocNodes;
+			return mLocNodes;
 		else if (field == "loopEntry")
-			return m_LoopLocations;
+			return mLoopLocations;
 		else
 			throw new UnsupportedOperationException("Unknown field " + field);
 	}
 
 	public Map<String, Map<String, ProgramPoint>> getProgramPoints() {
-		return m_LocNodes;
+		return mLocNodes;
 	}
 
 	public int getNumberOfProgramPoints() {
@@ -154,15 +154,15 @@ public class RootAnnot extends AbstractAnnotations {
 	}
 
 	public Map<String, ProgramPoint> getEntryNodes() {
-		return m_entryNode;
+		return mentryNode;
 	}
 
 	public Map<String, ProgramPoint> getExitNodes() {
-		return m_exitNode;
+		return mexitNode;
 	}
 
 	public Map<String, Collection<ProgramPoint>> getErrorNodes() {
-		return m_ErrorNodes;
+		return mErrorNodes;
 	}
 
 	public int getNumberOfErrorNodes() {
@@ -174,35 +174,35 @@ public class RootAnnot extends AbstractAnnotations {
 	}
 
 	public ModifiableGlobalVariableManager getModGlobVarManager() {
-		return m_ModifiableGlobalVariableManager;
+		return mModifiableGlobalVariableManager;
 	}
 
 	public Script getScript() {
-		return m_Boogie2SMT.getScript();
+		return mBoogie2SMT.getScript();
 	}
 	
 	public ManagedScript getManagedScript() {
-		return m_ManagedScript;
+		return mManagedScript;
 	}
 
 	public Boogie2SMT getBoogie2SMT() {
-		return m_Boogie2SMT;
+		return mBoogie2SMT;
 	}
 
 	public Map<ProgramPoint, ILocation> getLoopLocations() {
-		return m_LoopLocations;
+		return mLoopLocations;
 	}
 
 	public BoogieDeclarations getBoogieDeclarations() {
-		return m_BoogieDeclarations;
+		return mBoogieDeclarations;
 	}
 
 	public CodeBlockFactory getCodeBlockFactory() {
-		return m_CodeBlockFactory;
+		return mCodeBlockFactory;
 	}
 
 	public Set<ProgramPoint> getPotentialCycleProgramPoints() {
-		final Set<ProgramPoint> relevantLocs = m_LocNodes.entrySet().stream()
+		final Set<ProgramPoint> relevantLocs = mLocNodes.entrySet().stream()
 				.flatMap(a -> a.getValue().entrySet().stream()).map(a -> a.getValue())
 				.filter(a -> a.getOutgoingEdges().stream().anyMatch(b -> {
 					final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(b);

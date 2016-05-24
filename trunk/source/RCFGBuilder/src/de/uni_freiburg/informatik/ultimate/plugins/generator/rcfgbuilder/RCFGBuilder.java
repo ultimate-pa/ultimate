@@ -51,8 +51,8 @@ public class RCFGBuilder implements IGenerator {
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	public static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
-	private RCFGBuilderObserver m_Observer;
-	private ModelType m_InputDefinition;
+	private RCFGBuilderObserver mObserver;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 
@@ -83,13 +83,13 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		this.mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new RCFGBuilderObserver(mServices, mStorage);
-		return Collections.singletonList((IObserver) m_Observer);
+		mObserver = new RCFGBuilderObserver(mServices, mStorage);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
@@ -98,13 +98,13 @@ public class RCFGBuilder implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.CFG, m_InputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.CFG, mInputDefinition.getFileNames());
 
 	}
 
 	@Override
 	public IElement getModel() {
-		return this.m_Observer.getRoot();
+		return this.mObserver.getRoot();
 	}
 
 	@Override

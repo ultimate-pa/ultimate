@@ -38,19 +38,19 @@ import java.util.Set;
  */
 public class StronglyConnectedComponent<NODE> {
 
-	protected NODE m_RootNode;
-	protected final Set<NODE> m_Nodes = new HashSet<NODE>();
+	protected NODE mRootNode;
+	protected final Set<NODE> mNodes = new HashSet<NODE>();
 
 	public StronglyConnectedComponent() {
 		super();
 	}
 
 	public int getNumberOfStates() {
-		return m_Nodes.size();
+		return mNodes.size();
 	}
 
 	public NODE getRootNode() {
-		return m_RootNode;
+		return mRootNode;
 	}
 
 	/**
@@ -58,27 +58,27 @@ public class StronglyConnectedComponent<NODE> {
 	 * contained in this SCC.
 	 */
 	public Set<NODE> getNodes() {
-		return Collections.unmodifiableSet(m_Nodes);
+		return Collections.unmodifiableSet(mNodes);
 	}
 	
 	public void addNode(NODE node) {
-		if (m_RootNode != null) {
+		if (mRootNode != null) {
 			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
 		}
-		boolean notAlreadyContained = m_Nodes.add(node);
+		boolean notAlreadyContained = mNodes.add(node);
 		assert notAlreadyContained : "nodes must not be added twice";
 	}
 	
 	public void setRootNode(NODE rootNode) {
-		if (m_RootNode != null) {
+		if (mRootNode != null) {
 			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
 		}
-		m_RootNode = rootNode;
+		mRootNode = rootNode;
 	}
 
 	@Override
 	public String toString() {
-		return String.valueOf(m_Nodes);
+		return String.valueOf(mNodes);
 	}
 	
 	

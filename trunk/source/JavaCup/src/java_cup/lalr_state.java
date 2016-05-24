@@ -292,7 +292,7 @@ public class lalr_state {
 
       /* pull out our rows from the tables */
       int[] our_act_row = act_table.table[index()];
-      production[] productions = new production[grammar.num_terminals()+1];
+      production[] productions = new production[grammar.numterminals()+1];
       lalr_state[] our_red_row = reduce_table.table[index()];
 
       /* consider each item in our state */
@@ -307,7 +307,7 @@ public class lalr_state {
 	      int lasize = 0;
 
 	      /* consider each lookahead symbol */
-	      for (int t = 0; t < grammar.num_terminals(); t++)
+	      for (int t = 0; t < grammar.numterminals(); t++)
 		{
 		  /* skip over the ones not in the lookahead */
 		  if (!itm.getValue().contains(t)) continue;
@@ -412,10 +412,10 @@ public class lalr_state {
 		: parse_action_table.ERROR; 
 	  default_prodisempty = false;
 	}
-      our_act_row[grammar.num_terminals()] = default_action;
+      our_act_row[grammar.numterminals()] = default_action;
       if (default_action != parse_action_table.ERROR)
 	{
-	  for (int i = 0; i < grammar.num_terminals(); i++)
+	  for (int i = 0; i < grammar.numterminals(); i++)
 	    {
 	      /* map everything to default action, except the error transition
 	       * if default_action reduces an empty production.
@@ -445,7 +445,7 @@ public class lalr_state {
    *  if the precedence is non associative, then it is a shift/reduce error.
    *
    *  @param p           the production
-   *  @param term_index  the index of the lookahead terminal
+   *  @param termindex  the index of the lookahead terminal
    *  @param parse_action_row  a row of the action table
    *  @param act         the rule in conflict with the table entry
    */

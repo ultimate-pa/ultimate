@@ -55,21 +55,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  */
 public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
-	private final Set<STATE> m_AcceptingStates;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	private final Set<STATE> mAcceptingStates;
 
 
 
 	
 	public BuchiClosureNwa(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER, STATE> operand) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Operand = (INestedWordAutomatonOldApi<LETTER, STATE>) operand;
-		m_AcceptingStates = computeSetOfAcceptingStates();
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = (INestedWordAutomatonOldApi<LETTER, STATE>) operand;
+		mAcceptingStates = computeSetOfAcceptingStates();
 	}
 	
 	
@@ -79,10 +79,10 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	 */
 	public Set<STATE> computeSetOfAcceptingStates() {
 		Set<STATE> newFinalStates = new HashSet<STATE>();
-		m_Logger.info("Accepting states before buchiClosure: " + m_Operand.getFinalStates().size());
+		mLogger.info("Accepting states before buchiClosure: " + mOperand.getFinalStates().size());
 		LinkedHashSet<STATE> worklist = new LinkedHashSet<STATE>();
-		newFinalStates.addAll(m_Operand.getFinalStates());
-		for (STATE fin : m_Operand.getFinalStates()) {
+		newFinalStates.addAll(mOperand.getFinalStates());
+		for (STATE fin : mOperand.getFinalStates()) {
 			addAllNonFinalPredecessors(fin, worklist, newFinalStates);
 		}
 		while (!worklist.isEmpty()) {
@@ -94,7 +94,7 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 				addAllNonFinalPredecessors(state, worklist, newFinalStates);
 			}
 		}
-		m_Logger.info("Accepting states after buchiClosure: " + newFinalStates.size());
+		mLogger.info("Accepting states after buchiClosure: " + newFinalStates.size());
 		return newFinalStates;
 	}
 	
@@ -103,17 +103,17 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	 * to worklist.
 	 */
 	private void addAllNonFinalPredecessors(STATE state, Set<STATE> worklist, Set<STATE> newFinalStates) {
-		for (IncomingInternalTransition<LETTER, STATE> inTrans : m_Operand.internalPredecessors(state)) {
+		for (IncomingInternalTransition<LETTER, STATE> inTrans : mOperand.internalPredecessors(state)) {
 			if (!newFinalStates.contains(inTrans.getPred())) {
 				worklist.add(inTrans.getPred());
 			}
 		}
-		for (IncomingCallTransition<LETTER, STATE> inTrans : m_Operand.callPredecessors(state)) {
+		for (IncomingCallTransition<LETTER, STATE> inTrans : mOperand.callPredecessors(state)) {
 			if (!newFinalStates.contains(inTrans.getPred())) {
 				worklist.add(inTrans.getPred());
 			}
 		}
-		for (IncomingReturnTransition<LETTER, STATE> inTrans : m_Operand.returnPredecessors(state)) {
+		for (IncomingReturnTransition<LETTER, STATE> inTrans : mOperand.returnPredecessors(state)) {
 			if (!newFinalStates.contains(inTrans.getLinPred())) {
 				worklist.add(inTrans.getLinPred());
 			}
@@ -125,23 +125,23 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	 * Return true iff all successors of state state is the set newFinalStates.
 	 */
 	private boolean allSuccessorsAccepting(STATE state, Set<STATE> newFinalStates) {
-		for (LETTER symbol : m_Operand.lettersInternal(state)) {
-			for (STATE succ : m_Operand.succInternal(state, symbol)) {
+		for (LETTER symbol : mOperand.lettersInternal(state)) {
+			for (STATE succ : mOperand.succInternal(state, symbol)) {
 				if (!newFinalStates.contains(succ)) {
 					return false;
 				}
 			}
 		}
-		for (LETTER symbol : m_Operand.lettersCall(state)) {
-			for (STATE succ : m_Operand.succCall(state, symbol)) {
+		for (LETTER symbol : mOperand.lettersCall(state)) {
+			for (STATE succ : mOperand.succCall(state, symbol)) {
 				if (!newFinalStates.contains(succ)) {
 					return false;
 				}
 			}
 		}
-		for (LETTER symbol : m_Operand.lettersReturn(state)) {
-			for (STATE hier : m_Operand.hierPred(state, symbol)) {
-				for (STATE succ : m_Operand.succReturn(state, hier, symbol)) {
+		for (LETTER symbol : mOperand.lettersReturn(state)) {
+			for (STATE hier : mOperand.hierPred(state, symbol)) {
+				for (STATE succ : mOperand.succReturn(state, hier, symbol)) {
 					if (!newFinalStates.contains(succ)) {
 						return false;
 					}
@@ -154,82 +154,82 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	
 	@Override
 	public Set<STATE> getInitialStates() {
-		return m_Operand.getInitialStates();
+		return mOperand.getInitialStates();
 	}
 
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
-		return m_Operand.getInternalAlphabet();
+		return mOperand.getInternalAlphabet();
 	}
 
 	@Override
 	public Set<LETTER> getCallAlphabet() {
-		return m_Operand.getCallAlphabet();
+		return mOperand.getCallAlphabet();
 	}
 
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
-		return m_Operand.getReturnAlphabet();
+		return mOperand.getReturnAlphabet();
 	}
 
 	@Override
 	public StateFactory<STATE> getStateFactory() {
-		return m_Operand.getStateFactory();
+		return mOperand.getStateFactory();
 	}
 	
 	@Override
 	public boolean isInitial(STATE state) {
-		return m_Operand.isInitial(state);
+		return mOperand.isInitial(state);
 	}
 
 	@Override
 	public boolean isFinal(STATE state) {
-		return m_AcceptingStates.contains(state);
+		return mAcceptingStates.contains(state);
 	}
 
 	@Override
 	public STATE getEmptyStackState() {
-		return m_Operand.getEmptyStackState();
+		return mOperand.getEmptyStackState();
 	}
 
 	@Override
 	public Set<LETTER> lettersInternal(STATE state) {
-		return m_Operand.lettersInternal(state);
+		return mOperand.lettersInternal(state);
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(STATE state) {
-		return m_Operand.lettersCall(state);
+		return mOperand.lettersCall(state);
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(STATE state) {
-		return m_Operand.lettersReturn(state);
+		return mOperand.lettersReturn(state);
 	}
 
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
-		return m_Operand.internalSuccessors(state, letter);
+		return mOperand.internalSuccessors(state, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state) {
-		return m_Operand.internalSuccessors(state);
+		return mOperand.internalSuccessors(state);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
-		return m_Operand.callSuccessors(state, letter);
+		return mOperand.callSuccessors(state, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
-		return m_Operand.callSuccessors(state);
+		return mOperand.callSuccessors(state);
 	}
 
 
@@ -237,154 +237,154 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
-		return m_Operand.returnSucccessors(state, hier, letter);
+		return mOperand.returnSucccessors(state, hier, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
-		return m_Operand.returnSuccessorsGivenHier(state, hier);
+		return mOperand.returnSuccessorsGivenHier(state, hier);
 	}
 
 	@Override
 	public int size() {
-		return m_Operand.size();
+		return mOperand.size();
 	}
 
 	@Override
 	public Set<LETTER> getAlphabet() {
-		return m_Operand.getAlphabet();
+		return mOperand.getAlphabet();
 	}
 
 	@Override
 	public String sizeInformation() {
-		return m_Operand.sizeInformation();
+		return mOperand.sizeInformation();
 	}
 
 
 	public Set<STATE> getStates() {
-		return m_Operand.getStates();
+		return mOperand.getStates();
 	}
 
 
 	public Iterable<STATE> hierPred(STATE state, LETTER letter) {
-		return m_Operand.hierPred(state, letter);
+		return mOperand.hierPred(state, letter);
 	}
 
 
 	public Collection<STATE> getFinalStates() {
-		return m_AcceptingStates;
+		return mAcceptingStates;
 	}
 
 
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier) {
-		return m_Operand.returnSummarySuccessor(letter, hier);
+		return mOperand.returnSummarySuccessor(letter, hier);
 	}
 
 
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			STATE hier) {
-		return m_Operand.returnSummarySuccessor(hier);
+		return mOperand.returnSummarySuccessor(hier);
 	}
 
 
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			STATE succ) {
-		return m_Operand.internalPredecessors(succ);
+		return mOperand.internalPredecessors(succ);
 	}
 
 
 	public Set<LETTER> lettersInternalIncoming(STATE state) {
-		return m_Operand.lettersInternalIncoming(state);
+		return mOperand.lettersInternalIncoming(state);
 	}
 
 
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			LETTER letter, STATE succ) {
-		return m_Operand.internalPredecessors(letter, succ);
+		return mOperand.internalPredecessors(letter, succ);
 	}
 
 
 	public Set<LETTER> lettersCallIncoming(STATE state) {
-		return m_Operand.lettersCallIncoming(state);
+		return mOperand.lettersCallIncoming(state);
 	}
 
 
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			LETTER letter, STATE succ) {
-		return m_Operand.callPredecessors(letter, succ);
+		return mOperand.callPredecessors(letter, succ);
 	}
 
 
 	public Set<LETTER> lettersReturnIncoming(STATE state) {
-		return m_Operand.lettersReturnIncoming(state);
+		return mOperand.lettersReturnIncoming(state);
 	}
 
 
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			STATE succ) {
-		return m_Operand.callPredecessors(succ);
+		return mOperand.callPredecessors(succ);
 	}
 
 
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			STATE hier, LETTER letter, STATE succ) {
-		return m_Operand.returnPredecessors(hier, letter, succ);
+		return mOperand.returnPredecessors(hier, letter, succ);
 	}
 
 
 	public Set<LETTER> lettersReturnSummary(STATE state) {
-		return m_Operand.lettersReturnSummary(state);
+		return mOperand.lettersReturnSummary(state);
 	}
 
 
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			LETTER letter, STATE succ) {
-		return m_Operand.returnPredecessors(letter, succ);
+		return mOperand.returnPredecessors(letter, succ);
 	}
 
 
 	public Iterable<STATE> succInternal(STATE state, LETTER letter) {
-		return m_Operand.succInternal(state, letter);
+		return mOperand.succInternal(state, letter);
 	}
 
 
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			STATE succ) {
-		return m_Operand.returnPredecessors(succ);
+		return mOperand.returnPredecessors(succ);
 	}
 
 
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, LETTER letter) {
-		return m_Operand.returnSuccessors(state, letter);
+		return mOperand.returnSuccessors(state, letter);
 	}
 
 
 	public Iterable<STATE> succCall(STATE state, LETTER letter) {
-		return m_Operand.succCall(state, letter);
+		return mOperand.succCall(state, letter);
 	}
 
 
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state) {
-		return m_Operand.returnSuccessors(state);
+		return mOperand.returnSuccessors(state);
 	}
 
 
 	public Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
-		return m_Operand.succReturn(state, hier, letter);
+		return mOperand.succReturn(state, hier, letter);
 	}
 
 
 	public Iterable<STATE> predInternal(STATE state, LETTER letter) {
-		return m_Operand.predInternal(state, letter);
+		return mOperand.predInternal(state, letter);
 	}
 
 
 	public Iterable<STATE> predCall(STATE state, LETTER letter) {
-		return m_Operand.predCall(state, letter);
+		return mOperand.predCall(state, letter);
 	}
 
 
@@ -394,24 +394,24 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 
 
 	public boolean isDeterministic() {
-		return m_Operand.isDeterministic();
+		return mOperand.isDeterministic();
 	}
 
 
 	public boolean isTotal() {
-		return m_Operand.isTotal();
+		return mOperand.isTotal();
 	}
 
 
 	@Override
 	public boolean isDoubleDecker(STATE up, STATE down) {
-		return ((IDoubleDeckerAutomaton<LETTER, STATE>) m_Operand).isDoubleDecker(up, down);
+		return ((IDoubleDeckerAutomaton<LETTER, STATE>) mOperand).isDoubleDecker(up, down);
 	}
 
 
 	@Override
 	public Set<STATE> getDownStates(STATE up) {
-		return ((IDoubleDeckerAutomaton<LETTER, STATE>) m_Operand).getDownStates(up);
+		return ((IDoubleDeckerAutomaton<LETTER, STATE>) mOperand).getDownStates(up);
 	}
 
 

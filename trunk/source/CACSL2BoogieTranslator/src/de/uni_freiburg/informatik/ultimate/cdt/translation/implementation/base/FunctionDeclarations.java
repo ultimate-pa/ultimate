@@ -56,9 +56,9 @@ public class FunctionDeclarations {
 	/**
 	 * Names of all bitwise operation that occurred in the program.
 	 */
-	private final LinkedHashMap<String, FunctionDeclaration> m_DeclaredFunctions = new LinkedHashMap<String, FunctionDeclaration>();
-	private final ITypeHandler m_TypeHandler;
-	private final TypeSizes m_TypeSizeConstants;
+	private final LinkedHashMap<String, FunctionDeclaration> mDeclaredFunctions = new LinkedHashMap<String, FunctionDeclaration>();
+	private final ITypeHandler mTypeHandler;
+	private final TypeSizes mTypeSizeConstants;
 	public static final String s_BUILTIN_IDENTIFIER = "builtin";
 	public static final String s_OVERAPPROX_IDENTIFIER = "overapproximation";
 	public static final String s_INDEX_IDENTIFIER = "indices";
@@ -67,8 +67,8 @@ public class FunctionDeclarations {
 	public FunctionDeclarations(ITypeHandler typeHandler,
 			TypeSizes typeSizeConstants) {
 		super();
-		m_TypeHandler = typeHandler;
-		m_TypeSizeConstants = typeSizeConstants;
+		mTypeHandler = typeHandler;
+		mTypeSizeConstants = typeSizeConstants;
 	}
 
 	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, 
@@ -77,17 +77,17 @@ public class FunctionDeclarations {
 		if (boogieResultTypeBool) {
 			resultASTType = new PrimitiveType(loc, "bool");
 		} else {
-			resultASTType = m_TypeHandler.ctype2asttype(loc, resultCType);
+			resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
 		}
 		ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
 		for (int i=0; i<paramCTypes.length; i++) {
-			paramASTTypes[i] = m_TypeHandler.ctype2asttype(loc, paramCTypes[i]);
+			paramASTTypes[i] = mTypeHandler.ctype2asttype(loc, paramCTypes[i]);
 		}
 		declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTTypes);
 	}
 	
 	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {
-		if (m_DeclaredFunctions.containsKey(prefixedFunctionName)) {
+		if (mDeclaredFunctions.containsKey(prefixedFunctionName)) {
 			return;
 			//throw new IllegalArgumentException("Function " + functionName + " already declared");
 		}
@@ -101,16 +101,16 @@ public class FunctionDeclarations {
 		}
 		VarList outParam = new VarList(loc, new String[] { "out" }, resultASTType);
 		FunctionDeclaration d = new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
-		m_DeclaredFunctions.put(prefixedFunctionName, d);
+		mDeclaredFunctions.put(prefixedFunctionName, d);
 	}
 
 	public LinkedHashMap<String, FunctionDeclaration> getDeclaredFunctions() {
-		return m_DeclaredFunctions;
+		return mDeclaredFunctions;
 	}
 	
 	public String computeBitvectorSuffix(ILocation loc, CPrimitive... paramCTypes) {
 		CPrimitive firstParam = paramCTypes[0];
-		Integer bytesize = m_TypeSizeConstants.getSize(firstParam.getType());
+		Integer bytesize = mTypeSizeConstants.getSize(firstParam.getType());
 		int bitsize = bytesize * 8;
 		
 		return String.valueOf(bitsize);

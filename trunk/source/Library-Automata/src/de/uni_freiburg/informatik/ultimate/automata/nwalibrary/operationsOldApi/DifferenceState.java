@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
  * @param <STATE> Content
  */
 	public class DifferenceState<LETTER,STATE> {
-		private final STATE m_MinuendState;
+		private final STATE mMinuendState;
 		private final DeterminizedState<LETTER,STATE> subtrahendDeterminizedState;
 		private final boolean isFinal;
-		private final int m_HashCode;
-		private STATE m_State;
+		private final int mHashCode;
+		private STATE mState;
 		
 		
 		public DifferenceState(	
@@ -55,16 +55,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 				DeterminizedState<LETTER,STATE> subtrahendDeterminizedState,
 				boolean isFinal) {
 			
-			this.m_MinuendState = minuendState;
+			this.mMinuendState = minuendState;
 			this.subtrahendDeterminizedState = subtrahendDeterminizedState;
 			this.isFinal = isFinal; 
 		//			minuend.isFinal(minuendState) &&
 		//								!subtrahendDeterminizedState.containsFinal();
-			this.m_HashCode = computehashCode();
+			this.mHashCode = computehashCode();
 		}
 		
 		public STATE getMinuendState() {
-			return m_MinuendState;
+			return mMinuendState;
 		}
 
 		public DeterminizedState<LETTER,STATE> getSubtrahendDeterminizedState() {
@@ -77,12 +77,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 		
 		public STATE getState(StateFactory<STATE> stateFactory, 
 				IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
-			if (m_State == null) {
-				m_State = stateFactory.intersection(
+			if (mState == null) {
+				mState = stateFactory.intersection(
 						this.getMinuendState(),
 						stateDeterminizer.getState(getSubtrahendDeterminizedState()));
 			} 
-			return m_State;
+			return mState;
 		}
 
 
@@ -100,10 +100,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 			DifferenceState other = (DifferenceState) obj;
 			if (isFinal != other.isFinal)
 				return false;
-			if (m_MinuendState == null) {
-				if (other.m_MinuendState != null)
+			if (mMinuendState == null) {
+				if (other.mMinuendState != null)
 					return false;
-			} else if (!m_MinuendState.equals(other.m_MinuendState))
+			} else if (!mMinuendState.equals(other.mMinuendState))
 				return false;
 			if (subtrahendDeterminizedState == null) {
 				if (other.subtrahendDeterminizedState != null)
@@ -119,7 +119,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 		 */
 		@Override
 		public int hashCode() {
-			return m_HashCode;
+			return mHashCode;
 		}
 		
 		public int computehashCode() {
@@ -128,7 +128,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 			result = prime * result + (isFinal ? 1231 : 1237);
 			result = prime
 					* result
-					+ ((m_MinuendState == null) ? 0 : m_MinuendState.hashCode());
+					+ ((mMinuendState == null) ? 0 : mMinuendState.hashCode());
 			result = prime
 					* result
 					+ ((subtrahendDeterminizedState == null) ? 0
@@ -138,7 +138,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 		
 		@Override
 		public String toString() {
-			return "<[< " + m_MinuendState.toString() + " , "
+			return "<[< " + mMinuendState.toString() + " , "
 					+ subtrahendDeterminizedState.toString() + ">]>";
 		}
 	}

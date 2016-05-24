@@ -46,15 +46,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
  */
 public class SimplifyPreprocessor extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage m_Storage;
-	private final boolean m_UseSMTInterpolForSimplification = !true;
+	private final IToolchainStorage mStorage;
+	private final boolean mUseSMTInterpolForSimplification = !true;
 	
 	public static final String s_Description = "Simplify formula using SimplifyDDA";
 	
 	public SimplifyPreprocessor(IUltimateServiceProvider services, IToolchainStorage storage) {
 		super();
 		mServices = services;
-		m_Storage = storage;
+		mStorage = storage;
 	}
 	
 	@Override
@@ -71,9 +71,9 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		final Term simplified;
-		if (m_UseSMTInterpolForSimplification) {
+		if (mUseSMTInterpolForSimplification) {
 			Settings settings = new SolverBuilder.Settings(false, "", 10 * 1000, null, false, null, null);
-			Script simplificationScript = SolverBuilder.buildScript(mServices, m_Storage, settings);
+			Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 			simplificationScript.setLogic(Logics.QF_UFLIRA);
 			TermTransferrer towards = new TermTransferrer(simplificationScript);
 			Term foreign = towards.transform(tf.getFormula());

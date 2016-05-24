@@ -51,7 +51,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 	
 	HashMap<String, Expression> name2expression = 
 											new HashMap<String,Expression>();
-	Expression m_Result;
+	Expression mResult;
 	
 	public WeakestPrecondition(Expression expr, CallStatement call, Procedure proc) {
 		Expression[] arguments = call.getArguments();
@@ -73,7 +73,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 					"has wrong number of arguments");
 		}
 		
-		m_Result = processExpression(expr);
+		mResult = processExpression(expr);
 	}
 	
 	@Override
@@ -192,7 +192,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 	}
 	
 	public Expression getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 }

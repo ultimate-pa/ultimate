@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 /**
  * IHoareTripleChecker that "protects" another IHoareTripleChecker from
  * intricate predicates.
- * The m_PredicateUnifer defines what an intricate predicates is.
+ * The mPredicateUnifer defines what an intricate predicates is.
  * If the Hoare triple that should be checked contains an intricate predicate
  * we return Validity.NOT_CHECKED. Otherwise we ask the "protected" 
  * IHoareTripleChecker.
@@ -46,45 +46,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	
-	private final IHoareTripleChecker m_ProtectedHoareTripleChecker;
-	private final PredicateUnifier m_PredicateUnifer;
+	private final IHoareTripleChecker mProtectedHoareTripleChecker;
+	private final PredicateUnifier mPredicateUnifer;
 	
 	public ProtectiveHoareTripleChecker(
 			IHoareTripleChecker protectedHoareTripleChecker,
 			PredicateUnifier predicateUnifer) {
 		super();
-		m_ProtectedHoareTripleChecker = protectedHoareTripleChecker;
-		m_PredicateUnifer = predicateUnifer;
+		mProtectedHoareTripleChecker = protectedHoareTripleChecker;
+		mPredicateUnifer = predicateUnifer;
 	}
 
 	@Override
 	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
-		if (m_PredicateUnifer.isIntricatePredicate(pre) || 
-				m_PredicateUnifer.isIntricatePredicate(succ)) {
+		if (mPredicateUnifer.isIntricatePredicate(pre) || 
+				mPredicateUnifer.isIntricatePredicate(succ)) {
 			return Validity.NOT_CHECKED;
 		} else {
-			return m_ProtectedHoareTripleChecker.checkInternal(pre, act, succ);
+			return mProtectedHoareTripleChecker.checkInternal(pre, act, succ);
 		}
 	}
 
 	@Override
 	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
-		if (m_PredicateUnifer.isIntricatePredicate(pre) || 
-				m_PredicateUnifer.isIntricatePredicate(succ)) {
+		if (mPredicateUnifer.isIntricatePredicate(pre) || 
+				mPredicateUnifer.isIntricatePredicate(succ)) {
 			return Validity.NOT_CHECKED;
 		} else {
-			return m_ProtectedHoareTripleChecker.checkCall(pre, act, succ);
+			return mProtectedHoareTripleChecker.checkCall(pre, act, succ);
 		}
 	}
 
 	@Override
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
 			IReturnAction act, IPredicate succ) {
-		if (m_PredicateUnifer.isIntricatePredicate(preLin) || 
-				m_PredicateUnifer.isIntricatePredicate(preHier) || m_PredicateUnifer.isIntricatePredicate(succ)) {
+		if (mPredicateUnifer.isIntricatePredicate(preLin) || 
+				mPredicateUnifer.isIntricatePredicate(preHier) || mPredicateUnifer.isIntricatePredicate(succ)) {
 			return Validity.NOT_CHECKED;
 		} else {
-			return m_ProtectedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
+			return mProtectedHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 		}
 	}
 	
@@ -92,16 +92,16 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return m_ProtectedHoareTripleChecker.getEdgeCheckerBenchmark();
+		return mProtectedHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 
 	public IHoareTripleChecker getProtectedHoareTripleChecker() {
-		return m_ProtectedHoareTripleChecker;
+		return mProtectedHoareTripleChecker;
 	}
 
 	@Override
 	public void releaseLock() {
-		m_ProtectedHoareTripleChecker.releaseLock();
+		mProtectedHoareTripleChecker.releaseLock();
 	}
 	
 	

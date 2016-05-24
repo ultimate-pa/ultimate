@@ -65,7 +65,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * 
 	 * NOTE: All intermediate results are also stored here.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> m_result;
+	private final INestedWordAutomaton<LETTER, STATE> mresult;
 	
 	/**
 	 * Constructor.
@@ -82,7 +82,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 		assert super.checkForFiniteAutomaton() :
 			"The input automaton contains call or return transitions.";
 		
-		m_result = minimize();
+		mresult = minimize();
 		s_logger.info(exitMessage());
 	}
 	
@@ -95,7 +95,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 */
 	private INestedWordAutomaton<LETTER, STATE> minimize()
 			throws AutomataLibraryException {
-		INestedWordAutomaton<LETTER, STATE> automaton = m_operand;
+		INestedWordAutomaton<LETTER, STATE> automaton = moperand;
 		for (int i = 0; i < 2; ++i) {
 			super.checkForContinuation();
 			automaton = reverse(automaton);
@@ -120,7 +120,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	private INestedWordAutomaton<LETTER, STATE> reverse(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		NestedWordAutomaton<LETTER, STATE> reversed =
-				new NestedWordAutomaton<LETTER, STATE>(m_Services, 
+				new NestedWordAutomaton<LETTER, STATE>(mServices, 
 						automaton.getInternalAlphabet(),
 						automaton.getCallAlphabet(),
 						automaton.getReturnAlphabet(),
@@ -153,7 +153,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	private INestedWordAutomaton<LETTER, STATE> determinize(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		try {
-			return new Determinize<LETTER, STATE>(m_Services, m_StateFactory, automaton).getResult();
+			return new Determinize<LETTER, STATE>(mServices, mStateFactory, automaton).getResult();
 		}
 		// this case cannot occur
 		catch (AutomataLibraryException e) {
@@ -164,6 +164,6 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	
 	@Override
 	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		return m_result;
+		return mresult;
 	}
 }

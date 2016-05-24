@@ -57,31 +57,31 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * 
  */
 public class QuantifierSequence {
-	private final Script m_Script;
-	private final List<QuantifiedVariables> m_QuantifierBlocks = new ArrayList<>();
-	private Term m_InnerTerm;
+	private final Script mScript;
+	private final List<QuantifiedVariables> mQuantifierBlocks = new ArrayList<>();
+	private Term mInnerTerm;
 
 	public QuantifierSequence(final Script script, 
 			final Term input) {
-		m_Script = script;
+		mScript = script;
 		Term innerTerm = input;
 		while(innerTerm instanceof QuantifiedFormula) {
 			final QuantifiedFormula qf = (QuantifiedFormula) innerTerm;
 			final Set<TermVariable> variables = SmtUtils.filterToVarsThatOccurFreelyInTerm(
 					Arrays.asList(qf.getVariables()), qf.getSubformula()); 
 			final int quantifier = qf.getQuantifier();
-			if (m_QuantifierBlocks.isEmpty() || m_QuantifierBlocks.get(m_QuantifierBlocks.size()-1).getQuantifier() != quantifier) {
+			if (mQuantifierBlocks.isEmpty() || mQuantifierBlocks.get(mQuantifierBlocks.size()-1).getQuantifier() != quantifier) {
 				final QuantifiedVariables qv = new QuantifiedVariables(qf.getQuantifier(), variables);
-				m_QuantifierBlocks.add(qv);
+				mQuantifierBlocks.add(qv);
 			} else {
-				final QuantifiedVariables last = m_QuantifierBlocks.remove(m_QuantifierBlocks.size()-1);
+				final QuantifiedVariables last = mQuantifierBlocks.remove(mQuantifierBlocks.size()-1);
 				final Set<TermVariable> newQuantifiedVariables = new HashSet<>(last.getVariables());
 				newQuantifiedVariables.addAll(variables);
-				m_QuantifierBlocks.add(new QuantifiedVariables(quantifier, newQuantifiedVariables));
+				mQuantifierBlocks.add(new QuantifiedVariables(quantifier, newQuantifiedVariables));
 			}
 			innerTerm = qf.getSubformula();
 		}
-		m_InnerTerm = innerTerm;
+		mInnerTerm = innerTerm;
 	}
 	
 	
@@ -101,29 +101,29 @@ public class QuantifierSequence {
 	}
 	
 	public Term getInnerTerm() {
-		return m_InnerTerm;
+		return mInnerTerm;
 	}
 
 	public Term toTerm() {
-		return prependQuantifierSequence(m_Script, m_QuantifierBlocks, m_InnerTerm);
+		return prependQuantifierSequence(mScript, mQuantifierBlocks, mInnerTerm);
 	}
 	
 	public void replace(final Set<TermVariable> forbiddenVariables, 
 			final IFreshTermVariableConstructor freshVarConstructor,
 			final String replacementName) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (QuantifiedVariables qv : m_QuantifierBlocks) {
+		for (QuantifiedVariables qv : mQuantifierBlocks) {
 			for (TermVariable tv : forbiddenVariables) {
-				if (qv.m_Variables.contains(tv)) {
+				if (qv.mVariables.contains(tv)) {
 					final TermVariable fresh = freshVarConstructor.constructFreshTermVariable(
 							replacementName, tv.getSort());
 					substitutionMapping.put(tv, fresh);
-					qv.m_Variables.remove(tv);
-					qv.m_Variables.add(fresh);
+					qv.mVariables.remove(tv);
+					qv.mVariables.add(fresh);
 				}
 			}
 		}
-		m_InnerTerm = (new SafeSubstitution(m_Script, substitutionMapping)).transform(m_InnerTerm);
+		mInnerTerm = (new SafeSubstitution(mScript, substitutionMapping)).transform(mInnerTerm);
 	}
 	
 	public static Term mergeQuantifierSequences(final Script script, 
@@ -199,36 +199,36 @@ public class QuantifierSequence {
 
 
 	public List<QuantifiedVariables> getQuantifierBlocks() {
-		return m_QuantifierBlocks;
+		return mQuantifierBlocks;
 	}
 	
 	public int getNumberOfQuantifierBlocks() {
-		return m_QuantifierBlocks.size();
+		return mQuantifierBlocks.size();
 	}
 	
 	@Override
 	public String toString() {
-		return m_QuantifierBlocks + " " + m_InnerTerm;
+		return mQuantifierBlocks + " " + mInnerTerm;
 	}
 
 
 	public static class QuantifiedVariables {
-		private final int m_Quantifier;
-		private final Set<TermVariable> m_Variables;
+		private final int mQuantifier;
+		private final Set<TermVariable> mVariables;
 		public QuantifiedVariables(int quantifier, Set<TermVariable> variables) {
 			super();
-			m_Quantifier = quantifier;
-			m_Variables = variables;
+			mQuantifier = quantifier;
+			mVariables = variables;
 		}
 		public int getQuantifier() {
-			return m_Quantifier;
+			return mQuantifier;
 		}
 		public Set<TermVariable> getVariables() {
-			return m_Variables;
+			return mVariables;
 		}
 		@Override
 		public String toString() {
-			return ((m_Quantifier == 0) ? "exists" : "forall") + m_Variables + ". ";
+			return ((mQuantifier == 0) ? "exists" : "forall") + mVariables + ". ";
 		}
 		
 		

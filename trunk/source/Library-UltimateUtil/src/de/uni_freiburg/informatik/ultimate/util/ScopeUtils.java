@@ -45,7 +45,7 @@ public final class ScopeUtils {
 	public static final int NUM_INITIAL_SCOPES = 5;
 	/**
 	 * The growth function for internal scope arrays.  The arrays grow by a
-	 * constant amount {@link #NUM_ADDITIONAL_SCOPES NUM_ADDITIONAL_SCOPES}.
+	 * constant amount {@link #NUmADDITIONAL_SCOPES NUmADDITIONAL_SCOPES}.
 	 * @param curarray Current internal scope array.
 	 * @return New internal scope array
 	 */
@@ -55,7 +55,7 @@ public final class ScopeUtils {
 	/**
 	 * The growth function for internal integer scope arrays.  The arrays grow 
 	 * by a constant amount
-	 * {@link #NUM_ADDITIONAL_SCOPES NUM_ADDITIONAL_SCOPES}.
+	 * {@link #NUmADDITIONAL_SCOPES NUmADDITIONAL_SCOPES}.
 	 * @param curarray Current internal scope array.
 	 * @return New internal scope array
 	 */

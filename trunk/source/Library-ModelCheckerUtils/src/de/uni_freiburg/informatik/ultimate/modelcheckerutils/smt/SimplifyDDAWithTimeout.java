@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	
 	private final IUltimateServiceProvider mServices;
-	private Term m_InputTerm;
+	private Term mInputTerm;
 	
 
 	/**
@@ -98,7 +98,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	protected Redundancy getRedundancy(Term term) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(this.getClass(),
-					"simplifying term of DAG size " + (new DAGSize().size(m_InputTerm)));
+					"simplifying term of DAG size " + (new DAGSize().size(mInputTerm)));
 		}
 		return super.getRedundancy(term);
 	}
@@ -123,8 +123,8 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	 */
 	@Override
 	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
-		m_InputTerm = inputTerm;
-//		m_Logger.debug("Simplifying " + term);
+		mInputTerm = inputTerm;
+//		mLogger.debug("Simplifying " + term);
 		/* We can only simplify boolean terms. */
 		if (!inputTerm.getSort().getName().equals("Bool"))
 			return inputTerm;
@@ -165,7 +165,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 			: "Simplification unsound?";
 		mScript.echo(new QuotedObject("End Simplifier"));
 //		assert PushPopChecker.atLevel(mScript, lvl);
-		m_InputTerm = null;
+		mInputTerm = null;
 		return term;
 	}
 	

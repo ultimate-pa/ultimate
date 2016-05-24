@@ -37,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
-	protected INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
-	protected INestedWordAutomatonOldApi<LETTER, STATE> m_DeterminizedOperand;
-	protected INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
+	protected INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
+	protected INestedWordAutomatonOldApi<LETTER, STATE> mDeterminizedOperand;
+	protected INestedWordAutomatonOldApi<LETTER, STATE> mResult;
 
 	@Override
 	public String operationName() {
@@ -52,49 +52,49 @@ public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand "
-				+ m_Operand.sizeInformation();
+				+ mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
-				+ m_Result.sizeInformation();
+				+ mResult.sizeInformation();
 	}
 
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	public ComplementDD(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand)
 			throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Operand = operand;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
 
-		m_Logger.info(startMessage());
-		if (!m_Operand.isDeterministic()) {
-			m_DeterminizedOperand = 
-				   (new DeterminizeDD<LETTER, STATE>(m_Services, stateFactory, m_Operand)).getResult();
+		mLogger.info(startMessage());
+		if (!mOperand.isDeterministic()) {
+			mDeterminizedOperand = 
+				   (new DeterminizeDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
 		} else {
-			m_DeterminizedOperand = m_Operand;
-			m_Logger.debug("Operand is already deterministic");
+			mDeterminizedOperand = mOperand;
+			mLogger.debug("Operand is already deterministic");
 		}
-		m_Result = new ReachableStatesCopy<LETTER, STATE>(
-				m_Services, m_DeterminizedOperand, true, true, false, false).getResult();
-		m_Logger.info(exitMessage());
+		mResult = new ReachableStatesCopy<LETTER, STATE>(
+				mServices, mDeterminizedOperand, true, true, false, false).getResult();
+		mLogger.info(exitMessage());
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		m_Logger.debug("Testing correctness of complement");
+		mLogger.debug("Testing correctness of complement");
 		boolean correct = true;
-		INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(m_Services, false, m_Operand, m_Result)).getResult();
-		correct &=  ((new IsEmpty(m_Services, intersectionOperandResult)).getResult() == true);
-		m_Logger.debug("Finished testing correctness of complement");
+		INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(mServices, false, mOperand, mResult)).getResult();
+		correct &=  ((new IsEmpty(mServices, intersectionOperandResult)).getResult() == true);
+		mLogger.debug("Finished testing correctness of complement");
 		return correct;
 	}
 

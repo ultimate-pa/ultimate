@@ -38,28 +38,28 @@ import java.util.List;
  * 
  */
 public class IteratorConcatenation<E> implements Iterator<E> {
-	private final List<Iterator<E>> m_Iterators;
-	private int m_Current;
-	private E m_Next;
+	private final List<Iterator<E>> mIterators;
+	private int mCurrent;
+	private E mNext;
 	
 
 	public IteratorConcatenation(List<Iterator<E>> iterators) {
 		super();
-		m_Iterators = iterators;
-		m_Current = 0;
-		if (m_Iterators.isEmpty()) {
-			m_Next = null;
+		mIterators = iterators;
+		mCurrent = 0;
+		if (mIterators.isEmpty()) {
+			mNext = null;
 		} else {
-			m_Next = getNext();
+			mNext = getNext();
 		}
 	}
 
 
 	private E getNext() {
-		Iterator<E> currentIterator = m_Iterators.get(m_Current);
-		while (!currentIterator.hasNext() && m_Current + 1 < m_Iterators.size()) {
-			m_Current++;
-			currentIterator = m_Iterators.get(m_Current);
+		Iterator<E> currentIterator = mIterators.get(mCurrent);
+		while (!currentIterator.hasNext() && mCurrent + 1 < mIterators.size()) {
+			mCurrent++;
+			currentIterator = mIterators.get(mCurrent);
 		}
 		if (currentIterator.hasNext()) {
 			return currentIterator.next();
@@ -71,14 +71,14 @@ public class IteratorConcatenation<E> implements Iterator<E> {
 
 	@Override
 	public boolean hasNext() {
-		return m_Next != null;
+		return mNext != null;
 	}
 
 
 	@Override
 	public E next() {
-		E result = m_Next;
-		m_Next = getNext();
+		E result = mNext;
+		mNext = getNext();
 		return result;
 	}
 

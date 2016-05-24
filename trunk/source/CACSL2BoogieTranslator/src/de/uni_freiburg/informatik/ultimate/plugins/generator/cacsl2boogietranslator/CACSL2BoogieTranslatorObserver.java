@@ -97,7 +97,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
 	private IASTTranslationUnit inputTU;
-	private boolean m_LastModel;
+	private boolean mLastModel;
 	private BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
 
 	public CACSL2BoogieTranslatorObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
@@ -195,7 +195,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			// clear witness extractor to make him loose unused references
 			//mWitnessExtractor.clear();
 		}
-		if (m_LastModel) {
+		if (mLastModel) {
 			doTranslation();
 		}
 	}
@@ -271,7 +271,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
 		if (currentModelIndex == numberOfModels -1) {
-			m_LastModel = true;
+			mLastModel = true;
 		}
 	}
 

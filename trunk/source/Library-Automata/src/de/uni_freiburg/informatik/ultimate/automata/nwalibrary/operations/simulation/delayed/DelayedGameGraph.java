@@ -80,27 +80,27 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * The underlying buechi automaton from which the game graph gets generated.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mBuechi;
 	/**
 	 * Amount of states the inputed buechi automata has.
 	 */
-	private int m_BuechiAmountOfStates;
+	private int mBuechiAmountOfStates;
 	/**
 	 * Amount of transitions the inputed buechi automata has.
 	 */
-	private int m_BuechiAmountOfTransitions;
+	private int mBuechiAmountOfTransitions;
 	/**
 	 * Amount of edges the game graph has.
 	 */
-	private int m_GraphAmountOfEdges;
+	private int mGraphAmountOfEdges;
 	/**
 	 * Time duration building the graph took in milliseconds.
 	 */
-	private long m_GraphBuildTime;
+	private long mGraphBuildTime;
 	/**
 	 * Service provider of Ultimate framework.
 	 */
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 
 	/**
 	 * Creates a new delayed game graph by using the given buechi automaton.
@@ -131,12 +131,12 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
 
-		m_Services = services;
-		m_Buechi = preparedBuechi;
-		m_BuechiAmountOfStates = 0;
-		m_BuechiAmountOfTransitions = 0;
-		m_GraphBuildTime = 0;
-		m_GraphAmountOfEdges = 0;
+		mServices = services;
+		mBuechi = preparedBuechi;
+		mBuechiAmountOfStates = 0;
+		mBuechiAmountOfTransitions = 0;
+		mGraphBuildTime = 0;
+		mGraphAmountOfEdges = 0;
 	}
 
 	/*
@@ -154,7 +154,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Determine which states to merge
 		ArrayList<STATE> states = new ArrayList<>();
-		states.addAll(m_Buechi.getStates());
+		states.addAll(mBuechi.getStates());
 		boolean[][] table = new boolean[states.size()][states.size()];
 		for (SpoilerVertex<LETTER, STATE> v : getSpoilerVertices()) {
 			// All the states we need are in spoiler vertices
@@ -167,19 +167,19 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			// final.
 			final boolean considerVertex;
 			if (v.isB()) {
-				considerVertex = m_Buechi.isFinal(v.getQ0()) && !m_Buechi.isFinal(v.getQ0());
+				considerVertex = mBuechi.isFinal(v.getQ0()) && !mBuechi.isFinal(v.getQ0());
 			} else {
-				considerVertex = !m_Buechi.isFinal(v.getQ0()) || m_Buechi.isFinal(v.getQ0());
+				considerVertex = !mBuechi.isFinal(v.getQ0()) || mBuechi.isFinal(v.getQ0());
 			}
 
-			final boolean skip = (m_Buechi.isFinal(v.getQ0())
-					&& (m_Buechi.isFinal(v.getQ1()) ^ m_Buechi.isFinal(v.getQ0()) ^ v.isB()));
+			final boolean skip = (mBuechi.isFinal(v.getQ0())
+					&& (mBuechi.isFinal(v.getQ1()) ^ mBuechi.isFinal(v.getQ0()) ^ v.isB()));
 			{
 				// 2016-05-03 Matthias: I had some doubts about operator
 				// precedence
 				// added assert, remove if tested well enough.
-				boolean skipOld = (m_Buechi.isFinal(v.getQ0()) && m_Buechi.isFinal(v.getQ1())) ^ v.isB()
-						^ m_Buechi.isFinal(v.getQ0());
+				boolean skipOld = (mBuechi.isFinal(v.getQ0()) && mBuechi.isFinal(v.getQ1())) ^ v.isB()
+						^ mBuechi.isFinal(v.getQ0());
 				assert skipOld == skip : "unexpected operator precedence";
 			}
 			assert considerVertex != skip : "old implementation incorrect";
@@ -200,8 +200,8 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		boolean[] marker = new boolean[states.size()];
 		Set<STATE> temp = new HashSet<>();
 		HashMap<STATE, STATE> oldSNames2newSNames = new HashMap<>();
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(m_Services,
-				m_Buechi.getInternalAlphabet(), null, null, getStateFactory());
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(mServices,
+				mBuechi.getInternalAlphabet(), null, null, getStateFactory());
 
 		int resultAmountOfStates = 0;
 
@@ -211,15 +211,15 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			temp.clear();
 			temp.add(states.get(i));
 			marker[i] = true;
-			boolean isFinal = m_Buechi.isFinal(states.get(i));
-			boolean isInitial = m_Buechi.isInitial(states.get(i));
+			boolean isFinal = mBuechi.isFinal(states.get(i));
+			boolean isInitial = mBuechi.isInitial(states.get(i));
 			for (int j = i; j < states.size(); j++) {
 				if (table[i][j] && table[j][i] && !marker[j]) {
 					temp.add(states.get(j));
 					marker[j] = true;
-					if (m_Buechi.isFinal(states.get(j)))
+					if (mBuechi.isFinal(states.get(j)))
 						isFinal = true;
-					if (m_Buechi.isInitial(states.get(j)))
+					if (mBuechi.isInitial(states.get(j)))
 						isInitial = true;
 				}
 			}
@@ -239,9 +239,9 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		// Add edges
 		int resultAmountOfTransitions = 0;
 
-		for (STATE c : m_Buechi.getStates())
-			for (LETTER s : m_Buechi.getInternalAlphabet())
-				for (STATE succ : m_Buechi.succInternal(c, s)) {
+		for (STATE c : mBuechi.getStates())
+			for (LETTER s : mBuechi.getInternalAlphabet())
+				for (STATE succ : mBuechi.succInternal(c, s)) {
 					STATE newPred = oldSNames2newSNames.get(c);
 					STATE newSucc = oldSNames2newSNames.get(succ);
 					result.addInternalTransition(newPred, s, newSucc);
@@ -251,14 +251,14 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		// Log performance
 		if (performance != null) {
 			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT);
-			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH, m_GraphBuildTime);
+			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH, mGraphBuildTime);
 			performance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
-					m_BuechiAmountOfStates - resultAmountOfStates);
+					mBuechiAmountOfStates - resultAmountOfStates);
 			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
-					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
-			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, m_BuechiAmountOfTransitions);
-			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
-			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, m_GraphAmountOfEdges);
+					mBuechiAmountOfTransitions - resultAmountOfTransitions);
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, mBuechiAmountOfTransitions);
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, mBuechiAmountOfStates);
+			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, mGraphAmountOfEdges);
 		}
 
 		return result;
@@ -275,13 +275,13 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		long graphBuildTimeStart = System.currentTimeMillis();
 
 		// Calculate v1 [paper ref 10]
-		for (STATE q0 : m_Buechi.getStates()) {
-			m_BuechiAmountOfStates++;
+		for (STATE q0 : mBuechi.getStates()) {
+			mBuechiAmountOfStates++;
 
-			for (STATE q1 : m_Buechi.getStates()) {
+			for (STATE q1 : mBuechi.getStates()) {
 				SpoilerVertex<LETTER, STATE> v1e = new SpoilerVertex<>(0, false, q0, q1);
 				addSpoilerVertex(v1e);
-				if (!m_Buechi.isFinal(q1)) {
+				if (!mBuechi.isFinal(q1)) {
 					v1e = new SpoilerVertex<>(1, true, q0, q1);
 					addSpoilerVertex(v1e);
 					increaseGlobalInfinity();
@@ -293,53 +293,53 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			}
 		}
 		// Calculate v0 and edges [paper ref 10, 11, 12]
-		for (STATE q0 : m_Buechi.getStates()) {
+		for (STATE q0 : mBuechi.getStates()) {
 			boolean countedTransitionsForQ0 = false;
 
-			for (STATE q1 : m_Buechi.getStates()) {
-				for (LETTER s : m_Buechi.lettersInternalIncoming(q0)) {
-					if (m_Buechi.predInternal(q0, s).iterator().hasNext()) {
+			for (STATE q1 : mBuechi.getStates()) {
+				for (LETTER s : mBuechi.lettersInternalIncoming(q0)) {
+					if (mBuechi.predInternal(q0, s).iterator().hasNext()) {
 						DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(2, false, q0, q1, s);
 						addDuplicatorVertex(v0e);
 						// V0 -> V1 edges [paper ref 11]
-						for (STATE q2 : m_Buechi.succInternal(q1, s)) {
+						for (STATE q2 : mBuechi.succInternal(q1, s)) {
 							addEdge(v0e, getSpoilerVertex(q0, q2, false));
-							m_GraphAmountOfEdges++;
+							mGraphAmountOfEdges++;
 						}
 						// V1 -> V0 edges [paper ref 11]
-						for (STATE q2 : m_Buechi.predInternal(q0, s)) {
-							if (!m_Buechi.isFinal(q0)) {
+						for (STATE q2 : mBuechi.predInternal(q0, s)) {
+							if (!mBuechi.isFinal(q0)) {
 								addEdge(getSpoilerVertex(q2, q1, false), v0e);
-								m_GraphAmountOfEdges++;
+								mGraphAmountOfEdges++;
 							}
 						}
 						v0e = new DuplicatorVertex<>(2, true, q0, q1, s);
 						addDuplicatorVertex(v0e);
 						// V0 -> V1 edges [paper ref 11]
-						for (STATE q2 : m_Buechi.succInternal(q1, s)) {
-							if (!m_Buechi.isFinal(q2) && getAmountOfBitsForSpoilerVertices(q0, q2) > 1) {
+						for (STATE q2 : mBuechi.succInternal(q1, s)) {
+							if (!mBuechi.isFinal(q2) && getAmountOfBitsForSpoilerVertices(q0, q2) > 1) {
 								addEdge(v0e, getSpoilerVertex(q0, q2, true));
-								m_GraphAmountOfEdges++;
+								mGraphAmountOfEdges++;
 							} else {
 								addEdge(v0e, getSpoilerVertex(q0, q2, false));
-								m_GraphAmountOfEdges++;
+								mGraphAmountOfEdges++;
 							}
 						}
 						// V1 -> V0 edges [paper ref 11]
-						for (STATE q2 : m_Buechi.predInternal(q0, s)) {
+						for (STATE q2 : mBuechi.predInternal(q0, s)) {
 							if (getAmountOfBitsForSpoilerVertices(q2, q1) > 1) {
 								addEdge(getSpoilerVertex(q2, q1, true), v0e);
-								m_GraphAmountOfEdges++;
+								mGraphAmountOfEdges++;
 							}
-							if (m_Buechi.isFinal(q0)) {
+							if (mBuechi.isFinal(q0)) {
 								addEdge(getSpoilerVertex(q2, q1, false), v0e);
-								m_GraphAmountOfEdges++;
+								mGraphAmountOfEdges++;
 							}
 
 							// Make sure to only count this transitions one time
 							// for q0
 							if (!countedTransitionsForQ0) {
-								m_BuechiAmountOfTransitions++;
+								mBuechiAmountOfTransitions++;
 							}
 						}
 					}
@@ -360,10 +360,10 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					+ (getDuplicatorVertices().size() + getSpoilerVertices().size()));
 			logger.debug("Number of vertices in v0: " + getDuplicatorVertices().size());
 			logger.debug("Number of vertices in v1: " + getSpoilerVertices().size());
-			logger.debug("Number of edges in game graph: " + m_GraphAmountOfEdges);
+			logger.debug("Number of edges in game graph: " + mGraphAmountOfEdges);
 		}
 
-		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
+		mGraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
 	}
 
 	/**
@@ -401,7 +401,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *            Amount of buechi states.
 	 */
 	protected void setBuechiAmountOfStates(final int amount) {
-		m_BuechiAmountOfStates = amount;
+		mBuechiAmountOfStates = amount;
 	}
 
 	/**
@@ -411,7 +411,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *            Amount of buechi transitions.
 	 */
 	protected void setBuechiAmountOfTransitions(final int amount) {
-		m_BuechiAmountOfTransitions = amount;
+		mBuechiAmountOfTransitions = amount;
 	}
 
 	/**
@@ -421,7 +421,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *            Amount of graph edges.
 	 */
 	protected void setGraphAmountOfEdges(final int amount) {
-		m_GraphAmountOfEdges = amount;
+		mGraphAmountOfEdges = amount;
 	}
 
 	/**
@@ -431,6 +431,6 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *            The graphBuildTime to set
 	 */
 	protected void setGraphBuildTime(final long graphBuildTime) {
-		m_GraphBuildTime = graphBuildTime;
+		mGraphBuildTime = graphBuildTime;
 	}
 }

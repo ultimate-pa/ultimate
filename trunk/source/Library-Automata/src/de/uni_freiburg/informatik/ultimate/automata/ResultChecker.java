@@ -65,7 +65,7 @@ public class ResultChecker<LETTER,STATE> {
 	private static int resultCheckStackHeight = 0;
 	public static final int maxResultCheckStackHeight = 1;
 	
-	public final static boolean m_InvariantCheck_DetComplementBuchi = false;
+	public final static boolean mInvariantCheck_DetComplementBuchi = false;
 	
 	public static boolean doingInvariantCheck() {
 		return resultCheckStackHeight > 0;

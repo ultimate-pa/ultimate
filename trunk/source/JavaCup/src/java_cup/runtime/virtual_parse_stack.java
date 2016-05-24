@@ -37,7 +37,7 @@ public class virtual_parse_stack {
       real_stack = shadowing_stack;
       vstack     = new ArrayList<Integer>();
       real_top   = shadowing_stack.size();
-      get_from_real();
+      get_fromreal();
     }
 
   /*-----------------------------------------------------------*/
@@ -76,7 +76,7 @@ public class virtual_parse_stack {
   /** Transfer an element from the real to the virtual stack.  This assumes 
    *  that the virtual stack is currently empty.  
    */
-  protected void get_from_real()
+  protected void get_fromreal()
     {
       Symbol stack_sym;
 
@@ -125,23 +125,23 @@ public class virtual_parse_stack {
 
       /* if we are now empty transfer an element (if there is one) */
       if (vstack.isEmpty())
-        get_from_real();
+        get_fromreal();
     }
   
   /** Pop several elements from the stack */
-  public void pop(int num_elems)
+  public void pop(int numelems)
     {
       int vsize = vstack.size();
-      if (vsize > num_elems) 
+      if (vsize > numelems) 
 	{
-	  while (num_elems-- > 0)
+	  while (numelems-- > 0)
 	    vstack.remove(--vsize);
 	}
       else 
 	{
 	  vstack.clear();
-	  real_top -= (num_elems - vsize);
-	  get_from_real();
+	  real_top -= (numelems - vsize);
+	  get_fromreal();
 	}
     }
 

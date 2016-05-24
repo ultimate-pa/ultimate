@@ -46,10 +46,10 @@ public interface IPredicate<T> {
 	 *
 	 */
 	public static class SetBasedPredicate<T> implements IPredicate<T> {
-		private final Set<T> m_Set;
+		private final Set<T> mSet;
 		
 		public SetBasedPredicate(Set<T> set) {
-			m_Set = set;
+			mSet = set;
 		}
 		
 		/**
@@ -57,7 +57,7 @@ public interface IPredicate<T> {
 		 */
 		@Override
 		public boolean evaluate(T element) {
-			return m_Set.contains(element);
+			return mSet.contains(element);
 		}
 		
 	}

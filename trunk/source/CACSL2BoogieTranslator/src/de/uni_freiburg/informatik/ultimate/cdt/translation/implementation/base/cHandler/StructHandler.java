@@ -73,9 +73,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class StructHandler {
 	
-	private final MemoryHandler m_MemoryHandler;
-	private final TypeSizeAndOffsetComputer m_TypeSizeAndOffsetComputer;
-	private final AExpressionTranslation m_ExpressionTranslation;
+	private final MemoryHandler mMemoryHandler;
+	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
+	private final AExpressionTranslation mExpressionTranslation;
 	
 	
 
@@ -83,9 +83,9 @@ public class StructHandler {
 			TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, 
 			AExpressionTranslation expressionTranslation) {
 		super();
-		m_MemoryHandler = memoryHandler;
-		m_TypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
-		m_ExpressionTranslation = expressionTranslation;
+		mMemoryHandler = memoryHandler;
+		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
+		mExpressionTranslation = expressionTranslation;
 	}
 
 
@@ -96,7 +96,7 @@ public class StructHandler {
 	 *            a reference to the main dispatcher.
 	 * @param node
 	 *            the node to translate.
-	 * @param m_MemoryHandler 
+	 * @param mMemoryHandler 
 	 * @return the translation results.
 	 */
 	public Result handleFieldReference(Dispatcher main, IASTFieldReference node) {
@@ -118,7 +118,7 @@ public class StructHandler {
 		CType cFieldType = cStructType.getFieldType(field);
 
 		if (node.isPointerDereference()) {
-			ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, m_MemoryHandler, this, loc);
+			ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, mMemoryHandler, this, loc);
 			Expression address = rFieldOwnerRex.lrVal.getValue();
 			fieldOwner = new ExpressionResult(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.getCType()), 
 					rFieldOwnerRex.decl, rFieldOwnerRex.auxVars, rFieldOwnerRex.overappr);
@@ -138,10 +138,10 @@ public class StructHandler {
 				newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 				newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 			}
-			Expression fieldOffset = m_TypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
-			Expression sumOffset = m_ExpressionTranslation.constructArithmeticExpression(loc, 
+			Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
+			Expression sumOffset = mExpressionTranslation.constructArithmeticExpression(loc, 
 					IASTBinaryExpression.op_plus, newStartAddressOffset, 
-					m_ExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset, m_ExpressionTranslation.getCTypeOfPointerComponents());
+					mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 			Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(
 					newStartAddressBase, sumOffset, loc);
 			newValue = new HeapLValue(newPointer, cFieldType);
@@ -185,7 +185,7 @@ public class StructHandler {
 		addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
 				structAddress, SFO.POINTER_OFFSET);
 
-		Expression newOffset = computeStructFieldOffset(m_MemoryHandler, loc,
+		Expression newOffset = computeStructFieldOffset(mMemoryHandler, loc,
 				fieldIndex, addressOffsetOfFieldOwner, structType);
 		
 		StructConstructor newPointer = 
@@ -194,7 +194,7 @@ public class StructHandler {
 		CType resultType = structType.getFieldTypes()[fieldIndex];
 
 		ExpressionResult call = 
-				m_MemoryHandler.getReadCall(newPointer, resultType);
+				mMemoryHandler.getReadCall(newPointer, resultType);
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
@@ -222,12 +222,12 @@ public class StructHandler {
 		if (fieldOffsetIsZero) {
 			return addressOffsetOfFieldOwner;
 		} else {
-			Expression fieldOffset = m_TypeSizeAndOffsetComputer.
+			Expression fieldOffset = mTypeSizeAndOffsetComputer.
 					constructOffsetForField(loc, structType, fieldIndex);
-			Expression result = m_ExpressionTranslation.constructArithmeticExpression(
+			Expression result = mExpressionTranslation.constructArithmeticExpression(
 					loc, 
 					IASTBinaryExpression.op_plus, addressOffsetOfFieldOwner, 
-					m_TypeSizeAndOffsetComputer.getSize_T(), fieldOffset, m_TypeSizeAndOffsetComputer.getSize_T());
+					mTypeSizeAndOffsetComputer.getSize_T(), fieldOffset, mTypeSizeAndOffsetComputer.getSize_T());
 			return result;
 		}
 	}

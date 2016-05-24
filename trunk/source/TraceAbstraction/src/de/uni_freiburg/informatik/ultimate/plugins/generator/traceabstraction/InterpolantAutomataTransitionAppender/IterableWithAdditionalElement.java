@@ -40,16 +40,16 @@ import java.util.NoSuchElementException;
  */
 public class IterableWithAdditionalElement<E> implements Iterable<E> {
 
-	private final Iterable<E> m_Iterable;
-	private final E m_AdditionalElement;
+	private final Iterable<E> mIterable;
+	private final E mAdditionalElement;
 	
 	
 	
 	public IterableWithAdditionalElement(Iterable<E> iterable,
 			E additionalElement) {
 		super();
-		m_Iterable = iterable;
-		m_AdditionalElement = additionalElement;
+		mIterable = iterable;
+		mAdditionalElement = additionalElement;
 	}
 
 
@@ -58,40 +58,40 @@ public class IterableWithAdditionalElement<E> implements Iterable<E> {
 	public Iterator<E> iterator() {
 		
 		return new Iterator<E>() {
-			final Iterator<E> m_Iterator = m_Iterable.iterator();
-			boolean m_AdditionalElementSeen = false;
-			boolean m_AdditionalElementReturned = false;
+			final Iterator<E> mIterator = mIterable.iterator();
+			boolean mAdditionalElementSeen = false;
+			boolean mAdditionalElementReturned = false;
 			
 			@Override
 			public boolean hasNext() {
-				if (m_Iterator.hasNext()) {
+				if (mIterator.hasNext()) {
 					return true;
 				} else {
-					if (m_AdditionalElementSeen) {
+					if (mAdditionalElementSeen) {
 						return false;
 					} else {
-						return !m_AdditionalElementReturned;
+						return !mAdditionalElementReturned;
 					}
 				}
 			}
 
 			@Override
 			public E next() {
-				if (m_Iterator.hasNext()) {
-					E next = m_Iterator.next();
-					if (next == m_AdditionalElement) {
-						m_AdditionalElementSeen = true;
+				if (mIterator.hasNext()) {
+					E next = mIterator.next();
+					if (next == mAdditionalElement) {
+						mAdditionalElementSeen = true;
 					}
 					return next;
 				} else {
-					if (m_AdditionalElementSeen) {
+					if (mAdditionalElementSeen) {
 						throw new NoSuchElementException();
 					} else {
-						if (m_AdditionalElementReturned) {
+						if (mAdditionalElementReturned) {
 							throw new NoSuchElementException();
 						} else {
-							m_AdditionalElementReturned = true;
-							return m_AdditionalElement;
+							mAdditionalElementReturned = true;
+							return mAdditionalElement;
 						}
 					}
 				}

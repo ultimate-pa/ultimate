@@ -48,7 +48,7 @@ public class Activator implements BundleActivator {
 	/**
 	 * The shared instance
 	 */
-	private static Activator m_Plugin;
+	private static Activator mPlugin;
 	
 	private static BundleContext context;
 	
@@ -74,6 +74,6 @@ public class Activator implements BundleActivator {
 	 * @return the shared instance
 	 */
 	public static Activator getDefault() {
-		return m_Plugin;
+		return mPlugin;
 	}
 }

@@ -47,56 +47,56 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
  */
 public class ManagedScript {
 	
-	private final IUltimateServiceProvider m_Services;
-	private final Script m_Script;
-	private final ILogger m_Logger;
+	private final IUltimateServiceProvider mServices;
+	private final Script mScript;
+	private final ILogger mLogger;
 	
-	private Object m_LockOwner = null;
+	private Object mLockOwner = null;
 	
 	public ManagedScript(IUltimateServiceProvider services, Script script) {
 		super();
-		m_Services = services;
-		m_Script = script;
-		m_Logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		mServices = services;
+		mScript = script;
+		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 	}
 	
 	public void lock(Object lockOwner) {
 		if (lockOwner == null) {
 			throw new NullPointerException("cannot be locked by null");
 		} else {
-			if (m_LockOwner == null) {
-				m_LockOwner = lockOwner;
-				m_Logger.debug("ManagedScript locked by " + lockOwner.toString());
+			if (mLockOwner == null) {
+				mLockOwner = lockOwner;
+				mLogger.debug("ManagedScript locked by " + lockOwner.toString());
 			} else {
-				throw new IllegalStateException("ManagedScript already locked by " + m_LockOwner.toString());
+				throw new IllegalStateException("ManagedScript already locked by " + mLockOwner.toString());
 			}
 		}
 	}
 	
 	public void unlock(Object lockOwner) {
-		if (m_LockOwner == null) {
+		if (mLockOwner == null) {
 			throw new IllegalStateException("ManagedScript not locked");
 		} else {
-			if (m_LockOwner == lockOwner) {
-				m_LockOwner = null;
-				m_Logger.debug("ManagedScript unlocked by " + lockOwner.toString());
+			if (mLockOwner == lockOwner) {
+				mLockOwner = null;
+				mLogger.debug("ManagedScript unlocked by " + lockOwner.toString());
 			} else {
-				throw new IllegalStateException("ManagedScript locked by " + m_LockOwner.toString());
+				throw new IllegalStateException("ManagedScript locked by " + mLockOwner.toString());
 			}
 		}
 	}
 	
 	public boolean isLocked() {
-		return m_LockOwner != null;
+		return mLockOwner != null;
 	}
 	
 	public boolean requestLockRelease() {
-		if (m_LockOwner == null) {
+		if (mLockOwner == null) {
 			throw new IllegalStateException("ManagedScript not locked");
 		} else {
-			if (m_LockOwner instanceof ILockHolderWithVoluntaryLockRelease) {
-				m_Logger.debug("Asking " + m_LockOwner + " to release lock");
-				((ILockHolderWithVoluntaryLockRelease) m_LockOwner).releaseLock();
+			if (mLockOwner instanceof ILockHolderWithVoluntaryLockRelease) {
+				mLogger.debug("Asking " + mLockOwner + " to release lock");
+				((ILockHolderWithVoluntaryLockRelease) mLockOwner).releaseLock();
 				return true;
 			} else {
 				return false;
@@ -105,7 +105,7 @@ public class ManagedScript {
 	}
 	
 	public boolean isLockOwner(Object allegedLockOwner) {
-		return allegedLockOwner == m_LockOwner;
+		return allegedLockOwner == mLockOwner;
 	}
 	
 	public interface ILockHolderWithVoluntaryLockRelease {
@@ -113,57 +113,57 @@ public class ManagedScript {
 	}
 	
 	public void push(Object lockOwner, int levels) throws SMTLIBException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		m_Script.push(levels);
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		mScript.push(levels);
 	}
 	public void pop(Object lockOwner, int levels) throws SMTLIBException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		m_Script.pop(levels);
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		mScript.pop(levels);
 	}
 	public LBool assertTerm(Object lockOwner, Term term) throws SMTLIBException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		return m_Script.assertTerm(term);
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.assertTerm(term);
 	}
 	public LBool checkSat(Object lockOwner) throws SMTLIBException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		return m_Script.checkSat();
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.checkSat();
 	}
 	public Term[] getUnsatCore(Object lockOwner) throws SMTLIBException, UnsupportedOperationException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		return m_Script.getUnsatCore();
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.getUnsatCore();
 	}
 	public Term annotate(Object lockOwner, Term t, Annotation... annotations) throws SMTLIBException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		return m_Script.annotate(t, annotations);
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.annotate(t, annotations);
 	}
 
 	public Term term(Object lockOwner, String funcname, Term... params) throws SMTLIBException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		return m_Script.term(funcname, params);
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.term(funcname, params);
 	}
 
 	public Term term(Object lockOwner, String funcname, BigInteger[] indices, Sort returnSort, Term... params) throws SMTLIBException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		return m_Script.term(funcname, indices, returnSort, params);
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.term(funcname, indices, returnSort, params);
 	}
 
 	public Term let(Object lockOwner, TermVariable[] vars, Term[] values, Term body) throws SMTLIBException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		return m_Script.let(vars, values, body);
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.let(vars, values, body);
 	}
 
 	public void declareFun(Object lockOwner, String fun, Sort[] paramSorts, Sort resultSort) throws SMTLIBException {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		m_Script.declareFun(fun, paramSorts, resultSort);
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		mScript.declareFun(fun, paramSorts, resultSort);
 	}
 
 	public QuotedObject echo(Object lockOwner, QuotedObject msg) {
-		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
-		return m_Script.echo(msg);
+		assert lockOwner == mLockOwner : "ManagedScript locked by " + mLockOwner;
+		return mScript.echo(msg);
 	}
 
 	public Script getScript() {
-		return m_Script;
+		return mScript;
 	}
 	
 }

@@ -70,10 +70,10 @@ public class UltimateChecker extends CodeChecker {
 	HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> _pre2stm2post_toConnectIfSat;
 	HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> _pre2hier2stm2post_toConnectIfSat;
 
-	public UltimateChecker(IElement root, SmtManager m_smtManager, RootNode m_originalRoot, ImpRootNode m_graphRoot,
-			GraphWriter m_graphWriter, IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
-		super(root, m_smtManager, m_originalRoot, m_graphRoot,
-				m_graphWriter, edgeChecker, predicateUnifier, logger);
+	public UltimateChecker(IElement root, SmtManager msmtManager, RootNode moriginalRoot, ImpRootNode mgraphRoot,
+			GraphWriter mgraphWriter, IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
+		super(root, msmtManager, moriginalRoot, mgraphRoot,
+				mgraphWriter, edgeChecker, predicateUnifier, logger);
 	}
 
 	/**

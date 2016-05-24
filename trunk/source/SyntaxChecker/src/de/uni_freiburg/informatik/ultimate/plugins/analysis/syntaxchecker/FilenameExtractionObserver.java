@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
  */
 public class FilenameExtractionObserver implements IUnmanagedObserver {
 	
-	private String m_Filename;
+	private String mFilename;
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
@@ -64,16 +64,16 @@ public class FilenameExtractionObserver implements IUnmanagedObserver {
 		WrapperNode wn = (WrapperNode) root;
 		IASTNode tu = (IASTNode) wn.getBacking();
 		String filename = tu.getFileLocation().getFileName();
-		if (m_Filename == null) {
-			m_Filename = filename;
+		if (mFilename == null) {
+			mFilename = filename;
 		} else {
-			throw new IllegalStateException("m_Filename already set");
+			throw new IllegalStateException("mFilename already set");
 		}
 		return false;
 	}
 
 	public String getFilename() {
-		return m_Filename;
+		return mFilename;
 	}
 	
 	

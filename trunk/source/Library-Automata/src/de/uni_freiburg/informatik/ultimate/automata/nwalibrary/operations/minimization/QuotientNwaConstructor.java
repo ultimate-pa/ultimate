@@ -47,52 +47,52 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  */
 public class QuotientNwaConstructor<LETTER, STATE>  {
 	
-	private final AutomataLibraryServices m_Services;
-	private final StateFactory<STATE> m_StateFactory;
-	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
-	private final UnionFind<STATE> m_UnionFind;
-	private final NestedWordAutomaton<LETTER, STATE> m_Result;
+	private final AutomataLibraryServices mServices;
+	private final StateFactory<STATE> mStateFactory;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private final UnionFind<STATE> mUnionFind;
+	private final NestedWordAutomaton<LETTER, STATE> mResult;
 
 	public QuotientNwaConstructor(AutomataLibraryServices services, StateFactory<STATE> stateFactory,
 			INestedWordAutomaton<LETTER, STATE> operand, UnionFind<STATE> unionFind) {
-		m_Services = services;
-		m_StateFactory = stateFactory;
-		m_Operand = operand;
-		m_UnionFind = unionFind;
-		m_Result = new NestedWordAutomaton<>(m_Services, 
-				m_Operand.getInternalAlphabet(), m_Operand.getCallAlphabet(), 
-				m_Operand.getReturnAlphabet(), m_StateFactory);
+		mServices = services;
+		mStateFactory = stateFactory;
+		mOperand = operand;
+		mUnionFind = unionFind;
+		mResult = new NestedWordAutomaton<>(mServices, 
+				mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(), 
+				mOperand.getReturnAlphabet(), mStateFactory);
 		
 		final ResultStateConstructor resStateConstructor = new ResultStateConstructor();
-		for (STATE inputState : m_Operand.getStates()) {
+		for (STATE inputState : mOperand.getStates()) {
 			final STATE resultState = resStateConstructor.getOrConstructResultState(inputState); 
-			for (OutgoingInternalTransition<LETTER, STATE> trans : m_Operand.internalSuccessors(inputState)) {
+			for (OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(inputState)) {
 				final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
-				m_Result.addInternalTransition(resultState, trans.getLetter(), resultSucc);
+				mResult.addInternalTransition(resultState, trans.getLetter(), resultSucc);
 			}
 			
-			for (OutgoingCallTransition<LETTER, STATE> trans : m_Operand.callSuccessors(inputState)) {
+			for (OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(inputState)) {
 				final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
-				m_Result.addCallTransition(resultState, trans.getLetter(), resultSucc);
+				mResult.addCallTransition(resultState, trans.getLetter(), resultSucc);
 			}
 			
-			for (OutgoingReturnTransition<LETTER, STATE> trans : m_Operand.returnSuccessors(inputState)) {
+			for (OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(inputState)) {
 				final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
 				final STATE resultHierPred = resStateConstructor.getOrConstructResultState(trans.getHierPred());
-				m_Result.addReturnTransition(resultState, resultHierPred, trans.getLetter(), resultSucc);
+				mResult.addReturnTransition(resultState, resultHierPred, trans.getLetter(), resultSucc);
 			}
 		}
 
 	}
 	
 	private class ResultStateConstructor {
-		private final ConstructionCache<STATE, STATE> m_ConstructionCache;
+		private final ConstructionCache<STATE, STATE> mConstructionCache;
 		
 		public ResultStateConstructor() {
 			final IValueConstruction<STATE, STATE> valueConstruction = new IValueConstruction<STATE, STATE>() {
 				@Override
 				public STATE constructValue(STATE inputState) {
-					final STATE representative = m_UnionFind.find(inputState);
+					final STATE representative = mUnionFind.find(inputState);
 					if (representative != inputState && representative != null) {
 						throw new IllegalArgumentException("must be representative or null");
 					}
@@ -100,37 +100,37 @@ public class QuotientNwaConstructor<LETTER, STATE>  {
 					final boolean isInitial;
 					final boolean isFinal;
 					if (representative == null) {
-						 resultState = m_StateFactory.minimize(Collections.singleton(inputState));
-						 isInitial = m_Operand.isInitial(inputState);
-						 isFinal = m_Operand.isFinal(inputState);
+						 resultState = mStateFactory.minimize(Collections.singleton(inputState));
+						 isInitial = mOperand.isInitial(inputState);
+						 isFinal = mOperand.isFinal(inputState);
 					} else {
-						final Collection<STATE> equivalenceClass = m_UnionFind.getEquivalenceClassMembers(representative);
-						resultState = m_StateFactory.minimize(equivalenceClass);
-						final Predicate<STATE> pInitial = (s -> m_Operand.isInitial(s));
+						final Collection<STATE> equivalenceClass = mUnionFind.getEquivalenceClassMembers(representative);
+						resultState = mStateFactory.minimize(equivalenceClass);
+						final Predicate<STATE> pInitial = (s -> mOperand.isInitial(s));
 						isInitial = equivalenceClass.stream().anyMatch(pInitial);
-						final Predicate<STATE> pFinal = (s -> m_Operand.isFinal(s));
+						final Predicate<STATE> pFinal = (s -> mOperand.isFinal(s));
 						isFinal = equivalenceClass.stream().anyMatch(pFinal);
 					}
-					m_Result.addState(isInitial, isFinal, resultState);
+					mResult.addState(isInitial, isFinal, resultState);
 					return resultState;
 				}
 			};
-			m_ConstructionCache = new ConstructionCache<>(valueConstruction);
+			mConstructionCache = new ConstructionCache<>(valueConstruction);
 		}
 		
 		public STATE getOrConstructResultState(STATE inputState) {
-			assert m_Operand.getStates().contains(inputState) : "no input state";
-			STATE inputRepresentative = m_UnionFind.find(inputState);
+			assert mOperand.getStates().contains(inputState) : "no input state";
+			STATE inputRepresentative = mUnionFind.find(inputState);
 			if (inputRepresentative == null) {
 				inputRepresentative = inputState;
 			}
-			return m_ConstructionCache.getOrConstuct(inputRepresentative);
+			return mConstructionCache.getOrConstuct(inputRepresentative);
 		}
 	}
 	
 
 	public NestedWordAutomaton<LETTER, STATE> getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 }

@@ -43,28 +43,28 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
 	
 	public class UpDownEntry<STATE> {
-		private final STATE m_Up;
-		private final STATE m_Down;
-		private final STATE m_Entry;
+		private final STATE mUp;
+		private final STATE mDown;
+		private final STATE mEntry;
 		
 		public UpDownEntry(STATE up, STATE down, STATE entry) {
-			m_Up = up;
-			m_Down = down;
-			m_Entry = entry;
+			mUp = up;
+			mDown = down;
+			mEntry = entry;
 		}
 		public STATE getUp() {
-			return m_Up;
+			return mUp;
 		}
 		public STATE getDown() {
-			return m_Down;
+			return mDown;
 		}
 		public STATE getEntry() {
-			return m_Entry;
+			return mEntry;
 		}
 		
 		@Override
 		public String toString() {
-			return MessageFormat.format("up: {0} down: {1} entry {2}", m_Up, m_Down, m_Entry);
+			return MessageFormat.format("up: {0} down: {1} entry {2}", mUp, mDown, mEntry);
 		}
 		
 		@Override
@@ -72,10 +72,10 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result
-					+ ((m_Down == null) ? 0 : m_Down.hashCode());
+					+ ((mDown == null) ? 0 : mDown.hashCode());
 			result = prime * result
-					+ ((m_Entry == null) ? 0 : m_Entry.hashCode());
-			result = prime * result + ((m_Up == null) ? 0 : m_Up.hashCode());
+					+ ((mEntry == null) ? 0 : mEntry.hashCode());
+			result = prime * result + ((mUp == null) ? 0 : mUp.hashCode());
 			return result;
 		}
 		@Override
@@ -87,20 +87,20 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			if (getClass() != obj.getClass())
 				return false;
 			UpDownEntry other = (UpDownEntry) obj;
-			if (m_Down == null) {
-				if (other.m_Down != null)
+			if (mDown == null) {
+				if (other.mDown != null)
 					return false;
-			} else if (!m_Down.equals(other.m_Down))
+			} else if (!mDown.equals(other.mDown))
 				return false;
-			if (m_Entry == null) {
-				if (other.m_Entry != null)
+			if (mEntry == null) {
+				if (other.mEntry != null)
 					return false;
-			} else if (!m_Entry.equals(other.m_Entry))
+			} else if (!mEntry.equals(other.mEntry))
 				return false;
-			if (m_Up == null) {
-				if (other.m_Up != null)
+			if (mUp == null) {
+				if (other.mUp != null)
 					return false;
-			} else if (!m_Up.equals(other.m_Up))
+			} else if (!mUp.equals(other.mUp))
 				return false;
 			return true;
 		}

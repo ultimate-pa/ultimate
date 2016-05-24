@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
-	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
-	private final DeterminizeNwa<LETTER, STATE> m_Determinized;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
+	private final INestedWordAutomatonSimple<LETTER,STATE> mOperand;
+	private final DeterminizeNwa<LETTER, STATE> mDeterminized;
+	private final NestedWordAutomatonReachableStates<LETTER,STATE> mResult;
 	private final IStateDeterminizer<LETTER,STATE> stateDeterminizer;
-	private final StateFactory<STATE> m_StateFactory;
+	private final StateFactory<STATE> mStateFactory;
 	
 	
 	@Override
@@ -60,36 +60,36 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_Operand.sizeInformation();
+			mOperand.sizeInformation();
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + 
-				m_Result.sizeInformation();
+				mResult.sizeInformation();
 	}
 	
 	
 	public Determinize(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
-		this.m_StateFactory = stateFactory;
-		this.m_Operand = input;
-		m_Logger.info(startMessage());
-		m_Determinized = new DeterminizeNwa<LETTER, STATE>(m_Services, input, stateDeterminizer, m_StateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Determinized);
-		m_Logger.info(exitMessage());
+		this.mStateFactory = stateFactory;
+		this.mOperand = input;
+		mLogger.info(startMessage());
+		mDeterminized = new DeterminizeNwa<LETTER, STATE>(mServices, input, stateDeterminizer, mStateFactory);
+		mResult = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mDeterminized);
+		mLogger.info(exitMessage());
 	}
 	
 
 
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 
@@ -97,22 +97,22 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			m_Logger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Services, m_Operand);
+			mLogger.info("Start testing correctness of " + operationName());
+			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(mServices, mOperand);
 
 			// should have same number of states as old determinization
 			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
-					(new DeterminizeDD<LETTER, STATE>(m_Services, sf, operandOldApi)).getResult();
-			correct &= (resultDD.size() == m_Result.size());
+					(new DeterminizeDD<LETTER, STATE>(mServices, sf, operandOldApi)).getResult();
+			correct &= (resultDD.size() == mResult.size());
 			// should recognize same language as old computation
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultDD, m_Result, sf) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, resultDD, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultDD, mResult, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mResult, resultDD, sf) == null);
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
+				ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mOperand);
 			}
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		} else {
-			m_Logger.warn("result was not tested");
+			mLogger.warn("result was not tested");
 		}
 		return correct;
 	}

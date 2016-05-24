@@ -143,14 +143,14 @@ public class PRDispatcher extends Dispatcher {
 	
 	private final LinkedHashSet<IASTDeclaration> reachableDeclarations;
 	
-    private final LinkedHashSet<IASTNode> m_VariablesOnHeap;
+    private final LinkedHashSet<IASTNode> mVariablesOnHeap;
 
 	public PRDispatcher(CACSL2BoogieBacktranslator backtranslator,
 			IUltimateServiceProvider services, ILogger logger, LinkedHashMap<String,Integer> functionToIndex, LinkedHashSet<IASTDeclaration> reachableDeclarations) {
 		super(backtranslator, services, logger);
 		mFunctionToIndex = functionToIndex;
 		this.reachableDeclarations = reachableDeclarations;
-		this.m_VariablesOnHeap = new LinkedHashSet<>();
+		this.mVariablesOnHeap = new LinkedHashSet<>();
 	}
 	
 	/**
@@ -160,7 +160,7 @@ public class PRDispatcher extends Dispatcher {
 	 * declarations).
 	 */
     public Set<IASTNode> getVariablesOnHeap() {
-    	return m_VariablesOnHeap;
+    	return mVariablesOnHeap;
     }	
 
 	@Override

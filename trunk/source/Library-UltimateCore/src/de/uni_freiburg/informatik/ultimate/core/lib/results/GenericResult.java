@@ -36,31 +36,31 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
  */
 public class GenericResult extends AbstractResult implements IResultWithSeverity {
 
-	private final String m_ShortDescription;
-	private final String m_LongDescription;
-	private final Severity m_Severity;
+	private final String mShortDescription;
+	private final String mLongDescription;
+	private final Severity mSeverity;
 
 	public GenericResult(String plugin, String shortDescription, 
 			String longDescription,	Severity severity) {
 		super(plugin);
-		m_ShortDescription = shortDescription;
-		m_LongDescription = longDescription;
-		m_Severity = severity;
+		mShortDescription = shortDescription;
+		mLongDescription = longDescription;
+		mSeverity = severity;
 	}
 
 	@Override
 	public String getShortDescription() {
-		return m_ShortDescription;
+		return mShortDescription;
 	}
 
 	@Override
 	public String getLongDescription() {
-		return m_LongDescription;
+		return mLongDescription;
 	}
 
 	@Override
 	public Severity getSeverity() {
-		return m_Severity;
+		return mSeverity;
 	}
 
 }

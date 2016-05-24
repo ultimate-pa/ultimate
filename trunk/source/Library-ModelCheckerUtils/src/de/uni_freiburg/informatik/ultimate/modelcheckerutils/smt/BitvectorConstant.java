@@ -35,14 +35,14 @@ import java.util.function.Function;
  *
  */
 public class BitvectorConstant {
-	private final BigInteger m_Value;
-	private final BigInteger m_Index;
+	private final BigInteger mValue;
+	private final BigInteger mIndex;
 	
 	
 	public BitvectorConstant(BigInteger value, BigInteger index) {
 		super();
-		m_Value = computeUnifiedValue(value, index);
-		m_Index = index;
+		mValue = computeUnifiedValue(value, index);
+		mIndex = index;
 	}
 	
 	
@@ -54,19 +54,19 @@ public class BitvectorConstant {
 	}
 
 	public BigInteger getValue() {
-		return m_Value;
+		return mValue;
 	}
 
 	public BigInteger getIndex() {
-		return m_Index;
+		return mIndex;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_Index == null) ? 0 : m_Index.hashCode());
-		result = prime * result + ((m_Value == null) ? 0 : m_Value.hashCode());
+		result = prime * result + ((mIndex == null) ? 0 : mIndex.hashCode());
+		result = prime * result + ((mValue == null) ? 0 : mValue.hashCode());
 		return result;
 	}
 
@@ -79,15 +79,15 @@ public class BitvectorConstant {
 		if (getClass() != obj.getClass())
 			return false;
 		BitvectorConstant other = (BitvectorConstant) obj;
-		if (m_Index == null) {
-			if (other.m_Index != null)
+		if (mIndex == null) {
+			if (other.mIndex != null)
 				return false;
-		} else if (!m_Index.equals(other.m_Index))
+		} else if (!mIndex.equals(other.mIndex))
 			return false;
-		if (m_Value == null) {
-			if (other.m_Value != null)
+		if (mValue == null) {
+			if (other.mValue != null)
 				return false;
-		} else if (!m_Value.equals(other.m_Value))
+		} else if (!mValue.equals(other.mValue))
 			return false;
 		return true;
 	}
@@ -97,7 +97,7 @@ public class BitvectorConstant {
 	 */
 	@Override
 	public String toString() {
-		return "(_ bv" + m_Value + " " + m_Index + ")";
+		return "(_ bv" + mValue + " " + mIndex + ")";
 	}
 	
 	

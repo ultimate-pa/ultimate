@@ -49,18 +49,18 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
  */
 public class MemoryModel_MultiBitprecise extends AMemoryModel {
 	
-	private final Map<Integer, HeapDataArray> m_Size2HeapDataArray = new HashMap<>();
+	private final Map<Integer, HeapDataArray> mSize2HeapDataArray = new HashMap<>();
 	
 	public MemoryModel_MultiBitprecise(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		for (PRIMITIVE primitive : PRIMITIVE.values()) {
-			final int bytesize = m_TypeSizes.getSize(primitive);
-			if (!m_Size2HeapDataArray.containsKey(bytesize)) {
+			final int bytesize = mTypeSizes.getSize(primitive);
+			if (!mSize2HeapDataArray.containsKey(bytesize)) {
 				final String name = "data" + bytesize;
 				final ASTType astType = typeHandler.ctype2asttype(ignoreLoc, new CPrimitive(primitive));
 				final HeapDataArray hda = new HeapDataArray(name, astType, bytesize);
-				m_Size2HeapDataArray.put(bytesize, hda);
+				mSize2HeapDataArray.put(bytesize, hda);
 			}
 		}
 	}
@@ -68,8 +68,8 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 	
 	
 	public HeapDataArray getDataHeapArray(PRIMITIVE primitive) {
-		final int bytesize = m_TypeSizes.getSize(primitive);
-		return m_Size2HeapDataArray.get(bytesize);
+		final int bytesize = mTypeSizes.getSize(primitive);
+		return mSize2HeapDataArray.get(bytesize);
 	}
 
 
@@ -87,7 +87,7 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, PRIMITIVE> bytesizes2primitives = new HashRelation<>();
 		for (PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
-			final int bytesize = m_TypeSizes.getSize(primitive);
+			final int bytesize = mTypeSizes.getSize(primitive);
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
 			}
@@ -96,7 +96,7 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 		for (Integer bytesize : bytesizes2primitives.getDomain()) {
 			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = m_TypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
+			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
 		}
 		return result;
@@ -105,7 +105,7 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 	
 	@Override
 	protected int bytesizeOfStoredPointerComponents() {
-		return m_TypeSizes.getSizeOfPointer();
+		return mTypeSizes.getSizeOfPointer();
 	}
 
 

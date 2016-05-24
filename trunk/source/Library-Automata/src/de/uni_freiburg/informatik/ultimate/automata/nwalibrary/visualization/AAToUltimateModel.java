@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 
 public class AAToUltimateModel<LETTER,STATE> {
-//	private static ILogger m_Logger = 
+//	private static ILogger mLogger = 
 //		NestedWordAutomata.getLogger();
 //	
 	public IElement getUltimateModelOfAA(AlternatingAutomaton<LETTER,STATE> aaSimple) throws AutomataOperationCanceledException {
@@ -70,7 +70,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //				else {
 //					succVSN = new AutomatonState(succState,
 //							nwa.isFinal(succState));
-//					m_Logger.debug("Creating Node: " + succVSN.toString());
+//					mLogger.debug("Creating Node: " + succVSN.toString());
 //					constructed.put(succState,succVSN);
 //					queue.add(succState);
 //				}
@@ -87,7 +87,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //				} else {
 //					succVSN = new AutomatonState(succState,
 //							nwa.isFinal(succState));
-//					m_Logger.debug("Creating Node: " + succVSN.toString());
+//					mLogger.debug("Creating Node: " + succVSN.toString());
 //					constructed.put(succState, succVSN);
 //					queue.add(succState);
 //				}
@@ -103,7 +103,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //						succVSN = constructed.get(succState);
 //					} else {
 //						succVSN = new AutomatonState(succState,nwa.isFinal(succState));
-//						m_Logger.debug("Creating Node: " + succVSN.toString());
+//						mLogger.debug("Creating Node: " + succVSN.toString());
 //						constructed.put(succState, succVSN);
 //						queue.add(succState);
 //					}

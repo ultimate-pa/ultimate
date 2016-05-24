@@ -39,20 +39,20 @@ import java.text.MessageFormat;
  */
 public class IncomingInternalTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
 	
-	private final LETTER m_Letter; 
-	private final STATE m_Pred;
+	private final LETTER mLetter; 
+	private final STATE mPred;
 	
 	public IncomingInternalTransition(STATE pred, LETTER letter) {
-		m_Pred = pred;
-		m_Letter = letter;
+		mPred = pred;
+		mLetter = letter;
 	}
 	
 	public LETTER getLetter() {
-		return m_Letter;
+		return mLetter;
 	}
 	
 	public STATE getPred() {
-		return m_Pred;
+		return mPred;
 	}
 	
 	

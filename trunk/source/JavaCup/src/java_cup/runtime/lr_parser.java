@@ -532,7 +532,7 @@ public abstract class lr_parser {
       Symbol lhs_sym = null;
 
       /* information about production being reduced with */
-      short handle_size, lhs_sym_num;
+      short handle_size, lhs_symnum;
 
       /* set up direct reference to tables to drive the parser */
 
@@ -585,7 +585,7 @@ public abstract class lr_parser {
 	      lhs_sym = do_action((-act)-1, this, stack, tos);
 
 	      /* look up information about the production */
-	      lhs_sym_num = production_tab[(-act)-1][0];
+	      lhs_symnum = production_tab[(-act)-1][0];
 	      handle_size = production_tab[(-act)-1][1];
 
 	      /* pop the handle off the stack */
@@ -596,7 +596,7 @@ public abstract class lr_parser {
 		}
 	      
 	      /* look up the state to go to from the one popped back to */
-	      act = get_reduce(stack.peek().parse_state, lhs_sym_num);
+	      act = get_reduce(stack.peek().parse_state, lhs_symnum);
 
 	      /* shift to that state */
 	      lhs_sym.parse_state = act;
@@ -719,7 +719,7 @@ public abstract class lr_parser {
       Symbol lhs_sym = null;
 
       /* information about production being reduced with */
-      short handle_size, lhs_sym_num;
+      short handle_size, lhs_symnum;
 
       /* set up direct reference to tables to drive the parser */
       production_tab = production_table();
@@ -778,10 +778,10 @@ public abstract class lr_parser {
 	      lhs_sym = do_action((-act)-1, this, stack, tos);
 
 	      /* look up information about the production */
-	      lhs_sym_num = production_tab[(-act)-1][0];
+	      lhs_symnum = production_tab[(-act)-1][0];
 	      handle_size = production_tab[(-act)-1][1];
 
-	      debug_reduce((-act)-1, lhs_sym_num, handle_size);
+	      debug_reduce((-act)-1, lhs_symnum, handle_size);
 
 	      /* pop the handle off the stack */
 	      for (int i = 0; i < handle_size; i++)
@@ -791,10 +791,10 @@ public abstract class lr_parser {
 		}
 	      
 	      /* look up the state to go to from the one popped back to */
-	      act = get_reduce(stack.peek().parse_state, lhs_sym_num);
+	      act = get_reduce(stack.peek().parse_state, lhs_symnum);
 	      debug_message("# Reduce rule: top state " +
 			     stack.peek().parse_state +
-			     ", lhs sym " + lhs_sym_num + " -> state " + act); 
+			     ", lhs sym " + lhs_symnum + " -> state " + act); 
 
 	      /* shift to that state */
 	      lhs_sym.parse_state = act;
@@ -1137,7 +1137,7 @@ public abstract class lr_parser {
       Symbol lhs_sym = null;
 
       /* information about production being reduced with */
-      short handle_size, lhs_sym_num;
+      short handle_size, lhs_symnum;
 
       /* restart the saved input at the beginning */
       lookahead_pos = 0;
@@ -1194,10 +1194,10 @@ public abstract class lr_parser {
 	      lhs_sym = do_action((-act)-1, this, stack, tos);
 
 	      /* look up information about the production */
-	      lhs_sym_num = production_tab[(-act)-1][0];
+	      lhs_symnum = production_tab[(-act)-1][0];
 	      handle_size = production_tab[(-act)-1][1];
 
-	      if (debug) debug_reduce((-act)-1, lhs_sym_num, handle_size);
+	      if (debug) debug_reduce((-act)-1, lhs_symnum, handle_size);
 
 	      /* pop the handle off the stack */
 	      for (int i = 0; i < handle_size; i++)
@@ -1207,7 +1207,7 @@ public abstract class lr_parser {
 		}
 	      
 	      /* look up the state to go to from the one popped back to */
-	      act = get_reduce(stack.peek().parse_state, lhs_sym_num);
+	      act = get_reduce(stack.peek().parse_state, lhs_symnum);
 
 	      /* shift to that state */
 	      lhs_sym.parse_state = act;

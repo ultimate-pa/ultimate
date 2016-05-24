@@ -42,17 +42,17 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 public class AutomataScriptTestSummary implements ITestSummary {
 	
-	private Class<? extends UltimateTestSuite> m_UltimateTestSuite;
-	private List<SummaryEntry> m_Results;
+	private Class<? extends UltimateTestSuite> mUltimateTestSuite;
+	private List<SummaryEntry> mResults;
 
 	public AutomataScriptTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
-		m_UltimateTestSuite = ultimateTestSuite;
-		m_Results = new ArrayList<SummaryEntry>();
+		mUltimateTestSuite = ultimateTestSuite;
+		mResults = new ArrayList<SummaryEntry>();
 	}
 	
 	@Override
 	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
-		return m_UltimateTestSuite;
+		return mUltimateTestSuite;
 	}
 	
 	@Override
@@ -69,10 +69,10 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	public String getSummaryLog() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("################# ");
-		sb.append(m_UltimateTestSuite);
+		sb.append(mUltimateTestSuite);
 		sb.append(" #################");
 		sb.append("\n");
-		for (SummaryEntry summaryEntry  : m_Results) {
+		for (SummaryEntry summaryEntry  : mResults) {
 			sb.append(summaryEntry.getTestResult().toString());
 			sb.append("\t");
 			sb.append(String.format( "%.2f", summaryEntry.getTime()) + "s");
@@ -94,36 +94,36 @@ public class AutomataScriptTestSummary implements ITestSummary {
 		} else {
 			Benchmark benchmark = benchmarkSingleton.iterator().next();
 			double time = benchmark.getElapsedTime(de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator.s_PLUGIN_NAME, TimeUnit.SECONDS);
-			m_Results.add(new SummaryEntry(threeValuedResult, message, time, ultimateRunDefinition.getInput()[0]));
+			mResults.add(new SummaryEntry(threeValuedResult, message, time, ultimateRunDefinition.getInput()[0]));
 		}
 		
 
 	}
 	
 	private class SummaryEntry {
-		private final TestResult m_TestResult;
-		private final String m_Message;
-		private final double m_Time;
-		private final File m_AtsFile;
+		private final TestResult mTestResult;
+		private final String mMessage;
+		private final double mTime;
+		private final File mAtsFile;
 		public SummaryEntry(TestResult testResult, String message, double time,
 				File atsFile) {
 			super();
-			m_TestResult = testResult;
-			m_Message = message;
-			m_Time = time;
-			m_AtsFile = atsFile;
+			mTestResult = testResult;
+			mMessage = message;
+			mTime = time;
+			mAtsFile = atsFile;
 		}
 		public TestResult getTestResult() {
-			return m_TestResult;
+			return mTestResult;
 		}
 		public String getMessage() {
-			return m_Message;
+			return mMessage;
 		}
 		public double getTime() {
-			return m_Time;
+			return mTime;
 		}
 		public File getAtsFile() {
-			return m_AtsFile;
+			return mAtsFile;
 		}
 	}
 }

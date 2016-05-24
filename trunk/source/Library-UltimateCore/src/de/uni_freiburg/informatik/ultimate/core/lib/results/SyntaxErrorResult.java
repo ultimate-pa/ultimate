@@ -38,15 +38,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocatio
 public class SyntaxErrorResult extends AbstractResult 
 												implements IResultWithLocation {
 	
-	private String m_LongDescription;
-	private final ILocation m_Location;
+	private String mLongDescription;
+	private final ILocation mLocation;
 
 	public SyntaxErrorResult(String plugin, 
 			ILocation location,
 			String longDescription) {
 		super(plugin);
-		m_Location = location;
-		m_LongDescription = longDescription;
+		mLocation = location;
+		mLongDescription = longDescription;
 	}
 
 	@Override
@@ -56,12 +56,12 @@ public class SyntaxErrorResult extends AbstractResult
 
 	@Override
 	public String getLongDescription() {
-		return m_LongDescription;
+		return mLongDescription;
 	}
 
 	@Override
 	public ILocation getLocation() {
-		return m_Location;
+		return mLocation;
 	}
 
 	

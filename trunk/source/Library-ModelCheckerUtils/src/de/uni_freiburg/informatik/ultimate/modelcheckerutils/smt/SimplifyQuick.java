@@ -66,12 +66,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class SimplifyQuick {
 	
 	private final IUltimateServiceProvider mServices;
-	private final Script m_Script;
-	private IToolchainStorage m_Storage;
+	private final Script mScript;
+	private IToolchainStorage mStorage;
 	
 
 	public SimplifyQuick(Script script, IUltimateServiceProvider services) {
-		m_Script = script;
+		mScript = script;
 		mServices = services;
 	}
 	
@@ -79,7 +79,7 @@ public class SimplifyQuick {
 	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
 		
 //		Settings settings = new SolverBuilder.Settings(false, "", 10 * 1000, null, false, null, null);
-//		Script simplificationScript = SolverBuilder.buildScript(mServices, m_Storage, settings);
+//		Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 //		simplificationScript.setLogic(Logics.CORE);
 //		TermTransferrer towards = new TermTransferrerBooleanCore(simplificationScript);
 //		Term foreign = towards.transform(inputTerm);
@@ -90,14 +90,14 @@ public class SimplifyQuick {
 ////		simplificationScript.setOption(":check-type", "FULL");
 //		
 //		
-//		TermTransferrer back = new TermTransferrer(m_Script, towards.getBacktranferMapping());
+//		TermTransferrer back = new TermTransferrer(mScript, towards.getBacktranferMapping());
 //		Term simplified = back.transform(foreignsimplified);
 //		simplificationScript.exit();
 		
-//		m_Script.setOption(":check-type", "QUICK");
-		SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(m_Script, false, mServices);
+//		mScript.setOption(":check-type", "QUICK");
+		SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(mScript, false, mServices);
 		Term simplified = dda.getSimplifiedTerm(inputTerm);
-//		m_Script.setOption(":check-type", "FULL");
+//		mScript.setOption(":check-type", "FULL");
 		return simplified;
 	}
 }

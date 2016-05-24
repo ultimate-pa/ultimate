@@ -75,7 +75,7 @@ public class SortSymbol {
 	final int mFlags;
 	/**
 	 * The sorts already created from this SortSymbol.
-	 * If m_NumParams is 0, this is the single sort corresponding to
+	 * If mNumParams is 0, this is the single sort corresponding to
 	 * this SortSymbol.  Otherwise this is a UnifyHash containing all
 	 * created sorts.
 	 */

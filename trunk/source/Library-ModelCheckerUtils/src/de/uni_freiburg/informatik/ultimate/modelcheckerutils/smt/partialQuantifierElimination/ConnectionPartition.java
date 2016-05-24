@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * are in the transitive closure of the connection relation.
  */
 public class ConnectionPartition {
-	Map<NonTheorySymbol<?>, Set<Term>> m_Symbol2Terms = new HashMap<NonTheorySymbol<?>, Set<Term>>();
+	Map<NonTheorySymbol<?>, Set<Term>> mSymbol2Terms = new HashMap<NonTheorySymbol<?>, Set<Term>>();
 	UnionFind<NonTheorySymbol<?>> unionFind = new UnionFind<NonTheorySymbol<?>>();
-	List<Term> m_TermWithoutTvs = new ArrayList<Term>();
+	List<Term> mTermWithoutTvs = new ArrayList<Term>();
 	
 	public ConnectionPartition(Collection<Term> parameters) {
 		for (Term term : parameters) {
@@ -59,7 +59,7 @@ public class ConnectionPartition {
 	private void addTerm(Term term) {
 		Set<NonTheorySymbol<?>> symbols = NonTheorySymbol.extractNonTheorySymbols(term);
 		if (symbols.size() == 0) {
-			m_TermWithoutTvs.add(term);
+			mTermWithoutTvs.add(term);
 			return;
 		}
 		NonTheorySymbol<?> last = null;
@@ -81,10 +81,10 @@ public class ConnectionPartition {
 	}
 	
 	private void add(Term term, NonTheorySymbol<?> symbol) {
-		Set<Term> terms = m_Symbol2Terms.get(symbol);
+		Set<Term> terms = mSymbol2Terms.get(symbol);
 		if (terms == null) {
 			terms = new HashSet<Term>();
-			m_Symbol2Terms.put(symbol, terms);
+			mSymbol2Terms.put(symbol, terms);
 		}
 		terms.add(term);
 	}
@@ -96,20 +96,20 @@ public class ConnectionPartition {
 			public Iterator<Set<Term>> iterator() {
 
 				return new Iterator<Set<Term>>() {
-					private Iterator<NonTheorySymbol<?>> m_It;
+					private Iterator<NonTheorySymbol<?>> mIt;
 
 					{
-						m_It = unionFind.getAllRepresentatives().iterator();
+						mIt = unionFind.getAllRepresentatives().iterator();
 					}
 
 					@Override
 					public boolean hasNext() {
-						return m_It.hasNext();
+						return mIt.hasNext();
 					}
 
 					@Override
 					public Set<Term> next() {
-						Set<NonTheorySymbol<?>> eqMembers = unionFind.getEquivalenceClassMembers(m_It.next());
+						Set<NonTheorySymbol<?>> eqMembers = unionFind.getEquivalenceClassMembers(mIt.next());
 						return getTermsOfConnectedVariables(eqMembers);
 					}
 
@@ -126,13 +126,13 @@ public class ConnectionPartition {
 	Set<Term> getTermsOfConnectedVariables(Set<NonTheorySymbol<?>> eqMembers) {
 		Set<Term> result = new HashSet<Term>();
 		for (NonTheorySymbol<?> symbol : eqMembers) {
-			result.addAll(m_Symbol2Terms.get(symbol));
+			result.addAll(mSymbol2Terms.get(symbol));
 		}
 		return result;
 	}
 	
 	List<Term> getTermsWithOutTvs() {
-		return m_TermWithoutTvs;
+		return mTermWithoutTvs;
 	}
 	
 }

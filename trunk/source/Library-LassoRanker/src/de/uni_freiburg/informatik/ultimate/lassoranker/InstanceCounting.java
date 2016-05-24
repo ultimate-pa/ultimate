@@ -46,7 +46,7 @@ public class InstanceCounting {
 	/**
 	 *  Number of the current instance
 	 */
-	private final long m_instance;
+	private final long minstance;
 	
 	public InstanceCounting() {
 		/*
@@ -55,7 +55,7 @@ public class InstanceCounting {
 		 */
 		assert(s_instance_counter >= 0);
 		
-		m_instance = s_instance_counter;
+		minstance = s_instance_counter;
 		s_instance_counter++;
 	}
 	
@@ -63,6 +63,6 @@ public class InstanceCounting {
 	 * @return the instance number
 	 */
 	public long getInstanceNumber() {
-		return m_instance;
+		return minstance;
 	}
 }

@@ -99,7 +99,7 @@ public class FaultLocalizationRelevanceChecker {
 		}
 		
 		public boolean doesUnsatCoreContainTransition() {
-			Term[] unsatCore = m_ManagedScript.getUnsatCore(this);
+			Term[] unsatCore = mManagedScript.getUnsatCore(this);
 			for (Term term : unsatCore) {
 				ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (appTerm.getFunction().getApplicationString().equals(

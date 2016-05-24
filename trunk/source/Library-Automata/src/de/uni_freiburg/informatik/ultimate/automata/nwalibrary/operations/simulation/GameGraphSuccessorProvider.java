@@ -48,7 +48,7 @@ public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccess
 	/**
 	 * Underlying game graph of the provider.
 	 */
-	private final AGameGraph<LETTER, STATE> m_Graph;
+	private final AGameGraph<LETTER, STATE> mGraph;
 
 	/**
 	 * Creates a new successor provider on a given game graph.
@@ -57,7 +57,7 @@ public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccess
 	 *            The game graph of the provider
 	 */
 	public GameGraphSuccessorProvider(final AGameGraph<LETTER, STATE> graph) {
-		m_Graph = graph;
+		mGraph = graph;
 	}
 
 	/*
@@ -68,8 +68,8 @@ public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccess
 	 */
 	@Override
 	public Iterator<Vertex<LETTER, STATE>> getSuccessors(final Vertex<LETTER, STATE> vertex) {
-		if (m_Graph.hasSuccessors(vertex)) {
-			return m_Graph.getSuccessors(vertex).iterator();
+		if (mGraph.hasSuccessors(vertex)) {
+			return mGraph.getSuccessors(vertex).iterator();
 		} else {
 			return new HashSet<Vertex<LETTER, STATE>>().iterator();
 		}

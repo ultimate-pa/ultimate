@@ -38,10 +38,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 public class GenericResultAtLocation extends AbstractResult 
 						implements IResultWithSeverity, IResultWithLocation  {
 
-	private final ILocation m_Location;
-	private final String m_ShortDescription;
-	private final String m_LongDescription;
-	private final Severity m_Severity;
+	private final ILocation mLocation;
+	private final String mShortDescription;
+	private final String mLongDescription;
+	private final Severity mSeverity;
 	
 
 	public GenericResultAtLocation(String plugin, ILocation location, 
@@ -51,31 +51,31 @@ public class GenericResultAtLocation extends AbstractResult
 		if (location == null) {
 			throw new IllegalArgumentException();
 		} else {
-			m_Location = location;
+			mLocation = location;
 		}
-		m_ShortDescription = shortDescription;
-		m_LongDescription = longDescription;
-		m_Severity = severity;
+		mShortDescription = shortDescription;
+		mLongDescription = longDescription;
+		mSeverity = severity;
 	}
 
 	@Override
 	public String getShortDescription() {
-		return m_ShortDescription;
+		return mShortDescription;
 	}
 
 	@Override
 	public String getLongDescription() {
-		return m_LongDescription;
+		return mLongDescription;
 	}
 
 	@Override
 	public Severity getSeverity() {
-		return m_Severity;
+		return mSeverity;
 	}
 
 	@Override
 	public ILocation getLocation() {
-		return m_Location;
+		return mLocation;
 	}
 
 }

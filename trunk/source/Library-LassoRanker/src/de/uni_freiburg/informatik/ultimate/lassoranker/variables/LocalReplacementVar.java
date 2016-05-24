@@ -21,12 +21,12 @@ public class LocalReplacementVar extends ReplacementVar {
 	 * (should be a ProgramPoint but I don't want to introduce the 
 	 * dependency on RCFGBuilder right now)
 	 */
-	Object m_Location;
+	Object mLocation;
 	
 	
 	public LocalReplacementVar(String name, Term definition, Object location) {
 		super(name, definition);
-		m_Location = location;
+		mLocation = location;
 	}
 
 }

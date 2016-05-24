@@ -48,21 +48,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 
 public class IndexSupportingInvariantAnalysis {
-	private final SetOfDoubletons<Term> m_AllDoubletons;
-	private final Script m_Script;
-	private final Boogie2SMT m_boogie2smt;
-	private final ArrayList<Term> m_EqualitySupportingInvariants = new ArrayList<Term>();
-	private final ArrayList<Term> m_NotEqualsSupportingInvariants = new ArrayList<Term>();
+	private final SetOfDoubletons<Term> mAllDoubletons;
+	private final Script mScript;
+	private final Boogie2SMT mboogie2smt;
+	private final ArrayList<Term> mEqualitySupportingInvariants = new ArrayList<Term>();
+	private final ArrayList<Term> mNotEqualsSupportingInvariants = new ArrayList<Term>();
 	
 	private final SetOfDoubletons<Term> distinctDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> equalDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> unknownDoubletons = new SetOfDoubletons<>();
 	
-	private final TransFormula m_OriginalStem;
-	private final TransFormula m_OriginalLoop;
-	private final Set<BoogieVar> m_ModifiableGlobalsAtStart;
-	private final Set<BoogieVar> m_ModifiableGlobalsAtHonda;
-	private final ArrayCellRepVarConstructor m_ArrayCellRepVarConstructor;
+	private final TransFormula mOriginalStem;
+	private final TransFormula mOriginalLoop;
+	private final Set<BoogieVar> mModifiableGlobalsAtStart;
+	private final Set<BoogieVar> mModifiableGlobalsAtHonda;
+	private final ArrayCellRepVarConstructor mArrayCellRepVarConstructor;
 	
 	public IndexSupportingInvariantAnalysis(ArrayCellRepVarConstructor arrayCellRepVarConstructor,
 			boolean searchAdditionalSupportingInvariants, 
@@ -70,16 +70,16 @@ public class IndexSupportingInvariantAnalysis {
 			TransFormula originalStem, TransFormula originalLoop, 
 			Set<BoogieVar> modifiableGlobalsAtHonda) {
 		super();
-		m_ArrayCellRepVarConstructor = arrayCellRepVarConstructor;
-		m_boogie2smt = boogie2smt;
-		m_Script = boogie2smt.getScript();
-		m_OriginalStem = originalStem;
-		m_OriginalLoop = originalLoop;
-		m_ModifiableGlobalsAtStart = Collections.emptySet();
-		m_ModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
-		m_AllDoubletons = computeDoubletons();
+		mArrayCellRepVarConstructor = arrayCellRepVarConstructor;
+		mboogie2smt = boogie2smt;
+		mScript = boogie2smt.getScript();
+		mOriginalStem = originalStem;
+		mOriginalLoop = originalLoop;
+		mModifiableGlobalsAtStart = Collections.emptySet();
+		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
+		mAllDoubletons = computeDoubletons();
 		
-		for (Doubleton<Term> doubleton : m_AllDoubletons.elements()) {
+		for (Doubleton<Term> doubleton : mAllDoubletons.elements()) {
 //			if (containsTermVariable(doubleton)) {
 				boolean equalityIsInvariant = isInVariant(doubleton, true);
 				if (equalityIsInvariant) {
@@ -100,12 +100,12 @@ public class IndexSupportingInvariantAnalysis {
 	
 	private void addDistinctDoubleton(Doubleton<Term> doubleton) {
 		distinctDoubletons.addDoubleton(doubleton);
-		m_NotEqualsSupportingInvariants.add(notEqualTerm(doubleton));
+		mNotEqualsSupportingInvariants.add(notEqualTerm(doubleton));
 	}
 	
 	private void addEqualDoubleton(Doubleton<Term> doubleton) {
 		equalDoubletons.addDoubleton(doubleton);
-		m_EqualitySupportingInvariants.add(equalTerm(doubleton));
+		mEqualitySupportingInvariants.add(equalTerm(doubleton));
 	}
 	
 	private void addUnknownDoubleton(Doubleton<Term> doubleton) {
@@ -114,7 +114,7 @@ public class IndexSupportingInvariantAnalysis {
 	
 	private SetOfDoubletons<Term> computeDoubletons() {
 		NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> array2index2repVar = 
-				m_ArrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
+				mArrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
 		SetOfDoubletons<Term> result = new SetOfDoubletons<>();
 		for (TermVariable array : array2index2repVar.keySet()) {
 			Set<ArrayIndex> allIndices = array2index2repVar.get(array).keySet();
@@ -136,11 +136,11 @@ public class IndexSupportingInvariantAnalysis {
 	
 	
 	private Term equalTerm(Doubleton<Term> Doubleton) {
-		return SmtUtils.binaryEquality(m_Script, Doubleton.getOneElement(), Doubleton.getOtherElement());
+		return SmtUtils.binaryEquality(mScript, Doubleton.getOneElement(), Doubleton.getOtherElement());
 	}
 
 	private Term notEqualTerm(Doubleton<Term> Doubleton) {
-		return SmtUtils.not(m_Script, equalTerm(Doubleton));
+		return SmtUtils.not(mScript, equalTerm(Doubleton));
 	}
 	
 	private boolean isInVariant(Doubleton<Term> definingDoubleton, boolean checkEquals) {
@@ -150,15 +150,15 @@ public class IndexSupportingInvariantAnalysis {
 		} else {
 			invariantCandidateTerm = notEqualTerm(definingDoubleton);
 		}
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, m_boogie2smt);
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(invariantCandidateTerm, mboogie2smt);
 		IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
 		Set<BoogieVar> emptyVarSet = Collections.emptySet();
-		IPredicate truePredicate = new BasicPredicate(0, new String[0], m_Script.term("true"), emptyVarSet, m_Script.term("true"));
-		LBool impliedByStem = PredicateUtils.isInductiveHelper(m_Script, 
-				truePredicate, invariantCandidate, m_OriginalStem, m_ModifiableGlobalsAtStart, m_ModifiableGlobalsAtHonda);
+		IPredicate truePredicate = new BasicPredicate(0, new String[0], mScript.term("true"), emptyVarSet, mScript.term("true"));
+		LBool impliedByStem = PredicateUtils.isInductiveHelper(mScript, 
+				truePredicate, invariantCandidate, mOriginalStem, mModifiableGlobalsAtStart, mModifiableGlobalsAtHonda);
 		if (impliedByStem == LBool.UNSAT) {
-			LBool invariantOfLoop = PredicateUtils.isInductiveHelper(m_Script, 
-					invariantCandidate, invariantCandidate, m_OriginalLoop, m_ModifiableGlobalsAtHonda, m_ModifiableGlobalsAtHonda);
+			LBool invariantOfLoop = PredicateUtils.isInductiveHelper(mScript, 
+					invariantCandidate, invariantCandidate, mOriginalLoop, mModifiableGlobalsAtHonda, mModifiableGlobalsAtHonda);
 			if (invariantOfLoop == LBool.UNSAT) {
 				return true;
 			} else {
@@ -194,10 +194,10 @@ public class IndexSupportingInvariantAnalysis {
 	}
 	
 	public List<Term> getAdditionalConjunctsEqualities() {
-		return m_EqualitySupportingInvariants;
+		return mEqualitySupportingInvariants;
 	}
 	
 	public List<Term> getAdditionalConjunctsNotEquals() {
-		return m_NotEqualsSupportingInvariants;
+		return mNotEqualsSupportingInvariants;
 	}
 }

@@ -65,89 +65,89 @@ public class LassoExtractorNaive extends AbstractLassoExtractor {
 		}
 		assert (i<=3 || atLeastOneInappropriateSuccessor);
 		if (atLeastOneInappropriateSuccessor) {
-			m_Stem = null;
-			m_Loop = null;
-			m_Honda = null;
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = firstNode;
+			mStem = null;
+			mLoop = null;
+			mHonda = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = firstNode;
 			return;
 		}
 		if (firstNode == null) {
-			m_Stem = null;
-			m_Loop = null;
-			m_Honda = null;
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = rootNode;
+			mStem = null;
+			mLoop = null;
+			mHonda = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = rootNode;
 			return;
 		}
 		List<RCFGEdge> firstSucc = firstNode.getOutgoingEdges();
 		if (firstSucc.size() == 1) {
 			// this edge be the stem, the next node must be the honda
 			CodeBlock stemCodeBlock = (CodeBlock) firstSucc.get(0);
-			m_Honda = (ProgramPoint) stemCodeBlock.getTarget();
-			m_Stem = constructNestedWordOfLenthOne(stemCodeBlock);
+			mHonda = (ProgramPoint) stemCodeBlock.getTarget();
+			mStem = constructNestedWordOfLenthOne(stemCodeBlock);
 		} else if (firstSucc.size() == 2) {
 			// there is no stem, this must already be the honda
-			m_Stem = null;
-			m_Honda = firstNode;
+			mStem = null;
+			mHonda = firstNode;
 		} else {
-			m_Stem = null;
-			m_Loop = null;
-			m_Honda = null;
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = firstNode;
+			mStem = null;
+			mLoop = null;
+			mHonda = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = firstNode;
 			return;
 		}
-		List<RCFGEdge> hondaSuccs = m_Honda.getOutgoingEdges();
+		List<RCFGEdge> hondaSuccs = mHonda.getOutgoingEdges();
 		if (hondaSuccs.size() != 2) {
 			// honda has to have two outgoing edges (one where the while loop
 			// was taken, one where is is not taken)
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = m_Honda;
-			m_Loop = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = mHonda;
+			mLoop = null;
 			return;
 		}
 		CodeBlock hondaSucc0 = (CodeBlock) hondaSuccs.get(0);
 		CodeBlock hondaSucc1 = (CodeBlock) hondaSuccs.get(1);
 		
-		CodeBlock loopCand0 = checkForOneStepLoop(m_Honda, hondaSucc0);
-		CodeBlock loopCand1 = checkForOneStepLoop(m_Honda, hondaSucc1);
+		CodeBlock loopCand0 = checkForOneStepLoop(mHonda, hondaSucc0);
+		CodeBlock loopCand1 = checkForOneStepLoop(mHonda, hondaSucc1);
 		if (loopCand0 != null & loopCand1 != null) {
 			// double loop
-			m_LassoFound = false;
-			m_SomeNoneForErrorReport = m_Honda;
-			m_Loop = null;
+			mLassoFound = false;
+			mSomeNoneForErrorReport = mHonda;
+			mLoop = null;
 		} else if (loopCand0 != null) {
-			m_LassoFound = true;
-			m_SomeNoneForErrorReport = null;
-			m_Loop = constructNestedWordOfLenthOne(loopCand0);
+			mLassoFound = true;
+			mSomeNoneForErrorReport = null;
+			mLoop = constructNestedWordOfLenthOne(loopCand0);
 		} else if (loopCand1 != null) {
-			m_LassoFound = true;
-			m_SomeNoneForErrorReport = null;
-			m_Loop = constructNestedWordOfLenthOne(loopCand1);
+			mLassoFound = true;
+			mSomeNoneForErrorReport = null;
+			mLoop = constructNestedWordOfLenthOne(loopCand1);
 		} else {
 			// now, check for two step loop
-			loopCand0 = checkForTwoStepLoop(m_Honda, hondaSucc0);
-			loopCand1 = checkForTwoStepLoop(m_Honda, hondaSucc1);
+			loopCand0 = checkForTwoStepLoop(mHonda, hondaSucc0);
+			loopCand1 = checkForTwoStepLoop(mHonda, hondaSucc1);
 			if (loopCand0 != null & loopCand1 != null) {
 				// double loop
-				m_LassoFound = false;
-				m_SomeNoneForErrorReport = m_Honda;
-				m_Loop = null;
+				mLassoFound = false;
+				mSomeNoneForErrorReport = mHonda;
+				mLoop = null;
 			} else if (loopCand0 != null) {
-				m_LassoFound = true;
-				m_SomeNoneForErrorReport = null;
-				m_Loop = constructNestedWordOfLenthOne(loopCand0);
+				mLassoFound = true;
+				mSomeNoneForErrorReport = null;
+				mLoop = constructNestedWordOfLenthOne(loopCand0);
 				assert programStemsFromCacslTranslation;
 			} else if (loopCand1 != null) {
-				m_LassoFound = true;
-				m_SomeNoneForErrorReport = null;
-				m_Loop = constructNestedWordOfLenthOne(loopCand1);
+				mLassoFound = true;
+				mSomeNoneForErrorReport = null;
+				mLoop = constructNestedWordOfLenthOne(loopCand1);
 				assert programStemsFromCacslTranslation;
 			} else {
-				m_LassoFound = false;
-				m_SomeNoneForErrorReport = m_Honda;
-				m_Loop = null;
+				mLassoFound = false;
+				mSomeNoneForErrorReport = mHonda;
+				mLoop = null;
 			}
 		}
 	}

@@ -44,18 +44,18 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 public class MinimizeNwaMaxSAT<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
-	private final AutomataLibraryServices m_services;
-	private final INestedWordAutomaton<LETTER, STATE> m_operand;
+	private final AutomataLibraryServices mservices;
+	private final INestedWordAutomaton<LETTER, STATE> moperand;
 
-	private final NestedWordAutomaton<LETTER, STATE> m_result;
+	private final NestedWordAutomaton<LETTER, STATE> mresult;
 
 	public MinimizeNwaMaxSAT(
 			AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomaton<LETTER, STATE> automaton) {
 
-		m_services = services;
-		m_operand = automaton;
+		mservices = services;
+		moperand = automaton;
 
 		ILogger logger = services.getLoggingService().getLogger(operationName());
 		ILogger convertLog = services.getLoggingService().getLogger("Converter");
@@ -92,7 +92,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		Partition eqCls = Generator.makeMergeRelation(nwa.numStates, assignments);
 		generateLog.info("finished making equivalence classes");
 
-		m_result = converter.constructMerged(eqCls);
+		mresult = converter.constructMerged(eqCls);
 		convertLog.info("constructed minimized automaton");
 
 		logger.info(exitMessage());
@@ -115,16 +115,16 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 
 	@Override
 	public NestedWordAutomaton<LETTER, STATE> getResult() {
-		return m_result;
+		return mresult;
 	}
 
 	@Override
 	public final boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		if (checkInclusion(m_operand, getResult(), stateFactory)
-			&& checkInclusion(getResult(), m_operand, stateFactory))
+		if (checkInclusion(moperand, getResult(), stateFactory)
+			&& checkInclusion(getResult(), moperand, stateFactory))
 				return true;
 		else {
-			ResultChecker.writeToFileIfPreferred(m_services, operationName() + " failed", "language equality check failed", m_operand);
+			ResultChecker.writeToFileIfPreferred(mservices, operationName() + " failed", "language equality check failed", moperand);
 			return false;
 		}
 	 }
@@ -148,9 +148,9 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> superset,
 			final StateFactory<STATE> stateFactory)
 				throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(m_services,
-				ResultChecker.getOldApiNwa(m_services, subset),
-				ResultChecker.getOldApiNwa(m_services, superset),
+		return ResultChecker.nwaLanguageInclusion(mservices,
+				ResultChecker.getOldApiNwa(mservices, subset),
+				ResultChecker.getOldApiNwa(mservices, superset),
 				stateFactory) == null;
 	}
 }

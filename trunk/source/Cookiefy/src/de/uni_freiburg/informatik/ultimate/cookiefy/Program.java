@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class Program {
 	private final ILogger mLogger;
-	private Unit m_Unit;
+	private Unit mUnit;
 	
 	public Map<String, Procedure> Procedures;
 	public List<VariableDeclaration> Globals;
@@ -74,7 +74,7 @@ public class Program {
 	 */
 	public Program(Unit unit, ILogger logger) {
 		this(logger);
-		this.m_Unit = unit;
+		this.mUnit = unit;
 
 		for (Declaration decl : unit.getDeclarations()) {
 			if (decl instanceof Procedure) {

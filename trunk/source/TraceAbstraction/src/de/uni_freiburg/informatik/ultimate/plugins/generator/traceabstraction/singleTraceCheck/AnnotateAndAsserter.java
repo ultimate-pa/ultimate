@@ -63,112 +63,112 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class AnnotateAndAsserter {
 	
-	protected final IUltimateServiceProvider m_Services;
-	protected final ILogger m_Logger;
+	protected final IUltimateServiceProvider mServices;
+	protected final ILogger mLogger;
 
-	protected final Script m_Script;
-	protected final SmtManager m_SmtManager;
-	protected final NestedWord<? extends IAction> m_Trace;
+	protected final Script mScript;
+	protected final SmtManager mSmtManager;
+	protected final NestedWord<? extends IAction> mTrace;
 
 
-	protected LBool m_Satisfiable;
-	protected final NestedFormulas<Term, Term> m_SSA;
-	protected ModifiableNestedFormulas<Term, Term> m_AnnotSSA;
+	protected LBool mSatisfiable;
+	protected final NestedFormulas<Term, Term> mSSA;
+	protected ModifiableNestedFormulas<Term, Term> mAnnotSSA;
 
-	protected final AnnotateAndAssertCodeBlocks m_AnnotateAndAssertCodeBlocks;
+	protected final AnnotateAndAssertCodeBlocks mAnnotateAndAssertCodeBlocks;
 
-	protected final TraceCheckerBenchmarkGenerator m_Tcbg;
+	protected final TraceCheckerBenchmarkGenerator mTcbg;
 
 	public AnnotateAndAsserter(SmtManager smtManager,
 			NestedFormulas<Term, Term> nestedSSA, 
 			AnnotateAndAssertCodeBlocks aaacb, 
 			TraceCheckerBenchmarkGenerator tcbg, IUltimateServiceProvider services) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_SmtManager = smtManager;
-		m_Script = smtManager.getScript();
-		m_Trace = nestedSSA.getTrace();
-		m_SSA = nestedSSA;
-		m_AnnotateAndAssertCodeBlocks = aaacb;
-		m_Tcbg = tcbg;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSmtManager = smtManager;
+		mScript = smtManager.getScript();
+		mTrace = nestedSSA.getTrace();
+		mSSA = nestedSSA;
+		mAnnotateAndAssertCodeBlocks = aaacb;
+		mTcbg = tcbg;
 	}
 
 
 	public void buildAnnotatedSsaAndAssertTerms() {
-		if (m_AnnotSSA != null) {
+		if (mAnnotSSA != null) {
 			throw new AssertionError("already build");
 		}
-		assert m_Satisfiable == null;
+		assert mSatisfiable == null;
 
-		m_AnnotSSA = new ModifiableNestedFormulas<Term, Term>(m_Trace, new TreeMap<Integer, Term>());
+		mAnnotSSA = new ModifiableNestedFormulas<Term, Term>(mTrace, new TreeMap<Integer, Term>());
 
-		m_AnnotSSA.setPrecondition(m_AnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
-		m_AnnotSSA.setPostcondition(m_AnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
+		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
+		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 
 		Collection<Integer> callPositions = new ArrayList<Integer>();
 		Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
-		for (int i=0; i<m_Trace.length(); i++) {
-			if (m_Trace.isCallPosition(i)) {
+		for (int i=0; i<mTrace.length(); i++) {
+			if (mTrace.isCallPosition(i)) {
 				callPositions.add(i);
-				m_AnnotSSA.setGlobalVarAssignmentAtPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertGlobalVarAssignemntCall(i));
-				m_AnnotSSA.setLocalVarAssignmentAtPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntCall(i));
-				m_AnnotSSA.setOldVarAssignmentAtPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntCall(i));
+				mAnnotSSA.setGlobalVarAssignmentAtPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertGlobalVarAssignemntCall(i));
+				mAnnotSSA.setLocalVarAssignmentAtPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntCall(i));
+				mAnnotSSA.setOldVarAssignmentAtPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntCall(i));
 			} else  {
-				if (m_Trace.isReturnPosition(i) && m_Trace.isPendingReturn(i)) {
+				if (mTrace.isReturnPosition(i) && mTrace.isPendingReturn(i)) {
 					pendingReturnPositions.add(i);
 				}
-				m_AnnotSSA.setFormulaAtNonCallPos(i, m_AnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
+				mAnnotSSA.setFormulaAtNonCallPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 			}
 		}
 
-		assert callPositions.containsAll(m_Trace.getCallPositions());
-		assert m_Trace.getCallPositions().containsAll(callPositions);
+		assert callPositions.containsAll(mTrace.getCallPositions());
+		assert mTrace.getCallPositions().containsAll(callPositions);
 
 
 		// number that the pending context. The first pending context has
 		// number -1, the second -2, ...
-		int pendingContextCode = -1 - m_SSA.getTrace().getPendingReturns().size();
-		for (Integer positionOfPendingReturn : m_SSA.getTrace().getPendingReturns().keySet()) {
-			assert m_Trace.isPendingReturn(positionOfPendingReturn);
+		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
+		for (Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
+			assert mTrace.isPendingReturn(positionOfPendingReturn);
 			{
-				Term annotated = m_AnnotateAndAssertCodeBlocks.annotateAndAssertPendingContext(
+				Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertPendingContext(
 						positionOfPendingReturn, pendingContextCode);
-				m_AnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
+				mAnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
 			}
 			{
-				Term annotated = m_AnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
+				Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
 						positionOfPendingReturn, pendingContextCode);
-				m_AnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
+				mAnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
 			{
-				Term annotated = m_AnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
+				Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
 						positionOfPendingReturn, pendingContextCode);
-				m_AnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
+				mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
 			pendingContextCode++;
 		}
 		try {
-			m_Satisfiable = m_SmtManager.getScript().checkSat();
+			mSatisfiable = mSmtManager.getScript().checkSat();
 		} catch (SMTLIBException e) {
 			if (e.getMessage().contains("Received EOF on stdin. No stderr output.")
-					&& !m_Services.getProgressMonitorService().continueProcessing()) {
+					&& !mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(), 
-						"checking feasibility of error trace whose length is " + m_Trace.length());
+						"checking feasibility of error trace whose length is " + mTrace.length());
 			} else {
 				throw e;
 			}
 		}
 		// Report benchmarks
-		m_Tcbg.reportnewCheckSat();
-		m_Tcbg.reportnewCodeBlocks(m_Trace.length());
-		m_Tcbg.reportnewAssertedCodeBlocks(m_Trace.length());
-		m_Logger.info("Conjunction of SSA is " + m_Satisfiable);
+		mTcbg.reportnewCheckSat();
+		mTcbg.reportnewCodeBlocks(mTrace.length());
+		mTcbg.reportnewAssertedCodeBlocks(mTrace.length());
+		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
 
 
 
 	public LBool isInputSatisfiable() {
-		return m_Satisfiable;
+		return mSatisfiable;
 	}
 
 
@@ -246,7 +246,7 @@ public class AnnotateAndAsserter {
 
 
 	public NestedFormulas<Term, Term> getAnnotatedSsa() {
-		return m_AnnotSSA;
+		return mAnnotSSA;
 	}
 
 

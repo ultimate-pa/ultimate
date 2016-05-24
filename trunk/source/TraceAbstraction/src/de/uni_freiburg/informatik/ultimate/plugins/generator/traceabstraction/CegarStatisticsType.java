@@ -49,26 +49,26 @@ public class CegarStatisticsType extends AStatisticsType<CegarLoopStatisticsDefi
 	}
 
 	public class SizeIterationPair {
-		final int m_Size;
-		final int m_Iteration;
+		final int mSize;
+		final int mIteration;
 
 		public SizeIterationPair(int size, int iteration) {
 			super();
-			m_Size = size;
-			m_Iteration = iteration;
+			mSize = size;
+			mIteration = iteration;
 		}
 
 		public int getSize() {
-			return m_Size;
+			return mSize;
 		}
 
 		public int getIteration() {
-			return m_Iteration;
+			return mIteration;
 		}
 
 		@Override
 		public String toString() {
-			return "size=" + m_Size + "occurred in iteration=" + m_Iteration;
+			return "size=" + mSize + "occurred in iteration=" + mIteration;
 		}
 	}
 }

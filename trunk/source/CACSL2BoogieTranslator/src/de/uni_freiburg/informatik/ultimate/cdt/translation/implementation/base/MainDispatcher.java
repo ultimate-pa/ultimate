@@ -250,14 +250,14 @@ public class MainDispatcher extends Dispatcher {
 	 */
 	private LinkedHashSet<IASTNode> variablesOnHeap;
 	
-	private Set<Set<String>> m_NodeLabelsOfAddedWitnesses = new HashSet<>();
+	private Set<Set<String>> mNodeLabelsOfAddedWitnesses = new HashSet<>();
 
 	// begin alex
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
 	private LinkedHashMap<Integer, String> indexToFunction;
-	protected boolean m_BitvectorTranslation;
-	protected boolean m_OverapproximateFloatingPointOperations;
-	protected BeforeAfterWitnessInvariantsMapping m_WitnessInvariants;
+	protected boolean mBitvectorTranslation;
+	protected boolean mOverapproximateFloatingPointOperations;
+	protected BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
 
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
 		return mFunctionToIndex;
@@ -284,9 +284,9 @@ public class MainDispatcher extends Dispatcher {
 	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, BeforeAfterWitnessInvariantsMapping witnessInvariants,
 			IUltimateServiceProvider services, ILogger logger) {
 		super(backtranslator, services, logger);
-		m_BitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
-		m_OverapproximateFloatingPointOperations = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
-		m_WitnessInvariants = witnessInvariants;
+		mBitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
+		mOverapproximateFloatingPointOperations = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
+		mWitnessInvariants = witnessInvariants;
 	}
 
 	/**
@@ -363,11 +363,11 @@ public class MainDispatcher extends Dispatcher {
 	protected void init() {
 
 		sideEffectHandler = new SideEffectHandler();
-		typeHandler = new TypeHandler(!m_BitvectorTranslation);
-		acslHandler = new ACSLHandler(m_WitnessInvariants != null);
+		typeHandler = new TypeHandler(!mBitvectorTranslation);
+		acslHandler = new ACSLHandler(mWitnessInvariants != null);
 		nameHandler = new NameHandler(backtranslator);
 		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler, 
-				m_BitvectorTranslation, m_OverapproximateFloatingPointOperations, nameHandler);
+				mBitvectorTranslation, mOverapproximateFloatingPointOperations, nameHandler);
 		this.backtranslator.setExpressionTranslation(((CHandler) cHandler).getExpressionTranslation());
 		preprocessorHandler = new PreprocessorHandler();
 		REPORT_WARNINGS = true;
@@ -377,8 +377,8 @@ public class MainDispatcher extends Dispatcher {
 	public Result dispatch(IASTNode n) {
 		final List<AssertStatement> witnessInvariantsBefore;
 		WitnessInvariant invariantBefore;
-		if (m_WitnessInvariants != null) {
-			invariantBefore = m_WitnessInvariants.getInvariantsBefore().get(n);
+		if (mWitnessInvariants != null) {
+			invariantBefore = mWitnessInvariants.getInvariantsBefore().get(n);
 			witnessInvariantsBefore = translateWitnessInvariant(n, invariantBefore);
 		} else {
 			invariantBefore = null;
@@ -561,9 +561,9 @@ public class MainDispatcher extends Dispatcher {
 		}
 		final List<AssertStatement> witnessInvariantsAfter;
 		WitnessInvariant invariantAfter;
-		if (m_WitnessInvariants != null) {
+		if (mWitnessInvariants != null) {
 			// TODO: Use the new information as you see fit
-			invariantAfter = m_WitnessInvariants.getInvariantsAfter().get(n);
+			invariantAfter = mWitnessInvariants.getInvariantsAfter().get(n);
 			witnessInvariantsAfter = translateWitnessInvariant(n, invariantAfter);
 		} else {
 			invariantAfter = null;
@@ -575,42 +575,42 @@ public class MainDispatcher extends Dispatcher {
 			if (result instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) result;
 				final ArrayList<Statement> stmt = exprResult.stmt;
-				if (invariantBefore != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
+				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
 					stmt.addAll(0, witnessInvariantsBefore);
-					m_NodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
+					mNodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantBefore
 							+ " directly before the following code " + loc);
 				}
-				if (invariantAfter != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
+				if (invariantAfter != null && !mNodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
 					stmt.addAll(witnessInvariantsAfter);
-					m_NodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
+					mNodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
 							+ loc);
 				}
 			} else if (result instanceof ExpressionListResult) {
 				ExpressionListResult exlire = (ExpressionListResult) result;
-				if (invariantBefore != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
+				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
 					ArrayList<Statement> stmt = exlire.list.get(0).stmt;
 					stmt.addAll(0, witnessInvariantsBefore);
-					m_NodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
+					mNodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantBefore
 							+ " directly before the following code " + loc);
 				}
-				if (invariantAfter != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
+				if (invariantAfter != null && !mNodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
 					ArrayList<Statement> stmt = exlire.list.get(exlire.list.size() - 1).stmt;
 					stmt.addAll(witnessInvariantsAfter);
-					m_NodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
+					mNodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
 							+ loc);
 				}
 			} else {
-				if (invariantBefore != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
+				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
 					String message = "Found witness invariant but unable to add check " + invariantBefore
 							+ " directly before the following code " + loc;
 					mLogger.warn(message);
 					// throw new AssertionError(message);
 				}
-				if (invariantAfter != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
+				if (invariantAfter != null && !mNodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
 					String message = "Found witness invariant but unable to add check " + invariantAfter
 							+ " directly after the following code " + loc;
 					mLogger.warn(message);

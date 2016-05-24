@@ -68,7 +68,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	 * Search for a nested error path within the graph with the given root. Return null
 	 * if there is none.
 	 * @param root
-	 * @param m_Logger 
+	 * @param mLogger 
 	 * @return
 	 */
 	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(AnnotatedProgramPoint root) {

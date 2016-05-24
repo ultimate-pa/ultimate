@@ -43,9 +43,9 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	
-	private BoogieNonOldVar m_NonOldVar;
+	private BoogieNonOldVar mNonOldVar;
 	
-	private final int m_HashCode;
+	private final int mHashCode;
 
 	
 	public BoogieOldVar(String identifier, IType iType, 
@@ -54,7 +54,7 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 			ApplicationTerm defaultConstant,
 			ApplicationTerm primedContant) {
 		super(identifier, iType, tv, defaultConstant, primedContant);
-		m_HashCode = computeHashCode();
+		mHashCode = computeHashCode();
 	}
 	
 	public boolean isOldvar() {
@@ -63,12 +63,12 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 
 	
 	public BoogieNonOldVar getNonOldVar() {
-		return m_NonOldVar;
+		return mNonOldVar;
 	}
 
 
 	public void setNonOldVar(BoogieNonOldVar nonOldVar) {
-		m_NonOldVar = nonOldVar;
+		mNonOldVar = nonOldVar;
 	}
 
 
@@ -85,7 +85,7 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return m_HashCode;
+		return mHashCode;
 	}
 	
 	

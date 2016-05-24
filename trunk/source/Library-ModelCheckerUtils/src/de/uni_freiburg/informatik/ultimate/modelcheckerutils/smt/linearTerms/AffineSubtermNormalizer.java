@@ -39,12 +39,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
  */
 public class AffineSubtermNormalizer extends TermTransformer {
 
-	private final Script m_Script;
+	private final Script mScript;
 	private final ILogger mLogger;
 
 	public AffineSubtermNormalizer(Script script, ILogger logger) {
 		super();
-		m_Script = script;
+		mScript = script;
 		mLogger = logger;
 	}
 
@@ -68,12 +68,12 @@ public class AffineSubtermNormalizer extends TermTransformer {
 		if (isBinaryNumericRelation(term)) {
 			AffineRelation affRel = null;
 			try {
-				affRel = new AffineRelation(m_Script, term);
+				affRel = new AffineRelation(mScript, term);
 			} catch (NotAffineException e) {
 				setResult(term);
 				return;
 			}
-			Term pnf = affRel.positiveNormalForm(m_Script);
+			Term pnf = affRel.positiveNormalForm(mScript);
 			setResult(pnf);
 			return;
 		}

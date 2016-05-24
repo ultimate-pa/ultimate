@@ -57,7 +57,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	/**
 	 * The sort to be used for new replacement TermVariable's
 	 */
-	private final Sort m_repVarSort;
+	private final Sort mrepVarSort;
 
 	/**
 	 * Compute definition (see {@link RankVar#getDefinition()} for RankVar
@@ -95,19 +95,19 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	 * Maps TermVariable that have to replaced to the term by which they are
 	 * replaced.
 	 */
-	private final Map<Term, Term> m_SubstitutionMapping;
+	private final Map<Term, Term> mSubstitutionMapping;
 	
 	/**
 	 * Factory for construction of auxVars.
 	 */
-	private final ReplacementVarFactory m_VarFactory;
-	protected final Script m_Script;
+	private final ReplacementVarFactory mVarFactory;
+	protected final Script mScript;
 
 	public RewriteTermVariables(ReplacementVarFactory varFactory, Script script) {
-		m_VarFactory = varFactory;
-		m_Script = script;
-		m_repVarSort = m_Script.sort(getRepVarSortName());
-		m_SubstitutionMapping = new LinkedHashMap<Term, Term>();
+		mVarFactory = varFactory;
+		mScript = script;
+		mrepVarSort = mScript.sort(getRepVarSortName());
+		mSubstitutionMapping = new LinkedHashMap<Term, Term>();
 	}
 
 	/**
@@ -116,7 +116,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	 */
 	private final ReplacementVar getOrConstructReplacementVar(RankVar rankVar) {
 		Term definition = constructNewDefinitionForRankVar(rankVar);
-		ReplacementVar repVar = m_VarFactory.
+		ReplacementVar repVar = mVarFactory.
 				getOrConstuctReplacementVar(definition);
 		return repVar;
 	}
@@ -151,11 +151,11 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	
 		for (RankVar rv : rankVarsWithCommonInVarOutVar) {
 			ReplacementVar repVar = getOrConstructReplacementVar(rv);
-			TermVariable newInOutVar = m_VarFactory.getOrConstructAuxVar(
+			TermVariable newInOutVar = mVarFactory.getOrConstructAuxVar(
 					computeTermVariableName(repVar.getGloballyUniqueId(), true, true), 
-					m_repVarSort);
+					mrepVarSort);
 			Term replacementTerm = constructReplacementTerm(newInOutVar);
-			m_SubstitutionMapping.put(tf.getInVars().get(rv), replacementTerm);
+			mSubstitutionMapping.put(tf.getInVars().get(rv), replacementTerm);
 			tf.removeInVar(rv);
 			tf.addInVar(repVar, newInOutVar);
 			tf.removeOutVar(rv);
@@ -164,22 +164,22 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	
 		for (RankVar rv : rankVarsWithDistinctInVar) {
 			ReplacementVar repVar = getOrConstructReplacementVar(rv);
-			TermVariable newInVar = m_VarFactory.getOrConstructAuxVar(
+			TermVariable newInVar = mVarFactory.getOrConstructAuxVar(
 					computeTermVariableName(repVar.getGloballyUniqueId(), true, false), 
-					m_repVarSort);
+					mrepVarSort);
 			Term replacementTerm = constructReplacementTerm(newInVar);
-			m_SubstitutionMapping.put(tf.getInVars().get(rv), replacementTerm);
+			mSubstitutionMapping.put(tf.getInVars().get(rv), replacementTerm);
 			tf.removeInVar(rv);
 			tf.addInVar(repVar, newInVar);
 		}
 		
 		for (RankVar rv : rankVarsWithDistinctOutVar) {
 			ReplacementVar repVar = getOrConstructReplacementVar(rv);
-			TermVariable newOutVar = m_VarFactory.getOrConstructAuxVar(
+			TermVariable newOutVar = mVarFactory.getOrConstructAuxVar(
 					computeTermVariableName(repVar.getGloballyUniqueId(), false, true), 
-					m_repVarSort);
+					mrepVarSort);
 			Term replacementTerm = constructReplacementTerm(newOutVar);
-			m_SubstitutionMapping.put(tf.getOutVars().get(rv), replacementTerm);
+			mSubstitutionMapping.put(tf.getOutVars().get(rv), replacementTerm);
 			tf.removeOutVar(rv);
 			tf.addOutVar(repVar, newOutVar);
 		}
@@ -187,9 +187,9 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		Set<TermVariable> auxVars = tf.getAuxVars();
 		for (TermVariable tv : auxVars) {
 			if (hasToBeReplaced(tv)) {
-				TermVariable newAuxVar = m_VarFactory.getOrConstructAuxVar(
+				TermVariable newAuxVar = mVarFactory.getOrConstructAuxVar(
 						computeTermVariableName(tv.getName(), false, false),
-						m_repVarSort);
+						mrepVarSort);
 				tf.removeAuxVar(tv);
 				tf.addAuxVars(Collections.singleton(newAuxVar));
 			}
@@ -219,7 +219,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		this.generateRepAndAuxVars(tf);
 		TransFormulaLR newTf = new TransFormulaLR(tf);
 		Term newFormula = (new SafeSubstitutionWithLocalSimplification(
-				m_Script, m_SubstitutionMapping)).transform(tf.getFormula());
+				mScript, mSubstitutionMapping)).transform(tf.getFormula());
 		newTf.setFormula(newFormula);
 		return newTf;
 	}

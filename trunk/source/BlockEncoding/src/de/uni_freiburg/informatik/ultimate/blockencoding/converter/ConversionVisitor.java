@@ -128,7 +128,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	/**
 	 * Apply an extended (more expensive) partial quantifier elimination to eliminate auxiliary variables.
 	 */
-	private boolean m_ExtPqe = false;
+	private boolean mExtPqe = false;
 
 	/**
 	 * @param boogie2smt
@@ -239,7 +239,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				EncodingStatistics.addToTotalRating(edge.getRating().getRatingValueAsInteger());
 				EncodingStatistics.incTotalEdges();
 				// Convert IMinimizedEdge to valid RCFGEdge
-				cb = convertMinimizedEdge(edge, mSimplify, m_ExtPqe);
+				cb = convertMinimizedEdge(edge, mSimplify, mExtPqe);
 				if (cb instanceof GotoEdge) {
 					// it is possible that the found replacement, is Goto-Edge,
 					// which we have to convert in a valid edge

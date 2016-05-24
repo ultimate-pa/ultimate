@@ -116,7 +116,7 @@ public class SvComp14CHandler extends CHandler {
 	private static final String[] s_UNSUPPORTED_FLOAT_OPERATIONS = {
 		"__isinff","__finitef","__fpclassifyf","__fpclassifyf","__isinfl","__finitel","__isnanl", "sin"
 	};
-	private final HashSet<String> m_UnsupportedFloatOperations = 
+	private final HashSet<String> mUnsupportedFloatOperations = 
 			new HashSet<>(Arrays.asList(s_UNSUPPORTED_FLOAT_OPERATIONS));
 
 	/**
@@ -154,7 +154,7 @@ public class SvComp14CHandler extends CHandler {
 		if (methodName.equals("pthread_create")) {
 			throw new UnsupportedSyntaxException(loc, "we do not support pthread");
 		}
-		if (m_UnsupportedFloatOperations.contains(methodName)) {
+		if (mUnsupportedFloatOperations.contains(methodName)) {
 			throw new UnsupportedSyntaxException(loc, "unsupported float operation " + methodName);
 		}
 		if (methodName.equals(ERROR_STRING)) {
@@ -178,7 +178,7 @@ public class SvComp14CHandler extends CHandler {
 					String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 					throw new IncorrectSyntaxException(loc, msg);
 				}
-				in.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
+				in.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
 				args.add(in.lrVal.getValue());
 				stmt.addAll(in.stmt);
 				decl.addAll(in.decl);
@@ -256,7 +256,7 @@ public class SvComp14CHandler extends CHandler {
 				auxVars.put(tVarDecl, loc);
 
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
-				m_ExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(), stmt);
+				mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(), stmt);
 				
 				assert (isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 				return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
@@ -327,19 +327,19 @@ public class SvComp14CHandler extends CHandler {
 		if (methodName.equals("__builtin_object_size")) {
 			main.warn(loc, "used trivial implementation of __builtin_object_size");
 			CPrimitive cType = new CPrimitive(PRIMITIVE.INT);
-			Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
+			Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
 			return new ExpressionResult(new RValue(zero, cType));
 		}
 		
 		if (methodName.equals("nan") || methodName.equals("nanf") || methodName.equals("nanl")) {
 			
-			return m_ExpressionTranslation.createNanOrInfinity(loc, methodName);
+			return mExpressionTranslation.createNanOrInfinity(loc, methodName);
 		}
 		
 		if (methodName.equals("__builtin_nan") || methodName.equals("__builtin_nanf") || methodName.equals("__builtin_nanl")
 				|| methodName.equals("__builtin_inff")) {
 			final String functionName = methodName.substring(methodName.length() - 4);
-			return m_ExpressionTranslation.createNanOrInfinity(loc, functionName);
+			return mExpressionTranslation.createNanOrInfinity(loc, functionName);
 		}
 		
 		/*
@@ -369,7 +369,7 @@ public class SvComp14CHandler extends CHandler {
 		ILocation loc = LocationFactory.createCLocation(node);
 		if (node.getName().toString().equals("null")) {
 			return new ExpressionResult(
-					new RValue(m_ExpressionTranslation.constructNullPointer(loc),
+					new RValue(mExpressionTranslation.constructNullPointer(loc),
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
 		}
 		if (node.getName().toString().equals("__PRETTY_FUNCTION__")

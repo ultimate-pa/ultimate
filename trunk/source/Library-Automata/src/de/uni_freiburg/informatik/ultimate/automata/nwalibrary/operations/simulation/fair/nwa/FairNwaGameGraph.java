@@ -68,12 +68,12 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	/**
 	 * Utility object for generating game graphs based on nwa automata.
 	 */
-	private final NwaGameGraphGeneration<LETTER, STATE> m_Generation;
+	private final NwaGameGraphGeneration<LETTER, STATE> mGeneration;
 	/**
 	 * The underlying nwa automaton, as double decker automaton, from which the
 	 * game graph gets generated.
 	 */
-	private final IDoubleDeckerAutomaton<LETTER, STATE> m_Nwa;
+	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 
 	/**
 	 * Creates a new fair nwa game graph by using the given nwa automaton.
@@ -103,11 +103,11 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		// is a double decker automaton
 		INestedWordAutomatonOldApi<LETTER, STATE> preparedNwa = getAutomaton();
 		if (preparedNwa instanceof IDoubleDeckerAutomaton<?, ?>) {
-			m_Nwa = (IDoubleDeckerAutomaton<LETTER, STATE>) preparedNwa;
+			mNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) preparedNwa;
 		} else {
-			m_Nwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
+			mNwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
 		}
-		m_Generation = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), m_Nwa, this,
+		mGeneration = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), mNwa, this,
 				ESimulationType.FAIR);
 	}
 
@@ -124,12 +124,12 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
 		}
 
-		INestedWordAutomatonOldApi<LETTER, STATE> result = m_Generation.generateAutomatonFromGraph();
+		INestedWordAutomatonOldApi<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph();
 
 		// Log performance
 		if (performance != null) {
 			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT);
-			performance.addAllMeasures(m_Generation.getSimulationPerformance());
+			performance.addAllMeasures(mGeneration.getSimulationPerformance());
 		}
 
 		return result;
@@ -143,10 +143,10 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	@Override
 	public void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException {
-		m_Generation.generateGameGraphFromAutomaton();
+		mGeneration.generateGameGraphFromAutomaton();
 
 		// Set values for compatibility with non nwa graph
-		SimulationPerformance performance = m_Generation.getSimulationPerformance();
+		SimulationPerformance performance = mGeneration.getSimulationPerformance();
 		setGraphBuildTime(performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE));
 		setBuechiAmountOfStates(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES));
 		setBuechiAmountOfTransitions(performance.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS));

@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 public class SequentialComposition extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = 9192152338120598669L;
-	private final List<CodeBlock> m_CodeBlocks;
-	private final String m_PrettyPrinted;
+	private final List<CodeBlock> mCodeBlocks;
+	private final String mPrettyPrinted;
 
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
@@ -70,13 +70,13 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "CodeBlocks (Sequentially Composed)") {
-			return m_CodeBlocks;
+			return mCodeBlocks;
 		} else if (field == "PrettyPrintedStatements") {
-			return m_PrettyPrinted;
+			return mPrettyPrinted;
 		} else if (field == "TransitionFormula") {
-			return m_TransitionFormula;
+			return mTransitionFormula;
 		} else if (field == "OccurenceInCounterexamples") {
-			return m_OccurenceInCounterexamples;
+			return mOccurenceInCounterexamples;
 		} else {
 			throw new UnsupportedOperationException("Unknown field " + field);
 		}
@@ -86,7 +86,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe,
 			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
-		m_CodeBlocks = codeBlocks;
+		mCodeBlocks = codeBlocks;
 
 		StringBuilder prettyPrinted = new StringBuilder();
 
@@ -114,18 +114,18 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 		}
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, m_Annotation);
+		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
 
 		boolean s_TransformToCNF = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
-		m_TransitionFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
+		mTransitionFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
 				s_TransformToCNF, false, mLogger, services, codeBlocks);
-		m_TransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify,
+		mTransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify,
 				extPqe, s_TransformToCNF, true, mLogger, services, codeBlocks);
 
-		m_PrettyPrinted = prettyPrinted.toString();
+		mPrettyPrinted = prettyPrinted.toString();
 	}
 
 	protected void checkNumberOfCallsAndReturns(int numberCalls, int numberReturns) {
@@ -136,11 +136,11 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 
 	@Override
 	public String getPrettyPrintedStatements() {
-		return m_PrettyPrinted;
+		return mPrettyPrinted;
 	}
 
 	public List<CodeBlock> getCodeBlocks() {
-		return m_CodeBlocks;
+		return mCodeBlocks;
 	}
 
 	@Override
@@ -260,7 +260,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		for (CodeBlock cb : m_CodeBlocks) {
+		for (CodeBlock cb : mCodeBlocks) {
 			sb.append(cb.toString());
 		}
 		return sb.toString();

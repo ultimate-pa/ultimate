@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSum
  */
 public class BuchiAutomizerTemplateBenchmarkMode extends
 		AbstractBuchiAutomizerTestSuite {
-	private static final String[] m_Directories = {
+	private static final String[] mDirectories = {
 //		"examples/lassos",
 //		"examples/termination/TermCompOfficialBenchmarkSet",
 		"examples/termination/TermCompOfficialBenchmarkSet/ultimate",
@@ -92,12 +92,12 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 		addTestCase(
 			"BuchiAutomizerBplWithBlockEncoding.xml",
 			s_Setting,
-		    m_Directories,
+		    mDirectories,
 		    new String[] {".bpl"});
 		addTestCase(
 			"BuchiAutomizerCWithBlockEncoding.xml",
 			s_Setting,
-			m_Directories,
+			mDirectories,
 			new String[] {".c"});
 		return super.createTestCases();
 	}

@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class ComposedLexicographicTemplate extends ComposableTemplate {
 	
-	ComposableTemplate[] m_Parts;
+	ComposableTemplate[] mParts;
 	
 	/**
 	 * Construct a new ComposedLexicographicTemplate
@@ -59,13 +59,13 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	 */
 	public ComposedLexicographicTemplate(ComposableTemplate[] parts) {
 		assert(parts.length >= 1);
-		m_Parts = parts;
+		mParts = parts;
 	}
 	
 	@Override
 	protected void _init() {
-		for (ComposableTemplate t : m_Parts) {
-			t.init(m_tas);
+		for (ComposableTemplate t : mParts) {
+			t.init(mtas);
 		}
 	}
 	
@@ -74,7 +74,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 		StringBuilder sb = new StringBuilder();
 		sb.append("lex(");
 		boolean first = true;
-		for (ComposableTemplate t : m_Parts) {
+		for (ComposableTemplate t : mParts) {
 			if (!first) {
 				sb.append(", ");
 			}
@@ -95,19 +95,19 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 		{
 			List<List<List<LinearInequality>>> disjunction =
 					new ArrayList<List<List<LinearInequality>>>();
-			for (ComposableTemplate t : m_Parts) {
+			for (ComposableTemplate t : mParts) {
 				disjunction.add(t.getConstraintsDec(inVars, outVars));
 			}
 			constraints.add(disjunction);
 		}
 		
 		// /\_{i<k-1} (T_i^≤ \/ \/_{j < i} T_j^<)
-		for (int i = 0; i < m_Parts.length - 1; ++i) {
+		for (int i = 0; i < mParts.length - 1; ++i) {
 			List<List<List<LinearInequality>>> disjunction =
 					new ArrayList<List<List<LinearInequality>>>();
-			disjunction.add(m_Parts[i].getConstraintsNonInc(inVars, outVars));
+			disjunction.add(mParts[i].getConstraintsNonInc(inVars, outVars));
 			for (int j = 0; j < i; ++j) {
-				disjunction.add(m_Parts[j].getConstraintsDec(inVars, outVars));
+				disjunction.add(mParts[j].getConstraintsDec(inVars, outVars));
 			}
 			constraints.add(disjunction);
 		}
@@ -125,12 +125,12 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 		List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		// /\_i (T_i^≤ \/ \/_{j < i} T_j^<)
-		for (int i = 0; i < m_Parts.length; ++i) {
+		for (int i = 0; i < mParts.length; ++i) {
 			List<List<List<LinearInequality>>> disjunction =
 					new ArrayList<List<List<LinearInequality>>>();
-			disjunction.add(m_Parts[i].getConstraintsNonInc(inVars, outVars));
+			disjunction.add(mParts[i].getConstraintsNonInc(inVars, outVars));
 			for (int j = 0; j < i; ++j) {
-				disjunction.add(m_Parts[j].getConstraintsDec(inVars, outVars));
+				disjunction.add(mParts[j].getConstraintsDec(inVars, outVars));
 			}
 			constraints.add(disjunction);
 		}
@@ -148,7 +148,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		
 		// /\_i T_i^{>0}
-		for (ComposableTemplate t : m_Parts) {
+		for (ComposableTemplate t : mParts) {
 			constraints.add(Collections.singletonList(
 					t.getConstraintsBounded(inVars, outVars)));
 		}
@@ -197,7 +197,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public Collection<Term> getVariables() {
 		List<Term> variables = new ArrayList<Term>();
-		for (ComposableTemplate t : m_Parts) {
+		for (ComposableTemplate t : mParts) {
 			variables.addAll(t.getVariables());
 		}
 		return variables;
@@ -213,9 +213,9 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		RankingFunction[] rfs = new RankingFunction[m_Parts.length];
-		for (int i = 0; i < m_Parts.length; ++i) {
-			rfs[i] = m_Parts[i].extractRankingFunction(val);
+		RankingFunction[] rfs = new RankingFunction[mParts.length];
+		for (int i = 0; i < mParts.length; ++i) {
+			rfs[i] = mParts[i].extractRankingFunction(val);
 		}
 		return new LexicographicRankingFunction(rfs);
 	}

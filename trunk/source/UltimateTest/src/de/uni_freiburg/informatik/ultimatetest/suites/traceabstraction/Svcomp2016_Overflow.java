@@ -42,16 +42,16 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 public class Svcomp2016_Overflow extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int m_FilesPerDirectoryLimit = 5;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int mFilesPerDirectoryLimit = 5;
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 		/*** Category 2. Bit Vectors ***/
-		new DirectoryFileEndingsPair("examples/svcomp/signedintegeroverflow-regression/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/signedintegeroverflow-regression/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	
-	private static final String[] m_CurrentBugs = {
+	private static final String[] mCurrentBugs = {
 	};
 	
 
@@ -63,12 +63,12 @@ public class Svcomp2016_Overflow extends AbstractTraceAbstractionTestSuite {
 		return 300 * 1000;
 	}
 
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"svcomp2016/svcomp-Overflow-64bit-Automizer_Default.epf",
 	};
 
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 //		"AutomizerC.xml",
 		"AutomizerCInline.xml",
 	};
@@ -78,10 +78,10 @@ public class Svcomp2016_Overflow extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs);
-				addTestCase(toolchain, setting, m_CurrentBugs, new String[] {".c", ".i"});
+		for (String setting : mSettings) {
+			for (String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs);
+				addTestCase(toolchain, setting, mCurrentBugs, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

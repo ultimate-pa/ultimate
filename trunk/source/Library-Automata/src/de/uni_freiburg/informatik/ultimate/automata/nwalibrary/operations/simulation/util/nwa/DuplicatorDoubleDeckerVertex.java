@@ -63,22 +63,22 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * The sink this vertex belongs to if it is generated as a shadow vertex for
 	 * such, <tt>null</tt> if not set.
 	 */
-	private final DuplicatorWinningSink<LETTER, STATE> m_Sink;
+	private final DuplicatorWinningSink<LETTER, STATE> mSink;
 	/**
 	 * The summarize edge this vertex belongs to if it is generated as a shadow
 	 * vertex for such, <tt>null</tt> if not set.
 	 */
-	private final SummarizeEdge<LETTER, STATE> m_SummarizeEdge;
+	private final SummarizeEdge<LETTER, STATE> mSummarizeEdge;
 	/**
 	 * The type of the transition, i.e. if it stands for an internal, call or
 	 * return transition.
 	 */
-	private final ETransitionType m_TransitionType;
+	private final ETransitionType mTransitionType;
 	/**
 	 * Internal map of all down state configurations of the vertex and if they
 	 * are marked as safe.
 	 */
-	private final HashMap<VertexDownState<STATE>, Boolean> m_VertexDownStates;
+	private final HashMap<VertexDownState<STATE>, Boolean> mVertexDownStates;
 
 	/**
 	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
@@ -213,10 +213,10 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 			final LETTER a, final ETransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
 			final DuplicatorWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1, a);
-		m_VertexDownStates = new HashMap<>();
-		m_TransitionType = transitionType;
-		m_SummarizeEdge = summarizeEdge;
-		m_Sink = sink;
+		mVertexDownStates = new HashMap<>();
+		mTransitionType = transitionType;
+		mSummarizeEdge = summarizeEdge;
+		mSink = sink;
 	}
 
 	/**
@@ -229,8 +229,8 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *         was not already present.
 	 */
 	public boolean addVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		if (!m_VertexDownStates.containsKey(vertexDownState)) {
-			m_VertexDownStates.put(vertexDownState, false);
+		if (!mVertexDownStates.containsKey(vertexDownState)) {
+			mVertexDownStates.put(vertexDownState, false);
 			return true;
 		}
 		return false;
@@ -253,21 +253,21 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 			return false;
 		}
 		DuplicatorDoubleDeckerVertex<?, ?> other = (DuplicatorDoubleDeckerVertex<?, ?>) obj;
-		if (m_Sink == null) {
-			if (other.m_Sink != null) {
+		if (mSink == null) {
+			if (other.mSink != null) {
 				return false;
 			}
-		} else if (!m_Sink.equals(other.m_Sink)) {
+		} else if (!mSink.equals(other.mSink)) {
 			return false;
 		}
-		if (m_SummarizeEdge == null) {
-			if (other.m_SummarizeEdge != null) {
+		if (mSummarizeEdge == null) {
+			if (other.mSummarizeEdge != null) {
 				return false;
 			}
-		} else if (!m_SummarizeEdge.equals(other.m_SummarizeEdge)) {
+		} else if (!mSummarizeEdge.equals(other.mSummarizeEdge)) {
 			return false;
 		}
-		if (m_TransitionType != other.m_TransitionType) {
+		if (mTransitionType != other.mTransitionType) {
 			return false;
 		}
 		return true;
@@ -283,19 +283,19 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	public String getName() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getQ0() + "," + getQ1() + ",");
-		if (m_TransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
-			sb.append("SEntry/").append(m_SummarizeEdge.hashCode());
-		} else if (m_TransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {
-			sb.append("SExit/").append(m_SummarizeEdge.hashCode());
-		} else if (m_TransitionType.equals(ETransitionType.SINK)) {
-			sb.append("Sink/").append(m_Sink.hashCode());
+		if (mTransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
+			sb.append("SEntry/").append(mSummarizeEdge.hashCode());
+		} else if (mTransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {
+			sb.append("SExit/").append(mSummarizeEdge.hashCode());
+		} else if (mTransitionType.equals(ETransitionType.SINK)) {
+			sb.append("Sink/").append(mSink.hashCode());
 		} else {
 			sb.append(getLetter());
 		}
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates.keySet()) {
+		for (VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}
@@ -315,7 +315,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *         set.
 	 */
 	public DuplicatorWinningSink<LETTER, STATE> getSink() {
-		return m_Sink;
+		return mSink;
 	}
 
 	/**
@@ -328,7 +328,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 *         set.
 	 */
 	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
-		return m_SummarizeEdge;
+		return mSummarizeEdge;
 	}
 
 	/**
@@ -337,7 +337,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 * @return The type of the transition represented by this vertex.
 	 */
 	public ETransitionType getTransitionType() {
-		return m_TransitionType;
+		return mTransitionType;
 	}
 
 	/*
@@ -348,7 +348,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	@Override
 	public Set<VertexDownState<STATE>> getVertexDownStates() {
-		return Collections.unmodifiableSet(m_VertexDownStates.keySet());
+		return Collections.unmodifiableSet(mVertexDownStates.keySet());
 	}
 
 	/*
@@ -360,9 +360,9 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((m_Sink == null) ? 0 : m_Sink.hashCode());
-		result = prime * result + ((m_SummarizeEdge == null) ? 0 : m_SummarizeEdge.hashCode());
-		result = prime * result + ((m_TransitionType == null) ? 0 : m_TransitionType.hashCode());
+		result = prime * result + ((mSink == null) ? 0 : mSink.hashCode());
+		result = prime * result + ((mSummarizeEdge == null) ? 0 : mSummarizeEdge.hashCode());
+		result = prime * result + ((mTransitionType == null) ? 0 : mTransitionType.hashCode());
 		return result;
 	}
 
@@ -388,7 +388,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	@Override
 	public boolean hasVertexDownState(final VertexDownState<STATE> vertexDownState) {
-		return m_VertexDownStates.containsKey(vertexDownState);
+		return mVertexDownStates.containsKey(vertexDownState);
 	}
 
 	/*
@@ -401,7 +401,7 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	@Override
 	public Boolean isVertexDownStateSafe(final VertexDownState<STATE> vertexDownState) {
-		return m_VertexDownStates.get(vertexDownState);
+		return mVertexDownStates.get(vertexDownState);
 	}
 
 	/*
@@ -414,8 +414,8 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 	 */
 	@Override
 	public void setVertexDownStateSafe(final VertexDownState<STATE> vertexDownState, final boolean isSafe) {
-		if (m_VertexDownStates.containsKey(vertexDownState)) {
-			m_VertexDownStates.put(vertexDownState, isSafe);
+		if (mVertexDownStates.containsKey(vertexDownState)) {
+			mVertexDownStates.put(vertexDownState, isSafe);
 		}
 	}
 
@@ -429,19 +429,19 @@ public final class DuplicatorDoubleDeckerVertex<LETTER, STATE> extends Duplicato
 		StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1()).append(",");
-		if (m_TransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
-			sb.append("SEntry/").append(m_SummarizeEdge.hashCode());
-		} else if (m_TransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {
-			sb.append("SExit/").append(m_SummarizeEdge.hashCode());
-		} else if (m_TransitionType.equals(ETransitionType.SINK)) {
-			sb.append("Sink/").append(m_Sink.hashCode());
+		if (mTransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
+			sb.append("SEntry/").append(mSummarizeEdge.hashCode());
+		} else if (mTransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {
+			sb.append("SExit/").append(mSummarizeEdge.hashCode());
+		} else if (mTransitionType.equals(ETransitionType.SINK)) {
+			sb.append("Sink/").append(mSink.hashCode());
 		} else {
 			sb.append(getLetter());
 		}
 		sb.append("<" + getPriority() + ">");
 		sb.append("{");
 		boolean isFirstVertexDownState = true;
-		for (VertexDownState<STATE> vertexDownState : m_VertexDownStates.keySet()) {
+		for (VertexDownState<STATE> vertexDownState : mVertexDownStates.keySet()) {
 			if (!isFirstVertexDownState) {
 				sb.append(",");
 			}

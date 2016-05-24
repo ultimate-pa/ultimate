@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
  */
 public class NumberOfPlaces<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	IPetriNet<LETTER, STATE> m_Net;
+	IPetriNet<LETTER, STATE> mNet;
 	
 	public NumberOfPlaces(IPetriNet<LETTER, STATE> nwa) {
-		m_Net = nwa;
+		mNet = nwa;
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class NumberOfPlaces<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
-		return m_Net.getPlaces().size();
+		return mNet.getPlaces().size();
 	}
 
 	@Override

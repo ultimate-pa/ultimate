@@ -44,18 +44,18 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int m_FilesPerDirectoryLimit = 20;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int mFilesPerDirectoryLimit = 20;
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 			/*** Category 11. Floats ***/
-			new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
-			new DirectoryFileEndingsPair("examples/svcomp/floats-cbmc-regression/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
-			new DirectoryFileEndingsPair("examples/svcomp/float-benchs/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/floats-cbmc-regression/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/float-benchs/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	
-	private static final String[] m_CurrentBugs = {
+	private static final String[] mCurrentBugs = {
 	};
 	
 	
@@ -67,22 +67,22 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 		return 60 * 1000;
 	}
 
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"automizer/interpolation/float/Reach-32bit-Z3-IcSpLv-Float.epf",
 		"automizer/interpolation/float/Reach-32bit-Z3-IcWpLv-Float.epf",
 	};
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
 	};
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs);
-				addTestCase(toolchain, setting, m_CurrentBugs, new String[] {".c", ".i"});
+		for (String setting : mSettings) {
+			for (String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs);
+				addTestCase(toolchain, setting, mCurrentBugs, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

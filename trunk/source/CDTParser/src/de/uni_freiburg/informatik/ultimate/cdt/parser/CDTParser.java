@@ -78,7 +78,7 @@ public class CDTParser implements ISource {
 	/**
 	 * Supported file types.
 	 */
-	protected String[] m_FileTypes;
+	protected String[] mFileTypes;
 	/**
 	 * The logger instance.
 	 */
@@ -86,19 +86,19 @@ public class CDTParser implements ISource {
 	/**
 	 * List of file names.
 	 */
-	protected List<String> m_FileNames;
+	protected List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 
 	/**
 	 * Public constructor of this parser.
 	 */
 	public CDTParser() {
-		m_FileTypes = new String[] { "c", "i" };
+		mFileTypes = new String[] { "c", "i" };
 	}
 
 	@Override
 	public void init() {
-		m_FileNames = new ArrayList<String>();
+		mFileNames = new ArrayList<String>();
 	}
 
 	@Override
@@ -191,13 +191,13 @@ public class CDTParser implements ISource {
 
 	@Override
 	public String[] getFileTypes() {
-		return m_FileTypes;
+		return mFileTypes;
 	}
 
 	@Override
 	public ModelType getOutputDefinition() {
 		try {
-			return new ModelType(getPluginID(), ModelType.Type.AST, m_FileNames);
+			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
 		} catch (Exception ex) {
 			mLogger.fatal(ex.getMessage());
 			return null;

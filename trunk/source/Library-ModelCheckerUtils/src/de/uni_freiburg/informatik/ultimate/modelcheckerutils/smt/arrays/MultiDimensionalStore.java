@@ -52,18 +52,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
  * This is data structure is a wrapper for such a nested select expression which
  * allows you to directly access the array, the indices and the value.
  * This data structure allows also multidimensional arrays of dimension 0. In
- * this case, m_Array is null, m_Index is empty and m_Value coincides with
- * m_StoreTerm.
+ * this case, mArray is null, mIndex is empty and mValue coincides with
+ * mStoreTerm.
  * @author Matthias Heizmann
  */
 public class MultiDimensionalStore {
-	private Term m_Array;
-	private final ArrayIndex m_Index;
-	private final Term m_Value;
-	private final ApplicationTerm m_StoreTerm;
+	private Term mArray;
+	private final ArrayIndex mIndex;
+	private final Term mValue;
+	private final ApplicationTerm mStoreTerm;
 	
 	public MultiDimensionalStore(Term term) {
-		m_StoreTerm = (ApplicationTerm) term;
+		mStoreTerm = (ApplicationTerm) term;
 		Term array = null;
 		ArrayList<Term> index = new ArrayList<Term>();
 		Term value = term;
@@ -84,19 +84,19 @@ public class MultiDimensionalStore {
 			index.add(appTerm.getParameters()[1]);
 			value = appTerm.getParameters()[2];
 		}
-		m_Array = array;
-		m_Index = new ArrayIndex(index);
-		m_Value = value;
+		mArray = array;
+		mIndex = new ArrayIndex(index);
+		mValue = value;
 		assert classInvariant();
 	}
 	
 	private boolean classInvariant() {
-		if (m_Array == null) {
-			return m_Index.size() == 0 && m_StoreTerm == m_Value;
+		if (mArray == null) {
+			return mIndex.size() == 0 && mStoreTerm == mValue;
 		} else {
-			return m_Array.getSort() == m_StoreTerm.getSort() &&
+			return mArray.getSort() == mStoreTerm.getSort() &&
 					MultiDimensionalSort.
-					areDimensionsConsistent(m_Array, m_Index, m_Value);
+					areDimensionsConsistent(mArray, mIndex, mValue);
 		}
 	}
 	
@@ -106,30 +106,30 @@ public class MultiDimensionalStore {
 	}
 
 	public Term getArray() {
-		return m_Array;
+		return mArray;
 	}
 
 	public ArrayIndex getIndex() {
-		return m_Index;
+		return mIndex;
 	}
 
 	public Term getValue() {
-		return m_Value;
+		return mValue;
 	}
 
 	public ApplicationTerm getStoreTerm() {
-		return m_StoreTerm;
+		return mStoreTerm;
 	}
 
 	@Override
 	public String toString() {
-		return m_StoreTerm.toString();
+		return mStoreTerm.toString();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof MultiDimensionalStore) {
-			return m_StoreTerm.equals(((MultiDimensionalStore) obj).getStoreTerm());
+			return mStoreTerm.equals(((MultiDimensionalStore) obj).getStoreTerm());
 		} else {
 			return false;
 		}
@@ -137,7 +137,7 @@ public class MultiDimensionalStore {
 
 	@Override
 	public int hashCode() {
-		return m_StoreTerm.hashCode();
+		return mStoreTerm.hashCode();
 	}
 	
 	

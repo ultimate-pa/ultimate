@@ -57,7 +57,7 @@ public class non_terminal extends symbol {
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
   /** Total number of productions with this non terminal on the LHS. */
-  public int num_productions() {return _productions.size();}
+  public int numproductions() {return _productions.size();}
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

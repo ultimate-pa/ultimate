@@ -40,13 +40,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicate> {
 	
-	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
-	private final boolean m_WithBranchEncoders;
+	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
+	private final boolean mWithBranchEncoders;
 	
 	
 	
 	public ModifiableGlobalVariableManager getModifiableGlobalVariableManager() {
-		return m_ModifiableGlobalVariableManager;
+		return mModifiableGlobalVariableManager;
 	}
 
 	public DefaultTransFormulas(NestedWord<? extends IAction> nestedWord, 
@@ -57,12 +57,12 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 		super(nestedWord, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
-		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
-		m_WithBranchEncoders = withBranchEncoders;
+		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
+		mWithBranchEncoders = withBranchEncoders;
 	}
 	
 	public boolean hasBranchEncoders() {
-		return m_WithBranchEncoders;
+		return mWithBranchEncoders;
 	}
 	
 	@Override
@@ -72,7 +72,7 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 			return ret.getAssignmentOfReturn();
 		} else {
 			IInternalAction cb = (IInternalAction) super.getTrace().getSymbolAt(i);
-			if (m_WithBranchEncoders) {
+			if (mWithBranchEncoders) {
 				return ((CodeBlock) cb).getTransitionFormulaWithBranchEncoders();
 			} else {
 				return cb.getTransformula();
@@ -89,14 +89,14 @@ public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicat
 	@Override
 	protected TransFormula getGlobalVarAssignmentFromValidPos(int i) {
 		String calledProcedure = getCalledProcedure(i);
-		return m_ModifiableGlobalVariableManager.getGlobalVarsAssignment(calledProcedure);
+		return mModifiableGlobalVariableManager.getGlobalVarsAssignment(calledProcedure);
 
 	}
 
 	@Override
 	protected TransFormula getOldVarAssignmentFromValidPos(int i) {		
 		String calledProcedure = getCalledProcedure(i);
-		return m_ModifiableGlobalVariableManager.getOldVarsAssignment(calledProcedure);
+		return mModifiableGlobalVariableManager.getOldVarsAssignment(calledProcedure);
 	}
 	
 	/**

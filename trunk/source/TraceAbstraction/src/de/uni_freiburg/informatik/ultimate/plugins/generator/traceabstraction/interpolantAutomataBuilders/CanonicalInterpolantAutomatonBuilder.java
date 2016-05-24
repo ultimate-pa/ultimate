@@ -56,31 +56,31 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 
-	private final NestedWordAutomaton<CodeBlock, IPredicate> m_IA;
+	private final NestedWordAutomaton<CodeBlock, IPredicate> mIA;
 
-	private final boolean m_SelfloopAtInitial = false;
-	private final boolean m_SelfloopAtFinal = true;
+	private final boolean mSelfloopAtInitial = false;
+	private final boolean mSelfloopAtFinal = true;
 
-	private final SmtManager m_SmtManager;
+	private final SmtManager mSmtManager;
 
-	private final Map<Integer, Set<IPredicate>> m_AlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
+	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
 	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services, 
 			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPointSequence,
 			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, StateFactory<IPredicate> predicateFactory,
 			ILogger logger) {
 		super(services, interpolantGenerator, programPointSequence, logger);
-		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), alphabet.getInternalAlphabet(),
+		mIA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), alphabet.getInternalAlphabet(),
 				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
-		m_SmtManager = smtManager;
+		mSmtManager = smtManager;
 	}
 
 	protected void processCodeBlock(int i) {
 		// interpolant after the CodeBlock
-		IPredicate successorInterpolant = m_IPP.getInterpolant(i + 1);
-		if (!m_IA.getStates().contains(successorInterpolant)) {
-			assert (successorInterpolant != m_InterpolantGenerator.getPostcondition());
-			m_IA.addState(false, false, successorInterpolant);
+		IPredicate successorInterpolant = mIPP.getInterpolant(i + 1);
+		if (!mIA.getStates().contains(successorInterpolant)) {
+			assert (successorInterpolant != mInterpolantGenerator.getPostcondition());
+			mIA.addState(false, false, successorInterpolant);
 		}
 		addTransition(i, i, i + 1);
 	}
@@ -93,37 +93,37 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 	}
 
 	protected void postprocess() {
-		if (m_SelfloopAtInitial) {
-			IPredicate precond = m_InterpolantGenerator.getPrecondition();
-			for (CodeBlock symbol : m_IA.getInternalAlphabet()) {
-				m_IA.addInternalTransition(precond, symbol, precond);
+		if (mSelfloopAtInitial) {
+			IPredicate precond = mInterpolantGenerator.getPrecondition();
+			for (CodeBlock symbol : mIA.getInternalAlphabet()) {
+				mIA.addInternalTransition(precond, symbol, precond);
 			}
-			for (CodeBlock symbol : m_IA.getCallAlphabet()) {
-				m_IA.addCallTransition(precond, symbol, precond);
+			for (CodeBlock symbol : mIA.getCallAlphabet()) {
+				mIA.addCallTransition(precond, symbol, precond);
 			}
-			for (CodeBlock symbol : m_IA.getReturnAlphabet()) {
-				m_IA.addReturnTransition(precond, precond, symbol, precond);
-				for (Integer pos : m_AlternativeCallPredecessors.keySet()) {
-					for (IPredicate hier : m_AlternativeCallPredecessors.get(pos)) {
-						m_IA.addReturnTransition(precond, hier, symbol, precond);
+			for (CodeBlock symbol : mIA.getReturnAlphabet()) {
+				mIA.addReturnTransition(precond, precond, symbol, precond);
+				for (Integer pos : mAlternativeCallPredecessors.keySet()) {
+					for (IPredicate hier : mAlternativeCallPredecessors.get(pos)) {
+						mIA.addReturnTransition(precond, hier, symbol, precond);
 					}
 				}
 			}
 		}
 
-		if (m_SelfloopAtFinal) {
-			IPredicate postcond = m_InterpolantGenerator.getPostcondition();
-			for (CodeBlock symbol : m_IA.getInternalAlphabet()) {
-				m_IA.addInternalTransition(postcond, symbol, postcond);
+		if (mSelfloopAtFinal) {
+			IPredicate postcond = mInterpolantGenerator.getPostcondition();
+			for (CodeBlock symbol : mIA.getInternalAlphabet()) {
+				mIA.addInternalTransition(postcond, symbol, postcond);
 			}
-			for (CodeBlock symbol : m_IA.getCallAlphabet()) {
-				m_IA.addCallTransition(postcond, symbol, postcond);
+			for (CodeBlock symbol : mIA.getCallAlphabet()) {
+				mIA.addCallTransition(postcond, symbol, postcond);
 			}
-			for (CodeBlock symbol : m_IA.getReturnAlphabet()) {
-				m_IA.addReturnTransition(postcond, postcond, symbol, postcond);
-				for (Integer pos : m_AlternativeCallPredecessors.keySet()) {
-					for (IPredicate hier : m_AlternativeCallPredecessors.get(pos)) {
-						m_IA.addReturnTransition(postcond, hier, symbol, postcond);
+			for (CodeBlock symbol : mIA.getReturnAlphabet()) {
+				mIA.addReturnTransition(postcond, postcond, symbol, postcond);
+				for (Integer pos : mAlternativeCallPredecessors.keySet()) {
+					for (IPredicate hier : mAlternativeCallPredecessors.get(pos)) {
+						mIA.addReturnTransition(postcond, hier, symbol, postcond);
 					}
 				}
 			}
@@ -132,61 +132,61 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 
 	protected void preprocess() {
 		String interpolantAutomatonType = "Constructing canonical interpolant automaton";
-		if (m_SelfloopAtInitial) {
+		if (mSelfloopAtInitial) {
 			interpolantAutomatonType += ", with selfloop in true state";
 		}
-		if (m_SelfloopAtFinal) {
+		if (mSelfloopAtFinal) {
 			interpolantAutomatonType += ", with selfloop in false state";
 		}
 		mLogger.info(interpolantAutomatonType);
 
-		m_IA.addState(true, false, m_InterpolantGenerator.getPrecondition());
-		m_IA.addState(false, true, m_InterpolantGenerator.getPostcondition());
+		mIA.addState(true, false, mInterpolantGenerator.getPrecondition());
+		mIA.addState(false, true, mInterpolantGenerator.getPostcondition());
 	}
 
 	public NestedWordAutomaton<CodeBlock, IPredicate> getInterpolantAutomaton() {
-		return m_IA;
+		return mIA;
 	}
 
 	private void addTransition(int prePos, int symbolPos, int succPos) {
-		IPredicate pred = m_IPP.getInterpolant(prePos);
-		IPredicate succ = m_IPP.getInterpolant(succPos);
-		CodeBlock symbol = (CodeBlock) m_NestedWord.getSymbol(symbolPos);
-		if (m_NestedWord.isCallPosition(symbolPos)) {
-			m_IA.addCallTransition(pred, symbol, succ);
-			if (m_IPP.getInterpolant(prePos) != m_IPP.getInterpolant(symbolPos)) {
-				addAlternativeCallPredecessor(symbolPos, m_IPP.getInterpolant(prePos));
+		IPredicate pred = mIPP.getInterpolant(prePos);
+		IPredicate succ = mIPP.getInterpolant(succPos);
+		CodeBlock symbol = (CodeBlock) mNestedWord.getSymbol(symbolPos);
+		if (mNestedWord.isCallPosition(symbolPos)) {
+			mIA.addCallTransition(pred, symbol, succ);
+			if (mIPP.getInterpolant(prePos) != mIPP.getInterpolant(symbolPos)) {
+				addAlternativeCallPredecessor(symbolPos, mIPP.getInterpolant(prePos));
 			}
-		} else if (m_NestedWord.isReturnPosition(symbolPos)) {
-			int callPos = m_NestedWord.getCallPosition(symbolPos);
-			IPredicate hier = m_IPP.getInterpolant(callPos);
-			m_IA.addReturnTransition(pred, hier, symbol, succ);
+		} else if (mNestedWord.isReturnPosition(symbolPos)) {
+			int callPos = mNestedWord.getCallPosition(symbolPos);
+			IPredicate hier = mIPP.getInterpolant(callPos);
+			mIA.addReturnTransition(pred, hier, symbol, succ);
 			addAlternativeReturnTransitions(pred, callPos, symbol, succ);
 		} else {
-			m_IA.addInternalTransition(pred, symbol, succ);
+			mIA.addInternalTransition(pred, symbol, succ);
 		}
 	}
 
 	private void addAlternativeCallPredecessor(int symbolPos, IPredicate alternativeCallPredecessor) {
-		Set<IPredicate> alts = m_AlternativeCallPredecessors.get(symbolPos);
+		Set<IPredicate> alts = mAlternativeCallPredecessors.get(symbolPos);
 		if (alts == null) {
 			alts = new HashSet<IPredicate>();
-			m_AlternativeCallPredecessors.put(symbolPos, alts);
+			mAlternativeCallPredecessors.put(symbolPos, alts);
 		}
 		alts.add(alternativeCallPredecessor);
 	}
 
 	private void addAlternativeReturnTransitions(IPredicate pred, int callPos, CodeBlock symbol, IPredicate succ) {
-		if (m_AlternativeCallPredecessors.get(callPos) == null) {
+		if (mAlternativeCallPredecessors.get(callPos) == null) {
 			return;
 		}
 		// 2016-05-18 Matthias: Do not add alternative returns, this seems to be expensive
 		// and I am too lazy to construct another IHoaretripleChecker for these few checks.
-//		for (IPredicate hier : m_AlternativeCallPredecessors.get(callPos)) {
-//			LBool isInductive = m_SmtManager.isInductiveReturn(pred, hier, (Return) symbol, succ);
+//		for (IPredicate hier : mAlternativeCallPredecessors.get(callPos)) {
+//			LBool isInductive = mSmtManager.isInductiveReturn(pred, hier, (Return) symbol, succ);
 //			mLogger.debug("Trying to add alternative call Predecessor");
 //			if (isInductive == Script.LBool.UNSAT) {
-//				m_IA.addReturnTransition(pred, hier, symbol, succ);
+//				mIA.addReturnTransition(pred, hier, symbol, succ);
 //				mLogger.debug("Added return from alternative call Pred");
 //			}
 //		}

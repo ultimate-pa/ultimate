@@ -142,19 +142,19 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 //		BoogieVar m1 = new LocalBoogieVar("m1", "p", 
 //				//m.getIType(), 
 //				null,
-//				m_script.variable("m1_tv", m.getTermVariable().getSort()),
+//				mscript.variable("m1_tv", m.getTermVariable().getSort()),
 //				null,null
-////				(ApplicationTerm) m_script.term("m1_dc"),
-////				(ApplicationTerm) m_script.term("m1_pc")
+////				(ApplicationTerm) mscript.term("m1_dc"),
+////				(ApplicationTerm) mscript.term("m1_pc")
 //				);
 //		
 //		BoogieVar m2 = new LocalBoogieVar("m2", "p", 
 //				//m.getIType(), 
 //				null,
-//				m_script.variable("m2_tv", m.getTermVariable().getSort()),
+//				mscript.variable("m2_tv", m.getTermVariable().getSort()),
 //				null,null
-////				(ApplicationTerm) m_script.term("m2_dc"),
-////				(ApplicationTerm) m_script.term("m2_pc")
+////				(ApplicationTerm) mscript.term("m2_dc"),
+////				(ApplicationTerm) mscript.term("m2_pc")
 //				);
 	
 		mOldArrayToPointerToNewArray = new HashMap<>();

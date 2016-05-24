@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
  */
 public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	IPetriNet<LETTER, STATE> m_Net;
+	IPetriNet<LETTER, STATE> mNet;
 	
 	public NumberOfTransitions(IPetriNet<LETTER, STATE> nwa) {
-		m_Net = nwa;
+		mNet = nwa;
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class NumberOfTransitions<LETTER, STATE> implements IOperation<LETTER,STA
 
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
-		return m_Net.getTransitions().size();
+		return mNet.getTransitions().size();
 	}
 
 	@Override

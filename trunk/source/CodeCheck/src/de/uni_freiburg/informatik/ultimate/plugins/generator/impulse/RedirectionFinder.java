@@ -62,7 +62,7 @@ public class RedirectionFinder {
 		if (!nodes.isEmpty()) {
 			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOM)
 				ret = nodes.get((int) (Math.random() * nodes.size()));
-			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOM_STRONGEST)
+			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOmSTRONGEST)
 				ret = strongRandomPickup(nodes);
 		}
 		return ret;

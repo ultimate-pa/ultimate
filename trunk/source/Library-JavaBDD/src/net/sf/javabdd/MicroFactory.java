@@ -1491,7 +1491,7 @@ public class MicroFactory extends BDDFactory {
         return (a ^ b ^ c ^ op);
     }
 
-    static final double M_LN2 = 0.69314718055994530942;
+    static final double mLN2 = 0.69314718055994530942;
 
     static double log1p(double a) {
         return Math.log(1.0 + a);
@@ -4103,7 +4103,7 @@ public class MicroFactory extends BDDFactory {
         if ((top = bddtree_new(-1)) != null) {
             if (reorder_init() >= 0) {
                 
-                usednum_before = bddnodesize - bddfreenum;
+                usednumbefore = bddnodesize - bddfreenum;
         
                 top.first = 0;
                 top.last = bdd_varnum() - 1;
@@ -4114,7 +4114,7 @@ public class MicroFactory extends BDDFactory {
                 reorder_block(top, method);
                 vartree = top.nextlevel;
         
-                usednum_after = bddnodesize - bddfreenum;
+                usednumafter = bddnodesize - bddfreenum;
         
                 reorder_done();
                 bddreordermethod = savemethod;
@@ -4792,10 +4792,10 @@ public class MicroFactory extends BDDFactory {
     }
 
     int bdd_reorder_gain() {
-        if (usednum_before == 0)
+        if (usednumbefore == 0)
             return 0;
 
-        return (100 * (usednum_before - usednum_after)) / usednum_before;
+        return (100 * (usednumbefore - usednumafter)) / usednumbefore;
     }
 
     /* (non-Javadoc)
@@ -5266,8 +5266,8 @@ public class MicroFactory extends BDDFactory {
     //bddsizehandler reorder_nodenum;
 
     /* Number of live nodes before and after a reordering session */
-    int usednum_before;
-    int usednum_after;
+    int usednumbefore;
+    int usednumafter;
 
     void bdd_reorder_init() {
         reorderdisabled = 0;
@@ -5278,7 +5278,7 @@ public class MicroFactory extends BDDFactory {
         bdd_reorder_verbose(0);
         bdd_autoreorder_times(BDD_REORDER_NONE, 0);
         //reorder_nodenum = bdd_getnodenum;
-        usednum_before = usednum_after = 0;
+        usednumbefore = usednumafter = 0;
         blockid = 0;
     }
 

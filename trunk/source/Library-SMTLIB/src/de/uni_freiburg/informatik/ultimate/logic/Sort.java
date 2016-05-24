@@ -49,7 +49,7 @@ public final class Sort {
 	final SortSymbol mSymbol;
 	/**
 	 * The arguments of the sort symbol.  This is null if the sort symbol 
-	 * has no arguments, otherwise it is an array with m_Symbol.m_numParams
+	 * has no arguments, otherwise it is an array with mSymbol.mnumParams
 	 * elements.
 	 */
 	final Sort[]     mArgs;
@@ -64,7 +64,7 @@ public final class Sort {
 	 * Otherwise it is this for a real sort and the real sort as which the
 	 * sort is defined in all other cases.
 	 */
-	//@ invariant m_RealSort == null || m_RealSort.getRealSort() == m_RealSort
+	//@ invariant mRealSort == null || mRealSort.getRealSort() == mRealSort
 	Sort       mRealSort;
 	
 	private int mHash;
@@ -274,22 +274,22 @@ public final class Sort {
 	
 	/**
 	 * Convert a sort to a string in a stack based fashion.
-	 * @param m_Todo The stack where to put the strings and sub sorts.
+	 * @param mTodo The stack where to put the strings and sub sorts.
 	 * @see PrintTerm
 	 */
-	void toStringHelper(ArrayDeque<Object> m_Todo) {
+	void toStringHelper(ArrayDeque<Object> mTodo) {
 		String name = getIndexedName();
 		Sort[] args = getArguments();
 		if (args.length == 0) {
-			m_Todo.addLast(name);
+			mTodo.addLast(name);
 		} else {
-			m_Todo.addLast(")");
+			mTodo.addLast(")");
 			for (int i = args.length - 1; i >= 0; i--) {
-				m_Todo.addLast(args[i]);
-				m_Todo.addLast(" ");
+				mTodo.addLast(args[i]);
+				mTodo.addLast(" ");
 			}
-			m_Todo.addLast(name);
-			m_Todo.addLast("(");
+			mTodo.addLast(name);
+			mTodo.addLast("(");
 		}
 	}
 	

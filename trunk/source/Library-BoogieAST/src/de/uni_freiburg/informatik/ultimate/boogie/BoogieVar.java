@@ -45,36 +45,36 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public abstract class BoogieVar implements Serializable, IBoogieVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
-	private final String m_Identifier;
-	private final IType m_IType;
+	private final String mIdentifier;
+	private final IType mIType;
 
 	/**
 	 * TermVariable which represents this BoogieVar in SMT terms.
 	 */
-	private final TermVariable m_TermVariable;
+	private final TermVariable mTermVariable;
 
 	/**
 	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar in closed SMT terms.
 	 */
-	private final ApplicationTerm m_DefaultConstant;
+	private final ApplicationTerm mDefaultConstant;
 
 	/**
 	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar if it occurs as next state variable in closed
 	 * SMT which describe a transition.
 	 */
-	private final ApplicationTerm m_PrimedConstant;
+	private final ApplicationTerm mPrimedConstant;
 
 	public BoogieVar(String identifier, IType iType, TermVariable tv, ApplicationTerm defaultConstant,
 			ApplicationTerm primedContant) {
-		m_Identifier = identifier;
-		m_IType = iType;
-		m_TermVariable = tv;
-		m_DefaultConstant = defaultConstant;
-		m_PrimedConstant = primedContant;
+		mIdentifier = identifier;
+		mIType = iType;
+		mTermVariable = tv;
+		mDefaultConstant = defaultConstant;
+		mPrimedConstant = primedContant;
 	}
 
 	public String getIdentifier() {
-		return m_Identifier;
+		return mIdentifier;
 	}
 
 	/**
@@ -83,7 +83,7 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 	public abstract String getProcedure();
 
 	public IType getIType() {
-		return m_IType;
+		return mIType;
 	}
 
 	public abstract boolean isGlobal();
@@ -91,16 +91,16 @@ public abstract class BoogieVar implements Serializable, IBoogieVar {
 	public abstract boolean isOldvar();
 
 	public TermVariable getTermVariable() {
-		assert m_TermVariable != null;
-		return m_TermVariable;
+		assert mTermVariable != null;
+		return mTermVariable;
 	}
 
 	public ApplicationTerm getDefaultConstant() {
-		return m_DefaultConstant;
+		return mDefaultConstant;
 	}
 
 	public ApplicationTerm getPrimedConstant() {
-		return m_PrimedConstant;
+		return mPrimedConstant;
 	}
 
 	/**

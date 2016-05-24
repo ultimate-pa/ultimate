@@ -52,28 +52,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class CFG2NestedWordAutomaton {
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 	
-	private final SmtManager m_SmtManager;
-	private static final boolean m_StoreHistory = false;
-	private final boolean m_Interprocedural;
-	private boolean m_MainMode;
-	private static final String m_StartProcedure = "ULTIMATE.start";
+	private final SmtManager mSmtManager;
+	private static final boolean mStoreHistory = false;
+	private final boolean mInterprocedural;
+	private boolean mMainMode;
+	private static final String mStartProcedure = "ULTIMATE.start";
 	
 	private final ILogger mLogger;
 	
 	public CFG2NestedWordAutomaton(IUltimateServiceProvider services, boolean interprocedural, SmtManager predicateFactory, ILogger logger) {
-		m_Services = services;
+		mServices = services;
 		mLogger = logger;
-		m_SmtManager = predicateFactory;
-		m_Interprocedural = interprocedural;
+		mSmtManager = predicateFactory;
+		mInterprocedural = interprocedural;
 	}
 	
 	
 	/**
 	 * Construct the control automata (see Trace Abstraction) for the program
 	 * of rootNode.
-	 * If m_Interprocedural==false we construct an automaton for each procedure
+	 * If mInterprocedural==false we construct an automaton for each procedure
 	 * otherwise we construct one nested word automaton for the whole program.
 	 * @param errorLoc error location of the program. If null, each state that
 	 * corresponds to an error location will be accepting. Otherwise only the
@@ -92,18 +92,18 @@ public class CFG2NestedWordAutomaton {
 		Map<String, Procedure> implementations = 
 			rootNode.getRootAnnot().getBoogieDeclarations().getProcImplementation();
 		
-		if (implementations.containsKey(m_StartProcedure)) {
-			m_MainMode = true;
+		if (implementations.containsKey(mStartProcedure)) {
+			mMainMode = true;
 			mLogger.info("Mode: main mode - execution starts in main procedure");
 		}
 		else {
-			m_MainMode = false;
+			mMainMode = false;
 			mLogger.info("Mode: library - executation can start in any procedure");
 		}
 				
-		mLogger.debug("Step: put all LocationNodes into m_Nodes");
+		mLogger.debug("Step: put all LocationNodes into mNodes");
 		
-		// put all LocationNodes into m_Nodes
+		// put all LocationNodes into mNodes
 		LinkedList<ProgramPoint> queue = new LinkedList<ProgramPoint>();
 		for (RCFGNode node : rootNode.getOutgoingNodes()) {
 			ProgramPoint locNode = (ProgramPoint) node;
@@ -111,7 +111,7 @@ public class CFG2NestedWordAutomaton {
 			String procName = locNode.getProcedure();
 
 			if (implementations.containsKey(procName)) {
-				if (!m_MainMode || procName.equals(m_StartProcedure)) {
+				if (!mMainMode || procName.equals(mStartProcedure)) {
 					initialNodes.add(locNode);
 				}
 				allNodes.add(locNode);
@@ -142,11 +142,11 @@ public class CFG2NestedWordAutomaton {
 			if (locNode.getOutgoingNodes() != null)
 			for (RCFGEdge edge : locNode.getOutgoingEdges()) {
 				if (edge instanceof Call) {
-					if (m_Interprocedural) {
+					if (mInterprocedural) {
 						callAlphabet.add( ((Call) edge));
 					}
 				} else if (edge instanceof Return) {
-					if (m_Interprocedural) {
+					if (mInterprocedural) {
 						returnAlphabet.add( 
 								((Return) edge));
 					}
@@ -156,7 +156,7 @@ public class CFG2NestedWordAutomaton {
 					if (annot.calledProcedureHasImplementation()) {
 						//do nothing if analysis is interprocedural
 						//add summary otherwise
-						if (!m_Interprocedural) {
+						if (!mInterprocedural) {
 							internalAlphabet.add(annot);
 						}
 					}
@@ -174,7 +174,7 @@ public class CFG2NestedWordAutomaton {
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa =
-			new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), 
+			new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), 
 					internalAlphabet,
 					callAlphabet,
 					returnAlphabet,
@@ -187,11 +187,11 @@ public class CFG2NestedWordAutomaton {
 			boolean isErrorLocation = errorLocs.contains(locNode);
 
 			IPredicate automatonState;
-			Term trueTerm = m_SmtManager.getScript().term("true");
-			if (m_StoreHistory) {
-				automatonState = m_SmtManager.getPredicateFactory().newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
+			Term trueTerm = mSmtManager.getScript().term("true");
+			if (mStoreHistory) {
+				automatonState = mSmtManager.getPredicateFactory().newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
 			} else {
-				automatonState = m_SmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm); 
+				automatonState = mSmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm); 
 			}
 					
 			nwa.addState(isInitial, isErrorLocation, automatonState);
@@ -224,13 +224,13 @@ public class CFG2NestedWordAutomaton {
 				IPredicate succState = 
 					nodes2States.get(succLoc); 
 				if (edge instanceof Call) {
-					if (m_Interprocedural) {
+					if (mInterprocedural) {
 						CodeBlock symbol = 
 								((Call) edge);
 							nwa.addCallTransition(state,symbol, succState);
 					}
 				} else if (edge instanceof Return) {
-					if (m_Interprocedural) {
+					if (mInterprocedural) {
 						Return returnEdge = (Return) edge;
 						CodeBlock symbol = returnEdge;
 						ProgramPoint callerLocNode = returnEdge.getCallerProgramPoint();
@@ -245,7 +245,7 @@ public class CFG2NestedWordAutomaton {
 				} else if (edge instanceof Summary) {
 					Summary summaryEdge = (Summary) edge;
 					if (summaryEdge.calledProcedureHasImplementation()) {
-						if (!m_Interprocedural) {
+						if (!mInterprocedural) {
 							nwa.addInternalTransition(state,summaryEdge, succState);
 						}
 					}

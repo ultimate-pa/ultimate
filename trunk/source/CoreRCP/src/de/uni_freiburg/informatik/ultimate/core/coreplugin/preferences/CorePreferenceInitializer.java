@@ -113,11 +113,11 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String DEFAULT_VALUE_COLOR_FATAL = "255,85,85";
 
 	// Model manager
-	public static final String LABEL_MM_DROP_MODELS = "Drop models when Ultimate exits";
-	public static final boolean VALUE_MM_DROP_MODELS = true;
+	public static final String LABEL_MmDROP_MODELS = "Drop models when Ultimate exits";
+	public static final boolean VALUE_MmDROP_MODELS = true;
 
-	public static final String LABEL_MM_TMPDIRECTORY = "Repository directory";
-	public static final String VALUE_MM_TMPDIRECTORY = System.getProperty("java.io.tmpdir");
+	public static final String LABEL_MmTMPDIRECTORY = "Repository directory";
+	public static final String VALUE_MmTMPDIRECTORY = System.getProperty("java.io.tmpdir");
 
 	public static final String PREFID_ROOT = "ultimate.logging.root";
 	public static final String PREFID_CORE = "ultimate.logging.core";
@@ -194,8 +194,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_LOGFILE_DIR, VALUE_LOGFILE_DIR, PreferenceType.Directory),
 
 				// ModelManager
-				new UltimatePreferenceItem<Boolean>(LABEL_MM_DROP_MODELS, VALUE_MM_DROP_MODELS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_MM_TMPDIRECTORY, VALUE_MM_TMPDIRECTORY,
+				new UltimatePreferenceItem<Boolean>(LABEL_MmDROP_MODELS, VALUE_MmDROP_MODELS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(LABEL_MmTMPDIRECTORY, VALUE_MmTMPDIRECTORY,
 						PreferenceType.Directory),
 
 				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, DEFAULT_VALUE_LOG4J_PATTERN,

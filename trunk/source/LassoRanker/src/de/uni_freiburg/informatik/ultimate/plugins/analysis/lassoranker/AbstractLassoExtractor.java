@@ -37,45 +37,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  * @author Matthias Heizmann
  */
 public abstract class AbstractLassoExtractor {
-	protected NestedWord<CodeBlock> m_Stem;
-	protected NestedWord<CodeBlock> m_Loop;
-	protected ProgramPoint m_Honda;
-	protected boolean m_LassoFound;
-	protected RCFGNode m_SomeNoneForErrorReport;
+	protected NestedWord<CodeBlock> mStem;
+	protected NestedWord<CodeBlock> mLoop;
+	protected ProgramPoint mHonda;
+	protected boolean mLassoFound;
+	protected RCFGNode mSomeNoneForErrorReport;
 	
 	public NestedWord<CodeBlock> getStem() {
-		if (!m_LassoFound) {
+		if (!mLassoFound) {
 			throw new UnsupportedOperationException("no lasso was found");
 		}
-		return m_Stem;
+		return mStem;
 	}
 
 	public NestedWord<CodeBlock> getLoop() {
-		if (!m_LassoFound) {
+		if (!mLassoFound) {
 			throw new UnsupportedOperationException("no lasso was found");
 		}
 
-		return m_Loop;
+		return mLoop;
 	}
 
 	public ProgramPoint getHonda() {
-		if (!m_LassoFound) {
+		if (!mLassoFound) {
 			throw new UnsupportedOperationException("no lasso was found");
 		}
 
-		return m_Honda;
+		return mHonda;
 	}
 
 	public boolean wasLassoFound() {
-		return m_LassoFound;
+		return mLassoFound;
 	}
 
 	public RCFGNode getSomeNoneForErrorReport() {
-		if (m_LassoFound) {
+		if (mLassoFound) {
 			throw new UnsupportedOperationException(
 					"lasso was found, there was no error");
 		}
-		return m_SomeNoneForErrorReport;
+		return mSomeNoneForErrorReport;
 	}
 	
 }

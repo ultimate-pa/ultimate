@@ -67,20 +67,20 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * Stores information about vertices that, interpreted as (q0, q1),
 	 * represent a simulation where q1 direct simulates q0.
 	 */
-	private final Set<SpoilerVertex<LETTER, STATE>> m_DirectSimulations;
+	private final Set<SpoilerVertex<LETTER, STATE>> mDirectSimulations;
 
 	/**
 	 * Stores information about all edges that need to be removed if
 	 * transforming from direct to a fair game graph, added for the other
 	 * direction.
 	 */
-	private HashSet<Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>>> m_EdgesToBeChangedForTransformation;
+	private HashSet<Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>>> mEdgesToBeChangedForTransformation;
 
 	/**
 	 * True if the game graph currently mimics the behavior of a
 	 * DirectGameGraph, false if it mimics a FairGameGraph.
 	 */
-	private boolean m_IsCurrentlyDirectGameGraph;
+	private boolean mIsCurrentlyDirectGameGraph;
 
 	/**
 	 * Creates a new fair direct game graph by using the given buechi automaton.
@@ -114,9 +114,9 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 		INestedWordAutomatonOldApi<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
 		
-		m_IsCurrentlyDirectGameGraph = false;
-		m_DirectSimulations = new HashSet<>();
-		m_EdgesToBeChangedForTransformation = new HashSet<>();
+		mIsCurrentlyDirectGameGraph = false;
+		mDirectSimulations = new HashSet<>();
+		mEdgesToBeChangedForTransformation = new HashSet<>();
 	}
 
 	/*
@@ -128,7 +128,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> generateAutomatonFromGraph()
 			throws AutomataOperationCanceledException {
-		if (m_IsCurrentlyDirectGameGraph) {
+		if (mIsCurrentlyDirectGameGraph) {
 			// For the direct simulation we won't generate an expensive unused
 			// result since we only need the progress measure results for
 			// optimization, not the resulting automaton.
@@ -159,7 +159,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 */
 	@Override
 	public int getGlobalInfinity() {
-		if (m_IsCurrentlyDirectGameGraph) {
+		if (mIsCurrentlyDirectGameGraph) {
 			// In a direct game graph the global infinity is 1
 			return 1;
 		} else {
@@ -177,7 +177,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 */
 	@Override
 	public int getPriority(Vertex<LETTER, STATE> vertex) {
-		if (m_IsCurrentlyDirectGameGraph) {
+		if (mIsCurrentlyDirectGameGraph) {
 			// In a direct game graph every vertex has priority 0
 			return 0;
 		} else {
@@ -198,7 +198,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 *         where q1 direct simulates q0, false if not.
 	 */
 	public boolean isDirectSimulating(SpoilerVertex<LETTER, STATE> vertex) {
-		return m_DirectSimulations.contains(vertex) || vertex.getQ0().equals(vertex.getQ1());
+		return mDirectSimulations.contains(vertex) || vertex.getQ0().equals(vertex.getQ1());
 	}
 
 	/**
@@ -212,12 +212,12 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 			if (vertex.getPriority() == 1) {
 				if (hasSuccessors(vertex)) {
 					for (Vertex<LETTER, STATE> succ : getSuccessors(vertex)) {
-						m_EdgesToBeChangedForTransformation.add(new Pair<>(vertex, succ));
+						mEdgesToBeChangedForTransformation.add(new Pair<>(vertex, succ));
 					}
 				}
 				if (hasPredecessors(vertex)) {
 					for (Vertex<LETTER, STATE> pred : getPredecessors(vertex)) {
-						m_EdgesToBeChangedForTransformation.add(new Pair<>(pred, vertex));
+						mEdgesToBeChangedForTransformation.add(new Pair<>(pred, vertex));
 					}
 				}
 			}
@@ -232,7 +232,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 *         DirectGameGraph, false if it mimics a FairGameGraph.
 	 */
 	protected boolean isCurrentlyDirectGameGraph() {
-		return m_IsCurrentlyDirectGameGraph;
+		return mIsCurrentlyDirectGameGraph;
 	}
 
 	/**
@@ -251,7 +251,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 					continue;
 				}
 				// Found a one-directed direct simulating pair
-				m_DirectSimulations.add(vertex);
+				mDirectSimulations.add(vertex);
 			}
 
 			// Clear changes made in simulation
@@ -274,16 +274,16 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * behavior.
 	 */
 	protected void transformToDirectGameGraph() {
-		if (m_IsCurrentlyDirectGameGraph) {
+		if (mIsCurrentlyDirectGameGraph) {
 			return;
 		}
 
 		// Remove the corresponding edges
-		for (Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>> edge : m_EdgesToBeChangedForTransformation) {
+		for (Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>> edge : mEdgesToBeChangedForTransformation) {
 			removeEdge(edge.getFirst(), edge.getSecond());
 		}
 
-		m_IsCurrentlyDirectGameGraph = true;
+		mIsCurrentlyDirectGameGraph = true;
 	}
 
 	/**
@@ -291,15 +291,15 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * behavior.
 	 */
 	protected void transformToFairGameGraph() {
-		if (!m_IsCurrentlyDirectGameGraph) {
+		if (!mIsCurrentlyDirectGameGraph) {
 			return;
 		}
 
 		// Add the corresponding edges
-		for (Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>> edge : m_EdgesToBeChangedForTransformation) {
+		for (Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>> edge : mEdgesToBeChangedForTransformation) {
 			addEdge(edge.getFirst(), edge.getSecond());
 		}
 
-		m_IsCurrentlyDirectGameGraph = false;
+		mIsCurrentlyDirectGameGraph = false;
 	}
 }

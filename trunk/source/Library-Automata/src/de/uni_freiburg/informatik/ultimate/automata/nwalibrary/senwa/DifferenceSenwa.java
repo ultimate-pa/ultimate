@@ -58,8 +58,8 @@ public class DifferenceSenwa<LETTER, STATE> implements
 								IOperation<LETTER, STATE>,
 								IOpWithDelayedDeadEndRemoval<LETTER, STATE>{
 	
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 		
 	private final INestedWordAutomatonOldApi<LETTER,STATE> minuend;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> subtrahend;
@@ -68,9 +68,9 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	private final StateFactory<STATE> contentFactory;
 
-	private final Senwa<LETTER, STATE> m_Senwa;
+	private final Senwa<LETTER, STATE> mSenwa;
 	
-	private final SenwaWalker<LETTER, STATE> m_SenwaWalker;
+	private final SenwaWalker<LETTER, STATE> mSenwaWalker;
 	
 	
 	
@@ -80,14 +80,14 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	 * Maps a state in resulting automaton to the DifferenceState for which it
 	 * was created.
 	 */
-	Map<STATE,DifferenceState<LETTER,STATE>> m_Result2Operand = 
+	Map<STATE,DifferenceState<LETTER,STATE>> mResult2Operand = 
 			new HashMap<STATE,DifferenceState<LETTER,STATE>>();
 	
 	/**
 	 * Maps a DifferenceState and an entry state to its representative in the
 	 * resulting automaton.
 	 */
-	Map<DifferenceState<LETTER,STATE>,Map<DifferenceState<LETTER,STATE>,STATE>> m_Entry2Operand2Result = 
+	Map<DifferenceState<LETTER,STATE>,Map<DifferenceState<LETTER,STATE>,STATE>> mEntry2Operand2Result = 
 			new HashMap<DifferenceState<LETTER,STATE>,Map<DifferenceState<LETTER,STATE>,STATE>>();
 	
 	
@@ -108,7 +108,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + 
-		m_Senwa.sizeInformation() + ". Max degree of Nondeterminism is " + 
+		mSenwa.sizeInformation() + ". Max degree of Nondeterminism is " + 
 		stateDeterminizer.getMaxDegreeOfNondeterminism();
 	}
 	
@@ -119,22 +119,22 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
 					throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
-		m_Logger.info(startMessage());
+		mLogger.info(startMessage());
 		
 		
 		this.stateDeterminizer = new StateDeterminizerCache<LETTER, STATE>(
 							new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, contentFactory)); 
 		
-		m_Senwa = new Senwa<LETTER, STATE>(m_Services, 
+		mSenwa = new Senwa<LETTER, STATE>(mServices, 
 				minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
-		m_SenwaWalker = new SenwaWalker<LETTER, STATE>(m_Services, m_Senwa, this, true);
-		m_Logger.info(exitMessage());
+		mSenwaWalker = new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
+		mLogger.info(exitMessage());
 	}
 	
 	
@@ -145,30 +145,30 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			boolean removeDeadEndsImmediately)
 					throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		contentFactory = minuend.getStateFactory();
 		if (minuend instanceof INestedWordAutomatonOldApi) {
 			this.minuend = (INestedWordAutomatonOldApi<LETTER, STATE>) minuend;
 		} else {
-			this.minuend = (new RemoveUnreachable<LETTER,STATE>(m_Services, minuend)).getResult();
+			this.minuend = (new RemoveUnreachable<LETTER,STATE>(mServices, minuend)).getResult();
 		}
 		if (subtrahend instanceof INestedWordAutomatonOldApi) {
 			this.subtrahend = (INestedWordAutomatonOldApi<LETTER, STATE>) minuend;
 		} else {
-			this.subtrahend = (new RemoveUnreachable<LETTER,STATE>(m_Services, minuend)).getResult();
+			this.subtrahend = (new RemoveUnreachable<LETTER,STATE>(mServices, minuend)).getResult();
 		}
-		m_Logger.info(startMessage());
+		mLogger.info(startMessage());
 		
 		
 		this.stateDeterminizer = new StateDeterminizerCache<LETTER, STATE>(
 				stateDeterminizer); 
 		
-		m_Senwa = new Senwa<LETTER, STATE>(m_Services,
+		mSenwa = new Senwa<LETTER, STATE>(mServices,
 				minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
-		m_SenwaWalker = new SenwaWalker<LETTER, STATE>(m_Services, m_Senwa, this, removeDeadEndsImmediately);
-		m_Logger.info(exitMessage());
+		mSenwaWalker = new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, removeDeadEndsImmediately);
+		mLogger.info(exitMessage());
 	}
 	
 	
@@ -180,10 +180,10 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			DifferenceState<LETTER,STATE> diffState, boolean isInitial) {
 		assert minuend.getStates().contains(diffState.getMinuendState());
 		assert minuend.getStates().contains(diffEntry.getMinuendState());
-		Map<DifferenceState<LETTER,STATE>, STATE> op2res = m_Entry2Operand2Result.get(diffEntry);
+		Map<DifferenceState<LETTER,STATE>, STATE> op2res = mEntry2Operand2Result.get(diffEntry);
 		if (op2res == null) {
 			op2res = new HashMap<DifferenceState<LETTER,STATE>, STATE>();
-			m_Entry2Operand2Result.put(diffEntry, op2res);
+			mEntry2Operand2Result.put(diffEntry, op2res);
 		}
 		STATE resState = op2res.get(diffState);
 		if (resState == null) {
@@ -192,17 +192,17 @@ public class DifferenceSenwa<LETTER, STATE> implements
 					diffEntry.getState(contentFactory, stateDeterminizer), 
 					diffState.getState(contentFactory, stateDeterminizer));
 			op2res.put(diffState, resState);
-			m_Result2Operand.put(resState, diffState);
+			mResult2Operand.put(resState, diffState);
 			STATE resEntry = op2res.get(diffEntry);
 			assert resEntry != null;
-			m_Senwa.addState(resState, isInitial, diffState.isFinal(), resEntry);
+			mSenwa.addState(resState, isInitial, diffState.isFinal(), resEntry);
 		}
 		return resState;
 	}
 	
 	private DifferenceState<LETTER,STATE> getOperandState(STATE resState) {
-		assert m_Senwa.getStates().contains(resState);
-		DifferenceState<LETTER,STATE> opState = m_Result2Operand.get(resState);
+		assert mSenwa.getStates().contains(resState);
+		DifferenceState<LETTER,STATE> opState = mResult2Operand.get(resState);
 		assert opState != null;
 		return opState;
 	}
@@ -227,7 +227,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 
 	@Override
 	public Iterable<STATE> visitAndGetInternalSuccessors(STATE resState) {
-		STATE resEntry = m_Senwa.getEntry(resState);
+		STATE resEntry = mSenwa.getEntry(resState);
 		DifferenceState<LETTER,STATE> diffEntry = getOperandState(resEntry);
 		Set<STATE> resSuccs = new HashSet<STATE>();
 		DifferenceState<LETTER,STATE> diffState = getOperandState(resState);
@@ -242,7 +242,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 				
 				STATE resSucc = getOrConstructResultState(diffEntry, diffSucc, false);
 				resSuccs.add(resSucc);
-				m_Senwa.addInternalTransition(resState, letter, resSucc);
+				mSenwa.addInternalTransition(resState, letter, resSucc);
 			}
 		}
 		return resSuccs;
@@ -265,7 +265,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 						DifferenceState<LETTER,STATE>(minuSucc, subtrSucc, isFinal);		
 				STATE resSucc = getOrConstructResultState(diffSucc, diffSucc, false);
 				resSuccs.add(resSucc);
-				m_Senwa.addCallTransition(resState, letter, resSucc);
+				mSenwa.addCallTransition(resState, letter, resSucc);
 			}
 		}
 		return resSuccs;
@@ -283,7 +283,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		STATE minuHier = diffHier.getMinuendState();
 		DeterminizedState<LETTER,STATE> subtrHier = 
 									diffHier.getSubtrahendDeterminizedState();
-		STATE resHierEntry = m_Senwa.getEntry(resHier);
+		STATE resHierEntry = mSenwa.getEntry(resHier);
 		DifferenceState<LETTER,STATE> diffHierEntry = getOperandState(resHierEntry);
 
 		for (LETTER letter : minuend.lettersReturn(minuState)) {
@@ -296,27 +296,27 @@ public class DifferenceSenwa<LETTER, STATE> implements
 						DifferenceState<LETTER,STATE>(minuSucc, subtrSucc, isFinal);		
 				STATE resSucc = getOrConstructResultState(diffHierEntry, diffSucc, false);
 				resSuccs.add(resSucc);
-				m_Senwa.addReturnTransition(resState, resHier, letter, resSucc);
+				mSenwa.addReturnTransition(resState, resHier, letter, resSucc);
 			}
 		}
 		return resSuccs;
 	}
 	
 	public Senwa<LETTER,STATE> getResult() throws AutomataOperationCanceledException {
-		return m_Senwa;
+		return mSenwa;
 	}
 	
 	
 //FIXME: Remove this
 	public boolean removeStatesThatCanNotReachFinal(
 			boolean computeRemovedDoubleDeckersAndCallSuccessors) {
-		return m_SenwaWalker.removeStatesThatCanNotReachFinal(
+		return mSenwaWalker.removeStatesThatCanNotReachFinal(
 								computeRemovedDoubleDeckersAndCallSuccessors);
 	}
 
 	
 	public long getDeadEndRemovalTime() {
-		return m_SenwaWalker.getDeadEndRemovalTime();
+		return mSenwaWalker.getDeadEndRemovalTime();
 	}
 
 	@Override
@@ -336,17 +336,17 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			m_Logger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + operationName());
 
-			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(m_Services, stateFactory, minuend, subtrahend)).getResult();
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultSadd, m_Senwa, stateFactory) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Senwa, resultSadd, stateFactory) == null);
+			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(mServices, stateFactory, minuend, subtrahend)).getResult();
+			correct &= (ResultChecker.nwaLanguageInclusion(mServices, resultSadd, mSenwa, stateFactory) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(mServices, mSenwa, resultSadd, stateFactory) == null);
 			if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", minuend,subtrahend);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", minuend,subtrahend);
 			}
-			m_Logger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + operationName());
 		} else {
-			m_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
+			mLogger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
 		}
 		return correct;
 	}

@@ -49,29 +49,29 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
  */
 public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>
 										   implements IOperation<LETTER,STATE> {
-	private final Set<STATE> m_VisitedStates = new HashSet<STATE>();
-	private int m_UnreachalbeStates = 0;
+	private final Set<STATE> mVisitedStates = new HashSet<STATE>();
+	private int mUnreachalbeStates = 0;
 
 	
 	public HasUnreachableStates(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
 		super(services);
-		m_TraversedNwa = operand;
-		m_Logger.info(startMessage());
+		mTraversedNwa = operand;
+		mLogger.info(startMessage());
 		traverseDoubleDeckerGraph();
-		for (STATE state : m_TraversedNwa.getStates()) {
-			if (!m_VisitedStates.contains(state)) {
-				m_UnreachalbeStates++;
-				m_Logger.warn("Unreachalbe state: " + state);
+		for (STATE state : mTraversedNwa.getStates()) {
+			if (!mVisitedStates.contains(state)) {
+				mUnreachalbeStates++;
+				mLogger.warn("Unreachalbe state: " + state);
 			}
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	@Override
 	protected Collection<STATE> getInitialStates() {
-		m_VisitedStates.addAll(m_TraversedNwa.getInitialStates());
-		return m_TraversedNwa.getInitialStates();
+		mVisitedStates.addAll(mTraversedNwa.getInitialStates());
+		return mTraversedNwa.getInitialStates();
 	}
 
 	@Override
@@ -79,12 +79,12 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 			DoubleDecker<STATE> doubleDecker) {
 		STATE state = doubleDecker.getUp();
 		Set<STATE> succs = new HashSet<STATE>();
-		for (LETTER letter : m_TraversedNwa.lettersInternal(state)) {
-			for (STATE succ : m_TraversedNwa.succInternal(state, letter)) {
+		for (LETTER letter : mTraversedNwa.lettersInternal(state)) {
+			for (STATE succ : mTraversedNwa.succInternal(state, letter)) {
 				succs.add(succ);
 			}
 		}
-		m_VisitedStates.addAll(succs);
+		mVisitedStates.addAll(succs);
 		return succs;
 	}
 	
@@ -95,12 +95,12 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 			DoubleDecker<STATE> doubleDecker) {
 		STATE state = doubleDecker.getUp();
 		Set<STATE> succs = new HashSet<STATE>();
-		for (LETTER letter : m_TraversedNwa.lettersCall(state)) {
-			for (STATE succ : m_TraversedNwa.succCall(state, letter)) {
+		for (LETTER letter : mTraversedNwa.lettersCall(state)) {
+			for (STATE succ : mTraversedNwa.succCall(state, letter)) {
 				succs.add(succ);
 			}
 		}
-		m_VisitedStates.addAll(succs);
+		mVisitedStates.addAll(succs);
 		return succs;
 	}
 	
@@ -112,12 +112,12 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 		STATE state = doubleDecker.getUp();
 		STATE hier = doubleDecker.getDown();
 		Set<STATE> succs = new HashSet<STATE>();
-		for (LETTER letter : m_TraversedNwa.lettersReturn(state)) {
-			for (STATE succ : m_TraversedNwa.succReturn(state, hier, letter)) {
+		for (LETTER letter : mTraversedNwa.lettersReturn(state)) {
+			for (STATE succ : mTraversedNwa.succReturn(state, hier, letter)) {
 				succs.add(succ);
 			}
 		}
-		m_VisitedStates.addAll(succs);
+		mVisitedStates.addAll(succs);
 		return succs;
 	}
 
@@ -129,18 +129,18 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_TraversedNwa.sizeInformation();
+			mTraversedNwa.sizeInformation();
 	}
 	
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Operand has " + 
-			m_UnreachalbeStates + " unreachalbe states";
+			mUnreachalbeStates + " unreachalbe states";
 	}
 	
 	public boolean result() {
-		return m_UnreachalbeStates != 0;
+		return mUnreachalbeStates != 0;
 	}
 
 	@Override

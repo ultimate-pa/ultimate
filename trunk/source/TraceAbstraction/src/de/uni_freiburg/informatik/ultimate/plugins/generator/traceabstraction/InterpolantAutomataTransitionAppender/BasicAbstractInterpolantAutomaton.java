@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public abstract class BasicAbstractInterpolantAutomaton extends
 		AbstractInterpolantAutomaton {
 	
-	protected final IPredicate m_IaTrueState;
-	protected final PredicateUnifier m_PredicateUnifier;
+	protected final IPredicate mIaTrueState;
+	protected final PredicateUnifier mPredicateUnifier;
 
 
 	public BasicAbstractInterpolantAutomaton(IUltimateServiceProvider services,
@@ -62,27 +62,27 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 			ILogger logger) {
 		super(services, smtManager, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping, abstraction,
 				predicateUnifier.getFalsePredicate(), interpolantAutomaton, logger);
-		m_PredicateUnifier = predicateUnifier;
-		m_IaTrueState = predicateUnifier.getTruePredicate();
+		mPredicateUnifier = predicateUnifier;
+		mIaTrueState = predicateUnifier.getTruePredicate();
 	}
 
 	protected void computeSuccs(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 			SuccessorComputationHelper sch) {
 		// if (linear) predecessor is false, the successor is false
 		if (sch.isLinearPredecessorFalse(resPred)) {
-			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+			sch.addTransition(resPred, resHier, letter, mIaFalseState);
 			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
 		}
 		// if (hierarchical) predecessor is false, the successor is false
 		if (sch.isHierarchicalPredecessorFalse(resHier)) {
-			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+			sch.addTransition(resPred, resHier, letter, mIaFalseState);
 			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
 		} 
 		// if the letter is already infeasible, the successor is false
 		if (letter.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
-			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+			sch.addTransition(resPred, resHier, letter, mIaFalseState);
 			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
 		}
@@ -91,14 +91,14 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 		// input interpolant automaton
 		addInputAutomatonSuccs(resPred, resHier, letter, sch, inputSuccs);
 		// check if false is implied
-		if (inputSuccs.contains(m_IaFalseState)){
-			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+		if (inputSuccs.contains(mIaFalseState)){
+			sch.addTransition(resPred, resHier, letter, mIaFalseState);
 			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
 		} else {
-			Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
+			Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, mIaFalseState);
 			if (sat == Validity.VALID) {
-				sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+				sch.addTransition(resPred, resHier, letter, mIaFalseState);
 				sch.reportSuccsComputed(resPred, resHier, letter);
 				return;
 			}

@@ -44,25 +44,25 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
  * @param <C> Content
  */
 public class DoubleDecker<C> {
-	private final C m_Down;
-	private final C m_Up;
+	private final C mDown;
+	private final C mUp;
 	private final int hashCode;
 	
 	public DoubleDecker(C down, C up) {
-		this.m_Down = down;
-		this.m_Up = up;
+		this.mDown = down;
+		this.mUp = up;
 		
 		this.hashCode = 
-			3 * this.m_Down.hashCode() + 5 * this.m_Up.hashCode();
+			3 * this.mDown.hashCode() + 5 * this.mUp.hashCode();
 	}
 	
 	public C getDown() {
-		return m_Down;
+		return mDown;
 	}
 
 
 	public C getUp() {
-		return m_Up;
+		return mUp;
 	}
 	
 
@@ -71,8 +71,8 @@ public class DoubleDecker<C> {
 	public boolean equals(Object obj) {
 		if (obj instanceof DoubleDecker) {
 			DoubleDecker<C> summaryState = (DoubleDecker<C>) obj;
-			return m_Up.equals(summaryState.m_Up) && 
-							m_Down.equals(summaryState.m_Down);
+			return mUp.equals(summaryState.mUp) && 
+							mDown.equals(summaryState.mDown);
 		}
 		else {
 			return false;
@@ -86,7 +86,7 @@ public class DoubleDecker<C> {
 
 	@Override
 	public String toString() {
-		return "Basement: " + m_Down + "  Upstairs: " + m_Up;
+		return "Basement: " + mDown + "  Upstairs: " + mUp;
 	}
 	
 }

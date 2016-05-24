@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public abstract class AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	
-	protected final AutomataLibraryServices m_Services;
+	protected final AutomataLibraryServices mServices;
 	/**
 	 * The logger.
 	 */
@@ -63,17 +63,17 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	/**
 	 * The operation name.
 	 */
-	protected final String m_name;
+	protected final String mname;
 	
 	/**
 	 * The input automaton.
 	 */
-	protected final INestedWordAutomaton<LETTER, STATE> m_operand;
+	protected final INestedWordAutomaton<LETTER, STATE> moperand;
 	
 	/**
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */
-	protected final StateFactory<STATE> m_StateFactory;
+	protected final StateFactory<STATE> mStateFactory;
 
 	/**
 	 * This constructor should be called by all subclasses and only by them.
@@ -84,29 +84,29 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	protected AMinimizeNwa(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		m_Services = services;
-		s_logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_name = name;
-		m_operand = operand;
-		m_StateFactory = stateFactory;
+		mServices = services;
+		s_logger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mname = name;
+		moperand = operand;
+		mStateFactory = stateFactory;
 		s_logger.info(startMessage());
 	}
 	
 	@Override
 	public final String operationName() {
-		return m_name;
+		return mname;
 	}
 	
 	@Override
 	public final String startMessage() {
 		return "Start " + operationName() + ". Operand has " +
-			m_operand.sizeInformation();
+			moperand.sizeInformation();
 	}
 	
 	@Override
 	public final String exitMessage() {
 		return "Finished " + operationName() + ". Reduced states from " +
-				m_operand.size() + " to " + getResult().size() + ".";
+				moperand.size() + " to " + getResult().size() + ".";
 	}
 	
 	@Override
@@ -118,8 +118,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 		s_logger.info("Start testing correctness of " + operationName());
 		final String message;
 		
-		if (checkInclusion(m_operand, getResult(), stateFactory)) {
-			if (checkInclusion(getResult(), m_operand, stateFactory)) {
+		if (checkInclusion(moperand, getResult(), stateFactory)) {
+			if (checkInclusion(getResult(), moperand, stateFactory)) {
 				s_logger.info("Finished testing correctness of " +
 						operationName());
 				return true;
@@ -132,10 +132,10 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			message = "The result recognizes more words than before.";
 		}
 		
-		ResultChecker.writeToFileIfPreferred(m_Services, 
+		ResultChecker.writeToFileIfPreferred(mServices, 
 				operationName() + " failed",
 				message,
-				m_operand);
+				moperand);
 		return false;
 	}
 	
@@ -154,9 +154,9 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> superset,
 			final StateFactory<STATE> stateFactory)
 				throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(m_Services, 
-				ResultChecker.getOldApiNwa(m_Services, subset),
-				ResultChecker.getOldApiNwa(m_Services, superset),
+		return ResultChecker.nwaLanguageInclusion(mServices, 
+				ResultChecker.getOldApiNwa(mServices, subset),
+				ResultChecker.getOldApiNwa(mServices, superset),
 				stateFactory) == null;
 	}
 	
@@ -181,8 +181,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 */
 	protected final boolean checkForDeterminism()
 			throws AutomataLibraryException {
-		return new IsDeterministic<LETTER, STATE>(m_Services, m_operand).
-				checkResult(m_operand.getStateFactory());
+		return new IsDeterministic<LETTER, STATE>(mServices, moperand).
+				checkResult(moperand.getStateFactory());
 	}
 	
 	/**
@@ -197,8 +197,8 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @return true iff automaton contains no call and return letters
 	 */
 	protected final boolean checkForFiniteAutomaton() {
-		return ((m_operand.getCallAlphabet().size() == 0) &&
-				(m_operand.getReturnAlphabet().size() == 0));
+		return ((moperand.getCallAlphabet().size() == 0) &&
+				(moperand.getReturnAlphabet().size() == 0));
 	}
 	
 	/**
@@ -208,7 +208,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 */
 	protected final void checkForContinuation()
 			throws AutomataLibraryException {
-		if (!m_Services.getProgressMonitorService().continueProcessing()) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}

@@ -56,13 +56,13 @@ public class NestedMap7<K1, K2, K3, K4, K5, K6, K7, V> {
 	/**
 	 * Internal map that adds the first key to a {@link NestedMap5}.
 	 */
-	private final Map<K1, NestedMap6<K2, K3, K4, K5, K6, K7, V>> m_K1ToK2ToK3ToK4ToK5ToK6ToK7V = new HashMap<K1, NestedMap6<K2, K3, K4, K5, K6, K7, V>>();
+	private final Map<K1, NestedMap6<K2, K3, K4, K5, K6, K7, V>> mK1ToK2ToK3ToK4ToK5ToK6ToK7V = new HashMap<K1, NestedMap6<K2, K3, K4, K5, K6, K7, V>>();
 
 	/**
 	 * Clears the nested map.
 	 */
 	public void clear() {
-		m_K1ToK2ToK3ToK4ToK5ToK6ToK7V.clear();
+		mK1ToK2ToK3ToK4ToK5ToK6ToK7V.clear();
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class NestedMap7<K1, K2, K3, K4, K5, K6, K7, V> {
 	 * @return The value stored at the given position.
 	 */
 	public V get(K1 key1, K2 key2, K3 key3, K4 key4, K5 key5, K6 key6, K7 key7) {
-		NestedMap6<K2, K3, K4, K5, K6, K7, V> k2tok3tok4tok5tok6tok7toV = m_K1ToK2ToK3ToK4ToK5ToK6ToK7V.get(key1);
+		NestedMap6<K2, K3, K4, K5, K6, K7, V> k2tok3tok4tok5tok6tok7toV = mK1ToK2ToK3ToK4ToK5ToK6ToK7V.get(key1);
 		if (k2tok3tok4tok5tok6tok7toV == null) {
 			return null;
 		} else {
@@ -117,10 +117,10 @@ public class NestedMap7<K1, K2, K3, K4, K5, K6, K7, V> {
 	 *         was no mapping for key. See {@link Map#put(Object, Object)}.
 	 */
 	public V put(K1 key1, K2 key2, K3 key3, K4 key4, K5 key5, K6 key6, K7 key7, V value) {
-		NestedMap6<K2, K3, K4, K5, K6, K7, V> k2tok3tok4tok5tok6tok7toV = m_K1ToK2ToK3ToK4ToK5ToK6ToK7V.get(key1);
+		NestedMap6<K2, K3, K4, K5, K6, K7, V> k2tok3tok4tok5tok6tok7toV = mK1ToK2ToK3ToK4ToK5ToK6ToK7V.get(key1);
 		if (k2tok3tok4tok5tok6tok7toV == null) {
 			k2tok3tok4tok5tok6tok7toV = new NestedMap6<>();
-			m_K1ToK2ToK3ToK4ToK5ToK6ToK7V.put(key1, k2tok3tok4tok5tok6tok7toV);
+			mK1ToK2ToK3ToK4ToK5ToK6ToK7V.put(key1, k2tok3tok4tok5tok6tok7toV);
 		}
 		return k2tok3tok4tok5tok6tok7toV.put(key2, key3, key4, key5, key6, key7, value);
 	}

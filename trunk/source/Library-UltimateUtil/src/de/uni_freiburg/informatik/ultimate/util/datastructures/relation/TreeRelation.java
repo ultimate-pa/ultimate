@@ -50,7 +50,7 @@ public class TreeRelation<D,R> extends AbstractRelation<D, R, TreeMap<D,Set<R>>>
 	}
 	
 	public NavigableSet<D> descendingDomain() {
-		return super.m_Map.descendingKeySet();
+		return super.mMap.descendingKeySet();
 	}
 
 }

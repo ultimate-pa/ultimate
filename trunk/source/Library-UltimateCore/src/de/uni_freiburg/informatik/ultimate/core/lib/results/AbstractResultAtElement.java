@@ -43,22 +43,22 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 public abstract class AbstractResultAtElement<ELEM extends IElement> 
 						extends AbstractResult implements IResultWithLocation {
 	
-	private final ELEM m_Element;
+	private final ELEM mElement;
 	protected final IBacktranslationService mTranslatorSequence;
 	
 	public AbstractResultAtElement(ELEM element, String plugin,
 			IBacktranslationService translatorSequence) {
 		super(plugin);
-		m_Element = element;
+		mElement = element;
 		mTranslatorSequence = translatorSequence.getTranslationServiceCopy();
 	}
 	
 	public final ILocation getLocation() {
-		return m_Element.getPayload().getLocation();
+		return mElement.getPayload().getLocation();
 	}
 
 	public final ELEM getElement() {
-		return m_Element;
+		return mElement;
 	}
 
 

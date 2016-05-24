@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf
  * @author Jan Leike
  */
 public class DNF extends TransitionPreprocessor {
-	private final IUltimateServiceProvider m_Services;
-	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
+	private final IUltimateServiceProvider mServices;
+	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
 	
 	public static final String s_Description = 
 			"Transform into disjunctive normal form";
@@ -58,8 +58,8 @@ public class DNF extends TransitionPreprocessor {
 	public DNF(IUltimateServiceProvider services, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		super();
-		m_Services = services;
-		m_FreshTermVariableConstructor = freshTermVariableConstructor;
+		mServices = services;
+		mFreshTermVariableConstructor = freshTermVariableConstructor;
 	}
 	
 	@Override
@@ -78,7 +78,7 @@ public class DNF extends TransitionPreprocessor {
 	
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		Dnf dnf = new Dnf(script, m_Services, m_FreshTermVariableConstructor);
+		Dnf dnf = new Dnf(script, mServices, mFreshTermVariableConstructor);
 		tf.setFormula(dnf.transform(tf.getFormula()));
 		return tf;
 	}

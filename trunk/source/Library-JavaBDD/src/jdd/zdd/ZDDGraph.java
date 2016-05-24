@@ -42,7 +42,7 @@ public class ZDDGraph  extends ZDD  {
 	 * all pairs, that is, all possible edges in a fully connected graph.
 	 * if V = { x_from, ..., x_to} then  allEdge(V) = { (v1,v2) | v1,v2 \in V. v1 != v2 }
 	 */
-	public int allEdge() { return allEdge(0, num_vars-1); }
+	public int allEdge() { return allEdge(0, numvars-1); }
 	public int allEdge(int from, int to) {
 		if(to < from) return 0;
 

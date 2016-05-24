@@ -341,7 +341,7 @@ public class NoopScript implements Script {
   			    		throw new SMTLIBException("Cannot name open terms");
   			    	else
   			    	    defineFunInternal((String) a.getValue(), 
-  			    	    	Theory.EMPTY_TERM_VARIABLE_ARRAY, t.getSort(), t);
+  			    	    	Theory.EMPTY_TERmVARIABLE_ARRAY, t.getSort(), t);
   			    }
   			}
   			return mTheory.annotatedTerm(annotations, t);

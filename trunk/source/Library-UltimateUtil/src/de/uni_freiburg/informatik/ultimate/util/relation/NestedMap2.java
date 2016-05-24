@@ -45,19 +45,19 @@ import java.util.Set;
  */
 public class NestedMap2<K1, K2, V> {
 	
-	private final Map<K1, Map<K2, V>> m_K1ToK2ToV = new HashMap<K1, Map<K2, V>>();
+	private final Map<K1, Map<K2, V>> mK1ToK2ToV = new HashMap<K1, Map<K2, V>>();
 	
 	public V put(K1 key1, K2 key2, V value) {
-		Map<K2, V> k2toV = m_K1ToK2ToV.get(key1);
+		Map<K2, V> k2toV = mK1ToK2ToV.get(key1);
 		if (k2toV == null) {
 			k2toV = new HashMap<>();
-			m_K1ToK2ToV.put(key1, k2toV);
+			mK1ToK2ToV.put(key1, k2toV);
 		}
 		return k2toV.put(key2, value);
 	}
 	
 	public V get(K1 key1, K2 key2) {
-		Map<K2, V> k2toV = m_K1ToK2ToV.get(key1);
+		Map<K2, V> k2toV = mK1ToK2ToV.get(key1);
 		if (k2toV == null) {
 			return null;
 		} else {
@@ -66,11 +66,11 @@ public class NestedMap2<K1, K2, V> {
 	}
 	
 	public Map<K2,V> get(K1 key1) {
-		return m_K1ToK2ToV.get(key1);
+		return mK1ToK2ToV.get(key1);
 	}
 	
 	public Set<K1> keySet() {
-		return m_K1ToK2ToV.keySet();
+		return mK1ToK2ToV.keySet();
 	}
 	
 	public Iterable<Pair<K1,K2>> keys2() {
@@ -79,42 +79,42 @@ public class NestedMap2<K1, K2, V> {
 			@Override
 			public Iterator<Pair<K1, K2>> iterator() {
 				return new Iterator<Pair<K1,K2>>() {
-					private Iterator<Entry<K1, Map<K2, V>>> m_Iterator1;
-					private Entry<K1, Map<K2, V>> m_Iterator1Object;
-					private Iterator<K2> m_Iterator2;
+					private Iterator<Entry<K1, Map<K2, V>>> mIterator1;
+					private Entry<K1, Map<K2, V>> mIterator1Object;
+					private Iterator<K2> mIterator2;
 
 					{
-						m_Iterator1 = m_K1ToK2ToV.entrySet().iterator();
-						if (m_Iterator1.hasNext()) {
-							m_Iterator1Object = m_Iterator1.next();
-							m_Iterator2 = m_Iterator1Object.getValue().keySet().iterator();
+						mIterator1 = mK1ToK2ToV.entrySet().iterator();
+						if (mIterator1.hasNext()) {
+							mIterator1Object = mIterator1.next();
+							mIterator2 = mIterator1Object.getValue().keySet().iterator();
 						}
 					}
 
 					@Override
 					public boolean hasNext() {
-						if (m_Iterator1Object == null) {
+						if (mIterator1Object == null) {
 							return false;
 						} else {
-							return m_Iterator2.hasNext();
+							return mIterator2.hasNext();
 						}
 					}
 
 					@Override
 					public Pair<K1, K2> next() {
-						if (m_Iterator1Object == null) {
+						if (mIterator1Object == null) {
 							throw new NoSuchElementException();
 						} else {
-							if (!m_Iterator2.hasNext()) {
-								if (!m_Iterator1.hasNext()) {
+							if (!mIterator2.hasNext()) {
+								if (!mIterator1.hasNext()) {
 									throw new NoSuchElementException();
 								} else {
-									m_Iterator1Object = m_Iterator1.next();
-									assert m_Iterator1Object.getValue().size() > 0 : "must contain at least one value";
-									m_Iterator2 = m_Iterator1Object.getValue().keySet().iterator();
+									mIterator1Object = mIterator1.next();
+									assert mIterator1Object.getValue().size() > 0 : "must contain at least one value";
+									mIterator2 = mIterator1Object.getValue().keySet().iterator();
 								}
 							}
-							return new Pair<K1, K2>(m_Iterator1Object.getKey(), m_Iterator2.next());
+							return new Pair<K1, K2>(mIterator1Object.getKey(), mIterator2.next());
 						}
 					}
 
@@ -131,7 +131,7 @@ public class NestedMap2<K1, K2, V> {
 	//TODO more efficient iterable
 	public Iterable<Triple<K1,K2,V>> entrySet() {
 		ArrayList<Triple<K1,K2,V>> result = new ArrayList<Triple<K1,K2,V>>();
-		for (Entry<K1, Map<K2, V>> entryOuter  : m_K1ToK2ToV.entrySet()) {
+		for (Entry<K1, Map<K2, V>> entryOuter  : mK1ToK2ToV.entrySet()) {
 			for (Entry<K2, V> entryInner : entryOuter.getValue().entrySet()) {
 				result.add(new Triple<>(entryOuter.getKey(), entryInner.getKey(), entryInner.getValue()));
 			}
@@ -146,11 +146,11 @@ public class NestedMap2<K1, K2, V> {
 	}
 	
 	public Map<K2, V> remove(K1 k1) {
-		return m_K1ToK2ToV.remove(k1);
+		return mK1ToK2ToV.remove(k1);
 	}
 	
 	public V remove(K1 k1, K2 k2) {
-		Map<K2, V> k2ToV = m_K1ToK2ToV.get(k1);
+		Map<K2, V> k2ToV = mK1ToK2ToV.get(k1);
 		if (k2ToV == null) {
 			return null;
 		} else {
@@ -160,10 +160,10 @@ public class NestedMap2<K1, K2, V> {
 
 	@Override
 	public String toString() {
-		return m_K1ToK2ToV.toString();
+		return mK1ToK2ToV.toString();
 	}
 	
 	public void clear() {
-		m_K1ToK2ToV.clear();
+		mK1ToK2ToV.clear();
 	}
 }

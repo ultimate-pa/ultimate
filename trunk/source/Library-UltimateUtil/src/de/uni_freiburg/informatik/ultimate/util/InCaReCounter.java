@@ -32,45 +32,45 @@ package de.uni_freiburg.informatik.ultimate.util;
  *
  */
 public class InCaReCounter {
-	private static final boolean m_ToStringIsSum = true;
-	private int m_Internal;
-	private int m_Call;
-	private int m_Return;
+	private static final boolean mToStringIsSum = true;
+	private int mInternal;
+	private int mCall;
+	private int mReturn;
 	
 	public InCaReCounter() {
 		super();
-		m_Internal = 0;
-		m_Call = 0;
-		m_Return = 0;
+		mInternal = 0;
+		mCall = 0;
+		mReturn = 0;
 	}
 	public int getInternal() {
-		return m_Internal;
+		return mInternal;
 	}
 	public int getCall() {
-		return m_Call;
+		return mCall;
 	}
 	public int getReturn() {
-		return m_Return;
+		return mReturn;
 	}
 	
 	public void incIn() {
-		m_Internal++;
+		mInternal++;
 	}
 	
 	public void incCa() {
-		m_Call++;
+		mCall++;
 	}
 	
 	public void incRe() {
-		m_Return++;
+		mReturn++;
 	}
 	
 	@Override
 	public String toString() {
-		if (m_ToStringIsSum) {
-			return String.valueOf(m_Internal + m_Call + m_Return);
+		if (mToStringIsSum) {
+			return String.valueOf(mInternal + mCall + mReturn);
 		} else {
-			return m_Internal + "In " + m_Call + "Ca " + m_Return + "Re";
+			return mInternal + "In " + mCall + "Ca " + mReturn + "Re";
 		}
 	}
 	
@@ -79,9 +79,9 @@ public class InCaReCounter {
 	 * Add all values of another counter to the values of this counter.
 	 */
 	public void add(InCaReCounter inCaReCounter) {
-		m_Internal += inCaReCounter.getInternal();
-		m_Call += inCaReCounter.getCall();
-		m_Return =+ inCaReCounter.getReturn();
+		mInternal += inCaReCounter.getInternal();
+		mCall += inCaReCounter.getCall();
+		mReturn =+ inCaReCounter.getReturn();
 	}
 
 }

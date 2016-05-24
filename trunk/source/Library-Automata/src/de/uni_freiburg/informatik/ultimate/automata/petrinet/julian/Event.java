@@ -39,18 +39,18 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 public class Event<S, C> implements Serializable {
 	private static final long serialVersionUID = 7162664880110047121L;
 
-	private final int m_HashCode;
+	private final int mHashCode;
 
-	private final Set<Condition<S, C>> m_Predecessors;
-	private final Set<Condition<S, C>> m_Successors;
-	private final Configuration<S, C> m_LocalConfiguration;
-	// private final Event<S, C>[] m_LocalConfiguration;
-	// private final ArrayList<Event<S, C>> m_LocalConfiguration;
-	private final Marking<S, C> m_Mark;
-	private final ConditionMarking<S, C> m_ConditionMark;
+	private final Set<Condition<S, C>> mPredecessors;
+	private final Set<Condition<S, C>> mSuccessors;
+	private final Configuration<S, C> mLocalConfiguration;
+	// private final Event<S, C>[] mLocalConfiguration;
+	// private final ArrayList<Event<S, C>> mLocalConfiguration;
+	private final Marking<S, C> mMark;
+	private final ConditionMarking<S, C> mConditionMark;
 
-	private Event<S, C> m_Companion;
-	private final Transition<S, C> m_Transition;
+	private Event<S, C> mCompanion;
+	private final Transition<S, C> mTransition;
 
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from
@@ -71,11 +71,11 @@ public class Event<S, C> implements Serializable {
 				+ "\n  "
 				+ "transitions predecessors:"
 				+ transition.getPredecessors();
-		this.m_Predecessors = new HashSet<Condition<S, C>>(predecessors);
+		this.mPredecessors = new HashSet<Condition<S, C>>(predecessors);
 		// HashSet<Event<S, C>> localConfiguration = new HashSet<Event<S, C>>();
-		this.m_LocalConfiguration = new Configuration<S, C>(
+		this.mLocalConfiguration = new Configuration<S, C>(
 				new HashSet<Event<S, C>>());
-		this.m_Transition = transition;
+		this.mTransition = transition;
 		Set<Condition<S, C>> conditionMarkSet = new HashSet<Condition<S, C>>();
 
 		Set<Event<S, C>> predecessorEvents = new HashSet<Event<S, C>>();
@@ -84,24 +84,24 @@ public class Event<S, C> implements Serializable {
 			if (predecessorEvents.contains(e))
 				continue;
 			predecessorEvents.add(e);
-			// Collections.addAll(localConfiguration, e.m_LocalConfiguration);
-			m_LocalConfiguration.addAll(e.m_LocalConfiguration);
-			e.m_ConditionMark.addTo(conditionMarkSet);
+			// Collections.addAll(localConfiguration, e.mLocalConfiguration);
+			mLocalConfiguration.addAll(e.mLocalConfiguration);
+			e.mConditionMark.addTo(conditionMarkSet);
 		}
 
-		m_LocalConfiguration.add(this);
+		mLocalConfiguration.add(this);
 
-		this.m_Successors = new HashSet<Condition<S, C>>();
+		this.mSuccessors = new HashSet<Condition<S, C>>();
 		for (Place<S, C> p : transition.getSuccessors()) {
-			this.m_Successors.add(new Condition<S, C>(this, p));
+			this.mSuccessors.add(new Condition<S, C>(this, p));
 		}
-		for (Event<S, C> a : m_LocalConfiguration) {
+		for (Event<S, C> a : mLocalConfiguration) {
 			conditionMarkSet.removeAll(a.getPredecessorConditions());
 		}
-		conditionMarkSet.addAll(m_Successors);
-		this.m_ConditionMark = new ConditionMarking<S, C>(conditionMarkSet);
-		this.m_Mark = m_ConditionMark.getMarking();
-		m_HashCode = computeHashCode();
+		conditionMarkSet.addAll(mSuccessors);
+		this.mConditionMark = new ConditionMarking<S, C>(conditionMarkSet);
+		this.mMark = mConditionMark.getMarking();
+		mHashCode = computeHashCode();
 	}
 
 	/**
@@ -197,42 +197,42 @@ public class Event<S, C> implements Serializable {
 	/**
 	 * Creates a dummy event. Used as the root of a branchingprocess.
 	 * 
-	 * @param m_Successors
+	 * @param mSuccessors
 	 */
 	public Event(PetriNetJulian<S, C> net) {
-		this.m_Transition = null;
-		this.m_LocalConfiguration = new Configuration<S, C>(
+		this.mTransition = null;
+		this.mLocalConfiguration = new Configuration<S, C>(
 				new HashSet<Event<S, C>>());
-		this.m_Mark = net.getInitialMarking();
+		this.mMark = net.getInitialMarking();
 		Set<Condition<S, C>> conditionMarkSet = new HashSet<Condition<S, C>>();
-		this.m_ConditionMark = new ConditionMarking<S, C>(conditionMarkSet);
-		this.m_Predecessors = new HashSet<Condition<S, C>>();
-		this.m_Successors = new HashSet<Condition<S, C>>();
-		for (Place<S, C> p : m_Mark) {
+		this.mConditionMark = new ConditionMarking<S, C>(conditionMarkSet);
+		this.mPredecessors = new HashSet<Condition<S, C>>();
+		this.mSuccessors = new HashSet<Condition<S, C>>();
+		for (Place<S, C> p : mMark) {
 			Condition<S, C> c = new Condition<S, C>(this, p);
-			this.m_Successors.add(c);
+			this.mSuccessors.add(c);
 			conditionMarkSet.add(c);
 		}
-		m_HashCode = computeHashCode();
+		mHashCode = computeHashCode();
 	}
 
 	public ConditionMarking<S, C> getConditionMark() {
-		return m_ConditionMark;
+		return mConditionMark;
 	}
 
 	public Set<Condition<S, C>> getSuccessorConditions() {
-		return m_Successors;
+		return mSuccessors;
 	}
 
 	public Set<Condition<S, C>> getPredecessorConditions() {
-		return m_Predecessors;
+		return mPredecessors;
 	}
 
 	/**
 	 * @return marking of the local configuration of this.
 	 */
 	public Marking<S, C> getMark() {
-		return m_Mark;
+		return mMark;
 	}
 
 	/**
@@ -286,9 +286,9 @@ public class Event<S, C> implements Serializable {
 	 * @param e
 	 */
 	private void setCompanion(Event<S, C> e) {
-		assert this.m_Companion == null;
+		assert this.mCompanion == null;
 		if (e.getCompanion() == null) {
-			this.m_Companion = e;
+			this.mCompanion = e;
 		} else {
 			setCompanion(e.getCompanion());
 		}
@@ -306,7 +306,7 @@ public class Event<S, C> implements Serializable {
 	 * @return
 	 */
 	public boolean isCutoffEvent() {
-		return this.m_Companion != null;
+		return this.mCompanion != null;
 	}
 
 	/**
@@ -316,42 +316,42 @@ public class Event<S, C> implements Serializable {
 	 * @return
 	 */
 	public int getAncestors() {
-		return m_LocalConfiguration.size();
+		return mLocalConfiguration.size();
 	}
 
 	public Configuration<S, C> getLocalConfiguration() {
-		return m_LocalConfiguration;
+		return mLocalConfiguration;
 	}
 
 	public Event<S, C> getCompanion() {
-		return m_Companion;
+		return mCompanion;
 	}
 
 	public Transition<S, C> getTransition() {
-		return m_Transition;
+		return mTransition;
 	}
 
 	public String toString() {
-		return m_HashCode + ":" + getTransition() + ","
-				+ m_LocalConfiguration.size() + "A";
+		return mHashCode + ":" + getTransition() + ","
+				+ mLocalConfiguration.size() + "A";
 	}
 
 	public int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((m_Predecessors == null) ? 0 : m_Predecessors.hashCode());
+				+ ((mPredecessors == null) ? 0 : mPredecessors.hashCode());
 		// TODO remove successors from here later since they're not needed.
 		result = prime * result
-				+ ((m_Successors == null) ? 0 : m_Successors.hashCode());
+				+ ((mSuccessors == null) ? 0 : mSuccessors.hashCode());
 		result = prime * result
-				+ ((m_Transition == null) ? 0 : m_Transition.hashCode());
+				+ ((mTransition == null) ? 0 : mTransition.hashCode());
 		return result;
 	}
 
 	@Override
 	public int hashCode() {
-		return m_HashCode;
+		return mHashCode;
 	}
 
 }

@@ -122,8 +122,8 @@ public class Theory {
 	public final PolymorphicFunctionSymbol mEquals, mDistinct, mIte;
 	
 	final static Sort[] EMPTY_SORT_ARRAY = {};
-	final static TermVariable[] EMPTY_TERM_VARIABLE_ARRAY = {};
-	final static Term[] EMPTY_TERM_ARRAY = {};
+	final static TermVariable[] EMPTY_TERmVARIABLE_ARRAY = {};
+	final static Term[] EMPTY_TERmARRAY = {};
 	/**
 	 * Pattern for model value variables '{@literal @}digits'.
 	 */
@@ -1298,7 +1298,7 @@ public class Theory {
 		if (paramTypes.length == 0)
 			paramTypes = EMPTY_SORT_ARRAY;
 		if (definitionVars != null && definitionVars.length == 0)
-			definitionVars = EMPTY_TERM_VARIABLE_ARRAY;
+			definitionVars = EMPTY_TERmVARIABLE_ARRAY;
 		FunctionSymbol f = new FunctionSymbol(name, null, paramTypes,
 				resultType, definitionVars, definition, flags);	
 		mDeclaredFuns.put(name, f);
@@ -1436,7 +1436,7 @@ public class Theory {
 
 	public ApplicationTerm term(FunctionSymbol func, Term... parameters) {
 		if (parameters.length == 0)
-			parameters = EMPTY_TERM_ARRAY;
+			parameters = EMPTY_TERmARRAY;
 		int hash = ApplicationTerm.hashApplication(func, parameters);
 		for (Term t : mTermCache.iterateHashCode(hash)) {
 			if (t instanceof ApplicationTerm) {

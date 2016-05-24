@@ -74,7 +74,7 @@ public class MenuActions implements IWorkbenchWindowActionDelegate {
 	}
 
 	/**
-	 * Sets the working mode in the system propery MenuActions.SYSTEM_MODE. Is
+	 * Sets the working mode in the system propery MenuActions.SYSTEmMODE. Is
 	 * called when a user switches between Picking and Transforming modes.
 	 * Synchronizes radio buttons in the context menu with those in the main
 	 * menu.

@@ -76,18 +76,18 @@ public class RewriteDivision extends TransformerPreprocessor {
 	 * that they replace.
 	 * These variables are *not* added to in- or outVars.
 	 */
-	private final Map<TermVariable, Term> m_auxVars;
+	private final Map<TermVariable, Term> mauxVars;
 	
 	/**
 	 * Factory for construction of auxVars.
 	 */
-	private final ReplacementVarFactory m_VarFactory;
+	private final ReplacementVarFactory mVarFactory;
 	
 	/**
 	 * Terms for the auxiliary variables for the formula.
 	 * These terms will be set in conjunction with the whole formula.
 	 */
-	private final Collection<Term> m_auxTerms;
+	private final Collection<Term> mauxTerms;
 	
 	/**
 	 * Use assert statement to check if result is equivalent to the conjunction
@@ -106,9 +106,9 @@ public class RewriteDivision extends TransformerPreprocessor {
 	 */
 	public RewriteDivision(ReplacementVarFactory varFactory) {
 		super();
-		m_VarFactory = varFactory;
-		m_auxVars = new LinkedHashMap<TermVariable, Term>();
-		m_auxTerms = new ArrayList<Term>();
+		mVarFactory = varFactory;
+		mauxVars = new LinkedHashMap<TermVariable, Term>();
+		mauxTerms = new ArrayList<Term>();
 	}
 	
 	@Override
@@ -119,17 +119,17 @@ public class RewriteDivision extends TransformerPreprocessor {
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		// Clear the data structures
-		m_auxVars.clear();
-		m_auxTerms.clear();
+		mauxVars.clear();
+		mauxTerms.clear();
 		
 		// Call parent that applies the TermTransformer
 		TransFormulaLR new_tf = super.process(script, tf);
 		
 		// Add auxTerms to the transition
 		Term formula = new_tf.getFormula();
-		Term auxTerms = Util.and(script, m_auxTerms.toArray(new Term[0]));
+		Term auxTerms = Util.and(script, mauxTerms.toArray(new Term[0]));
 		new_tf.setFormula(Util.and(script, formula, auxTerms));
-		new_tf.addAuxVars(m_auxVars.keySet());
+		new_tf.addAuxVars(mauxVars.keySet());
 		
 		return new_tf;
 	}
@@ -138,13 +138,13 @@ public class RewriteDivision extends TransformerPreprocessor {
 	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
 			TransFormulaLR newTF) {
 		Term old_term = oldTF.getFormula();
-		Term old_term_with_def = Util.and(script, old_term,
-				Util.and(script, m_auxTerms.toArray(new Term[0])));
+		Term old_termwith_def = Util.and(script, old_term,
+				Util.and(script, mauxTerms.toArray(new Term[0])));
 		Term new_term = newTF.getFormula();
 		boolean fail1 = s_CheckResult &&
-				isIncorrect(script, old_term_with_def, new_term);
+				isIncorrect(script, old_termwith_def, new_term);
 		boolean fail2 = s_CheckResultWithQuantifiers &&
-				isIncorrectWithQuantifiers(script, old_term_with_def, new_term);
+				isIncorrectWithQuantifiers(script, old_termwith_def, new_term);
 		return !fail1 || fail2;
 	}
 	
@@ -166,9 +166,9 @@ public class RewriteDivision extends TransformerPreprocessor {
 	private boolean isIncorrectWithQuantifiers(Script script, Term input,
 			Term result) {
 		Term quantified;
-		if (m_auxVars.size() > 0) {
+		if (mauxVars.size() > 0) {
 			quantified = script.quantifier(Script.EXISTS,
-					m_auxVars.keySet().toArray(new TermVariable[0]), result);
+					mauxVars.keySet().toArray(new TermVariable[0]), result);
 		} else {
 			quantified = script.term("true");
 		}
@@ -186,11 +186,11 @@ public class RewriteDivision extends TransformerPreprocessor {
 	 * add definitions of these auxiliary variables.
 	 */
 	private class RewriteDivisionTransformer extends TermTransformer {
-		private final Script m_Script;
+		private final Script mScript;
 		
 		RewriteDivisionTransformer(Script script) {
 			assert script != null;
-			m_Script = script;
+			mScript = script;
 		}
 		
 		@Override
@@ -200,32 +200,32 @@ public class RewriteDivision extends TransformerPreprocessor {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientAuxVar = m_VarFactory.getOrConstructAuxVar(
+				TermVariable quotientAuxVar = mVarFactory.getOrConstructAuxVar(
 						s_DivAuxPrefix + dividend.toString() + divisor.toString(),
 						appTerm.getSort());
-				m_auxVars.put(quotientAuxVar, appTerm);
+				mauxVars.put(quotientAuxVar, appTerm);
 				Term divAuxTerm = computeDivAuxTerms(
 						dividend, divisor, quotientAuxVar);
-				m_auxTerms.add(divAuxTerm);
+				mauxTerms.add(divAuxTerm);
 				setResult(quotientAuxVar);
 				return;
 			} else if (func.equals("mod")) {
 				assert(appTerm.getParameters().length == 2);
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
-				TermVariable quotientAuxVar = m_VarFactory.getOrConstructAuxVar(
+				TermVariable quotientAuxVar = mVarFactory.getOrConstructAuxVar(
 						s_DivAuxPrefix + dividend.toString() + divisor.toString(),
 						appTerm.getSort());
-				m_auxVars.put(quotientAuxVar,
-						m_Script.term("div", dividend, divisor));
+				mauxVars.put(quotientAuxVar,
+						mScript.term("div", dividend, divisor));
 				TermVariable remainderAuxVar =
-						m_VarFactory.getOrConstructAuxVar(
+						mVarFactory.getOrConstructAuxVar(
 						s_ModAuxPrefix + dividend.toString() + divisor.toString(),
 						appTerm.getSort());
-				m_auxVars.put(remainderAuxVar, appTerm);
+				mauxVars.put(remainderAuxVar, appTerm);
 				Term modAuxTerms = computeModAuxTerms(dividend,
 						divisor, quotientAuxVar, remainderAuxVar);
-				m_auxTerms.add(modAuxTerms);
+				mauxTerms.add(modAuxTerms);
 				setResult(remainderAuxVar);
 				return;
 			} else {
@@ -250,29 +250,29 @@ public class RewriteDivision extends TransformerPreprocessor {
 		private Term computeDivAuxTerms(Term dividend, Term divisor,
 				TermVariable quotientAuxVar) {
 			Term[] disjuncts = new Term[2];
-			Term one = m_Script.numeral(BigInteger.ONE);
-			Term minusOne = m_Script.term("-", one);
-			Term divisorIsNegative = m_Script.term("<=", divisor, minusOne);
-			Term divisorIsPositive = m_Script.term(">=", divisor, one);
-			Term quotientMulDivisor = m_Script.term("*", quotientAuxVar, divisor);
-			Term isLowerBound = m_Script.term("<=", quotientMulDivisor, dividend);
-			Term strictUpperBoundPosDivisor = m_Script.term(
-					"*", m_Script.term("+", quotientAuxVar, one), divisor);
-			Term upperBoundPosDivisor = m_Script.term(
+			Term one = mScript.numeral(BigInteger.ONE);
+			Term minusOne = mScript.term("-", one);
+			Term divisorIsNegative = mScript.term("<=", divisor, minusOne);
+			Term divisorIsPositive = mScript.term(">=", divisor, one);
+			Term quotientMulDivisor = mScript.term("*", quotientAuxVar, divisor);
+			Term isLowerBound = mScript.term("<=", quotientMulDivisor, dividend);
+			Term strictUpperBoundPosDivisor = mScript.term(
+					"*", mScript.term("+", quotientAuxVar, one), divisor);
+			Term upperBoundPosDivisor = mScript.term(
 					"-", strictUpperBoundPosDivisor, one);
-			Term strictUpperBoundNegDivisor = m_Script.term(
-					"*", m_Script.term("-", quotientAuxVar, one), divisor);
-			Term upperBoundNegDivisor = m_Script.term(
+			Term strictUpperBoundNegDivisor = mScript.term(
+					"*", mScript.term("-", quotientAuxVar, one), divisor);
+			Term upperBoundNegDivisor = mScript.term(
 					"-", strictUpperBoundNegDivisor, one);
-			Term isUpperBoundPosDivisor = m_Script.term(
+			Term isUpperBoundPosDivisor = mScript.term(
 					"<=", dividend, upperBoundPosDivisor);
-			Term isUpperBoundNegDivisor = m_Script.term(
+			Term isUpperBoundNegDivisor = mScript.term(
 					"<=", dividend, upperBoundNegDivisor);
-			disjuncts[0] = Util.and(m_Script, 
+			disjuncts[0] = Util.and(mScript, 
 					divisorIsPositive, isLowerBound, isUpperBoundPosDivisor);
-			disjuncts[1] = Util.and(m_Script, 
+			disjuncts[1] = Util.and(mScript, 
 					divisorIsNegative, isLowerBound, isUpperBoundNegDivisor);
-			return Util.or(m_Script, disjuncts);
+			return Util.or(mScript, disjuncts);
 		}
 		
 		/**
@@ -294,27 +294,27 @@ public class RewriteDivision extends TransformerPreprocessor {
 		private Term computeModAuxTerms(Term dividend, Term divisor,
 				TermVariable quotientAuxVar, TermVariable remainderAuxVar) {
 			Term[] disjuncts = new Term[2];
-			Term one = m_Script.numeral(BigInteger.ONE);
-			Term minusOne = m_Script.term("-", one);
-			Term divisorIsNegative = m_Script.term("<=", divisor, minusOne);
-			Term divisorIsPositive = m_Script.term(">=", divisor, one);
-			Term zero = m_Script.numeral(BigInteger.ZERO);
-			Term isLowerBound = m_Script.term("<=", zero, remainderAuxVar);
-			Term upperBoundPosDivisor = m_Script.term("-", divisor, one);
+			Term one = mScript.numeral(BigInteger.ONE);
+			Term minusOne = mScript.term("-", one);
+			Term divisorIsNegative = mScript.term("<=", divisor, minusOne);
+			Term divisorIsPositive = mScript.term(">=", divisor, one);
+			Term zero = mScript.numeral(BigInteger.ZERO);
+			Term isLowerBound = mScript.term("<=", zero, remainderAuxVar);
+			Term upperBoundPosDivisor = mScript.term("-", divisor, one);
 			Term isUpperBoundPosDivisor = 
-					m_Script.term("<=", remainderAuxVar, upperBoundPosDivisor);
+					mScript.term("<=", remainderAuxVar, upperBoundPosDivisor);
 			Term upperBoundNegDivisor = 
-					m_Script.term("-", m_Script.term("-", divisor), one);
+					mScript.term("-", mScript.term("-", divisor), one);
 			Term isUpperBoundNegDivisor = 
-					m_Script.term("<=", remainderAuxVar, upperBoundNegDivisor);
-			Term equality = m_Script.term("=", dividend, 
-					m_Script.term("+", m_Script.term("*", 
+					mScript.term("<=", remainderAuxVar, upperBoundNegDivisor);
+			Term equality = mScript.term("=", dividend, 
+					mScript.term("+", mScript.term("*", 
 							quotientAuxVar, divisor), remainderAuxVar));
-			disjuncts[0] = Util.and(m_Script, divisorIsPositive, isLowerBound, 
+			disjuncts[0] = Util.and(mScript, divisorIsPositive, isLowerBound, 
 					isUpperBoundPosDivisor, equality);
-			disjuncts[1] = Util.and(m_Script, divisorIsNegative, isLowerBound, 
+			disjuncts[1] = Util.and(mScript, divisorIsNegative, isLowerBound, 
 					isUpperBoundNegDivisor, equality);
-			return Util.or(m_Script, disjuncts);
+			return Util.or(mScript, disjuncts);
 		}
 	}
 }

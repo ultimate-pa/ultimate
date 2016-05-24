@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 	
-	Script m_script;
+	Script mscript;
 
 	public TraceCheckerWithAccessibleSSATerms(IPredicate precondition,
 			IPredicate postcondition,
@@ -58,22 +58,22 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, 
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution);
-		m_script = smtManager.getScript();
+		mscript = smtManager.getScript();
 	}
 	
 	public void traceCheckFinished() {
-		m_TraceCheckFinished = true;
+		mTraceCheckFinished = true;
 	}
 	
 	public Term getAnnotatedSSATerm(int position) {
-		return m_AAA.getAnnotatedSsa().getFormulaFromNonCallPos(position);
+		return mAAA.getAnnotatedSsa().getFormulaFromNonCallPos(position);
 	}
 	
 	public Term getSSATerm(int position) {
-		return m_Nsb.getSsa().getFormulaFromNonCallPos(position);
+		return mNsb.getSsa().getFormulaFromNonCallPos(position);
 	}
 	
 	public Map<Term, BoogieVar> getConstantsToBoogieVar() {
-		return m_Nsb.getConstants2BoogieVar();
+		return mNsb.getConstants2BoogieVar();
 	}
 }

@@ -44,7 +44,7 @@ public class ReproduceBarcelogicProblemTest extends
 	
 	
 	
-	private static final String[] m_UltimateRepository = {
+	private static final String[] mUltimateRepository = {
 		"examples/lassos/NonTermination1.bpl",
 	};
 	
@@ -57,12 +57,12 @@ public class ReproduceBarcelogicProblemTest extends
 	}
 	
 	
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"buchiAutomizer/Barcelogic.epf",
 	};
 	
 	
-	private static final String[] m_BoogieToolchains = {
+	private static final String[] mBoogieToolchains = {
 		"BuchiAutomizerBpl.xml",
 	};
 	
@@ -70,9 +70,9 @@ public class ReproduceBarcelogicProblemTest extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		
-		for (String setting : m_Settings) {
-			for (String toolchain : m_BoogieToolchains) {
-				addTestCase(toolchain, setting, m_UltimateRepository, 
+		for (String setting : mSettings) {
+			for (String toolchain : mBoogieToolchains) {
+				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}

@@ -49,7 +49,7 @@ public class Svcomp_Overflow_PreciseMemoryModel extends AbstractTraceAbstraction
 		return new SafetyCheckTestResultDecider_Overflow(ultimateRunDefinition, true);
 	}
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 		/*** Category 1. Arrays ***/
 		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }) ,
 		
@@ -108,20 +108,20 @@ public class Svcomp_Overflow_PreciseMemoryModel extends AbstractTraceAbstraction
 		return 60 * 1000;
 	}
 
-	private static final boolean m_AutomizerWithForwardPredicates = true;
-	private static final boolean m_AutomizerWithBackwardPredicates = false;
+	private static final boolean mAutomizerWithForwardPredicates = true;
+	private static final boolean mAutomizerWithBackwardPredicates = false;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (m_AutomizerWithForwardPredicates) {
+		if (mAutomizerWithForwardPredicates) {
 			addTestCase("AutomizerC.xml", 
 					"automizer/ForwardPredicates_SvcompOverflowPreciseMM.epf", 
-					m_DirectoryFileEndingsPairs);
+					mDirectoryFileEndingsPairs);
 		}
-		if (m_AutomizerWithBackwardPredicates) {
+		if (mAutomizerWithBackwardPredicates) {
 			addTestCase("AutomizerC.xml", 
 					"automizer/BackwardPredicates_SvcompOverflowPreciseMM.epf", 
-					m_DirectoryFileEndingsPairs);
+					mDirectoryFileEndingsPairs);
 		}
 		// return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();

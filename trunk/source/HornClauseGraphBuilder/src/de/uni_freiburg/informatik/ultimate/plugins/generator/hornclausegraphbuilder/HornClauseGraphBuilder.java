@@ -45,12 +45,12 @@ public class HornClauseGraphBuilder implements IGenerator {
 	public static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 	
 	
-	private HornClauseGraphBuilderObserver m_Observer;
-//	private ModelType m_InputDefinition;
+	private HornClauseGraphBuilderObserver mObserver;
+//	private ModelType mInputDefinition;
 
-	private IUltimateServiceProvider m_Services;
-	private IToolchainStorage m_ToolchainStorage;
-	private List<IObserver> m_Observers;
+	private IUltimateServiceProvider mServices;
+	private IToolchainStorage mToolchainStorage;
+	private List<IObserver> mObservers;
 
 	@Override
 	public ModelType getOutputDefinition() {
@@ -84,23 +84,23 @@ public class HornClauseGraphBuilder implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		return m_Observers;
+		return mObservers;
 	}
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
-		m_ToolchainStorage = storage;
+		mToolchainStorage = storage;
 	}
 
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
-		m_Services = services;
+		mServices = services;
 	}
 
 	@Override
 	public void init() {
-		m_Observer = new HornClauseGraphBuilderObserver();
-		m_Observers = Collections.singletonList(m_Observer);
+		mObserver = new HornClauseGraphBuilderObserver();
+		mObservers = Collections.singletonList(mObserver);
 	}
 
 	@Override

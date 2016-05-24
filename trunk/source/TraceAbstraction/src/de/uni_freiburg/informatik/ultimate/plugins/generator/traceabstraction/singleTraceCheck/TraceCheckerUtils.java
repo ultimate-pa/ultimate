@@ -120,44 +120,44 @@ public class TraceCheckerUtils {
 	 * getInterpolant method).
 	 */
 	public static class InterpolantsPreconditionPostcondition {
-		private final IPredicate m_Precondition;
-		private final IPredicate m_Postcondition;
-		private final List<IPredicate> m_Interpolants;
+		private final IPredicate mPrecondition;
+		private final IPredicate mPostcondition;
+		private final List<IPredicate> mInterpolants;
 		
 		public InterpolantsPreconditionPostcondition(IInterpolantGenerator interpolantGenerator) {
 			if (interpolantGenerator.getInterpolants() == null) {
 				throw new AssertionError("We can only build an interpolant "
 						+ "automaton for which interpolants were computed");
 			}
-			m_Precondition = interpolantGenerator.getPrecondition();
-			m_Postcondition = interpolantGenerator.getPostcondition();
-			m_Interpolants = Arrays.asList(interpolantGenerator.getInterpolants());
+			mPrecondition = interpolantGenerator.getPrecondition();
+			mPostcondition = interpolantGenerator.getPostcondition();
+			mInterpolants = Arrays.asList(interpolantGenerator.getInterpolants());
 		}
 		
 		public InterpolantsPreconditionPostcondition(IPredicate precondition,
 				IPredicate postcondition, List<IPredicate> interpolants) {
 			super();
-			m_Precondition = precondition;
-			m_Postcondition = postcondition;
-			m_Interpolants = interpolants;
+			mPrecondition = precondition;
+			mPostcondition = postcondition;
+			mInterpolants = interpolants;
 		}
 
 		public IPredicate getInterpolant(int i) {
 			if (i < 0) {
 				throw new AssertionError("index beyond precondition");
 			} else if (i == 0) {
-				return m_Precondition;
-			} else if (i <= m_Interpolants.size()) {
-				return m_Interpolants.get(i-1);
-			} else if (i == m_Interpolants.size()+1) {
-				return m_Postcondition;
+				return mPrecondition;
+			} else if (i <= mInterpolants.size()) {
+				return mInterpolants.get(i-1);
+			} else if (i == mInterpolants.size()+1) {
+				return mPostcondition;
 			} else {
 				throw new AssertionError("index beyond postcondition");
 			}
 		}
 		
 		public List<IPredicate> getInterpolants() {
-			return Collections.unmodifiableList(m_Interpolants);
+			return Collections.unmodifiableList(mInterpolants);
 		}
 	}
 	

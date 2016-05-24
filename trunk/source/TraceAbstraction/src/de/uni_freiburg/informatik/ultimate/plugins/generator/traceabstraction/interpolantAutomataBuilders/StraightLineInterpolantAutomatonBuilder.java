@@ -54,20 +54,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public class StraightLineInterpolantAutomatonBuilder {
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 	
-	private final NestedWordAutomaton<CodeBlock, IPredicate> m_Result;
+	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	
 	public StraightLineInterpolantAutomatonBuilder(
 			IUltimateServiceProvider services, 
 			InCaReAlphabet<CodeBlock> alphabet,
 			IInterpolantGenerator interpolantGenerator,
 			PredicateFactoryForInterpolantAutomata predicateFactory) {
-		m_Services = services;
+		mServices = services;
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(interpolantGenerator);
-		m_Result =	new NestedWordAutomaton<CodeBlock, IPredicate>(
-				new AutomataLibraryServices(m_Services), 
+		mResult =	new NestedWordAutomaton<CodeBlock, IPredicate>(
+				new AutomataLibraryServices(mServices), 
 						alphabet.getInternalAlphabet(),
 						alphabet.getCallAlphabet(),
 						alphabet.getReturnAlphabet(),
@@ -78,33 +78,33 @@ public class StraightLineInterpolantAutomatonBuilder {
 	private void addStatesAndTransitions(IInterpolantGenerator interpolantGenerator, 
 			PredicateFactoryForInterpolantAutomata predicateFactory, InterpolantsPreconditionPostcondition ipp) { 
 
-		m_Result.addState(true, false, interpolantGenerator.getPrecondition());
-		m_Result.addState(false, true, interpolantGenerator.getPostcondition());
+		mResult.addState(true, false, interpolantGenerator.getPrecondition());
+		mResult.addState(false, true, interpolantGenerator.getPostcondition());
 		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) interpolantGenerator.getTrace();
 		for (int i=0; i<trace.length(); i++) {
 			IPredicate pred = ipp.getInterpolant(i);
 			IPredicate succ = ipp.getInterpolant(i+1);
-			assert m_Result.getStates().contains(pred);
-			if (!m_Result.getStates().contains(succ)) {
-				m_Result.addState(false, false, succ);
+			assert mResult.getStates().contains(pred);
+			if (!mResult.getStates().contains(succ)) {
+				mResult.addState(false, false, succ);
 			}
 			if (trace.isCallPosition(i)) {
-				m_Result.addCallTransition(pred, trace.getSymbol(i), succ);
+				mResult.addCallTransition(pred, trace.getSymbol(i), succ);
 			} else if (trace.isReturnPosition(i)) {
 				assert !trace.isPendingReturn(i);
 				int callPos = trace.getCallPosition(i);
 				IPredicate hierPred = ipp.getInterpolant(callPos);
-				m_Result.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
+				mResult.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
 			} else {
 				assert trace.isInternalPosition(i);
-				m_Result.addInternalTransition(pred, trace.getSymbol(i), succ);
+				mResult.addInternalTransition(pred, trace.getSymbol(i), succ);
 			}
 		}
 	}
 
 
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
-		return m_Result;
+		return mResult;
 	}
 	
 }

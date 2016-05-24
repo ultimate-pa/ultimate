@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  */
 public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 
-	protected final String m_pathOfTrunk;
+	protected final String mpathOfTrunk;
 	
 	protected final static TestResult[] s_testResultTypes = {TestResult.SUCCESS, TestResult.UNKNOWN, TestResult.FAIL};
 
@@ -41,15 +41,15 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 		protected static final int TIMESUM = 2;
 		protected static final int MEMSUM = 3;
 		protected static final int SIZE = 4;
-		private Map<ExpectedResultType, Long[]> m_statistics;
+		private Map<ExpectedResultType, Long[]> mstatistics;
 		
 		protected ResultStatistics() {
-			m_statistics = new HashMap<ExpectedResultType, Long[]>();
+			mstatistics = new HashMap<ExpectedResultType, Long[]>();
 			for (ExpectedResultType e : s_expectedResultTypes) {
 				Long[] eStats = new Long[SIZE];
 				for (int i = 0; i < SIZE; i++)
 					eStats[i] = 0L;
-				m_statistics.put(e, eStats);
+				mstatistics.put(e, eStats);
 			}
 		}
 		
@@ -73,7 +73,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 		}
 		
 		protected Long[] getData(ExpectedResultType resultType) {
-			return m_statistics.get(resultType);
+			return mstatistics.get(resultType);
 		}
 		
 		protected void addStats(ResultStatistics stats, boolean addTime, boolean addMem) {
@@ -95,12 +95,12 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 	}
 
 	// used for determining the table prefix
-	protected final String m_svcompFolder = "\\examples\\svcomp\\";
+	protected final String msvcompFolder = "\\examples\\svcomp\\";
 
 	public AbstractInterpretationMk2LaTeXTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		
-		m_pathOfTrunk = TestUtil.getPathFromTrunk("");
+		mpathOfTrunk = TestUtil.getPathFromTrunk("");
 	}
 
 	@Override
@@ -178,7 +178,7 @@ public class AbstractInterpretationMk2LaTeXTestSummary extends OldTestSummary {
 						String fileName = fileMsgPair.getKey();
 						String tablePrefix = "---";
 						String fileLines = calculateNumberOfLines(fileName);
-						if (fileName.startsWith(m_pathOfTrunk + m_svcompFolder)) {
+						if (fileName.startsWith(mpathOfTrunk + msvcompFolder)) {
 							tablePrefix = "S"; // file from SV-COMP
 						} else {
 							tablePrefix = "U"; // file from ULTIMATE

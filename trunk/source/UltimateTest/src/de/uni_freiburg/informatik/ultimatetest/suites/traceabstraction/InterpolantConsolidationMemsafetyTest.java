@@ -25,19 +25,19 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSum
  */
 public class InterpolantConsolidationMemsafetyTest extends AbstractTraceAbstractionTestSuite {
 	
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int m_FilesPerDirectoryLimit = 5;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int mFilesPerDirectoryLimit = 5;
 	
-	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
+	private static final DirectoryFileEndingsPair[] mSVCOMP_Examples = {
 		/*** Category 7. Memory Safety ***/
-		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	
-	private static final String[] m_UltimateRepository = {
+	private static final String[] mUltimateRepository = {
 //		"examples/programs/regression",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
@@ -53,7 +53,7 @@ public class InterpolantConsolidationMemsafetyTest extends AbstractTraceAbstract
 	 * because we assume that all settings files are in this folder.
 	 * 
 	 */
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 			"automizer/interpolantConsolidation/FP-Mem.epf",
 			"automizer/interpolantConsolidation/FP_CO-Mem.epf",
 			"automizer/interpolantConsolidation/BP-Mem.epf",
@@ -70,33 +70,33 @@ public class InterpolantConsolidationMemsafetyTest extends AbstractTraceAbstract
 		return 60 * 1000;
 	}
 	
-	private static final String[] m_BoogieToolchains = {
+	private static final String[] mBoogieToolchains = {
 //		"AutomizerBpl.xml",
 		"AutomizerBplInline.xml",
 	};
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 //		"AutomizerC.xml",
 		"AutomizerCInline.xml",
 	};
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_SVCOMP_Examples);
+		for (String setting : mSettings) {
+			for (String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mSVCOMP_Examples);
 			}
 		}
 		
-		for (String setting : m_Settings) {
-			for (String toolchain : m_BoogieToolchains) {
-				addTestCase(toolchain, setting, m_UltimateRepository, 
+		for (String setting : mSettings) {
+			for (String toolchain : mBoogieToolchains) {
+				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_UltimateRepository, 
+		for (String setting : mSettings) {
+			for (String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".c", ".i"});
 			}
 		}

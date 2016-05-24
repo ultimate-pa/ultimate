@@ -49,15 +49,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class AutomatonEpimorphism<STATE> {
 
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
-	private HashMap<STATE, STATE> m_epimorphism;
+	private HashMap<STATE, STATE> mepimorphism;
 
 	public AutomatonEpimorphism(AutomataLibraryServices services) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_epimorphism = new HashMap<STATE, STATE>();
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mepimorphism = new HashMap<STATE, STATE>();
 	}
 
 	/**
@@ -112,7 +112,7 @@ public class AutomatonEpimorphism<STATE> {
 				}
 
 				// set the mapping from state1 to state2
-				epimorphism.m_epimorphism.put(state1, state2);
+				epimorphism.mepimorphism.put(state1, state2);
 			}
 		}
 
@@ -125,19 +125,19 @@ public class AutomatonEpimorphism<STATE> {
 	 */
 	public STATE getMapping(STATE s)
 	{
-		return m_epimorphism.get(s);
+		return mepimorphism.get(s);
 	}
 	
 	public void insert(STATE from, STATE to)
 	{
-		m_epimorphism.put(from, to);
+		mepimorphism.put(from, to);
 	}
 
 	public void Print() 
 	{
-		for(Entry<STATE, STATE> e : m_epimorphism.entrySet())
+		for(Entry<STATE, STATE> e : mepimorphism.entrySet())
 		{
-			m_Logger.debug(e.getKey().toString() + " --> " + e.getValue());
+			mLogger.debug(e.getKey().toString() + " --> " + e.getValue());
 		}		
 	}
 }

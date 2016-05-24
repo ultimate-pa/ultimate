@@ -55,16 +55,16 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
  */
 public class TerminationAnalysisOverallResultEvaluator implements IOverallResultEvaluator<TerminationAnalysisOverallResult> {
 	
-	private final HashRelation<TerminationAnalysisOverallResult, IResult> m_Category2Results = 
+	private final HashRelation<TerminationAnalysisOverallResult, IResult> mCategory2Results = 
 			new HashRelation<TerminationAnalysisOverallResult, IResult>();
-	private TerminationAnalysisOverallResult m_OverallResult;
-	private Set<IResult> m_MostSignificantResults;
+	private TerminationAnalysisOverallResult mOverallResult;
+	private Set<IResult> mMostSignificantResults;
 	
 	public void evaluateOverallResult(IResultService resultService) {
 		for (Entry<String, List<IResult>> entry  : resultService.getResults().entrySet()) {
 			for (IResult result  : entry.getValue()) {
 				TerminationAnalysisOverallResult category = detectResultCategory(result);
-				m_Category2Results.addPair(category, result);
+				mCategory2Results.addPair(category, result);
 			}
 		}
 		TerminationAnalysisOverallResult[] categoriesOrderedBySignificance = 
@@ -79,15 +79,15 @@ public class TerminationAnalysisOverallResultEvaluator implements IOverallResult
 		};
 		
 		for (TerminationAnalysisOverallResult category : categoriesOrderedBySignificance) {
-			if (m_Category2Results.getDomain().contains(category)) {
-				m_OverallResult = category;
+			if (mCategory2Results.getDomain().contains(category)) {
+				mOverallResult = category;
 			}
 		}
 		
-		if (m_OverallResult == null) {
-			m_OverallResult = TerminationAnalysisOverallResult.NO_RESULT;
+		if (mOverallResult == null) {
+			mOverallResult = TerminationAnalysisOverallResult.NO_RESULT;
 		} else {
-			m_MostSignificantResults = m_Category2Results.getImage(m_OverallResult);
+			mMostSignificantResults = mCategory2Results.getImage(mOverallResult);
 		}
 	}
 	
@@ -117,7 +117,7 @@ public class TerminationAnalysisOverallResultEvaluator implements IOverallResult
 
 	@Override
 	public TerminationAnalysisOverallResult getOverallResult() {
-		return m_OverallResult;
+		return mOverallResult;
 	}
 	
 	@Override
@@ -147,7 +147,7 @@ public class TerminationAnalysisOverallResultEvaluator implements IOverallResult
 
 	@Override
 	public Set<IResult> getMostSignificantResults() {
-		return m_MostSignificantResults;
+		return mMostSignificantResults;
 	}
 	
 	

@@ -43,18 +43,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  * @param <STATE>
  */
 public class StateContainerFieldMap<LETTER, STATE> {
-	private final STATE m_State;
+	private final STATE mState;
 	private Object mOut1;
 	private Object mOut2;
 	private Object mOut3;
 	private Object mOut4;
 	
 	public StateContainerFieldMap(STATE state) {
-		m_State = state;
+		mState = state;
 	}
 	
 	STATE getState() {
-		return m_State;
+		return mState;
 	}
 	
 	private boolean inOutMapMode() {
@@ -179,30 +179,30 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
 				Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
-					Iterator<STATE> m_Iterator;
+					Iterator<STATE> mIterator;
 					{
 						if (letter2succ != null) {
 							if (letter2succ.get(letter) != null) {
-								m_Iterator = letter2succ.get(letter).iterator();
+								mIterator = letter2succ.get(letter).iterator();
 							} else {
-								m_Iterator = null;
+								mIterator = null;
 							}
 						} else {
-							m_Iterator = null;
+							mIterator = null;
 						}
 					}
 
 					@Override
 					public boolean hasNext() {
-						return m_Iterator == null || m_Iterator.hasNext();
+						return mIterator == null || mIterator.hasNext();
 					}
 
 					@Override
 					public OutgoingInternalTransition<LETTER, STATE> next() {
-						if (m_Iterator == null) {
+						if (mIterator == null) {
 							throw new NoSuchElementException();
 						} else {
-							STATE succ = m_Iterator.next(); 
+							STATE succ = mIterator.next(); 
 							return new OutgoingInternalTransition<LETTER, STATE>(letter, succ);
 						}
 					}
@@ -229,45 +229,45 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
 				Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator = 
 						new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
-					Iterator<LETTER> m_LetterIterator;
-					LETTER m_CurrentLetter;
-					Iterator<OutgoingInternalTransition<LETTER, STATE>> m_CurrentIterator;
+					Iterator<LETTER> mLetterIterator;
+					LETTER mCurrentLetter;
+					Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
 					{
-						m_LetterIterator = letter2succ.keySet().iterator();
+						mLetterIterator = letter2succ.keySet().iterator();
 						nextLetter();
 					}
 
 					private void nextLetter() {
-						if (m_LetterIterator.hasNext()) {
+						if (mLetterIterator.hasNext()) {
 							do {
-								m_CurrentLetter = m_LetterIterator.next();
-								m_CurrentIterator = internalSuccessorsMap(letter2succ,
-										m_CurrentLetter).iterator();
-							} while (!m_CurrentIterator.hasNext()
-									&& m_LetterIterator.hasNext());
-							if (!m_CurrentIterator.hasNext()) {
-								m_CurrentLetter = null;
-								m_CurrentIterator = null;
+								mCurrentLetter = mLetterIterator.next();
+								mCurrentIterator = internalSuccessorsMap(letter2succ,
+										mCurrentLetter).iterator();
+							} while (!mCurrentIterator.hasNext()
+									&& mLetterIterator.hasNext());
+							if (!mCurrentIterator.hasNext()) {
+								mCurrentLetter = null;
+								mCurrentIterator = null;
 							}
 						} else {
-							m_CurrentLetter = null;
-							m_CurrentIterator = null;
+							mCurrentLetter = null;
+							mCurrentIterator = null;
 						}
 					}
 
 					@Override
 					public boolean hasNext() {
-						return m_CurrentLetter != null;
+						return mCurrentLetter != null;
 					}
 
 					@Override
 					public OutgoingInternalTransition<LETTER, STATE> next() {
-						if (m_CurrentLetter == null) {
+						if (mCurrentLetter == null) {
 							throw new NoSuchElementException();
 						} else {
 							OutgoingInternalTransition<LETTER, STATE> result = 
-									m_CurrentIterator.next();
-							if (!m_CurrentIterator.hasNext()) {
+									mCurrentIterator.next();
+							if (!mCurrentIterator.hasNext()) {
 								nextLetter();
 							}
 							return result;

@@ -52,13 +52,13 @@ public class CodeCheck implements IGenerator {
 	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
 
-	private CodeCheckObserver m_Observer;
-	private ModelType m_InputDefinition;
+	private CodeCheckObserver mObserver;
+	private ModelType mInputDefinition;
 
 	EdgeCheckOptimization edgeCheckOptimization = EdgeCheckOptimization.SDEC;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage m_toolchainStorage;
-	private List<IObserver> m_Observers;
+	private IToolchainStorage mtoolchainStorage;
+	private List<IObserver> mObservers;
 
 	@Override
 	public String getPluginName() {
@@ -72,8 +72,8 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public void init() {
-		m_Observer = new CodeCheckObserver(mServices, m_toolchainStorage);
-		m_Observers =  Collections.singletonList((IObserver) m_Observer);
+		mObserver = new CodeCheckObserver(mServices, mtoolchainStorage);
+		mObservers =  Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
@@ -89,12 +89,12 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		this.mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		return m_Observers;
+		return mObservers;
 	}
 
 	public ModelType getOutputDefinition() {
@@ -102,12 +102,12 @@ public class CodeCheck implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
 	public IElement getModel() {
-		return m_Observer.getRoot();
+		return mObserver.getRoot();
 	}
 
 	@Override
@@ -122,7 +122,7 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage tcStorage) {
-		m_toolchainStorage = tcStorage;
+		mtoolchainStorage = tcStorage;
 	}
 
 	@Override

@@ -122,32 +122,32 @@ public class TypeChecker extends BaseObserver {
 	 * Maps a procedure identifier to all variables that occur in a modifies
 	 * clause of this procedure.
 	 */
-	Map<String, Set<String>> m_Proc2ModfiedGlobals = new HashMap<String, Set<String>>();
+	Map<String, Set<String>> mProc2ModfiedGlobals = new HashMap<String, Set<String>>();
 
 	/**
 	 * Identifier of procedure that is checked at the moment.
 	 */
-	private String m_CurrentProcedure;
+	private String mCurrentProcedure;
 
 	/**
 	 * Identifiers of global variables
 	 */
-	private Set<String> m_Globals = new HashSet<String>();
+	private Set<String> mGlobals = new HashSet<String>();
 
 	/**
 	 * Identifiers of the in-parameters of the checked procedure
 	 */
-	private Set<String> m_InParams;
+	private Set<String> mInParams;
 
 	/**
 	 * Identifiers of the out-parameters of the checked procedure
 	 */
-	private Set<String> m_OutParams;
+	private Set<String> mOutParams;
 
 	/**
 	 * Identifiers of the local variables of the checked procedure
 	 */
-	private Set<String> m_LocalVars;
+	private Set<String> mLocalVars;
 	private IUltimateServiceProvider mServices;
 
 	private static BoogieType boolType = BoogieType.boolType;
@@ -582,7 +582,7 @@ public class TypeChecker extends BaseObserver {
 			for (String id : varlist.getIdentifiers()) {
 				// s_logger.info("Declaring variable "+id+":"+type);
 				declaredVars.put(id, new VariableInfo(false, varDecl, id, type, declInfo));
-				m_Globals.add(id);
+				mGlobals.add(id);
 			}
 		}
 	}
@@ -731,7 +731,7 @@ public class TypeChecker extends BaseObserver {
 					typeError(vl.getWhereClause(), "Where clause is not boolean: " + vl.getWhereClause());
 			}
 		}
-		m_Proc2ModfiedGlobals.put(name, new HashSet<String>());
+		mProc2ModfiedGlobals.put(name, new HashSet<String>());
 		for (Specification s : proc.getSpecification()) {
 			if (s instanceof RequiresSpecification) {
 				BoogieType t = typecheckExpression(((RequiresSpecification) s).getFormula());
@@ -742,7 +742,7 @@ public class TypeChecker extends BaseObserver {
 				if (!t.equals(boolType) && !t.equals(errorType))
 					typeError(s, "Ensures clause is not boolean: " + s);
 			} else if (s instanceof ModifiesSpecification) {
-				Set<String> modifiedGlobals = m_Proc2ModfiedGlobals.get(name);
+				Set<String> modifiedGlobals = mProc2ModfiedGlobals.get(name);
 				for (VariableLHS var : ((ModifiesSpecification) s).getIdentifiers()) {
 					DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
 					if (var.getDeclarationInformation() == null) {
@@ -751,7 +751,7 @@ public class TypeChecker extends BaseObserver {
 						checkExistingDeclarationInformation(var.getIdentifier(), var.getDeclarationInformation(), declInfo);
 					}
 					String id = var.getIdentifier();
-					if (m_Globals.contains(id)) {
+					if (mGlobals.contains(id)) {
 						modifiedGlobals.add(id);
 						var.setType(findVariable(id).getType());
 					} else {
@@ -966,29 +966,29 @@ public class TypeChecker extends BaseObserver {
 	 *         not declared.
 	 */
 	private BoogieType checkVarModification(BoogieASTNode BoogieASTNode, String var) {
-		if (m_InParams.contains(var)) {
-			String message = "Local variable " + var + " modified in " + " procedure " + m_CurrentProcedure
+		if (mInParams.contains(var)) {
+			String message = "Local variable " + var + " modified in " + " procedure " + mCurrentProcedure
 					+ " but is an " + "in-parameter of this procedure";
 			typeError(BoogieASTNode, message);
 			return findVariable(var).getType();
-		} else if (m_OutParams.contains(var)) {
+		} else if (mOutParams.contains(var)) {
 			// var is out parameter (may shadow global var), modification is
 			// legal
 			return findVariable(var).getType();
-		} else if (m_LocalVars.contains(var)) {
+		} else if (mLocalVars.contains(var)) {
 			// var is local variable (may shadow global var), modification is
 			// legal
 			return findVariable(var).getType();
-		} else if (m_Globals.contains(var)) {
-			Set<String> modifiedGlobals = m_Proc2ModfiedGlobals.get(m_CurrentProcedure);
+		} else if (mGlobals.contains(var)) {
+			Set<String> modifiedGlobals = mProc2ModfiedGlobals.get(mCurrentProcedure);
 			if (!modifiedGlobals.contains(var)) {
-				String message = "Global variable " + var + " modified in " + " procedure " + m_CurrentProcedure
+				String message = "Global variable " + var + " modified in " + " procedure " + mCurrentProcedure
 						+ " but not " + "contained in procedures modifies clause.";
 				typeError(BoogieASTNode, message);
 			}
 			return findVariable(var).getType();
 		} else {
-			String message = "Variable " + var + " modified in procedure " + m_CurrentProcedure + " but not declared";
+			String message = "Variable " + var + " modified in procedure " + mCurrentProcedure + " but not declared";
 			typeError(BoogieASTNode, message);
 			return errorType;
 		}
@@ -999,9 +999,9 @@ public class TypeChecker extends BaseObserver {
 	 * modifies clause of the current procedure.
 	 */
 	private void checkModifiesTransitive(CallStatement call, String callee) {
-		String caller = m_CurrentProcedure;
-		Set<String> calleeModifiedGlobals = m_Proc2ModfiedGlobals.get(callee);
-		Set<String> callerModifiedGlobals = m_Proc2ModfiedGlobals.get(caller);
+		String caller = mCurrentProcedure;
+		Set<String> calleeModifiedGlobals = mProc2ModfiedGlobals.get(callee);
+		Set<String> callerModifiedGlobals = mProc2ModfiedGlobals.get(caller);
 		for (String var : calleeModifiedGlobals) {
 			if (!callerModifiedGlobals.contains(var)) {
 				String message = "Procedure " + callee + " may modify " + var + " procedure " + caller
@@ -1022,7 +1022,7 @@ public class TypeChecker extends BaseObserver {
 				}
 				for (String id : vl.getIdentifiers()) {
 					checkIfAlreadyInOutLocal(vl, id);
-					m_LocalVars.add(id);
+					mLocalVars.add(id);
 					localVarList.add(new VariableInfo(false, decl, id, type, declInfo));
 				}
 			}
@@ -1060,10 +1060,10 @@ public class TypeChecker extends BaseObserver {
 		TypeParameters typeParams = new TypeParameters(impl.getTypeParams());
 		typeManager.pushTypeScope(typeParams);
 
-		m_CurrentProcedure = impl.getIdentifier();
-		m_InParams = new HashSet<String>();
-		m_OutParams = new HashSet<String>();
-		m_LocalVars = new HashSet<String>();
+		mCurrentProcedure = impl.getIdentifier();
+		mInParams = new HashSet<String>();
+		mOutParams = new HashSet<String>();
+		mLocalVars = new HashSet<String>();
 		DeclarationInformation declInfoInParam;
 		DeclarationInformation declInfoOutParam;
 		// We call this procedure object a pure implementation if it contains 
@@ -1094,7 +1094,7 @@ public class TypeChecker extends BaseObserver {
 					typeError(vl, "Type differs at parameter " + id + " in " + impl);
 				}
 				checkIfAlreadyInOutLocal(vl, id);
-				m_InParams.add(id);
+				mInParams.add(id);
 				allParams.add(new VariableInfo(true /* in params are rigid */, impl, id, type, declInfoInParam));
 			}
 		}
@@ -1112,7 +1112,7 @@ public class TypeChecker extends BaseObserver {
 					typeError(vl, "Type differs at parameter " + id + " in " + impl);
 				}
 				checkIfAlreadyInOutLocal(vl, id);
-				m_OutParams.add(id);
+				mOutParams.add(id);
 				allParams.add(new VariableInfo(false, impl, id, type, declInfoOutParam));
 
 			}
@@ -1133,13 +1133,13 @@ public class TypeChecker extends BaseObserver {
 	 * parameter, out parameter of local variable.
 	 */
 	private void checkIfAlreadyInOutLocal(VarList vl, String id) {
-		if (m_InParams.contains(id)) {
+		if (mInParams.contains(id)) {
 			typeError(vl, id + "already declared as in parameter");
 		}
-		if (m_OutParams.contains(id)) {
+		if (mOutParams.contains(id)) {
 			typeError(vl, id + "already declared as out parameter");
 		}
-		if (m_LocalVars.contains(id)) {
+		if (mLocalVars.contains(id)) {
 			typeError(vl, id + "already declared as local variable");
 		}
 	}

@@ -69,7 +69,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	static long trueAvgNodeInTheEnd = 0, trueAvgNodeGenerated = 0,trueAvgRun = 0,trueTestNum = 0,trueAvgTime = 0;
 	static long falseAvgNodeInTheEnd = 0, falseAvgNodeGenerated = 0,falseAvgRun = 0,falseTestNum = 0,falseAvgTime = 0;
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
-	private static ILogger m_Logger;
+	private static ILogger mLogger;
 	public Jeffery_Test_3(AutomataLibraryServices services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b,int num) throws AutomataLibraryException{
 		

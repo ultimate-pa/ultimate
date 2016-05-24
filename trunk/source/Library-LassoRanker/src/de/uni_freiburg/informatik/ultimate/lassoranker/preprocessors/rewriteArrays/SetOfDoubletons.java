@@ -43,13 +43,13 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
  *
  */
 public class SetOfDoubletons<E> {
-	private final HashRelation<E, E> m_SomeElem2OtherElem;
-	private final List<Doubleton<E>> m_Elements;
+	private final HashRelation<E, E> mSomeElem2OtherElem;
+	private final List<Doubleton<E>> mElements;
 	
 	public SetOfDoubletons() {
 		super();
-		m_SomeElem2OtherElem = new HashRelation<>();
-		m_Elements = new ArrayList<Doubleton<E>>();
+		mSomeElem2OtherElem = new HashRelation<>();
+		mElements = new ArrayList<Doubleton<E>>();
 	}
 	
 	public boolean containsDoubleton(Doubleton<E> twoelton) {
@@ -57,7 +57,7 @@ public class SetOfDoubletons<E> {
 	}
 	
 	public boolean containsDoubleton(E oneElem, E otherElem) {
-		Set<E> image = m_SomeElem2OtherElem.getImage(oneElem);
+		Set<E> image = mSomeElem2OtherElem.getImage(oneElem);
 		if (image == null) {
 			return false;
 		} else {
@@ -67,26 +67,26 @@ public class SetOfDoubletons<E> {
 	
 	public void addDoubleton(Doubleton<E> doubleton) {
 		if (!containsDoubleton(doubleton)) {
-			m_SomeElem2OtherElem.addPair(doubleton.getOneElement(), doubleton.getOtherElement());
-			m_SomeElem2OtherElem.addPair(doubleton.getOtherElement(), doubleton.getOneElement());
-			m_Elements.add(doubleton);
+			mSomeElem2OtherElem.addPair(doubleton.getOneElement(), doubleton.getOtherElement());
+			mSomeElem2OtherElem.addPair(doubleton.getOtherElement(), doubleton.getOneElement());
+			mElements.add(doubleton);
 		}
 	}
 	
 //	public Set<E> getSecondElements(E elem) {
-//		return m_Elem2Twoelton.getImage(elem);
+//		return mElem2Twoelton.getImage(elem);
 //	}
 	
 	public Iterable<Doubleton<E>> elements() {
-		return m_Elements;
+		return mElements;
 	}
 	
 	public int size() {
-		return m_Elements.size();
+		return mElements.size();
 	}
 	
 	@Override
 	public String toString() {
-		return m_Elements.toString();
+		return mElements.toString();
 	}
 }

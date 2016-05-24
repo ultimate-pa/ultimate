@@ -44,16 +44,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, STATE>, IOperation<LETTER, STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	Senwa<LETTER, STATE> m_Senwa;
-	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
-	Set<STATE> m_Added = new HashSet<STATE>();
+	private final AutomataLibraryServices mServices;
+	Senwa<LETTER, STATE> mSenwa;
+	INestedWordAutomatonOldApi<LETTER, STATE> mNwa;
+	Set<STATE> mAdded = new HashSet<STATE>();
 	
-	Map<STATE,STATE> m_Result2Operand = new HashMap<STATE,STATE>();
-	Map<STATE,Map<STATE,STATE>> m_Entry2Operand2Result = new HashMap<STATE,Map<STATE,STATE>>();
+	Map<STATE,STATE> mResult2Operand = new HashMap<STATE,STATE>();
+	Map<STATE,Map<STATE,STATE>> mEntry2Operand2Result = new HashMap<STATE,Map<STATE,STATE>>();
 	
 	
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 	
 	
 	@Override
@@ -64,13 +64,13 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	@Override
 	public String startMessage() {
 			return "Start " + operationName() + ". Input has " + 
-					m_Nwa.sizeInformation();	
+					mNwa.sizeInformation();	
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result has " + 
-				m_Senwa.sizeInformation();
+				mSenwa.sizeInformation();
 	}
 	
 	
@@ -79,42 +79,42 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	
 	public SenwaBuilder(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Nwa = nwa;
-		m_Logger.info(startMessage());
-		m_Senwa = new Senwa<LETTER, STATE>(m_Services,
-				m_Nwa.getInternalAlphabet(), m_Nwa.getCallAlphabet(), 
-				m_Nwa.getReturnAlphabet(), m_Nwa.getStateFactory());
-		new SenwaWalker<LETTER, STATE>(m_Services, m_Senwa, this, true);
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mNwa = nwa;
+		mLogger.info(startMessage());
+		mSenwa = new Senwa<LETTER, STATE>(mServices,
+				mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), 
+				mNwa.getReturnAlphabet(), mNwa.getStateFactory());
+		new SenwaWalker<LETTER, STATE>(mServices, mSenwa, this, true);
+		mLogger.info(exitMessage());
 	}
 	
 	
 	
 	private STATE getOrConstructResultState(STATE opEntry, STATE opState, boolean isInitial) {
-		assert m_Nwa.getStates().contains(opState);
-		assert m_Nwa.getStates().contains(opEntry);
-		Map<STATE, STATE> op2res = m_Entry2Operand2Result.get(opEntry);
+		assert mNwa.getStates().contains(opState);
+		assert mNwa.getStates().contains(opEntry);
+		Map<STATE, STATE> op2res = mEntry2Operand2Result.get(opEntry);
 		if (op2res == null) {
 			op2res = new HashMap<STATE, STATE>();
-			m_Entry2Operand2Result.put(opEntry, op2res);
+			mEntry2Operand2Result.put(opEntry, op2res);
 		}
 		STATE resState = op2res.get(opState);
 		if (resState == null) {
-			resState = m_Nwa.getStateFactory().senwa(opEntry, opState);
+			resState = mNwa.getStateFactory().senwa(opEntry, opState);
 			op2res.put(opState, resState);
-			m_Result2Operand.put(resState, opState);
+			mResult2Operand.put(resState, opState);
 			STATE resEntry = op2res.get(opEntry);
 			assert resEntry != null;
-			m_Senwa.addState(resState, isInitial, m_Nwa.isFinal(opState), resEntry);
+			mSenwa.addState(resState, isInitial, mNwa.isFinal(opState), resEntry);
 		}
 		return resState;
 	}
 	
 	private STATE getOperandState(STATE resState) {
-		assert m_Senwa.getStates().contains(resState);
-		STATE opState = m_Result2Operand.get(resState);
+		assert mSenwa.getStates().contains(resState);
+		STATE opState = mResult2Operand.get(resState);
 		assert opState != null;
 		return opState;
 	}
@@ -123,7 +123,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	@Override
 	public Iterable<STATE> getInitialStates() {
 		Set<STATE> resInits = new HashSet<STATE>();
-		for (STATE opState : m_Nwa.getInitialStates()) {
+		for (STATE opState : mNwa.getInitialStates()) {
 			STATE resSTATE = getOrConstructResultState(opState, opState, true);
 			resInits.add(resSTATE);
 		}
@@ -132,15 +132,15 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 
 	@Override
 	public Iterable<STATE> visitAndGetInternalSuccessors(STATE resState) {
-		STATE resEntry = m_Senwa.getEntry(resState);
+		STATE resEntry = mSenwa.getEntry(resState);
 		STATE opEntry = getOperandState(resEntry);
 		Set<STATE> resSuccs = new HashSet<STATE>();
 		STATE opState = getOperandState(resState);
-		for (LETTER letter : m_Nwa.lettersInternal(opState)) {
-			for (STATE opSucc : m_Nwa.succInternal(opState, letter)) {
+		for (LETTER letter : mNwa.lettersInternal(opState)) {
+			for (STATE opSucc : mNwa.succInternal(opState, letter)) {
 				STATE resSucc = getOrConstructResultState(opEntry, opSucc, false);
 				resSuccs.add(resSucc);
-				m_Senwa.addInternalTransition(resState, letter, resSucc);
+				mSenwa.addInternalTransition(resState, letter, resSucc);
 			}
 		}
 		return resSuccs;
@@ -150,11 +150,11 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	public Iterable<STATE> visitAndGetCallSuccessors(STATE resState) {
 		Set<STATE> resSuccs = new HashSet<STATE>();
 		STATE opState = getOperandState(resState);
-		for (LETTER letter : m_Nwa.lettersCall(opState)) {
-			for (STATE opSucc : m_Nwa.succCall(opState, letter)) {
+		for (LETTER letter : mNwa.lettersCall(opState)) {
+			for (STATE opSucc : mNwa.succCall(opState, letter)) {
 				STATE resSucc = getOrConstructResultState(opSucc, opSucc, false);
 				resSuccs.add(resSucc);
-				m_Senwa.addCallTransition(resState, letter, resSucc);
+				mSenwa.addCallTransition(resState, letter, resSucc);
 			}
 		}
 		return resSuccs;
@@ -165,34 +165,34 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 			STATE resHier) {
 		STATE opState = getOperandState(resState);
 		STATE opHier = getOperandState(resHier);
-		STATE resHierEntry = m_Senwa.getEntry(resHier);
+		STATE resHierEntry = mSenwa.getEntry(resHier);
 		STATE opHierEntry = getOperandState(resHierEntry);
 		Set<STATE> resSuccs = new HashSet<STATE>();
-		for (LETTER letter : m_Nwa.lettersReturn(opState)) {
-			for (STATE opSucc : m_Nwa.succReturn(opState, opHier, letter)) {
+		for (LETTER letter : mNwa.lettersReturn(opState)) {
+			for (STATE opSucc : mNwa.succReturn(opState, opHier, letter)) {
 				STATE resSucc = getOrConstructResultState(opHierEntry, opSucc, false);
 				resSuccs.add(resSucc);
-				m_Senwa.addReturnTransition(resState, resHier, letter, resSucc);
+				mSenwa.addReturnTransition(resState, resHier, letter, resSucc);
 			}
 		}
 		return resSuccs;
 	}
 	
 	public Senwa<LETTER,STATE> getResult() throws AutomataLibraryException {
-		return m_Senwa;
+		return mSenwa;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Nwa, m_Senwa, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Senwa, m_Nwa, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mNwa, mSenwa, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(mServices, mSenwa, mNwa, stateFactory) == null);
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Nwa);
+			ResultChecker.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mNwa);
 		}
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 

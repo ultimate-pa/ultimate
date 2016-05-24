@@ -159,12 +159,12 @@ public class ACSLHandler implements IACSLHandler {
      * in the witness invariant mode we write a different annotation at the
      * assert
      */
-	private final  boolean m_WitnessInvariantMode;
+	private final  boolean mWitnessInvariantMode;
     
     
 
 	public ACSLHandler(boolean witnessInvariantMode) {
-		m_WitnessInvariantMode = witnessInvariantMode;
+		mWitnessInvariantMode = witnessInvariantMode;
 	}
 
 	/**
@@ -207,7 +207,7 @@ public class ACSLHandler implements IACSLHandler {
             return new Result(assertStmt);
             */
             final Check check; 
-            if (m_WitnessInvariantMode) {
+            if (mWitnessInvariantMode) {
             	check = new Check(Check.Spec.WITNESS_INVARIANT);
             } else {
             	check = new Check(Check.Spec.ASSERT);

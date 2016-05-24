@@ -54,7 +54,7 @@ public class BlockEncoding implements IGenerator {
 
 	private MinModelConversionObserver mConversionObserver;
 	private BlockEncodingObserver mBlockEncodingObserver;
-	private ModelType m_InputDefinition;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 
 	@Override
@@ -86,7 +86,7 @@ public class BlockEncoding implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		this.mInputDefinition = graphType;
 	}
 
 	@Override
@@ -99,9 +99,9 @@ public class BlockEncoding implements IGenerator {
 
 	public ModelType getOutputDefinition() {
 		if (mConversionObserver.getRoot() == null) {
-			return new ModelType("BlockEncodedModel", m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+			return new ModelType("BlockEncodedModel", mInputDefinition.getType(), mInputDefinition.getFileNames());
 		}
-		return new ModelType(Activator.PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override

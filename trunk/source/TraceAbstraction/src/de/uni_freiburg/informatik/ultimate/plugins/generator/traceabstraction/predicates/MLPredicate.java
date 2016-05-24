@@ -44,13 +44,13 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 	 * 
 	 */
 	private static final long serialVersionUID = 1750137515726690834L;
-	protected final ProgramPoint[] m_ProgramPoints;
+	protected final ProgramPoint[] mProgramPoints;
 	
 	
 	protected MLPredicate(ProgramPoint[] programPoints, int serialNumber, 
 			String[] procedures, Term term, Set<BoogieVar> vars, Term closedFormula) {
 		super(serialNumber,procedures,term,vars,closedFormula);
-		m_ProgramPoints = programPoints;
+		mProgramPoints = programPoints;
 	}
 
 
@@ -71,38 +71,38 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "ProgramPoint")
-			return m_Procedures;
+			return mProcedures;
 		else
 			return super.getFieldValue(field);
 	}
 	
 	@Override
 	public ProgramPoint[] getProgramPoints() {
-		return m_ProgramPoints;
+		return mProgramPoints;
 	}
 
 	/**
-	 * @return the m_Assertion
+	 * @return the mAssertion
 	 */
 	public Term getFormula() {
-		return m_Formula;
+		return mFormula;
 	}
 	
 	public Term getClosedFormula() {
-		return m_ClosedFormula;
+		return mClosedFormula;
 	}
 
 	public Set<BoogieVar> getVars() {
-		return m_Vars;
+		return mVars;
 	}
 	
 	@Override
 	public String toString() {
-		String result = super.m_SerialNumber + "#";
-		if (m_ProgramPoints != null) {
-			result += Arrays.toString(m_ProgramPoints);
+		String result = super.mSerialNumber + "#";
+		if (mProgramPoints != null) {
+			result += Arrays.toString(mProgramPoints);
 		}
-		result += m_Formula.toString();
+		result += mFormula.toString();
 		return result;
 	}
 
@@ -114,7 +114,7 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 
 	@Override
 	public int hashCode() {
-		return super.m_SerialNumber;
+		return super.mSerialNumber;
 	}
 	
 	

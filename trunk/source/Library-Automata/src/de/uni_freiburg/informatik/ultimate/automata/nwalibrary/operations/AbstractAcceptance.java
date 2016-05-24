@@ -47,16 +47,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public abstract class AbstractAcceptance<LETTER,STATE> {
 
-	protected final AutomataLibraryServices m_Services;
-	protected final ILogger m_Logger;
+	protected final AutomataLibraryServices mServices;
+	protected final ILogger mLogger;
 	
 	
 	
 	
 	public AbstractAcceptance(AutomataLibraryServices services) {
 		super();
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 
 	/**
@@ -149,7 +149,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 							symbol + " at position " + position + " not in return alphabet of automaton.");
 				}
 				if (config.isEmpty()) {
-					m_Logger.warn("Input has pending returns, we reject such words");
+					mLogger.warn("Input has pending returns, we reject such words");
 				}
 				else {
 					STATE callPred = config.pop();

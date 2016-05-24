@@ -41,7 +41,7 @@ public class TermcompJoogieConvertedTests extends
 		AbstractBuchiAutomizerTestSuite {
 	
 	
-	private static final String[] m_UltimateRepository = {
+	private static final String[] mUltimateRepository = {
 		"examples/termination/Joogie",
 	};
 	
@@ -61,12 +61,12 @@ public class TermcompJoogieConvertedTests extends
 	 * because we assume that all settings files are in this folder.
 	 * 
 	 */
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"buchiAutomizer/termcomp2015_Tests.epf",
 	};
 	
 	
-	private static final String[] m_Toolchains = {
+	private static final String[] mToolchains = {
 		"BuchiAutomizerJoogieWithBlockEncoding.xml",
 	};
 
@@ -76,9 +76,9 @@ public class TermcompJoogieConvertedTests extends
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_Toolchains) {
-				addTestCase(toolchain, setting, m_UltimateRepository, 
+		for (String setting : mSettings) {
+			for (String toolchain : mToolchains) {
+				addTestCase(toolchain, setting, mUltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}

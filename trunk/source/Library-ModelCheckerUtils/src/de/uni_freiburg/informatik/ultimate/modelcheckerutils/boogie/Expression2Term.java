@@ -78,24 +78,24 @@ public class Expression2Term {
 				BoogieASTNode boogieASTNode);
 	}
 
-	private final Script m_Script;
-	private final TypeSortTranslator m_TypeSortTranslator;
-	private final IOperationTranslator m_OperationTranslator;
-	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
-	private final VariableManager m_VariableManager;
-	private final boolean m_OverapproximateFunctions = false;
+	private final Script mScript;
+	private final TypeSortTranslator mTypeSortTranslator;
+	private final IOperationTranslator mOperationTranslator;
+	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final VariableManager mVariableManager;
+	private final boolean mOverapproximateFunctions = false;
 	
-	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<>();
-	private IdentifierTranslator[] m_SmtIdentifierProviders;
-	private Map<String, ILocation> m_Overapproximations = null;
-	private Collection<TermVariable> m_AuxVars = null;
+	private final ScopedHashMap<String, TermVariable> mQuantifiedVariables = new ScopedHashMap<>();
+	private IdentifierTranslator[] mSmtIdentifierProviders;
+	private Map<String, ILocation> mOverapproximations = null;
+	private Collection<TermVariable> mAuxVars = null;
 
 	/**
 	 * Count the height of current old(.) expressions. As long as this is
 	 * strictly greater than zero we are have to consider all global vars as
 	 * oldvars.
 	 */
-	private int m_OldContextScopeDepth = 0;
+	private int mOldContextScopeDepth = 0;
 
 	private final IUltimateServiceProvider mServices;
 	private static final String s_Overapproximation = "overapproximation";
@@ -105,53 +105,53 @@ public class Expression2Term {
 			Boogie2SmtSymbolTable boogie2SmtSymbolTable, IOperationTranslator operationTranslator, VariableManager variableManager) {
 		super();
 		mServices = services;
-		m_Script = script;
-		m_TypeSortTranslator = typeSortTranslator;
-		m_Boogie2SmtSymbolTable = boogie2SmtSymbolTable;
-		m_OperationTranslator = operationTranslator;
-		m_VariableManager = variableManager;
+		mScript = script;
+		mTypeSortTranslator = typeSortTranslator;
+		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
+		mOperationTranslator = operationTranslator;
+		mVariableManager = variableManager;
 	}
 
 	public SingleTermResult translateToTerm(IdentifierTranslator[] identifierTranslators, Expression expression) {
-		assert m_SmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
-		assert m_QuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
-		assert m_Overapproximations == null : getClass().getSimpleName() + " in use";
-		assert m_AuxVars == null : getClass().getSimpleName() + " in use";
-		m_SmtIdentifierProviders = identifierTranslators;
-		m_AuxVars = new ArrayList<>();
-		m_Overapproximations = new HashMap<String, ILocation>();
+		assert mSmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
+		assert mQuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
+		assert mOverapproximations == null : getClass().getSimpleName() + " in use";
+		assert mAuxVars == null : getClass().getSimpleName() + " in use";
+		mSmtIdentifierProviders = identifierTranslators;
+		mAuxVars = new ArrayList<>();
+		mOverapproximations = new HashMap<String, ILocation>();
 		Term term = translate(expression);
-		SingleTermResult result = new SingleTermResult(m_Overapproximations, m_AuxVars, term);
-		m_SmtIdentifierProviders = null;
-		m_AuxVars = null;
-		m_Overapproximations = null;
+		SingleTermResult result = new SingleTermResult(mOverapproximations, mAuxVars, term);
+		mSmtIdentifierProviders = null;
+		mAuxVars = null;
+		mOverapproximations = null;
 		return result; 
 	}
 
 	public MultiTermResult translateToTerms(IdentifierTranslator[] identifierTranslators, Expression[] expressions) {
-		assert m_SmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
-		assert m_QuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
-		assert m_Overapproximations == null : getClass().getSimpleName() + " in use";
-		assert m_AuxVars == null : getClass().getSimpleName() + " in use";
-		m_SmtIdentifierProviders = identifierTranslators;
-		m_AuxVars = new ArrayList<>();
-		m_Overapproximations = new HashMap<String, ILocation>();
+		assert mSmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
+		assert mQuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
+		assert mOverapproximations == null : getClass().getSimpleName() + " in use";
+		assert mAuxVars == null : getClass().getSimpleName() + " in use";
+		mSmtIdentifierProviders = identifierTranslators;
+		mAuxVars = new ArrayList<>();
+		mOverapproximations = new HashMap<String, ILocation>();
 		Term[] terms = new Term[expressions.length];
 		for (int i = 0; i < expressions.length; i++) {
 			terms[i] = translate(expressions[i]);
 		}
-		MultiTermResult result = new MultiTermResult(m_Overapproximations, m_AuxVars, terms);
-		m_SmtIdentifierProviders = null;
-		m_AuxVars = null;
-		m_Overapproximations = null;
+		MultiTermResult result = new MultiTermResult(mOverapproximations, mAuxVars, terms);
+		mSmtIdentifierProviders = null;
+		mAuxVars = null;
+		mOverapproximations = null;
 		return result; 
 	}
 
 	Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode boogieASTNode) {
-		if (m_QuantifiedVariables.containsKey(id)) {
-			return m_QuantifiedVariables.get(id);
+		if (mQuantifiedVariables.containsKey(id)) {
+			return mQuantifiedVariables.get(id);
 		} else {
-			for (IdentifierTranslator it : m_SmtIdentifierProviders) {
+			for (IdentifierTranslator it : mSmtIdentifierProviders) {
 				Term term = it.getSmtIdentifier(id, declInfo, isOldContext, boogieASTNode);
 				if (term != null) {
 					return term;
@@ -163,12 +163,12 @@ public class Expression2Term {
 
 	/**
 	 * We are in a context where we have to consider all global vars as oldvars
-	 * if m_OldContextScopeDepth is > 0.
+	 * if mOldContextScopeDepth is > 0.
 	 * 
 	 * @return
 	 */
 	private boolean isOldContext() {
-		return m_OldContextScopeDepth > 0;
+		return mOldContextScopeDepth > 0;
 	}
 
 	private Term translate(Expression exp) {
@@ -178,7 +178,7 @@ public class Expression2Term {
 			Term result = translate(arrexp.getArray());
 			for (int i = 0; i < indices.length; i++) {
 				Term indexiTerm = translate(indices[i]);
-				result = m_Script.term("select", result, indexiTerm);
+				result = mScript.term("select", result, indexiTerm);
 			}
 			return result;
 
@@ -193,12 +193,12 @@ public class Expression2Term {
 			arrayBeforeIndex[0] = translate(arrexp.getArray());
 			for (int i = 0; i < indices.length - 1; i++) {
 				indexTerm[i] = translate(indices[i]);
-				arrayBeforeIndex[i + 1] = m_Script.term("select", arrayBeforeIndex[i], indexTerm[i]);
+				arrayBeforeIndex[i + 1] = mScript.term("select", arrayBeforeIndex[i], indexTerm[i]);
 			}
 			indexTerm[indices.length - 1] = translate(indices[indices.length - 1]);
 			Term result = translate(arrexp.getValue());
 			for (int i = indices.length - 1; i >= 0; i--) {
-				result = m_Script.term("store", arrayBeforeIndex[i], indexTerm[i], result);
+				result = mScript.term("store", arrayBeforeIndex[i], indexTerm[i], result);
 			}
 			assert (result != null);
 			assert (result.toString() instanceof Object);
@@ -207,23 +207,23 @@ public class Expression2Term {
 		} else if (exp instanceof BinaryExpression) {
 			BinaryExpression binexp = (BinaryExpression) exp;
 			BinaryExpression.Operator op = binexp.getOperator();
-			// Sort sort = m_Smt2Boogie.getSort(binexp.getLeft().getType());
+			// Sort sort = mSmt2Boogie.getSort(binexp.getLeft().getType());
             if (op == BinaryExpression.Operator.COMPNEQ) {
-				String equalityFuncname = m_OperationTranslator.opTranslation(
+				String equalityFuncname = mOperationTranslator.opTranslation(
 						BinaryExpression.Operator.COMPEQ, binexp.getLeft().getType(), binexp.getRight().getType());
-				String negationFuncname = m_OperationTranslator.opTranslation(
+				String negationFuncname = mOperationTranslator.opTranslation(
 						UnaryExpression.Operator.LOGICNEG, PrimitiveType.boolType);
 				BigInteger[] indices = new BigInteger[0];
-            	return SmtUtils.termWithLocalSimplification(m_Script, 
+            	return SmtUtils.termWithLocalSimplification(mScript, 
             			negationFuncname, indices,
-            			SmtUtils.termWithLocalSimplification(m_Script, 
+            			SmtUtils.termWithLocalSimplification(mScript, 
             			equalityFuncname, indices, 
 					    translate(binexp.getLeft()), translate(binexp.getRight())));
             } else {
-				String funcname = m_OperationTranslator.opTranslation(
+				String funcname = mOperationTranslator.opTranslation(
 						op, binexp.getLeft().getType(), binexp.getRight().getType());
 				BigInteger[] indices = null;
-			    return SmtUtils.termWithLocalSimplification(m_Script, 
+			    return SmtUtils.termWithLocalSimplification(mScript, 
 			    		funcname, indices,
 					    translate(binexp.getLeft()), translate(binexp.getRight()));
             }
@@ -231,22 +231,22 @@ public class Expression2Term {
 			UnaryExpression unexp = (UnaryExpression) exp;
 			UnaryExpression.Operator op = unexp.getOperator();
 			if (op == UnaryExpression.Operator.OLD) {
-				m_OldContextScopeDepth++;
+				mOldContextScopeDepth++;
 				Term term = translate(unexp.getExpr());
-				m_OldContextScopeDepth--;
+				mOldContextScopeDepth--;
 				return term;
 			} else {
-				String funcname = m_OperationTranslator.opTranslation(op, unexp.getExpr().getType());
+				String funcname = mOperationTranslator.opTranslation(op, unexp.getExpr().getType());
 				BigInteger[] indices = null;
-				return SmtUtils.termWithLocalSimplification(m_Script, funcname, indices, translate(unexp.getExpr()));
+				return SmtUtils.termWithLocalSimplification(mScript, funcname, indices, translate(unexp.getExpr()));
 			}
 		} else if (exp instanceof RealLiteral) {
-			Term result = m_OperationTranslator.realTranslation((RealLiteral) exp);
+			Term result = mOperationTranslator.realTranslation((RealLiteral) exp);
 			assert result != null;
 			return result;
 
 		} else if (exp instanceof BitvecLiteral) {
-			Term result = m_OperationTranslator.bitvecTranslation((BitvecLiteral) exp);
+			Term result = mOperationTranslator.bitvecTranslation((BitvecLiteral) exp);
 			assert result != null;
 			return result;
 
@@ -255,25 +255,25 @@ public class Expression2Term {
 			indices[0] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getEnd() - 1).toString());
 			indices[1] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getStart()).toString());
 
-			Term result = m_Script.term("extract", indices, null, translate(((BitVectorAccessExpression) exp).getBitvec()));
+			Term result = mScript.term("extract", indices, null, translate(((BitVectorAccessExpression) exp).getBitvec()));
 			assert result != null;
 			return result;
 
 		} else if (exp instanceof BooleanLiteral) {
-			Term result = m_OperationTranslator.booleanTranslation((BooleanLiteral) exp);
+			Term result = mOperationTranslator.booleanTranslation((BooleanLiteral) exp);
 			assert result != null;
 			return result;
 
 		} else if (exp instanceof FunctionApplication) {
 			FunctionApplication func = ((FunctionApplication) exp);
 			final Term result;
-			Map<String, Expression[]> attributes = m_Boogie2SmtSymbolTable.getAttributes(func.getIdentifier());
+			Map<String, Expression[]> attributes = mBoogie2SmtSymbolTable.getAttributes(func.getIdentifier());
 			String overapproximation = Boogie2SmtSymbolTable.checkForAttributeDefinedIdentifier(attributes, s_Overapproximation );
-			if (m_OverapproximateFunctions || overapproximation != null) {
-				Sort resultSort = m_TypeSortTranslator.getSort(exp.getType(), exp);
-				TermVariable auxVar = m_VariableManager.constructFreshTermVariable(func.getIdentifier(), resultSort);
-				m_AuxVars.add(auxVar);
-				m_Overapproximations.put(overapproximation, exp.getLocation());
+			if (mOverapproximateFunctions || overapproximation != null) {
+				Sort resultSort = mTypeSortTranslator.getSort(exp.getType(), exp);
+				TermVariable auxVar = mVariableManager.constructFreshTermVariable(func.getIdentifier(), resultSort);
+				mAuxVars.add(auxVar);
+				mOverapproximations.put(overapproximation, exp.getLocation());
 				result = auxVar;
 			} else {
 				BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
@@ -284,7 +284,7 @@ public class Expression2Term {
 
 				Sort[] params = new Sort[func.getArguments().length];
 				for (int i = 0; i < func.getArguments().length; i++) {
-					params[i] = m_TypeSortTranslator.getSort(func.getArguments()[i].getType(), exp);
+					params[i] = mTypeSortTranslator.getSort(func.getArguments()[i].getType(), exp);
 				}
 				
 				Term[] parameters = new Term[func.getArguments().length];
@@ -292,13 +292,13 @@ public class Expression2Term {
 					parameters[i] = translate(func.getArguments()[i]);
 				}
 
-				String funcSymb = m_OperationTranslator.funcApplication(func.getIdentifier(), argumentTypes);
+				String funcSymb = mOperationTranslator.funcApplication(func.getIdentifier(), argumentTypes);
 				if (funcSymb == null) {
 					throw new IllegalArgumentException("unknown function" + func.getIdentifier());
 				}
-//				result = m_Script.term(funcSymb, indices, null, parameters);
+//				result = mScript.term(funcSymb, indices, null, parameters);
 				// overkill, this should be called only for bitvector operations.
-				result = SmtUtils.termWithLocalSimplification(m_Script, funcSymb, indices, parameters);
+				result = SmtUtils.termWithLocalSimplification(mScript, funcSymb, indices, parameters);
 			}
 			return result;
 		} else if (exp instanceof IdentifierExpression) {
@@ -309,7 +309,7 @@ public class Expression2Term {
 			return result;
 
 		} else if (exp instanceof IntegerLiteral) {
-			Term result = m_OperationTranslator.integerTranslation((IntegerLiteral) exp);
+			Term result = mOperationTranslator.integerTranslation((IntegerLiteral) exp);
 			assert result != null;
 			return result;
 
@@ -318,7 +318,7 @@ public class Expression2Term {
 			Term cond = translate(ite.getCondition());
 			Term thenPart = translate(ite.getThenPart());
 			Term elsePart = translate(ite.getElsePart());
-			Term result = Util.ite(m_Script, cond, thenPart, elsePart);
+			Term result = Util.ite(mScript, cond, thenPart, elsePart);
 			assert result != null;
 			return result;
 
@@ -336,20 +336,20 @@ public class Expression2Term {
 			// HashMap<String,Term> newVars = new HashMap<String, Term>();
 			int offset = 0;
 			// for (int j = 0; j < typeParams.length; j++) {
-			// vars[offset] = m_Script.createTermVariable("q" +
+			// vars[offset] = mScript.createTermVariable("q" +
 			// quoteId(typeParams[j]), intSort);
 			// typeStack.push(vars[offset]);
 			// offset++;
 			// }
-			m_QuantifiedVariables.beginScope();
+			mQuantifiedVariables.beginScope();
 			for (int i = 0; i < variables.length; i++) {
 				IType type = variables[i].getType().getBoogieType();
-				Sort sort = m_TypeSortTranslator.getSort(type, exp);
+				Sort sort = mTypeSortTranslator.getSort(type, exp);
 				for (int j = 0; j < variables[i].getIdentifiers().length; j++) {
 					String identifier = variables[i].getIdentifiers()[j];
 					String smtVarName = "q" + Boogie2SMT.quoteId(variables[i].getIdentifiers()[j]);
-					vars[offset] = m_Script.variable(smtVarName, sort);
-					m_QuantifiedVariables.put(identifier, vars[offset]);
+					vars[offset] = mScript.variable(smtVarName, sort);
+					mQuantifiedVariables.put(identifier, vars[offset]);
 					offset++;
 				}
 			}
@@ -385,11 +385,11 @@ public class Expression2Term {
 			// for (int j = 0; j < typeParams.length; j++) {
 			// typeStack.pop();
 			// }
-			m_QuantifiedVariables.endScope();
+			mQuantifiedVariables.endScope();
 
 			Term result = null;
 			try {
-				result = quant.isUniversal() ? m_Script.quantifier(Script.FORALL, vars, form, triggers) : m_Script
+				result = quant.isUniversal() ? mScript.quantifier(Script.FORALL, vars, form, triggers) : mScript
 						.quantifier(Script.EXISTS, vars, form, triggers);
 			} catch (SMTLIBException e) {
 				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {
@@ -407,44 +407,44 @@ public class Expression2Term {
 	}
 	
 	abstract class TranslationResult {
-		private final Map<String, ILocation> m_Overappoximations;
-		private final Collection<TermVariable> m_AuxiliaryVars;
+		private final Map<String, ILocation> mOverappoximations;
+		private final Collection<TermVariable> mAuxiliaryVars;
 		public TranslationResult(Map<String, ILocation> overapproximations,
 				Collection<TermVariable> auxiliaryVars) {
 			super();
 			assert auxiliaryVars != null;
-			m_Overappoximations = overapproximations;
-			m_AuxiliaryVars = auxiliaryVars;
+			mOverappoximations = overapproximations;
+			mAuxiliaryVars = auxiliaryVars;
 		}
 		public Map<String, ILocation> getOverappoximations() {
-			return m_Overappoximations;
+			return mOverappoximations;
 		}
 		public Collection<TermVariable> getAuxiliaryVars() {
-			return m_AuxiliaryVars;
+			return mAuxiliaryVars;
 		}
 	}
 	
 	public class SingleTermResult extends TranslationResult {
-		private final Term m_Term;
+		private final Term mTerm;
 		public SingleTermResult(Map<String, ILocation> overapproximations,
 				Collection<TermVariable> auxiliaryVars, Term term) {
 			super(overapproximations, auxiliaryVars);
-			m_Term = term;
+			mTerm = term;
 		}
 		public Term getTerm() {
-			return m_Term;
+			return mTerm;
 		}
 	}
 	
 	public class MultiTermResult extends TranslationResult {
-		private final Term[] m_Terms;
+		private final Term[] mTerms;
 		public MultiTermResult(Map<String, ILocation> overapproximations,
 				Collection<TermVariable> auxiliaryVars, Term[] terms) {
 			super(overapproximations, auxiliaryVars);
-			m_Terms = terms;
+			mTerms = terms;
 		}
 		public Term[] getTerms() {
-			return m_Terms;
+			return mTerms;
 		}
 	}
 }

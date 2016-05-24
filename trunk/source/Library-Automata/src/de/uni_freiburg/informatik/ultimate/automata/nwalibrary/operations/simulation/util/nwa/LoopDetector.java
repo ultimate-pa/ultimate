@@ -52,15 +52,15 @@ public final class LoopDetector<LETTER, STATE> {
 	/**
 	 * Game graph to use for loop detection.
 	 */
-	private final AGameGraph<LETTER, STATE> m_GameGraph;
+	private final AGameGraph<LETTER, STATE> mGameGraph;
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 	/**
 	 * Timer used for responding to timeouts and operation cancellation.
 	 */
-	private final IProgressAwareTimer m_ProgressAwareTimer;
+	private final IProgressAwareTimer mProgressAwareTimer;
 
 	/**
 	 * Creates a new loop detector which can detect special loops on a given
@@ -76,9 +76,9 @@ public final class LoopDetector<LETTER, STATE> {
 	 */
 	public LoopDetector(final AGameGraph<LETTER, STATE> gameGraph, final ILogger logger,
 			final IProgressAwareTimer progressAwareTimer) {
-		m_GameGraph = gameGraph;
-		m_Logger = logger;
-		m_ProgressAwareTimer = progressAwareTimer;
+		mGameGraph = gameGraph;
+		mLogger = logger;
+		mProgressAwareTimer = progressAwareTimer;
 	}
 
 	/**
@@ -149,16 +149,16 @@ public final class LoopDetector<LETTER, STATE> {
 
 			if (!destinationFound && !wasAlreadyProcessed && !isToAvoid) {
 				// Add successors to queue
-				Set<Vertex<LETTER, STATE>> successors = m_GameGraph.getSuccessors(element);
+				Set<Vertex<LETTER, STATE>> successors = mGameGraph.getSuccessors(element);
 				if (successors != null) {
-					queue.addAll(m_GameGraph.getSuccessors(element));
+					queue.addAll(mGameGraph.getSuccessors(element));
 				}
 			}
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (m_ProgressAwareTimer != null && !m_ProgressAwareTimer.continueProcessing()) {
-				m_Logger.debug("Stopped in isLoopVertex");
+			if (mProgressAwareTimer != null && !mProgressAwareTimer.continueProcessing()) {
+				mLogger.debug("Stopped in isLoopVertex");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}

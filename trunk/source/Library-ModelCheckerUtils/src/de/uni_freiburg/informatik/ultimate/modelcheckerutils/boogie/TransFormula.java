@@ -71,23 +71,23 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  * formula. The formula denotes a binary relation of this-state/next-state
  * pairs, where we consider a state as a variable assignment. The variables that
  * describe the "this-state"s are given as a BoogieVar, stored as the keySet of
- * the Map m_InVars. m_InVars maps to each of these variables a corresponding
+ * the Map mInVars. mInVars maps to each of these variables a corresponding
  * TermVariable in the formula. The variables that describe the "next-state"s
- * are given as a set of strings, stored as the keySet of the Map m_OutVars.
- * m_InVars maps to each of these variables a corresponding TermVariable in the
+ * are given as a set of strings, stored as the keySet of the Map mOutVars.
+ * mInVars maps to each of these variables a corresponding TermVariable in the
  * formula. All TermVariables that occur in the formula are stored in the Set
- * m_Vars. The names of all variables that are assigned/updated by this
- * transition are stored in m_AssignedVars (this information is obtained from
- * m_InVars and m_OutVars). If a variable does not occur in the this-state, but
+ * mVars. The names of all variables that are assigned/updated by this
+ * transition are stored in mAssignedVars (this information is obtained from
+ * mInVars and mOutVars). If a variable does not occur in the this-state, but
  * in the next-state it may have any value (think of a Havoc Statement).
  * <p>
  * A TransFormula represents the set of transitions denoted by the formula φ
  * over primed and unprimed variables where φ is obtained by
  * <ul>
  * <li>first replacing for each x ∈ dom(invar) the TermVariable invar(x) in
- * m_Formula by x
+ * mFormula by x
  * <li>then replacing for each x ∈ dom(outvar) the TermVariable onvar(x) in
- * m_Formula by x'
+ * mFormula by x'
  * <li>finally, adding the conjunct x=x' for each x∈(dom(invar)⋂dom(outvar)
  * such that invar(x)=outvar(x)
  * </ul>
@@ -98,15 +98,15 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class TransFormula implements Serializable {
 	private static final long serialVersionUID = 7058102586141801399L;
-	private final Term m_Formula;
-	private final Map<BoogieVar, TermVariable> m_InVars;
-	private final Map<BoogieVar, TermVariable> m_OutVars;
-	private final Set<BoogieVar> m_AssignedVars;
-	private final Set<TermVariable> m_auxVars;
-	private final Set<TermVariable> m_BranchEncoders;
-	private final Infeasibility m_Infeasibility;
-	private final Term m_ClosedFormula;
-	private final Set<ApplicationTerm> m_Constants;
+	private final Term mFormula;
+	private final Map<BoogieVar, TermVariable> mInVars;
+	private final Map<BoogieVar, TermVariable> mOutVars;
+	private final Set<BoogieVar> mAssignedVars;
+	private final Set<TermVariable> mauxVars;
+	private final Set<TermVariable> mBranchEncoders;
+	private final Infeasibility mInfeasibility;
+	private final Term mClosedFormula;
+	private final Set<ApplicationTerm> mConstants;
 
 	/**
 	 * Was the solver able to prove infeasiblity of a TransFormula. UNPROVEABLE
@@ -120,29 +120,29 @@ public class TransFormula implements Serializable {
 	public TransFormula(Term formula, Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars,
 			Set<TermVariable> auxVars, Set<TermVariable> branchEncoders, Infeasibility infeasibility,
 			Term closedFormula, boolean allowSuperflousInVars) {
-		m_Formula = formula;
-		m_InVars = inVars;
-		m_OutVars = outVars;
-		m_auxVars = auxVars;
-		m_BranchEncoders = branchEncoders;
-		m_Infeasibility = infeasibility;
-		m_ClosedFormula = closedFormula;
+		mFormula = formula;
+		mInVars = inVars;
+		mOutVars = outVars;
+		mauxVars = auxVars;
+		mBranchEncoders = branchEncoders;
+		mInfeasibility = infeasibility;
+		mClosedFormula = closedFormula;
 		assert SmtUtils.neitherKeyNorValueIsNull(inVars) : "null in inVars";
 		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
 		assert (branchEncoders.size() > 0 || closedFormula.getFreeVars().length == 0);
-		// m_Vars = new
-		// HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
+		// mVars = new
+		// HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
 		assert inAuxSubsetAll(allowSuperflousInVars) : "superfluous vars in TransFormula";
-		// assert m_OutVars.keySet().containsAll(m_InVars.keySet()) :
+		// assert mOutVars.keySet().containsAll(mInVars.keySet()) :
 		// " strange inVar";
 
-		m_AssignedVars = computeAssignedVars(inVars, outVars);
+		mAssignedVars = computeAssignedVars(inVars, outVars);
 		// TODO: The following line is a workaround, in the future the set of
 		// constants will be part of the input and we use findConstants only
 		// in the assertion
-		m_Constants = (new ConstantFinder()).findConstants(m_Formula);
-		// assert isSupersetOfOccurringConstants(m_Constants, m_Formula) :
+		mConstants = (new ConstantFinder()).findConstants(mFormula);
+		// assert isSupersetOfOccurringConstants(mConstants, mFormula) :
 		// "forgotten constant";
 
 		// if (!eachInVarOccursAsOutVar()) {
@@ -195,19 +195,19 @@ public class TransFormula implements Serializable {
 			substitutionMapping.put(bv.getTermVariable(), freshTv);
 			boogieVar2TermVariable.put(bv, freshTv);
 		}
-		m_InVars = boogieVar2TermVariable;
-		m_OutVars = boogieVar2TermVariable;
-		m_Formula = (new SafeSubstitution(script, substitutionMapping)).transform(pred.getFormula());
+		mInVars = boogieVar2TermVariable;
+		mOutVars = boogieVar2TermVariable;
+		mFormula = (new SafeSubstitution(script, substitutionMapping)).transform(pred.getFormula());
 		if (SmtUtils.isFalse(pred.getFormula())) {
-			m_Infeasibility = Infeasibility.INFEASIBLE;
+			mInfeasibility = Infeasibility.INFEASIBLE;
 		} else {
-			m_Infeasibility = Infeasibility.NOT_DETERMINED;
+			mInfeasibility = Infeasibility.NOT_DETERMINED;
 		}
-		m_BranchEncoders = Collections.emptySet();
-		m_auxVars = Collections.emptySet();
-		m_Constants = (new ConstantFinder()).findConstants(m_Formula);
-		m_AssignedVars = computeAssignedVars(m_InVars, m_OutVars);
-		m_ClosedFormula = computeClosedFormula(m_Formula, m_InVars, m_OutVars, m_auxVars, false, boogie2smt);
+		mBranchEncoders = Collections.emptySet();
+		mauxVars = Collections.emptySet();
+		mConstants = (new ConstantFinder()).findConstants(mFormula);
+		mAssignedVars = computeAssignedVars(mInVars, mOutVars);
+		mClosedFormula = computeClosedFormula(mFormula, mInVars, mOutVars, mauxVars, false, boogie2smt);
 	}
 
 	/**
@@ -349,18 +349,18 @@ public class TransFormula implements Serializable {
 	}
 
 	/**
-	 * Returns true if each Term variable in m_Vars occurs as inVar, outVar,
+	 * Returns true if each Term variable in mVars occurs as inVar, outVar,
 	 * auxVar, or branchEncoder
 	 */
 	private boolean allSubsetInOutAuxBranch() {
 		boolean result = true;
-		HashSet<TermVariable> allVars = new HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
+		HashSet<TermVariable> allVars = new HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		for (TermVariable tv : allVars) {
-			result &= (m_InVars.values().contains(tv) || m_OutVars.values().contains(tv) || m_auxVars.contains(tv) || m_BranchEncoders
+			result &= (mInVars.values().contains(tv) || mOutVars.values().contains(tv) || mauxVars.contains(tv) || mBranchEncoders
 					.contains(tv));
 			assert result : "unexpected variable in formula";
 		}
-		for (TermVariable tv : m_auxVars) {
+		for (TermVariable tv : mauxVars) {
 			result &= allVars.contains(tv);
 			assert result : "unnecessary many vars in TransFormula";
 		}
@@ -372,14 +372,14 @@ public class TransFormula implements Serializable {
 	 */
 	private boolean inAuxSubsetAll(boolean allowSuperflousInVars) {
 		boolean result = true;
-		HashSet<TermVariable> allVars = new HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
+		HashSet<TermVariable> allVars = new HashSet<TermVariable>(Arrays.asList(mFormula.getFreeVars()));
 		if (!allowSuperflousInVars) {
-			for (BoogieVar bv : m_InVars.keySet()) {
-				result &= (allVars.contains(m_InVars.get(bv)));
+			for (BoogieVar bv : mInVars.keySet()) {
+				result &= (allVars.contains(mInVars.get(bv)));
 				assert result : "superfluous inVar";
 			}
 		}
-		for (TermVariable tv : m_auxVars) {
+		for (TermVariable tv : mauxVars) {
 			result &= allVars.contains(tv);
 			assert result : "superfluous auxVar";
 		}
@@ -387,8 +387,8 @@ public class TransFormula implements Serializable {
 	}
 
 	private boolean eachInVarOccursAsOutVar() {
-		for (BoogieVar bv : m_InVars.keySet()) {
-			if (!m_OutVars.containsKey(bv)) {
+		for (BoogieVar bv : mInVars.keySet()) {
+			if (!mOutVars.containsKey(bv)) {
 				return false;
 			}
 		}
@@ -396,48 +396,48 @@ public class TransFormula implements Serializable {
 	}
 
 	public Term getFormula() {
-		return m_Formula;
+		return mFormula;
 	}
 
 	public Map<BoogieVar, TermVariable> getInVars() {
-		return Collections.unmodifiableMap(m_InVars);
+		return Collections.unmodifiableMap(mInVars);
 	}
 
 	public Map<BoogieVar, TermVariable> getOutVars() {
-		return Collections.unmodifiableMap(m_OutVars);
+		return Collections.unmodifiableMap(mOutVars);
 	}
 
 	public Set<TermVariable> getAuxVars() {
-		return Collections.unmodifiableSet(m_auxVars);
+		return Collections.unmodifiableSet(mauxVars);
 	}
 
 	public Set<TermVariable> getBranchEncoders() {
-		return Collections.unmodifiableSet(m_BranchEncoders);
+		return Collections.unmodifiableSet(mBranchEncoders);
 	}
 
 	public Term getClosedFormula() {
-		return m_ClosedFormula;
+		return mClosedFormula;
 	}
 
 	public Set<ApplicationTerm> getConstants() {
-		return Collections.unmodifiableSet(m_Constants);
+		return Collections.unmodifiableSet(mConstants);
 	}
 
 	/**
-	 * @return the m_AssignedVars
+	 * @return the mAssignedVars
 	 */
 	public Set<BoogieVar> getAssignedVars() {
-		return Collections.unmodifiableSet(m_AssignedVars);
+		return Collections.unmodifiableSet(mAssignedVars);
 	}
 
 	@Override
 	public String toString() {
-		return "Formula: " + m_Formula + "  InVars " + m_InVars + "  OutVars" + m_OutVars + "  AuxVars" + m_auxVars
-				+ "  AssignedVars" + m_AssignedVars;
+		return "Formula: " + mFormula + "  InVars " + mInVars + "  OutVars" + mOutVars + "  AuxVars" + mauxVars
+				+ "  AssignedVars" + mAssignedVars;
 	}
 
 	public Infeasibility isInfeasible() {
-		return m_Infeasibility;
+		return mInfeasibility;
 	}
 
 	/**
@@ -447,12 +447,12 @@ public class TransFormula implements Serializable {
 	 * that there are no constraints.
 	 */
 	public boolean isHavocedOut(BoogieVar bv) {
-		TermVariable inVar = m_InVars.get(bv);
-		TermVariable outVar = m_OutVars.get(bv);
+		TermVariable inVar = mInVars.get(bv);
+		TermVariable outVar = mOutVars.get(bv);
 		if (inVar == outVar) {
 			return false;
 		} else {
-			if (Arrays.asList(m_Formula.getFreeVars()).contains(outVar)) {
+			if (Arrays.asList(mFormula.getFreeVars()).contains(outVar)) {
 				return false;
 			} else {
 				return true;
@@ -461,12 +461,12 @@ public class TransFormula implements Serializable {
 	}
 
 	public boolean isHavocedIn(BoogieVar bv) {
-		TermVariable inVar = m_InVars.get(bv);
-		TermVariable outVar = m_OutVars.get(bv);
+		TermVariable inVar = mInVars.get(bv);
+		TermVariable outVar = mOutVars.get(bv);
 		if (inVar == outVar) {
 			return false;
 		} else {
-			if (Arrays.asList(m_Formula.getFreeVars()).contains(inVar)) {
+			if (Arrays.asList(mFormula.getFreeVars()).contains(inVar)) {
 				return false;
 			} else {
 				return true;
@@ -1211,35 +1211,35 @@ public class TransFormula implements Serializable {
 	//
 
 	private void removeOutVar(BoogieVar var) {
-		assert this.m_OutVars.containsKey(var) : "illegal to remove variable not that is contained";
-		TermVariable inVar = m_InVars.get(var);
-		TermVariable outVar = m_OutVars.get(var);
-		m_OutVars.remove(var);
+		assert this.mOutVars.containsKey(var) : "illegal to remove variable not that is contained";
+		TermVariable inVar = mInVars.get(var);
+		TermVariable outVar = mOutVars.get(var);
+		mOutVars.remove(var);
 		if (inVar != outVar) {
 			// outVar does not occurs already as inVar, we have to add outVar
 			// to auxVars
-			m_auxVars.add(outVar);
-			boolean removed = m_AssignedVars.remove(var);
+			mauxVars.add(outVar);
+			boolean removed = mAssignedVars.remove(var);
 			assert (removed);
 		} else {
-			assert !m_AssignedVars.contains(var);
+			assert !mAssignedVars.contains(var);
 		}
 	}
 
 	private void removeInVar(BoogieVar var) {
-		assert this.m_InVars.containsKey(var) : "illegal to remove variable not that is contained";
-		TermVariable inVar = m_InVars.get(var);
-		TermVariable outVar = m_OutVars.get(var);
-		m_InVars.remove(var);
+		assert this.mInVars.containsKey(var) : "illegal to remove variable not that is contained";
+		TermVariable inVar = mInVars.get(var);
+		TermVariable outVar = mOutVars.get(var);
+		mInVars.remove(var);
 		if (inVar != outVar) {
 			// inVar does not occurs already as outVar, we have to add inVar
 			// to auxVars
-			m_auxVars.add(inVar);
-			assert outVar == null || m_AssignedVars.contains(var);
+			mauxVars.add(inVar);
+			assert outVar == null || mAssignedVars.contains(var);
 		} else {
-			assert !m_AssignedVars.contains(var);
+			assert !mAssignedVars.contains(var);
 			if (outVar != null) {
-				m_AssignedVars.add(var);
+				mAssignedVars.add(var);
 			}
 		}
 	}
@@ -1468,7 +1468,7 @@ public class TransFormula implements Serializable {
 					if (inVar == null) {
 						// do nothing, not in formula any more
 					} else {
-						result.m_OutVars.put(entry.getKey(), inVar);
+						result.mOutVars.put(entry.getKey(), inVar);
 					}
 				}
 			}
@@ -1489,13 +1489,13 @@ public class TransFormula implements Serializable {
 		// // do nothing,
 		// // this inVar was removed by a simplification
 		// } else {
-		// result.m_OutVars.put(bv, inVar);
+		// result.mOutVars.put(bv, inVar);
 		// }
 		// }
 		//
 		// }
 		// }
-		assert SmtUtils.neitherKeyNorValueIsNull(result.m_OutVars) : "sequentialCompositionWithCallAndReturn introduced null entries";
+		assert SmtUtils.neitherKeyNorValueIsNull(result.mOutVars) : "sequentialCompositionWithCallAndReturn introduced null entries";
 		assert (isIntraprocedural(result));
 		return result;
 	}

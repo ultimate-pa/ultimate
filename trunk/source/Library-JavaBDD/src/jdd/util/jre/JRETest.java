@@ -15,15 +15,15 @@ import java.util.*;
  */
 public class JRETest {
 
-	public static long mem_start;
+	public static long memstart;
 
-	public static void mem_start() {
+	public static void memstart() {
 		for(int i = 0; i < 6; i++) System.gc();
-		mem_start = JREInfo.usedMemory();
+		memstart = JREInfo.usedMemory();
 	}
 
-	public static long mem_end() {
-		return JREInfo.usedMemory() - mem_start;
+	public static long memend() {
+		return JREInfo.usedMemory() - memstart;
 	}
 
 	public static int rnd_size(int i) {
@@ -148,9 +148,9 @@ public class JRETest {
 		else					System.out.println("COPY: System.arraycopy() is faster than unrolled loop [" +lib + " vs " + code + "]");
 
 		// memory test:
-		mem_start();
+		memstart();
 		Object obj = new Object();
-		long obj_size = mem_end();
+		long obj_size = memend();
 		System.out.println("MEMORY: Object size = " + obj_size);
 
 		// PRNG speed test:

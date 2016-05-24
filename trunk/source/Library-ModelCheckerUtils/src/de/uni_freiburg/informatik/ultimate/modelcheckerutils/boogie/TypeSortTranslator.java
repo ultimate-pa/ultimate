@@ -52,14 +52,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 public class TypeSortTranslator {
 
 
-	protected final Script m_Script;
+	protected final Script mScript;
 
-	private final Map<IType, Sort> m_type2sort = new HashMap<IType, Sort>();
-	private final Map<Sort, IType> m_sort2type = new HashMap<Sort, IType>();
-	final Map<String, Map<String, Expression[]>> m_Type2Attributes =
+	private final Map<IType, Sort> mtype2sort = new HashMap<IType, Sort>();
+	private final Map<Sort, IType> msort2type = new HashMap<Sort, IType>();
+	final Map<String, Map<String, Expression[]>> mType2Attributes =
 			new HashMap<String, Map<String,Expression[]>>();
 
-	private final boolean m_BlackHoleArrays;
+	private final boolean mBlackHoleArrays;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -68,17 +68,17 @@ public class TypeSortTranslator {
 			Script script,
 			boolean blackHoleArrays, IUltimateServiceProvider services) {
 		mServices = services;
-		m_BlackHoleArrays = blackHoleArrays;
-		m_Script = script;
+		mBlackHoleArrays = blackHoleArrays;
+		mScript = script;
 		{
 			// Add type/sort bool to mapping. We need this in our
 			// backtranslation in the case where there was no Boolean 
 			// variable in the Boogie program but we translate a boolean
 			// term e.g., "true".
-			Sort boolSort = m_Script.sort("Bool");
+			Sort boolSort = mScript.sort("Bool");
 			IType boolType = BoogieType.boolType;
-			m_type2sort.put(boolType, boolSort);
-			m_sort2type.put(boolSort, boolType);
+			mtype2sort.put(boolType, boolSort);
+			msort2type.put(boolSort, boolType);
 		}
 		for (TypeDeclaration typeDecl : declarations) {
 			declareType(typeDecl);
@@ -87,7 +87,7 @@ public class TypeSortTranslator {
 	}
 	
 	public IType getType(Sort sort) {
-		IType type = m_sort2type.get(sort);
+		IType type = msort2type.get(sort);
 		if (type == null) {
 			//TODO Matthias: The following special treatment of arrays is only
 			//necessary if we allow to backtranslate to arrays that do not occur
@@ -111,17 +111,17 @@ public class TypeSortTranslator {
 	
 	/**
 	 * Return the SMT sort for a boogie type.
-	 * If the (type,sort) pair is not already stored in m_type2sort the 
+	 * If the (type,sort) pair is not already stored in mtype2sort the 
 	 * corresponding sort is constructed and the pair (sort, type) is added to
-	 * m_sort2type which is used for a backtranslation.
+	 * msort2type which is used for a backtranslation.
 	 * @param BoogieASTNode BoogieASTNode for which Sort is computed 
 	 */
 	public Sort getSort(IType type, BoogieASTNode BoogieASTNode) {
 		if (type instanceof BoogieType) {
 			type = ((BoogieType) type).getUnderlyingType();
 		}
-		if (m_type2sort.containsKey(type)) {
-			return m_type2sort.get(type);
+		if (mtype2sort.containsKey(type)) {
+			return mtype2sort.get(type);
 		} else {
 			return constructSort(type, BoogieASTNode);
 		}
@@ -137,7 +137,7 @@ public class TypeSortTranslator {
 
 		final Map<String, Expression[]> attributes = Boogie2SmtSymbolTable.extractAttributes(typeDecl);
 		if (attributes != null) {
-			m_Type2Attributes.put(id, attributes);
+			mType2Attributes.put(id, attributes);
 			final String attributeDefinedIdentifier = Boogie2SmtSymbolTable.
 					checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.s_BUILTINIDENTIFIER);
 			if (attributeDefinedIdentifier != null) {
@@ -147,10 +147,10 @@ public class TypeSortTranslator {
 			}
 		}
 		if (typeDecl.getSynonym() == null) {
-			m_Script.declareSort(id, 0);
+			mScript.declareSort(id, 0);
 		} else {
 			Sort synonymSort = getSort(typeDecl.getSynonym().getBoogieType(), typeDecl);
-			m_Script.defineSort(id, new Sort[0], synonymSort);
+			mScript.defineSort(id, new Sort[0], synonymSort);
 		}
 	}
 		
@@ -158,26 +158,26 @@ public class TypeSortTranslator {
 		
 	/**
 	 * Construct the SMT sort for a boogie type.
-	 * Store the (type, sort) pair in m_type2sort. Store the (sort, type) pair 
-	 * in m_sort2type.
+	 * Store the (type, sort) pair in mtype2sort. Store the (sort, type) pair 
+	 * in msort2type.
 	 * @param BoogieASTNode BoogieASTNode for which Sort is computed 
 	 */
 	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
 		Sort result;
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(PrimitiveType.boolType)) {
-				result = m_Script.sort("Bool");
+				result = mScript.sort("Bool");
 			} else if (boogieType.equals(PrimitiveType.intType)) {
-				result = m_Script.sort("Int");
+				result = mScript.sort("Int");
 			} else if (boogieType.equals(PrimitiveType.realType)) {
-				result = m_Script.sort("Real");
+				result = mScript.sort("Real");
 			} else if (boogieType.equals(PrimitiveType.errorType)) {
 				throw new IllegalArgumentException("BoogieAST contains type " +
 						"errors. This plugin supports only BoogieASTs without type errors");
 			} else if (((PrimitiveType) boogieType).getTypeCode() > 0) {
 				int bitvectorSize = ((PrimitiveType) boogieType).getTypeCode();
 				BigInteger[] sortIndices = { BigInteger.valueOf(bitvectorSize) };
-				result = m_Script.sort("BitVec", sortIndices);
+				result = mScript.sort("BitVec", sortIndices);
 			} else {
 				throw new IllegalArgumentException("Unsupported PrimitiveType " + boogieType);
 			}
@@ -185,16 +185,16 @@ public class TypeSortTranslator {
 		else if (boogieType instanceof ArrayType) {
 			ArrayType arrayType = (ArrayType) boogieType;
 			Sort rangeSort = constructSort(arrayType.getValueType(), BoogieASTNode);
-			if (m_BlackHoleArrays) {
+			if (mBlackHoleArrays) {
 				result = rangeSort;
 			} else {
 				try {
 					for (int i = arrayType.getIndexCount() - 1; i >= 1; i--) {
 						Sort sorti = constructSort(arrayType.getIndexType(i), BoogieASTNode);
-						rangeSort = m_Script.sort("Array", sorti, rangeSort);
+						rangeSort = mScript.sort("Array", sorti, rangeSort);
 					}
 					Sort domainSort = constructSort(arrayType.getIndexType(0), BoogieASTNode);
-					result = m_Script.sort("Array", domainSort,rangeSort);
+					result = mScript.sort("Array", domainSort,rangeSort);
 				}
 				catch (SMTLIBException e) {
 					if (e.getMessage().equals("Sort Array not declared")) {
@@ -211,26 +211,26 @@ public class TypeSortTranslator {
 		else if (boogieType instanceof ConstructedType) {
 			ConstructedType constructedType = (ConstructedType) boogieType;
 			String name = constructedType.getConstr().getName();
-			Map<String, Expression[]> attributes = m_Type2Attributes.get(name);
+			Map<String, Expression[]> attributes = mType2Attributes.get(name);
 			if (attributes == null) {
-				result = m_Script.sort(name);
+				result = mScript.sort(name);
 			} else {
 				final String attributeDefinedIdentifier = Boogie2SmtSymbolTable.
 						checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.s_BUILTINIDENTIFIER);
 				if (attributeDefinedIdentifier == null) {
-					result = m_Script.sort(name);
+					result = mScript.sort(name);
 				} else {
 					// use SMT identifier that was defined by our "builtin"
 					// attribute
 					final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
-					result = m_Script.sort(attributeDefinedIdentifier, indices);
+					result = mScript.sort(attributeDefinedIdentifier, indices);
 				}
 			}
 		} else {
 			throw new IllegalArgumentException("Unsupported type " + boogieType);
 		}
-		m_type2sort.put(boogieType, result);
-		m_sort2type.put(result, boogieType);
+		mtype2sort.put(boogieType, result);
+		msort2type.put(result, boogieType);
 		return result;
 	}
 	

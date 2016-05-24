@@ -48,55 +48,55 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 
 	
 	private static final long serialVersionUID = 8077752308820134631L;
-	protected List<AtsASTNode> m_children;
-	protected AtsASTNode m_parent;
+	protected List<AtsASTNode> mchildren;
+	protected AtsASTNode mparent;
 	// The type of the returned value
-	protected Class<?> m_returnType;
+	protected Class<?> mreturnType;
 	// The type the children of this node should have.
-	protected Class<?> m_expectingType;
+	protected Class<?> mexpectingType;
 
-	private Map<Class<?>, Class<?>> m_primitiveToClassTypes;
+	private Map<Class<?>, Class<?>> mprimitiveToClassTypes;
 	
  	public AtsASTNode(ILocation loc) {
  		super(new Payload(loc));
-		m_children = new ArrayList<AtsASTNode>();
-		m_parent = null;
-		m_primitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
-		m_primitiveToClassTypes.put(int.class, Integer.class);
-		m_primitiveToClassTypes.put(boolean.class, Boolean.class);
+		mchildren = new ArrayList<AtsASTNode>();
+		mparent = null;
+		mprimitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
+		mprimitiveToClassTypes.put(int.class, Integer.class);
+		mprimitiveToClassTypes.put(boolean.class, Boolean.class);
 	}
 	
 //	public AtsASTNode(ILocation loc) {
 //		super(new Payload(loc, "AtsASTNode"));
-//		m_children = new ArrayList<AtsASTNode>();
-//		m_parent = null;
-//		m_location = loc;
+//		mchildren = new ArrayList<AtsASTNode>();
+//		mparent = null;
+//		mlocation = loc;
 //	}
 	
 	public AtsASTNode(ILocation loc, AtsASTNode par) {
 		super(new Payload(loc));
-		m_children = new ArrayList<AtsASTNode>();
-		m_parent = par;
+		mchildren = new ArrayList<AtsASTNode>();
+		mparent = par;
 	}
 
 	
 	public AtsASTNode getIncomingNode() {
-		return m_parent;
+		return mparent;
 	}
 
 	public List<AtsASTNode> getOutgoingNodes() {
-		return m_children;
+		return mchildren;
 	}
 	
 	
 	public boolean addIncomingNode(AtsASTNode par) {
-		m_parent = par;
+		mparent = par;
 		return true;
 	}
 
 	
 	public boolean addOutgoingNode(AtsASTNode element) {
-		m_children.add(element);
+		mchildren.add(element);
 		if (element != null) {
 			((AtsASTNode) element).addIncomingNode(this);
 		}
@@ -105,28 +105,28 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	
 		
 	public Class<?> getReturnType() {
-		return m_returnType;
+		return mreturnType;
 	}
 	
 	public Class<?> getExpectingType() {
-		return m_expectingType;
+		return mexpectingType;
 	}
 
 	public void setType(Class<?> type) {
 		Class<?> classType = type;
-		if (m_primitiveToClassTypes.containsKey(type)) {
-			classType = m_primitiveToClassTypes.get(type);
+		if (mprimitiveToClassTypes.containsKey(type)) {
+			classType = mprimitiveToClassTypes.get(type);
 		}
 		setReturnType(classType);
 		setExpectingType(classType);
 	}
 	
 	public void setReturnType(Class<?> type) {
-		m_returnType = type;
+		mreturnType = type;
 	}
 	
 	public void setExpectingType(Class<?> type) {
-		m_expectingType = type;
+		mexpectingType = type;
 	}
 	
 	
@@ -141,7 +141,7 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	 */
 	public String getAsString() {
 		StringBuilder builder = new StringBuilder();
-		for (AtsASTNode n : m_children) {
+		for (AtsASTNode n : mchildren) {
 			builder.append(n.getAsString());
 		}
 		return builder.toString();

@@ -53,8 +53,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	protected final PredicateUnifier predUnifier;
 	protected final SmtManager smtManager;
 	protected final ILinearInequalityInvariantPatternStrategy strategy;
-	private final boolean m_UseNonlinearConstraints;
-	private final Settings m_SolverSettings;
+	private final boolean mUseNonlinearConstraints;
+	private final Settings mSolverSettings;
 
 	/**
 	 * Constructs a new factory for
@@ -81,8 +81,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		this.predUnifier = predUnifier;
 		this.smtManager = smtManager;
 		this.strategy = strategy;
-		this.m_UseNonlinearConstraints = useNonlinerConstraints;
-		this.m_SolverSettings = solverSettings;
+		this.mUseNonlinearConstraints = useNonlinerConstraints;
+		this.mSolverSettings = solverSettings;
 	}
 
 	/**
@@ -94,7 +94,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			IPredicate postcondition) {
 		return new LinearInequalityInvariantPatternProcessor(services,
 				storage, predUnifier, smtManager, produceSmtSolver(), cfg, precondition,
-				postcondition, strategy, m_UseNonlinearConstraints);
+				postcondition, strategy, mUseNonlinearConstraints);
 	}
 
 	/**
@@ -104,13 +104,13 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 */
 	protected Script produceSmtSolver() {
 		final Logics logic;
-		if (m_UseNonlinearConstraints) {
+		if (mUseNonlinearConstraints) {
 			logic = Logics.QF_NRA;
 		} else {
 			logic = Logics.QF_LRA;
 		}
 		Script script = SolverBuilder.buildAndInitializeSolver(services, storage, 
-				SolverMode.External_DefaultMode, m_SolverSettings, 
+				SolverMode.External_DefaultMode, mSolverSettings, 
 				false, false, logic.toString(), "InvariantSynthesis"); 
 		script = new ScriptWithTermConstructionChecks(script);
 		return script;
@@ -128,7 +128,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		String pathOfDumpedScript = ".";
 		String baseNameOfDumpedScript = "contraintSolving";
 		final String solverCommand;
-		if (m_UseNonlinearConstraints) {
+		if (mUseNonlinearConstraints) {
 			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
 		} else {
 			solverCommand = "yices-smt2 --incremental";

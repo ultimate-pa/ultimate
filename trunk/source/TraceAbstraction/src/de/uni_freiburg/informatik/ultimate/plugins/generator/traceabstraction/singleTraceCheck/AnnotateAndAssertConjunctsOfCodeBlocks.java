@@ -56,27 +56,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCodeBlocks {
 	
-	protected final NestedFormulas<TransFormula, IPredicate> m_NestedFormulas;
-	private final Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
-	private final SplitEqualityMapping m_SplitEqualityMapping = new SplitEqualityMapping();
-	private final SmtManager m_SmtManagerPredicates;
+	protected final NestedFormulas<TransFormula, IPredicate> mNestedFormulas;
+	private final Map<Term,Term> mAnnotated2Original = new HashMap<Term,Term>();
+	private final SplitEqualityMapping mSplitEqualityMapping = new SplitEqualityMapping();
+	private final SmtManager mSmtManagerPredicates;
 	
-	private final static boolean m_SplitEqualities = true;
+	private final static boolean mSplitEqualities = true;
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, 
 			NestedFormulas<TransFormula, IPredicate> nestedFormulas, ILogger logger,
 			SmtManager smtManagerPredicates) {
 		super(smtManager, nestedSSA,logger);
-		m_NestedFormulas = nestedFormulas;
-		m_SmtManagerPredicates = smtManagerPredicates;
+		mNestedFormulas = nestedFormulas;
+		mSmtManagerPredicates = smtManagerPredicates;
 	}
 	
 	
 	/**
 	 * Take transition in single static assignment form (Term indexed), take
 	 * its conjuncts, annotate each conjunct, assert the annotation, and
-	 * store in m_Annotated2Original which indexed conjunct corresponds to
+	 * store in mAnnotated2Original which indexed conjunct corresponds to
 	 * which original conjunct.
 	 * 
 	 * @param name Prefix of this terms annotation (e.g., ssa_23, 
@@ -100,36 +100,36 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 		for (int i=0; i<originalConjuncts.length; i++) {
 			Term originalConjunct = originalConjuncts[i];
 			Term indexedConjunct = indexedConjuncts[i];
-			if (m_SplitEqualities) {
+			if (mSplitEqualities) {
 				BinaryNumericRelation bnr_originalConjunct = convertToBinaryNumericEquality(originalConjunct);
 				if (bnr_originalConjunct != null) {
 					BinaryNumericRelation bnr_indexedConjunct = convertToBinaryNumericEquality(indexedConjunct);
-					Term[] conjunctAsInequalities_indexed =  transformEqualityToInequalities(bnr_indexedConjunct, m_SmtManager.getScript());
-					Term[] conjunctAsInequalities_original = transformEqualityToInequalities(bnr_originalConjunct, m_SmtManagerPredicates.getScript());
+					Term[] conjunctAsInequalities_indexed =  transformEqualityToInequalities(bnr_indexedConjunct, mSmtManager.getScript());
+					Term[] conjunctAsInequalities_original = transformEqualityToInequalities(bnr_originalConjunct, mSmtManagerPredicates.getScript());
 					// Annotate and store the first inequality
 					annotatedConjuncts.add(annotateAndAssertTerm(conjunctAsInequalities_indexed[0], name, annotatedTermsCounter));
-					// Caution! The map m_Annotated2Original is only correct, if BinaryNumericRelation splits the original_conjunct and the indexed_conjunct, such
+					// Caution! The map mAnnotated2Original is only correct, if BinaryNumericRelation splits the original_conjunct and the indexed_conjunct, such
 					// that the getLhs() and getRhs() methods return the same terms.
-					m_Annotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter), conjunctAsInequalities_original[0]);
+					mAnnotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter), conjunctAsInequalities_original[0]);
 					// Annotate and store the second inequality
 					annotatedConjuncts.add(annotateAndAssertTerm(conjunctAsInequalities_indexed[1], name, annotatedTermsCounter + 1));
-					m_Annotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter + 1), conjunctAsInequalities_original[1]);
+					mAnnotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter + 1), conjunctAsInequalities_original[1]);
 
-					// Put the first annotated inequality and the second annotated inequality into m_SplitEqualityMapping
-					m_SplitEqualityMapping.add(annotatedConjuncts.get(annotatedTermsCounter), annotatedConjuncts.get(annotatedTermsCounter+1), originalConjunct);
+					// Put the first annotated inequality and the second annotated inequality into mSplitEqualityMapping
+					mSplitEqualityMapping.add(annotatedConjuncts.get(annotatedTermsCounter), annotatedConjuncts.get(annotatedTermsCounter+1), originalConjunct);
 					annotatedTermsCounter = annotatedTermsCounter + 2;
 				} else {
 					annotatedConjuncts.add(annotateAndAssertTerm(indexedConjunct, name, annotatedTermsCounter));
-					m_Annotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter), originalConjunct);
+					mAnnotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter), originalConjunct);
 					annotatedTermsCounter = annotatedTermsCounter + 1;
 				}
 			} else {
 				annotatedConjuncts.add(annotateAndAssertTerm(indexedConjunct, name, annotatedTermsCounter));
-				m_Annotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter), originalConjunct);
+				mAnnotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter), originalConjunct);
 				annotatedTermsCounter = annotatedTermsCounter + 1;
 			}
 		}
-		return Util.and(m_Script, annotatedConjuncts.toArray(new Term[annotatedConjuncts.size()]));
+		return Util.and(mScript, annotatedConjuncts.toArray(new Term[annotatedConjuncts.size()]));
 	}
 	
 	
@@ -139,15 +139,15 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	 */
 	private Term annotateAndAssertConjunction(String name, Term original, Term indexed) {
 		Term annotated = super.annotateAndAssertTerm(indexed, name);
-		m_Annotated2Original.put(annotated, original);
+		mAnnotated2Original.put(annotated, original);
 		return annotated;
 	}
 	
 	@Override
 	protected Term annotateAndAssertPrecondition() {
 		String name = super.precondAnnotation();
-		Term original = m_NestedFormulas.getPrecondition().getFormula();
-		Term indexed = m_SSA.getPrecondition();
+		Term original = mNestedFormulas.getPrecondition().getFormula();
+		Term indexed = mSSA.getPrecondition();
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -156,22 +156,22 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	@Override
 	protected Term annotateAndAssertPostcondition() {
 		String name = super.postcondAnnotation();
-		Term original = m_NestedFormulas.getPostcondition().getFormula();
-		Term indexed = m_Script.term("not", m_SSA.getPostcondition());
+		Term original = mNestedFormulas.getPostcondition().getFormula();
+		Term indexed = mScript.term("not", mSSA.getPostcondition());
 		return annotateAndAssertConjunction(name, original, indexed);
 	}
 
 	@Override
 	protected Term annotateAndAssertNonCall(int position) {
 		String name;
-		if (m_Trace.isReturnPosition(position)) {
+		if (mTrace.isReturnPosition(position)) {
 			name = returnAnnotation(position);
 		} else {
 			 name = internalAnnotation(position);
 		}
 		
-		Term original = m_NestedFormulas.getFormulaFromNonCallPos(position).getFormula();
-		Term indexed = m_SSA.getFormulaFromNonCallPos(position);
+		Term original = mNestedFormulas.getFormulaFromNonCallPos(position).getFormula();
+		Term indexed = mSSA.getFormulaFromNonCallPos(position);
 		Term annotated = annotateAndAssertConjuncts(name, original, indexed);
 		return annotated;
 	}
@@ -179,24 +179,24 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	@Override
 	protected Term annotateAndAssertLocalVarAssignemntCall(int position) {
 		String name = super.localVarAssignemntCallAnnotation(position);
-		Term original = m_NestedFormulas.getLocalVarAssignment(position).getFormula();
-		Term indexed = m_SSA.getLocalVarAssignment(position);
+		Term original = mNestedFormulas.getLocalVarAssignment(position).getFormula();
+		Term indexed = mSSA.getLocalVarAssignment(position);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
 	@Override
 	protected Term annotateAndAssertGlobalVarAssignemntCall(int position) {
 		String name = super.globalVarAssignemntAnnotation(position);
-		Term original = m_NestedFormulas.getGlobalVarAssignment(position).getFormula();
-		Term indexed = m_SSA.getGlobalVarAssignment(position);
+		Term original = mNestedFormulas.getGlobalVarAssignment(position).getFormula();
+		Term indexed = mSSA.getGlobalVarAssignment(position);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
 	@Override
 	protected Term annotateAndAssertOldVarAssignemntCall(int position) {
 		String name = super.oldVarAssignemntCallAnnotation(position);
-		Term original = m_NestedFormulas.getOldVarAssignment(position).getFormula();
-		Term indexed = m_SSA.getOldVarAssignment(position);
+		Term original = mNestedFormulas.getOldVarAssignment(position).getFormula();
+		Term indexed = mSSA.getOldVarAssignment(position);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -204,8 +204,8 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	protected Term annotateAndAssertPendingContext(
 			int positionOfPendingContext, int pendingContextCode) {
 		String name = super.pendingContextAnnotation(pendingContextCode);
-		Term original = m_NestedFormulas.getPendingContext(positionOfPendingContext).getFormula();
-		Term indexed = m_SSA.getPendingContext(positionOfPendingContext);
+		Term original = mNestedFormulas.getPendingContext(positionOfPendingContext).getFormula();
+		Term indexed = mSSA.getPendingContext(positionOfPendingContext);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -214,8 +214,8 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	protected Term annotateAndAssertLocalVarAssignemntPendingContext(
 			int positionOfPendingReturn, int pendingContextCode) {
 		String name = super.localVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term original = m_NestedFormulas.getLocalVarAssignment(positionOfPendingReturn).getFormula();
-		Term indexed = m_SSA.getLocalVarAssignment(positionOfPendingReturn);
+		Term original = mNestedFormulas.getLocalVarAssignment(positionOfPendingReturn).getFormula();
+		Term indexed = mSSA.getLocalVarAssignment(positionOfPendingReturn);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -224,8 +224,8 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	protected Term annotateAndAssertOldVarAssignemntPendingContext(
 			int positionOfPendingReturn, int pendingContextCode) {
 		String name = super.oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term original = m_NestedFormulas.getOldVarAssignment(positionOfPendingReturn).getFormula();
-		Term indexed = m_SSA.getOldVarAssignment(positionOfPendingReturn);
+		Term original = mNestedFormulas.getOldVarAssignment(positionOfPendingReturn).getFormula();
+		Term indexed = mSSA.getOldVarAssignment(positionOfPendingReturn);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -271,43 +271,43 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	 * to which these named terms correspond.
 	 */
 	public Map<Term, Term> getAnnotated2Original() {
-		return m_Annotated2Original;
+		return mAnnotated2Original;
 	}
 	
 	
 	public SplitEqualityMapping getSplitEqualityMapping() {
-		return m_SplitEqualityMapping;
+		return mSplitEqualityMapping;
 	}
 
 
 	/**
 	 * Provides two information for each equality a=b that was split into
 	 * two inequalities a>=b, a<=b.
-	 * For the equality a=b, the map m_Inequality2CorrespondingInequality 
+	 * For the equality a=b, the map mInequality2CorrespondingInequality 
 	 * contains the following two pairs:
 	 * (a>=b, a<=b) (a<=b, a>=b)
-	 * For the equality a=b, the map m_Inequality2OriginalEquality contains 
+	 * For the equality a=b, the map mInequality2OriginalEquality contains 
 	 * the following two pairs:
 	 * (a>=b, a=b) (a<=b, a=b)
 	 *
 	 */
 	public class SplitEqualityMapping {
-		private final Map<Term, Term> m_Inequality2CorrespondingInequality = new HashMap<>();
-		private final Map<Term, Term> m_Inequality2OriginalEquality = new HashMap<>();
+		private final Map<Term, Term> mInequality2CorrespondingInequality = new HashMap<>();
+		private final Map<Term, Term> mInequality2OriginalEquality = new HashMap<>();
 		
 		void add(Term firstInequality, Term secondInequality, Term orginalEquality) {
-			m_Inequality2CorrespondingInequality.put(firstInequality, secondInequality);
-			m_Inequality2CorrespondingInequality.put(secondInequality, firstInequality);
-			m_Inequality2OriginalEquality.put(firstInequality, orginalEquality);
-			m_Inequality2OriginalEquality.put(secondInequality, orginalEquality);
+			mInequality2CorrespondingInequality.put(firstInequality, secondInequality);
+			mInequality2CorrespondingInequality.put(secondInequality, firstInequality);
+			mInequality2OriginalEquality.put(firstInequality, orginalEquality);
+			mInequality2OriginalEquality.put(secondInequality, orginalEquality);
 		}
 
 		public Map<Term, Term> getInequality2CorrespondingInequality() {
-			return Collections.unmodifiableMap(m_Inequality2CorrespondingInequality);
+			return Collections.unmodifiableMap(mInequality2CorrespondingInequality);
 		}
 
 		public Map<Term, Term> getInequality2OriginalEquality() {
-			return Collections.unmodifiableMap(m_Inequality2OriginalEquality);
+			return Collections.unmodifiableMap(mInequality2OriginalEquality);
 		}
 	}
 	

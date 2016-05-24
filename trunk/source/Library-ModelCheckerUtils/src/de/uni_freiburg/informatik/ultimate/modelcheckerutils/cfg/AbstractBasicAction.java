@@ -32,22 +32,22 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
  *
  */
 public abstract class AbstractBasicAction implements IAction {
-	private final String m_PreceedingProcedure;
-	private final String m_SucceedingProcedure;
+	private final String mPreceedingProcedure;
+	private final String mSucceedingProcedure;
 	
 	public AbstractBasicAction(String preceedingProcedure, String succeedingProcedure) {
 		super();
-		m_PreceedingProcedure = preceedingProcedure;
-		m_SucceedingProcedure = succeedingProcedure;
+		mPreceedingProcedure = preceedingProcedure;
+		mSucceedingProcedure = succeedingProcedure;
 	}
 
 	@Override
 	public String getPreceedingProcedure() {
-		return m_PreceedingProcedure;
+		return mPreceedingProcedure;
 	}
 
 	@Override
 	public String getSucceedingProcedure() {
-		return m_SucceedingProcedure;
+		return mSucceedingProcedure;
 	}
 }

@@ -51,15 +51,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
  * @author Matthias Heizmann
  */
 public class AffineRelation {
-	private final Term m_OriginalTerm;
-	private final RelationSymbol m_RelationSymbol;
-	private final TrivialityStatus m_TrivialityStatus;
+	private final Term mOriginalTerm;
+	private final RelationSymbol mRelationSymbol;
+	private final TrivialityStatus mTrivialityStatus;
 	/**
 	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the
-	 * m_OriginalTerm.
+	 * mOriginalTerm.
 	 * 
 	 */
-	private AffineTerm m_AffineTerm;
+	private AffineTerm mAffineTerm;
 	
 	public enum TransformInequality { NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT };
 	
@@ -77,7 +77,7 @@ public class AffineRelation {
 	 * @throws NotAffineException Thrown if Term is not affine.
 	 */
 	public AffineRelation(Script script, Term term, TransformInequality transformInequality) throws NotAffineException {
-		m_OriginalTerm = term;
+		mOriginalTerm = term;
 		BinaryNumericRelation bnr = null;
 		try {
 			bnr = new BinaryNumericRelation(term);
@@ -104,19 +104,19 @@ public class AffineRelation {
 				case GEQ:
 				case LEQ:
 					// relation symbol is not strict anyway
-					m_AffineTerm = difference; 
-					m_RelationSymbol = bnr.getRelationSymbol();
+					mAffineTerm = difference; 
+					mRelationSymbol = bnr.getRelationSymbol();
 					break;
 				case LESS:
 					// increment affine term by one
-					m_RelationSymbol = RelationSymbol.LEQ;
-					m_AffineTerm = new AffineTerm(difference, 
+					mRelationSymbol = RelationSymbol.LEQ;
+					mAffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.ONE));
 					break;
 				case GREATER:
 					// decrement affine term by one
-					m_RelationSymbol = RelationSymbol.GEQ;
-					m_AffineTerm = new AffineTerm(difference, 
+					mRelationSymbol = RelationSymbol.GEQ;
+					mAffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.MONE));
 
 					break;
@@ -130,19 +130,19 @@ public class AffineRelation {
 				case LESS:
 				case GREATER:
 					// relation symbol is strict anyway
-					m_AffineTerm = difference; 
-					m_RelationSymbol = bnr.getRelationSymbol();
+					mAffineTerm = difference; 
+					mRelationSymbol = bnr.getRelationSymbol();
 					break;
 				case GEQ:
 					// increment affine term by one
-					m_RelationSymbol = RelationSymbol.GREATER;
-					m_AffineTerm = new AffineTerm(difference, 
+					mRelationSymbol = RelationSymbol.GREATER;
+					mAffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.ONE));
 					break;
 				case LEQ:
 					// decrement affine term by one
-					m_RelationSymbol = RelationSymbol.LESS;
-					m_AffineTerm = new AffineTerm(difference, 
+					mRelationSymbol = RelationSymbol.LESS;
+					mAffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.MONE));
 					break;
 				default:
@@ -152,58 +152,58 @@ public class AffineRelation {
 				throw new AssertionError("unknown case");
 			}
 		} else {
-			m_AffineTerm = difference; 
-			m_RelationSymbol = bnr.getRelationSymbol();
+			mAffineTerm = difference; 
+			mRelationSymbol = bnr.getRelationSymbol();
 		}
-		if (m_AffineTerm.isConstant()) {
-			switch (m_RelationSymbol) {
+		if (mAffineTerm.isConstant()) {
+			switch (mRelationSymbol) {
 			case DISTINCT:
-				if (m_AffineTerm.getConstant().signum() != 0) {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				if (mAffineTerm.getConstant().signum() != 0) {
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
 				} else {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
 				}
 				break;
 			case EQ:
-				if (m_AffineTerm.getConstant().signum() == 0) {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				if (mAffineTerm.getConstant().signum() == 0) {
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
 				} else {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
 				}
 				break;
 			case LESS:
-				if (m_AffineTerm.getConstant().signum() < 0) {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				if (mAffineTerm.getConstant().signum() < 0) {
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
 				} else {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
 				}
 				break;
 			case GREATER:
-				if (m_AffineTerm.getConstant().signum() > 0) {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				if (mAffineTerm.getConstant().signum() > 0) {
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
 				} else {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
 				}
 				break;
 			case GEQ:
-				if (m_AffineTerm.getConstant().signum() >= 0) {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				if (mAffineTerm.getConstant().signum() >= 0) {
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
 				} else {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
 				}
 				break;
 			case LEQ:
-				if (m_AffineTerm.getConstant().signum() <= 0) {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
+				if (mAffineTerm.getConstant().signum() <= 0) {
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
 				} else {
-					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
+					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;					
 				}
 				break;
 			default:
 				throw new AssertionError("unknown symbol");
 			}
 		} else {
-			m_TrivialityStatus = TrivialityStatus.NONTRIVIAL;
+			mTrivialityStatus = TrivialityStatus.NONTRIVIAL;
 		}
 	}
 	
@@ -215,7 +215,7 @@ public class AffineRelation {
 	 * @return
 	 */
 	public String getFunctionSymbolName() {
-		return m_RelationSymbol.toString();
+		return mRelationSymbol.toString();
 	}
 
 	/**
@@ -223,7 +223,7 @@ public class AffineRelation {
 	 * relation.
 	 */
 	public boolean isVariable(Term term) {
-		return m_AffineTerm.getVariable2Coefficient().containsKey(term);
+		return mAffineTerm.getVariable2Coefficient().containsKey(term);
 	}
 
 	/**
@@ -234,32 +234,32 @@ public class AffineRelation {
 	 * <i>true</i> (resp. <i>false</i>).
 	 */
 	public Term positiveNormalForm(Script script) {
-		if (m_TrivialityStatus == TrivialityStatus.EQUIVALENT_TO_TRUE) {
+		if (mTrivialityStatus == TrivialityStatus.EQUIVALENT_TO_TRUE) {
 			return script.term("true");
-		} else if (m_TrivialityStatus == TrivialityStatus.EQUIVALENT_TO_FALSE) {
+		} else if (mTrivialityStatus == TrivialityStatus.EQUIVALENT_TO_FALSE) {
 			return script.term("false");
 		} else {
-			assert m_TrivialityStatus == TrivialityStatus.NONTRIVIAL;
+			assert mTrivialityStatus == TrivialityStatus.NONTRIVIAL;
 			List<Term> lhsSummands = new ArrayList<Term>();
 			List<Term> rhsSummands = new ArrayList<Term>();
-			for (Entry<Term, Rational> entry : m_AffineTerm.getVariable2Coefficient().entrySet()) {
+			for (Entry<Term, Rational> entry : mAffineTerm.getVariable2Coefficient().entrySet()) {
 				if (entry.getValue().isNegative()) {
 					rhsSummands.add(product(script, entry.getValue().abs(), entry.getKey()));
 				} else {
 					lhsSummands.add(product(script, entry.getValue(), entry.getKey()));
 				}
 			}
-			if (m_AffineTerm.getConstant() != Rational.ZERO) {
-				if (m_AffineTerm.getConstant().isNegative()) {
-					rhsSummands.add(SmtUtils.rational2Term(script, m_AffineTerm.getConstant().abs(), m_AffineTerm.getSort()));
+			if (mAffineTerm.getConstant() != Rational.ZERO) {
+				if (mAffineTerm.getConstant().isNegative()) {
+					rhsSummands.add(SmtUtils.rational2Term(script, mAffineTerm.getConstant().abs(), mAffineTerm.getSort()));
 				} else {
-					lhsSummands.add(SmtUtils.rational2Term(script, m_AffineTerm.getConstant(), m_AffineTerm.getSort()));
+					lhsSummands.add(SmtUtils.rational2Term(script, mAffineTerm.getConstant(), mAffineTerm.getSort()));
 				}
 			}
-			Term lhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), lhsSummands.toArray(new Term[lhsSummands.size()]));
-			Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
-			Term result = BinaryRelation.constructLessNormalForm(script, m_RelationSymbol, lhsTerm, rhsTerm);
-			assert isEquivalent(script, m_OriginalTerm, result) != LBool.SAT : "transformation to positive normal form unsound";
+			Term lhsTerm = SmtUtils.sum(script, mAffineTerm.getSort(), lhsSummands.toArray(new Term[lhsSummands.size()]));
+			Term rhsTerm = SmtUtils.sum(script, mAffineTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
+			Term result = BinaryRelation.constructLessNormalForm(script, mRelationSymbol, lhsTerm, rhsTerm);
+			assert isEquivalent(script, mOriginalTerm, result) != LBool.SAT : "transformation to positive normal form unsound";
 			return result;
 		}
 	}
@@ -273,18 +273,18 @@ public class AffineRelation {
 	 * Int and the term is 2x=1.)
 	 */
 	public ApplicationTerm onLeftHandSideOnly(Script script, Term var) throws NotAffineException {
-		assert m_AffineTerm.getVariable2Coefficient().containsKey(var);
-		final Rational termsCoeff = m_AffineTerm.getVariable2Coefficient().get(var);
+		assert mAffineTerm.getVariable2Coefficient().containsKey(var);
+		final Rational termsCoeff = mAffineTerm.getVariable2Coefficient().get(var);
 		if (termsCoeff.equals(Rational.ZERO)) {
 			throw new NotAffineException("No affine representation " + "where desired variable is on left hand side");
 		}
-		List<Term> rhsSummands = new ArrayList<Term>(m_AffineTerm.getVariable2Coefficient().size());
-		for (Entry<Term, Rational> entry : m_AffineTerm.getVariable2Coefficient().entrySet()) {
+		List<Term> rhsSummands = new ArrayList<Term>(mAffineTerm.getVariable2Coefficient().size());
+		for (Entry<Term, Rational> entry : mAffineTerm.getVariable2Coefficient().entrySet()) {
 			if (var == entry.getKey()) {
 				// do nothing
 			} else {
 				Rational newCoeff = entry.getValue().div(termsCoeff);
-				if (newCoeff.isIntegral() || m_AffineTerm.getSort().getName().equals("Real")) {
+				if (newCoeff.isIntegral() || mAffineTerm.getSort().getName().equals("Real")) {
 					Rational negated = newCoeff.negate();
 					rhsSummands.add(product(script, negated, entry.getKey()));
 				} else {
@@ -294,30 +294,30 @@ public class AffineRelation {
 			}
 		}
 		{
-			if (!m_AffineTerm.getSort().isNumericSort() && 
+			if (!mAffineTerm.getSort().isNumericSort() && 
 					!termsCoeff.abs().equals(Rational.ONE)) {
 				// for bitvectors we may only divide by 1 or -1
 				throw new NotAffineException("No affine representation "
 						+ "where desired variable is on left hand side");
 			}
-			Rational newConstant = m_AffineTerm.getConstant().div(termsCoeff);
-			if (newConstant.isIntegral() && newConstant.isRational() || m_AffineTerm.getSort().getName().equals("Real")) {
+			Rational newConstant = mAffineTerm.getConstant().div(termsCoeff);
+			if (newConstant.isIntegral() && newConstant.isRational() || mAffineTerm.getSort().getName().equals("Real")) {
 				Rational negated = newConstant.negate();
-				rhsSummands.add(SmtUtils.rational2Term(script, negated, m_AffineTerm.getSort()));
+				rhsSummands.add(SmtUtils.rational2Term(script, negated, mAffineTerm.getSort()));
 			} else {
 				throw new NotAffineException("No affine representation "
 						+ "where desired variable is on left hand side");
 			}
 		}
-		Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
+		Term rhsTerm = SmtUtils.sum(script, mAffineTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
 
 		// if coefficient is negative we have to use the "swapped"
 		// RelationSymbol
 		boolean useRelationSymbolForSwappedTerms = termsCoeff.isNegative();
-		RelationSymbol relSymb = useRelationSymbolForSwappedTerms ? BinaryRelation.swapParameters(m_RelationSymbol)
-				: m_RelationSymbol;
+		RelationSymbol relSymb = useRelationSymbolForSwappedTerms ? BinaryRelation.swapParameters(mRelationSymbol)
+				: mRelationSymbol;
 		ApplicationTerm result = (ApplicationTerm) script.term(relSymb.toString(), var, rhsTerm);
-		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT : "transformation to AffineRelation unsound";
+		assert isEquivalent(script, mOriginalTerm, result) == LBool.UNSAT : "transformation to AffineRelation unsound";
 		return result;
 	}
 

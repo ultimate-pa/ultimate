@@ -29,25 +29,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class Pair<T,U> {
-	private final T m_First;
-	private U m_Second;
+	private final T mFirst;
+	private U mSecond;
 	
 	public Pair(T e1, U e2) {
-		m_First = e1;
-		m_Second = e2;
+		mFirst = e1;
+		mSecond = e2;
 	}
 	
 	public T getFirst() {
-		return m_First;
+		return mFirst;
 	}
 	
 	public U getSecond() {
-		return m_Second;
+		return mSecond;
 	}
 	
 	private boolean equals(Pair<T, U> pair2) {
-		if (pair2.getFirst().equals(m_First)) {
-			if (pair2.getSecond().equals(m_Second)) {
+		if (pair2.getFirst().equals(mFirst)) {
+			if (pair2.getSecond().equals(mSecond)) {
 				return true;
 			}
 		}
@@ -62,10 +62,10 @@ public class Pair<T,U> {
 	}
 	
 	public int hashCode() {
-		return HashUtils.hashJenkins(m_First.hashCode(), m_Second.hashCode());
+		return HashUtils.hashJenkins(mFirst.hashCode(), mSecond.hashCode());
     }
 	
 	public String toString() {
-		return "(" + m_First + "," + m_Second + ")";
+		return "(" + mFirst + "," + mSecond + ")";
 	}
 }

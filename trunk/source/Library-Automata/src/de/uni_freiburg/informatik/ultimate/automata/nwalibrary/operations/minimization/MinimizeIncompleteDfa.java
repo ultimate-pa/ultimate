@@ -98,15 +98,15 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	/**
 	 * Input automaton that should be minimized.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> m_operand;
+	private final INestedWordAutomaton<LETTER, STATE> moperand;
 	/**
 	 * Resulting minimized automaton.
 	 */
-	private final NestedWordAutomaton<LETTER, STATE> m_result;
+	private final NestedWordAutomaton<LETTER, STATE> mresult;
 	/**
 	 * Service provider.
 	 */
-	private final AutomataLibraryServices m_services;
+	private final AutomataLibraryServices mservices;
 	/**
 	 * Mapping for state to the block number where it is contained.
 	 */
@@ -128,8 +128,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 //		OutgoingInternalTransition<LETTER, STATE>>> stateToOutgoingEdges;
 	
 	// added by Christian
-	private final StateFactory<STATE> m_stateFactory;
-	private HashMap<STATE, STATE> m_oldState2newState;
+	private final StateFactory<STATE> mstateFactory;
+	private HashMap<STATE, STATE> moldState2newState;
 	
 	/**
 	 * Minimizes a given incomplete DFAs (Deterministic Finite Automaton).<br/>
@@ -153,15 +153,15 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			throw new UnsupportedOperationException(
 				"This class only supports minimization of finite automata.");
 		}
-		m_stateFactory = stateFactoryConstruction;
+		mstateFactory = stateFactoryConstruction;
 		if (addMapping) {
-			this.m_oldState2newState = null;
+			this.moldState2newState = null;
 		} else {
-			m_oldState2newState = new HashMap<STATE, STATE>();
+			moldState2newState = new HashMap<STATE, STATE>();
 		}
 		
-		m_services = services;
-		m_operand = operand;
+		mservices = services;
+		moperand = operand;
 		blockToId = new HashMap<LinkedHashSet<Integer>, Integer>(
 				INITIAL_BLOCK_AMOUNT);
 		idToBlock = new HashMap<Integer, LinkedHashSet<Integer>>(
@@ -183,8 +183,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 
 		init(stateAmount, letterAmount);
 		
-		m_result = minimizeICDFA(m_operand, initialPartition);
-		ILogger logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mresult = minimizeICDFA(moperand, initialPartition);
+		ILogger logger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		logger.info(exitMessage());
 	}
 
@@ -214,11 +214,11 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	 */
 	private NestedWordAutomaton<LETTER, STATE> buildMinimizedAutomaton() {
 		NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<LETTER, STATE>(m_services,
-						m_operand.getInternalAlphabet(),
-						m_operand.getCallAlphabet(),
-						m_operand.getReturnAlphabet(),
-						m_operand.getStateFactory());
+				new NestedWordAutomaton<LETTER, STATE>(mservices,
+						moperand.getInternalAlphabet(),
+						moperand.getCallAlphabet(),
+						moperand.getReturnAlphabet(),
+						moperand.getStateFactory());
 		
 		// Select a representative state for every block
 		LinkedList<STATE> representatives = new LinkedList<STATE>();
@@ -229,7 +229,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		
 		// Christian: edited for proper state factory usage
 		HashSet<Integer> initialBlocks = new HashSet<Integer>();
-		for (STATE initialState : m_operand.getInitialStates()) {
+		for (STATE initialState : moperand.getInitialStates()) {
 			initialBlocks.add(stateToBlockId.get(stateToId.get(initialState)));
 		}
 		for (LinkedHashSet<Integer> block : blocks) {
@@ -249,22 +249,22 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				allStates.add(idToState.get(blockIt.next()));
 			}
 			
-			STATE newState = m_stateFactory.minimize(allStates);
+			STATE newState = mstateFactory.minimize(allStates);
 			blockToNewState.put(blockId, newState);
 			result.addState(initialBlocks.contains(blockId),
-					m_operand.isFinal(representative), newState);
+					moperand.isFinal(representative), newState);
 			
 			// update mapping 'old state -> new state'
-			if (m_oldState2newState != null) {
+			if (moldState2newState != null) {
 				for (final STATE oldState : allStates) {
-					m_oldState2newState.put(oldState, newState);
+					moldState2newState.put(oldState, newState);
 				}
 			}
 		}
 		//Add adjusted outgoing transitions of every representative
 		for (STATE oldSrcState : representatives) {
 			for (OutgoingInternalTransition<LETTER, STATE> trans :
-				m_operand.internalSuccessors(oldSrcState)) {
+				moperand.internalSuccessors(oldSrcState)) {
 				//Redirect the destination to the representative of the block
 				int oldSrc = stateToId.get(oldSrcState);
 				int oldDest = stateToId.get(trans.getSucc());
@@ -289,8 +289,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 //			
 //			// Determine if the block contains an initial state
 //			// If yes, the block also must be initial
-//			Collection<STATE> initialStates = m_operand.getInitialStates();
-//			boolean isBlockInitial = m_operand.isInitial(state);
+//			Collection<STATE> initialStates = moperand.getInitialStates();
+//			boolean isBlockInitial = moperand.isInitial(state);
 //			// If representative is not initial, check if there are
 //			// other states that are
 //			if (!isBlockInitial) {
@@ -302,7 +302,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 //				}
 //			}
 //			
-//			result.addState(isBlockInitial, m_operand.isFinal(state), state);
+//			result.addState(isBlockInitial, moperand.isFinal(state), state);
 //		}
 //		//Add adjusted outgoing transitions of every representative
 //        for (int state : representatives) {
@@ -325,7 +325,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return m_result;
+		return mresult;
 	}
 
 	/**
@@ -353,8 +353,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		if (stateAmount < letterAmount) {
 			maxAmount = letterAmount;
 		}
-		Iterator<STATE> states = m_operand.getStates().iterator();
-		Iterator<LETTER> letters = m_operand.getInternalAlphabet().iterator();
+		Iterator<STATE> states = moperand.getStates().iterator();
+		Iterator<LETTER> letters = moperand.getInternalAlphabet().iterator();
 		
 		for (int i = 0; i < maxAmount; i++) {
 			if (states.hasNext()) {
@@ -363,10 +363,10 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				idToState.put(i, state);
 				stateToId.put(state, i);
 				stateToIncomingEdges.put(i,
-						m_operand.internalPredecessors(state));
+						moperand.internalPredecessors(state));
 				// Christian: not needed anymore
 //				stateToOutgoingEdges
-//						.put(i, m_operand.internalSuccessors(state));
+//						.put(i, moperand.internalSuccessors(state));
 			}
 			if (letters.hasNext()) {
 				LETTER letter = letters.next();
@@ -816,6 +816,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	 * This method can only be used if the minimization is finished.
 	 */
 	public Map<STATE,STATE> getOldState2newState() {
-		return m_oldState2newState;
+		return moldState2newState;
 	}
 }

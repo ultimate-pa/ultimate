@@ -109,31 +109,31 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
  */
 public class TraceChecker {
 
-	protected final ILogger m_Logger;
-	protected final IUltimateServiceProvider m_Services;
+	protected final ILogger mLogger;
+	protected final IUltimateServiceProvider mServices;
 	/**
 	 * After constructing a new TraceChecker satisfiability of the trace was checked. However, the trace check is not
 	 * yet finished, and the SmtManager is still locked by this TraceChecker to allow the computation of an interpolants
 	 * or an execution. The trace check is only finished after the unlockSmtManager() method was called.
 	 * 
 	 */
-	protected boolean m_TraceCheckFinished;
+	protected boolean mTraceCheckFinished;
 	/**
 	 * Interface for query the SMT solver.
 	 */
-	protected final SmtManager m_SmtManager;
-	protected final VariableManager m_VariableManager;
-	protected final ManagedScript m_ManagedScript;
-	protected final Script m_Script;
-	protected final SmtManager m_TcSmtManager;
+	protected final SmtManager mSmtManager;
+	protected final VariableManager mVariableManager;
+	protected final ManagedScript mManagedScript;
+	protected final Script mScript;
+	protected final SmtManager mTcSmtManager;
 	/**
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
 	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
 	 */
-	protected final ModifiableGlobalVariableManager m_ModifiedGlobals;
-	protected final NestedWord<? extends IAction> m_Trace;
-	protected final IPredicate m_Precondition;
-	protected final IPredicate m_Postcondition;
+	protected final ModifiableGlobalVariableManager mModifiedGlobals;
+	protected final NestedWord<? extends IAction> mTrace;
+	protected final IPredicate mPrecondition;
+	protected final IPredicate mPostcondition;
 	/**
 	 * If the trace contains "pending returns" (returns without corresponding calls) we have to provide a predicate for
 	 * each pending return that specifies what held in the calling context to which we return. (If the trace would
@@ -141,15 +141,15 @@ public class TraceChecker {
 	 * "pending contexts". These pending contexts are provided via a mapping from the position of the pending return
 	 * (given as Integer) to the predicate.
 	 */
-	protected final SortedMap<Integer, IPredicate> m_PendingContexts;
-	protected AnnotateAndAsserter m_AAA;
-	protected final LBool m_IsSafe;
-	protected RcfgProgramExecution m_RcfgProgramExecution;
-	protected final NestedFormulas<TransFormula, IPredicate> m_NestedFormulas;
-	protected NestedSsaBuilder m_Nsb;
-	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
-	protected final AssertCodeBlockOrder m_assertCodeBlocksIncrementally;
-	protected ToolchainCanceledException m_ToolchainCanceledException;
+	protected final SortedMap<Integer, IPredicate> mPendingContexts;
+	protected AnnotateAndAsserter mAAA;
+	protected final LBool mIsSafe;
+	protected RcfgProgramExecution mRcfgProgramExecution;
+	protected final NestedFormulas<TransFormula, IPredicate> mNestedFormulas;
+	protected NestedSsaBuilder mNsb;
+	protected final TraceCheckerBenchmarkGenerator mTraceCheckerBenchmarkGenerator;
+	protected final AssertCodeBlockOrder massertCodeBlocksIncrementally;
+	protected ToolchainCanceledException mToolchainCanceledException;
 
 	/**
 	 * Defines benchmark for measuring data about the usage of TraceCheckers. E.g., number and size of predicates
@@ -261,11 +261,11 @@ public class TraceChecker {
 	public class TraceCheckerBenchmarkGenerator extends StatisticsGeneratorWithStopwatches
 			implements IStatisticsDataProvider {
 
-		int m_NumberOfCodeBlocks = 0;
-		int m_NumberOfCodeBlocksAsserted = 0;
-		int m_NumberOfCheckSat = 0;
-		int m_ConstructedInterpolants = 0;
-		int m_QuantifiedInterpolants = 0;
+		int mNumberOfCodeBlocks = 0;
+		int mNumberOfCodeBlocksAsserted = 0;
+		int mNumberOfCheckSat = 0;
+		int mConstructedInterpolants = 0;
+		int mQuantifiedInterpolants = 0;
 
 		@Override
 		public String[] getStopwatches() {
@@ -291,15 +291,15 @@ public class TraceChecker {
 					throw new AssertionError("clock still running: " + key);
 				}
 			case TraceCheckerBenchmarkType.s_NumberOfCodeBlocks:
-				return m_NumberOfCodeBlocks;
+				return mNumberOfCodeBlocks;
 			case TraceCheckerBenchmarkType.s_NumberOfCodeBlocksAsserted:
-				return m_NumberOfCodeBlocksAsserted;
+				return mNumberOfCodeBlocksAsserted;
 			case TraceCheckerBenchmarkType.s_NumberOfCheckSat:
-				return m_NumberOfCheckSat;
+				return mNumberOfCheckSat;
 			case TraceCheckerBenchmarkType.s_ConstructedInterpolants:
-				return m_ConstructedInterpolants;
+				return mConstructedInterpolants;
 			case TraceCheckerBenchmarkType.s_QuantifiedInterpolants:
-				return m_QuantifiedInterpolants;
+				return mQuantifiedInterpolants;
 			default:
 				throw new AssertionError("unknown data");
 			}
@@ -314,34 +314,34 @@ public class TraceChecker {
 		 * Tell the Benchmark that the checked trace has n CodeBlocks
 		 */
 		public void reportnewCodeBlocks(int n) {
-			m_NumberOfCodeBlocks = m_NumberOfCodeBlocks + n;
+			mNumberOfCodeBlocks = mNumberOfCodeBlocks + n;
 		}
 
 		/**
 		 * Tell the Benchmark that n CodeBlocks have been asserted additionally
 		 */
 		public void reportnewAssertedCodeBlocks(int n) {
-			m_NumberOfCodeBlocksAsserted = m_NumberOfCodeBlocksAsserted + n;
+			mNumberOfCodeBlocksAsserted = mNumberOfCodeBlocksAsserted + n;
 		}
 
 		/**
 		 * Tell the Benchmark we did another check sat
 		 */
 		public void reportnewCheckSat() {
-			m_NumberOfCheckSat++;
+			mNumberOfCheckSat++;
 		}
 
 		public void reportNewInterpolant(boolean isQuantified) {
-			m_ConstructedInterpolants++;
+			mConstructedInterpolants++;
 			if (isQuantified) {
-				m_QuantifiedInterpolants++;
+				mQuantifiedInterpolants++;
 			}
 		}
 
 		public void reportSequenceOfInterpolants(List<IPredicate> interpolants) {
 			for (IPredicate pred : interpolants) {
 				boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
-				m_TraceCheckerBenchmarkGenerator.reportNewInterpolant(isQuantified);
+				mTraceCheckerBenchmarkGenerator.reportNewInterpolant(isQuantified);
 			}
 		}
 
@@ -360,7 +360,7 @@ public class TraceChecker {
 	 * </ul>
 	 */
 	public LBool isCorrect() {
-		return m_IsSafe;
+		return mIsSafe;
 	}
 
 	/**
@@ -405,25 +405,25 @@ public class TraceChecker {
 			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
 			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat, SmtManager tcSmtManager) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_SmtManager = smtManager;
-		m_VariableManager = smtManager.getVariableManager();
-		m_ManagedScript = smtManager.getManagedScript();
-		m_Script = smtManager.getScript();
-		m_TcSmtManager = tcSmtManager;
-		m_ModifiedGlobals = modifiedGlobals;
-		m_Trace = trace;
-		m_Precondition = precondition;
-		m_Postcondition = postcondition;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSmtManager = smtManager;
+		mVariableManager = smtManager.getVariableManager();
+		mManagedScript = smtManager.getManagedScript();
+		mScript = smtManager.getScript();
+		mTcSmtManager = tcSmtManager;
+		mModifiedGlobals = modifiedGlobals;
+		mTrace = trace;
+		mPrecondition = precondition;
+		mPostcondition = postcondition;
 		if (pendingContexts == null) {
 			throw new NullPointerException(
 					"pendingContexts must not be " + "null, if there are no pending contexts, use an empty map");
 		}
-		m_PendingContexts = pendingContexts;
-		m_NestedFormulas = rv;
-		m_TraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
-		m_assertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
+		mPendingContexts = pendingContexts;
+		mNestedFormulas = rv;
+		mTraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
+		massertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
 		LBool isSafe = null;
 		try {
 			isSafe = checkTrace();
@@ -435,14 +435,14 @@ public class TraceChecker {
 				if (computeRcfgProgramExecution) {
 					computeRcfgProgramExecution(isSafe);
 				} else {
-					m_TraceCheckFinished = true;
+					mTraceCheckFinished = true;
 					unlockSmtManager();
 				}
 			}
 		} catch (ToolchainCanceledException tce) {
-			m_ToolchainCanceledException = tce;
+			mToolchainCanceledException = tce;
 		} finally {
-			m_IsSafe = isSafe;
+			mIsSafe = isSafe;
 		}
 	}
 
@@ -454,28 +454,28 @@ public class TraceChecker {
 	 */
 	protected LBool checkTrace() {
 		LBool isSafe;
-		m_TcSmtManager.startTraceCheck(this);
-		boolean transferToDifferentScript = (m_TcSmtManager != m_SmtManager);
-		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
-		m_Nsb = new NestedSsaBuilder(m_Trace, m_TcSmtManager, m_NestedFormulas, m_ModifiedGlobals, m_Logger,
+		mTcSmtManager.startTraceCheck(this);
+		boolean transferToDifferentScript = (mTcSmtManager != mSmtManager);
+		mTraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
+		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mModifiedGlobals, mLogger,
 				transferToDifferentScript);
-		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
-		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
+		NestedFormulas<Term, Term> ssa = mNsb.getSsa();
+		mTraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 
-		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
-		if (m_assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
-			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_TcSmtManager, ssa,
-					getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator,
-					m_assertCodeBlocksIncrementally, m_Services);
+		mTraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
+		if (massertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
+			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization(mTcSmtManager, ssa,
+					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckerBenchmarkGenerator,
+					massertCodeBlocksIncrementally, mServices);
 		} else {
-			m_AAA = new AnnotateAndAsserter(m_TcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
-					m_TraceCheckerBenchmarkGenerator, m_Services);
+			mAAA = new AnnotateAndAsserter(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
+					mTraceCheckerBenchmarkGenerator, mServices);
 			// Report the asserted code blocks
-			// m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length());
+			// mTraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(mTrace.length());
 		}
 		try {
-			m_AAA.buildAnnotatedSsaAndAssertTerms();
-			isSafe = m_AAA.isInputSatisfiable();
+			mAAA.buildAnnotatedSsaAndAssertTerms();
+			isSafe = mAAA.isInputSatisfiable();
 		} catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				isSafe = LBool.UNKNOWN;
@@ -483,7 +483,7 @@ public class TraceChecker {
 				throw e;
 			}
 		} finally {
-			m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
+			mTraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
 		}
 		return isSafe;
 	}
@@ -504,36 +504,36 @@ public class TraceChecker {
 	 * @param isSafe
 	 */
 	private void computeRcfgProgramExecution(LBool isSafe) {
-		if (!(m_NestedFormulas instanceof DefaultTransFormulas)) {
+		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
 			throw new AssertionError(
-					"program execution only computable if " + "m_NestedFormulas instanceof DefaultTransFormulas");
+					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
 		}
 		if (isSafe == LBool.SAT) {
-			if (!((DefaultTransFormulas) m_NestedFormulas).hasBranchEncoders()) {
+			if (!((DefaultTransFormulas) mNestedFormulas).hasBranchEncoders()) {
 				unlockSmtManager();
-				DefaultTransFormulas withBE = new DefaultTransFormulas(m_NestedFormulas.getTrace(),
-						m_NestedFormulas.getPrecondition(), m_NestedFormulas.getPostcondition(), m_PendingContexts,
-						m_ModifiedGlobals, true);
-				TraceChecker tc = new TraceChecker(m_NestedFormulas.getPrecondition(),
-						m_NestedFormulas.getPostcondition(), m_PendingContexts, m_NestedFormulas.getTrace(),
-						m_SmtManager, m_ModifiedGlobals, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services,
-						true, true, m_TcSmtManager);
+				DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
+						mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
+						mModifiedGlobals, true);
+				TraceChecker tc = new TraceChecker(mNestedFormulas.getPrecondition(),
+						mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(),
+						mSmtManager, mModifiedGlobals, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices,
+						true, true, mTcSmtManager);
 				if (tc.getToolchainCancelledExpection() != null) {
 					throw tc.getToolchainCancelledExpection();
 				}
 				assert tc.isCorrect() == LBool.SAT : "result of second trace check is different";
-				m_RcfgProgramExecution = tc.getRcfgProgramExecution();
+				mRcfgProgramExecution = tc.getRcfgProgramExecution();
 			} else {
-				m_RcfgProgramExecution = computeRcfgProgramExecutionCaseSAT(m_Nsb);
+				mRcfgProgramExecution = computeRcfgProgramExecutionCaseSAT(mNsb);
 			}
 		} else if (isSafe == LBool.UNKNOWN) {
-			m_RcfgProgramExecution = computeRcfgProgramExecutionCaseUNKNOWN();
+			mRcfgProgramExecution = computeRcfgProgramExecutionCaseUNKNOWN();
 		} else if (isSafe == LBool.UNSAT) {
 			throw new AssertionError("specification satisfied - " + "cannot compute counterexample");
 		} else {
 			throw new AssertionError("unexpected result of correctness check");
 		}
-		m_TraceCheckFinished = true;
+		mTraceCheckFinished = true;
 	}
 
 	/**
@@ -545,25 +545,25 @@ public class TraceChecker {
 		@SuppressWarnings("unchecked")
 		Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		unlockSmtManager();
-		m_TraceCheckFinished = true;
-		return new RcfgProgramExecution((List<? extends RCFGEdge>) m_NestedFormulas.getTrace().lettersAsList(), emptyMap, branchEncoders);
+		mTraceCheckFinished = true;
+		return new RcfgProgramExecution((List<? extends RCFGEdge>) mNestedFormulas.getTrace().lettersAsList(), emptyMap, branchEncoders);
 	}
 
 	/**
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(NestedSsaBuilder nsb) {
-		RelevantVariables relVars = new RelevantVariables(m_NestedFormulas, m_ModifiedGlobals);
-		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals,
-				(NestedWord<CodeBlock>) m_Trace, relVars, m_SmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
-		for (int i = 0; i < m_Trace.length(); i++) {
-			CodeBlock cb = (CodeBlock) m_Trace.getSymbolAt(i);
+		RelevantVariables relVars = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
+		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mModifiedGlobals,
+				(NestedWord<CodeBlock>) mTrace, relVars, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+		for (int i = 0; i < mTrace.length(); i++) {
+			CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
 			TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
 			if (tf.getBranchEncoders().size() > 0) {
 				Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
 				for (TermVariable tv : tf.getBranchEncoders()) {
 					String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
-					Term indexedBe = m_TcSmtManager.getScript().term(nameOfConstant);
+					Term indexedBe = mTcSmtManager.getScript().term(nameOfConstant);
 					Term value = getValue(indexedBe);
 					Boolean booleanValue = getBooleanValue(value);
 					beMapping.put(tv, booleanValue);
@@ -578,10 +578,10 @@ public class TraceChecker {
 				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
 					Term valueT = getValue(indexedVar);
-					if (m_SmtManager != m_TcSmtManager) {
-						valueT = new TermTransferrer(m_SmtManager.getScript()).transform(valueT);
+					if (mSmtManager != mTcSmtManager) {
+						valueT = new TermTransferrer(mSmtManager.getScript()).transform(valueT);
 					}
-					Expression valueE = m_SmtManager.getBoogie2Smt().getTerm2Expression().translate(valueT);
+					Expression valueE = mSmtManager.getBoogie2Smt().getTerm2Expression().translate(valueT);
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
 				}
 			}
@@ -591,26 +591,26 @@ public class TraceChecker {
 	}
 
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
-		return new AnnotateAndAssertCodeBlocks(m_TcSmtManager, ssa, m_Logger);
+		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, ssa, mLogger);
 
 		// AnnotateAndAssertCodeBlocks aaacb =
-		// return new AnnotateAndAsserter(m_SmtManager, ssa, aaacb);
+		// return new AnnotateAndAsserter(mSmtManager, ssa, aaacb);
 	}
 
 	private Term getValue(Term term) {
 		final Term[] arr = { term };
-		final Map<Term, Term> map = m_TcSmtManager.getScript().getValue(arr);
+		final Map<Term, Term> map = mTcSmtManager.getScript().getValue(arr);
 		final Term value = map.get(term);
 		/*
 		 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
 		 * affine term to obtain the negative literal.
 		 */
-		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(m_TcSmtManager.getScript()))
+		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(mTcSmtManager.getScript()))
 				.transform(value);
 		if (affineTerm.isErrorTerm()) {
 			return value;
 		} else {
-			return affineTerm.toTerm(m_TcSmtManager.getScript());
+			return affineTerm.toTerm(mTcSmtManager.getScript());
 		}
 
 	}
@@ -630,38 +630,38 @@ public class TraceChecker {
 	}
 
 	public NestedWord<? extends IAction> getTrace() {
-		return m_Trace;
+		return mTrace;
 	}
 
 	public IPredicate getPrecondition() {
-		return m_Precondition;
+		return mPrecondition;
 	}
 
 	public IPredicate getPostcondition() {
-		return m_Postcondition;
+		return mPostcondition;
 	}
 
 	public Map<Integer, IPredicate> getPendingContexts() {
-		return m_PendingContexts;
+		return mPendingContexts;
 	}
 
 	/**
 	 * Return the RcfgProgramExecution that has been computed by computeRcfgProgramExecution().
 	 */
 	public RcfgProgramExecution getRcfgProgramExecution() {
-		if (m_RcfgProgramExecution == null) {
+		if (mRcfgProgramExecution == null) {
 			throw new AssertionError("program execution has not yet been computed");
 		}
-		return m_RcfgProgramExecution;
+		return mRcfgProgramExecution;
 	}
 
 	protected void unlockSmtManager() {
-		m_TcSmtManager.endTraceCheck(this);
+		mTcSmtManager.endTraceCheck(this);
 	}
 
 	public TraceCheckerBenchmarkGenerator getTraceCheckerBenchmark() {
-		if (m_TraceCheckFinished || m_ToolchainCanceledException != null) {
-			return m_TraceCheckerBenchmarkGenerator;
+		if (mTraceCheckFinished || mToolchainCanceledException != null) {
+			return mTraceCheckerBenchmarkGenerator;
 		} else {
 			throw new AssertionError("Benchmark is only available after the trace check is finished.");
 		}
@@ -672,7 +672,7 @@ public class TraceChecker {
 	 * computation was not cancelled, we return null.
 	 */
 	public ToolchainCanceledException getToolchainCancelledExpection() {
-		return m_ToolchainCanceledException;
+		return mToolchainCanceledException;
 	}
 
 }

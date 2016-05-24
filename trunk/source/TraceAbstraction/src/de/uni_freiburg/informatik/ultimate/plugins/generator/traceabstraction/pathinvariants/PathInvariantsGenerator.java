@@ -67,11 +67,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
-	private final NestedRun<? extends IAction, IPredicate> m_Run;
-	private final IPredicate m_Precondition;
-	private final IPredicate m_Postcondition;
-	private final IPredicate[] m_Interpolants;
-	private final PredicateUnifier m_PredicateUnifier;
+	private final NestedRun<? extends IAction, IPredicate> mRun;
+	private final IPredicate mPrecondition;
+	private final IPredicate mPostcondition;
+	private final IPredicate[] mInterpolants;
+	private final PredicateUnifier mPredicateUnifier;
 	private final ILogger logger;
 
 	/**
@@ -162,10 +162,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final ModifiableGlobalVariableManager modGlobVarManager,
 			final IInvariantPatternProcessorFactory<?> invPatternProcFactory) {
 		super();
-		m_Run = run;
-		m_Precondition = precondition;
-		m_Postcondition = postcondition;
-		m_PredicateUnifier = predicateUnifier;
+		mRun = run;
+		mPrecondition = precondition;
+		mPostcondition = postcondition;
+		mPredicateUnifier = predicateUnifier;
 
 		final ILogger logService = services.getLoggingService().getLogger(
 				Activator.PLUGIN_ID);
@@ -173,17 +173,17 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		logger = logService;
 
 		logService.info(
-				"Started with a run of length " + m_Run.getLength());
+				"Started with a run of length " + mRun.getLength());
 
 		// Project path to CFG
-		final int len = m_Run.getLength();
+		final int len = mRun.getLength();
 		final List<Location> locations = new ArrayList<>(len);
 		final Map<ProgramPoint, Location> locationsForProgramPoint = new HashMap<ProgramPoint, Location>(
 				len);
 		final Collection<Transition> transitions = new ArrayList<>(len - 1);
 
 		for (int i = 0; i < len; i++) {
-			final ISLPredicate pred = (ISLPredicate) m_Run
+			final ISLPredicate pred = (ISLPredicate) mRun
 					.getStateAtPosition(i);
 			final ProgramPoint programPoint = pred.getProgramPoint();
 
@@ -196,11 +196,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			locations.add(location);
 
 			if (i > 0) {
-				if (!m_Run.getWord().isInternalPosition(i - 1)) {
+				if (!mRun.getWord().isInternalPosition(i - 1)) {
 					throw new UnsupportedOperationException(
 							"interprocedural traces are not supported (yet)");
 				}
-				final TransFormula transFormula = ((IInternalAction) m_Run.getSymbol(i - 1))
+				final TransFormula transFormula = ((IInternalAction) mRun.getSymbol(i - 1))
 						.getTransformula();
 				transitions.add(new Transition(transFormula, locations
 						.get(i - 1), location));
@@ -223,18 +223,18 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		// Populate resulting array
 		if (invariants != null) {
-			m_Interpolants = new IPredicate[len];
+			mInterpolants = new IPredicate[len];
 			for (int i = 0; i < len; i++) {
-				m_Interpolants[i] = invariants.get(locations.get(i));
+				mInterpolants[i] = invariants.get(locations.get(i));
 				logService.info( "[PathInvariants] Interpolant no "
-				        + i + " " + m_Interpolants[i].toString());
+				        + i + " " + mInterpolants[i].toString());
 			}
 			logService.info( "[PathInvariants] Invariants found and "
 					+ "processed.");
 			logService.info( "Got a Invariant map of length "
-					+ m_Interpolants.length);
+					+ mInterpolants.length);
 		} else {
-			m_Interpolants = null;
+			mInterpolants = null;
 			logService.info( "[PathInvariants] No invariants found.");
 		}
 	}
@@ -244,7 +244,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	@Override
 	public Word<? extends IAction> getTrace() {
-		return m_Run.getWord();
+		return mRun.getWord();
 	}
 
 	/**
@@ -252,7 +252,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	@Override
 	public IPredicate getPrecondition() {
-		return m_Precondition;
+		return mPrecondition;
 	}
 
 	/**
@@ -260,7 +260,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	@Override
 	public IPredicate getPostcondition() {
-		return m_Postcondition;
+		return mPostcondition;
 	}
 
 	/**
@@ -276,12 +276,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
-		return m_PredicateUnifier;
+		return mPredicateUnifier;
 	}
 
 	/**
 	 * Returns a sequence of interpolants (see definition in
-	 * {@link IInterpolantGenerator}) the trace which is m_Run.getWord() with an
+	 * {@link IInterpolantGenerator}) the trace which is mRun.getWord() with an
 	 * additional property. If the ProgramPoint and position i and k coincide
 	 * the the interpolants at position i and k coincide.
 	 * 
@@ -291,12 +291,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	@Override
 	public IPredicate[] getInterpolants() {
-		if (m_Interpolants == null){
+		if (mInterpolants == null){
 			return null;
 		}
-		IPredicate[] interpolantMapWithOutFirstInterpolant = new IPredicate[m_Interpolants.length - 2];
-		for (int i = 0; i < m_Interpolants.length - 2; i++) {
-			interpolantMapWithOutFirstInterpolant[i] = m_Interpolants[i+1];
+		IPredicate[] interpolantMapWithOutFirstInterpolant = new IPredicate[mInterpolants.length - 2];
+		for (int i = 0; i < mInterpolants.length - 2; i++) {
+			interpolantMapWithOutFirstInterpolant[i] = mInterpolants[i+1];
 		}
 		return interpolantMapWithOutFirstInterpolant;
 	}

@@ -48,26 +48,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 public class GraphWriter {
 
 	//	int index = 0;
-	boolean m_annotateEdges = true;
-	boolean m_annotateNodes = true;
-	boolean m_showUnreachableEdges = false;
-	boolean m_rankByLocation = false;
-	boolean m_showNodeToCopy = true;
+	boolean mannotateEdges = true;
+	boolean mannotateNodes = true;
+	boolean mshowUnreachableEdges = false;
+	boolean mrankByLocation = false;
+	boolean mshowNodeToCopy = true;
 	
-	boolean m_hideUnreachableOnce = true;
+	boolean mhideUnreachableOnce = true;
 	//	boolean clusterWithCopy = false;
 
-	boolean m_edgesWithHash = false;
+	boolean medgesWithHash = false;
 	
 	StringBuilder graph;
 	HashMap<String, ArrayList<String>> locToLabel;
-	Script m_script;
-	StripAnnotationsTermTransformer m_satt;
+	Script mscript;
+	StripAnnotationsTermTransformer msatt;
 
 	String imagePath;
 
-//	boolean m_dontWrite = true;
-	boolean m_dontWrite = false;
+//	boolean mdontWrite = true;
+	boolean mdontWrite = false;
 	
 	int _graphCounter = 0;
 
@@ -82,18 +82,18 @@ public class GraphWriter {
 			boolean annotateNodes, boolean showUnreachableEdges, boolean rankByLocation, Script script) {
 		this.imagePath = imagePath;
 		if(imagePath == "")
-			m_dontWrite = true;
-		this.m_annotateEdges = annotateEdges;
-		this.m_annotateNodes = annotateNodes;
-		this.m_showUnreachableEdges = showUnreachableEdges;
-		this.m_rankByLocation = rankByLocation;
-		m_script = script;
-		m_satt = new StripAnnotationsTermTransformer();
+			mdontWrite = true;
+		this.mannotateEdges = annotateEdges;
+		this.mannotateNodes = annotateNodes;
+		this.mshowUnreachableEdges = showUnreachableEdges;
+		this.mrankByLocation = rankByLocation;
+		mscript = script;
+		msatt = new StripAnnotationsTermTransformer();
 	}
 
 
 	public void writeGraphAsImage(AnnotatedProgramPoint root, String fileName) {
-		if(m_dontWrite)
+		if(mdontWrite)
 			return;
 		else {
 			GraphViz gv = new GraphViz();
@@ -124,7 +124,7 @@ public class GraphWriter {
 	public void writeGraphAsImage(AnnotatedProgramPoint root, String fileName,
 			AnnotatedProgramPoint[] error_trace) {
 		
-		if(m_dontWrite)
+		if(mdontWrite)
 			return;
 		else {
 			GraphViz gv = new GraphViz();
@@ -158,7 +158,7 @@ public class GraphWriter {
 	public void writeGraphAsImage(AnnotatedProgramPoint root, String fileName,
 			HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy_current, 
 			HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy) {
-		if(m_dontWrite)
+		if(mdontWrite)
 			return;
 		else {
 			GraphViz gv = new GraphViz();
@@ -201,8 +201,8 @@ public class GraphWriter {
 							new ArrayList<AnnotatedProgramPoint>(node.getOutgoingNodes());
 
 
-				if(m_showUnreachableEdges && 
-						!m_hideUnreachableOnce && 
+				if(mshowUnreachableEdges && 
+						!mhideUnreachableOnce && 
 						node.getIncomingNodes() != null)
 					inOutNodes.addAll(node.getIncomingNodes());
 
@@ -242,7 +242,7 @@ public class GraphWriter {
 		StringBuilder graph = new StringBuilder(); 
 
 		for(Iterator<AnnotatedProgramPoint> it = allNodes.iterator(); it.hasNext();){
-			if(m_annotateNodes) {
+			if(mannotateNodes) {
 				graph.append(getLabeledNode(it.next()) + "\n");
 			}
 			else {
@@ -312,15 +312,15 @@ public class GraphWriter {
 			graph.append(
 					//"subgraph \"cluster" + ctr++ + "\" " +
 					"{ rank=same; rankdir=LR; " + 
-					(m_annotateNodes ? 
+					(mannotateNodes ? 
 							getLabeledNode(en.getKey(),  "color=grey, style=filled") : 
 								convertNodeNameQuot(en.getKey()) + " [color=grey, style=filled] ; ") + 
-					(m_annotateNodes ? 
+					(mannotateNodes ? 
 							getLabeledNode(en.getValue(),  "color=lightblue, style=filled") : 
 								convertNodeNameQuot(en.getValue()) + " [color=lightblue, style=filled] ;")
 					+ "}");
 		}
-		if(m_showNodeToCopy) {
+		if(mshowNodeToCopy) {
 			for(Entry<AnnotatedProgramPoint, AnnotatedProgramPoint> en : nodeToCopy.entrySet()) {
 			graph.append(convertNodeNameQuot(en.getKey()) + " -> " + 
 				convertNodeNameQuot(en.getValue()) + "[weight=0, color=red] ;");
@@ -383,7 +383,7 @@ public class GraphWriter {
 		edgeName.append(convertNodeNameQuot(edge.source)
 				+ " -> " + convertNodeNameQuot(edge.target));
 
-		if(m_annotateEdges){
+		if(mannotateEdges){
 			String edgeLabel;
 			if (edge.code == null)
 				edgeLabel = "-";
@@ -405,7 +405,7 @@ public class GraphWriter {
 //			String toReturn = f.toString().replaceAll("(_b[0-9]*)|(_[0-9]*)", ""); //obsolete since evren's change
 //			String toReturn = f.toString().split("location")[0].trim();
 			
-			Term f1 = m_satt.transform(f);
+			Term f1 = msatt.transform(f);
 			String toReturn = f1.toString();
 //			String toReturn = f.toString().replaceAll(":location(\\w|\\s|:|/|.|[|])*?\\)", "\\)");
 			return toReturn;
@@ -416,12 +416,12 @@ public class GraphWriter {
 
 
 	public boolean getHideUnreachableOnce() {
-		return m_hideUnreachableOnce;
+		return mhideUnreachableOnce;
 	}
 
 
-	public void setHideUnreachableOnce(boolean m_hideUnreachableOnce) {
-		this.m_hideUnreachableOnce = m_hideUnreachableOnce;
+	public void setHideUnreachableOnce(boolean mhideUnreachableOnce) {
+		this.mhideUnreachableOnce = mhideUnreachableOnce;
 	}
 	
 	class GraphEdge {

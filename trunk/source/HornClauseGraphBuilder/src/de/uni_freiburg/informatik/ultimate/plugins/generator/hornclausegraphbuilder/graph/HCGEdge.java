@@ -20,10 +20,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class HCGEdge {
 	
-	Term m_Formula;
+	Term mFormula;
 
-	HashMap<HornClausePredicateSymbol, Object> m_Sources;
-	HornClausePredicateSymbol m_Target;
+	HashMap<HornClausePredicateSymbol, Object> mSources;
+	HornClausePredicateSymbol mTarget;
 	
 	
 	

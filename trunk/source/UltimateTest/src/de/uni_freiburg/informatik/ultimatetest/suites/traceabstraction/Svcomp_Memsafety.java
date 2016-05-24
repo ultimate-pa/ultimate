@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
  */
 public class Svcomp_Memsafety extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { 
+	private static final String[] mDirectories = { 
 		"examples/svcomp/memsafety",
 		"examples/svcomp/memsafety-ext",
 		"examples/svcomp/list-ext-properties",
@@ -55,68 +55,68 @@ public class Svcomp_Memsafety extends
 		return 60 * 1000;
 	}
 
-	private static final boolean m_AutomizerWithForwardPredicates = true;
-	private static final boolean m_AutomizerWithBackwardPredicates = !true;
+	private static final boolean mAutomizerWithForwardPredicates = true;
+	private static final boolean mAutomizerWithBackwardPredicates = !true;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (m_AutomizerWithForwardPredicates) {
+		if (mAutomizerWithForwardPredicates) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates_SvcompMemsafety.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".i"});
 		}
-		if (m_AutomizerWithForwardPredicates) {
+		if (mAutomizerWithForwardPredicates) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates_SvcompMemsafetyConservative.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".i"});
 		}
-//		if (m_AutomizerWithForwardPredicates) {
+//		if (mAutomizerWithForwardPredicates) {
 //			addTestCases(
 //					"AutomizerC.xml",
 //					"automizer/ForwardPredicates_SvcompMemsafetyLbe.epf",
-//				    m_Directories,
+//				    mDirectories,
 //				    new String[] {".i"},
-//				    m_Timeout);
+//				    mTimeout);
 //		}
-//		if (m_AutomizerWithForwardPredicates) {
+//		if (mAutomizerWithForwardPredicates) {
 //			addTestCases(
 //					"AutomizerC.xml",
 //					"automizer/ForwardPredicates_SvcompMemsafetyLbeConservative.epf",
-//				    m_Directories,
+//				    mDirectories,
 //				    new String[] {".i"},
-//				    m_Timeout);
+//				    mTimeout);
 //		}
-		if (m_AutomizerWithForwardPredicates) {
+		if (mAutomizerWithForwardPredicates) {
 			addTestCase(
 					"AutomizerCWithBlockEncoding.xml",
 					"automizer/ForwardPredicates_SvcompMemsafetySeqbe.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".i"});
 		}
-		if (m_AutomizerWithForwardPredicates) {
+		if (mAutomizerWithForwardPredicates) {
 			addTestCase(
 					"AutomizerCWithBlockEncoding.xml",
 					"automizer/ForwardPredicates_SvcompMemsafetySeqbeConservative.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".i"});
 		}
-//		if (m_AutomizerWithForwardPredicates) {
+//		if (mAutomizerWithForwardPredicates) {
 //			addTestCases(
 //					"AutomizerC.xml",
 //					"automizer/ForwardPredicates_SvcompMemsafetyAdditionalAssume.epf",
-//				    m_Directories,
+//				    mDirectories,
 //				    new String[] {".i"},
-//				    m_Timeout);
+//				    mTimeout);
 //		}
-		if (m_AutomizerWithBackwardPredicates) {
+		if (mAutomizerWithBackwardPredicates) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates_SvcompMemsafety.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();

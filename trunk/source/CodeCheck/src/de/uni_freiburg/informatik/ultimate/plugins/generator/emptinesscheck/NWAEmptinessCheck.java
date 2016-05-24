@@ -57,18 +57,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class NWAEmptinessCheck implements IEmptinessCheck {
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 
 	public NWAEmptinessCheck(IUltimateServiceProvider services) {
-		m_Services = services;
+		mServices = services;
 	}
 
 	@Override
 	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(AnnotatedProgramPoint root) {
 		INestedWordAutomatonSimple<CodeBlock, AnnotatedProgramPoint> converted = new MyNWA(root);
 		try {
-			return new IsEmpty<CodeBlock, AnnotatedProgramPoint>(new AutomataLibraryServices(m_Services), 
-					(new RemoveUnreachable<CodeBlock, AnnotatedProgramPoint>(new AutomataLibraryServices(m_Services), converted)).getResult()).getNestedRun();
+			return new IsEmpty<CodeBlock, AnnotatedProgramPoint>(new AutomataLibraryServices(mServices), 
+					(new RemoveUnreachable<CodeBlock, AnnotatedProgramPoint>(new AutomataLibraryServices(mServices), converted)).getResult()).getNestedRun();
 		} catch (AutomataOperationCanceledException e) {
 			e.printStackTrace();
 			return null;

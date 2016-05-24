@@ -105,8 +105,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	private int prefixCounter;
 	private int currentRound;
 	private int maxRounds;
-	private final boolean m_UseNonlinearConstraints; 
-	private final boolean m_SimplifySatisfyingAssignment = true;
+	private final boolean mUseNonlinearConstraints; 
+	private final boolean mSimplifySatisfyingAssignment = true;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -161,7 +161,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		
 		currentRound = -1;
 		maxRounds = strategy.getMaxRounds();
-		m_UseNonlinearConstraints = useNonlinearConstraints;
+		mUseNonlinearConstraints = useNonlinearConstraints;
 	}
 
 	/**
@@ -459,7 +459,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		// Apply Motzkin and generate the conjunction of the resulting Terms
 		final Collection<Term> resultTerms = new ArrayList<Term>(
 				conjunctionDNF.size());
-		final AnalysisType analysisType = m_UseNonlinearConstraints ? 
+		final AnalysisType analysisType = mUseNonlinearConstraints ? 
 				AnalysisType.Nonlinear : AnalysisType.Linear;
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
 			logger.info( "[LIIPP] Transforming conjunct "
@@ -679,7 +679,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		logger.info( "[LIIPP] Solution found!");
 		Collection<Term> coefficientsOfAllInvariants = patternVariables;
 		try {
-			if (m_SimplifySatisfyingAssignment) {
+			if (mSimplifySatisfyingAssignment) {
 				valuation = ModelExtractionUtils.getSimplifiedAssignment(
 						solver, coefficientsOfAllInvariants, logger, services);
 			} else {
@@ -785,7 +785,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			solver.setOption(":produce-unsat-cores", true);
 		}
 		final Logics logic;
-		if (m_UseNonlinearConstraints) {
+		if (mUseNonlinearConstraints) {
 			logic = Logics.QF_NRA;
 		} else {
 			logic = Logics.QF_LRA;

@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class LocalBoogieVar extends BoogieVar  implements Serializable {
 
 	private static final long serialVersionUID = 103072739646531062L;
-	private final String m_Procedure;
+	private final String mProcedure;
 	
-	private final int m_HashCode;
+	private final int mHashCode;
 	
 	
 	public LocalBoogieVar(String identifier, String procedure, IType iType, 
@@ -55,8 +55,8 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable {
 			ApplicationTerm defaultConstant,
 			ApplicationTerm primedContant) {
 		super(identifier, iType, tv, defaultConstant, primedContant);
-		m_Procedure = procedure;
-		m_HashCode = computeHashCode();
+		mProcedure = procedure;
+		mHashCode = computeHashCode();
 	}
 	
 	
@@ -66,7 +66,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable {
 	 */
 	@Override
 	public String getProcedure() {
-		return m_Procedure;
+		return mProcedure;
 	}
 	@Override
 	public boolean isGlobal() {
@@ -89,7 +89,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return m_HashCode;
+		return mHashCode;
 	}
 	
 	@Override

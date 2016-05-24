@@ -27,11 +27,11 @@ public class parse_reduce_table {
   public parse_reduce_table(Grammar grammar)
     {
       /* determine how many states we are working with */
-      _num_states = grammar.lalr_states().size();
-      _num_nonterm = grammar.num_non_terminals();
+      _numstates = grammar.lalr_states().size();
+      _numnonterm = grammar.numnon_terminals();
 
       /* allocate the array and fill it in with empty rows */
-      table = new lalr_state[_num_states][_num_nonterm];
+      table = new lalr_state[_numstates][_numnonterm];
     }
 
    
@@ -40,11 +40,11 @@ public class parse_reduce_table {
   /*-----------------------------------------------------------*/
 
   /** How many rows/states in the machine/table. */
-  protected int _num_states;
-  private int _num_nonterm;
+  protected int _numstates;
+  private int _numnonterm;
 
   /** How many rows/states in the machine/table. */
-  public int num_states() {return _num_states;}
+  public int numstates() {return _numstates;}
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -63,10 +63,10 @@ public class parse_reduce_table {
     {
       BitSet used = new BitSet();
       TreeSet<CombRow> rows = new TreeSet<CombRow>();
-      for (int i = 0; i < _num_states; i++)
+      for (int i = 0; i < _numstates; i++)
 	{
 	  int len = 0;
-	  for (int j = 0; j < _num_nonterm; j++)
+	  for (int j = 0; j < _numnonterm; j++)
 	    if (table[i][j] != null)
 	      len++;
 	  if (len == 0)
@@ -75,7 +75,7 @@ public class parse_reduce_table {
 	  used.set(i);
 	  int[] rowidx = new int[len];
 	  len = 0;
-	  for (int j = 0; j < _num_nonterm; j++)
+	  for (int j = 0; j < _numnonterm; j++)
 	    if (table[i][j] != null)
 	      rowidx[len++] = j;
 	  CombRow row = new CombRow(i, rowidx);
@@ -116,11 +116,11 @@ public class parse_reduce_table {
       int cnt;
 
       result.append("-------- REDUCE_TABLE --------\n");
-      for (int row = 0; row < num_states(); row++)
+      for (int row = 0; row < numstates(); row++)
 	{
 	  result.append("From state #").append(row).append("\n");
 	  cnt = 0;
-	  for (int col = 0; col < _num_nonterm; col++)
+	  for (int col = 0; col < _numnonterm; col++)
 	    {
 	      /* pull out the table entry */
 	      goto_st = table[row][col];

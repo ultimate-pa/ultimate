@@ -44,26 +44,26 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Not
  */
 public class EqualityInformation {
 
-	private final int m_Index;
-	private final Term m_GivenTerm;
-	private final Term m_EqualTerm;
+	private final int mIndex;
+	private final Term mGivenTerm;
+	private final Term mEqualTerm;
 
 	public EqualityInformation(int index, Term givenTerm, Term equalTerm) {
-		m_Index = index;
-		m_GivenTerm = givenTerm;
-		m_EqualTerm = equalTerm;
+		mIndex = index;
+		mGivenTerm = givenTerm;
+		mEqualTerm = equalTerm;
 	}
 
 	public int getIndex() {
-		return m_Index;
+		return mIndex;
 	}
 
 	public Term getVariable() {
-		return m_GivenTerm;
+		return mGivenTerm;
 	}
 
 	public Term getTerm() {
-		return m_EqualTerm;
+		return mEqualTerm;
 	}
 	
 	

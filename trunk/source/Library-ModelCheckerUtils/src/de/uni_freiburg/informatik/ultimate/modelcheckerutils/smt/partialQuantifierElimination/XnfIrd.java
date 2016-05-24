@@ -78,17 +78,17 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				continue;
 			} else {
 				if (tv.getSort().isNumericSort()) {
-					Term[] withoutTv = irdSimple(m_Script, quantifier, result, tv, m_Logger);
+					Term[] withoutTv = irdSimple(mScript, quantifier, result, tv, mLogger);
 					if (withoutTv != null) {
-						m_Logger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
+						mLogger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
 						result = withoutTv;
 						it.remove();
 					} else {
-						m_Logger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
+						mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
 					}
 				} else {
 					// ird is only applicable to variables of numeric sort
-					m_Logger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
+					mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
 				}
 			}
 		}

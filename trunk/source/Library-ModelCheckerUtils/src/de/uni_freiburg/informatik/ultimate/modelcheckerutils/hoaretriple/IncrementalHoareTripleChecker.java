@@ -58,18 +58,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockHolderWithVoluntaryLockRelease  {
 	
-	protected final ManagedScript m_ManagedScript;
-	private Boogie2SMT m_Boogie2Smt;
-	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
+	protected final ManagedScript mManagedScript;
+	private Boogie2SMT mBoogie2Smt;
+	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 	
-	private IPredicate m_AssertedPrecond;
-	private IPredicate m_AssertedHier;
-	private IAction m_AssertedAction;
-//	private TransFormula m_TransFormula;
-	private IPredicate m_AssertedPostcond;
-	private ScopedHashMap<BoogieVar, Term> m_HierConstants;
-	public final boolean m_UseNamedTerms = true;
-	public final static boolean m_UnletTerms = true;
+	private IPredicate mAssertedPrecond;
+	private IPredicate mAssertedHier;
+	private IAction mAssertedAction;
+//	private TransFormula mTransFormula;
+	private IPredicate mAssertedPostcond;
+	private ScopedHashMap<BoogieVar, Term> mHierConstants;
+	public final boolean mUseNamedTerms = true;
+	public final static boolean mUnletTerms = true;
 	
 	protected static final String s_IdPrecondition = "precondition";
 	protected static final String s_PrecondNonModGlobalEquality = "precondNonModGlobalEquality";
@@ -79,7 +79,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	protected static final String s_IdHierarchicalPrecondition = "hierarchicalPrecondition";
 	protected static final String s_IdNegatedPostcondition = "negatedPostcondition";
 	
-	private final HoareTripleCheckerStatisticsGenerator m_EdgeCheckerBenchmark;
+	private final HoareTripleCheckerStatisticsGenerator mEdgeCheckerBenchmark;
 	
 	
 	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
@@ -88,15 +88,15 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	public IncrementalHoareTripleChecker(ManagedScript managedScript, 
 			ModifiableGlobalVariableManager modGlobVarManager,
 			Boogie2SMT boogie2smt) {
-		m_ManagedScript = managedScript;
-		m_ModifiableGlobalVariableManager = modGlobVarManager;
-		m_Boogie2Smt = boogie2smt;
-		m_EdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
+		mManagedScript = managedScript;
+		mModifiableGlobalVariableManager = modGlobVarManager;
+		mBoogie2Smt = boogie2smt;
+		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
 	}
 	
 	@Override
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return m_EdgeCheckerBenchmark;
+		return mEdgeCheckerBenchmark;
 	}
 	
 	
@@ -115,8 +115,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			return Validity.VALID;
 		}
 		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
-		assert m_AssertedPrecond == pre && m_AssertedHier == null && 
-				m_AssertedAction == act && m_AssertedPostcond == post;
+		assert mAssertedPrecond == pre && mAssertedHier == null && 
+				mAssertedAction == act && mAssertedPostcond == post;
 		return checkValidity();
 	}
 	
@@ -136,8 +136,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			return Validity.VALID;
 		}
 		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
-		assert m_AssertedPrecond == pre && m_AssertedHier == null && 
-				m_AssertedAction == act && m_AssertedPostcond == post;
+		assert mAssertedPrecond == pre && mAssertedHier == null && 
+				mAssertedAction == act && mAssertedPostcond == post;
 		return checkValidity();
 	}
 
@@ -162,20 +162,20 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			return Validity.VALID;
 		}
 		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
-		assert m_AssertedPrecond == linPre && m_AssertedHier == hierPre && 
-				m_AssertedAction == act && m_AssertedPostcond == postcond;
+		assert mAssertedPrecond == linPre && mAssertedHier == hierPre && 
+				mAssertedAction == act && mAssertedPostcond == postcond;
 		return checkValidity();
 	}
 	
 	
 	protected LBool prepareAssertionStackAndAddTransition(IAction act) {
-		if (m_AssertedAction != act) {
-			if (m_AssertedAction != null) {
-				if (m_AssertedPrecond != null) {
-					if (m_AssertedPostcond != null) {
+		if (mAssertedAction != act) {
+			if (mAssertedAction != null) {
+				if (mAssertedPrecond != null) {
+					if (mAssertedPostcond != null) {
 						unAssertPostcondition();
 					}
-					if (m_AssertedHier != null) {
+					if (mAssertedHier != null) {
 						unAssertHierPred();
 					}
 					unAssertPrecondition();
@@ -190,12 +190,12 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 
 	protected LBool prepareAssertionStackAndAddPrecondition(IPredicate precond) {
-		if (m_AssertedPrecond != precond) {
-			if (m_AssertedPrecond != null) {
-				if (m_AssertedPostcond != null) {
+		if (mAssertedPrecond != precond) {
+			if (mAssertedPrecond != null) {
+				if (mAssertedPostcond != null) {
 					unAssertPostcondition();
 				}
-				if (m_AssertedHier != null) {
+				if (mAssertedHier != null) {
 					unAssertHierPred();
 				}
 				unAssertPrecondition();
@@ -208,11 +208,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	protected LBool prepareAssertionStackAndAddHierpred(IPredicate hierpred) {
-		if (m_AssertedHier != hierpred) {
-			if (m_AssertedPostcond != null) {
+		if (mAssertedHier != hierpred) {
+			if (mAssertedPostcond != null) {
 				unAssertPostcondition();
 			}
-			if (m_AssertedHier != null) {
+			if (mAssertedHier != null) {
 				unAssertHierPred();
 			}
 			final LBool quickCheck = assertHierPred(hierpred);
@@ -223,8 +223,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	protected LBool prepareAssertionStackAndAddPostcond(IPredicate postcond) {
-		if (m_AssertedPostcond != postcond) {
-			if (m_AssertedPostcond != null) {
+		if (mAssertedPostcond != postcond) {
+			if (mAssertedPostcond != null) {
 				unAssertPostcondition();
 			}
 			final LBool quickCheck = assertPostcond(postcond);
@@ -235,11 +235,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 
 	protected LBool assertPostcond(IPredicate postcond) {
-		if (m_AssertedAction instanceof IInternalAction) {
+		if (mAssertedAction instanceof IInternalAction) {
 			return assertPostcond_Internal(postcond);
-		} else if (m_AssertedAction instanceof ICallAction) {
+		} else if (mAssertedAction instanceof ICallAction) {
 			return assertPostcond_Call(postcond);
-		} else if (m_AssertedAction instanceof IReturnAction) {
+		} else if (mAssertedAction instanceof IReturnAction) {
 			return assertPostcond_Return(postcond);
 		} else {
 			throw new AssertionError("unknown trans type");
@@ -248,16 +248,16 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 	
 	public void clearAssertionStack() {
-		if (m_AssertedPostcond != null) {
+		if (mAssertedPostcond != null) {
 			this.unAssertPostcondition();
 		}
-		if (m_AssertedPrecond != null) {
+		if (mAssertedPrecond != null) {
 			this.unAssertPrecondition();
 		}
-		if (m_AssertedHier != null) {
+		if (mAssertedHier != null) {
 			this.unAssertHierPred();
 		}
-		if (m_AssertedAction != null) {
+		if (mAssertedAction != null) {
 			this.unAssertCodeBlock();
 		}
 	}
@@ -270,34 +270,34 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 	
 	private LBool assertPrecondition(IPredicate p) {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedAction != null : "Assert CodeBlock first";
-		assert m_AssertedPrecond == null : "precond already asserted";
-		m_AssertedPrecond = p;
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		m_ManagedScript.push(this, 1);
-		if (m_AssertedAction instanceof IReturnAction) {
-			m_HierConstants.beginScope();
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedAction != null : "Assert CodeBlock first";
+		assert mAssertedPrecond == null : "precond already asserted";
+		mAssertedPrecond = p;
+		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
+		mManagedScript.push(this, 1);
+		if (mAssertedAction instanceof IReturnAction) {
+			mHierConstants.beginScope();
 		}
 		Term predcondition = p.getClosedFormula();
-		if (m_UseNamedTerms) {
+		if (mUseNamedTerms) {
 			Annotation annot = new Annotation(":named", s_IdPrecondition);
-			predcondition = m_ManagedScript.annotate(this, predcondition, annot);
+			predcondition = mManagedScript.annotate(this, predcondition, annot);
 		}
-		LBool quickCheck = m_ManagedScript.assertTerm(this, predcondition);
-		String predProc = m_AssertedAction.getPreceedingProcedure();
-		Set<BoogieVar> oldVarsOfModifiable = m_ModifiableGlobalVariableManager.
+		LBool quickCheck = mManagedScript.assertTerm(this, predcondition);
+		String predProc = mAssertedAction.getPreceedingProcedure();
+		Set<BoogieVar> oldVarsOfModifiable = mModifiableGlobalVariableManager.
 				getOldVarsAssignment(predProc).getAssignedVars();
 		Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), oldVarsOfModifiable);
 		if (!oldVarEqualities.isEmpty()) {
-			Term nonModOldVarsEquality = Util.and(m_Boogie2Smt.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
-			if (m_UseNamedTerms) {
+			Term nonModOldVarsEquality = Util.and(mBoogie2Smt.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
+			if (mUseNamedTerms) {
 				Annotation annot = new Annotation(":named", s_PrecondNonModGlobalEquality);
-				nonModOldVarsEquality = m_ManagedScript.annotate(this, nonModOldVarsEquality, annot);
+				nonModOldVarsEquality = mManagedScript.annotate(this, nonModOldVarsEquality, annot);
 			}
-			quickCheck = m_ManagedScript.assertTerm(this, nonModOldVarsEquality);
+			quickCheck = mManagedScript.assertTerm(this, nonModOldVarsEquality);
 		}
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return quickCheck;
 	}
 	
@@ -322,37 +322,37 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private Term oldVarsEquality(BoogieOldVar oldVar) {
 		assert oldVar.isOldvar();
 		BoogieVar nonOldVar = oldVar.getNonOldVar();
-		Term equality = m_ManagedScript.term(this, "=", oldVar.getDefaultConstant(), 
+		Term equality = mManagedScript.term(this, "=", oldVar.getDefaultConstant(), 
 										   nonOldVar.getDefaultConstant());
 		return equality;
 	}
 	
 
 	private void unAssertPrecondition() {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedPrecond != null : "No PrePred asserted";
-		m_AssertedPrecond = null;
-		m_ManagedScript.pop(this, 1);
-		if (m_AssertedAction instanceof IReturnAction) {
-			m_HierConstants.endScope();
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedPrecond != null : "No PrePred asserted";
+		mAssertedPrecond = null;
+		mManagedScript.pop(this, 1);
+		if (mAssertedAction instanceof IReturnAction) {
+			mHierConstants.endScope();
 		}
-		if (m_AssertedAction == null) {
+		if (mAssertedAction == null) {
 			throw new AssertionError("CodeBlock is assigned first");
 		}
 	}
 	
 	
 	protected LBool assertCodeBlock(IAction act) {
-		if (m_ManagedScript.isLocked()) {
-			m_ManagedScript.requestLockRelease();
+		if (mManagedScript.isLocked()) {
+			mManagedScript.requestLockRelease();
 		}
-		m_ManagedScript.lock(this);
-		m_ManagedScript.echo(this, new QuotedObject(s_StartEdgeCheck));
-		assert m_AssertedAction == null : "CodeBlock already asserted";
-		m_AssertedAction = act;
+		mManagedScript.lock(this);
+		mManagedScript.echo(this, new QuotedObject(s_StartEdgeCheck));
+		assert mAssertedAction == null : "CodeBlock already asserted";
+		mAssertedAction = act;
 
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		m_ManagedScript.push(this, 1);
+		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
+		mManagedScript.push(this, 1);
 		
 		Term cbFormula;
 		if (act instanceof IInternalAction) {
@@ -364,16 +364,16 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		} else {
 			throw new AssertionError("unknown action");
 		}
-		if (m_UseNamedTerms) {
+		if (mUseNamedTerms) {
 			Annotation annot = new Annotation(":named", s_IdTransitionFormula);
-			cbFormula = m_ManagedScript.annotate(this, cbFormula, annot);
+			cbFormula = mManagedScript.annotate(this, cbFormula, annot);
 		}
-		LBool quickCheck = m_ManagedScript.assertTerm(this, cbFormula);
+		LBool quickCheck = mManagedScript.assertTerm(this, cbFormula);
 		if (act instanceof IReturnAction) {
-			m_HierConstants = new ScopedHashMap<BoogieVar,Term>();
+			mHierConstants = new ScopedHashMap<BoogieVar,Term>();
 			IReturnAction ret = (IReturnAction) act;
 			String proc = ret.getPreceedingProcedure();
-			TransFormula ovaTF = m_ModifiableGlobalVariableManager.
+			TransFormula ovaTF = mModifiableGlobalVariableManager.
 					getOldVarsAssignment(proc);
 			Term ovaFormula = ovaTF.getFormula();
 
@@ -381,15 +381,15 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			ovaFormula = renameVarsToHierConstants(ovaTF.getInVars(), ovaFormula);
 			//rename oldVars of modifiable globals to default vars
 			ovaFormula = renameVarsToDefaultConstants(ovaTF.getOutVars(), ovaFormula);
-			if (m_UnletTerms ) {
+			if (mUnletTerms ) {
 				ovaFormula = (new FormulaUnLet()).unlet(ovaFormula);
 			}
 			assert ovaFormula.getFreeVars().length == 0;
-			if (m_UseNamedTerms) {
+			if (mUseNamedTerms) {
 				Annotation annot = new Annotation(":named", s_IdTransitionModifiableGlobalEquality);
-				ovaFormula = m_ManagedScript.annotate(this, ovaFormula, annot);
+				ovaFormula = mManagedScript.annotate(this, ovaFormula, annot);
 			}
-			quickCheck = m_ManagedScript.assertTerm(this, ovaFormula);
+			quickCheck = mManagedScript.assertTerm(this, ovaFormula);
 			
 			Set<BoogieVar> modifiableGlobals = ovaTF.getInVars().keySet();
 			TransFormula callTf = ret.getLocalVarsAssignmentOfCall();
@@ -404,30 +404,30 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			locVarAssign = renameVarsToDefaultConstants(callTf.getOutVars(), locVarAssign);
 			//rename auxiliary vars to fresh constants
 			locVarAssign = renameAuxVarsToCorrespondingConstants(callTf.getAuxVars(), locVarAssign);
-			if (m_UnletTerms ) {
+			if (mUnletTerms ) {
 				locVarAssign = (new FormulaUnLet()).unlet(locVarAssign);
 			}
 			assert locVarAssign.getFreeVars().length == 0;
-			if (m_UseNamedTerms) {
+			if (mUseNamedTerms) {
 				Annotation annot = new Annotation(":named", s_IdLocalVarsAssignment);
-				locVarAssign = m_ManagedScript.annotate(this, locVarAssign, annot);
+				locVarAssign = mManagedScript.annotate(this, locVarAssign, annot);
 			}
-			quickCheck = m_ManagedScript.assertTerm(this, locVarAssign);
+			quickCheck = mManagedScript.assertTerm(this, locVarAssign);
 		}
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return quickCheck;
 	}
 
 	
 	protected void unAssertCodeBlock() {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedAction != null : "No CodeBlock asserted";
-		m_AssertedAction = null;
-		m_HierConstants = null;
-		m_ManagedScript.pop(this, 1);
-		if (m_AssertedPrecond == null) {
-			m_ManagedScript.echo(this, new QuotedObject(s_EndEdgeCheck));
-			m_ManagedScript.unlock(this);
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedAction != null : "No CodeBlock asserted";
+		mAssertedAction = null;
+		mHierConstants = null;
+		mManagedScript.pop(this, 1);
+		if (mAssertedPrecond == null) {
+			mManagedScript.echo(this, new QuotedObject(s_EndEdgeCheck));
+			mManagedScript.unlock(this);
 		} else {
 			throw new AssertionError("CodeBlock is unasserted last");
 		}
@@ -435,48 +435,48 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	protected LBool assertHierPred(IPredicate p) {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedAction != null : "assert Return first";
-		assert m_AssertedAction instanceof IReturnAction : "assert Return first";
-		assert m_AssertedPrecond != null : "assert precond fist";
-		assert m_AssertedHier == null : "HierPred already asserted";
-		m_AssertedHier = p;
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		m_ManagedScript.push(this, 1);
-		m_HierConstants.beginScope();
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedAction != null : "assert Return first";
+		assert mAssertedAction instanceof IReturnAction : "assert Return first";
+		assert mAssertedPrecond != null : "assert precond fist";
+		assert mAssertedHier == null : "HierPred already asserted";
+		mAssertedHier = p;
+		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
+		mManagedScript.push(this, 1);
+		mHierConstants.beginScope();
 		Term hierFormula = p.getFormula();
 		
 		// rename globals that are not modifiable by callee to default constants
-		String callee = m_AssertedAction.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobalVariableManager.
+		String callee = mAssertedAction.getPreceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		hierFormula = renameNonModifiableNonOldGlobalsToDefaultConstants(
 				p.getVars(), modifiableGlobalsCallee, hierFormula);
 		
 		// rename oldvars of globals that are not modifiable by caller to 
 		// default constants of nonOldVar
-		String caller = m_AssertedAction.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobalVariableManager.
+		String caller = mAssertedAction.getSucceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(caller);
 		hierFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
 				p.getVars(), modifiableGlobalsCaller, hierFormula);
 		
 		//rename vars which are assigned on return to Hier vars
 		hierFormula = renameVarsToHierConstants(p.getVars(), hierFormula);
-		if (m_UnletTerms ) {
+		if (mUnletTerms ) {
 			hierFormula = (new FormulaUnLet()).unlet(hierFormula);
 		}
 		
 		//TODO auxvars
 		assert hierFormula.getFreeVars().length == 0;
 		
-		if (m_UseNamedTerms) {
+		if (mUseNamedTerms) {
 			Annotation annot = new Annotation(":named", s_IdHierarchicalPrecondition);
-			hierFormula = m_ManagedScript.annotate(this, hierFormula, annot);
+			hierFormula = mManagedScript.annotate(this, hierFormula, annot);
 		}
-		LBool quickCheck = m_ManagedScript.assertTerm(this, hierFormula);
+		LBool quickCheck = mManagedScript.assertTerm(this, hierFormula);
 		
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return quickCheck;
 	}
 	
@@ -512,7 +512,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 				if (modifiableGlobalsCaller.contains(bnov) && 
 						!modifiableGlobalsCallee.contains(bnov)) {
 					Term hierConst = getOrConstructHierConstant(bnov);
-					Term conjunct = SmtUtils.binaryEquality(m_Boogie2Smt.getScript(), bv.getDefaultConstant(), hierConst);
+					Term conjunct = SmtUtils.binaryEquality(mBoogie2Smt.getScript(), bv.getDefaultConstant(), hierConst);
 					conjunction.add(conjunct);
 				}
 			}
@@ -522,57 +522,57 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 	
 	private void unAssertHierPred() {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedHier != null : "No HierPred asserted";
-		assert (m_AssertedAction instanceof IReturnAction) : "Wrong kind of action";
-		m_AssertedHier = null;
-		m_ManagedScript.pop(this, 1);
-		m_HierConstants.endScope();
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedHier != null : "No HierPred asserted";
+		assert (mAssertedAction instanceof IReturnAction) : "Wrong kind of action";
+		mAssertedHier = null;
+		mManagedScript.pop(this, 1);
+		mHierConstants.endScope();
 	}
 	
 	
 	private LBool assertPostcond_Internal(IPredicate p) {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedPrecond != null;
-		assert m_AssertedAction != null;
-		assert (m_AssertedAction instanceof IInternalAction) : "Wrong kind of action";
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		m_ManagedScript.push(this, 1);
-		m_AssertedPostcond = p;
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedPrecond != null;
+		assert mAssertedAction != null;
+		assert (mAssertedAction instanceof IInternalAction) : "Wrong kind of action";
+		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
+		mManagedScript.push(this, 1);
+		mAssertedPostcond = p;
 		
 		//OldVars renamed (depending on modifiability)
 		//All variables get index 0 
 		//assigned vars (locals and globals) get index 1
 		//other vars get index 0
-		Set<BoogieVar> assignedVars = ((IInternalAction) m_AssertedAction).getTransformula().getAssignedVars();
+		Set<BoogieVar> assignedVars = ((IInternalAction) mAssertedAction).getTransformula().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
-		String succProc = m_AssertedAction.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobalVariableManager.getModifiedBoogieVars(succProc);
+		String succProc = mAssertedAction.getSucceedingProcedure();
+		Set<BoogieVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(succProc);
 		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(p.getVars(), modifiableGlobals, renamedFormula);
 		renamedFormula = renameVarsToDefaultConstants(p.getVars(), renamedFormula);
-		if (m_UnletTerms ) {
+		if (mUnletTerms ) {
 			renamedFormula = (new FormulaUnLet()).unlet(renamedFormula);
 		}
 		assert renamedFormula.getFreeVars().length == 0;
-		Term negation = m_ManagedScript.term(this, "not", renamedFormula);
-		if (m_UseNamedTerms) {
+		Term negation = mManagedScript.term(this, "not", renamedFormula);
+		if (mUseNamedTerms) {
 			Annotation annot = new Annotation(":named", s_IdNegatedPostcondition);
-			negation = m_ManagedScript.annotate(this, negation, annot);
+			negation = mManagedScript.annotate(this, negation, annot);
 		}
-		LBool isSat = m_ManagedScript.assertTerm(this, negation);
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		LBool isSat = mManagedScript.assertTerm(this, negation);
+		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return isSat;
 	}
 	
 
 	private LBool assertPostcond_Call(IPredicate p) {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedPrecond != null;
-		assert m_AssertedAction != null;
-		assert (m_AssertedAction instanceof ICallAction) : "Wrong kind of action";
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		m_ManagedScript.push(this, 1);
-		m_AssertedPostcond = p;
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedPrecond != null;
+		assert mAssertedAction != null;
+		assert (mAssertedAction instanceof ICallAction) : "Wrong kind of action";
+		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
+		mManagedScript.push(this, 1);
+		mAssertedPostcond = p;
 		
 		Set<BoogieVar> boogieVars = p.getVars();
 		// rename oldVars to default constants of non-oldvars
@@ -581,39 +581,39 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		// rename remaining variables
 		renamedFormula = renameVarsToPrimedConstants(boogieVars, renamedFormula);
 		renamedFormula = renameVarsToDefaultConstants(p.getVars(), renamedFormula);
-		if (m_UnletTerms ) {
+		if (mUnletTerms ) {
 			renamedFormula = (new FormulaUnLet()).unlet(renamedFormula);
 		}
 		assert renamedFormula.getFreeVars().length == 0;
-		Term negation = m_ManagedScript.term(this, "not", renamedFormula);
-		if (m_UseNamedTerms) {
+		Term negation = mManagedScript.term(this, "not", renamedFormula);
+		if (mUseNamedTerms) {
 			String name = "negatedPostcondition";
 			Annotation annot = new Annotation(":named", name);
-			negation = m_ManagedScript.annotate(this, negation, annot);
+			negation = mManagedScript.annotate(this, negation, annot);
 		}
-		LBool isSat = m_ManagedScript.assertTerm(this, negation);
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		LBool isSat = mManagedScript.assertTerm(this, negation);
+		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return isSat;
 	}
 
 
 
 	private LBool assertPostcond_Return(IPredicate p) {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedPrecond != null;
-		assert (m_AssertedAction instanceof IReturnAction) : "Wrong kind of action";
-		assert m_AssertedHier != null;
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		m_ManagedScript.push(this, 1);
-		m_HierConstants.beginScope();
-		m_AssertedPostcond = p;
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedPrecond != null;
+		assert (mAssertedAction instanceof IReturnAction) : "Wrong kind of action";
+		assert mAssertedHier != null;
+		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
+		mManagedScript.push(this, 1);
+		mHierConstants.beginScope();
+		mAssertedPostcond = p;
 		
 		//rename assignedVars to primed vars
-		Set<BoogieVar> assignedVars = ((IReturnAction) m_AssertedAction).getAssignmentOfReturn().getAssignedVars();
+		Set<BoogieVar> assignedVars = ((IReturnAction) mAssertedAction).getAssignmentOfReturn().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
 		
-		String callee = m_AssertedAction.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobalVariableManager.
+		String callee = mAssertedAction.getPreceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		
 		//rename modifiable globals to default constants
@@ -625,8 +625,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		
 		// rename oldvars of globals that are not modifiable by caller to 
 		// default constants of nonOldVar
-		String caller = m_AssertedAction.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobalVariableManager.
+		String caller = mAssertedAction.getSucceedingProcedure();
+		Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(caller);
 		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
 				p.getVars(), modifiableGlobalsCaller, renamedFormula);
@@ -637,33 +637,33 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		//rename remaining vars to Hier vars
 		renamedFormula = renameVarsToHierConstants(p.getVars(), renamedFormula);
 		
-		if (m_UnletTerms ) {
+		if (mUnletTerms ) {
 			renamedFormula = (new FormulaUnLet()).unlet(renamedFormula);
 		}
 		assert renamedFormula.getFreeVars().length == 0;
-		Term negation = m_ManagedScript.term(this, "not", renamedFormula);
+		Term negation = mManagedScript.term(this, "not", renamedFormula);
 
-		if (m_UseNamedTerms) {
+		if (mUseNamedTerms) {
 			String name = "negatedPostcondition";
 			Annotation annot = new Annotation(":named", name);
-			negation = m_ManagedScript.annotate(this, negation, annot);
+			negation = mManagedScript.annotate(this, negation, annot);
 		}
-		LBool isSat = m_ManagedScript.assertTerm(this, negation);
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		LBool isSat = mManagedScript.assertTerm(this, negation);
+		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return isSat;
 	}
 	
 	private void unAssertPostcondition() {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedAction != null : "Assert CodeBlock first!";
-		assert m_AssertedPrecond != null : "Assert precond first!";
-		assert m_AssertedPostcond != null : "Assert postcond first!";
-		m_AssertedPostcond = null;
-		m_ManagedScript.pop(this, 1);
-		if (m_AssertedAction instanceof IReturnAction) {
-			assert m_HierConstants != null : "Assert hierPred first!";
-			assert m_AssertedHier != null : "Assert hierPred first!";
-			m_HierConstants.endScope();
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedAction != null : "Assert CodeBlock first!";
+		assert mAssertedPrecond != null : "Assert precond first!";
+		assert mAssertedPostcond != null : "Assert postcond first!";
+		mAssertedPostcond = null;
+		mManagedScript.pop(this, 1);
+		if (mAssertedAction instanceof IReturnAction) {
+			assert mHierConstants != null : "Assert hierPred first!";
+			assert mAssertedHier != null : "Assert hierPred first!";
+			mHierConstants.endScope();
 		}
 	}
 
@@ -671,26 +671,26 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 	
 	protected Validity checkValidity() {
-		assert m_ManagedScript.isLockOwner(this);
-		assert m_AssertedAction != null : "Assert CodeBlock first!";
-		assert m_AssertedPrecond != null : "Assert precond first! ";
-		assert m_AssertedPostcond != null : "Assert postcond first! ";
-		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		final LBool isSat = m_ManagedScript.checkSat(this);
+		assert mManagedScript.isLockOwner(this);
+		assert mAssertedAction != null : "Assert CodeBlock first!";
+		assert mAssertedPrecond != null : "Assert precond first! ";
+		assert mAssertedPostcond != null : "Assert postcond first! ";
+		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
+		final LBool isSat = mManagedScript.checkSat(this);
 		switch (isSat) {
 		case SAT:
-			m_EdgeCheckerBenchmark.getSolverCounterSat().incRe();
+			mEdgeCheckerBenchmark.getSolverCounterSat().incRe();
 			break;
 		case UNKNOWN:
-			m_EdgeCheckerBenchmark.getSolverCounterUnknown().incRe();
+			mEdgeCheckerBenchmark.getSolverCounterUnknown().incRe();
 			break;
 		case UNSAT:
-			m_EdgeCheckerBenchmark.getSolverCounterUnsat().incRe();
+			mEdgeCheckerBenchmark.getSolverCounterUnsat().incRe();
 			break;
 		default:
 			throw new AssertionError("unknown case");
 		}
-		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return IHoareTripleChecker.lbool2validity(isSat);
 	}
 	
@@ -709,7 +709,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	
@@ -722,7 +722,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	
@@ -735,7 +735,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 
 
@@ -748,7 +748,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	private Term renameVarsToHierConstants(Map<BoogieVar, TermVariable> bv2tv, Term formula) {
@@ -760,7 +760,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	private Term renameAuxVarsToCorrespondingConstants(Set<TermVariable> auxVars,
@@ -769,24 +769,24 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		ArrayList<Term> replacers = new ArrayList<Term>();
 		for (TermVariable tv : auxVars) {
 			replacees.add(tv);
-			Term correspondingConstant = m_Boogie2Smt.
+			Term correspondingConstant = mBoogie2Smt.
 					getVariableManager().getCorrespondingConstant(tv); 
 			replacers.add(correspondingConstant);
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 
 
 	private Term getOrConstructHierConstant(BoogieVar bv) {
-		Term preHierConstant = m_HierConstants.get(bv);
+		Term preHierConstant = mHierConstants.get(bv);
 		if (preHierConstant == null) {
 			String name = "c_" + bv.getTermVariable().getName() + "_Hier";
 			Sort sort = bv.getTermVariable().getSort();
-			m_ManagedScript.declareFun(this, name, new Sort[0], sort);
-			preHierConstant = m_ManagedScript.term(this, name);
-			m_HierConstants.put(bv, preHierConstant);
+			mManagedScript.declareFun(this, name, new Sort[0], sort);
+			preHierConstant = mManagedScript.term(this, name);
+			mHierConstants.put(bv, preHierConstant);
 		}
 		return preHierConstant;
 	}
@@ -817,7 +817,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	
@@ -845,7 +845,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 
 	
@@ -875,7 +875,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	
@@ -898,14 +898,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		return m_ManagedScript.let(this, vars , values, formula);
+		return mManagedScript.let(this, vars , values, formula);
 	}
 	
 	
 	public boolean isAssertionStackEmpty() {
-		if (m_AssertedAction == null) {
-			assert m_AssertedPrecond == null;
-			assert m_AssertedHier == null;
+		if (mAssertedAction == null) {
+			assert mAssertedPrecond == null;
+			assert mAssertedHier == null;
 			return true;
 		} else {
 			return false;

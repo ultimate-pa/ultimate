@@ -43,12 +43,12 @@ public class lr_item implements Comparable<lr_item> {
    */
   private lr_item(production prod, int pos)
     {
-      assert prod != null: "Attempt to create an lr_item_core with a null production";
+      assert prod != null: "Attempt to create an lr_itemcore with a null production";
 
       the_production = prod;
 
       assert pos >= 0 && pos <= the_production.rhs_length():
-	  "Attempt to create an lr_item_core with a bad dot position";
+	  "Attempt to create an lr_itemcore with a bad dot position";
 
       dot_pos = pos;
     } 
@@ -108,7 +108,7 @@ public class lr_item implements Comparable<lr_item> {
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-  /** Get the lr_item_core that results from shifting the dot one 
+  /** Get the lr_itemcore that results from shifting the dot one 
    *  position to the right. 
    */
   public lr_item shift_item()

@@ -92,22 +92,22 @@ public class QuantifiedFormula extends Term {
 	}
 
 	@Override
-	public void toStringHelper(ArrayDeque<Object> m_Todo) {
+	public void toStringHelper(ArrayDeque<Object> mTodo) {
 		// Add subterm to stack.
-		m_Todo.addLast(")");
-		m_Todo.addLast(getSubformula());
-		m_Todo.addLast(")) ");
+		mTodo.addLast(")");
+		mTodo.addLast(getSubformula());
+		mTodo.addLast(")) ");
 		
 		// Add variables
 		TermVariable[] vars = getVariables();
 		for (int i = vars.length - 1; i > 0; i--) {
-			m_Todo.addLast(vars[i].getSort());
-			m_Todo.addLast(") (" + vars[i] + " ");
+			mTodo.addLast(vars[i].getSort());
+			mTodo.addLast(") (" + vars[i] + " ");
 		}
-		m_Todo.addLast(vars[0].getSort());
+		mTodo.addLast(vars[0].getSort());
 
 		// Print out the quantifier.
-		m_Todo.addLast("(" + (getQuantifier() == EXISTS ? "exists" : "forall")
+		mTodo.addLast("(" + (getQuantifier() == EXISTS ? "exists" : "forall")
 				+ " ((" + vars[0] + " ");
 	}
 }

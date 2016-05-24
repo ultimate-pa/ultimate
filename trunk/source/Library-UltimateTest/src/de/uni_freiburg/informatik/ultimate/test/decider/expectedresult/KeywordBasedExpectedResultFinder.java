@@ -54,30 +54,30 @@ import java.util.Set;
  * @param <OVERALL_RESULT>
  */
 public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpectedResultFinder<OVERALL_RESULT> {
-	private final Map<String, OVERALL_RESULT> m_FilenameKeywords;
-	private final Map<String, OVERALL_RESULT> m_PathKeywords;
-	private final Map<String, OVERALL_RESULT> m_FirstlineKeywords;
+	private final Map<String, OVERALL_RESULT> mFilenameKeywords;
+	private final Map<String, OVERALL_RESULT> mPathKeywords;
+	private final Map<String, OVERALL_RESULT> mFirstlineKeywords;
 
-	OVERALL_RESULT m_ExpectedResult;
-	ExpectedResultFinderStatus m_EvaluationStatus;
-	String m_ExpectedResultEvaluation;
+	OVERALL_RESULT mExpectedResult;
+	ExpectedResultFinderStatus mEvaluationStatus;
+	String mExpectedResultEvaluation;
 
 	public KeywordBasedExpectedResultFinder(Map<String, OVERALL_RESULT> filenameKeywords,
 			Map<String, OVERALL_RESULT> pathKeywords, Map<String, OVERALL_RESULT> firstlineKeywords) {
 		if (filenameKeywords == null) {
-			m_FilenameKeywords = Collections.emptyMap();
+			mFilenameKeywords = Collections.emptyMap();
 		} else {
-			m_FilenameKeywords = filenameKeywords;
+			mFilenameKeywords = filenameKeywords;
 		}
 		if (pathKeywords == null) {
-			m_PathKeywords = Collections.emptyMap();
+			mPathKeywords = Collections.emptyMap();
 		} else {
-			m_PathKeywords = pathKeywords;
+			mPathKeywords = pathKeywords;
 		}
 		if (firstlineKeywords == null) {
-			m_FirstlineKeywords = Collections.emptyMap();
+			mFirstlineKeywords = Collections.emptyMap();
 		} else {
-			m_FirstlineKeywords = firstlineKeywords;
+			mFirstlineKeywords = firstlineKeywords;
 		}
 	}
 
@@ -87,13 +87,13 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpect
 		Set<OVERALL_RESULT> expectedResult = new HashSet<OVERALL_RESULT>();
 		if (file != null) {
 			String filename = file.getName();
-			for (Entry<String, OVERALL_RESULT> entry : m_FilenameKeywords.entrySet()) {
+			for (Entry<String, OVERALL_RESULT> entry : mFilenameKeywords.entrySet()) {
 				if (filename.matches(entry.getKey())) {
 					expectedResult.add(entry.getValue());
 				}
 			}
 			String folder = file.getParent();
-			for (Entry<String, OVERALL_RESULT> entry : m_PathKeywords.entrySet()) {
+			for (Entry<String, OVERALL_RESULT> entry : mPathKeywords.entrySet()) {
 				if (folder.contains(entry.getKey())) {
 					expectedResult.add(entry.getValue());
 				}
@@ -102,7 +102,7 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpect
 			// 2015-10-04 Matthias: firstline != null is a workaround that I used
 			// for emtpy files (SV-COMP benchmark set contained empty files).
 			if (firstline != null) {
-				for (Entry<String, OVERALL_RESULT> entry : m_FirstlineKeywords.entrySet()) {
+				for (Entry<String, OVERALL_RESULT> entry : mFirstlineKeywords.entrySet()) {
 					if (firstline.contains(entry.getKey())) {
 						expectedResult.add(entry.getValue());
 					}
@@ -110,32 +110,32 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpect
 			}
 		}
 		if (expectedResult.size() == 0) {
-			m_ExpectedResult = null;
-			m_EvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
-			m_ExpectedResultEvaluation = "Neither filename nor path nor first line contains a keyword that defines the expected result";
+			mExpectedResult = null;
+			mEvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
+			mExpectedResultEvaluation = "Neither filename nor path nor first line contains a keyword that defines the expected result";
 		} else if (expectedResult.size() == 1) {
-			m_ExpectedResult = expectedResult.iterator().next();
-			m_EvaluationStatus = ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND;
-			m_ExpectedResultEvaluation = "Expected result: " + m_ExpectedResult;
+			mExpectedResult = expectedResult.iterator().next();
+			mEvaluationStatus = ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND;
+			mExpectedResultEvaluation = "Expected result: " + mExpectedResult;
 		} else {
-			m_EvaluationStatus = ExpectedResultFinderStatus.ERROR;
-			m_ExpectedResultEvaluation = "Error: annotation given by keywords is inconsitent";
+			mEvaluationStatus = ExpectedResultFinderStatus.ERROR;
+			mExpectedResultEvaluation = "Error: annotation given by keywords is inconsitent";
 		}
 	}
 
 	@Override
 	public String getExpectedResultFinderMessage() {
-		return m_ExpectedResultEvaluation;
+		return mExpectedResultEvaluation;
 	}
 
 	@Override
 	public OVERALL_RESULT getExpectedResult() {
-		return m_ExpectedResult;
+		return mExpectedResult;
 	}
 
 	@Override
 	public ExpectedResultFinderStatus getExpectedResultFinderStatus() {
-		return m_EvaluationStatus;
+		return mEvaluationStatus;
 	}
 
 }

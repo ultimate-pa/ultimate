@@ -66,7 +66,7 @@ public class StatementListAST extends AtsASTNode {
 	@Override
 	public String getAsString() {
 		StringBuilder builder = new StringBuilder();
-		for (AtsASTNode n : m_children) {
+		for (AtsASTNode n : mchildren) {
 			builder.append(n.getAsString() + ";\n");
 		}
 		return builder.toString();

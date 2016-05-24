@@ -43,22 +43,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVaria
  */
 public class ReplacementVarFactory {
 	
-	private final IFreshTermVariableConstructor m_VariableManager;
-	private final Map<Term, ReplacementVar> m_RepVarMapping = 
+	private final IFreshTermVariableConstructor mVariableManager;
+	private final Map<Term, ReplacementVar> mRepVarMapping = 
 			new HashMap<Term, ReplacementVar>();
-	private final Map<Term, Map<Object, LocalReplacementVar>> m_LocalRepVarMapping = 
+	private final Map<Term, Map<Object, LocalReplacementVar>> mLocalRepVarMapping = 
 			new HashMap<Term, Map<Object, LocalReplacementVar>>();
-	private final Map<String, TermVariable> m_AuxVarMapping = 
+	private final Map<String, TermVariable> mAuxVarMapping = 
 			new HashMap<String, TermVariable>();
 	/**
 	 * Maps each BoogieVar to a unique BoogieVarWrapper.
 	 */
-	private final Map<BoogieVar, BoogieVarWrapper> m_BoogieVarWrappers
+	private final Map<BoogieVar, BoogieVarWrapper> mBoogieVarWrappers
 		= new HashMap<BoogieVar, BoogieVarWrapper>();
 
 	public ReplacementVarFactory(IFreshTermVariableConstructor variableManager) {
 		super();
-		m_VariableManager = variableManager;
+		mVariableManager = variableManager;
 	}
 
 	/**
@@ -66,10 +66,10 @@ public class ReplacementVarFactory {
 	 * definition. Construct this ReplacementVar if it does not exist yet.
 	 */
 	public ReplacementVar getOrConstuctReplacementVar(Term definition) {
-		ReplacementVar repVar = m_RepVarMapping.get(definition);
+		ReplacementVar repVar = mRepVarMapping.get(definition);
 		if (repVar == null) {
 			repVar = new ReplacementVar(definition.toString(), definition);
-			m_RepVarMapping.put(definition, repVar);
+			mRepVarMapping.put(definition, repVar);
 		}
 		return repVar;
 	}
@@ -80,10 +80,10 @@ public class ReplacementVarFactory {
 	 * Construct this LocalReplacementVar if it does not exist yet.
 	 */
 	public ReplacementVar getOrConstuctLocalReplacementVar(Term definition, Object location) {
-		Map<Object, LocalReplacementVar> locToRepVar = m_LocalRepVarMapping.get(definition);
+		Map<Object, LocalReplacementVar> locToRepVar = mLocalRepVarMapping.get(definition);
 		if (definition == null) {
 			locToRepVar = new HashMap<Object, LocalReplacementVar>();
-			m_LocalRepVarMapping.put(definition, locToRepVar);
+			mLocalRepVarMapping.put(definition, locToRepVar);
 		}
 		LocalReplacementVar repVar = locToRepVar.get(location);
 		if (repVar == null) {
@@ -98,10 +98,10 @@ public class ReplacementVarFactory {
 	 * Construct and return a unique TermVariable with the given name.
 	 */
 	public TermVariable getOrConstructAuxVar(String name, Sort sort) {
-		TermVariable auxVar = m_AuxVarMapping.get(name);
+		TermVariable auxVar = mAuxVarMapping.get(name);
 		if (auxVar == null) {
-			auxVar = m_VariableManager.constructFreshTermVariable(name, sort);
-			m_AuxVarMapping.put(name, auxVar);
+			auxVar = mVariableManager.constructFreshTermVariable(name, sort);
+			mAuxVarMapping.put(name, auxVar);
 		} else {
 			if (sort != auxVar.getSort()) {
 				throw new AssertionError("cannot construct auxVars with same name and different sort");
@@ -115,11 +115,11 @@ public class ReplacementVarFactory {
 	 * Get unique BoogieVarWrapper for a given BoogieVar.
 	 */
 	public RankVar getOrConstuctBoogieVarWrapper(BoogieVar boogieVar) {
-		if (m_BoogieVarWrappers.containsKey(boogieVar)) {
-			return m_BoogieVarWrappers.get(boogieVar);
+		if (mBoogieVarWrappers.containsKey(boogieVar)) {
+			return mBoogieVarWrappers.get(boogieVar);
 		} else {
 			BoogieVarWrapper wrapper = new BoogieVarWrapper(boogieVar);
-			m_BoogieVarWrappers.put(boogieVar, wrapper);
+			mBoogieVarWrappers.put(boogieVar, wrapper);
 			return wrapper;
 		}
 	}

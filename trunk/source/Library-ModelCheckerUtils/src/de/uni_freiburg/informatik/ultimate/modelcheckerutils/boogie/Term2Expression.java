@@ -84,18 +84,18 @@ public class Term2Expression implements Serializable {
 	private static final long serialVersionUID = -4519646474900935398L;
 
 
-	private final Script m_Script;
+	private final Script mScript;
 	
-	private final ScopedHashMap<TermVariable, VarList> m_QuantifiedVariables =
+	private final ScopedHashMap<TermVariable, VarList> mQuantifiedVariables =
 			new ScopedHashMap<TermVariable, VarList>();
 
 	
-	private int m_freshIdentiferCounter = 0;
+	private int mfreshIdentiferCounter = 0;
 
 
-	private final TypeSortTranslator m_TypeSortTranslator;
+	private final TypeSortTranslator mTypeSortTranslator;
 	
-	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
+	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	
 
 	
@@ -103,15 +103,15 @@ public class Term2Expression implements Serializable {
 	public Term2Expression(TypeSortTranslator tsTranslation, 
 			Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
 
-		m_TypeSortTranslator = tsTranslation;
-		m_Boogie2SmtSymbolTable = boogie2SmtSymbolTable;
-		m_Script = boogie2SmtSymbolTable.getScript();
+		mTypeSortTranslator = tsTranslation;
+		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
+		mScript = boogie2SmtSymbolTable.getScript();
 	}
 
-	Set<IdentifierExpression> m_freeVariables = new HashSet<IdentifierExpression>();
+	Set<IdentifierExpression> mfreeVariables = new HashSet<IdentifierExpression>();
 	
 	private String getFreshIdenfier() {
-		return "freshIdentifier" + m_freshIdentiferCounter++;
+		return "freshIdentifier" + mfreshIdentiferCounter++;
 	}
 	
 	public Expression translate(Term term) {
@@ -142,7 +142,7 @@ public class Term2Expression implements Serializable {
 	
 	private Expression translate(ApplicationTerm term) {
 		FunctionSymbol symb = term.getFunction();
-		IType type = m_TypeSortTranslator.getType(symb.getReturnSort());
+		IType type = mTypeSortTranslator.getType(symb.getReturnSort());
 		Term[] termParams = term.getParameters();
 		if (symb.isIntern() && symb.getName().equals("select")) {
 			return translateSelect(term);
@@ -156,18 +156,18 @@ public class Term2Expression implements Serializable {
 			params[i] = translate(termParams[i]);
 		}
 		if (symb.getParameterSorts().length == 0) {
-			if (term == m_Script.term("true")) {
-				IType booleanType = m_TypeSortTranslator.getType(m_Script.sort("Bool"));
+			if (term == mScript.term("true")) {
+				IType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, true);
 			}
-			if (term == m_Script.term("false")) {
-				IType booleanType = m_TypeSortTranslator.getType(m_Script.sort("Bool"));
+			if (term == mScript.term("false")) {
+				IType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, false);
 			}
-			BoogieConst boogieConst = m_Boogie2SmtSymbolTable.getBoogieConst(term);
+			BoogieConst boogieConst = mBoogie2SmtSymbolTable.getBoogieConst(term);
 			if (boogieConst != null) {
 				IdentifierExpression ie = new IdentifierExpression(null, 
-						m_TypeSortTranslator.getType(term.getSort()),
+						mTypeSortTranslator.getType(term.getSort()),
 						boogieConst.getIdentifier(),
 						new DeclarationInformation(StorageClass.GLOBAL, null));
 				return ie;
@@ -181,7 +181,7 @@ public class Term2Expression implements Serializable {
 					&& !symb.getName().equals("=") && !symb.getName().equals("distinct")) {
 				if (symb.getName().equals("extract")) {
 					return translateBitvectorAccess(type, term);
-				} else if (m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
+				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 					return translateWithSymbolTable(symb, type, termParams); 
 				} else {
 					throw new UnsupportedOperationException("translation of " + symb + 
@@ -220,7 +220,7 @@ public class Term2Expression implements Serializable {
 							" which is neither leftAssoc, rightAssoc, chainable, or pairwise.");
 				}
 			}
-		} else if (m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
+		} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 			return translateWithSymbolTable(symb, type, termParams); 
 		} else {
 			throw new UnsupportedOperationException("translation of " + symb + 
@@ -243,7 +243,7 @@ public class Term2Expression implements Serializable {
 	 * Boogie function application.
 	 */
 	private Expression translateWithSymbolTable(FunctionSymbol symb, IType type, Term[] termParams) {
-		String identifier = m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
+		String identifier = mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
 		Expression[] arguments = new Expression[termParams.length];
 		for (int i=0; i<termParams.length; i++) {
 			arguments[i] = translate(termParams[i]);
@@ -260,7 +260,7 @@ public class Term2Expression implements Serializable {
 		String name = term.getFunction().getName();
 		assert name.startsWith("bv");
 		String decimalValue = name.substring(2, name.length());
-		IType type = m_TypeSortTranslator.getType(term.getSort());
+		IType type = mTypeSortTranslator.getType(term.getSort());
 		BigInteger length = term.getSort().getIndices()[0];
 		return new BitvecLiteral(null, type , decimalValue, length.intValue());
 	}
@@ -321,7 +321,7 @@ public class Term2Expression implements Serializable {
 
 	private Expression translate(ConstantTerm term) {
 		Object value = term.getValue();
-		IType type = m_TypeSortTranslator.getType(term.getSort());
+		IType type = mTypeSortTranslator.getType(term.getSort());
 		if (term.getSort().getRealSort().getName().equals("BitVec")) {
 			BigInteger[] indices = term.getSort().getIndices();
 			if (indices.length !=1) {
@@ -363,19 +363,19 @@ public class Term2Expression implements Serializable {
 	}
 	
 	private Expression translate(QuantifiedFormula term) {
-		m_QuantifiedVariables.beginScope();
+		mQuantifiedVariables.beginScope();
 		VarList[] parameters = new VarList[term.getVariables().length];
 		int offset = 0;
 		for (TermVariable tv : term.getVariables()) {
-			IType type = m_TypeSortTranslator.getType(tv.getSort());
+			IType type = mTypeSortTranslator.getType(tv.getSort());
 			String[] identifiers = { tv.getName() };
 			//FIXME: Matthias: How can I get the ASTType of type?
 			VarList varList = new VarList(null, identifiers, null);
 			parameters[offset] = varList;
-			m_QuantifiedVariables.put(tv, varList);
+			mQuantifiedVariables.put(tv, varList);
 			offset++;
 		}
-		IType type = m_TypeSortTranslator.getType(term.getSort());
+		IType type = mTypeSortTranslator.getType(term.getSort());
 		assert (term.getQuantifier() == QuantifiedFormula.FORALL || 
 							term.getQuantifier() == QuantifiedFormula.EXISTS);
 		boolean isUniversal = term.getQuantifier() == QuantifiedFormula.FORALL;
@@ -405,33 +405,33 @@ public class Term2Expression implements Serializable {
 		Expression subformula = translate(subTerm);
 		QuantifierExpression result = new QuantifierExpression(null, type, 
 					isUniversal, typeParams, parameters, attributes, subformula);
-		m_QuantifiedVariables.endScope();
+		mQuantifiedVariables.endScope();
 		return result;
 	}
 	
 	private Expression translate(TermVariable term) {
 		Expression result;
-		IType type = m_TypeSortTranslator.getType(term.getSort());
-		if (m_QuantifiedVariables.containsKey(term)) {
-			VarList varList = m_QuantifiedVariables.get(term);
+		IType type = mTypeSortTranslator.getType(term.getSort());
+		if (mQuantifiedVariables.containsKey(term)) {
+			VarList varList = mQuantifiedVariables.get(term);
 			assert varList.getIdentifiers().length == 1;
 			String id = varList.getIdentifiers()[0];
 			result = new IdentifierExpression(null, type, id,
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
-		} else if (m_Boogie2SmtSymbolTable.getBoogieVar(term) == null) {
+		} else if (mBoogie2SmtSymbolTable.getBoogieVar(term) == null) {
 			//Case where term contains some auxilliary variable that was 
 			//introduced during model checking. 
 			//TODO: Matthias: I think we want closed expressions, we should
 			//quantify auxilliary variables
 			result = new IdentifierExpression(null, type, getFreshIdenfier(),
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
-			m_freeVariables.add((IdentifierExpression) result);
+			mfreeVariables.add((IdentifierExpression) result);
 		}
 		else {
-			BoogieVar bv = m_Boogie2SmtSymbolTable.getBoogieVar(term);
-			ILocation loc = m_Boogie2SmtSymbolTable.getAstNode(bv).getLocation();
+			BoogieVar bv = mBoogie2SmtSymbolTable.getBoogieVar(term);
+			ILocation loc = mBoogie2SmtSymbolTable.getAstNode(bv).getLocation();
 			DeclarationInformation declInfo = 
-					m_Boogie2SmtSymbolTable.getDeclarationInformation(bv);
+					mBoogie2SmtSymbolTable.getDeclarationInformation(bv);
 			result = new IdentifierExpression(loc, type, bv.getIdentifier(), 
 					declInfo);
 			if (bv.isOldvar()) {

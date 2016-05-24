@@ -53,16 +53,16 @@ public final class Array {
 	 * <p>
 	 * BEWRAE: stupid System.arraycopy() cant hande overlapping arrays correctly
 	 */
-	public static final void copy(int [] from, int []to, int len, int from_offset, int to_offset) {
+	public static final void copy(int [] from, int []to, int len, int fromoffset, int to_offset) {
 		if(from == to) {
-			if(from_offset < to_offset &&( from_offset + len >= to_offset )) {
-				fast_copy_backward(from, from_offset, to, to_offset, len);
+			if(fromoffset < to_offset &&( fromoffset + len >= to_offset )) {
+				fast_copy_backward(from, fromoffset, to, to_offset, len);
 				return;
 			}
 			// XXX: 1. do we need to repeat this when its the other way around?
 			// XXX: 2. how about very small diffrences (like 1 or 2 elements) ???
 		}
-		fast_copy(from, from_offset, to, to_offset, len);
+		fast_copy(from, fromoffset, to, to_offset, len);
 	}
 
 	// ----------------------------------------------------------------------------------------

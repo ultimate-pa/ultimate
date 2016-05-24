@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 public class AutomataScriptTestResultDecider implements ITestResultDecider {
 
-	private OverallResult m_Category;
-	private String m_ErrorMessage;
+	private OverallResult mCategory;
+	private String mErrorMessage;
 
 	@Override
 	public TestResult getTestResult(IUltimateServiceProvider  services) {
@@ -54,34 +54,34 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 		if (asior == null) {
 			throw new AssertionError("no overall result");
 		} else {
-			m_Category = asior.getOverallResult();
-			if (m_Category == OverallResult.EXCEPTION_OR_ERROR) {
-				m_ErrorMessage = asior.getErrorMessage();
+			mCategory = asior.getOverallResult();
+			if (mCategory == OverallResult.EXCEPTION_OR_ERROR) {
+				mErrorMessage = asior.getErrorMessage();
 			} else {
-				m_ErrorMessage = null;
+				mErrorMessage = null;
 			}
 		}
-		return getTestResultFromCategory(m_Category);
+		return getTestResultFromCategory(mCategory);
 	}
 
 	@Override
 	public TestResult getTestResult(IUltimateServiceProvider service, Throwable e) {
-		m_Category = OverallResult.EXCEPTION_OR_ERROR;
-		return getTestResultFromCategory(m_Category);
+		mCategory = OverallResult.EXCEPTION_OR_ERROR;
+		return getTestResultFromCategory(mCategory);
 	}
 
 	@Override
 	public String getResultMessage() {
-		if (m_Category == OverallResult.EXCEPTION_OR_ERROR) {
-			return m_Category.toString() + " " + m_ErrorMessage;
+		if (mCategory == OverallResult.EXCEPTION_OR_ERROR) {
+			return mCategory.toString() + " " + mErrorMessage;
 		} else {
-			return m_Category.toString();
+			return mCategory.toString();
 		}
 	}
 
 	@Override
 	public String getResultCategory() {
-		return m_Category.toString();
+		return mCategory.toString();
 	}
 
 	@Override

@@ -84,15 +84,15 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
 
-	private final ILogger m_Logger;
-	private final IUltimateServiceProvider m_Services;
-	private final IToolchainStorage m_ToolchainStorage;
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage mToolchainStorage;
 
 	public TraceAbstractionStarter(IUltimateServiceProvider services, IToolchainStorage storage, RootNode rcfgRootNode,
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
-		m_Services = services;
-		m_ToolchainStorage = storage;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mServices = services;
+		mToolchainStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
 	}
 
@@ -100,9 +100,9 @@ public class TraceAbstractionStarter {
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
 	 * Successors of this node exactly the initial nodes of procedures.
 	 */
-	private IElement m_RootOfNewModel = null;
-	private Result m_OverallResult;
-	private IElement m_Artifact;
+	private IElement mRootOfNewModel = null;
+	private Result mOverallResult;
+	private IElement mArtifact;
 
 	private void runCegarLoops(RootNode rcfgRootNode, NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		RootAnnot rootAnnot = rcfgRootNode.getRootAnnot();
@@ -116,7 +116,7 @@ public class TraceAbstractionStarter {
 		System.out.println(settings);
 
 		SmtManager smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(),
-				rootAnnot.getModGlobVarManager(), m_Services, interpolationModeSwitchNeeded(),
+				rootAnnot.getModGlobVarManager(), mServices, interpolationModeSwitchNeeded(),
 				rootAnnot.getManagedScript());
 		TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 
@@ -126,8 +126,8 @@ public class TraceAbstractionStarter {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		m_OverallResult = Result.SAFE;
-		m_Artifact = null;
+		mOverallResult = Result.SAFE;
+		mArtifact = null;
 
 		if (taPrefs.allErrorLocsAtOnce()) {
 			String name = "AllErrorsAtOnce";
@@ -138,13 +138,13 @@ public class TraceAbstractionStarter {
 				String name = errorLoc.getPosition();
 				ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
 				errorLocs.add(errorLoc);
-				m_Services.getProgressMonitorService().setSubtask(errorLoc.toString());
+				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
 				iterate(name, rcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs,
 						witnessAutomaton);
 			}
 		}
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
-		if (m_OverallResult == Result.SAFE) {
+		if (mOverallResult == Result.SAFE) {
 			final String longDescription;
 			if (errNodesOfAllProc.isEmpty()) {
 				longDescription = "We were not able to verify any"
@@ -157,14 +157,14 @@ public class TraceAbstractionStarter {
 			reportResult(result);
 		}
 
-		m_Logger.debug("Compute Hoare Annotation: " + taPrefs.computeHoareAnnotation());
-		m_Logger.debug("Overall result: " + m_OverallResult);
-		m_Logger.debug("Continue processing: " + m_Services.getProgressMonitorService().continueProcessing());
-		if (taPrefs.computeHoareAnnotation() && m_OverallResult != Result.TIMEOUT
-				&& m_Services.getProgressMonitorService().continueProcessing()) {
-			assert (new HoareAnnotationChecker(m_Services, rcfgRootNode, smtManager).isInductive());
+		mLogger.debug("Compute Hoare Annotation: " + taPrefs.computeHoareAnnotation());
+		mLogger.debug("Overall result: " + mOverallResult);
+		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
+		if (taPrefs.computeHoareAnnotation() && mOverallResult != Result.TIMEOUT
+				&& mServices.getProgressMonitorService().continueProcessing()) {
+			assert (new HoareAnnotationChecker(mServices, rcfgRootNode, smtManager).isInductive());
 
-			final IBacktranslationService backTranslatorService = m_Services.getBacktranslationService();
+			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			final Term trueterm = smtManager.getScript().term("true");
 
 			final Set<ProgramPoint> locsForLoopLocations = new HashSet<>();
@@ -212,7 +212,7 @@ public class TraceAbstractionStarter {
 			}
 		}
 		reportBenchmark(traceAbstractionBenchmark);
-		switch (m_OverallResult) {
+		switch (mOverallResult) {
 		case SAFE:
 			// s_Logger.warn("Program is correct");
 			// ResultNotifier.programCorrect();
@@ -222,18 +222,18 @@ public class TraceAbstractionStarter {
 			// ResultNotifier.programIncorrect();
 			break;
 		case TIMEOUT:
-			m_Logger.warn("Timeout");
+			mLogger.warn("Timeout");
 			// ResultNotifier
 			// .programUnknown("Timeout");
 			break;
 		case UNKNOWN:
-			m_Logger.warn("Unable to decide correctness. Please check the following counterexample manually.");
+			mLogger.warn("Unable to decide correctness. Please check the following counterexample manually.");
 			// ResultNotifier.programUnknown("Program might be incorrect, check"
 			// + " conterexample.");
 			break;
 		}
 
-		m_RootOfNewModel = m_Artifact;
+		mRootOfNewModel = mArtifact;
 	}
 
 	private void logNumberOfWitnessInvariants(Collection<ProgramPoint> errNodesOfAllProc) {
@@ -249,8 +249,8 @@ public class TraceAbstractionStarter {
 			}
 		}
 		if (numberOfCheckedInvariants > 0) {
-			m_Logger.info("Automizer considered " + numberOfCheckedInvariants + " witness invariants");
-			m_Logger.info("WitnessConsidered=" + numberOfCheckedInvariants);
+			mLogger.info("Automizer considered " + numberOfCheckedInvariants + " witness invariants");
+			mLogger.info("WitnessConsidered=" + numberOfCheckedInvariants);
 		}
 	}
 
@@ -263,16 +263,16 @@ public class TraceAbstractionStarter {
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 				basicCegarLoop = new CegarLoopSWBnonRecursive(name, root, smtManager, taBenchmark, taPrefs, errorLocs,
-						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), m_Services, m_ToolchainStorage);
+						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 				// abstractCegarLoop = new CegarLoopSequentialWithBackedges(name,
 				// root, smtManager, timingStatistics,taPrefs, errorLocs);
 			} else {
 				basicCegarLoop = new BasicCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(),
-						taPrefs.computeHoareAnnotation(), m_Services, m_ToolchainStorage);
+						taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 			}
 		} else {
 			basicCegarLoop = new IncrementalInclusionCegarLoop(name, root, smtManager, taPrefs, errorLocs,
-					taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), m_Services, m_ToolchainStorage,
+					taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
 					languageOperation);
 		}
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
@@ -290,33 +290,33 @@ public class TraceAbstractionStarter {
 		case UNSAFE: {
 			RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
 			reportCounterexampleResult(pe);
-			m_OverallResult = result;
+			mOverallResult = result;
 			break;
 		}
 		case TIMEOUT:
 			reportTimeoutResult(errorLocs, basicCegarLoop.getToolchainCancelledException());
-			if (m_OverallResult != Result.UNSAFE) {
-				m_OverallResult = result;
+			if (mOverallResult != Result.UNSAFE) {
+				mOverallResult = result;
 			}
 			break;
 		case UNKNOWN: {
 			RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
-			if (m_OverallResult != Result.UNSAFE) {
-				m_OverallResult = result;
+			if (mOverallResult != Result.UNSAFE) {
+				mOverallResult = result;
 			}
 			break;
 		}
 		}
-		if (taPrefs.computeHoareAnnotation() && m_OverallResult == Result.SAFE) {
-			m_Logger.debug("Computing Hoare annotation of CFG");
+		if (taPrefs.computeHoareAnnotation() && mOverallResult == Result.SAFE) {
+			mLogger.debug("Computing Hoare annotation of CFG");
 			basicCegarLoop.computeCFGHoareAnnotation();
 			writeHoareAnnotationToLogger(root);
 		} else {
-			m_Logger.debug("Ommiting computation of Hoare annotation");
+			mLogger.debug("Ommiting computation of Hoare annotation");
 
 		}
-		m_Artifact = basicCegarLoop.getArtifact();
+		mArtifact = basicCegarLoop.getArtifact();
 	}
 
 	private void writeHoareAnnotationToLogger(RootNode root) {
@@ -325,10 +325,10 @@ public class TraceAbstractionStarter {
 			for (ProgramPoint pp : proc2label2pp.getValue().values()) {
 				HoareAnnotation hoare = getHoareAnnotation(pp);
 				if (hoare == null) {
-					m_Logger.info("For program point  " + prettyPrintProgramPoint(pp)
+					mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
 							+ "  no Hoare annotation was computed.");
 				} else {
-					m_Logger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
+					mLogger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
 							+ hoare.getFormula());
 				}
 			}
@@ -351,7 +351,7 @@ public class TraceAbstractionStarter {
 	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
 			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.PLUGIN_NAME, errorLoc,
-					m_Services.getBacktranslationService());
+					mServices.getBacktranslationService());
 			reportResult(pResult);
 		}
 	}
@@ -362,7 +362,7 @@ public class TraceAbstractionStarter {
 			return;
 		}
 		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe),
-				Activator.PLUGIN_NAME, m_Services.getBacktranslationService(), pe));
+				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs,
@@ -377,7 +377,7 @@ public class TraceAbstractionStarter {
 				timeOutMessage += " " + toolchainCanceledException.prettyPrint();
 			}
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.PLUGIN_NAME, m_Services.getBacktranslationService(), timeOutMessage);
+					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			// s_Logger.warn(timeOutMessage);
 		}
@@ -386,7 +386,7 @@ public class TraceAbstractionStarter {
 	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
-				Activator.PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
+				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
@@ -403,14 +403,14 @@ public class TraceAbstractionStarter {
 	}
 
 	private void reportResult(IResult res) {
-		m_Services.getResultService().reportResult(Activator.PLUGIN_ID, res);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
 	/**
 	 * @return the root of the CFG.
 	 */
 	public IElement getRootOfNewModel() {
-		return m_RootOfNewModel;
+		return mRootOfNewModel;
 	}
 
 	public static HoareAnnotation getHoareAnnotation(ProgramPoint programPoint) {

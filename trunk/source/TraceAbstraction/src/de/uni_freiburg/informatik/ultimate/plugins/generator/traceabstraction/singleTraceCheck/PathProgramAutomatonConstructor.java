@@ -58,11 +58,11 @@ public class PathProgramAutomatonConstructor {
 	/**
 	 *  A mapping from positions of given path to states of the constructed automaton.
 	 */
-	private List<IPredicate> m_PositionsToStates;
+	private List<IPredicate> mPositionsToStates;
 
 	
 	public List<IPredicate> getPositionsToStates() {
-		return m_PositionsToStates;
+		return mPositionsToStates;
 	}
 	
 	/**
@@ -91,7 +91,7 @@ public class PathProgramAutomatonConstructor {
 		NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, predicateFactory);
 		
 		// We need this list to create the transitions of the automaton.
-		m_PositionsToStates = new ArrayList<IPredicate>(path.length() + 1);
+		mPositionsToStates = new ArrayList<IPredicate>(path.length() + 1);
 		
 		ProgramPoint[] arrOfProgPoints = new ProgramPoint[path.length()];
 		// We use this map to keep track of the predicates we've created so far. We don't want to create a new predicate
@@ -106,7 +106,7 @@ public class PathProgramAutomatonConstructor {
 		SPredicate initialState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTerm);
 		pathPA.addState(true, false, initialState);
 		programPointToState.put(tempProgramPoint, initialState);
-		m_PositionsToStates.add(0, initialState);
+		mPositionsToStates.add(0, initialState);
 		
 		// Add the other states
 		for (int i = 0; i < path.length(); i++) {
@@ -122,19 +122,19 @@ public class PathProgramAutomatonConstructor {
 					pathPA.addState(false, false, newState);
 				}
 			}
-			m_PositionsToStates.add(i+1, programPointToState.get(tempProgramPoint));
+			mPositionsToStates.add(i+1, programPointToState.get(tempProgramPoint));
 		}
 		
 		// Add the transitions
 		for (int i = 0; i < path.length(); i++) {
-			IPredicate pred = m_PositionsToStates.get(i);
-			IPredicate succ = m_PositionsToStates.get(i+1);
+			IPredicate pred = mPositionsToStates.get(i);
+			IPredicate succ = mPositionsToStates.get(i+1);
 			if (path.isInternalPosition(i)) {
 				pathPA.addInternalTransition(pred, path.getSymbol(i), succ);
 			} else if (path.isCallPosition(i)) {
 				pathPA.addCallTransition(pred, path.getSymbol(i), succ);
 			} else if (path.isReturnPosition(i)) {
-				IPredicate hier = m_PositionsToStates.get(path.getCallPosition(i));
+				IPredicate hier = mPositionsToStates.get(path.getCallPosition(i));
 				pathPA.addReturnTransition(pred, hier, path.getSymbol(i), succ);
 			}
 		}

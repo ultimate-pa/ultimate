@@ -143,7 +143,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	 */
 	private void reportNonTerminationResult(ProgramPoint honda, NonTerminationArgument nta) {
 		// TODO: translate also the rational coefficients to Expressions?
-		// m_RootAnnot.getBoogie2Smt().translate(term)
+		// mRootAnnot.getBoogie2Smt().translate(term)
 		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
 		final List<Map<RankVar, Rational>> states = new ArrayList<Map<RankVar, Rational>>();
@@ -345,9 +345,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	// }
 
 	private class NonterminationBenchmark implements ICsvProviderProvider<String> {
-		private final String m_Ntar;
-		private final boolean m_LambdaZero;
-		private final boolean m_GEVZero;
+		private final String mNtar;
+		private final boolean mLambdaZero;
+		private final boolean mGEVZero;
 
 		public NonterminationBenchmark(NonTerminationArgument nta) {
 			boolean lambdaZero = true;
@@ -358,14 +358,14 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				gevZero &= isZero(nta.getGEVs().get(i));
 			}
 
-			m_LambdaZero = lambdaZero;
-			m_GEVZero = gevZero;
-			m_Ntar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " GEVs: "
-					+ (m_GEVZero ? "is zero" : "is not zero");
+			mLambdaZero = lambdaZero;
+			mGEVZero = gevZero;
+			mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " GEVs: "
+					+ (mGEVZero ? "is zero" : "is not zero");
 		}
 
 		private boolean isFixpoint() {
-			return m_LambdaZero || m_GEVZero;
+			return mLambdaZero || mGEVZero;
 		}
 
 		/**
@@ -387,7 +387,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		@Override
 		public String toString() {
-			return m_Ntar;
+			return mNtar;
 		}
 
 	}

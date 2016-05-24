@@ -39,28 +39,28 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 /**
  * Constraints that define a set of LevelRankingStates.
  * <ul>
- * <li> m_LevelRanking represents an upper bound for ranks of 
+ * <li> mLevelRanking represents an upper bound for ranks of 
  * LevelRankingStates defined by this LevelRankingConstraints.
- * <li> A DoubleDecker is in LevelRankingState.m_O iff (it is in 
- *   LevelRankingConstraints.m_O and it has an even level rank)
+ * <li> A DoubleDecker is in LevelRankingState.mO iff (it is in 
+ *   LevelRankingConstraints.mO and it has an even level rank)
  * </ul>
  */
 public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LETTER, STATE> {
-	private final int m_UserDefinedMaxRank;
+	private final int mUserDefinedMaxRank;
 	/**
-	 * if !m_UseDoubleDeckers we always use getEmptyStackState()
+	 * if !mUseDoubleDeckers we always use getEmptyStackState()
 	 * as down state to obtain sets of states instead of
 	 * sets of DoubleDeckers.
 	 */
-	private final boolean m_UseDoubleDeckers;
+	private final boolean mUseDoubleDeckers;
 	
-	protected final boolean m_PredecessorOwasEmpty;
+	protected final boolean mPredecessorOwasEmpty;
 	
 	/**
 	 * Information if the direct predecessor of a DoubleDecker was accepting.
 	 * If this information is used by the LevelRankingGenerator.
 	 */
-	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> m_PredecessorWasAccepting = 
+	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> mPredecessorWasAccepting = 
 			new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
 	
 	public LevelRankingConstraint(
@@ -69,9 +69,9 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			int userDefinedMaxRank,
 			boolean useDoubleDeckers) {
 		super(operand);
-		m_PredecessorOwasEmpty = predecessorOwasEmpty;
-		m_UserDefinedMaxRank = userDefinedMaxRank;
-		m_UseDoubleDeckers = useDoubleDeckers;
+		mPredecessorOwasEmpty = predecessorOwasEmpty;
+		mUserDefinedMaxRank = userDefinedMaxRank;
+		mUseDoubleDeckers = useDoubleDeckers;
 	}
 	
 	/**
@@ -80,9 +80,9 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 */
 	public LevelRankingConstraint() {
 		super();
-		m_PredecessorOwasEmpty = false;
-		m_UserDefinedMaxRank = -1;
-		m_UseDoubleDeckers = true;
+		mPredecessorOwasEmpty = false;
+		mUserDefinedMaxRank = -1;
+		mUseDoubleDeckers = true;
 	}
 
 	void internalSuccessorConstraints(IFkvState<LETTER, STATE> state, LETTER symbol) {
@@ -91,17 +91,17 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 				final boolean inO;
 				final Integer upRank;
 				if (state instanceof LevelRankingState) {
-					assert m_PredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
+					assert mPredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
 					inO = up.isInO();
 					upRank = up.getRank();
 				} else {
 					assert (state instanceof FkvSubsetComponentState);
 					inO = false;
-					upRank = m_UserDefinedMaxRank;
+					upRank = mUserDefinedMaxRank;
 				}
 				for (OutgoingInternalTransition<LETTER, STATE> trans : 
-								m_Operand.internalSuccessors(up.getState(),symbol)) {
-					addConstaint(down, trans.getSucc(), upRank, inO, m_Operand.isFinal(up.getState()));
+								mOperand.internalSuccessors(up.getState(),symbol)) {
+					addConstaint(down, trans.getSucc(), upRank, inO, mOperand.isFinal(up.getState()));
 				}
 			}
 		}
@@ -113,26 +113,26 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 				final boolean inO;
 				final Integer upRank;
 				if (state instanceof LevelRankingState) {
-					assert m_PredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
+					assert mPredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
 					inO = up.isInO();
 					upRank = up.getRank();
 				} else {
 					assert (state instanceof FkvSubsetComponentState);
 					inO = false;
-					upRank = m_UserDefinedMaxRank;
+					upRank = mUserDefinedMaxRank;
 				}
 				for (OutgoingCallTransition<LETTER, STATE> trans : 
-								m_Operand.callSuccessors(up.getState(),symbol)) {
+								mOperand.callSuccessors(up.getState(),symbol)) {
 					StateWithRankInfo<STATE> succDownState;
-					// if !m_UseDoubleDeckers we always use getEmptyStackState()
+					// if !mUseDoubleDeckers we always use getEmptyStackState()
 					// as down state to obtain sets of states instead of
 					// sets of DoubleDeckers.
-					if (m_UseDoubleDeckers) {
+					if (mUseDoubleDeckers) {
 						succDownState = up;
 					} else {
-						succDownState = new StateWithRankInfo<STATE>(m_Operand.getEmptyStackState());
+						succDownState = new StateWithRankInfo<STATE>(mOperand.getEmptyStackState());
 					}
-					addConstaint(succDownState, trans.getSucc(), upRank, inO, m_Operand.isFinal(up.getState()));
+					addConstaint(succDownState, trans.getSucc(), upRank, inO, mOperand.isFinal(up.getState()));
 				}
 			}
 		}
@@ -147,7 +147,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					//throw new AssertionError();
 				}
 				StateWithRankInfo<STATE> downState;
-				if (m_UseDoubleDeckers) {
+				if (mUseDoubleDeckers) {
 					if (!state.getDownStates().contains(hierUp)) {
 						continue;
 					}
@@ -155,11 +155,11 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 				} else {
 					assert state.getDownStates().size() == 1;
 					assert state.getDownStates().iterator().next() == 
-											m_Operand.getEmptyStackState();
-					// if !m_UseDoubleDeckers we always use getEmptyStackState()
+											mOperand.getEmptyStackState();
+					// if !mUseDoubleDeckers we always use getEmptyStackState()
 					// as down state to obtain sets of states instead of
 					// sets of DoubleDeckers.
-					downState = new StateWithRankInfo<STATE>(m_Operand.getEmptyStackState());
+					downState = new StateWithRankInfo<STATE>(mOperand.getEmptyStackState());
 
 				}
 				Iterable<StateWithRankInfo<STATE>> upStates = state.getUpStates(downState);
@@ -178,7 +178,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			final boolean inO;
 			final Integer upRank;
 			if (state instanceof LevelRankingState) {
-				assert m_PredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
+				assert mPredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
 				//TODO: obtain rank and inO directly from StateWithRankInfo
 				LevelRankingState<LETTER, STATE> lvlRkState = (LevelRankingState<LETTER, STATE>) state;
 				inO = lvlRkState.inO(downState,stateUp.getState());
@@ -186,12 +186,12 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			} else {
 				assert (state instanceof FkvSubsetComponentState);
 				inO = false;
-				upRank = m_UserDefinedMaxRank;
+				upRank = mUserDefinedMaxRank;
 			}
 			for (OutgoingReturnTransition<LETTER, STATE> trans : 
-							m_Operand.returnSucccessors(stateUp.getState(),hierUp.getState(),symbol)) {
-				assert m_UseDoubleDeckers || hierDown == m_Operand.getEmptyStackState();
-				addConstaint(hierDown, trans.getSucc(), upRank, inO, m_Operand.isFinal(stateUp.getState()));
+							mOperand.returnSucccessors(stateUp.getState(),hierUp.getState(),symbol)) {
+				assert mUseDoubleDeckers || hierDown == mOperand.getEmptyStackState();
+				addConstaint(hierDown, trans.getSucc(), upRank, inO, mOperand.isFinal(stateUp.getState()));
 			}
 		}
 	}
@@ -211,30 +211,30 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		// override a rank that was already set (instead takes the minimum) 
 		// and one assert is missing.
 		assert predecessorRank != null;
-		HashMap<STATE, Integer> up2rank = m_LevelRanking.get(down);
+		HashMap<STATE, Integer> up2rank = mLevelRanking.get(down);
 		if (up2rank == null) {
 			up2rank = new HashMap<STATE,Integer>();
-			m_LevelRanking.put(down, up2rank);
+			mLevelRanking.put(down, up2rank);
 		}
 		Integer oldRank = up2rank.get(up);
 		if (oldRank == null || oldRank > predecessorRank) {
 			up2rank.put(up,predecessorRank);
 		}
-		boolean oCandidate = predecessorIsInO || m_PredecessorOwasEmpty;
+		boolean oCandidate = predecessorIsInO || mPredecessorOwasEmpty;
 		if (oCandidate) {
 			addToO(down,up);
 		}
-		if (m_HighestRank < predecessorRank) {
-			m_HighestRank = predecessorRank;
+		if (mHighestRank < predecessorRank) {
+			mHighestRank = predecessorRank;
 		}
 		if (predecessorIsAccepting) {
-			m_PredecessorWasAccepting.add(new DoubleDecker<StateWithRankInfo<STATE>>(
+			mPredecessorWasAccepting.add(new DoubleDecker<StateWithRankInfo<STATE>>(
 					down, new StateWithRankInfo<STATE>(up, predecessorRank, oCandidate)));
 		}
 	}
 
 
 	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
-		return m_PredecessorWasAccepting;
+		return mPredecessorWasAccepting;
 	}		
 }

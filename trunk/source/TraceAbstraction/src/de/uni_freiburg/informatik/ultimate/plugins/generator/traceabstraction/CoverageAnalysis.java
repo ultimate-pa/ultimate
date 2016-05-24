@@ -59,77 +59,77 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class CoverageAnalysis {
 	
-	protected final IUltimateServiceProvider m_Services;
+	protected final IUltimateServiceProvider mServices;
 
 	protected final ILogger mLogger ;
 	
-	protected final NestedWord<? extends IAction> m_NestedWord;
-	private List<ProgramPoint> m_ProgramPointSequence;
-	private final IPredicate[] m_Interpolants;
-	private final PredicateUnifier m_PredicateUnifier;
+	protected final NestedWord<? extends IAction> mNestedWord;
+	private List<ProgramPoint> mProgramPointSequence;
+	private final IPredicate[] mInterpolants;
+	private final PredicateUnifier mPredicateUnifier;
 	
-	private final Map<ProgramPoint, List<Integer>> m_ProgramPoint2Occurence = 
+	private final Map<ProgramPoint, List<Integer>> mProgramPoint2Occurence = 
 		new HashMap<ProgramPoint, List<Integer>>();
 	
-	private int m_Unsat;
-	private int m_Sat;
-	private int m_Unknown;
-	private int m_Trivial;
-	private int m_Notchecked;
+	private int mUnsat;
+	private int mSat;
+	private int mUnknown;
+	private int mTrivial;
+	private int mNotchecked;
 	
-	protected final IInterpolantGenerator m_InterpolantGenerator;
-	protected final InterpolantsPreconditionPostcondition m_IPP;
+	protected final IInterpolantGenerator mInterpolantGenerator;
+	protected final InterpolantsPreconditionPostcondition mIPP;
 
 	public CoverageAnalysis(IUltimateServiceProvider services, 
 			IInterpolantGenerator interpolantGenerator,
 			List<ProgramPoint> programPointSequence, ILogger logger) {
-		m_Services = services;
+		mServices = services;
 		mLogger = logger;
-		m_Interpolants = interpolantGenerator.getInterpolants();
-		m_NestedWord = NestedWord.nestedWord(interpolantGenerator.getTrace());
-		m_ProgramPointSequence = programPointSequence;
-		m_PredicateUnifier = interpolantGenerator.getPredicateUnifier();
-		m_InterpolantGenerator = interpolantGenerator;
-		m_IPP = new InterpolantsPreconditionPostcondition(interpolantGenerator);
+		mInterpolants = interpolantGenerator.getInterpolants();
+		mNestedWord = NestedWord.nestedWord(interpolantGenerator.getTrace());
+		mProgramPointSequence = programPointSequence;
+		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
+		mInterpolantGenerator = interpolantGenerator;
+		mIPP = new InterpolantsPreconditionPostcondition(interpolantGenerator);
 	}
 	
 	public void analyze() {
-		assert(m_NestedWord.length()-1 == m_Interpolants.length);
+		assert(mNestedWord.length()-1 == mInterpolants.length);
 		preprocess();
 		
-		for (int i=0; i<m_NestedWord.length(); i++) {
+		for (int i=0; i<mNestedWord.length(); i++) {
 
 			processCodeBlock(i);
 
-			ProgramPoint pp = m_ProgramPointSequence.get(i);
-			List<Integer> previousOccurrences = m_ProgramPoint2Occurence.get(pp);
+			ProgramPoint pp = mProgramPointSequence.get(i);
+			List<Integer> previousOccurrences = mProgramPoint2Occurence.get(pp);
 			if (previousOccurrences == null) {
 				previousOccurrences = new ArrayList<Integer>();
-				m_ProgramPoint2Occurence.put(pp, previousOccurrences);
+				mProgramPoint2Occurence.put(pp, previousOccurrences);
 			} else {
 				for (int previousOccurrence : previousOccurrences) {
 					assert i > previousOccurrence;
-					IPredicate currentPredicate = m_IPP.getInterpolant(i);
-					IPredicate previousPredicate = m_IPP.getInterpolant(previousOccurrence);
+					IPredicate currentPredicate = mIPP.getInterpolant(i);
+					IPredicate previousPredicate = mIPP.getInterpolant(previousOccurrence);
 					if (currentPredicate == previousPredicate) {
 						// trivially covered and backedges already contained
-						m_Trivial++;
+						mTrivial++;
 					} else {
-						Validity lbool = m_PredicateUnifier.getCoverageRelation().isCovered(
+						Validity lbool = mPredicateUnifier.getCoverageRelation().isCovered(
 								currentPredicate, previousPredicate);
 						processCoveringResult(i, previousOccurrence, lbool);
 						switch (lbool) {
 						case VALID:
-							m_Unsat++;
+							mUnsat++;
 							break;
 						case INVALID:
-							m_Sat++;
+							mSat++;
 							break;
 						case UNKNOWN:
-							m_Unknown++;
+							mUnknown++;
 							break;
 						case NOT_CHECKED:
-							m_Notchecked++;
+							mNotchecked++;
 							break;
 						default:
 							throw new AssertionError();
@@ -139,23 +139,23 @@ public class CoverageAnalysis {
 			}
 			previousOccurrences.add(i);
 		}
-		assert sumCountedOccurrences() == m_ProgramPointSequence.size() - 1;
+		assert sumCountedOccurrences() == mProgramPointSequence.size() - 1;
 
 		postprocess();
 		
 		mLogger.info("Checked inductivity of " +
-				(m_Unsat+m_Sat+m_Unknown+m_Trivial+m_Notchecked) +	" backedges. " + 
-				m_Unsat + " proven. " + 
-				m_Sat + " refuted. " + 
-				m_Unknown + " times theorem prover too weak." +
-				m_Trivial + " trivial." +
-				m_Notchecked + " not checked.");
+				(mUnsat+mSat+mUnknown+mTrivial+mNotchecked) +	" backedges. " + 
+				mUnsat + " proven. " + 
+				mSat + " refuted. " + 
+				mUnknown + " times theorem prover too weak." +
+				mTrivial + " trivial." +
+				mNotchecked + " not checked.");
 
 	}
 
 	private int sumCountedOccurrences() {
 		int occurrenceSum = 0;
-		for (Entry<ProgramPoint, List<Integer>> entry : m_ProgramPoint2Occurence.entrySet()) {
+		for (Entry<ProgramPoint, List<Integer>> entry : mProgramPoint2Occurence.entrySet()) {
 			occurrenceSum += entry.getValue().size();
 		}
 		return occurrenceSum;
@@ -191,8 +191,8 @@ public class CoverageAnalysis {
 	
 	
 	public BackwardCoveringInformation getBackwardCoveringInformation() {
-		int potentialBackwardCoverings = (m_Unsat+m_Sat+m_Unknown+m_Trivial+m_Notchecked);
-		int successfullBackwardCoverings = m_Unsat+m_Trivial;
+		int potentialBackwardCoverings = (mUnsat+mSat+mUnknown+mTrivial+mNotchecked);
+		int successfullBackwardCoverings = mUnsat+mTrivial;
 		return new BackwardCoveringInformation(potentialBackwardCoverings, successfullBackwardCoverings);
 	}
 	
@@ -202,34 +202,34 @@ public class CoverageAnalysis {
 	
 	
 	public static class BackwardCoveringInformation {
-		private int m_PotentialBackwardCoverings;
-		private int m_SuccessfullBackwardCoverings;
+		private int mPotentialBackwardCoverings;
+		private int mSuccessfullBackwardCoverings;
 		
 		public BackwardCoveringInformation(int potentialBackwardCoverings,
 				int successfullBackwardCoverings) {
 			super();
-			m_PotentialBackwardCoverings = potentialBackwardCoverings;
-			m_SuccessfullBackwardCoverings = successfullBackwardCoverings;
+			mPotentialBackwardCoverings = potentialBackwardCoverings;
+			mSuccessfullBackwardCoverings = successfullBackwardCoverings;
 		}
 		
 		public BackwardCoveringInformation(BackwardCoveringInformation bci1, BackwardCoveringInformation bci2) {
-			m_PotentialBackwardCoverings = bci1.getPotentialBackwardCoverings() + bci2.getPotentialBackwardCoverings();
-			m_SuccessfullBackwardCoverings = bci1.getSuccessfullBackwardCoverings() + bci2.getSuccessfullBackwardCoverings();
+			mPotentialBackwardCoverings = bci1.getPotentialBackwardCoverings() + bci2.getPotentialBackwardCoverings();
+			mSuccessfullBackwardCoverings = bci1.getSuccessfullBackwardCoverings() + bci2.getSuccessfullBackwardCoverings();
 		}
 		public int getPotentialBackwardCoverings() {
-			return m_PotentialBackwardCoverings;
+			return mPotentialBackwardCoverings;
 		}
 		public int getSuccessfullBackwardCoverings() {
-			return m_SuccessfullBackwardCoverings;
+			return mSuccessfullBackwardCoverings;
 		}
 
 		@Override
 		public String toString() {
-			return m_SuccessfullBackwardCoverings + "/" + m_PotentialBackwardCoverings;
-//			if (m_PotentialBackwardCoverings == 0) {
+			return mSuccessfullBackwardCoverings + "/" + mPotentialBackwardCoverings;
+//			if (mPotentialBackwardCoverings == 0) {
 //				return "not available";
 //			} else {
-//				long result = Math.round((((double) m_SuccessfullBackwardCoverings) / m_PotentialBackwardCoverings) * 100);
+//				long result = Math.round((((double) mSuccessfullBackwardCoverings) / mPotentialBackwardCoverings) * 100);
 //				return result + "%";
 //			}
 		}

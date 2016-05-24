@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
  * @date 27.03.2012
  */
 public class PositiveResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> implements IResult {
-	private final Check m_CheckedSpecification;
+	private final Check mCheckedSpecification;
 
 	/**
 	 * Constructor.
@@ -58,26 +58,26 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 	public PositiveResult(String plugin, ELEM position, 
 			IBacktranslationService translatorSequence) {
 		super(position, plugin, translatorSequence);
-		m_CheckedSpecification = ResultUtil.getCheckedSpecification(position);
+		mCheckedSpecification = ResultUtil.getCheckedSpecification(position);
 	}
 
 	@Override
 	public String getShortDescription() {
-		if (m_CheckedSpecification == null) {
+		if (mCheckedSpecification == null) {
 			return "some specification holds - ERROR (information lost during translation process)";
 		} else {
-			return m_CheckedSpecification.getPositiveMessage();
+			return mCheckedSpecification.getPositiveMessage();
 		}
 	}
 
 	@Override
 	public String getLongDescription() {
-		if (m_CheckedSpecification == null) {
+		if (mCheckedSpecification == null) {
 			return "some specification holds - ERROR (information lost during translation process)";
 		} else {
 			StringBuilder sb = new StringBuilder();
 			sb.append("For all program executions holds that ");
-			sb.append(m_CheckedSpecification.getPositiveMessage());
+			sb.append(mCheckedSpecification.getPositiveMessage());
 			sb.append(" at this location");
 			return sb.toString();
 		}

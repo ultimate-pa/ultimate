@@ -48,18 +48,18 @@ public final class UniqueQueue<T> implements Queue<T> {
 	/**
 	 * Queue used by the element.
 	 */
-	private final Queue<T> m_Queue;
+	private final Queue<T> mQueue;
 	/**
 	 * Set used by the element to ensure uniqueness of elements.
 	 */
-	private final Set<T> m_Set;
+	private final Set<T> mSet;
 
 	/**
 	 * Creates a new empty unique queue element.
 	 */
 	public UniqueQueue() {
-		m_Queue = new LinkedList<>();
-		m_Set = new HashSet<>();
+		mQueue = new LinkedList<>();
+		mSet = new HashSet<>();
 	}
 
 	/*
@@ -69,9 +69,9 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean add(final T e) {
-		boolean changed = m_Set.add(e);
+		boolean changed = mSet.add(e);
 		if (changed) {
-			m_Queue.add(e);
+			mQueue.add(e);
 		}
 		return changed;
 	}
@@ -99,8 +99,8 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public void clear() {
-		m_Set.clear();
-		m_Queue.clear();
+		mSet.clear();
+		mQueue.clear();
 	}
 
 	/*
@@ -110,7 +110,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean contains(final Object o) {
-		return m_Set.contains(o);
+		return mSet.contains(o);
 	}
 
 	/*
@@ -120,7 +120,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean containsAll(final Collection<?> c) {
-		return m_Set.containsAll(c);
+		return mSet.containsAll(c);
 	}
 
 	/*
@@ -130,7 +130,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public T element() {
-		return m_Queue.element();
+		return mQueue.element();
 	}
 
 	/*
@@ -140,7 +140,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean isEmpty() {
-		return m_Set.isEmpty();
+		return mSet.isEmpty();
 	}
 
 	/*
@@ -150,7 +150,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public Iterator<T> iterator() {
-		return m_Queue.iterator();
+		return mQueue.iterator();
 	}
 
 	/*
@@ -160,9 +160,9 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean offer(final T e) {
-		boolean changed = m_Queue.offer(e);
+		boolean changed = mQueue.offer(e);
 		if (changed) {
-			m_Set.add(e);
+			mSet.add(e);
 		}
 		return changed;
 	}
@@ -174,7 +174,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public T peek() {
-		return m_Queue.peek();
+		return mQueue.peek();
 	}
 
 	/*
@@ -184,8 +184,8 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public T poll() {
-		T element = m_Queue.poll();
-		m_Set.remove(element);
+		T element = mQueue.poll();
+		mSet.remove(element);
 		return element;
 	}
 
@@ -196,8 +196,8 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public T remove() {
-		T element = m_Queue.remove();
-		m_Set.remove(element);
+		T element = mQueue.remove();
+		mSet.remove(element);
 		return element;
 	}
 
@@ -208,9 +208,9 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean remove(Object o) {
-		boolean changed = m_Set.remove(o);
+		boolean changed = mSet.remove(o);
 		if (changed) {
-			m_Queue.remove(o);
+			mQueue.remove(o);
 		}
 		return changed;
 	}
@@ -222,9 +222,9 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean removeAll(final Collection<?> c) {
-		boolean changed = m_Set.removeAll(c);
+		boolean changed = mSet.removeAll(c);
 		if (changed) {
-			m_Queue.removeAll(c);
+			mQueue.removeAll(c);
 		}
 		return changed;
 	}
@@ -236,9 +236,9 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public boolean retainAll(final Collection<?> c) {
-		boolean changed = m_Set.retainAll(c);
+		boolean changed = mSet.retainAll(c);
 		if (changed) {
-			m_Queue.retainAll(c);
+			mQueue.retainAll(c);
 		}
 		return changed;
 	}
@@ -250,7 +250,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public int size() {
-		return m_Queue.size();
+		return mQueue.size();
 	}
 
 	/*
@@ -260,7 +260,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public Object[] toArray() {
-		return m_Queue.toArray();
+		return mQueue.toArray();
 	}
 
 	/*
@@ -270,7 +270,7 @@ public final class UniqueQueue<T> implements Queue<T> {
 	 */
 	@Override
 	public <K> K[] toArray(final K[] a) {
-		return m_Queue.toArray(a);
+		return mQueue.toArray(a);
 	}
 
 }

@@ -59,22 +59,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ho
  */
 public class HoareAnnotationChecker {
 
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final IHoareTripleChecker m_HoareTripleChecker;
-	private final RootNode m_RootNode;
-	private final boolean m_IsInductive;
+	private final IHoareTripleChecker mHoareTripleChecker;
+	private final RootNode mRootNode;
+	private final boolean mIsInductive;
 	
 	
 
 	public HoareAnnotationChecker(IUltimateServiceProvider services, RootNode rootNode, SmtManager smtManager) {
 		super();
-		m_Services = services;
-		mLogger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_RootNode = rootNode;
-		m_HoareTripleChecker = new MonolithicHoareTripleChecker(smtManager.getManagedScript(), 
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mRootNode = rootNode;
+		mHoareTripleChecker = new MonolithicHoareTripleChecker(smtManager.getManagedScript(), 
 				smtManager.getModifiableGlobals());
-		m_IsInductive = cfgInductive(m_RootNode);
+		mIsInductive = cfgInductive(mRootNode);
 	}
 
 	private boolean cfgInductive(RootNode rootNode) {
@@ -129,7 +129,7 @@ public class HoareAnnotationChecker {
 				final IAction action;
 				if (iEdge instanceof ICallAction) {
 					action = ((ICallAction) iEdge);
-					inductivity = m_HoareTripleChecker.checkCall(sf1, (ICallAction) action, sf2);
+					inductivity = mHoareTripleChecker.checkCall(sf1, (ICallAction) action, sf2);
 				} else if (iEdge instanceof Return) {
 					ProgramPoint callerNode = ((Return) iEdge).getCallerProgramPoint();
 					IPredicate sfk = HoareAnnotation.getAnnotation(callerNode);
@@ -138,17 +138,17 @@ public class HoareAnnotationChecker {
 						continue;
 					}
 					action = ((IReturnAction) iEdge);
-					inductivity = m_HoareTripleChecker.checkReturn(sf1, sfk, (IReturnAction) action, sf2);
+					inductivity = mHoareTripleChecker.checkReturn(sf1, sfk, (IReturnAction) action, sf2);
 				} else if (iEdge instanceof Summary) {
 					action = ((Summary) iEdge);
 					if (((Summary) action).calledProcedureHasImplementation()) {
 						continue;
 					} else {
-						inductivity = m_HoareTripleChecker.checkInternal(sf1, (IInternalAction) action, sf2);
+						inductivity = mHoareTripleChecker.checkInternal(sf1, (IInternalAction) action, sf2);
 					}
 				} else if (iEdge instanceof CodeBlock) {
 					action = ((CodeBlock) iEdge);
-					inductivity = m_HoareTripleChecker.checkInternal(sf1, (IInternalAction) action, sf2);
+					inductivity = mHoareTripleChecker.checkInternal(sf1, (IInternalAction) action, sf2);
 				} else {
 					continue;
 				}
@@ -182,7 +182,7 @@ public class HoareAnnotationChecker {
 	}
 
 	public boolean isInductive() {
-		return m_IsInductive;
+		return mIsInductive;
 	}
 	
 }

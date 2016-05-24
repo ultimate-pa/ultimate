@@ -1283,24 +1283,24 @@ public abstract class BDDFactory {
 	public static class ReorderStats {
 
 		public long time;
-		public int usednum_before, usednum_after;
+		public int usednumbefore, usednumafter;
 
 		protected ReorderStats() {
 		}
 
 		public int gain() {
-			if (usednum_before == 0)
+			if (usednumbefore == 0)
 				return 0;
 
-			return (100 * (usednum_before - usednum_after)) / usednum_before;
+			return (100 * (usednumbefore - usednumafter)) / usednumbefore;
 		}
 
 		public String toString() {
 			StringBuffer sb = new StringBuffer();
 			sb.append("Went from ");
-			sb.append(usednum_before);
+			sb.append(usednumbefore);
 			sb.append(" to ");
-			sb.append(usednum_after);
+			sb.append(usednumafter);
 			sb.append(" nodes, gain = ");
 			sb.append(gain());
 			sb.append("% (");
@@ -1634,7 +1634,7 @@ public abstract class BDDFactory {
 		return domain[i];
 	}
 
-	// TODO: fdd_file_hook, fdd_strm_hook
+	// TODO: fdd_file_hook, fdd_strmhook
 
 	/**
 	 * <p>
@@ -1974,11 +1974,11 @@ public abstract class BDDFactory {
 
 	void reorder_handler(boolean b, ReorderStats s) {
 		if (b) {
-			s.usednum_before = getNodeNum();
+			s.usednumbefore = getNodeNum();
 			s.time = System.currentTimeMillis();
 		} else {
 			s.time = System.currentTimeMillis() - s.time;
-			s.usednum_after = getNodeNum();
+			s.usednumafter = getNodeNum();
 		}
 		if (reorder_callbacks == null) {
 			bdd_default_reohandler(b, s);
@@ -1992,11 +1992,11 @@ public abstract class BDDFactory {
 		if (verbose > 0) {
 			if (prestate) {
 				System.out.println("Start reordering");
-				s.usednum_before = getNodeNum();
+				s.usednumbefore = getNodeNum();
 				s.time = System.currentTimeMillis();
 			} else {
 				s.time = System.currentTimeMillis() - s.time;
-				s.usednum_after = getNodeNum();
+				s.usednumafter = getNodeNum();
 				System.out.println("End reordering. " + s);
 			}
 		}

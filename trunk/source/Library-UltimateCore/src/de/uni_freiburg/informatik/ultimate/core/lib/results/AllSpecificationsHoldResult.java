@@ -35,11 +35,11 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
  */
 public class AllSpecificationsHoldResult extends AbstractResult {
 
-	private final String m_Longdescription;
+	private final String mLongdescription;
 
 	public AllSpecificationsHoldResult(String plugin, String longDescription) {
 		super(plugin);
-		m_Longdescription = longDescription;
+		mLongdescription = longDescription;
 	}
 
 	@Override
@@ -49,6 +49,6 @@ public class AllSpecificationsHoldResult extends AbstractResult {
 
 	@Override
 	public String getLongDescription() {
-		return m_Longdescription;
+		return mLongdescription;
 	}
 }

@@ -54,36 +54,36 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
  */
 public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, Expression> {
 
-	private final List<AtomicTraceElement<BoogieASTNode>> m_Trace;
-	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
+	private final List<AtomicTraceElement<BoogieASTNode>> mTrace;
+	private final Map<Integer, ProgramState<Expression>> mPartialProgramStateMapping;
 
 	public BoogieProgramExecution(Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
 			List<AtomicTraceElement<BoogieASTNode>> trace) {
-		m_Trace = trace;
-		m_PartialProgramStateMapping = partialProgramStateMapping;
+		mTrace = trace;
+		mPartialProgramStateMapping = partialProgramStateMapping;
 	}
 
 	@Override
 	public int getLength() {
-		return m_Trace.size();
+		return mTrace.size();
 	}
 
 	@Override
 	public AtomicTraceElement<BoogieASTNode> getTraceElement(int i) {
-		return m_Trace.get(i);
+		return mTrace.get(i);
 	}
 
 	@Override
 	public ProgramState<Expression> getProgramState(int i) {
-		if (i < 0 || i >= m_Trace.size()) {
+		if (i < 0 || i >= mTrace.size()) {
 			throw new IllegalArgumentException("out of range");
 		}
-		return m_PartialProgramStateMapping.get(i);
+		return mPartialProgramStateMapping.get(i);
 	}
 
 	@Override
 	public ProgramState<Expression> getInitialProgramState() {
-		return m_PartialProgramStateMapping.get(-1);
+		return mPartialProgramStateMapping.get(-1);
 	}
 
 	@Override

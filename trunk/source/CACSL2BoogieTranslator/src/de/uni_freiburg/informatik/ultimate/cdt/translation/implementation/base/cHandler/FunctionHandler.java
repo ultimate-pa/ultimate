@@ -155,7 +155,7 @@ public class FunctionHandler {
 
 	private LinkedHashMap<String, CFunction> procedureToCFunctionType;
 
-	private final boolean m_CheckMemoryLeakAtEndOfMain;
+	private final boolean mCheckMemoryLeakAtEndOfMain;
 
 	/**
 	 * Herein the function Signatures (as a CFunction) are stored for which a
@@ -165,8 +165,8 @@ public class FunctionHandler {
 //	LinkedHashSet<CFunction> functionSignaturesThatHaveAFunctionPointer;
 	LinkedHashSet<ProcedureSignature> functionSignaturesThatHaveAFunctionPointer;
 	
-	private final AExpressionTranslation m_ExpressionTranslation;
-	private final TypeSizeAndOffsetComputer m_TypeSizeComputer;
+	private final AExpressionTranslation mExpressionTranslation;
+	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 
 	/**
 	 * Constructor.
@@ -174,8 +174,8 @@ public class FunctionHandler {
 	 * @param typeSizeComputer 
 	 */
 	public FunctionHandler(AExpressionTranslation expressionTranslation, TypeSizeAndOffsetComputer typeSizeComputer) {
-		m_ExpressionTranslation = expressionTranslation;
-		m_TypeSizeComputer = typeSizeComputer;
+		mExpressionTranslation = expressionTranslation;
+		mTypeSizeComputer = typeSizeComputer;
 		callGraph = new LinkedHashMap<String, LinkedHashSet<String>>();
 		currentProcedureIsVoid = false;
 		modifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
@@ -183,7 +183,7 @@ public class FunctionHandler {
 		procedures = new LinkedHashMap<String, Procedure>();
 		procedureToCFunctionType = new LinkedHashMap<>();
 		modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
-		m_CheckMemoryLeakAtEndOfMain = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
+		mCheckMemoryLeakAtEndOfMain = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
 		functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}
@@ -436,7 +436,7 @@ public class FunctionHandler {
 		} else if (node.getReturnValue() != null) {
 			ExpressionResult exprResult = ((ExpressionResult) main.dispatch(node.getReturnValue()))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			exprResult.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
+			exprResult.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 
 			// do some implicit casts
 			CType functionResultType = procedureToCFunctionType.get(currentProcedure.getIdentifier())
@@ -445,7 +445,7 @@ public class FunctionHandler {
 				if (functionResultType instanceof CPointer && exprResult.lrVal.getCType() instanceof CPrimitive
 						&& exprResult.lrVal.getValue() instanceof IntegerLiteral
 						&& ((IntegerLiteral) exprResult.lrVal.getValue()).getValue().equals("0")) {
-					exprResult.lrVal = new RValue(m_ExpressionTranslation.constructNullPointer(loc), functionResultType);
+					exprResult.lrVal = new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
 				}
 			}
 
@@ -637,7 +637,7 @@ public class FunctionHandler {
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
 			if (main.isMMRequired() && (main.getCheckedMethod() == SFO.EMPTY || main.getCheckedMethod().equals(mId))) {
-				if (m_CheckMemoryLeakAtEndOfMain) {
+				if (mCheckMemoryLeakAtEndOfMain) {
 					// add a specification to check for memory leaks
 					Expression vIe = new IdentifierExpression(loc, SFO.VALID);
 					int nrSpec = spec.length;
@@ -753,7 +753,7 @@ public class FunctionHandler {
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
 						&& ((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					in.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
+					in.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				}
 				if (expectedParamType instanceof CFunction) {
 					// workaround - better: make this conversion already in declaration
@@ -809,7 +809,7 @@ public class FunctionHandler {
 			assert arguments.length == 1;
 			ExpressionResult exprRes = (ExpressionResult) main.dispatch(arguments[0]);
 			exprRes = exprRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			main.cHandler.convert(loc, exprRes, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(loc, exprRes, mTypeSizeComputer.getSize_T());
 			
 	    	CPointer resultType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
 	    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
@@ -851,14 +851,14 @@ public class FunctionHandler {
 			 */
 			assert arguments.length == 2;
 			ExpressionResult nmemb = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			main.cHandler.convert(loc, nmemb, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(loc, nmemb, mTypeSizeComputer.getSize_T());
 			ExpressionResult size = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			main.cHandler.convert(loc, size, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(loc, size, mTypeSizeComputer.getSize_T());
 			
-			Expression product = m_ExpressionTranslation.constructArithmeticExpression(
+			Expression product = mExpressionTranslation.constructArithmeticExpression(
 					loc, IASTBinaryExpression.op_multiply,
-					nmemb.lrVal.getValue(), m_TypeSizeComputer.getSize_T(), 
-					size.lrVal.getValue(), m_TypeSizeComputer.getSize_T());
+					nmemb.lrVal.getValue(), mTypeSizeComputer.getSize_T(), 
+					size.lrVal.getValue(), mTypeSizeComputer.getSize_T());
 			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(nmemb, size);
 			
 	    	CPointer resultType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
@@ -890,9 +890,9 @@ public class FunctionHandler {
 			assert arguments.length == 3 : "wrong number of arguments";
 			ExpressionResult arg_s = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
 			ExpressionResult arg_c = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			m_ExpressionTranslation.convertIntToInt(loc, arg_c, new CPrimitive(PRIMITIVE.INT));
+			mExpressionTranslation.convertIntToInt(loc, arg_c, new CPrimitive(PRIMITIVE.INT));
 			ExpressionResult arg_n = ((ExpressionResult) main.dispatch(arguments[2])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			m_ExpressionTranslation.convertIntToInt(loc, arg_n, m_TypeSizeComputer.getSize_T());
+			mExpressionTranslation.convertIntToInt(loc, arg_n, mTypeSizeComputer.getSize_T());
 			
 			final ExpressionResult result = new ExpressionResult(arg_s.lrVal);
 			result.addAll(arg_s);
@@ -1528,7 +1528,7 @@ public class FunctionHandler {
 		stmt.add(call);
 		CType returnCType = methodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(PRIMITIVE.INT)
 				: procedureToCFunctionType.get(methodName).getResultType().getUnderlyingType();
-		m_ExpressionTranslation.addAssumeValueInRangeStatements(loc, expr, returnCType, stmt);
+		mExpressionTranslation.addAssumeValueInRangeStatements(loc, expr, returnCType, stmt);
 		assert (CHandler.isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 		return new ExpressionResult(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
 	}

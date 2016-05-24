@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann
  */
 public class ArrayEquality {
-	private final Term m_OriginalTerm;
+	private final Term mOriginalTerm;
 	private final TermVariable lhs;
 	private final TermVariable rhs;
 
@@ -55,7 +55,7 @@ public class ArrayEquality {
 		if (!(eqAppTerm.getParameters().length == 2)) {
 			throw new ArrayEqualityException("no binary equality");
 		}
-		m_OriginalTerm = term;
+		mOriginalTerm = term;
 		Term lhsTerm = eqAppTerm.getParameters()[0];
 		Term rhsTerm = eqAppTerm.getParameters()[1];
 		if (!(lhsTerm.getSort().isArraySort())) {
@@ -76,7 +76,7 @@ public class ArrayEquality {
 	}
 
 	public Term getOriginalTerm() {
-		return m_OriginalTerm;
+		return mOriginalTerm;
 	}
 
 	public TermVariable getLhs() {
@@ -89,7 +89,7 @@ public class ArrayEquality {
 
 	@Override
 	public String toString() {
-		return m_OriginalTerm.toString();
+		return mOriginalTerm.toString();
 	}
 	
 	private class ArrayEqualityException extends Exception {
@@ -106,7 +106,7 @@ public class ArrayEquality {
 	 * equalities and terms that are not array equalities.
 	 */
 	public static class ArrayEqualityExtractor {
-		private final List<ArrayEquality> m_ArrayEqualities = new ArrayList<ArrayEquality>();
+		private final List<ArrayEquality> mArrayEqualities = new ArrayList<ArrayEquality>();
 		private final List<Term> remainingTerms = new ArrayList<Term>();
 
 		public ArrayEqualityExtractor(Term[] terms) {
@@ -120,13 +120,13 @@ public class ArrayEquality {
 				if (au == null) {
 					remainingTerms.add(term);
 				} else {
-					m_ArrayEqualities.add(au);
+					mArrayEqualities.add(au);
 				}
 			}
 		}
 
 		public List<ArrayEquality> getArrayEqualities() {
-			return m_ArrayEqualities;
+			return mArrayEqualities;
 		}
 
 		public List<Term> getRemainingTerms() {

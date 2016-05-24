@@ -53,12 +53,12 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class XnfDer extends XjunctPartialQuantifierElimination {
 
-	private final IFreshTermVariableConstructor m_FreshVarConstructor;
+	private final IFreshTermVariableConstructor mFreshVarConstructor;
 
 	public XnfDer(Script script, IUltimateServiceProvider services, 
 			IFreshTermVariableConstructor freshVarConstructor) {
 		super(script, services);
-		m_FreshVarConstructor = freshVarConstructor;
+		mFreshVarConstructor = freshVarConstructor;
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			someVariableWasEliminated = false;
 			Iterator<TermVariable> it = eliminatees.iterator();
 			while (it.hasNext()) {
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
 							"eliminating " + eliminatees.size() + 
 							" quantified variables from " + inputAtoms.length + " xjuncts");
@@ -99,7 +99,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 					it.remove();
 					continue;
 				} else {
-					Term[] withoutTv = derSimple(m_Script, quantifier, resultAtoms, tv, m_Logger);
+					Term[] withoutTv = derSimple(mScript, quantifier, resultAtoms, tv, mLogger);
 					if (withoutTv != null) {
 						resultAtoms = withoutTv;
 						it.remove();
@@ -131,7 +131,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			resultAtoms = new Term[inputAtoms.length - 1];
 			Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
 			SafeSubstitution substitution = new SafeSubstitutionWithLocalSimplification(
-					script, m_FreshVarConstructor, substitutionMapping);
+					script, mFreshVarConstructor, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
 			}
@@ -149,8 +149,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		Term result =  substitution.transform(term);
 		if (term != result) {
 			try {
-				AffineRelation afr = new AffineRelation(m_Script, result);
-				result = afr.positiveNormalForm(m_Script);
+				AffineRelation afr = new AffineRelation(mScript, result);
+				result = afr.positiveNormalForm(mScript);
 			} catch (NotAffineException e) {
 				// Do nothing - we return result.
 			}

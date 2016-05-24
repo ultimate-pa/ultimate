@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 public class TimeoutResultAtElement<ELEM extends IElement> 
 					extends AbstractResultAtElement<ELEM> implements IResult, ITimeoutResult {
 	
-	private final String m_longDescription;
+	private final String mlongDescription;
 
 
 	public TimeoutResultAtElement(ELEM element, String plugin, 
 			IBacktranslationService translatorSequence, String longDescription) {
 		super(element, plugin, translatorSequence);
-		this.m_longDescription = longDescription;
+		this.mlongDescription = longDescription;
 	}
 	
 	@Override
@@ -60,7 +60,7 @@ public class TimeoutResultAtElement<ELEM extends IElement>
 
 	@Override
 	public String getLongDescription() {
-		return m_longDescription;
+		return mlongDescription;
 	}
 
 	

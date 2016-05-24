@@ -75,28 +75,28 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 
 	protected class ActualResult {
-		private final IResult m_IResult;
-		private final ActualResultType m_actualResultType;
+		private final IResult mIResult;
+		private final ActualResultType mactualResultType;
 
 		public ActualResult(ActualResultType automizerResultType, IResult iResult) {
-			m_IResult = iResult;
-			m_actualResultType = automizerResultType;
+			mIResult = iResult;
+			mactualResultType = automizerResultType;
 		}
 
 		public IResult getIResult() {
-			return m_IResult;
+			return mIResult;
 		}
 
 		public ActualResultType getResultType() {
-			return m_actualResultType;
+			return mactualResultType;
 		}
 	}
 
 	private String mInputFile;
 
-	private String m_toolIdentifier;
+	private String mtoolIdentifier;
 
-	private ExpectedResultType m_expectedResult;
+	private ExpectedResultType mexpectedResult;
 
 	private Collection<IResult> mResults;
 
@@ -114,7 +114,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	public AbstractInterpretationTestResultDecider(File inputFile, String toolIdentifier) {
 		super();
 		mInputFile = inputFile.getAbsolutePath();
-		m_toolIdentifier = toolIdentifier;
+		mtoolIdentifier = toolIdentifier;
 		generateExpectedResult(inputFile);
 	}
 
@@ -268,11 +268,11 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 
 	protected ExpectedResultType getExpectedResult() {
-		return m_expectedResult;
+		return mexpectedResult;
 	}
 
 	protected void setExpectedResult(ExpectedResultType expectedResult) {
-		m_expectedResult = expectedResult;
+		mexpectedResult = expectedResult;
 	}
 
 	/**
@@ -302,7 +302,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		}
 
 		// category: Plug-in, expected, actual
-		setResultCategory(String.format("%s ## %s ## %s", m_toolIdentifier, getExpectedResult(),
+		setResultCategory(String.format("%s ## %s ## %s", mtoolIdentifier, getExpectedResult(),
 				safetyCheckerResult.getResultType()));
 
 		// statistics prefix:

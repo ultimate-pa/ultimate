@@ -41,11 +41,11 @@ public final class VertexDownState<STATE> {
 	/**
 	 * Left down state of the vertex.
 	 */
-	private final STATE m_LeftDownState;
+	private final STATE mLeftDownState;
 	/**
 	 * Right down state of the vertex.
 	 */
-	private final STATE m_RightDownState;
+	private final STATE mRightDownState;
 
 	/**
 	 * Creates a new vertex down state with two given down states.
@@ -56,8 +56,8 @@ public final class VertexDownState<STATE> {
 	 *            Right down state of the vertex
 	 */
 	public VertexDownState(final STATE leftDownState, final STATE rightDownState) {
-		m_LeftDownState = leftDownState;
-		m_RightDownState = rightDownState;
+		mLeftDownState = leftDownState;
+		mRightDownState = rightDownState;
 	}
 
 	/*
@@ -77,18 +77,18 @@ public final class VertexDownState<STATE> {
 			return false;
 		}
 		VertexDownState<?> other = (VertexDownState<?>) obj;
-		if (m_LeftDownState == null) {
-			if (other.m_LeftDownState != null) {
+		if (mLeftDownState == null) {
+			if (other.mLeftDownState != null) {
 				return false;
 			}
-		} else if (!m_LeftDownState.equals(other.m_LeftDownState)) {
+		} else if (!mLeftDownState.equals(other.mLeftDownState)) {
 			return false;
 		}
-		if (m_RightDownState == null) {
-			if (other.m_RightDownState != null) {
+		if (mRightDownState == null) {
+			if (other.mRightDownState != null) {
 				return false;
 			}
-		} else if (!m_RightDownState.equals(other.m_RightDownState)) {
+		} else if (!mRightDownState.equals(other.mRightDownState)) {
 			return false;
 		}
 		return true;
@@ -100,7 +100,7 @@ public final class VertexDownState<STATE> {
 	 * @return The left down state
 	 */
 	public STATE getLeftDownState() {
-		return m_LeftDownState;
+		return mLeftDownState;
 	}
 
 	/**
@@ -109,7 +109,7 @@ public final class VertexDownState<STATE> {
 	 * @return The right down state
 	 */
 	public STATE getRightDownState() {
-		return m_RightDownState;
+		return mRightDownState;
 	}
 
 	/*
@@ -121,8 +121,8 @@ public final class VertexDownState<STATE> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_LeftDownState == null) ? 0 : m_LeftDownState.hashCode());
-		result = prime * result + ((m_RightDownState == null) ? 0 : m_RightDownState.hashCode());
+		result = prime * result + ((mLeftDownState == null) ? 0 : mLeftDownState.hashCode());
+		result = prime * result + ((mRightDownState == null) ? 0 : mRightDownState.hashCode());
 		return result;
 	}
 
@@ -133,6 +133,6 @@ public final class VertexDownState<STATE> {
 	 */
 	@Override
 	public String toString() {
-		return "[" + m_LeftDownState + "," + m_RightDownState + "]";
+		return "[" + mLeftDownState + "," + mRightDownState + "]";
 	}
 }

@@ -59,7 +59,7 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		m_Logger.warn("Correctness of result was not tested");
+		mLogger.warn("Correctness of result was not tested");
 		return true;
 	}
 

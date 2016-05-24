@@ -54,16 +54,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @version 2010-12-18
  */
 public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 	
 	public BuchiIsEmptyXW(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_nwa = nwa;
-		m_Logger.info(startMessage());
-		m_Result = checkEmptiness();
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mnwa = nwa;
+		mLogger.info(startMessage());
+		mResult = checkEmptiness();
+		mLogger.info(exitMessage());
 	}
 	
 	@Override
@@ -74,21 +74,21 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 			return "Start " + operationName() + ". Operand " + 
-			m_nwa.sizeInformation();	
+			mnwa.sizeInformation();	
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result is " + m_Result; 
+		return "Finished " + operationName() + " Result is " + mResult; 
 	}
 
 	@Override
 	public Boolean getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 	
-	INestedWordAutomatonOldApi<LETTER, STATE> m_nwa;
-	final Boolean m_Result;
+	INestedWordAutomatonOldApi<LETTER, STATE> mnwa;
+	final Boolean mResult;
 
 	Bridge reachabilityBridge = new Bridge();
 	Bridge reachabilityBridgeA = new Bridge();
@@ -98,7 +98,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	STATE witnessInitial;
 	STATE witnessCritical;
 
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 	
 	/** Element of worklist, a pair of states. */
 	private class StatePair {	
@@ -315,19 +315,19 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() {
-		if (m_Result) {
-			m_Logger.info("There is no accepting nested lasso run");
+		if (mResult) {
+			mLogger.info("There is no accepting nested lasso run");
 			return null;
 		} else {
-			m_Logger.info("Starting construction of run");
+			mLogger.info("Starting construction of run");
 			NestedRun<LETTER,STATE> stem = 
 				reconstructionC(witnessInitial, witnessCritical);
 			NestedRun<LETTER,STATE> loop = 
 				reconstructionAC(witnessCritical, witnessCritical);
 			NestedLassoRun<LETTER,STATE> acceptingNestedLassoRun = 
 										new NestedLassoRun<LETTER,STATE>(stem, loop);
-			m_Logger.debug("Accepting run: " + acceptingNestedLassoRun);
-			m_Logger.debug("Accepted word:  Stem:" + 
+			mLogger.debug("Accepting run: " + acceptingNestedLassoRun);
+			mLogger.debug("Accepted word:  Stem:" + 
 					acceptingNestedLassoRun.getStem().getWord() + 
 					" Loop: " +
 					acceptingNestedLassoRun.getLoop().getWord());
@@ -348,22 +348,22 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		Set<STATE> allStates = new HashSet<STATE>();
 		Set<STATE> acceptingStates = new HashSet<STATE>();
 		Set<STATE> initialStates = new HashSet<STATE>();
-		Collection<LETTER> internalAlphabet = m_nwa.getInternalAlphabet();
-		Collection<LETTER> callAlphabet = m_nwa.getCallAlphabet();
-		Collection<LETTER> returnAlphabet = m_nwa.getReturnAlphabet();
+		Collection<LETTER> internalAlphabet = mnwa.getInternalAlphabet();
+		Collection<LETTER> callAlphabet = mnwa.getCallAlphabet();
+		Collection<LETTER> returnAlphabet = mnwa.getReturnAlphabet();
 		
 		// Get all states and accepting states
 		// TODO: xw: check the consequence of casting
-		for (STATE state : m_nwa.getStates()) {
+		for (STATE state : mnwa.getStates()) {
 			allStates.add((STATE) state);
-			if (m_nwa.isFinal(state)) {
+			if (mnwa.isFinal(state)) {
 				acceptingStates.add((STATE) state);
 			}
 		}
 		
 		// Get all initial states
 		// TODO: xw: check the consequence of casting
-		for (STATE state : m_nwa.getInitialStates()) {
+		for (STATE state : mnwa.getInitialStates()) {
 			initialStates.add((STATE) state);
 		}
 		
@@ -388,7 +388,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		for (STATE internalPredState : allStates) {
 			for (LETTER symbol : internalAlphabet) {
 				for (STATE temp : 
-					m_nwa.succInternal(internalPredState, symbol)) {
+					mnwa.succInternal(internalPredState, symbol)) {
 					// TODO: xw: ill-effect of casting?
 					STATE internalSuccState = (STATE) temp;
 					if (! reachabilityBridge.containsPair(internalPredState, 
@@ -415,7 +415,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			extendPathBeyondOrigin(workPair.source, workPair.target, 
 					reachabilityBridge, worklist);
 			
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -440,7 +440,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			extendAcceptingPathCallReturn(workPair.source, workPair.target, 
 					callAlphabet, returnAlphabet, reachabilityBridge, 
 					reachabilityBridgeA, worklist);
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -457,7 +457,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		for (STATE callPredState : allStates) {
 			for (LETTER symbol : callAlphabet) {
 				for (STATE temp : 
-					m_nwa.succCall(callPredState, symbol)) {
+					mnwa.succCall(callPredState, symbol)) {
 					// TODO: xw: ill-effect of casting?
 					STATE callSuccState = (STATE) temp;
 					if (! reachabilityBridgeC.containsPair(callPredState, 
@@ -477,7 +477,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					reachabilityBridgeC, worklist);
 			extendPathBeyondOrigin(workPair.source,workPair.target, 
 					reachabilityBridgeC, worklist);
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -505,17 +505,17 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 						targetOfIntialState)) {
 					witnessInitial = initialState;
 					witnessCritical = targetOfIntialState;
-					m_Logger.info("########################################");
-					m_Logger.info("witnessInitial: " + witnessInitial + ", "
+					mLogger.info("########################################");
+					mLogger.info("witnessInitial: " + witnessInitial + ", "
 							+ "witnessCritical: " + witnessCritical);
-					m_Logger.info("########################################");
+					mLogger.info("########################################");
 					return false;
 				}
 			}
 		}
-		m_Logger.info("########################################");
-		m_Logger.info("The NWA is empty.");
-		m_Logger.info("########################################");
+		mLogger.info("########################################");
+		mLogger.info("The NWA is empty.");
+		mLogger.info("########################################");
 		return true;
 	}
 	
@@ -526,7 +526,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		Collection<STATE> callPredStates = new HashSet<STATE>();	
 		for (LETTER symbol : callAlphabet) {
-			for (STATE pred : m_nwa.predCall(callSuccState, symbol)) {
+			for (STATE pred : mnwa.predCall(callSuccState, symbol)) {
 				callPredStates.add(pred);
 			}
 			}
@@ -545,7 +545,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		Collection<STATE> returnSuccStates= new HashSet<STATE>();	
 		for (LETTER symbol : returnAlphabet) {
-			Iterable<STATE> succs = m_nwa.succReturn(hierarcReturnPredState, 
+			Iterable<STATE> succs = mnwa.succReturn(hierarcReturnPredState, 
 					linearReturnPredState, symbol);
 			for (STATE succ : succs) {
 				returnSuccStates.add(succ);
@@ -560,8 +560,8 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 *  transitions. */
 	LETTER getFirstInternalSymbol(STATE internalPred, 
 			STATE internalSucc) {
-		for (LETTER internalSymbol : m_nwa.lettersInternal(internalPred)) {
-			Iterable<STATE> succs = m_nwa.succInternal(internalPred,internalSymbol);
+		for (LETTER internalSymbol : mnwa.lettersInternal(internalPred)) {
+			Iterable<STATE> succs = mnwa.succInternal(internalPred,internalSymbol);
 			for (STATE succ : succs) {
 				if (succ.equals(internalSucc)) {
 					return internalSymbol;
@@ -576,8 +576,8 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * "(callPred, symbol, callSucc)" is contained in the call transitions. */
 	LETTER getFirstCallSymbol(STATE callPred, 
 			STATE callSucc) {
-		for (LETTER callSymbol : m_nwa.lettersCall(callPred)) {
-			Iterable<STATE> succs = m_nwa.succCall(callPred, callSymbol);
+		for (LETTER callSymbol : mnwa.lettersCall(callPred)) {
+			Iterable<STATE> succs = mnwa.succCall(callPred, callSymbol);
 			for (STATE succ : succs) {
 				if (succ.equals(callSucc)) {
 					return callSymbol;
@@ -594,8 +594,8 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	LETTER getFirstReturnSymbol(STATE returnPredHierarc, 
 			STATE returnPredLinear,  
 			STATE returnSucc) {
-		for (LETTER returnSymbol : m_nwa.lettersReturn(returnPredHierarc)) {
-			Iterable<STATE> succs = m_nwa.succReturn(returnPredHierarc, 
+		for (LETTER returnSymbol : mnwa.lettersReturn(returnPredHierarc)) {
+			Iterable<STATE> succs = mnwa.succReturn(returnPredHierarc, 
 					returnPredLinear, returnSymbol);
 			for (STATE succ : succs) {
 				if (succ.equals(returnSucc)) {
@@ -901,7 +901,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			
 			// TODO: xw: breaking line
 			return ((callSuccessor == returnPredecessor)
-					&& m_nwa.isFinal(callSuccessor))? 
+					&& mnwa.isFinal(callSuccessor))? 
 					// Reconstruction-AC: case 3, version 2010-11-22
 					reconstructionC(origin, callPredecessor).concatenate(
 					runOfCall).concatenate(

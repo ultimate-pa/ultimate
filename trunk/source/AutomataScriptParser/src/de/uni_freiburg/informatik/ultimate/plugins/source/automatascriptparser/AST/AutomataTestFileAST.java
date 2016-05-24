@@ -35,27 +35,27 @@ public class AutomataTestFileAST extends AtsASTNode {
 	
 	private static final long serialVersionUID = 8118811454684637616L;
 	
-	private AutomataDefinitionsAST m_automataDefinitions;
+	private AutomataDefinitionsAST mautomataDefinitions;
 	
 
-	private AtsASTNode m_statementList;
+	private AtsASTNode mstatementList;
 
 	public AutomataTestFileAST (ILocation loc, AtsASTNode stmtList, AutomataDefinitionsAST autDefs) {
 		super(loc);
-		m_automataDefinitions = autDefs;
-		m_statementList = stmtList;
+		mautomataDefinitions = autDefs;
+		mstatementList = stmtList;
 	}
 
 	public AutomataDefinitionsAST getAutomataDefinitions() {
-		return m_automataDefinitions;
+		return mautomataDefinitions;
 	}
 
-	public void setAutomataDefinitions(AutomataDefinitionsAST m_automataDefinitions) {
-		this.m_automataDefinitions = m_automataDefinitions;
+	public void setAutomataDefinitions(AutomataDefinitionsAST mautomataDefinitions) {
+		this.mautomataDefinitions = mautomataDefinitions;
 	}
 	
 	public AtsASTNode getStatementList() {
-		return m_statementList;
+		return mstatementList;
 	}
 
 	

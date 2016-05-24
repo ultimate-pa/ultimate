@@ -46,11 +46,11 @@ public class NestedwordAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = 498949013884049199L;
-	private ArrayList<String> m_Word;
-	private int m_sizeOfWordSymbols;
-	private ArrayList<Integer> m_NestingRelation;
+	private ArrayList<String> mWord;
+	private int msizeOfWordSymbols;
+	private ArrayList<Integer> mNestingRelation;
 	// Stack for positions of call symbols
-	Deque<Integer> m_CallPositions;
+	Deque<Integer> mCallPositions;
 	
 	// TODO: Following declaration must be removed when NestedWord
 	// can be imported!
@@ -75,39 +75,39 @@ public class NestedwordAST extends AtsASTNode {
 	
 	public NestedwordAST(ILocation loc) {
 		super(loc);
-		m_CallPositions = new ArrayDeque<Integer>();
-		m_Word = new ArrayList<String>();
-		m_NestingRelation = new ArrayList<Integer>();
-		m_sizeOfWordSymbols = 0;
+		mCallPositions = new ArrayDeque<Integer>();
+		mWord = new ArrayList<String>();
+		mNestingRelation = new ArrayList<Integer>();
+		msizeOfWordSymbols = 0;
 		setType(de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord.class);
 	}
 	
 	public void addSymbol(CallSymbolAST c) {
-		m_CallPositions.push(m_sizeOfWordSymbols);
-		m_Word.add(c.getSymbol());
+		mCallPositions.push(msizeOfWordSymbols);
+		mWord.add(c.getSymbol());
 		// For each call symbol we assume it is a pending call.
 		// If it is not, it is changed in the addSymbol(ReturnSymbol) method.
-		m_NestingRelation.add(PLUS_INFINITY);
-		++m_sizeOfWordSymbols;
+		mNestingRelation.add(PLUS_INFINITY);
+		++msizeOfWordSymbols;
 	}
 	public void addSymbol(InternalSymbolAST c) {
-		m_Word.add(c.getSymbol());
-		m_NestingRelation.add(INTERNAL_POSITION);
-		++m_sizeOfWordSymbols;
+		mWord.add(c.getSymbol());
+		mNestingRelation.add(INTERNAL_POSITION);
+		++msizeOfWordSymbols;
 
 	}
 
 	public void addSymbol(ReturnSymbolAST c) {
-		int positionOfThisSymbol = m_sizeOfWordSymbols;
-		m_Word.add(c.getSymbol());
-		if (m_CallPositions.isEmpty()) {
-			m_NestingRelation.add(MINUS_INFINITY);
+		int positionOfThisSymbol = msizeOfWordSymbols;
+		mWord.add(c.getSymbol());
+		if (mCallPositions.isEmpty()) {
+			mNestingRelation.add(MINUS_INFINITY);
 		} else {
-			int posOfMatchingCall = m_CallPositions.pop();
-			m_NestingRelation.add(posOfMatchingCall);
-			m_NestingRelation.set(posOfMatchingCall, positionOfThisSymbol);
+			int posOfMatchingCall = mCallPositions.pop();
+			mNestingRelation.add(posOfMatchingCall);
+			mNestingRelation.set(posOfMatchingCall, positionOfThisSymbol);
 		}
-		++m_sizeOfWordSymbols;
+		++msizeOfWordSymbols;
 
 	}
 	
@@ -119,9 +119,9 @@ public class NestedwordAST extends AtsASTNode {
 	 * @return true iff the conditions above are all true, otherwise false
 	 */
 	public boolean isNestedWordCorrect() {
-		int[] nestingRelation = new int[m_NestingRelation.size()];
-		for (int i = 0; i < m_NestingRelation.size(); i++) {
-			nestingRelation[i] = m_NestingRelation.get(i);
+		int[] nestingRelation = new int[mNestingRelation.size()];
+		for (int i = 0; i < mNestingRelation.size(); i++) {
+			nestingRelation[i] = mNestingRelation.get(i);
 		}
 		return (nestingRelationValuesInRange(nestingRelation) && nestingEdgesDoNotCross(nestingRelation) && nestingRelationSymmetricNestingEdges(nestingRelation) );
 	}
@@ -130,13 +130,13 @@ public class NestedwordAST extends AtsASTNode {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Nestedword [");
-		for (int i = 0; i < m_sizeOfWordSymbols; i++) {
-			if ((m_NestingRelation.get(i) != INTERNAL_POSITION) && (m_NestingRelation.get(i) < i)) {
-				builder.append(">" + m_Word.get(i));
-			} else if (m_NestingRelation.get(i) > i) {
-				builder.append(m_Word.get(i) + "<");
+		for (int i = 0; i < msizeOfWordSymbols; i++) {
+			if ((mNestingRelation.get(i) != INTERNAL_POSITION) && (mNestingRelation.get(i) < i)) {
+				builder.append(">" + mWord.get(i));
+			} else if (mNestingRelation.get(i) > i) {
+				builder.append(mWord.get(i) + "<");
 			} else {
-				builder.append(m_Word.get(i));
+				builder.append(mWord.get(i));
 			}
 			builder.append(" ");
 		}
@@ -223,17 +223,17 @@ public class NestedwordAST extends AtsASTNode {
 	}
 	
 	public String[] getWordSymbols() {
-		String[] symbols = new String[m_Word.size()];
-		for (int i = 0; i < m_Word.size(); i++) {
-			symbols[i] = m_Word.get(i);
+		String[] symbols = new String[mWord.size()];
+		for (int i = 0; i < mWord.size(); i++) {
+			symbols[i] = mWord.get(i);
 		}
 		return symbols;
 	}
 	
 	public int[] getNestingRelation() {
-		int[] nestingRelation = new int[m_NestingRelation.size()];
-		for (int i = 0; i < m_NestingRelation.size(); i++) {
-			nestingRelation[i] = m_NestingRelation.get(i);
+		int[] nestingRelation = new int[mNestingRelation.size()];
+		for (int i = 0; i < mNestingRelation.size(); i++) {
+			nestingRelation[i] = mNestingRelation.get(i);
 		}
 		return nestingRelation;
 	}

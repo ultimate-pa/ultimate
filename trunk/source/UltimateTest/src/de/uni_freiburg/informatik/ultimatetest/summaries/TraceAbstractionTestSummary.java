@@ -54,12 +54,12 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 	/**
 	 * A map from file names to benchmark results.
 	 */
-	private Map<UltimateRunDefinition, Collection<ICsvProvider<?>>> m_TraceAbstractionBenchmarks;
+	private Map<UltimateRunDefinition, Collection<ICsvProvider<?>>> mTraceAbstractionBenchmarks;
 
 	public TraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		mCount = 0;
-		m_TraceAbstractionBenchmarks = new HashMap<UltimateRunDefinition, Collection<ICsvProvider<?>>>();
+		mTraceAbstractionBenchmarks = new HashMap<UltimateRunDefinition, Collection<ICsvProvider<?>>>();
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 	@SuppressWarnings("rawtypes")
 	public void addTraceAbstractionBenchmarks(UltimateRunDefinition ultimateRunDefinition,
 			Collection<BenchmarkResult> benchmarkResults) {
-		assert !m_TraceAbstractionBenchmarks.containsKey(ultimateRunDefinition) : "benchmarks already added";
+		assert !mTraceAbstractionBenchmarks.containsKey(ultimateRunDefinition) : "benchmarks already added";
 
 		if (benchmarkResults != null && !benchmarkResults.isEmpty()) {
 			ArrayList<ICsvProvider<?>> providers = new ArrayList<>(benchmarkResults.size());
@@ -99,7 +99,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 				providers.add(result.getBenchmark().createCvsProvider());
 			}
 			if (!providers.isEmpty()) {
-				m_TraceAbstractionBenchmarks.put(ultimateRunDefinition, providers);
+				mTraceAbstractionBenchmarks.put(ultimateRunDefinition, providers);
 			}
 		}
 	}
@@ -165,7 +165,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 				sb.append(indent).append(currentResult.getValue().getMessage()).append(CoreUtil.getPlatformLineSeparator());
 				if (mShowBenchmarkResults) {
 					// Add TraceAbstraction benchmarks
-					Collection<ICsvProvider<?>> benchmarkProviders = m_TraceAbstractionBenchmarks.get(currentResult
+					Collection<ICsvProvider<?>> benchmarkProviders = mTraceAbstractionBenchmarks.get(currentResult
 							.getKey());
 					if (benchmarkProviders == null) {
 						sb.append(indent).append("No benchmark results available.")

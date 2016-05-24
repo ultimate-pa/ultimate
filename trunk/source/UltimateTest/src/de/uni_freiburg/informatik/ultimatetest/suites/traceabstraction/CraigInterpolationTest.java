@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
  */
 public class CraigInterpolationTest extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = {
+	private static final String[] mDirectories = {
 //		"examples/programs/regression",
 //		"examples/programs/quantifier",
 		"examples/programs/recursivePrograms",
@@ -69,14 +69,14 @@ public class CraigInterpolationTest extends
 			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/TreeInterpolants.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".bpl"});
 		} 
 		if (s_C_TreeInterpolants) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/TreeInterpolants.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".c", ".i"});
 		}
 		
@@ -84,14 +84,14 @@ public class CraigInterpolationTest extends
 			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/NestedInterpolants.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".bpl"});
 		} 
 		if (s_C_NestedInterpolants) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/NestedInterpolants.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();

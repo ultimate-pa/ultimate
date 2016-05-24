@@ -392,21 +392,21 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		 */
 		public static final String s_LassoTerminating = "lasso";
 		
-		public final Map<String, Integer> m_Map;
+		public final Map<String, Integer> mMap;
 		
 		public LassoAnalysisResults() {
-			m_Map = new LinkedHashMap<String, Integer>();
-			m_Map.put(s_LassoNonterminating, 0);
-			m_Map.put(s_TerminationUnknown, 0);
-			m_Map.put(s_StemFeasibleLoopInfeasible, 0);
-			m_Map.put(s_StemFeasibleLoopTerminating, 0);
-			m_Map.put(s_ConcatenationInfeasible, 0);
-			m_Map.put(s_ConcatInfeasibleLoopTerminating, 0);
-			m_Map.put(s_StemInfeasibleLoopNonterminating, 0);
-			m_Map.put(s_StemInfeasibleLoopUnknown, 0);
-			m_Map.put(s_StemInfeasibleLoopInfeasible, 0);
-			m_Map.put(s_StemInfeasibleLoopTerminating, 0);
-			m_Map.put(s_LassoTerminating, 0);
+			mMap = new LinkedHashMap<String, Integer>();
+			mMap.put(s_LassoNonterminating, 0);
+			mMap.put(s_TerminationUnknown, 0);
+			mMap.put(s_StemFeasibleLoopInfeasible, 0);
+			mMap.put(s_StemFeasibleLoopTerminating, 0);
+			mMap.put(s_ConcatenationInfeasible, 0);
+			mMap.put(s_ConcatInfeasibleLoopTerminating, 0);
+			mMap.put(s_StemInfeasibleLoopNonterminating, 0);
+			mMap.put(s_StemInfeasibleLoopUnknown, 0);
+			mMap.put(s_StemInfeasibleLoopInfeasible, 0);
+			mMap.put(s_StemInfeasibleLoopTerminating, 0);
+			mMap.put(s_LassoTerminating, 0);
 		}
 		
 		
@@ -423,32 +423,32 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		
 
 		public void increment(String key) {
-			int value = m_Map.get(key);
-			m_Map.put(key, value + 1);
+			int value = mMap.get(key);
+			mMap.put(key, value + 1);
 		}
 		
 //		public void aggregate(LassoAnalysisResults lassoAnalysisResults) {
-//			m_LassoNonterminating = lassoAnalysisResults.m_LassoNonterminating;
-//			m_TerminationUnknown = lassoAnalysisResults.m_TerminationUnknown;
-//			m_StemFeasibleLoopInfeasible = lassoAnalysisResults.m_StemFeasibleLoopInfeasible;
-//			m_StemFeasibleLoopTerminating = lassoAnalysisResults.m_StemFeasibleLoopTerminating;
-//			m_ConcatenationInfeasible = lassoAnalysisResults.m_ConcatenationInfeasible;
-//			m_ConcatInfeasibleLoopTerminating = lassoAnalysisResults.m_ConcatInfeasibleLoopTerminating;
-//			m_StemInfeasibleLoopNonterminating = lassoAnalysisResults.m_StemInfeasibleLoopNonterminating;
-//			m_StemInfeasibleLoopUnknown = lassoAnalysisResults.m_StemInfeasibleLoopUnknown;
-//			m_StemInfeasibleLoopInfeasible = lassoAnalysisResults.m_StemInfeasibleLoopInfeasible;
-//			m_StemInfeasibleLoopTerminating = lassoAnalysisResults.m_StemInfeasibleLoopTerminating;
-//			m_LassoTerminating = lassoAnalysisResults.m_LassoTerminating;
+//			mLassoNonterminating = lassoAnalysisResults.mLassoNonterminating;
+//			mTerminationUnknown = lassoAnalysisResults.mTerminationUnknown;
+//			mStemFeasibleLoopInfeasible = lassoAnalysisResults.mStemFeasibleLoopInfeasible;
+//			mStemFeasibleLoopTerminating = lassoAnalysisResults.mStemFeasibleLoopTerminating;
+//			mConcatenationInfeasible = lassoAnalysisResults.mConcatenationInfeasible;
+//			mConcatInfeasibleLoopTerminating = lassoAnalysisResults.mConcatInfeasibleLoopTerminating;
+//			mStemInfeasibleLoopNonterminating = lassoAnalysisResults.mStemInfeasibleLoopNonterminating;
+//			mStemInfeasibleLoopUnknown = lassoAnalysisResults.mStemInfeasibleLoopUnknown;
+//			mStemInfeasibleLoopInfeasible = lassoAnalysisResults.mStemInfeasibleLoopInfeasible;
+//			mStemInfeasibleLoopTerminating = lassoAnalysisResults.mStemInfeasibleLoopTerminating;
+//			mLassoTerminating = lassoAnalysisResults.mLassoTerminating;
 //		}
 
 		@Override
 		public Collection<String> getKeys() {
-			return m_Map.keySet();
+			return mMap.keySet();
 		}
 
 		@Override
 		public Object getValue(String key) {
-			return m_Map.get(key);
+			return mMap.get(key);
 		}
 
 		@Override

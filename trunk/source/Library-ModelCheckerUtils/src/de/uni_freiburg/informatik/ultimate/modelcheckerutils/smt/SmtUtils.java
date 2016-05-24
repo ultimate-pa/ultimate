@@ -179,7 +179,7 @@ public class SmtUtils {
 	}
 
 	/**
-	 * Given a list of Terms term_1, ... ,term_n returns a new list that contains (not term_1), ... ,(not term_n) in
+	 * Given a list of Terms term1, ... ,termn returns a new list that contains (not term1), ... ,(not termn) in
 	 * this order.
 	 */
 	public static List<Term> negateElementwise(Script script, List<Term> terms) {

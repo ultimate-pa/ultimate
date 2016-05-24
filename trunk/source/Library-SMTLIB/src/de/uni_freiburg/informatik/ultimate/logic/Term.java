@@ -116,8 +116,8 @@ public abstract class Term {
 	 * Convert a term to a string in a stack based fashion.  This is used
 	 * for internal purposes.  External users can just use toString()
 	 * or toStringDirect().
-	 * @param m_Todo The stack where to put the strings and sub terms.
+	 * @param mTodo The stack where to put the strings and sub terms.
 	 * @see PrintTerm
 	 */
-	protected abstract void toStringHelper(ArrayDeque<Object> m_Todo);
+	protected abstract void toStringHelper(ArrayDeque<Object> mTodo);
 }

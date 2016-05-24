@@ -65,19 +65,19 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
+	private INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
+	private INestedWordAutomatonOldApi<LETTER, STATE> mResult;
 	/**
 	 * Service provider of Ultimate framework.
 	 */
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
@@ -124,30 +124,30 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	protected BuchiReduce(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Operand = operand;
-		m_Logger.info(startMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
 
 		simulation.getGameGraph().generateGameGraphFromAutomaton();
 		simulation.doSimulation();
-		m_Result = simulation.getResult();
+		mResult = simulation.getResult();
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(m_Services,
-					m_Services.getProgressMonitorService(), m_Logger, m_Operand, stateFactory);
+			DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
+					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
-			DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(m_Services.getProgressMonitorService(),
-					m_Logger, false, stateFactory, graph);
+			DelayedSimulation<LETTER, STATE> nonSccSim = new DelayedSimulation<>(mServices.getProgressMonitorService(),
+					mLogger, false, stateFactory, graph);
 			nonSccSim.doSimulation();
 			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = nonSccSim.getResult();
-			if (m_Result.size() != nonSCCresult.size()) {
+			if (mResult.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}
 		}
 
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	/*
@@ -159,7 +159,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return ResultChecker.reduceBuchi(m_Services, m_Operand, m_Result);
+		return ResultChecker.reduceBuchi(mServices, mOperand, mResult);
 	}
 
 	/*
@@ -170,7 +170,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + m_Result.sizeInformation();
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 
 	/*
@@ -180,7 +180,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 	/*
@@ -202,7 +202,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + m_Operand.sizeInformation();
+		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
 	}
 
 	/**
@@ -211,7 +211,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @return The logger used by the Ultimate framework.
 	 */
 	protected ILogger getLogger() {
-		return m_Logger;
+		return mLogger;
 	}
 
 	/**
@@ -220,7 +220,7 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @return The inputed automaton.
 	 */
 	protected INestedWordAutomatonOldApi<LETTER, STATE> getOperand() {
-		return m_Operand;
+		return mOperand;
 	}
 
 	/**
@@ -229,6 +229,6 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @return The service provider of the Ultimate framework.
 	 */
 	protected AutomataLibraryServices getServices() {
-		return m_Services;
+		return mServices;
 	}
 }

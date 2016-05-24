@@ -37,67 +37,67 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataProvider {
 	
-	protected final InCaReCounter m_SDtfsCounter;
-	protected final InCaReCounter m_SDsluCounter;
-	protected final InCaReCounter m_SDsCounter;
-	protected final InCaReCounter m_SdLazyCounter;
-	protected final InCaReCounter m_SolverCounterSat;
-	protected final InCaReCounter m_SolverCounterUnsat;
-	protected final InCaReCounter m_SolverCounterUnknown;
-	protected final InCaReCounter m_SolverCounterNotChecked;
-	protected final Benchmark m_Benchmark;
+	protected final InCaReCounter mSDtfsCounter;
+	protected final InCaReCounter mSDsluCounter;
+	protected final InCaReCounter mSDsCounter;
+	protected final InCaReCounter mSdLazyCounter;
+	protected final InCaReCounter mSolverCounterSat;
+	protected final InCaReCounter mSolverCounterUnsat;
+	protected final InCaReCounter mSolverCounterUnknown;
+	protected final InCaReCounter mSolverCounterNotChecked;
+	protected final Benchmark mBenchmark;
 
-	protected boolean m_Running = false;
+	protected boolean mRunning = false;
 
 	public HoareTripleCheckerStatisticsGenerator() {
-		m_SDtfsCounter = new InCaReCounter();
-		m_SDsluCounter = new InCaReCounter();
-		m_SDsCounter = new InCaReCounter();
-		m_SdLazyCounter = new InCaReCounter();
-		m_SolverCounterSat = new InCaReCounter();
-		m_SolverCounterUnsat = new InCaReCounter();
-		m_SolverCounterUnknown = new InCaReCounter();
-		m_SolverCounterNotChecked= new InCaReCounter();
-		m_Benchmark = new Benchmark();
-		m_Benchmark.register(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
+		mSDtfsCounter = new InCaReCounter();
+		mSDsluCounter = new InCaReCounter();
+		mSDsCounter = new InCaReCounter();
+		mSdLazyCounter = new InCaReCounter();
+		mSolverCounterSat = new InCaReCounter();
+		mSolverCounterUnsat = new InCaReCounter();
+		mSolverCounterUnknown = new InCaReCounter();
+		mSolverCounterNotChecked= new InCaReCounter();
+		mBenchmark = new Benchmark();
+		mBenchmark.register(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
 
 	public InCaReCounter getSDtfsCounter() {
-		return m_SDtfsCounter;
+		return mSDtfsCounter;
 	}
 	public InCaReCounter getSDsluCounter() {
-		return m_SDsluCounter;
+		return mSDsluCounter;
 	}
 	public InCaReCounter getSDsCounter() {
-		return m_SDsCounter;
+		return mSDsCounter;
 	}
 	public InCaReCounter getSdLazyCounter() {
-		return m_SdLazyCounter;
+		return mSdLazyCounter;
 	}
 	public InCaReCounter getSolverCounterSat() {
-		return m_SolverCounterSat;
+		return mSolverCounterSat;
 	}
 	public InCaReCounter getSolverCounterUnsat() {
-		return m_SolverCounterUnsat;
+		return mSolverCounterUnsat;
 	}
 	public InCaReCounter getSolverCounterUnknown() {
-		return m_SolverCounterUnknown;
+		return mSolverCounterUnknown;
 	}
 	public InCaReCounter getSolverCounterNotChecked() {
-		return m_SolverCounterNotChecked;
+		return mSolverCounterNotChecked;
 	}
 	public long getEdgeCheckerTime() {
-		return (long) m_Benchmark.getElapsedTime(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time), TimeUnit.NANOSECONDS);
+		return (long) mBenchmark.getElapsedTime(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time), TimeUnit.NANOSECONDS);
 	}
 	public void continueEdgeCheckerTime() {
-		assert m_Running == false : "Timing already running";
-		m_Running = true;
-		m_Benchmark.unpause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
+		assert mRunning == false : "Timing already running";
+		mRunning = true;
+		mBenchmark.unpause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
 	public void stopEdgeCheckerTime() {
-		assert m_Running == true : "Timing not running";
-		m_Running = false;
-		m_Benchmark.pause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
+		assert mRunning == true : "Timing not running";
+		mRunning = false;
+		mBenchmark.pause(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 	}
 	@Override
 	public Collection<String> getKeys() {
@@ -107,21 +107,21 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 		HoareTripleCheckerStatisticsDefinitions keyEnum = Enum.valueOf(HoareTripleCheckerStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case SDtfs:
-			return m_SDtfsCounter;
+			return mSDtfsCounter;
 		case SDslu:
-			return m_SDsluCounter;
+			return mSDsluCounter;
 		case SDs:
-			return m_SDsCounter;
+			return mSDsCounter;
 		case SdLazy:
-			return m_SdLazyCounter;
+			return mSdLazyCounter;
 		case SolverSat: 
-			return m_SolverCounterSat;
+			return mSolverCounterSat;
 		case SolverUnsat:
-			return m_SolverCounterUnsat;
+			return mSolverCounterUnsat;
 		case SolverUnknown:
-			return m_SolverCounterUnknown;
+			return mSolverCounterUnknown;
 		case SolverNotchecked:
-			return m_SolverCounterNotChecked;
+			return mSolverCounterNotChecked;
 		case Time:
 			return getEdgeCheckerTime();
 		default:

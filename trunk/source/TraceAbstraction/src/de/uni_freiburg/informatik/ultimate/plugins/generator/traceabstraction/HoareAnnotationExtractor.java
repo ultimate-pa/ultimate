@@ -51,36 +51,36 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPredicate> {
 
-	Set<DoubleDecker<IPredicate>> m_ReportedDoubleDeckers = new HashSet<DoubleDecker<IPredicate>>();
+	Set<DoubleDecker<IPredicate>> mReportedDoubleDeckers = new HashSet<DoubleDecker<IPredicate>>();
 
-	private final HoareAnnotationFragments m_HoareAnnotation;
+	private final HoareAnnotationFragments mHoareAnnotation;
 
 	public HoareAnnotationExtractor(IUltimateServiceProvider services, INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction,
 			HoareAnnotationFragments haf) {
 		super(new AutomataLibraryServices(services));
-		m_TraversedNwa = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) abstraction;
-		m_HoareAnnotation = haf;
+		mTraversedNwa = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) abstraction;
+		mHoareAnnotation = haf;
 
 		try {
 			traverseDoubleDeckerGraph();
 		} catch (AutomataOperationCanceledException e) {
-			m_Logger.warn("Computation of Hoare annotation canceled.");
+			mLogger.warn("Computation of Hoare annotation canceled.");
 		}
 	}
 
 	private void addContext(DoubleDecker<IPredicate> doubleDecker) {
-		if (!m_ReportedDoubleDeckers.contains(doubleDecker)) {
+		if (!mReportedDoubleDeckers.contains(doubleDecker)) {
 			IPredicate state = doubleDecker.getUp();
 			IPredicate context = doubleDecker.getDown();
-			m_HoareAnnotation.addDoubleDecker(context, state, m_TraversedNwa.getEmptyStackState());
-			m_ReportedDoubleDeckers.add(doubleDecker);
+			mHoareAnnotation.addDoubleDecker(context, state, mTraversedNwa.getEmptyStackState());
+			mReportedDoubleDeckers.add(doubleDecker);
 		}
 
 	}
 
 	@Override
 	protected Collection<IPredicate> getInitialStates() {
-		Collection<IPredicate> result = m_TraversedNwa.getInitialStates();
+		Collection<IPredicate> result = mTraversedNwa.getInitialStates();
 		if (result.size() == 1) {
 			// case where automaton is emtpy minimized and contains only one
 			// dummy state.
@@ -98,8 +98,8 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 		addContext(doubleDecker);
 		IPredicate state = doubleDecker.getUp();
 		ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
-		for (CodeBlock symbol : m_TraversedNwa.lettersInternal(state)) {
-			for (IPredicate succ : m_TraversedNwa.succInternal(state, symbol)) {
+		for (CodeBlock symbol : mTraversedNwa.lettersInternal(state)) {
+			for (IPredicate succ : mTraversedNwa.succInternal(state, symbol)) {
 				succs.add(succ);
 			}
 		}
@@ -111,19 +111,19 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 		addContext(doubleDecker);
 		IPredicate state = doubleDecker.getUp();
 		ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
-		Collection<CodeBlock> symbolsCall = m_TraversedNwa.lettersCall(state);
+		Collection<CodeBlock> symbolsCall = mTraversedNwa.lettersCall(state);
 		if (symbolsCall.size() > 1) {
 			throw new UnsupportedOperationException("Several outgoing calls not supported");
 		}
 		for (CodeBlock symbol : symbolsCall) {
-			Iterable<IPredicate> succCall = m_TraversedNwa.succCall(state, symbol);
+			Iterable<IPredicate> succCall = mTraversedNwa.succCall(state, symbol);
 			Iterator<IPredicate> calls = succCall.iterator();
 			calls.next();
 			if (calls.hasNext()) {
 				throw new UnsupportedOperationException("Several outgoing calls not supported");
 			}
 			for (IPredicate succ : succCall) {
-				m_HoareAnnotation.addContextEntryPair(state, succ);
+				mHoareAnnotation.addContextEntryPair(state, succ);
 				succs.add(succ);
 			}
 		}
@@ -136,11 +136,11 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 		IPredicate state = doubleDecker.getUp();
 		IPredicate context = doubleDecker.getDown();
 		ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
-		if (context == m_TraversedNwa.getEmptyStackState()) {
+		if (context == mTraversedNwa.getEmptyStackState()) {
 			return succs;
 		}
-		for (CodeBlock symbol : m_TraversedNwa.lettersReturn(state)) {
-			for (IPredicate succ : m_TraversedNwa.succReturn(state, context, symbol)) {
+		for (CodeBlock symbol : mTraversedNwa.lettersReturn(state)) {
+			for (IPredicate succ : mTraversedNwa.succReturn(state, context, symbol)) {
 				succs.add(succ);
 			}
 		}

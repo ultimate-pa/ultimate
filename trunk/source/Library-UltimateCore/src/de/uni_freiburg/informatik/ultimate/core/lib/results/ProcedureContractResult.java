@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 public class ProcedureContractResult<ELEM extends IElement, E> 
 		extends AbstractResultAtElement<ELEM> implements IResultWithLocation {
 	
-	private E m_Contract;
-	private final String m_ProcedureName;
+	private E mContract;
+	private final String mProcedureName;
 	
 	/**
 	 * Constructor.
@@ -51,17 +51,17 @@ public class ProcedureContractResult<ELEM extends IElement, E>
 			IBacktranslationService translatorSequence,
 			String procedureName, E contract) {
 		super(position, plugin, translatorSequence);
-		this.m_ProcedureName = procedureName;
-		this.m_Contract = contract;
+		this.mProcedureName = procedureName;
+		this.mContract = contract;
 	}
 	
 	public E getContract() {
-		return m_Contract;
+		return mContract;
 	}
 
 	@Override
 	public String getShortDescription() {
-		return "Procedure Contract for " + m_ProcedureName;
+		return "Procedure Contract for " + mProcedureName;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -69,9 +69,9 @@ public class ProcedureContractResult<ELEM extends IElement, E>
 	public String getLongDescription() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("Derived contract for procedure ");
-		sb.append(m_ProcedureName);
+		sb.append(mProcedureName);
 		sb.append(": ");
-		sb.append(mTranslatorSequence.translateExpressionToString(m_Contract, (Class<E>)m_Contract.getClass()));
+		sb.append(mTranslatorSequence.translateExpressionToString(mContract, (Class<E>)mContract.getClass()));
 		return sb.toString();
 	}
 }

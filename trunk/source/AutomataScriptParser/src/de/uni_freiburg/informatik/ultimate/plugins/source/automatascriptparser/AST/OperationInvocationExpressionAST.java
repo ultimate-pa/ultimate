@@ -43,51 +43,51 @@ public class OperationInvocationExpressionAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = -2607691105145027619L;
-	private String m_operationName;
-	private String m_errorMessage;
-	private String m_argsAsString;
+	private String moperationName;
+	private String merrorMessage;
+	private String margsAsString;
 	
 	public OperationInvocationExpressionAST(ILocation loc, String opName, AtsASTNode e2) {
 		super(loc);
-		m_operationName = opName;
-		m_errorMessage = "";
+		moperationName = opName;
+		merrorMessage = "";
 		addOutgoingNode(e2);
 	}
 	
 	public String getErrorMessage() {
-		return m_errorMessage;
+		return merrorMessage;
 	}
 
 	public String getOperationName() {
-		return m_operationName;
+		return moperationName;
 	}
 
 		
 	public void setErrorMessage(String errorMessage) {
-		this.m_errorMessage = errorMessage;
+		this.merrorMessage = errorMessage;
 	}
 	
 	public void setOperationName(String opName) {
-		this.m_operationName = opName;
+		this.moperationName = opName;
 	}
 	
 	
 	@Override
 	public String toString() {
-		return "OperationExpression [Operation: " + m_operationName + "]";
+		return "OperationExpression [Operation: " + moperationName + "]";
 	}
 
 	public String getArgsAsString() {
-		return m_argsAsString;
+		return margsAsString;
 	}
 
-	public void setArgsAsString(String m_argsAsString) {
-		this.m_argsAsString = m_argsAsString;
+	public void setArgsAsString(String margsAsString) {
+		this.margsAsString = margsAsString;
 	}
 
 	@Override
 	public String getAsString() {
-		return m_operationName + "(" + m_children.get(0).getAsString() + ")";
+		return moperationName + "(" + mchildren.get(0).getAsString() + ")";
 	}
 	
 

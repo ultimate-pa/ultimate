@@ -41,15 +41,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> implements
 		IResultWithLocation {
 
-	private final E m_Invariant;
+	private final E mInvariant;
 
 	public InvariantResult(String plugin, ELEM element, IBacktranslationService translatorSequence, E invariant) {
 		super(element, plugin, translatorSequence);
-		this.m_Invariant = invariant;
+		this.mInvariant = invariant;
 	}
 
 	public E getInvariant() {
-		return m_Invariant;
+		return mInvariant;
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtE
 	public String getLongDescription() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("Derived loop invariant: ");
-		sb.append(mTranslatorSequence.translateExpressionToString(m_Invariant, (Class<E>) m_Invariant.getClass()));
+		sb.append(mTranslatorSequence.translateExpressionToString(mInvariant, (Class<E>) mInvariant.getClass()));
 		return sb.toString();
 	}
 }

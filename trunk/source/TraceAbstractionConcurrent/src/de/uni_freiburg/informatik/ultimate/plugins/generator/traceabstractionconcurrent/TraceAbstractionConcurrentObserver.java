@@ -77,14 +77,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
 	 * Successors of this node exactly the initial nodes of procedures.
 	 */
-	private IElement m_Graphroot = null;
-	private final IUltimateServiceProvider m_Services;
-	private final IToolchainStorage m_ToolchainStorage;
+	private IElement mGraphroot = null;
+	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage mToolchainStorage;
 
 	public TraceAbstractionConcurrentObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
-		m_Services = services;
-		m_ToolchainStorage = storage;
-		mLogger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mServices = services;
+		mToolchainStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		mLogger.warn(taPrefs.dumpPath());
 
 		SmtManager smtManager = new SmtManager(rootNode.getRootAnnot().getBoogie2SMT().getScript(),
-				rootNode.getRootAnnot().getBoogie2SMT(), rootNode.getRootAnnot().getModGlobVarManager(), m_Services,
+				rootNode.getRootAnnot().getBoogie2SMT(), rootNode.getRootAnnot().getModGlobVarManager(), mServices,
 				false, rootNode.getRootAnnot().getManagedScript());
 		TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());
 
@@ -112,10 +112,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		String name = "AllErrorsAtOnce";
 		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
 			abstractCegarLoop = new CegarLoopJulian(name, rootNode, smtManager, timingStatistics, taPrefs,
-					errNodesOfAllProc, m_Services, m_ToolchainStorage);
+					errNodesOfAllProc, mServices, mToolchainStorage);
 		} else if (taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
 			abstractCegarLoop = new CegarLoopConcurrentAutomata(name, rootNode, smtManager, timingStatistics, taPrefs,
-					errNodesOfAllProc, m_Services, m_ToolchainStorage);
+					errNodesOfAllProc, mServices, mToolchainStorage);
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -148,9 +148,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		mLogger.info("Statistics - number of theorem prover calls: " + smtManager.getNontrivialSatQueries());
 		mLogger.info("Statistics - iterations: " + abstractCegarLoop.getIteration());
 		// s_Logger.info("Statistics - biggest abstraction: " +
-		// abstractCegarLoop.m_BiggestAbstractionSize + " states");
+		// abstractCegarLoop.mBiggestAbstractionSize + " states");
 		// s_Logger.info("Statistics - biggest abstraction in iteration: " +
-		// abstractCegarLoop.m_BiggestAbstractionIteration);
+		// abstractCegarLoop.mBiggestAbstractionIteration);
 
 		String stat = "";
 		stat += "Statistics:  ";
@@ -164,14 +164,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		stat += smtManager.getTrivialSatQueries() + " tivial, ";
 		stat += smtManager.getNontrivialSatQueries() + " nontrivial.";
 		// stat += " Biggest abstraction occured in iteration " +
-		// abstractCegarLoop.m_BiggestAbstractionIteration + " had ";
-		// stat += abstractCegarLoop.m_BiggestAbstractionSize;
+		// abstractCegarLoop.mBiggestAbstractionIteration + " had ";
+		// stat += abstractCegarLoop.mBiggestAbstractionSize;
 
 		if (abstractCegarLoop instanceof CegarLoopJulian) {
 			stat += " conditions ";
 			CegarLoopJulian clj = (CegarLoopJulian) abstractCegarLoop;
-			stat += "and " + clj.m_BiggestAbstractionTransitions + " transitions. ";
-			stat += "Overall " + clj.m_CoRelationQueries + "co-relation queries";
+			stat += "and " + clj.mBiggestAbstractionTransitions + " transitions. ";
+			stat += "Overall " + clj.mCoRelationQueries + "co-relation queries";
 		} else if (abstractCegarLoop instanceof CegarLoopConcurrentAutomata) {
 			stat += " states ";
 		} else {
@@ -208,7 +208,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			break;
 		}
 
-		m_Graphroot = abstractCegarLoop.getArtifact();
+		mGraphroot = abstractCegarLoop.getArtifact();
 
 		return false;
 	}
@@ -222,7 +222,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (ProgramPoint errorLoc : errorLocs) {
 				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.PLUGIN_NAME, errorLoc,
-						m_Services.getBacktranslationService());
+						mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
 		}
@@ -237,7 +237,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			return;
 		}
 		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe),
-				Activator.PLUGIN_NAME, m_Services.getBacktranslationService(), pe));
+				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
@@ -248,7 +248,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			String timeOutMessage = "Timeout! Unable to prove that " + check.getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.PLUGIN_NAME, m_Services.getBacktranslationService(), timeOutMessage);
+					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			mLogger.warn(timeOutMessage);
 		}
@@ -257,7 +257,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
-				Activator.PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
+				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
@@ -270,14 +270,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	}
 
 	private void reportResult(IResult res) {
-		m_Services.getResultService().reportResult(Activator.PLUGIN_ID, res);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
 	/**
 	 * @return the root of the CFG.
 	 */
 	public IElement getRoot() {
-		return m_Graphroot;
+		return mGraphroot;
 	}
 
 	@Override

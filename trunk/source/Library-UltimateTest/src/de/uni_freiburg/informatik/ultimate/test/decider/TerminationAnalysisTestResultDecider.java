@@ -71,9 +71,9 @@ public class TerminationAnalysisTestResultDecider extends
 	
 	
 	public class TerminationAnalysisResultEvaluation implements ITestResultEvaluation<TerminationAnalysisOverallResult> {
-		String m_Category;
-		String m_Message;
-		TestResult m_TestResult;
+		String mCategory;
+		String mMessage;
+		TestResult mTestResult;
 
 		@Override
 		public void evaluateTestResult(
@@ -95,20 +95,20 @@ public class TerminationAnalysisTestResultDecider extends
 		
 		private void evaluateOverallResultWithoutExpectedResult(
 				IOverallResultEvaluator<TerminationAnalysisOverallResult> overallResultDeterminer) {
-			m_Category = overallResultDeterminer.getOverallResult() + "(Expected:UNKNOWN)";
-			m_Message += " UltimateResult: " + overallResultDeterminer.generateOverallResultMessage();
+			mCategory = overallResultDeterminer.getOverallResult() + "(Expected:UNKNOWN)";
+			mMessage += " UltimateResult: " + overallResultDeterminer.generateOverallResultMessage();
 			switch (overallResultDeterminer.getOverallResult()) {
 			case EXCEPTION_OR_ERROR:
 			case UNSUPPORTED_SYNTAX:
 			case NO_RESULT:
-				m_TestResult = TestResult.FAIL;
+				mTestResult = TestResult.FAIL;
 				break;
 			case TERMINATING:
 			case NONTERMINATING:
 			case UNKNOWN:
 			case SYNTAX_ERROR:
 			case TIMEOUT:
-				m_TestResult = TestResult.UNKNOWN;
+				mTestResult = TestResult.UNKNOWN;
 				break;
 			}
 		}
@@ -116,55 +116,55 @@ public class TerminationAnalysisTestResultDecider extends
 		private void compareToOverallResult(
 				TerminationAnalysisOverallResult expectedResult,
 				IOverallResultEvaluator<TerminationAnalysisOverallResult> overallResultDeterminer) {
-			m_Category = overallResultDeterminer.getOverallResult() + "(Expected:" + expectedResult + ")";
-			m_Message += " UltimateResult: " + overallResultDeterminer.getOverallResult() 
+			mCategory = overallResultDeterminer.getOverallResult() + "(Expected:" + expectedResult + ")";
+			mMessage += " UltimateResult: " + overallResultDeterminer.getOverallResult() 
 					+ "   " + overallResultDeterminer.generateOverallResultMessage();
 				switch (overallResultDeterminer.getOverallResult()) {
 				case EXCEPTION_OR_ERROR:
-					m_TestResult = TestResult.FAIL;
+					mTestResult = TestResult.FAIL;
 					break;
 				case TERMINATING:
 					if (expectedResult == TerminationAnalysisOverallResult.TERMINATING) {
-						m_TestResult = TestResult.SUCCESS;
+						mTestResult = TestResult.SUCCESS;
 					} else {
-						m_TestResult = TestResult.FAIL;
+						mTestResult = TestResult.FAIL;
 					}
 					break;
 				case NONTERMINATING:
 					if (expectedResult == TerminationAnalysisOverallResult.NONTERMINATING) {
-						m_TestResult = TestResult.SUCCESS;
+						mTestResult = TestResult.SUCCESS;
 					} else {
-						m_TestResult = TestResult.FAIL;
+						mTestResult = TestResult.FAIL;
 					}
 					break;
 				case UNKNOWN:
 					// syntax error should always have been found
 					if (expectedResult == TerminationAnalysisOverallResult.SYNTAX_ERROR) {
-						m_TestResult = TestResult.FAIL;
+						mTestResult = TestResult.FAIL;
 					} else {
-						m_TestResult = TestResult.UNKNOWN;
+						mTestResult = TestResult.UNKNOWN;
 					}
 					break;
 				case SYNTAX_ERROR:
 					if (expectedResult == TerminationAnalysisOverallResult.SYNTAX_ERROR) {
-						m_TestResult = TestResult.SUCCESS;
+						mTestResult = TestResult.SUCCESS;
 					} else {
-						m_TestResult = TestResult.FAIL;
+						mTestResult = TestResult.FAIL;
 					}
 					break;
 				case TIMEOUT:
 					// syntax error should always have been found
 					if (expectedResult == TerminationAnalysisOverallResult.SYNTAX_ERROR) {
-						m_TestResult = TestResult.FAIL;
+						mTestResult = TestResult.FAIL;
 					} else {
-						m_TestResult = TestResult.UNKNOWN;
+						mTestResult = TestResult.UNKNOWN;
 					}
 					break;
 				case UNSUPPORTED_SYNTAX:
-					m_TestResult = TestResult.FAIL;
+					mTestResult = TestResult.FAIL;
 					break;
 				case NO_RESULT:
-					m_TestResult = TestResult.FAIL;
+					mTestResult = TestResult.FAIL;
 					break;
 				default:
 					throw new AssertionError("unknown case");
@@ -176,15 +176,15 @@ public class TerminationAnalysisTestResultDecider extends
 				throws AssertionError {
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
-				m_Category = "Inkonsistent keywords";
-				m_Message = expectedResultFinder.getExpectedResultFinderMessage();
-				m_TestResult = TestResult.FAIL;
+				mCategory = "Inkonsistent keywords";
+				mMessage = expectedResultFinder.getExpectedResultFinderMessage();
+				mTestResult = TestResult.FAIL;
 				break;
 			case EXPECTED_RESULT_FOUND:
-				m_Message = "ExpectedResult: " + expectedResultFinder.getExpectedResult();
+				mMessage = "ExpectedResult: " + expectedResultFinder.getExpectedResult();
 				break;
 			case NO_EXPECTED_RESULT_FOUND:
-				m_Message = expectedResultFinder.getExpectedResultFinderMessage();
+				mMessage = expectedResultFinder.getExpectedResultFinderMessage();
 				break;
 			default:
 				throw new AssertionError("unknown case");
@@ -202,8 +202,8 @@ public class TerminationAnalysisTestResultDecider extends
 				return;
 			case EXPECTED_RESULT_FOUND:
 			case NO_EXPECTED_RESULT_FOUND:
-				m_Category += "/UltimateResult:" + TerminationAnalysisOverallResult.EXCEPTION_OR_ERROR;
-				m_Message += " UltimateResult: " + e.getMessage();
+				mCategory += "/UltimateResult:" + TerminationAnalysisOverallResult.EXCEPTION_OR_ERROR;
+				mMessage += " UltimateResult: " + e.getMessage();
 			default:
 				break;
 			}
@@ -211,17 +211,17 @@ public class TerminationAnalysisTestResultDecider extends
 
 		@Override
 		public TestResult getTestResult() {
-			return m_TestResult;
+			return mTestResult;
 		}
 
 		@Override
 		public String getTestResultCategory() {
-			return m_Category;
+			return mCategory;
 		}
 
 		@Override
 		public String getTestResultMessage() {
-			return m_Message;
+			return mMessage;
 		}
 		
 	}

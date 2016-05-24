@@ -56,46 +56,46 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class LookaheadPartitionConstructor<LETTER, STATE>  {
 	
-	private final AutomataLibraryServices m_Services;
-	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
-	private final Collection<Set<STATE>> m_Result;
+	private final AutomataLibraryServices mServices;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	private final Collection<Set<STATE>> mResult;
 
 	public LookaheadPartitionConstructor(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER, STATE> operand) {
-		m_Services = services;
-		m_Operand = operand;
+		mServices = services;
+		mOperand = operand;
 
 		final HashRelation<OutgoingInCaSymbols<STATE, LETTER>, STATE> symbols2states = new HashRelation<>();
-		for (STATE inputState : m_Operand.getStates()) {
+		for (STATE inputState : mOperand.getStates()) {
 			symbols2states.addPair(computeOutgoingSymbols(inputState), inputState);
 		}
-		m_Result = new LinkedHashSet<>();
+		mResult = new LinkedHashSet<>();
 		for(OutgoingInCaSymbols<STATE, LETTER> outgoingSymbols : symbols2states.getDomain()) {
-			m_Result.add(Collections.unmodifiableSet(symbols2states.getImage(outgoingSymbols)));
+			mResult.add(Collections.unmodifiableSet(symbols2states.getImage(outgoingSymbols)));
 		}
 	}
 	
 	private OutgoingInCaSymbols<STATE,LETTER> computeOutgoingSymbols(STATE state) {
-		Set<LETTER> lettersInternal = m_Operand.lettersInternal(state);
-		Set<LETTER> lettersCall = m_Operand.lettersCall(state);
+		Set<LETTER> lettersInternal = mOperand.lettersInternal(state);
+		Set<LETTER> lettersCall = mOperand.lettersCall(state);
 		return new OutgoingInCaSymbols<>(lettersInternal, lettersCall);
 		
 	}
 	
 	private static class OutgoingInCaSymbols<STATE,LETTER> {
-		private final Set<LETTER> m_Internal;
-		private final Set<LETTER> m_Call;
+		private final Set<LETTER> mInternal;
+		private final Set<LETTER> mCall;
 		public OutgoingInCaSymbols(Set<LETTER> internal, Set<LETTER> call) {
 			super();
-			m_Internal = internal;
-			m_Call = call;
+			mInternal = internal;
+			mCall = call;
 		}
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((m_Call == null) ? 0 : m_Call.hashCode());
-			result = prime * result + ((m_Internal == null) ? 0 : m_Internal.hashCode());
+			result = prime * result + ((mCall == null) ? 0 : mCall.hashCode());
+			result = prime * result + ((mInternal == null) ? 0 : mInternal.hashCode());
 			return result;
 		}
 		@Override
@@ -107,21 +107,21 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 			if (getClass() != obj.getClass())
 				return false;
 			OutgoingInCaSymbols other = (OutgoingInCaSymbols) obj;
-			if (m_Call == null) {
-				if (other.m_Call != null)
+			if (mCall == null) {
+				if (other.mCall != null)
 					return false;
-			} else if (!m_Call.equals(other.m_Call))
+			} else if (!mCall.equals(other.mCall))
 				return false;
-			if (m_Internal == null) {
-				if (other.m_Internal != null)
+			if (mInternal == null) {
+				if (other.mInternal != null)
 					return false;
-			} else if (!m_Internal.equals(other.m_Internal))
+			} else if (!mInternal.equals(other.mInternal))
 				return false;
 			return true;
 		}
 		@Override
 		public String toString() {
-			return "OutgoingInCaSymbols [m_Internal=" + m_Internal + ", m_Call=" + m_Call + "]";
+			return "OutgoingInCaSymbols [mInternal=" + mInternal + ", mCall=" + mCall + "]";
 		}
 		
 		
@@ -129,7 +129,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE>  {
 	}
 	
 	public Collection<Set<STATE>> getResult() {
-		return m_Result;
+		return mResult;
 	}
 	
 	

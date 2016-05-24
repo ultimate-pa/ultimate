@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
  */
 public class MemoryModel_Unbounded extends AMemoryModel {
 	
-	private final HeapDataArray m_IntegerArray;
-	private final HeapDataArray m_FloatingArray;
+	private final HeapDataArray mIntegerArray;
+	private final HeapDataArray mFloatingArray;
 	
 	public MemoryModel_Unbounded(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
@@ -71,8 +71,8 @@ public class MemoryModel_Unbounded extends AMemoryModel {
         ASTType realArrayType = typeHandler.ctype2asttype(ignoreLoc, 
         		new CPrimitive(PRIMITIVE.FLOAT));
         
-       	m_IntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
-       	m_FloatingArray = new HeapDataArray(SFO.REAL, realArrayType, 0);
+       	mIntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
+       	mFloatingArray = new HeapDataArray(SFO.REAL, realArrayType, 0);
 	}
 	
 	@Override
@@ -83,9 +83,9 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 	@Override
 	public HeapDataArray getDataHeapArray(PRIMITIVE primitive) {
 		if (primitive.isIntegertype()) {
-			return m_IntegerArray;
+			return mIntegerArray;
 		} else if(primitive.isFloatingtype()) {
-			return m_FloatingArray;
+			return mFloatingArray;
 		} else {
 			throw new AssertionError();
 		}
@@ -106,7 +106,7 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 		for (Integer bytesize : bytesizes2primitives.getDomain()) {
 			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = m_TypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
+			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
 		}
 		return result;

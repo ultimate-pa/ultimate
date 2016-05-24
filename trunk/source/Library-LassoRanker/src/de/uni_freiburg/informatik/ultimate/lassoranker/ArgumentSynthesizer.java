@@ -67,31 +67,31 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	/**
 	 * The SMT script for argument synthesis
 	 */
-	protected final Script m_script;
+	protected final Script mscript;
 
 	/**
 	 * The lasso program that we are analyzing
 	 */
-	protected final Lasso m_lasso;
+	protected final Lasso mlasso;
 
 	/**
 	 * Preferences
 	 */
-	protected final LassoRankerPreferences m_preferences;
+	protected final LassoRankerPreferences mpreferences;
 
 	/**
 	 * Whether synthesize() has been called
 	 */
-	private boolean m_synthesis_successful = false;
+	private boolean msynthesis_successful = false;
 
 	/**
 	 * Whether close() has been called
 	 */
-	private boolean m_closed = false;
+	private boolean mclosed = false;
 
 	
-	protected IUltimateServiceProvider m_services;
-	protected IToolchainStorage m_storage;
+	protected IUltimateServiceProvider mservices;
+	protected IToolchainStorage mstorage;
 	
 	/**
 	 * Constructor for the argument synthesizer
@@ -109,11 +109,11 @@ public abstract class ArgumentSynthesizer implements Closeable {
 			String constaintsName, IUltimateServiceProvider services,
 			IToolchainStorage storage) throws IOException {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_preferences = preferences;
-		m_lasso = lasso;
-		m_services = services;
-		m_storage = storage;
-		m_script = constructScript(m_preferences, constaintsName);
+		mpreferences = preferences;
+		mlasso = lasso;
+		mservices = services;
+		mstorage = storage;
+		mscript = constructScript(mpreferences, constaintsName);
 	}
 	
 	/**
@@ -127,14 +127,14 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @return the SMT script to be used for the argument synthesis
 	 */
 	public Script getScript() {
-		return m_script;
+		return mscript;
 	}
 
 	/**
 	 * @return whether the last call to synthesize() was successfull
 	 */
 	public boolean synthesisSuccessful() {
-		return m_synthesis_successful;
+		return msynthesis_successful;
 	}
 
 	/**
@@ -145,7 +145,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 */
 	public final LBool synthesize() throws SMTLIBException, TermException, IOException {
 		LBool lBool = do_synthesis();
-		m_synthesis_successful = (lBool == LBool.SAT);
+		msynthesis_successful = (lBool == LBool.SAT);
 		return lBool;
 	}
 
@@ -172,7 +172,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 *             if something goes wrong, e.g. the name is already defined
 	 */
 	public Term newConstant(String name, String sortname) throws SMTLIBException {
-		return SmtUtils.buildNewConstant(m_script, name, sortname);
+		return SmtUtils.buildNewConstant(mscript, name, sortname);
 	}
 
 
@@ -181,9 +181,9 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * Perform cleanup actions
 	 */
 	public void close() {
-		if (!m_closed) {
-			m_script.exit();
-			m_closed = true;
+		if (!mclosed) {
+			mscript.exit();
+			mclosed = true;
 		}
 	}
 

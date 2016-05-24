@@ -73,11 +73,11 @@ public class BlockEncoder {
 
 	private ArrayList<MinimizedNode> nonCallingFunctions;
 
-	private IUltimateServiceProvider m_Services;
+	private IUltimateServiceProvider mServices;
 
 	public BlockEncoder(ILogger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
-		m_Services = services;
+		mServices = services;
 	}
 
 	/**
@@ -99,7 +99,7 @@ public class BlockEncoder {
 
 		// Initialize the Visitors, which apply the minimization rules
 		mbVisitor = new MinimizeBranchVisitor(mLogger);
-		mlVisitor = new MinimizeLoopVisitor(mLogger, m_Services);
+		mlVisitor = new MinimizeLoopVisitor(mLogger, mServices);
 		mcrVisitor = new MinimizeCallReturnVisitor(mLogger, mbVisitor);
 		tmVisitor = new TestMinimizationVisitor(mLogger);
 

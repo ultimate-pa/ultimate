@@ -49,19 +49,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class RCFG2AnnotatedRCFG {
 
 
-	HashMap<ProgramPoint, AnnotatedProgramPoint> m_oldPpTonew;
+	HashMap<ProgramPoint, AnnotatedProgramPoint> moldPpTonew;
 	private final ILogger mLogger;
-	private final SmtManager m_smtManager;
-	private final IPredicate m_truePredicate;
-	private final Map<RCFGNode, Term> m_initialPredicates;
-	private final boolean m_useInitialPredicates;
+	private final SmtManager msmtManager;
+	private final IPredicate mtruePredicate;
+	private final Map<RCFGNode, Term> minitialPredicates;
+	private final boolean museInitialPredicates;
 
 	public RCFG2AnnotatedRCFG(SmtManager smtMan, ILogger logger, IPredicate truePredicate, Map<RCFGNode, Term> initialPredicates) {
 		mLogger = logger;
-		m_smtManager = smtMan;
-		m_truePredicate = truePredicate;
-		m_initialPredicates = initialPredicates;
-		m_useInitialPredicates = initialPredicates != null;
+		msmtManager = smtMan;
+		mtruePredicate = truePredicate;
+		minitialPredicates = initialPredicates;
+		museInitialPredicates = initialPredicates != null;
 	}
 
 	public ImpRootNode convert(IUltimateServiceProvider mServices, RootNode oldRoot) {
@@ -71,7 +71,7 @@ public class RCFG2AnnotatedRCFG {
 		ImpRootNode newRoot = new ImpRootNode(ra);
 
 		ArrayDeque<ProgramPoint> openNodes = new ArrayDeque<ProgramPoint>();
-		m_oldPpTonew = new HashMap<ProgramPoint, AnnotatedProgramPoint>();
+		moldPpTonew = new HashMap<ProgramPoint, AnnotatedProgramPoint>();
 
 		for (RCFGEdge rootEdge : oldRoot.getOutgoingEdges()) {
 			ProgramPoint oldNode = (ProgramPoint) rootEdge.getTarget();
@@ -79,7 +79,7 @@ public class RCFG2AnnotatedRCFG {
 
 			newRoot.connectOutgoing(new DummyCodeBlock(mLogger), newNode);
 			openNodes.add(oldNode);
-			m_oldPpTonew.put(oldNode, newNode);
+			moldPpTonew.put(oldNode, newNode);
 		}
 
 		/*
@@ -90,15 +90,15 @@ public class RCFG2AnnotatedRCFG {
 
 			for (RCFGEdge outEdge : currentNode.getOutgoingEdges()) {
 				ProgramPoint newNode = (ProgramPoint) outEdge.getTarget();
-				if (m_oldPpTonew.containsKey(newNode))
+				if (moldPpTonew.containsKey(newNode))
 					continue;
-				m_oldPpTonew.put(newNode, createAnnotatedProgramPoint(newNode));
+				moldPpTonew.put(newNode, createAnnotatedProgramPoint(newNode));
 				openNodes.add(newNode);
 				if (outEdge instanceof Return) {
 					ProgramPoint hier = ((Return) outEdge).getCallerProgramPoint();
-					if (m_oldPpTonew.containsKey(hier))
+					if (moldPpTonew.containsKey(hier))
 						continue;
-					m_oldPpTonew.put(hier, createAnnotatedProgramPoint(hier));
+					moldPpTonew.put(hier, createAnnotatedProgramPoint(hier));
 					openNodes.add(hier);
 				}
 			}
@@ -107,12 +107,12 @@ public class RCFG2AnnotatedRCFG {
 		/*
 		 * put edges into annotated program points
 		 */
-		for (Entry<ProgramPoint, AnnotatedProgramPoint> entry : m_oldPpTonew.entrySet()) {
+		for (Entry<ProgramPoint, AnnotatedProgramPoint> entry : moldPpTonew.entrySet()) {
 			for (RCFGEdge outEdge : entry.getKey().getOutgoingEdges()) {
-				AnnotatedProgramPoint annotatedTarget = (AnnotatedProgramPoint) m_oldPpTonew.get(outEdge.getTarget());
+				AnnotatedProgramPoint annotatedTarget = (AnnotatedProgramPoint) moldPpTonew.get(outEdge.getTarget());
 
 				if (outEdge instanceof Return) {
-					AnnotatedProgramPoint callPred = m_oldPpTonew.get(((Return) outEdge).getCallerProgramPoint());
+					AnnotatedProgramPoint callPred = moldPpTonew.get(((Return) outEdge).getCallerProgramPoint());
 					entry.getValue().connectOutgoingReturn(callPred, (Return) outEdge, annotatedTarget);
 				} else {
 					entry.getValue().connectOutgoing((CodeBlock) outEdge, annotatedTarget);
@@ -129,21 +129,21 @@ public class RCFG2AnnotatedRCFG {
 	 * with the corresponding Predicate. Otherwise the annotation is "true".
 	 */
 	private AnnotatedProgramPoint createAnnotatedProgramPoint(ProgramPoint pp) {
-		if (m_useInitialPredicates) {
-			Term aiTerm = m_initialPredicates.get(pp);
+		if (museInitialPredicates) {
+			Term aiTerm = minitialPredicates.get(pp);
 			IPredicate aiPredicate;
 			if (aiTerm != null) {
-				aiPredicate = m_smtManager.getPredicateFactory().newPredicate(aiTerm);
+				aiPredicate = msmtManager.getPredicateFactory().newPredicate(aiTerm);
 			} else {
-				aiPredicate = m_truePredicate;
+				aiPredicate = mtruePredicate;
 			}
 			return new AnnotatedProgramPoint(aiPredicate, pp);
 		} else {
-			return  new AnnotatedProgramPoint(m_truePredicate, pp);
+			return  new AnnotatedProgramPoint(mtruePredicate, pp);
 		}
 	}
 
 	public HashMap<ProgramPoint, AnnotatedProgramPoint> getOldPpTonew() {
-		return m_oldPpTonew;
+		return moldPpTonew;
 	}
 }

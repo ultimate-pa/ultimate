@@ -38,26 +38,26 @@ public final class Interrupt {
 	 * Internal status:
 	 * true <=> terminate
 	 */
-	private boolean m_terminate;
+	private boolean mterminate;
 	
 	/**
 	 * constructor
 	 */
 	public Interrupt() {
-		m_terminate = false;
+		mterminate = false;
 	}
 	
 	/**
 	 * @return the internal status
 	 */
 	public boolean getStatus() {
-		return m_terminate;
+		return mterminate;
 	}
 	
 	/**
 	 * Sets the status to <code>true</code>.
 	 */
 	public void setStatus() {
-		m_terminate = true;
+		mterminate = true;
 	}
 }

@@ -51,27 +51,27 @@ public class DefaultAnnotations implements IAnnotations {
 	 * long serialVersionUID
 	 */
 	private static final long serialVersionUID = -3930174445763628926L;
-	private Map<String, Object> m_Map = new HashMap<String, Object>();
+	private Map<String, Object> mMap = new HashMap<String, Object>();
 	
 
 	public Object get(String key) {
-		return this.m_Map.get(key);
+		return this.mMap.get(key);
 	}
 
 	public Map<String, Object> getAnnotationsAsMap() {
-		return this.m_Map;
+		return this.mMap;
 	}
 
 	public void put(String key, Object value) {
-		this.m_Map.put(key, value);
+		this.mMap.put(key, value);
 	}
 
 	public Set<String> keySet() {
-		return this.m_Map.keySet();
+		return this.mMap.keySet();
 	}
 
 	public boolean containsKey(String key) {
-		return this.m_Map.containsKey(key);
+		return this.mMap.containsKey(key);
 	}
 	
 	/* (non-Javadoc)
@@ -79,7 +79,7 @@ public class DefaultAnnotations implements IAnnotations {
 	 */
 	@Override
 	public String toString() {
-		return this.m_Map.toString();
+		return this.mMap.toString();
 	}
 
 }

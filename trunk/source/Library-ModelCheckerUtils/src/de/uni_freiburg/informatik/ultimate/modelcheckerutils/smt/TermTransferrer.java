@@ -53,31 +53,31 @@ public class TermTransferrer extends TermTransformer {
 	
 	public enum TransferMode { ASSUME_DECLARED, DECLARE, UNSUPPORTED_LOGIC }
 	
-	protected final Script m_Script;
-	private Set<Sort> m_DeclaredSorts = new HashSet<>();
+	protected final Script mScript;
+	private Set<Sort> mDeclaredSorts = new HashSet<>();
 
-	protected final Map<Term, Term> m_BacktransferMapping = new HashMap<Term,Term>();
-	protected final Map<Term, Term> m_TransferMapping;
+	protected final Map<Term, Term> mBacktransferMapping = new HashMap<Term,Term>();
+	protected final Map<Term, Term> mTransferMapping;
 	
 	
 	public Map<Term, Term> getBacktranferMapping() {
-		return m_BacktransferMapping;
+		return mBacktransferMapping;
 	}
 
 
 	public TermTransferrer(Script script) {
-		m_Script = script;
-		m_TransferMapping = Collections.emptyMap();
+		mScript = script;
+		mTransferMapping = Collections.emptyMap();
 	}
 	
 	public TermTransferrer(Script script, Map<Term, Term> transferMapping) {
-		m_Script = script;
-		m_TransferMapping = transferMapping;
+		mScript = script;
+		mTransferMapping = transferMapping;
 	}
 
 	@Override
 	protected void convert(Term term) {
-		Term mappingResult = m_TransferMapping.get(term);
+		Term mappingResult = mTransferMapping.get(term);
 		if (mappingResult != null) {
 			setResult(mappingResult);
 			return;
@@ -90,17 +90,17 @@ public class TermTransferrer extends TermTransformer {
 			ConstantTerm ct = (ConstantTerm) term;
 			final Term result;
 			if (ct.getValue() instanceof BigInteger) {
-				result = m_Script.numeral((BigInteger) ct.getValue());
+				result = mScript.numeral((BigInteger) ct.getValue());
 			} else if (ct.getValue() instanceof BigDecimal) {
-				result = m_Script.decimal((BigDecimal) ct.getValue());
+				result = mScript.decimal((BigDecimal) ct.getValue());
 			} else if (ct.getValue() instanceof Rational) {
 				result = ((Rational) ct.getValue()).toTerm(sort);
 			} else if (ct.getValue() instanceof String) {
 				String value = (String) ct.getValue();
 				if (value.startsWith("#x")) {
-					result = m_Script.hexadecimal(value);
+					result = mScript.hexadecimal(value);
 				} else if (value.startsWith("#b")) {
-					result = m_Script.binary(value);
+					result = mScript.binary(value);
 				} else {
 					throw new AssertionError("unexpected ConstantTerm (maybe not yet implemented)" + term);
 				}
@@ -114,12 +114,12 @@ public class TermTransferrer extends TermTransformer {
 	}
 	
 	TermVariable transferTermVariable(TermVariable tv) {
-//		final Term mappingResult = m_TransferMapping.get(tv);
+//		final Term mappingResult = mTransferMapping.get(tv);
 		final TermVariable transferResult;
 //		if (mappingResult == null) {
 			Sort sort = transferSort(tv.getSort());
-			transferResult = m_Script.variable(tv.getName(), sort);
-//			m_TransferMapping.put(tv, transferResult);
+			transferResult = mScript.variable(tv.getName(), sort);
+//			mTransferMapping.put(tv, transferResult);
 //		} else {
 //			transferResult = (TermVariable) mappingResult;
 //		}
@@ -128,15 +128,15 @@ public class TermTransferrer extends TermTransformer {
 
 	private Sort declareSortIfNeeded(Sort sort) {
 		if (!sort.isInternal()) {
-			if (!m_DeclaredSorts.contains(sort)) {
-				m_Script.declareSort(sort.getName(), sort.getIndices().length);
-				m_DeclaredSorts.add(sort);
+			if (!mDeclaredSorts.contains(sort)) {
+				mScript.declareSort(sort.getName(), sort.getIndices().length);
+				mDeclaredSorts.add(sort);
 			}
 		}
 		if (sort.getArguments().length > 0) {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
-		return m_Script.sort(sort.getName());
+		return mScript.sort(sort.getName());
 	}
 	
 	private Sort transferSort(Sort sort) {
@@ -144,11 +144,11 @@ public class TermTransferrer extends TermTransformer {
 		BigInteger[] indices = sort.getIndices();
 		Sort result;
 		try {
-			result = m_Script.sort(sort.getName(), indices, arguments);
+			result = mScript.sort(sort.getName(), indices, arguments);
 		} catch (SMTLIBException e) {
 			if (e.getMessage().equals("Sort " + sort.getName() + " not declared")) {
-				m_Script.declareSort(sort.getName(), sort.getArguments().length);
-				result = m_Script.sort(sort.getName(), arguments);
+				mScript.declareSort(sort.getName(), sort.getArguments().length);
+				result = mScript.sort(sort.getName(), arguments);
 			} else {
 				throw e;
 			}
@@ -169,14 +169,14 @@ public class TermTransferrer extends TermTransformer {
 		Term result;
 		try {
 			BigInteger[] indices = appTerm.getFunction().getIndices();
-			result = m_Script.term(appTerm.getFunction().getName(), indices, null, newArgs);
+			result = mScript.term(appTerm.getFunction().getName(), indices, null, newArgs);
 		} catch (SMTLIBException e) {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
 				FunctionSymbol fsymb = appTerm.getFunction();
 				Sort[] paramSorts = transferSorts(fsymb.getParameterSorts());
 				Sort resultSort = transferSort(fsymb.getReturnSort());
-				m_Script.declareFun(fsymb.getName(), paramSorts, resultSort);
-				result = m_Script.term(appTerm.getFunction().getName(), newArgs);
+				mScript.declareFun(fsymb.getName(), paramSorts, resultSort);
+				result = mScript.term(appTerm.getFunction().getName(), newArgs);
 			} else {
 				throw e;
 			}
@@ -187,7 +187,7 @@ public class TermTransferrer extends TermTransformer {
 	@Override
 	public void postConvertLet(LetTerm oldLet, Term[] newValues, Term newBody) {
 		throw new UnsupportedOperationException("not yet implemented");
-		//Term result = m_Script.let(vars, newValues, newBody);
+		//Term result = mScript.let(vars, newValues, newBody);
 	}
 
 	@Override
@@ -196,14 +196,14 @@ public class TermTransferrer extends TermTransformer {
 		for (int i=0; i<old.getVariables().length; i++) {
 			vars[i] = transferTermVariable(old.getVariables()[i]);
 		}
-		Term result = m_Script.quantifier(old.getQuantifier(), vars, newBody);
+		Term result = mScript.quantifier(old.getQuantifier(), vars, newBody);
 		setResult(result);
 	}
 
 	@Override
 	public void postConvertAnnotation(AnnotatedTerm old,
 			Annotation[] newAnnots, Term newBody) {
-		Term result = m_Script.annotate(newBody, newAnnots);
+		Term result = mScript.annotate(newBody, newAnnots);
 		setResult(result);
 	}
 	

@@ -50,21 +50,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	
-	private final ManagedScript m_ManagedScript;
-	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
+	private final ManagedScript mManagedScript;
+	private final ModifiableGlobalVariableManager mModifiableGlobals;
 	
-	private final HoareTripleCheckerStatisticsGenerator m_HoareTripleCheckerStatistics;
+	private final HoareTripleCheckerStatisticsGenerator mHoareTripleCheckerStatistics;
 
-	private ScopedHashMap<String, Term> m_IndexedConstants;
+	private ScopedHashMap<String, Term> mIndexedConstants;
 	
-	private int m_TrivialSatQueries = 0;
-	private int m_NontrivialSatQueries = 0;
-	private long m_SatCheckSolverTime = 0;
+	private int mTrivialSatQueries = 0;
+	private int mNontrivialSatQueries = 0;
+	private long mSatCheckSolverTime = 0;
 
-	private int m_TrivialCoverQueries = 0;
-	private int m_NontrivialCoverQueries = 0;
+	private int mTrivialCoverQueries = 0;
+	private int mNontrivialCoverQueries = 0;
 	
-	private long m_SatCheckTime = 0;
+	private long mSatCheckTime = 0;
 	
 	/**
 	 * Whenever you do an edge check with the old method (not edge checker),
@@ -72,32 +72,32 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	 * true if you can guarantee that only an IPredicate whose formula is true
 	 * is equivalent to true.
 	 */
-	private final static boolean m_TestDataflow = false;
+	private final static boolean mTestDataflow = false;
 	
 	
 	public MonolithicHoareTripleChecker(
 			final ManagedScript managedScript, 
 			final ModifiableGlobalVariableManager modifiableGlobals) {
 		super();
-		m_ManagedScript = managedScript;
-		m_ModifiableGlobals = modifiableGlobals;
-		m_HoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
+		mManagedScript = managedScript;
+		mModifiableGlobals = modifiableGlobals;
+		mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
 	}
 
 	@Override
 	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
-		m_HoareTripleCheckerStatistics.continueEdgeCheckerTime();
+		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		Validity result = IHoareTripleChecker.lbool2validity(isInductive(pre, act, succ));
-		m_HoareTripleCheckerStatistics.stopEdgeCheckerTime();
+		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
-			m_HoareTripleCheckerStatistics.getSolverCounterSat().incIn();
+			mHoareTripleCheckerStatistics.getSolverCounterSat().incIn();
 			break;
 		case UNKNOWN:
-			m_HoareTripleCheckerStatistics.getSolverCounterUnknown().incIn();
+			mHoareTripleCheckerStatistics.getSolverCounterUnknown().incIn();
 			break;
 		case VALID:
-			m_HoareTripleCheckerStatistics.getSolverCounterUnsat().incIn();
+			mHoareTripleCheckerStatistics.getSolverCounterUnsat().incIn();
 			break;
 		default:
 			throw new AssertionError("unknown case");
@@ -107,18 +107,18 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
-		m_HoareTripleCheckerStatistics.continueEdgeCheckerTime();
+		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		Validity result =  IHoareTripleChecker.lbool2validity(isInductiveCall(pre, act, succ));
-		m_HoareTripleCheckerStatistics.stopEdgeCheckerTime();
+		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
-			m_HoareTripleCheckerStatistics.getSolverCounterSat().incCa();
+			mHoareTripleCheckerStatistics.getSolverCounterSat().incCa();
 			break;
 		case UNKNOWN:
-			m_HoareTripleCheckerStatistics.getSolverCounterUnknown().incCa();
+			mHoareTripleCheckerStatistics.getSolverCounterUnknown().incCa();
 			break;
 		case VALID:
-			m_HoareTripleCheckerStatistics.getSolverCounterUnsat().incCa();
+			mHoareTripleCheckerStatistics.getSolverCounterUnsat().incCa();
 			break;
 		default:
 			throw new AssertionError("unknown case");
@@ -129,18 +129,18 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
 			IReturnAction act, IPredicate succ) {
-		m_HoareTripleCheckerStatistics.continueEdgeCheckerTime();
+		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		Validity result =  IHoareTripleChecker.lbool2validity(isInductiveReturn(preLin, preHier, act, succ));
-		m_HoareTripleCheckerStatistics.stopEdgeCheckerTime();
+		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
-			m_HoareTripleCheckerStatistics.getSolverCounterSat().incRe();
+			mHoareTripleCheckerStatistics.getSolverCounterSat().incRe();
 			break;
 		case UNKNOWN:
-			m_HoareTripleCheckerStatistics.getSolverCounterUnknown().incRe();
+			mHoareTripleCheckerStatistics.getSolverCounterUnknown().incRe();
 			break;
 		case VALID:
-			m_HoareTripleCheckerStatistics.getSolverCounterUnsat().incRe();
+			mHoareTripleCheckerStatistics.getSolverCounterUnsat().incRe();
 			break;
 		default:
 			throw new AssertionError("unknown case");
@@ -149,7 +149,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return m_HoareTripleCheckerStatistics;
+		return mHoareTripleCheckerStatistics;
 	}
 
 	@Override
@@ -182,23 +182,23 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	 *         question.
 	 */
 	public LBool isInductive(IPredicate ps1, IInternalAction ta, IPredicate ps2, boolean expectUnsat) {
-		m_ManagedScript.lock(this);
+		mManagedScript.lock(this);
 		long startTime = System.nanoTime();
 
 		if (isDontCare(ps1) || isDontCare(ps2)) {
-			m_TrivialSatQueries++;
-			m_ManagedScript.unlock(this);
+			mTrivialSatQueries++;
+			mManagedScript.unlock(this);
 			return Script.LBool.UNKNOWN;
 		}
 
 		if (SmtUtils.isFalse(ps1.getFormula()) || SmtUtils.isTrue(ps2.getFormula())) {
-			m_TrivialSatQueries++;
-			m_ManagedScript.unlock(this);
+			mTrivialSatQueries++;
+			mManagedScript.unlock(this);
 			return Script.LBool.UNSAT;
 		}
 
 		// if (simpleSelfloopCheck(ps1, ta, ps2)) {
-		// m_TrivialSatQueries = m_TrivialSatQueries + 10000000;
+		// mTrivialSatQueries = mTrivialSatQueries + 10000000;
 		// return Script.LBool.UNSAT;
 		// }
 
@@ -206,10 +206,10 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		String procPred = ta.getPreceedingProcedure();
 		String procSucc = ta.getSucceedingProcedure();
 //		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
-		Set<BoogieVar> modifiableGlobalsPred = m_ModifiableGlobals.getModifiedBoogieVars(procPred);
-		Set<BoogieVar> modifiableGlobalsSucc = m_ModifiableGlobals.getModifiedBoogieVars(procSucc);
+		Set<BoogieVar> modifiableGlobalsPred = mModifiableGlobals.getModifiedBoogieVars(procPred);
+		Set<BoogieVar> modifiableGlobalsSucc = mModifiableGlobals.getModifiedBoogieVars(procSucc);
 
-		LBool result = PredicateUtils.isInductiveHelper(m_ManagedScript.getScript(), 
+		LBool result = PredicateUtils.isInductiveHelper(mManagedScript.getScript(), 
 				ps1, ps2, tf, modifiableGlobalsPred, modifiableGlobalsSucc);
 
 		if (expectUnsat) {
@@ -219,11 +219,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				"To " + ps2.getFormula().toStringDirect() +
 				"Not inductive!";
 		}
-		m_SatCheckTime += (System.nanoTime() - startTime);
-		if (m_TestDataflow) {
+		mSatCheckTime += (System.nanoTime() - startTime);
+		if (mTestDataflow) {
 			testMyInternalDataflowCheck(ps1, ta, ps2, result);
 		}
-		m_ManagedScript.unlock(this);
+		mManagedScript.unlock(this);
 		return result;
 	}
 
@@ -232,59 +232,59 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	public LBool isInductiveCall(IPredicate ps1, ICallAction ta, IPredicate ps2, boolean expectUnsat) {
-		m_ManagedScript.lock(this);
+		mManagedScript.lock(this);
 		long startTime = System.nanoTime();
 
 		if (isDontCare(ps1) || isDontCare(ps2)) {
-			m_TrivialSatQueries++;
-			m_ManagedScript.unlock(this);
+			mTrivialSatQueries++;
+			mManagedScript.unlock(this);
 			return Script.LBool.UNKNOWN;
 		}
 
 		if (SmtUtils.isFalse(ps1.getFormula()) || SmtUtils.isTrue(ps2.getFormula())) {
-			m_TrivialSatQueries++;
-			m_ManagedScript.unlock(this);
+			mTrivialSatQueries++;
+			mManagedScript.unlock(this);
 			return Script.LBool.UNSAT;
 		}
 
-		m_ManagedScript.getScript().push(1);
-		m_IndexedConstants = new ScopedHashMap<String, Term>();
+		mManagedScript.getScript().push(1);
+		mIndexedConstants = new ScopedHashMap<String, Term>();
 		// OldVars not renamed if modifiable.
 		// All variables get index 0.
 		String caller = ta.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobals.getModifiedBoogieVars(caller);
+		Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
 		Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 4, 0,
-				Integer.MIN_VALUE, null, -5, 0, m_IndexedConstants, m_ManagedScript.getScript(), modifiableGlobalsCaller);
+				Integer.MIN_VALUE, null, -5, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
 		TransFormula tf = ta.getLocalVarsAssignment();
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
-		Term fTrans = PredicateUtils.formulaWithIndexedVars(tf, 0, 1, assignedVars, m_IndexedConstants, m_ManagedScript.getScript());
+		Term fTrans = PredicateUtils.formulaWithIndexedVars(tf, 0, 1, assignedVars, mIndexedConstants, mManagedScript.getScript());
 
 		// OldVars renamed to index 0
 		// GlobalVars renamed to index 0
 		// Other vars get index 1
 		String callee = ta.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobals.getModifiedBoogieVars(callee);
+		Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
 		Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, new HashSet<BoogieVar>(0), 4, 1, 0, null, 23, 0,
-				m_IndexedConstants, m_ManagedScript.getScript(), modifiableGlobalsCallee);
+				mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCallee);
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
-		Term f = SmtUtils.not(m_ManagedScript.getScript(), ps2renamed);
-		f = Util.and(m_ManagedScript.getScript(), fTrans, f);
-		f = Util.and(m_ManagedScript.getScript(), ps1renamed, f);
+		Term f = SmtUtils.not(mManagedScript.getScript(), ps2renamed);
+		f = Util.and(mManagedScript.getScript(), fTrans, f);
+		f = Util.and(mManagedScript.getScript(), ps1renamed, f);
 
 		LBool result = checkSatisfiable(f);
-		m_IndexedConstants = null;
-		m_ManagedScript.getScript().pop(1);
+		mIndexedConstants = null;
+		mManagedScript.getScript().pop(1);
 		if (expectUnsat) {
 			assert (result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN) : "call statement not inductive";
 		}
-		m_SatCheckTime += (System.nanoTime() - startTime);
-		if (m_TestDataflow) {
+		mSatCheckTime += (System.nanoTime() - startTime);
+		if (mTestDataflow) {
 			testMyCallDataflowCheck(ps1, ta, ps2, result);
 		}
-		m_ManagedScript.unlock(this);
+		mManagedScript.unlock(this);
 		return result;
 	}
 
@@ -293,72 +293,72 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2, boolean expectUnsat) {
-		m_ManagedScript.lock(this);
+		mManagedScript.lock(this);
 		long startTime = System.nanoTime();
 
 		if (isDontCare(ps1) || isDontCare(ps2) || isDontCare(psk)) {
-			m_TrivialSatQueries++;
-			m_ManagedScript.unlock(this);
+			mTrivialSatQueries++;
+			mManagedScript.unlock(this);
 			return Script.LBool.UNKNOWN;
 		}
 
 		if (SmtUtils.isFalse(ps1.getFormula()) || SmtUtils.isFalse(psk.getFormula()) || SmtUtils.isTrue(ps2.getFormula())) {
-			m_TrivialSatQueries++;
-			m_ManagedScript.unlock(this);
+			mTrivialSatQueries++;
+			mManagedScript.unlock(this);
 			return Script.LBool.UNSAT;
 		}
 
-		m_ManagedScript.getScript().push(1);
-		m_IndexedConstants = new ScopedHashMap<String, Term>();
+		mManagedScript.getScript().push(1);
+		mIndexedConstants = new ScopedHashMap<String, Term>();
 
 		TransFormula tfReturn = ta.getAssignmentOfReturn();
 		Set<BoogieVar> assignedVarsOnReturn = new HashSet<BoogieVar>();
-		Term fReturn = PredicateUtils.formulaWithIndexedVars(tfReturn, 1, 2, assignedVarsOnReturn, m_IndexedConstants,
-				m_ManagedScript.getScript());
+		Term fReturn = PredicateUtils.formulaWithIndexedVars(tfReturn, 1, 2, assignedVarsOnReturn, mIndexedConstants,
+				mManagedScript.getScript());
 		// fReturn = (new FormulaUnLet()).unlet(fReturn);
 
 		TransFormula tfCall = ta.getLocalVarsAssignmentOfCall();
 		Set<BoogieVar> assignedVarsOnCall = new HashSet<BoogieVar>();
-		Term fCall = PredicateUtils.formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, m_IndexedConstants,
-				m_ManagedScript.getScript());
+		Term fCall = PredicateUtils.formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, mIndexedConstants,
+				mManagedScript.getScript());
 		// fCall = (new FormulaUnLet()).unlet(fCall);
 
 		String callee = ta.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobals.getModifiedBoogieVars(callee);
+		Set<BoogieVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
 
 		String caller = ta.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobals.getModifiedBoogieVars(caller);
+		Set<BoogieVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
 
 		// oldVars not renamed if modifiable
 		// other variables get index 0
 		Term pskrenamed = PredicateUtils.formulaWithIndexedVars(psk, new HashSet<BoogieVar>(0), 23, 0,
-				Integer.MIN_VALUE, null, 23, 0, m_IndexedConstants, m_ManagedScript.getScript(), modifiableGlobalsCaller);
+				Integer.MIN_VALUE, null, 23, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
 		// oldVars get index 0
 		// modifiable globals get index 2
 		// not modifiable globals get index 0
 		// other variables get index 1
 		Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 23, 1, 0,
-				modifiableGlobalsCallee, 2, 0, m_IndexedConstants, m_ManagedScript.getScript(), modifiableGlobalsCallee);
+				modifiableGlobalsCallee, 2, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCallee);
 
 		// oldVars not renamed if modifiable
 		// modifiable globals get index 2
 		// variables assigned on return get index 2
 		// other variables get index 0
 		Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, assignedVarsOnReturn, 2, 0, Integer.MIN_VALUE,
-				modifiableGlobalsCallee, 2, 0, m_IndexedConstants, m_ManagedScript.getScript(), modifiableGlobalsCaller);
+				modifiableGlobalsCallee, 2, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
 		// We want to return true if (fState1 && fTrans)-> fState2 is valid
 		// This is the case if (fState1 && fTrans && !fState2) is unsatisfiable
-		Term f = SmtUtils.not(m_ManagedScript.getScript(), ps2renamed);
-		f = Util.and(m_ManagedScript.getScript(), fReturn, f);
-		f = Util.and(m_ManagedScript.getScript(), ps1renamed, f);
-		f = Util.and(m_ManagedScript.getScript(), fCall, f);
-		f = Util.and(m_ManagedScript.getScript(), pskrenamed, f);
+		Term f = SmtUtils.not(mManagedScript.getScript(), ps2renamed);
+		f = Util.and(mManagedScript.getScript(), fReturn, f);
+		f = Util.and(mManagedScript.getScript(), ps1renamed, f);
+		f = Util.and(mManagedScript.getScript(), fCall, f);
+		f = Util.and(mManagedScript.getScript(), pskrenamed, f);
 
 		LBool result = checkSatisfiable(f);
-		m_ManagedScript.getScript().pop(1);
-		m_IndexedConstants = null;
+		mManagedScript.getScript().pop(1);
+		mIndexedConstants = null;
 		if (expectUnsat) {
 			if (result == LBool.SAT) {
 			}
@@ -370,19 +370,19 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				("Not inductive!");
 
 		}
-		m_SatCheckTime += (System.nanoTime() - startTime);
-		if (m_TestDataflow) {
+		mSatCheckTime += (System.nanoTime() - startTime);
+		if (mTestDataflow) {
 			testMyReturnDataflowCheck(ps1, psk, ta, ps2, result);
 		}
-		m_ManagedScript.unlock(this);
+		mManagedScript.unlock(this);
 		return result;
 	}
 	
 	public LBool assertTerm(Term term) {
 		long startTime = System.nanoTime();
 		LBool result = null;
-		result = m_ManagedScript.getScript().assertTerm(term);
-		m_SatCheckSolverTime += (System.nanoTime() - startTime);
+		result = mManagedScript.getScript().assertTerm(term);
+		mSatCheckSolverTime += (System.nanoTime() - startTime);
 		return result;
 	}
 	
@@ -399,16 +399,16 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				throw e;
 			}
 		}
-		result = m_ManagedScript.getScript().checkSat();
-		m_SatCheckSolverTime += (System.nanoTime() - startTime);
-		m_NontrivialSatQueries++;
+		result = mManagedScript.getScript().checkSat();
+		mSatCheckSolverTime += (System.nanoTime() - startTime);
+		mNontrivialSatQueries++;
 		if (result == LBool.UNKNOWN) {
-			Object info = m_ManagedScript.getScript().getInfo(":reason-unknown");
+			Object info = mManagedScript.getScript().getInfo(":reason-unknown");
 			if (!(info instanceof ReasonUnknown)) {
-				m_ManagedScript.getScript().getInfo(":reason-unknown");
+				mManagedScript.getScript().getInfo(":reason-unknown");
 			}
 			ReasonUnknown reason = (ReasonUnknown) info;
-			Object test = m_ManagedScript.getScript().getInfo(":reason-unknown");
+			Object test = mManagedScript.getScript().getInfo(":reason-unknown");
 			switch (reason) {
 			case CRASHED:
 				throw new AssertionError("Solver crashed");
@@ -429,10 +429,10 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 	// FIXME: remove once enough tested
 	private void testMyReturnDataflowCheck(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2, LBool result) {
-		if (ps2.getFormula() == m_ManagedScript.getScript().term("false")) {
+		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
-		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
+		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
 		Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		if (testRes != null) {
 			// assert testRes == result : "my return dataflow check failed";
@@ -444,10 +444,10 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 	// FIXME: remove once enough tested
 	private void testMyCallDataflowCheck(IPredicate ps1, ICallAction ta, IPredicate ps2, LBool result) {
-		if (ps2.getFormula() == m_ManagedScript.getScript().term("false")) {
+		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
-		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
+		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
 		Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my call dataflow check failed";
@@ -459,8 +459,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
 	// FIXME: remove once enough tested
 	private void testMyInternalDataflowCheck(IPredicate ps1, IInternalAction ta, IPredicate ps2, LBool result) {
-		if (ps2.getFormula() == m_ManagedScript.getScript().term("false")) {
-			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
+		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
+			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
 			Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) || testRes == IHoareTripleChecker.lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
@@ -471,7 +471,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			return;
 		}
 		if (ps1 == ps2) {
-			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
+			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
 			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
@@ -483,7 +483,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (ta.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return;
 		}
-		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
+		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
 		Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";

@@ -55,9 +55,9 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	/**
 	 * Data structure that unifies Predicates with respect to its Term.
 	 */
-	protected final PredicateUnifier m_PredicateUnifier;
+	protected final PredicateUnifier mPredicateUnifier;
 
-	protected IPredicate[] m_Interpolants;
+	protected IPredicate[] mInterpolants;
 	
 	/**
 	 * Check if trace fulfills specification given by precondition,
@@ -83,7 +83,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
-		m_PredicateUnifier = predicateUnifier;
+		mPredicateUnifier = predicateUnifier;
 	}
 
 
@@ -111,7 +111,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 *            UnknownPredicate.
 	 *            <p>
 	 *            interpolatedPositions has to be sorted (ascending) and its
-	 *            entries have to be smaller than or equal to m_Trace.size()
+	 *            entries have to be smaller than or equal to mTrace.size()
 	 * @param predicateUnifier
 	 *            A PredicateUnifier in which precondition, postcondition and
 	 *            all pending contexts are representatives.
@@ -123,18 +123,18 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 
 	private boolean testRelevantVars() {
 		boolean result = true;
-		RelevantVariables rv = new RelevantVariables(m_NestedFormulas, m_ModifiedGlobals);
-		for (int i = 0; i < m_Interpolants.length; i++) {
-			IPredicate itp = m_Interpolants[i];
+		RelevantVariables rv = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
+		for (int i = 0; i < mInterpolants.length; i++) {
+			IPredicate itp = mInterpolants[i];
 			Set<BoogieVar> vars = itp.getVars();
 			Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
 			Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
 			if (!frel.containsAll(vars)) {
-				m_Logger.warn("forward relevant variables wrong");
+				mLogger.warn("forward relevant variables wrong");
 				result = false;
 			}
 			if (!brel.containsAll(vars)) {
-				m_Logger.warn("backward relevant variables wrong");
+				mLogger.warn("backward relevant variables wrong");
 				result = false;
 			}
 		}
@@ -143,18 +143,18 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 
 	public IPredicate[] getInterpolants() {
 		if (isCorrect() == LBool.UNSAT) {
-			if (m_Interpolants == null) {
+			if (mInterpolants == null) {
 				throw new AssertionError("No Interpolants");
 			}
-			assert m_Interpolants.length == m_Trace.length() - 1;
-			return m_Interpolants;
+			assert mInterpolants.length == mTrace.length() - 1;
+			return mInterpolants;
 		} else {
 			throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
 		}
 	}
 
 	public final PredicateUnifier getPredicateUnifier() {
-		return m_PredicateUnifier;
+		return mPredicateUnifier;
 	}
 
 	/**

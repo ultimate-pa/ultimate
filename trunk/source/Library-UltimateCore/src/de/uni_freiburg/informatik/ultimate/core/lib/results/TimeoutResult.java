@@ -43,10 +43,10 @@ public class TimeoutResult extends AbstractResult implements IResult, ITimeoutRe
 
 	public TimeoutResult(String plugin, String longDescription) {
 		super(plugin);
-		m_longDescription = longDescription;
+		mlongDescription = longDescription;
 	}
 
-	private final String m_longDescription;
+	private final String mlongDescription;
 
 	@Override
 	public String getShortDescription() {
@@ -55,7 +55,7 @@ public class TimeoutResult extends AbstractResult implements IResult, ITimeoutRe
 
 	@Override
 	public String getLongDescription() {
-		return m_longDescription;
+		return mlongDescription;
 	}
 
 }

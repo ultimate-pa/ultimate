@@ -41,171 +41,171 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
 public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 		INestedWordAutomatonOldApi<LETTER, STATE> {
 	
-	private final INestedWordAutomaton<LETTER, STATE> m_Nwa;
+	private final INestedWordAutomaton<LETTER, STATE> mNwa;
 	
 	public INWA2INestedWordAutomaton(INestedWordAutomaton<LETTER, STATE> inwa) {
-		m_Nwa = inwa;
+		mNwa = inwa;
 	}
 
 	public Set<LETTER> getInternalAlphabet() {
-		return m_Nwa.getInternalAlphabet();
+		return mNwa.getInternalAlphabet();
 	}
 
 	public Set<LETTER> getCallAlphabet() {
-		return m_Nwa.getCallAlphabet();
+		return mNwa.getCallAlphabet();
 	}
 
 	public Set<LETTER> getReturnAlphabet() {
-		return m_Nwa.getReturnAlphabet();
+		return mNwa.getReturnAlphabet();
 	}
 
 	public Set<STATE> getStates() {
-		return m_Nwa.getStates();
+		return mNwa.getStates();
 	}
 
 	public STATE getEmptyStackState() {
-		return m_Nwa.getEmptyStackState();
+		return mNwa.getEmptyStackState();
 	}
 
 	public StateFactory<STATE> getStateFactory() {
-		return m_Nwa.getStateFactory();
+		return mNwa.getStateFactory();
 	}
 
 	public int size() {
-		return m_Nwa.size();
+		return mNwa.size();
 	}
 
 	public Set<LETTER> getAlphabet() {
-		return m_Nwa.getAlphabet();
+		return mNwa.getAlphabet();
 	}
 
 	public Set<STATE> getInitialStates() {
-		return m_Nwa.getInitialStates();
+		return mNwa.getInitialStates();
 	}
 
 	public boolean isInitial(STATE state) {
-		return m_Nwa.isInitial(state);
+		return mNwa.isInitial(state);
 	}
 
 	public boolean isFinal(STATE state) {
-		return m_Nwa.isFinal(state);
+		return mNwa.isFinal(state);
 	}
 
 	public Set<LETTER> lettersInternal(STATE state) {
-		return m_Nwa.lettersInternal(state);
+		return mNwa.lettersInternal(state);
 	}
 
 	public Set<LETTER> lettersInternalIncoming(STATE state) {
-		return m_Nwa.lettersInternalIncoming(state);
+		return mNwa.lettersInternalIncoming(state);
 	}
 
 	public Set<LETTER> lettersCall(STATE state) {
-		return m_Nwa.lettersCall(state);
+		return mNwa.lettersCall(state);
 	}
 
 	public Set<LETTER> lettersCallIncoming(STATE state) {
-		return m_Nwa.lettersCallIncoming(state);
+		return mNwa.lettersCallIncoming(state);
 	}
 
 	public Set<LETTER> lettersReturn(STATE state) {
-		return m_Nwa.lettersReturn(state);
+		return mNwa.lettersReturn(state);
 	}
 
 	public Set<LETTER> lettersReturnIncoming(STATE state) {
-		return m_Nwa.lettersReturnIncoming(state);
+		return mNwa.lettersReturnIncoming(state);
 	}
 
 	public Set<LETTER> lettersReturnSummary(STATE state) {
-		return m_Nwa.lettersReturnSummary(state);
+		return mNwa.lettersReturnSummary(state);
 	}
 
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier) {
-		return m_Nwa.returnSummarySuccessor(letter, hier);
+		return mNwa.returnSummarySuccessor(letter, hier);
 	}
 	
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			STATE hier) {
-		return m_Nwa.returnSummarySuccessor(hier);
+		return mNwa.returnSummarySuccessor(hier);
 	}
 
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			LETTER letter, STATE succ) {
-		return m_Nwa.internalPredecessors(letter, succ);
+		return mNwa.internalPredecessors(letter, succ);
 	}
 
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			STATE succ) {
-		return m_Nwa.internalPredecessors(succ);
+		return mNwa.internalPredecessors(succ);
 	}
 
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			LETTER letter, STATE succ) {
-		return m_Nwa.callPredecessors(letter, succ);
+		return mNwa.callPredecessors(letter, succ);
 	}
 
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			STATE succ) {
-		return m_Nwa.callPredecessors(succ);
+		return mNwa.callPredecessors(succ);
 	}
 
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
-		return m_Nwa.internalSuccessors(state, letter);
+		return mNwa.internalSuccessors(state, letter);
 	}
 
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state) {
-		return m_Nwa.internalSuccessors(state);
+		return mNwa.internalSuccessors(state);
 	}
 
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
-		return m_Nwa.callSuccessors(state, letter);
+		return mNwa.callSuccessors(state, letter);
 	}
 
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
-		return m_Nwa.callSuccessors(state);
+		return mNwa.callSuccessors(state);
 	}
 
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			STATE hier, LETTER letter, STATE succ) {
-		return m_Nwa.returnPredecessors(hier, letter, succ);
+		return mNwa.returnPredecessors(hier, letter, succ);
 	}
 
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			LETTER letter, STATE succ) {
-		return m_Nwa.returnPredecessors(letter, succ);
+		return mNwa.returnPredecessors(letter, succ);
 	}
 
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			STATE succ) {
-		return m_Nwa.returnPredecessors(succ);
+		return mNwa.returnPredecessors(succ);
 	}
 
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
-		return m_Nwa.returnSucccessors(state, hier, letter);
+		return mNwa.returnSucccessors(state, hier, letter);
 	}
 
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, LETTER letter) {
-		return m_Nwa.returnSuccessors(state, letter);
+		return mNwa.returnSuccessors(state, letter);
 	}
 
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state) {
-		return m_Nwa.returnSuccessors(state);
+		return mNwa.returnSuccessors(state);
 	}
 
 	public String sizeInformation() {
-		return m_Nwa.sizeInformation();
+		return mNwa.sizeInformation();
 	}
 
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
-		return m_Nwa.returnSuccessorsGivenHier(state, hier);
+		return mNwa.returnSuccessorsGivenHier(state, hier);
 	}
 
 	@Override
@@ -216,25 +216,25 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 	@Override
 	public Iterable<STATE> succInternal(final STATE state, final LETTER letter) {
 		return new Iterable<STATE>() {
-			Iterable<OutgoingInternalTransition<LETTER,STATE>> m_Iterable;
+			Iterable<OutgoingInternalTransition<LETTER,STATE>> mIterable;
 			{
-				m_Iterable = m_Nwa.internalSuccessors(state,letter);
+				mIterable = mNwa.internalSuccessors(state,letter);
 			}
 			@Override
 			public Iterator<STATE> iterator() {
 				Iterator<STATE> iterator = new Iterator<STATE>() {
-				Iterator<OutgoingInternalTransition<LETTER,STATE>> m_BackingIterator;
+				Iterator<OutgoingInternalTransition<LETTER,STATE>> mBackingIterator;
 				{
-					m_BackingIterator = m_Iterable.iterator();
+					mBackingIterator = mIterable.iterator();
 				}
 					@Override
 					public boolean hasNext() {
-						return m_BackingIterator.hasNext();
+						return mBackingIterator.hasNext();
 					}
 
 					@Override
 					public STATE next() {
-							return m_BackingIterator.next().getSucc();
+							return mBackingIterator.next().getSucc();
 					}
 
 					@Override
@@ -250,25 +250,25 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 	@Override
 	public Iterable<STATE> succCall(final STATE state, final LETTER letter) {
 		return new Iterable<STATE>() {
-			Iterable<OutgoingCallTransition<LETTER,STATE>> m_Iterable;
+			Iterable<OutgoingCallTransition<LETTER,STATE>> mIterable;
 			{
-				m_Iterable = m_Nwa.callSuccessors(state,letter);
+				mIterable = mNwa.callSuccessors(state,letter);
 			}
 			@Override
 			public Iterator<STATE> iterator() {
 				Iterator<STATE> iterator = new Iterator<STATE>() {
-				Iterator<OutgoingCallTransition<LETTER,STATE>> m_BackingIterator;
+				Iterator<OutgoingCallTransition<LETTER,STATE>> mBackingIterator;
 				{
-					m_BackingIterator = m_Iterable.iterator();
+					mBackingIterator = mIterable.iterator();
 				}
 					@Override
 					public boolean hasNext() {
-						return m_BackingIterator.hasNext();
+						return mBackingIterator.hasNext();
 					}
 
 					@Override
 					public STATE next() {
-							return m_BackingIterator.next().getSucc();
+							return mBackingIterator.next().getSucc();
 					}
 
 					@Override
@@ -290,25 +290,25 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 	@Override
 	public Iterable<STATE> succReturn(final STATE state, STATE hier, final LETTER letter) {
 		return new Iterable<STATE>() {
-			Iterable<OutgoingReturnTransition<LETTER,STATE>> m_Iterable;
+			Iterable<OutgoingReturnTransition<LETTER,STATE>> mIterable;
 			{
-				m_Iterable = m_Nwa.returnSuccessors(state,letter);
+				mIterable = mNwa.returnSuccessors(state,letter);
 			}
 			@Override
 			public Iterator<STATE> iterator() {
 				Iterator<STATE> iterator = new Iterator<STATE>() {
-				Iterator<OutgoingReturnTransition<LETTER,STATE>> m_BackingIterator;
+				Iterator<OutgoingReturnTransition<LETTER,STATE>> mBackingIterator;
 				{
-					m_BackingIterator = m_Iterable.iterator();
+					mBackingIterator = mIterable.iterator();
 				}
 					@Override
 					public boolean hasNext() {
-						return m_BackingIterator.hasNext();
+						return mBackingIterator.hasNext();
 					}
 
 					@Override
 					public STATE next() {
-							return m_BackingIterator.next().getSucc();
+							return mBackingIterator.next().getSucc();
 					}
 
 					@Override

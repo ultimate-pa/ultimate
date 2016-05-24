@@ -58,68 +58,68 @@ public class TerminationAnalysisBenchmark
 	public static final String s_Label_SupportingInvariants = "SupportingInvariants";
 	public static final String s_Label_MotzkinApplications = "MotzkinApplications";
 	
-	private final LBool m_ConstraintsSatisfiability;
-	private final int m_VariablesStem;
-	private final int m_VariablesLoop;
-	private final int m_DisjunctsStem;
-	private final int m_DisjunctsLoop;
-	private final String m_Template;
-	private final int m_Degree;
-	private final int m_SupportingInvariants;
-	private final int m_MotzkinApplications;
-	private final long m_Time;
+	private final LBool mConstraintsSatisfiability;
+	private final int mVariablesStem;
+	private final int mVariablesLoop;
+	private final int mDisjunctsStem;
+	private final int mDisjunctsLoop;
+	private final String mTemplate;
+	private final int mDegree;
+	private final int mSupportingInvariants;
+	private final int mMotzkinApplications;
+	private final long mTime;
 	
 	public TerminationAnalysisBenchmark(
 			LBool constraintsSatisfiability, int variablesStem,
 			int variablesLoop, int disjunctsStem, int disjunctsLoop,
 			String template, int degree, int supportingInvariants,
 			int motzkinApplications, long time) {
-		m_ConstraintsSatisfiability = constraintsSatisfiability;
-		m_VariablesStem = variablesStem;
-		m_VariablesLoop = variablesLoop;
-		m_DisjunctsStem = disjunctsStem;
-		m_DisjunctsLoop = disjunctsLoop;
-		m_Template = template;
-		m_Degree = degree;
-		m_SupportingInvariants = supportingInvariants;
-		m_MotzkinApplications = motzkinApplications;
-		m_Time = time;
+		mConstraintsSatisfiability = constraintsSatisfiability;
+		mVariablesStem = variablesStem;
+		mVariablesLoop = variablesLoop;
+		mDisjunctsStem = disjunctsStem;
+		mDisjunctsLoop = disjunctsLoop;
+		mTemplate = template;
+		mDegree = degree;
+		mSupportingInvariants = supportingInvariants;
+		mMotzkinApplications = motzkinApplications;
+		mTime = time;
 	}
 	
 	public LBool getConstraintsSatisfiability() {
-		return m_ConstraintsSatisfiability;
+		return mConstraintsSatisfiability;
 	}
 	
 	public int getVariablesStem() {
-		return m_VariablesStem;
+		return mVariablesStem;
 	}
 	
 	public int getVariablesLoop() {
-		return m_VariablesLoop;
+		return mVariablesLoop;
 	}
 	
 	public int getDisjunctsStem() {
-		return m_DisjunctsStem;
+		return mDisjunctsStem;
 	}
 	
 	public int getDisjunctsLoop() {
-		return m_DisjunctsLoop;
+		return mDisjunctsLoop;
 	}
 	
 	public String getTemplate() {
-		return m_Template;
+		return mTemplate;
 	}
 	
 	public int getDegree() {
-		return m_Degree;
+		return mDegree;
 	}
 	
 	public int getSupportingInvariants() {
-		return m_SupportingInvariants;
+		return mSupportingInvariants;
 	}
 	
 	public int getMotzkinApplications() {
-		return m_MotzkinApplications;
+		return mMotzkinApplications;
 	}
 	
 	public String toString() {
@@ -147,16 +147,16 @@ public class TerminationAnalysisBenchmark
 	
 	public Map<String, Object> getKeyValueMap() {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
-		result.put(s_Label_Template, m_Template);
-		result.put(s_Label_Degree, m_Degree);
-		result.put(s_Label_ConstraintsSatisfiability, m_ConstraintsSatisfiability);
-		result.put(s_Label_Time, m_Time);
-		result.put(s_Label_VariablesStem, m_VariablesStem);
-		result.put(s_Label_VariablesLoop, m_VariablesLoop);
-		result.put(s_Label_DisjunctsStem, m_DisjunctsStem);
-		result.put(s_Label_DisjunctsLoop, m_DisjunctsLoop);
-		result.put(s_Label_SupportingInvariants, m_SupportingInvariants);
-		result.put(s_Label_MotzkinApplications, m_MotzkinApplications);
+		result.put(s_Label_Template, mTemplate);
+		result.put(s_Label_Degree, mDegree);
+		result.put(s_Label_ConstraintsSatisfiability, mConstraintsSatisfiability);
+		result.put(s_Label_Time, mTime);
+		result.put(s_Label_VariablesStem, mVariablesStem);
+		result.put(s_Label_VariablesLoop, mVariablesLoop);
+		result.put(s_Label_DisjunctsStem, mDisjunctsStem);
+		result.put(s_Label_DisjunctsLoop, mDisjunctsLoop);
+		result.put(s_Label_SupportingInvariants, mSupportingInvariants);
+		result.put(s_Label_MotzkinApplications, mMotzkinApplications);
 		return Collections.unmodifiableMap(result);
 	}
 	

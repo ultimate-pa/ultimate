@@ -68,46 +68,46 @@ public class HoareAnnotationFragments {
 	 * States for contexts were the context was already removed (because it was
 	 * a dead end) from the abstraction.
 	 */
-	private final Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> m_DeadContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+	private final Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> mDeadContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
 	/**
 	 * States for contexts were the are still in the current abstraction.
 	 */
-	private Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> m_LiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
-	private final HashMap<IPredicate, IPredicate> m_Context2Entry = new HashMap<IPredicate, IPredicate>();
+	private Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> mLiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+	private final HashMap<IPredicate, IPredicate> mContext2Entry = new HashMap<IPredicate, IPredicate>();
 
-	private final HashRelation<ProgramPoint, IPredicate> m_ProgPoint2StatesWithEmptyContext = new HashRelation<ProgramPoint, IPredicate>();
+	private final HashRelation<ProgramPoint, IPredicate> mProgPoint2StatesWithEmptyContext = new HashRelation<ProgramPoint, IPredicate>();
 
-	private final HashSet<ProgramPoint> m_HoareAnnotationPositions;
+	private final HashSet<ProgramPoint> mHoareAnnotationPositions;
 
-	private final HoareAnnotationPositions m_HoareAnnotationPos;
+	private final HoareAnnotationPositions mHoareAnnotationPos;
 
 	/**
 	 * What is the precondition for a context? Strongest postcondition or entry
 	 * given by automaton?
 	 */
-	private final static boolean m_UseEntry = true;
+	private final static boolean mUseEntry = true;
 
 	Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> getDeadContexts2ProgPoint2Preds() {
-		return m_DeadContexts2ProgPoint2Preds;
+		return mDeadContexts2ProgPoint2Preds;
 	}
 
 	Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> getLiveContexts2ProgPoint2Preds() {
-		return m_LiveContexts2ProgPoint2Preds;
+		return mLiveContexts2ProgPoint2Preds;
 	}
 
 	HashRelation<ProgramPoint, IPredicate> getProgPoint2StatesWithEmptyContext() {
-		return m_ProgPoint2StatesWithEmptyContext;
+		return mProgPoint2StatesWithEmptyContext;
 	}
 
 	HashMap<IPredicate, IPredicate> getContext2Entry() {
-		return m_Context2Entry;
+		return mContext2Entry;
 	}
 
 	public HoareAnnotationFragments(ILogger logger, HashSet<ProgramPoint> hoareAnnotationPositions, 
 			HoareAnnotationPositions hoareAnnotationPos){
 		mLogger = logger;
-		m_HoareAnnotationPositions = hoareAnnotationPositions;
-		m_HoareAnnotationPos = hoareAnnotationPos;
+		mHoareAnnotationPositions = hoareAnnotationPositions;
+		mHoareAnnotationPos = hoareAnnotationPos;
 	}
 	
 	/**
@@ -140,18 +140,18 @@ public class HoareAnnotationFragments {
 	 * deckers that have been removed by a dead end removal.
 	 */
 	private void update(Update update, INestedWordAutomatonSimple<CodeBlock, IPredicate> newAbstraction) {
-		Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> oldLiveContexts2ProgPoint2Preds = m_LiveContexts2ProgPoint2Preds;
-		m_LiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+		Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> oldLiveContexts2ProgPoint2Preds = mLiveContexts2ProgPoint2Preds;
+		mLiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
 		for (Entry<IPredicate, HashRelation<ProgramPoint, IPredicate>> contextHrPair : oldLiveContexts2ProgPoint2Preds
 				.entrySet()) {
 			IPredicate oldContext = contextHrPair.getKey();
 			List<IPredicate> newContexts = update.getNewPredicates(oldContext);
 			if (newContexts == null) {
-				assert !m_DeadContexts2ProgPoint2Preds.containsKey(oldContext);
-				m_DeadContexts2ProgPoint2Preds.put(oldContext, contextHrPair.getValue());
+				assert !mDeadContexts2ProgPoint2Preds.containsKey(oldContext);
+				mDeadContexts2ProgPoint2Preds.put(oldContext, contextHrPair.getValue());
 			} else {
-				IPredicate oldEntry = m_Context2Entry.get(oldContext);
-				m_Context2Entry.remove(oldContext);
+				IPredicate oldEntry = mContext2Entry.get(oldContext);
+				mContext2Entry.remove(oldContext);
 				for (int i = 0; i < newContexts.size(); i++) {
 					final HashRelation<ProgramPoint, IPredicate> hr;
 					if (i == newContexts.size() - 1) {
@@ -162,12 +162,12 @@ public class HoareAnnotationFragments {
 						hr = new HashRelation<ProgramPoint, IPredicate>();
 						hr.addAll(contextHrPair.getValue());
 					}
-					m_LiveContexts2ProgPoint2Preds.put(newContexts.get(i), hr);
+					mLiveContexts2ProgPoint2Preds.put(newContexts.get(i), hr);
 					IPredicate entry = getEntry(newAbstraction, newContexts.get(i));
 					if (entry == null) {
-						m_Context2Entry.put(newContexts.get(i), oldEntry);
+						mContext2Entry.put(newContexts.get(i), oldEntry);
 					} else {
-						m_Context2Entry.put(newContexts.get(i), entry);
+						mContext2Entry.put(newContexts.get(i), entry);
 					}
 				}
 			}
@@ -207,16 +207,16 @@ public class HoareAnnotationFragments {
 
 	private class IntersectionUpdate implements Update {
 
-		private final Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState>> m_Fst2snd2res;
+		private final Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState>> mFst2snd2res;
 
 		public IntersectionUpdate(
 				Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState>> fst2snd2res) {
-			m_Fst2snd2res = fst2snd2res;
+			mFst2snd2res = fst2snd2res;
 		}
 
 		@Override
 		public List<IPredicate> getNewPredicates(IPredicate oldPredicate) {
-			Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState> mapping = m_Fst2snd2res.get(oldPredicate);
+			Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState> mapping = mFst2snd2res.get(oldPredicate);
 			if (mapping == null) {
 				return null;
 			} else {
@@ -231,16 +231,16 @@ public class HoareAnnotationFragments {
 
 	private class MinimizationUpdate implements Update {
 
-		private final Map<IPredicate, IPredicate> m_Old2New;
+		private final Map<IPredicate, IPredicate> mOld2New;
 
 		public MinimizationUpdate(Map<IPredicate, IPredicate> old2New) {
 			super();
-			m_Old2New = old2New;
+			mOld2New = old2New;
 		}
 
 		@Override
 		public List<IPredicate> getNewPredicates(IPredicate oldPredicate) {
-			IPredicate newPredicate = m_Old2New.get(oldPredicate);
+			IPredicate newPredicate = mOld2New.get(oldPredicate);
 			if (newPredicate == null) {
 				return null;
 			} else {
@@ -252,18 +252,18 @@ public class HoareAnnotationFragments {
 
 	void addDoubleDecker(IPredicate down, IPredicate up, IPredicate emtpy) {
 		ProgramPoint pp = getProgramPoint(up);
-		if (m_HoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles && 
-				!m_HoareAnnotationPositions.contains(pp)) {
+		if (mHoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles && 
+				!mHoareAnnotationPositions.contains(pp)) {
 			// do not compute Hoare annotation for this program point
 			return;
 		}
 		if (down == emtpy) {
-			m_ProgPoint2StatesWithEmptyContext.addPair(pp, up);
+			mProgPoint2StatesWithEmptyContext.addPair(pp, up);
 		} else {
-			HashRelation<ProgramPoint, IPredicate> pp2preds = m_LiveContexts2ProgPoint2Preds.get(down);
+			HashRelation<ProgramPoint, IPredicate> pp2preds = mLiveContexts2ProgPoint2Preds.get(down);
 			if (pp2preds == null) {
 				pp2preds = new HashRelation<ProgramPoint, IPredicate>();
-				m_LiveContexts2ProgPoint2Preds.put(down, pp2preds);
+				mLiveContexts2ProgPoint2Preds.put(down, pp2preds);
 			}
 			pp2preds.addPair(pp, up);
 		}
@@ -282,7 +282,7 @@ public class HoareAnnotationFragments {
 	}
 
 	void addContextEntryPair(IPredicate context, IPredicate entry) {
-		m_Context2Entry.put(context, entry);
+		mContext2Entry.put(context, entry);
 	}
 
 	/**

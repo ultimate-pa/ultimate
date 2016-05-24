@@ -55,7 +55,7 @@ import java.util.Set;
  * @param <MAP> Type of Map that is used to store the relation.
  */
 public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
-	protected final MAP m_Map;
+	protected final MAP mMap;
 	
 	protected abstract MAP newMap();
 	
@@ -63,7 +63,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 
 	public AbstractRelation() {
 		super();
-		m_Map = newMap();
+		mMap = newMap();
 	}
 	
 	/**
@@ -71,10 +71,10 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 * @return if this relation did not already contain the specified pair. 
 	 */
 	public boolean addPair(D domainElem, R rangeElem) {
-		Set<R> rangeElems = m_Map.get(domainElem);
+		Set<R> rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
 			rangeElems = newSet();
-			m_Map.put(domainElem, rangeElems);
+			mMap.put(domainElem, rangeElems);
 		}
 		return rangeElems.add(rangeElem);
 	}
@@ -85,13 +85,13 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 */
 	public boolean removePair(D domainElem, R rangeElem) {
 		final boolean result;
-		Set<R> rangeElems = m_Map.get(domainElem);
+		Set<R> rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
 			result = false;
 		} else {
 			result = rangeElems.remove(rangeElems);
 			if (rangeElems.isEmpty()) {
-				m_Map.remove(domainElem);
+				mMap.remove(domainElem);
 			}
 		}
 		return result;
@@ -103,11 +103,11 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 * necessary.
 	 */
 	public void addAll(AbstractRelation<D,R,?> rel) {
-		for (Entry<D, Set<R>> entry : rel.m_Map.entrySet()) {
-			Set<R> rangeElems = m_Map.get(entry.getKey());
+		for (Entry<D, Set<R>> entry : rel.mMap.entrySet()) {
+			Set<R> rangeElems = mMap.get(entry.getKey());
 			if (rangeElems == null) {
 				rangeElems = newSet();
-				m_Map.put(entry.getKey(), rangeElems);
+				mMap.put(entry.getKey(), rangeElems);
 			}
 			rangeElems.addAll(entry.getValue());
 		}
@@ -118,7 +118,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 * relation.
 	 */
 	public boolean containsPair(D domainElem, R rangeElem) {
-		Set<R> rangeElems = m_Map.get(domainElem);
+		Set<R> rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
 			return false;
 		} else {
@@ -131,7 +131,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 * (d,r) is in the relation.
 	 */
 	public Set<D> getDomain() {
-		return m_Map.keySet();
+		return mMap.keySet();
 	}
 	
 	/**
@@ -139,11 +139,11 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 * domainElem, the pair (domainElem, r) is in the relation.
 	 */
 	public Set<R> getImage(D domainElem) {
-		Set<R> set = m_Map.get(domainElem);
+		Set<R> set = mMap.get(domainElem);
 		if (set == null) {
 			return Collections.emptySet();
 		} else {
-			return Collections.unmodifiableSet(m_Map.get(domainElem));
+			return Collections.unmodifiableSet(mMap.get(domainElem));
 		}
 	}
 	
@@ -152,7 +152,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	 */
 	public int size() {
 		int result = 0;
-		for (Set<R> rangeSet : m_Map.values()) {
+		for (Set<R> rangeSet : mMap.values()) {
 			result += rangeSet.size();
 		}
 		return result;
@@ -173,6 +173,6 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	
 	@Override
 	public String toString() {
-		return m_Map.toString();
+		return mMap.toString();
 	}
 }

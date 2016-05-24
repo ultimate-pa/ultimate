@@ -42,15 +42,15 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 public class Svcomp_Memsafety_SmtBenchmarkProduction extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
 	
-	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
+	private static final DirectoryFileEndingsPair[] mSVCOMP_Examples = {
 		/*** Category 7. Memory Safety ***/
-		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/memsafety-ext/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memsafety-ext/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 	};
 
 	/**
@@ -68,7 +68,7 @@ public class Svcomp_Memsafety_SmtBenchmarkProduction extends AbstractTraceAbstra
 	 * because we assume that all settings files are in this folder.
 	 * 
 	 */
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"automizer/smtBenchmarkProduction/Z3-mem.epf",
 		"automizer/smtBenchmarkProduction/CVC4-mem.epf",
 	};
@@ -76,10 +76,10 @@ public class Svcomp_Memsafety_SmtBenchmarkProduction extends AbstractTraceAbstra
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
+		for (String setting : mSettings) {
 			addTestCase("AutomizerCWithBlockEncoding.xml", 
 					setting, 
-					m_SVCOMP_Examples);
+					mSVCOMP_Examples);
 		}
 		return super.createTestCases();
 	}

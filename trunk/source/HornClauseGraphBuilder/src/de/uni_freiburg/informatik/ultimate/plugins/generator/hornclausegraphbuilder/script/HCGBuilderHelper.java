@@ -14,9 +14,9 @@ public class HCGBuilderHelper {
 	
 	public static class ConstructAndInitializeBackendSmtSolver {
 	
-		private Settings m_SolverSettings;
-		private String m_LogicForExternalSolver;
-		private Script m_Script;
+		private Settings mSolverSettings;
+		private String mLogicForExternalSolver;
+		private Script mScript;
 
 		public ConstructAndInitializeBackendSmtSolver(IUltimateServiceProvider services, 
 				IToolchainStorage storage,
@@ -34,34 +34,34 @@ public class HCGBuilderHelper {
 			final String commandExternalSolver = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
 					.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverCommand);
 
-			m_LogicForExternalSolver = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
+			mLogicForExternalSolver = (new RcpPreferenceProvider(HornClauseGraphBuilder.s_PLUGIN_ID))
 					.getString(HornClauseGraphBuilderPreferenceInitializer.LABEL_ExtSolverLogic);
 
-			m_SolverSettings = SolverBuilder.constructSolverSettings(
+			mSolverSettings = SolverBuilder.constructSolverSettings(
 					filename, solverMode, commandExternalSolver, false, null);
 
-			m_Script =  SolverBuilder.buildAndInitializeSolver(services, 
+			mScript =  SolverBuilder.buildAndInitializeSolver(services, 
 					storage, 
 					solverMode, 
-					m_SolverSettings, 
+					mSolverSettings, 
 					//				dumpUsatCoreTrackBenchmark, 
 					false, 
 					//				dumpMainTrackBenchmark,
 					false,
-					m_LogicForExternalSolver, 
+					mLogicForExternalSolver, 
 					"HornClauseSolverBackendSolverScript");		
 		}
 
 		public Settings getSolverSettings() {
-			return m_SolverSettings;
+			return mSolverSettings;
 		}
 
 		public String getLogicForExternalSolver() {
-			return m_LogicForExternalSolver;
+			return mLogicForExternalSolver;
 		}
 
 		public Script getScript() {
-			return m_Script;
+			return mScript;
 		}
 	}
 }

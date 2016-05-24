@@ -40,13 +40,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 public class TypeErrorResult<ELEM extends IElement> extends 
 				AbstractResultAtElement<ELEM> implements IResultWithLocation {
 	
-	private final String m_LongDescription;
+	private final String mLongDescription;
 
 	public TypeErrorResult(ELEM element, String plugin, 
 			IBacktranslationService translatorSequence, 
 			String longDescription) {
 		super(element, plugin, translatorSequence);
-		m_LongDescription = longDescription;
+		mLongDescription = longDescription;
 	}
 
 	@Override
@@ -56,7 +56,7 @@ public class TypeErrorResult<ELEM extends IElement> extends
 
 	@Override
 	public String getLongDescription() {
-		return m_LongDescription;
+		return mLongDescription;
 	}
 	
 }

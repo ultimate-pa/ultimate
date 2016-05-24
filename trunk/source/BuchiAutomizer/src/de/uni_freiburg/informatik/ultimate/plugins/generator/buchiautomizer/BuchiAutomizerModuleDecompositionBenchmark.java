@@ -42,17 +42,17 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderProvider<String> {
 
-	private final TreeMap<Integer, Integer> m_ModuleSizeTrivial = new TreeMap<Integer, Integer>();
-	private final TreeMap<Integer, Integer> m_ModuleSizeDeterministic = new TreeMap<Integer, Integer>();
-	private final TreeMap<Integer, Integer> m_ModuleSizeNondeterministic = new TreeMap<Integer, Integer>();
-	private final TreeMap<Integer, String> m_RankingFunction = new TreeMap<Integer, String>();
+	private final TreeMap<Integer, Integer> mModuleSizeTrivial = new TreeMap<Integer, Integer>();
+	private final TreeMap<Integer, Integer> mModuleSizeDeterministic = new TreeMap<Integer, Integer>();
+	private final TreeMap<Integer, Integer> mModuleSizeNondeterministic = new TreeMap<Integer, Integer>();
+	private final TreeMap<Integer, String> mRankingFunction = new TreeMap<Integer, String>();
 	/**
 	 * Is there a remainder module? A remainder module contains remaining traces if decomposition into modules failed.
 	 * Null if yet unknown.
 	 */
-	private Boolean m_HasRemainderModule;
-	private int m_RemainderModuleLocations;
-	private boolean m_RemainderModuleNonterminationKnown;
+	private Boolean mHasRemainderModule;
+	private int mRemainderModuleLocations;
+	private boolean mRemainderModuleNonterminationKnown;
 	private IBacktranslationService mBacktranslationService;
 
 	public BuchiAutomizerModuleDecompositionBenchmark(IBacktranslationService service) {
@@ -60,31 +60,31 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	}
 
 	void reportTrivialModule(Integer iteration, Integer size) {
-		m_ModuleSizeTrivial.put(iteration, size);
+		mModuleSizeTrivial.put(iteration, size);
 	}
 
 	void reportDeterminsticModule(Integer iteration, Integer size) {
-		m_ModuleSizeDeterministic.put(iteration, size);
+		mModuleSizeDeterministic.put(iteration, size);
 	}
 
 	void reportNonDeterminsticModule(Integer iteration, Integer size) {
-		m_ModuleSizeNondeterministic.put(iteration, size);
+		mModuleSizeNondeterministic.put(iteration, size);
 	}
 
 	void reportRankingFunction(Integer iteration, TerminationArgumentResult<RcfgElement, Expression> tar) {
-		m_RankingFunction.put(iteration, prettyPrintRankingFunction(tar));
+		mRankingFunction.put(iteration, prettyPrintRankingFunction(tar));
 	}
 
 	void reportRemainderModule(int numberLocations, boolean nonterminationKnown) {
-		assert m_HasRemainderModule == null : "remainder module already reported";
-		m_HasRemainderModule = true;
-		m_RemainderModuleLocations = numberLocations;
-		m_RemainderModuleNonterminationKnown = nonterminationKnown;
+		assert mHasRemainderModule == null : "remainder module already reported";
+		mHasRemainderModule = true;
+		mRemainderModuleLocations = numberLocations;
+		mRemainderModuleNonterminationKnown = nonterminationKnown;
 	}
 
 	void reportNoRemainderModule() {
-		assert m_HasRemainderModule == null : "remainder module already reported";
-		m_HasRemainderModule = false;
+		assert mHasRemainderModule == null : "remainder module already reported";
+		mHasRemainderModule = false;
 	}
 
 	private String prettyPrintRankingFunction(TerminationArgumentResult<RcfgElement, Expression> tar) {
@@ -94,14 +94,14 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 
 	@Override
 	public String toString() {
-		if (m_HasRemainderModule == null) {
+		if (mHasRemainderModule == null) {
 			return "Decomposition not yet finished";
 		}
-		int modules = m_ModuleSizeTrivial.size() + m_ModuleSizeDeterministic.size()
-				+ m_ModuleSizeNondeterministic.size();
+		int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
+				+ mModuleSizeNondeterministic.size();
 		if (modules == 0) {
-			if (m_HasRemainderModule) {
-				if (m_RemainderModuleNonterminationKnown) {
+			if (mHasRemainderModule) {
+				if (mRemainderModuleNonterminationKnown) {
 					return "Trivial decomposition into one nonterminating module.";
 				} else {
 					return "Trivial decomposition into one module whose termination is unknown.";
@@ -116,14 +116,14 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		sb.append(modules);
 		sb.append(" terminating modules ");
 		sb.append("(");
-		sb.append(m_ModuleSizeTrivial.size());
+		sb.append(mModuleSizeTrivial.size());
 		sb.append(" trivial, ");
-		sb.append(m_ModuleSizeDeterministic.size());
+		sb.append(mModuleSizeDeterministic.size());
 		sb.append(" deterministic, ");
-		sb.append(m_ModuleSizeNondeterministic.size());
+		sb.append(mModuleSizeNondeterministic.size());
 		sb.append(" nondeterministic)");
-		if (m_HasRemainderModule) {
-			if (m_RemainderModuleNonterminationKnown) {
+		if (mHasRemainderModule) {
+			if (mRemainderModuleNonterminationKnown) {
 				sb.append(" and one nonterminating remainder module.");
 			} else {
 				sb.append(" and one module whose termination is unknown.");
@@ -131,34 +131,34 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		} else {
 			sb.append(". ");
 		}
-		for (Entry<Integer, Integer> entry : m_ModuleSizeDeterministic.entrySet()) {
+		for (Entry<Integer, Integer> entry : mModuleSizeDeterministic.entrySet()) {
 			sb.append("One deterministic module has ");
-			sb.append(m_RankingFunction.get(entry.getKey()));
+			sb.append(mRankingFunction.get(entry.getKey()));
 			sb.append(" and consists of ");
 			sb.append(entry.getValue());
 			sb.append(" locations. ");
 		}
-		for (Entry<Integer, Integer> entry : m_ModuleSizeNondeterministic.entrySet()) {
+		for (Entry<Integer, Integer> entry : mModuleSizeNondeterministic.entrySet()) {
 			sb.append("One nondeterministic module has ");
-			sb.append(m_RankingFunction.get(entry.getKey()));
+			sb.append(mRankingFunction.get(entry.getKey()));
 			sb.append(" and consists of ");
 			sb.append(entry.getValue());
 			sb.append(" locations. ");
 		}
-		for (Entry<Integer, Integer> entry : m_ModuleSizeTrivial.entrySet()) {
+		for (Entry<Integer, Integer> entry : mModuleSizeTrivial.entrySet()) {
 			if (entry.getValue() > maxNumberOfStatesOfModuleWithTrivialRankingFunction) {
 				maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
 			}
 		}
-		if (m_ModuleSizeTrivial.size() > 0) {
-			sb.append(m_ModuleSizeTrivial.size());
+		if (mModuleSizeTrivial.size() > 0) {
+			sb.append(mModuleSizeTrivial.size());
 			sb.append(" modules have a trivial ranking function, the largest among these consists of ");
 			sb.append(maxNumberOfStatesOfModuleWithTrivialRankingFunction);
 			sb.append(" locations.");
 		}
-		if (m_HasRemainderModule) {
+		if (mHasRemainderModule) {
 			sb.append(" The remainder module has ");
-			sb.append(m_RemainderModuleLocations);
+			sb.append(mRemainderModuleLocations);
 			sb.append(" locations.");
 		}
 		return sb.toString();
@@ -183,8 +183,8 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		header.add("Avg Locs nondeterministic modules");
 		header.add("Max Locs nondeterministic modules");
 
-		int modules = m_ModuleSizeTrivial.size() + m_ModuleSizeDeterministic.size()
-				+ m_ModuleSizeNondeterministic.size();
+		int modules = mModuleSizeTrivial.size() + mModuleSizeDeterministic.size()
+				+ mModuleSizeNondeterministic.size();
 
 		ArrayList<String> row = new ArrayList<String>();
 		row.add(String.valueOf(modules));
@@ -192,10 +192,10 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 			row.add(null);
 			row.add(null);
 			row.add(null);
-			if (m_HasRemainderModule == null) {
+			if (mHasRemainderModule == null) {
 				row.add("Decomposition not yet finished");
-			} else if (m_HasRemainderModule) {
-				if (m_RemainderModuleNonterminationKnown) {
+			} else if (mHasRemainderModule) {
+				if (mRemainderModuleNonterminationKnown) {
 					row.add("Nonterminating");
 				} else {
 					row.add("Unknown");
@@ -213,13 +213,13 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 			row.add(null);
 			row.add(null);
 		} else {
-			row.add(String.valueOf(m_ModuleSizeTrivial.size()));
-			row.add(String.valueOf(m_ModuleSizeDeterministic.size()));
-			row.add(String.valueOf(m_ModuleSizeNondeterministic.size()));
-			if (m_HasRemainderModule == null) {
+			row.add(String.valueOf(mModuleSizeTrivial.size()));
+			row.add(String.valueOf(mModuleSizeDeterministic.size()));
+			row.add(String.valueOf(mModuleSizeNondeterministic.size()));
+			if (mHasRemainderModule == null) {
 				row.add("Decomposition not yet finished");
-			} else if (m_HasRemainderModule) {
-				if (m_RemainderModuleNonterminationKnown) {
+			} else if (mHasRemainderModule) {
+				if (mRemainderModuleNonterminationKnown) {
 					row.add("Nonterminating");
 				} else {
 					row.add("Unknown");
@@ -228,9 +228,9 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 				row.add(null);
 			}
 
-			MinAvgMax triv = getMinAvgMax(m_ModuleSizeTrivial);
-			MinAvgMax determinisic = getMinAvgMax(m_ModuleSizeDeterministic);
-			MinAvgMax nondet = getMinAvgMax(m_ModuleSizeNondeterministic);
+			MinAvgMax triv = getMinAvgMax(mModuleSizeTrivial);
+			MinAvgMax determinisic = getMinAvgMax(mModuleSizeDeterministic);
+			MinAvgMax nondet = getMinAvgMax(mModuleSizeNondeterministic);
 			row.add(String.valueOf(triv.min));
 			row.add(String.valueOf(triv.avg));
 			row.add(String.valueOf(triv.max));

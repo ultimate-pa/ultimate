@@ -53,29 +53,29 @@ public final class SummarizeEdge<LETTER, STATE> {
 	/**
 	 * Destination of the edge.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> m_Dest;
+	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mDest;
 	/**
 	 * The first duplicator shadow vertex to create a valid edge.
 	 */
-	private final DuplicatorDoubleDeckerVertex<LETTER, STATE> m_DuplicatorEntryShadow;
+	private final DuplicatorDoubleDeckerVertex<LETTER, STATE> mDuplicatorEntryShadow;
 	/**
 	 * The second duplicator shadow vertex to create a valid edge.
 	 */
-	private final DuplicatorDoubleDeckerVertex<LETTER, STATE> m_DuplicatorExitShadow;
+	private final DuplicatorDoubleDeckerVertex<LETTER, STATE> mDuplicatorExitShadow;
 	/**
 	 * Spoiler vertex that invoked creating the summarize edge. This is the
 	 * spoiler vertex that used the corresponding return edge.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> m_SpoilerInvoker;
+	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mSpoilerInvoker;
 
 	/**
 	 * Spoilers shadow vertex to create a valid edge.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> m_SpoilerShadow;
+	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mSpoilerShadow;
 	/**
 	 * Source of the edge.
 	 */
-	private final SpoilerDoubleDeckerVertex<LETTER, STATE> m_Src;
+	private final SpoilerDoubleDeckerVertex<LETTER, STATE> mSrc;
 
 	/**
 	 * Creates a new summarize edge with given source and destination vertices.
@@ -91,13 +91,13 @@ public final class SummarizeEdge<LETTER, STATE> {
 	public SummarizeEdge(final SpoilerDoubleDeckerVertex<LETTER, STATE> src,
 			final SpoilerDoubleDeckerVertex<LETTER, STATE> dest,
 			final SpoilerDoubleDeckerVertex<LETTER, STATE> spoilerInvoker) {
-		m_Src = src;
-		m_Dest = dest;
-		m_SpoilerInvoker = spoilerInvoker;
-		m_DuplicatorEntryShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
+		mSrc = src;
+		mDest = dest;
+		mSpoilerInvoker = spoilerInvoker;
+		mDuplicatorEntryShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
 				ETransitionType.SUMMARIZE_ENTRY, this);
-		m_SpoilerShadow = new SpoilerDoubleDeckerVertex<LETTER, STATE>(NO_PRIORITY, false, null, null, this);
-		m_DuplicatorExitShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
+		mSpoilerShadow = new SpoilerDoubleDeckerVertex<LETTER, STATE>(NO_PRIORITY, false, null, null, this);
+		mDuplicatorExitShadow = new DuplicatorDoubleDeckerVertex<LETTER, STATE>(2, false, null, null, null,
 				ETransitionType.SUMMARIZE_EXIT, this);
 	}
 
@@ -107,7 +107,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return The destination of the edge
 	 */
 	public SpoilerVertex<LETTER, STATE> getDestination() {
-		return m_Dest;
+		return mDest;
 	}
 
 	/**
@@ -118,7 +118,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return The first shadow vertex
 	 */
 	public DuplicatorDoubleDeckerVertex<LETTER, STATE> getEntryShadowVertex() {
-		return m_DuplicatorEntryShadow;
+		return mDuplicatorEntryShadow;
 	}
 
 	/**
@@ -129,7 +129,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return The first shadow vertex
 	 */
 	public DuplicatorDoubleDeckerVertex<LETTER, STATE> getExitShadowVertex() {
-		return m_DuplicatorExitShadow;
+		return mDuplicatorExitShadow;
 	}
 
 	/**
@@ -140,7 +140,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return The first shadow vertex
 	 */
 	public SpoilerDoubleDeckerVertex<LETTER, STATE> getMiddleShadowVertex() {
-		return m_SpoilerShadow;
+		return mSpoilerShadow;
 	}
 
 	/**
@@ -150,7 +150,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return Returns the priority of the edge
 	 */
 	public int getPriority() {
-		return m_SpoilerShadow.getPriority();
+		return mSpoilerShadow.getPriority();
 	}
 
 	/**
@@ -159,7 +159,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return The source of the edge
 	 */
 	public SpoilerVertex<LETTER, STATE> getSource() {
-		return m_Src;
+		return mSrc;
 	}
 
 	/**
@@ -169,7 +169,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * @return The spoiler vertex that invoked creating the summarize edge
 	 */
 	public SpoilerDoubleDeckerVertex<LETTER, STATE> getSpoilerInvoker() {
-		return m_SpoilerInvoker;
+		return mSpoilerInvoker;
 	}
 
 	/**
@@ -180,6 +180,6 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 *            The priority to set
 	 */
 	public void setPriority(final int priority) {
-		m_SpoilerShadow.setPriority(priority);
+		mSpoilerShadow.setPriority(priority);
 	}
 }

@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 
 
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * @param logger
@@ -66,7 +66,7 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 	 */
 	public MinimizeLoopVisitor(ILogger logger, IUltimateServiceProvider services) {
 		super(logger);
-		m_Services = services;
+		mServices = services;
 	}
 
 	@Override
@@ -92,7 +92,7 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 	 * @return
 	 */
 	private List<MinimizedNode> recursiveLoopMerge(MinimizedNode node) {
-		if (!m_Services.getProgressMonitorService().continueProcessing()) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(this.getClass());
 		}
 		if (checkForSequentialMerge(node)) {

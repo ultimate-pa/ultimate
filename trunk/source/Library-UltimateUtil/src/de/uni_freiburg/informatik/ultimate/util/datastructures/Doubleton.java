@@ -35,35 +35,35 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
  * @param <E>
  */
 public class Doubleton<E> {
-	private final E m_OneElement;
-	private final E m_OtherElement;
+	private final E mOneElement;
+	private final E mOtherElement;
 	
 	public Doubleton(E oneElement, E otherElement) {
 		super();
 		if (oneElement == null || otherElement == null) {
 			throw new NullPointerException();
 		}
-		m_OneElement = oneElement;
-		m_OtherElement = otherElement;
+		mOneElement = oneElement;
+		mOtherElement = otherElement;
 	}
 	
 	public E getOneElement() {
-		return m_OneElement;
+		return mOneElement;
 	}
 	
 	public E getOtherElement() {
-		return m_OtherElement;
+		return mOtherElement;
 	}
 	
 	public E[] toArray() {
 		@SuppressWarnings("unchecked")
-		E[] result = (E[]) new Object[] { m_OneElement, m_OtherElement};
+		E[] result = (E[]) new Object[] { mOneElement, mOtherElement};
 		return result;
 	}
 	
 	@Override
 	public int hashCode() {
-		return m_OneElement.hashCode() + m_OtherElement.hashCode();
+		return mOneElement.hashCode() + mOtherElement.hashCode();
 	}
 	
 	@Override
@@ -90,6 +90,6 @@ public class Doubleton<E> {
 	
 	@Override
 	public String toString() {
-		return "[" + m_OneElement + ", " + m_OtherElement + "]";
+		return "[" + mOneElement + ", " + mOtherElement + "]";
 	}
 }

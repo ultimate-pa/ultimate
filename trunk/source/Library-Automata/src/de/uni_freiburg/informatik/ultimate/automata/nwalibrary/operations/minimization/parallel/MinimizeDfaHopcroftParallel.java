@@ -66,39 +66,39 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	/**
 	 * Result automaton.
 	 */
-	private INestedWordAutomaton<LETTER, STATE> m_result;
+	private INestedWordAutomaton<LETTER, STATE> mresult;
 	/**
 	 * Input automaton.
 	 */
-	private final INestedWordAutomaton<LETTER, STATE> m_operand;
+	private final INestedWordAutomaton<LETTER, STATE> moperand;
 	/**
 	 * ArrayList and HashMap for mapping STATE to integer and vice versa.
 	 */
-	private ArrayList<STATE> m_int2state;
-	private HashMap<STATE, Integer> m_state2int;
+	private ArrayList<STATE> mint2state;
+	private HashMap<STATE, Integer> mstate2int;
 
 	/**
 	 * Set keeping all partitions contained in the worklist.
 	 */
-	private Set<Block> m_worklist;
+	private Set<Block> mworklist;
 	/**
 	 * Map that keeps mappings of states to blocks.
 	 */
-	private Map<Integer, Block> m_mappings;
+	private Map<Integer, Block> mmappings;
 	/**
 	 * ArrayList keeping all blocks for construction of result.
 	 */
-	private ArrayList<Block> m_blocks;
+	private ArrayList<Block> mblocks;
 	/**
 	 * Interrupt object. The algorithm terminates without the complete result if
 	 * status is set to true.
 	 */
-	private Interrupt m_interrupt;
+	private Interrupt minterrupt;
 
 	/**
 	 * map states to their representatives - needed for constructing result.
 	 */
-	private int[] m_state2representative;
+	private int[] mstate2representative;
 
 	/**
 	 * True if Hopcroft algorithm shall help Incremental algorithm, false
@@ -109,13 +109,13 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	/**
 	 * String holding the cpu time.
 	 */
-	private double m_runTime;
+	private double mrunTime;
 
 	/**
 	 * Getter of runtime string builder for testing.
 	 */
 	public double getRunTime() {
-		return m_runTime;
+		return mrunTime;
 	}
 
 	// ---- Variables and methods needed for parallel execution. ---- //
@@ -127,16 +127,16 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	/**
 	 * Reference on task queue for enqueueing the produced tasks.
 	 */
-	private LinkedBlockingQueue<Runnable> m_taskQueue;
+	private LinkedBlockingQueue<Runnable> mtaskQueue;
 	/**
 	 * Instance of the running instance of the incremental algorithm.
 	 */
-	private MinimizeDfaAmrParallel<LETTER, STATE> m_incrementalAlgorithm;
+	private MinimizeDfaAmrParallel<LETTER, STATE> mincrementalAlgorithm;
 	/**
 	 * This variable will be true as soon as the mappings of states to integer
 	 * are entirely computed.
 	 */
-	private boolean m_initialized = false;
+	private boolean minitialized = false;
 
 	/**
 	 * Method for setting the flag before constructor is called.
@@ -156,7 +156,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 *         otherwise.
 	 */
 	public boolean getMappings() {
-		return m_initialized;
+		return minitialized;
 	}
 
 	/**
@@ -165,7 +165,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * @return
 	 */
 	public ArrayList<STATE> getInt2State() {
-		return m_int2state;
+		return mint2state;
 	}
 
 	/**
@@ -174,7 +174,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * @return
 	 */
 	public HashMap<STATE, Integer> getState2Int() {
-		return m_state2int;
+		return mstate2int;
 	}
 
 	/**
@@ -184,11 +184,11 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 *
 	 */
 	public void removePartition(int state) {
-		m_mappings.remove(state);
+		mmappings.remove(state);
 	}
 
 	public HashSet<Integer> getBlock(int state) {
-		return m_mappings.get(state).getAll();
+		return mmappings.get(state).getAll();
 	}
 
 	// ---- Starting minimization ---- //
@@ -221,16 +221,16 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 			final Interrupt interrupt) {
 		super(services, operand.getStateFactory(),
 				"MinimizeDfaHopcroftParallel", operand);
-		m_interrupt = interrupt;
-		this.m_operand = operand;
+		minterrupt = interrupt;
+		this.moperand = operand;
 		// Initialize final partition
-		// m_finalPartition = Collections.synchronizedList(new
+		// mfinalPartition = Collections.synchronizedList(new
 		// LinkedList<HashSet<Integer>>());
 		initialize();
 		if (!s_parallel) {
 			executeAlgorithm();
 		}
-		assert (m_state2int != null && m_int2state != null);
+		assert (mstate2int != null && mint2state != null);
 	}
 
 	/**
@@ -253,12 +253,12 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 			throws AutomataOperationCanceledException, AutomataLibraryException {
 		super(services, operand.getStateFactory(),
 				"MinimizeDfaHopcroftParallel", operand);
-		m_interrupt = interrupt;
-		this.m_operand = operand;
-		m_int2state = int2state;
-		m_state2int = state2int;
+		minterrupt = interrupt;
+		this.moperand = operand;
+		mint2state = int2state;
+		mstate2int = state2int;
 		initialize();
-		assert (m_state2int != null && m_int2state != null);
+		assert (mstate2int != null && mint2state != null);
 		if (!s_parallel) {
 			executeAlgorithm();
 		}
@@ -268,17 +268,17 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * This method is only called when the algorithm is executed non-parallel.
 	 */
 	private void executeAlgorithm() {
-		assert ((m_interrupt == null) || (!m_interrupt.getStatus())) : "HOP: The interrupt tells to terminate right at the beginning.";
+		assert ((minterrupt == null) || (!minterrupt.getStatus())) : "HOP: The interrupt tells to terminate right at the beginning.";
 		initialize();
 		minimizeDfaHopcroft();
-		if (m_result == null) {
-			m_result = constructResult();
+		if (mresult == null) {
+			mresult = constructResult();
 		}
 		// Do time measurement
 		// ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-		// m_runTime = bean.getThreadCpuTime(Thread.currentThread().getId())
+		// mrunTime = bean.getThreadCpuTime(Thread.currentThread().getId())
 		// / Math.pow(10, 9);
-		// s_logger.info("Hopcroft2 CPU Time: " + m_runTime + "sec");
+		// s_logger.info("Hopcroft2 CPU Time: " + mrunTime + "sec");
 		s_logger.info(exitMessage());
 
 	}
@@ -287,7 +287,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * Initialize mappings and partition.
 	 */
 	private void initialize() {
-		if (m_state2int == null && m_int2state == null) {
+		if (mstate2int == null && mint2state == null) {
 			initializeMappings();
 		}
 		// Initialize partition.
@@ -305,8 +305,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	public void minimizeParallel(final LinkedBlockingQueue<Runnable> taskQueue,
 			final MinimizeDfaAmrParallel<LETTER, STATE> incremental) {
 
-		m_taskQueue = taskQueue;
-		m_incrementalAlgorithm = incremental;
+		mtaskQueue = taskQueue;
+		mincrementalAlgorithm = incremental;
 		minimizeDfaHopcroft();
 	}
 
@@ -317,11 +317,11 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 */
 	private void createInitialPartition() {
 		// create new partition.
-		m_mappings = Collections.synchronizedMap(new HashMap<Integer, Block>());
-		m_worklist = new HashSet<Block>();
-		m_blocks = new ArrayList<Block>();
-		Collection<STATE> finalStatesCol = m_operand.getFinalStates();
-		Collection<STATE> statesCol = m_operand.getStates();
+		mmappings = Collections.synchronizedMap(new HashMap<Integer, Block>());
+		mworklist = new HashSet<Block>();
+		mblocks = new ArrayList<Block>();
+		Collection<STATE> finalStatesCol = moperand.getFinalStates();
+		Collection<STATE> statesCol = moperand.getStates();
 
 		int nOfFinalStates = finalStatesCol.size();
 		int nOfStates = statesCol.size();
@@ -335,20 +335,20 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		while (it.hasNext()) {
 			STATE st = it.next();
 			if (finalStatesCol.contains(st)) {
-				m_mappings.put(m_state2int.get(st), acceptingStates);
-				acceptingStates.add(m_state2int.get(st));
+				mmappings.put(mstate2int.get(st), acceptingStates);
+				acceptingStates.add(mstate2int.get(st));
 			} else {
-				m_mappings.put(m_state2int.get(st), nonAcceptingStates);
-				nonAcceptingStates.add(m_state2int.get(st));
+				mmappings.put(mstate2int.get(st), nonAcceptingStates);
+				nonAcceptingStates.add(mstate2int.get(st));
 			}
 		}
 
-		m_worklist.add(acceptingStates);
-		m_worklist.add(nonAcceptingStates);
+		mworklist.add(acceptingStates);
+		mworklist.add(nonAcceptingStates);
 
 		// Add every new block. Blocks are never destroyed.
-		m_blocks.add(acceptingStates);
-		m_blocks.add(nonAcceptingStates);
+		mblocks.add(acceptingStates);
+		mblocks.add(nonAcceptingStates);
 	}
 
 	/**
@@ -356,17 +356,17 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 */
 	private void initializeMappings() {
 
-		int nOfStates = m_operand.getStates().size();
+		int nOfStates = moperand.getStates().size();
 
 		// Allocate the finite space in ArrayList and HashMap.
-		m_int2state = new ArrayList<STATE>(nOfStates);
-		m_state2int = new HashMap<STATE, Integer>(
+		mint2state = new ArrayList<STATE>(nOfStates);
+		mstate2int = new HashMap<STATE, Integer>(
 				computeHashMapCapacity(nOfStates));
 
 		int index = -1;
-		for (final STATE state : m_operand.getStates()) {
-			m_int2state.add(state);
-			m_state2int.put(state, ++index);
+		for (final STATE state : moperand.getStates()) {
+			mint2state.add(state);
+			mstate2int.put(state, ++index);
 		}
 
 	}
@@ -379,23 +379,23 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 			s_logger.info("HOP: " + startMessage());
 		}
 
-		while (m_worklist.iterator().hasNext()) {
-			if ((m_interrupt != null) && (m_interrupt.getStatus())) {
+		while (mworklist.iterator().hasNext()) {
+			if ((minterrupt != null) && (minterrupt.getStatus())) {
 				return;
 			}
-			Block currentBlock = m_worklist.iterator().next();
-			m_worklist.remove(currentBlock);
+			Block currentBlock = mworklist.iterator().next();
+			mworklist.remove(currentBlock);
 
 			HashSet<Integer> elem = currentBlock.getStates();
 
-			for (LETTER letter : m_operand.getAlphabet()) {
+			for (LETTER letter : moperand.getAlphabet()) {
 				// Initialize Predecessors on letter.
 				Set<Integer> x = new HashSet<Integer>();
 				for (int state : elem) {
-					for (IncomingInternalTransition<LETTER, STATE> transition : m_operand
+					for (IncomingInternalTransition<LETTER, STATE> transition : moperand
 							.internalPredecessors(letter,
-									m_int2state.get(state))) {
-						x.add(m_state2int.get(transition.getPred()));
+									mint2state.get(state))) {
+						x.add(mstate2int.get(transition.getPred()));
 					}
 				}
 
@@ -407,7 +407,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 				// Find blocks
 				HashSet<Block> blocks = new HashSet<Block>();
 				for (Integer state : x) {
-					Block b = m_mappings.get(state);
+					Block b = mmappings.get(state);
 					if (b == null) {
 						continue;
 					}
@@ -424,26 +424,26 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 						// Remove singleton partitions.
 						if (newBlock.getStates().size() == 1) {
 							int state = newBlock.getStates().iterator().next();
-							m_mappings.remove(state);
-							// m_finalPartition.add(newBlock.getStates());
+							mmappings.remove(state);
+							// mfinalPartition.add(newBlock.getStates());
 							if (b.getStates().size() == 1) {
 								int state2 = b.getStates().iterator().next();
-								m_mappings.remove(state2);
-								// m_finalPartition.add(b.getStates());
+								mmappings.remove(state2);
+								// mfinalPartition.add(b.getStates());
 							}
 						} else {
 							// Update Map.
 							for (int state : newBlock.getStates()) {
-								m_mappings.put(state, newBlock);
+								mmappings.put(state, newBlock);
 							}
 						}
 
 						// Create HelpIncremental
 						if (s_parallel && HelpIncremental) {
-							assert (m_incrementalAlgorithm != null);
+							assert (mincrementalAlgorithm != null);
 							try {
-								m_taskQueue.put(new HelpIncremental(
-										m_incrementalAlgorithm,
+								mtaskQueue.put(new HelpIncremental(
+										mincrementalAlgorithm,
 										new HashSet<Integer>(b.getStates()),
 										new HashSet<Integer>(newBlock
 												.getStates())));
@@ -453,8 +453,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 						}
 
 						// Always add this because it is smaller.
-						m_worklist.add(newBlock);
-						m_blocks.add(newBlock);
+						mworklist.add(newBlock);
+						mblocks.add(newBlock);
 
 					} else {
 						b.reset();
@@ -479,10 +479,10 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		final HashMap<Integer, ? extends Collection<STATE>> state2equivStates = computeMapState2Equiv();
 
 		// construct result
-		final StateFactory<STATE> stateFactory = m_operand.getStateFactory();
+		final StateFactory<STATE> stateFactory = moperand.getStateFactory();
 		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(
-				m_Services, m_operand.getInternalAlphabet(),
-				m_operand.getCallAlphabet(), m_operand.getReturnAlphabet(),
+				mServices, moperand.getInternalAlphabet(),
+				moperand.getCallAlphabet(), moperand.getReturnAlphabet(),
 				stateFactory);
 
 		// mapping from old state to new state
@@ -490,10 +490,10 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 				computeHashCap(state2equivStates.size()));
 
 		// add states
-		assert (m_operand.getInitialStates().iterator().hasNext()) : "There is no initial state in the automaton.";
+		assert (moperand.getInitialStates().iterator().hasNext()) : "There is no initial state in the automaton.";
 
-		final int initRepresentative = m_state2representative[m_state2int
-				.get(m_operand.getInitialStates().iterator().next())];
+		final int initRepresentative = mstate2representative[mstate2int
+				.get(moperand.getInitialStates().iterator().next())];
 		for (final Entry<Integer, ? extends Collection<STATE>> entry : state2equivStates
 				.entrySet()) {
 			final int representative = entry.getKey();
@@ -504,7 +504,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 
 			assert (equivStates.iterator().hasNext()) : "There is no equivalent state in the collection.";
 			result.addState((representative == initRepresentative),
-					m_operand.isFinal(equivStates.iterator().next()), newSTate);
+					moperand.isFinal(equivStates.iterator().next()), newSTate);
 		}
 
 		/*
@@ -513,12 +513,12 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		 * NOTE: This exploits the fact that the input is deterministic.
 		 */
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> out : m_operand
-					.internalSuccessors(m_int2state.get(oldStateInt))) {
+			for (final OutgoingInternalTransition<LETTER, STATE> out : moperand
+					.internalSuccessors(mint2state.get(oldStateInt))) {
 				result.addInternalTransition(
 						oldState2newState.get(oldStateInt), out.getLetter(),
 						oldState2newState
-								.get(m_state2representative[m_state2int.get(out
+								.get(mstate2representative[mstate2int.get(out
 										.getSucc())]));
 			}
 		}
@@ -533,12 +533,12 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 */
 	private HashMap<Integer, ? extends Collection<STATE>> computeMapState2Equiv() {
 		// Initialize mapping of states to their representatives.
-		m_state2representative = new int[m_operand.size()];
+		mstate2representative = new int[moperand.size()];
 		final HashMap<Integer, LinkedList<STATE>> state2equivStates = new HashMap<Integer, LinkedList<STATE>>(
-				computeHashCap(m_operand.size()));
+				computeHashCap(moperand.size()));
 
-		// Collection<Block> values = m_partitions.values();
-		HashSet<Block> blocks = new HashSet<Block>(m_mappings.values());
+		// Collection<Block> values = mpartitions.values();
+		HashSet<Block> blocks = new HashSet<Block>(mmappings.values());
 		for (Block b : blocks) {
 			if (b.getStates().isEmpty()) {
 				continue;
@@ -546,18 +546,18 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 			final int representative = b.getStates().iterator().next();
 			LinkedList<STATE> equivStates = new LinkedList<STATE>();
 			for (int j : b.getStates()) {
-				equivStates.add(m_int2state.get(j));
-				m_state2representative[j] = representative;
+				equivStates.add(mint2state.get(j));
+				mstate2representative[j] = representative;
 			}
 			state2equivStates.put(representative, equivStates);
 		}
 
-		for (Block elem : m_blocks) {
+		for (Block elem : mblocks) {
 			final int representative = elem.getStates().iterator().next();
 			LinkedList<STATE> equivStates = new LinkedList<STATE>();
 			for (int j : elem.getStates()) {
-				equivStates.add(m_int2state.get(j));
-				m_state2representative[j] = representative;
+				equivStates.add(mint2state.get(j));
+				mstate2representative[j] = representative;
 			}
 			state2equivStates.put(representative, equivStates);
 
@@ -580,11 +580,11 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	@Override
 	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
 		if (s_parallel) {
-			if (m_result == null) {
-				m_result = constructResult();
+			if (mresult == null) {
+				mresult = constructResult();
 			}
 		}
-		return m_result;
+		return mresult;
 	}
 
 	// --------------------------------------Subclass
@@ -597,41 +597,41 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 */
 	private static class Block {
 		public static int ID = 0;
-		private int m_id;
+		private int mid;
 
 		/**
 		 * Keeps all states that are important for one iteration.
 		 */
-		private HashSet<Integer> m_marked;
+		private HashSet<Integer> mmarked;
 		/*
 		 * Keeps all states from the beginning.
 		 */
-		private HashSet<Integer> m_unmarked;
+		private HashSet<Integer> munmarked;
 
 		public Block(final HashSet<Integer> containedStates) {
 			assert (containedStates != null);
-			m_unmarked = containedStates;
-			m_marked = new HashSet<Integer>();
-			m_id = ID;
+			munmarked = containedStates;
+			mmarked = new HashSet<Integer>();
+			mid = ID;
 			ID++;
 		}
 
 		public void mark(Integer state) {
-			m_marked.add(state);
-			m_unmarked.remove(state);
+			mmarked.add(state);
+			munmarked.remove(state);
 		}
 
 		public void add(Integer state) {
-			m_unmarked.add(state);
+			munmarked.add(state);
 		}
 
 		public HashSet<Integer> getStates() {
-			return m_unmarked;
+			return munmarked;
 		}
 
 		public HashSet<Integer> getAll() {
-			HashSet<Integer> all = new HashSet<Integer>(m_unmarked);
-			all.addAll(m_marked);
+			HashSet<Integer> all = new HashSet<Integer>(munmarked);
+			all.addAll(mmarked);
 			return all;
 
 		}
@@ -642,18 +642,18 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		 * @return true if the block should be split, false otherwise.
 		 */
 		public boolean doSplit() {
-			return m_unmarked.size() > 0;
+			return munmarked.size() > 0;
 		}
 
 		public Block split() {
-			if (m_marked.size() <= m_unmarked.size()) {
-				Block b = new Block(m_marked);
-				m_marked = new HashSet<Integer>();
+			if (mmarked.size() <= munmarked.size()) {
+				Block b = new Block(mmarked);
+				mmarked = new HashSet<Integer>();
 				return b;
 			} else {
-				Block b = new Block(m_unmarked);
-				m_unmarked = m_marked;
-				m_marked = new HashSet<Integer>();
+				Block b = new Block(munmarked);
+				munmarked = mmarked;
+				mmarked = new HashSet<Integer>();
 				return b;
 			}
 		}
@@ -662,14 +662,14 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		 * This function is only called if the block can not be split.
 		 */
 		public void reset() {
-			assert (m_unmarked.size() == 0);
-			m_unmarked = m_marked;
-			m_marked = new HashSet<Integer>();
+			assert (munmarked.size() == 0);
+			munmarked = mmarked;
+			mmarked = new HashSet<Integer>();
 		}
 
 		@Override
 		public int hashCode() {
-			return this.m_id;
+			return this.mid;
 		}
 	}
 

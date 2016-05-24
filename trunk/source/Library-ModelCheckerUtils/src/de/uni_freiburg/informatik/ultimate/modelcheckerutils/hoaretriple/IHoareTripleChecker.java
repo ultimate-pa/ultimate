@@ -98,31 +98,31 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 		Time(Integer.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
 		;
 		
-		private final Class<?> m_Clazz;
-		private final Function<Object, Function<Object, Object>> m_Aggr;
-		private final Function<String, Function<Object, String>> m_Prettyprinter;
+		private final Class<?> mClazz;
+		private final Function<Object, Function<Object, Object>> mAggr;
+		private final Function<String, Function<Object, String>> mPrettyprinter;
 		
 		HoareTripleCheckerStatisticsDefinitions(Class<?> clazz, 
 				Function<Object, Function<Object, Object>> aggr, 
 				Function<String, Function<Object, String>> prettyprinter) {
-			m_Clazz = clazz;
-			m_Aggr = aggr;
-			m_Prettyprinter = prettyprinter;
+			mClazz = clazz;
+			mAggr = aggr;
+			mPrettyprinter = prettyprinter;
 		}
 
 		@Override
 		public Object aggregate(Object o1, Object o2) {
-			return m_Aggr.apply(o1).apply(o2);
+			return mAggr.apply(o1).apply(o2);
 		}
 
 		@Override
 		public String prettyprint(Object o) {
-			return m_Prettyprinter.apply(this.name()).apply(o);
+			return mPrettyprinter.apply(this.name()).apply(o);
 		}
 
 		@Override
 		public Class<?> getDataType() {
-			return m_Clazz;
+			return mClazz;
 		}
 	}
 	

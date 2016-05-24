@@ -62,11 +62,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce<LETTER,STATE> extends AbstractIncrementalInclusionCheck<LETTER,STATE> implements IOperation<LETTER, STATE>  {
 	public int counter_run = 0, counter_total_nodes = 0 ;
-	private INestedWordAutomatonSimple<LETTER, STATE> local_m_A;
-	private INestedWordAutomatonSimple<LETTER,STATE> current_m_B;
-	private LinkedList<INestedWordAutomatonSimple<LETTER,STATE>> union_m_Bs;
-	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_m_B;
-	private List<INestedWordAutomatonSimple<LETTER,STATE>> local_m_B2;
+	private INestedWordAutomatonSimple<LETTER, STATE> local_mA;
+	private INestedWordAutomatonSimple<LETTER,STATE> current_mB;
+	private LinkedList<INestedWordAutomatonSimple<LETTER,STATE>> union_mBs;
+	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
+	private List<INestedWordAutomatonSimple<LETTER,STATE>> local_mB2;
 	private StateFactory<STATE> localStateFactory;
 	private AutomataLibraryServices localServiceProvider;
 	private int counterExampleFlag;
@@ -74,21 +74,21 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	public LinkedList<PseudoAutomata> prvPAutomaton;
 	public int nodeNumberBeforeDelete = 0;
 	public int totalNodes = 0, totalAACNodes = 0, totalCoveredNodes = 0,totalUniqueNodes = 0;
-	private boolean m_acc;
+	private boolean macc;
 	
 	class NfaUnion implements IOperation<LETTER, STATE> {
 		INestedWordAutomatonSimple<LETTER,STATE> orgin,target;
 		NestedWordAutomaton<LETTER,STATE> result;
 		Collection<STATE> state1,state2;
 		Collection<LETTER> letter1,letter2,newLetterSet;
-		private final AutomataLibraryServices m_Services;
+		private final AutomataLibraryServices mServices;
 		public StateFactory<STATE> stateFactory;
 		private ILogger s_Logger;
 		public NfaUnion(AutomataLibraryServices services,StateFactory<STATE> sf,INestedWordAutomatonSimple<LETTER,STATE> in1,INestedWordAutomatonSimple<LETTER,STATE> in2){
-			m_Services=services;
+			mServices=services;
 			stateFactory =sf;
-			//s_Logger = (ILogger) m_Services.getLoggingService();
-			s_Logger = m_Logger;
+			//s_Logger = (ILogger) mServices.getLoggingService();
+			s_Logger = mLogger;
 			s_Logger.info(startMessage());
 			orgin = in1;
 			target = in2;
@@ -101,7 +101,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			s_Logger.info(exitMessage());
 		}
 		public void union(){
-			result = new NestedWordAutomaton<LETTER, STATE>(m_Services,(Set<LETTER>)newLetterSet,null,null,stateFactory);
+			result = new NestedWordAutomaton<LETTER, STATE>(mServices,(Set<LETTER>)newLetterSet,null,null,stateFactory);
 			HashSet<STATE> currentStates = new HashSet<STATE>();
 			HashSet<STATE> nextRoundStates = new HashSet<STATE>();
 			HashSet<STATE> finishedStates = new HashSet<STATE>();
@@ -217,7 +217,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			currentTree = expand(true,true);
 			initialNodes = new HashSet<NodeData>(currentTree);
 			do{
-				if(cover(m_acc)){
+				if(cover(macc)){
 					break;
 				}
 				currentTree = expand(true,false);
@@ -236,7 +236,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			ACCNodes = new HashMap<NodeData, LinkedList<NodeData>>();
 			letter = prvPAutomata.getAlphabet();
 			if(!letter.equals(bn.getAlphabet())){
-				m_Logger.info("Alphabet inconsistent");
+				mLogger.info("Alphabet inconsistent");
 				return;
 			}
 			prvPAutomata.deadendRemove();
@@ -262,7 +262,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			initialNodes = new HashSet<NodeData>(currentTree);
 			do{
 				calculateAcceptingStates();
-				if(cover(m_acc)){
+				if(cover(macc)){
 					if(!stack2.isEmpty()){
 						HashSet<NodeData> prvNodesToBeFinish = new  HashSet<NodeData>();
 						for(NodeData stack2Nodes :stack2){
@@ -274,7 +274,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 						do{
 							currentTree = expand(false,false);
 							calculateAcceptingStates();
-							if(cover(m_acc)){
+							if(cover(macc)){
 								break;
 							}
 						}while(true);
@@ -307,7 +307,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 				
 		@SuppressWarnings("unchecked")
 		public  LinkedList<NodeData> expand(boolean iteration1, boolean init) throws AutomataOperationCanceledException{
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			LinkedList<NodeData> newNodes = new LinkedList<NodeData>();
@@ -418,7 +418,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 		
 		public void calculateAcceptingStates() throws AutomataOperationCanceledException{
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			for(NodeData currentNodeSet1:currentTree){
@@ -442,7 +442,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 		
 		public boolean cover(boolean acc) throws AutomataOperationCanceledException{
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			//cover() will need to write appropriate outgoing transition for previous nodes
@@ -580,7 +580,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 		
 		public void finishACCover(HashSet<NodeData> nodes) throws AutomataOperationCanceledException{
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			HashSet<NodeData> nodesToBeFinishedFirst = new HashSet<NodeData>();
@@ -622,7 +622,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 		
 		public void finishACCover2(NodeData parentNode,LinkedList<NodeData> nodes) throws AutomataOperationCanceledException{
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			HashSet<NodeData> nodesToBeFinishedFirst = new HashSet<NodeData>();
@@ -685,7 +685,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 					}
 				}
 			}
-			m_Logger.info("Nodes before: "+i);
+			mLogger.info("Nodes before: "+i);
 			for(NodeData nodes : allNodes){
 				nodes.keep = false;
 				nodes.keep_Hard = false;
@@ -708,7 +708,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 					}
 				}
 			}
-			m_Logger.info("Nodes After: "+i);
+			mLogger.info("Nodes After: "+i);
 /*			toBeDeletedNodes.removeAll(toBeKeepedNodes);
 			for(NodeData nodeToBeDelete : toBeDeletedNodes){
 				Transition removeTran = null;
@@ -858,17 +858,17 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		super(services,a);
 		IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce.abortIfContainsCallOrReturn(a);
 		counterExampleFlag = 0;
-		m_acc = acc;
+		macc = acc;
 		localServiceProvider = services;
 		localStateFactory = sf;
-		m_Logger.info(startMessage());
-		local_m_A =  a;
-		local_m_B = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		local_m_B2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		union_m_Bs = new LinkedList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		current_m_B = null;
+		mLogger.info(startMessage());
+		local_mA =  a;
+		local_mB = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
+		local_mB2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
+		union_mBs = new LinkedList<INestedWordAutomatonSimple<LETTER, STATE>>();
+		current_mB = null;
 		prvPAutomaton = new LinkedList<PseudoAutomata>();
-		workingAutomata = new PseudoAutomata(local_m_A);
+		workingAutomata = new PseudoAutomata(local_mA);
 		prvPAutomaton.add(workingAutomata);
 		for(INestedWordAutomatonSimple<LETTER,STATE> bn : b){
 			try {
@@ -877,21 +877,21 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			local_m_B.add(bn);
-			local_m_B2.add(bn);
-			if(current_m_B == null){
-				current_m_B = bn;
+			local_mB.add(bn);
+			local_mB2.add(bn);
+			if(current_mB == null){
+				current_mB = bn;
 			}else{
-				current_m_B = new NfaUnion(localServiceProvider,localStateFactory,current_m_B,bn).getResult();
+				current_mB = new NfaUnion(localServiceProvider,localStateFactory,current_mB,bn).getResult();
 			}
 		}
 		if(!getResult()){
-			workingAutomata = new PseudoAutomata(workingAutomata,current_m_B);
+			workingAutomata = new PseudoAutomata(workingAutomata,current_mB);
 			prvPAutomaton.add(workingAutomata);
 		}
-		union_m_Bs.add(current_m_B);
-		current_m_B = null;
-		m_Logger.info(exitMessage());
+		union_mBs.add(current_mB);
+		current_mB = null;
+		mLogger.info(exitMessage());
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -900,17 +900,17 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		super(services,a);
 		IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce.abortIfContainsCallOrReturn(a);
 		counterExampleFlag = 0;
-		m_acc = true;
+		macc = true;
 		localServiceProvider = services;
 		localStateFactory = sf;
-		m_Logger.info(startMessage());
-		local_m_A =  a;
-		local_m_B = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		local_m_B2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		union_m_Bs = new LinkedList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		current_m_B = null;
+		mLogger.info(startMessage());
+		local_mA =  a;
+		local_mB = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
+		local_mB2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
+		union_mBs = new LinkedList<INestedWordAutomatonSimple<LETTER, STATE>>();
+		current_mB = null;
 		prvPAutomaton = new LinkedList<PseudoAutomata>();
-		workingAutomata = new PseudoAutomata(local_m_A);
+		workingAutomata = new PseudoAutomata(local_mA);
 		prvPAutomaton.add(workingAutomata);
 		for(INestedWordAutomatonSimple<LETTER,STATE> bn : b){
 			try {
@@ -919,42 +919,42 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			if(current_m_B == null){
-				current_m_B = bn;
+			if(current_mB == null){
+				current_mB = bn;
 			}else{
-				current_m_B = new NfaUnion(localServiceProvider,localStateFactory,current_m_B,bn).getResult();
+				current_mB = new NfaUnion(localServiceProvider,localStateFactory,current_mB,bn).getResult();
 			}
-			local_m_B.add(bn);
-			local_m_B2.add(bn);
+			local_mB.add(bn);
+			local_mB2.add(bn);
 			
 		}
-		if(!getResult()&&current_m_B!=null){
-			workingAutomata = new PseudoAutomata(workingAutomata,current_m_B);
+		if(!getResult()&&current_mB!=null){
+			workingAutomata = new PseudoAutomata(workingAutomata,current_mB);
 			prvPAutomaton.add(workingAutomata);
-			union_m_Bs.add(current_m_B);
-			current_m_B = null;
+			union_mBs.add(current_mB);
+			current_mB = null;
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	@Override
 	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
-		local_m_B.add(nwa);
-		local_m_B2.add(nwa);
-		if(current_m_B == null){
-			current_m_B = nwa;
+		local_mB.add(nwa);
+		local_mB2.add(nwa);
+		if(current_mB == null){
+			current_mB = nwa;
 		}else{
-			current_m_B = new NfaUnion(localServiceProvider,localStateFactory,current_m_B,nwa).getResult();
+			current_mB = new NfaUnion(localServiceProvider,localStateFactory,current_mB,nwa).getResult();
 		}
 		if(workingAutomata.errorNodes.peekFirst()==null || counterExampleFlag==2){
-			m_Logger.info(startMessage());
+			mLogger.info(startMessage());
 			counterExampleFlag = 0;
-			workingAutomata = new PseudoAutomata(workingAutomata,current_m_B);
+			workingAutomata = new PseudoAutomata(workingAutomata,current_mB);
 			prvPAutomaton.add(workingAutomata);
-			union_m_Bs.add(current_m_B);
-			current_m_B = null;
-			m_Logger.info(exitMessage());
+			union_mBs.add(current_mB);
+			current_mB = null;
+			mLogger.info(exitMessage());
 		}
 	}
 	
@@ -985,7 +985,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	@Override
 	public String exitMessage() {
 		/*int i = 0, j = 0;
-		for(INestedWordAutomatonSimple<LETTER, STATE> automata:local_m_B){
+		for(INestedWordAutomatonSimple<LETTER, STATE> automata:local_mB){
 			try {
 				if(!(new IsDeterministic<LETTER, STATE>(localServiceProvider,automata)).getResult()){
 					i++;
@@ -996,19 +996,19 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			}
 		}*/
 		if(!getResult()){
-			m_Logger.info("counterExample: "+workingAutomata.errorNodes.peekFirst().word.getWord().toString());
+			mLogger.info("counterExample: "+workingAutomata.errorNodes.peekFirst().word.getWord().toString());
 		}
-		m_Logger.info("Total: "+ totalNodes+" node(s)");
-		m_Logger.info("Total ACC: "+ totalAACNodes+" node(s)");
-		m_Logger.info("Total IC: "+ totalCoveredNodes+" node(s)");
-		m_Logger.info("Total Unique: "+ totalUniqueNodes+" node(s)");
-		m_Logger.info("Total Iterations: "+ prvPAutomaton.size()+" iterations");
-		m_Logger.info("Total B Automaton: "+ local_m_B2.size()+" ");
-/*		m_Logger.info("Total B Automaton: "+local_m_B.size());
-		m_Logger.info("Total non-Deterministic B Automaton: "+i);
+		mLogger.info("Total: "+ totalNodes+" node(s)");
+		mLogger.info("Total ACC: "+ totalAACNodes+" node(s)");
+		mLogger.info("Total IC: "+ totalCoveredNodes+" node(s)");
+		mLogger.info("Total Unique: "+ totalUniqueNodes+" node(s)");
+		mLogger.info("Total Iterations: "+ prvPAutomaton.size()+" iterations");
+		mLogger.info("Total B Automaton: "+ local_mB2.size()+" ");
+/*		mLogger.info("Total B Automaton: "+local_mB.size());
+		mLogger.info("Total non-Deterministic B Automaton: "+i);
 		i = 0;		
 		HashSet<STATE> visitedStates,currentStates,nextStates;
-		for(INestedWordAutomatonSimple<LETTER, STATE> automata:local_m_B){
+		for(INestedWordAutomatonSimple<LETTER, STATE> automata:local_mB){
 			try {
 				if(!(new IsDeterministic<LETTER, STATE>(localServiceProvider,automata)).getResult()){
 					visitedStates = new HashSet<STATE>();
@@ -1039,9 +1039,9 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			}		
 		}
 		if(i!=0){
-			m_Logger.info("Total States: "+i);
-			m_Logger.info("Total non-Deterministic States:"+j);
-			m_Logger.info("non-Determinism: "+((j*1.0)/(i*1.0)));
+			mLogger.info("Total States: "+i);
+			mLogger.info("Total non-Deterministic States:"+j);
+			mLogger.info("non-Determinism: "+((j*1.0)/(i*1.0)));
 		}*/
 		return "Exit " + operationName();
 	}
@@ -1071,11 +1071,11 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		boolean checkResult;
 		if(getCounterexample() != null){
 			checkResult = compareInclusionCheckResult(localServiceProvider, 
-					localStateFactory, local_m_A, local_m_B2, getCounterexample());
+					localStateFactory, local_mA, local_mB2, getCounterexample());
 		}
 		else{
 			checkResult = compareInclusionCheckResult(localServiceProvider, 
-					localStateFactory, local_m_A, local_m_B2, null);
+					localStateFactory, local_mA, local_mB2, null);
 		}
 		return checkResult;
 

@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * ...
  * </pre>
  * 
- * The general form is x + Y*(sum_i J^i)*1 where
+ * The general form is x + Y*(sumi J^i)*1 where
  * <ul>
  * <li> x is the initial state
  * <li> Y is a matrix with the generalized eigenvectors as columns
@@ -74,11 +74,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 public class NonTerminationArgument implements Serializable {
 	private static final long serialVersionUID = 4606815082909883553L;
 	
-	private final Map<RankVar, Rational> m_StateInit;
-	private final Map<RankVar, Rational> m_StateHonda;
-	private final List<Map<RankVar, Rational>> m_GEVs;
-	private final List<Rational> m_Lambdas;
-	private final List<Rational> m_Nus;
+	private final Map<RankVar, Rational> mStateInit;
+	private final Map<RankVar, Rational> mStateHonda;
+	private final List<Map<RankVar, Rational>> mGEVs;
+	private final List<Rational> mLambdas;
+	private final List<Rational> mNus;
 	
 	/**
 	 * Construct a non-termination argument
@@ -95,17 +95,17 @@ public class NonTerminationArgument implements Serializable {
 			List<Rational> lambdas,
 			List<Rational> nus) {
 		assert(state_init != null);
-		m_StateInit = state_init;
+		mStateInit = state_init;
 		assert(state_honda != null);
-		m_StateHonda = state_honda;
+		mStateHonda = state_honda;
 		assert(gevs != null);
-		m_GEVs = gevs;
+		mGEVs = gevs;
 		assert(lambdas != null);
-		m_Lambdas = lambdas;
+		mLambdas = lambdas;
 		assert(nus != null);
-		m_Nus = nus;
-		assert m_GEVs.size() == lambdas.size();
-		assert m_GEVs.size() == nus.size() + 1 || m_GEVs.size() == 0;
+		mNus = nus;
+		assert mGEVs.size() == lambdas.size();
+		assert mGEVs.size() == nus.size() + 1 || mGEVs.size() == 0;
 	}
 	
 	/**
@@ -119,16 +119,16 @@ public class NonTerminationArgument implements Serializable {
 	 */
 	public NonTerminationArgument join(NonTerminationArgument other) {
 		// Check for compatibility
-		for (RankVar rankVar : m_StateInit.keySet()) {
-			if (other.m_StateInit.containsKey(rankVar)) {
-				assert m_StateInit.get(rankVar).equals(
-						other.m_StateInit.get(rankVar));
+		for (RankVar rankVar : mStateInit.keySet()) {
+			if (other.mStateInit.containsKey(rankVar)) {
+				assert mStateInit.get(rankVar).equals(
+						other.mStateInit.get(rankVar));
 			}
 		}
-		for (RankVar rankVar : m_StateHonda.keySet()) {
-			if (other.m_StateHonda.containsKey(rankVar)) {
-				assert m_StateHonda.get(rankVar).equals(
-						other.m_StateHonda.get(rankVar));
+		for (RankVar rankVar : mStateHonda.keySet()) {
+			if (other.mStateHonda.containsKey(rankVar)) {
+				assert mStateHonda.get(rankVar).equals(
+						other.mStateHonda.get(rankVar));
 			}
 		}
 		
@@ -138,17 +138,17 @@ public class NonTerminationArgument implements Serializable {
 				new ArrayList<Map<RankVar, Rational>>();
 		List<Rational> lambdas = new ArrayList<Rational>();
 		List<Rational> nus = new ArrayList<Rational>();
-		stateInit.putAll(this.m_StateInit);
-		stateInit.putAll(other.m_StateInit);
-		stateHonda.putAll(this.m_StateHonda);
-		stateHonda.putAll(other.m_StateHonda);
-		gevs.addAll(this.m_GEVs);
-		gevs.addAll(other.m_GEVs);
-		lambdas.addAll(this.m_Lambdas);
-		lambdas.addAll(other.m_Lambdas);
-		nus.addAll(this.m_Nus);
+		stateInit.putAll(this.mStateInit);
+		stateInit.putAll(other.mStateInit);
+		stateHonda.putAll(this.mStateHonda);
+		stateHonda.putAll(other.mStateHonda);
+		gevs.addAll(this.mGEVs);
+		gevs.addAll(other.mGEVs);
+		lambdas.addAll(this.mLambdas);
+		lambdas.addAll(other.mLambdas);
+		nus.addAll(this.mNus);
 		nus.add(Rational.ZERO); // add 0 because the length of nus has to be #gevs-1
-		nus.addAll(other.m_Nus);
+		nus.addAll(other.mNus);
 		return new NonTerminationArgument(stateInit, stateHonda, gevs, lambdas, nus);
 	}
 	
@@ -156,21 +156,21 @@ public class NonTerminationArgument implements Serializable {
 	 * @return the initial state
 	 */
 	public Map<RankVar, Rational> getStateInit() {
-		return Collections.unmodifiableMap(m_StateInit);
+		return Collections.unmodifiableMap(mStateInit);
 	}
 	
 	/**
 	 * @return the state at the lasso's honda
 	 */
 	public Map<RankVar, Rational> getStateHonda() {
-		return Collections.unmodifiableMap(m_StateHonda);
+		return Collections.unmodifiableMap(mStateHonda);
 	}
 	
 	/**
 	 * @return the number of generalized eigenvectors
 	 */
 	public int getNumberOfGEVs() {
-		return m_GEVs.size();
+		return mGEVs.size();
 	}
 	
 	/**
@@ -180,7 +180,7 @@ public class NonTerminationArgument implements Serializable {
 		// Make unmodifiable view
 		List<Map<RankVar, Rational>> gevs =
 				new ArrayList<Map<RankVar, Rational>>();
-		for (Map<RankVar, Rational> gev : m_GEVs) {
+		for (Map<RankVar, Rational> gev : mGEVs) {
 			gevs.add(Collections.unmodifiableMap(gev));
 		}
 		return Collections.unmodifiableList(gevs);
@@ -190,14 +190,14 @@ public class NonTerminationArgument implements Serializable {
 	 * @return the eigenvalue lambda
 	 */
 	public List<Rational> getLambdas() {
-		return Collections.unmodifiableList(m_Lambdas);
+		return Collections.unmodifiableList(mLambdas);
 	}
 	
 	/**
 	 * @return the nilpotent factors nu
 	 */
 	public List<Rational> getNus() {
-		return Collections.unmodifiableList(m_Nus);
+		return Collections.unmodifiableList(mNus);
 	}
 	
 	
@@ -205,15 +205,15 @@ public class NonTerminationArgument implements Serializable {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Non-Termination argument consisting of:\n");
 		sb.append("Initial state: ");
-		sb.append(m_StateInit);
+		sb.append(mStateInit);
 		sb.append("\nHonda state: ");
-		sb.append(m_StateHonda);
+		sb.append(mStateHonda);
 		sb.append("\nGeneralized eigenvectors: ");
-		sb.append(m_GEVs);
+		sb.append(mGEVs);
 		sb.append("\nLambdas: ");
-		sb.append(m_Lambdas);
+		sb.append(mLambdas);
 		sb.append("\nNus: ");
-		sb.append(m_Nus);
+		sb.append(mNus);
 		return sb.toString();
 	}
 }

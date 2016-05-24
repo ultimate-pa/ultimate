@@ -49,29 +49,29 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	/**
 	 * Fifth element of the tuple.
 	 */
-	private final E5 m_Fifth;
+	private final E5 mFifth;
 	/**
 	 * First element of the tuple.
 	 */
-	private final E1 m_First;
+	private final E1 mFirst;
 	/**
 	 * Fourth element of the tuple.
 	 */
-	private final E4 m_Fourth;
+	private final E4 mFourth;
 
 	/**
 	 * Second element of the tuple.
 	 */
-	private final E2 m_Second;
+	private final E2 mSecond;
 
 	/**
 	 * Sixth element of the tuple.
 	 */
-	private final E6 m_Sixth;
+	private final E6 mSixth;
 	/**
 	 * Third element of the tuple.
 	 */
-	private final E3 m_Third;
+	private final E3 mThird;
 
 	/**
 	 * Creates a new Hextuple with given elements.
@@ -90,12 +90,12 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	 *            Sixth element of the tuple
 	 */
 	public Hex(final E1 first, final E2 second, final E3 third, final E4 fourth, final E5 fifth, final E6 sixth) {
-		m_First = first;
-		m_Second = second;
-		m_Third = third;
-		m_Fourth = fourth;
-		m_Fifth = fifth;
-		m_Sixth = sixth;
+		mFirst = first;
+		mSecond = second;
+		mThird = third;
+		mFourth = fourth;
+		mFifth = fifth;
+		mSixth = sixth;
 	}
 
 	/*
@@ -115,46 +115,46 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 			return false;
 		}
 		Hex<?, ?, ?, ?, ?, ?> other = (Hex<?, ?, ?, ?, ?, ?>) obj;
-		if (m_Fifth == null) {
-			if (other.m_Fifth != null) {
+		if (mFifth == null) {
+			if (other.mFifth != null) {
 				return false;
 			}
-		} else if (!m_Fifth.equals(other.m_Fifth)) {
+		} else if (!mFifth.equals(other.mFifth)) {
 			return false;
 		}
-		if (m_First == null) {
-			if (other.m_First != null) {
+		if (mFirst == null) {
+			if (other.mFirst != null) {
 				return false;
 			}
-		} else if (!m_First.equals(other.m_First)) {
+		} else if (!mFirst.equals(other.mFirst)) {
 			return false;
 		}
-		if (m_Fourth == null) {
-			if (other.m_Fourth != null) {
+		if (mFourth == null) {
+			if (other.mFourth != null) {
 				return false;
 			}
-		} else if (!m_Fourth.equals(other.m_Fourth)) {
+		} else if (!mFourth.equals(other.mFourth)) {
 			return false;
 		}
-		if (m_Second == null) {
-			if (other.m_Second != null) {
+		if (mSecond == null) {
+			if (other.mSecond != null) {
 				return false;
 			}
-		} else if (!m_Second.equals(other.m_Second)) {
+		} else if (!mSecond.equals(other.mSecond)) {
 			return false;
 		}
-		if (m_Sixth == null) {
-			if (other.m_Sixth != null) {
+		if (mSixth == null) {
+			if (other.mSixth != null) {
 				return false;
 			}
-		} else if (!m_Sixth.equals(other.m_Sixth)) {
+		} else if (!mSixth.equals(other.mSixth)) {
 			return false;
 		}
-		if (m_Third == null) {
-			if (other.m_Third != null) {
+		if (mThird == null) {
+			if (other.mThird != null) {
 				return false;
 			}
-		} else if (!m_Third.equals(other.m_Third)) {
+		} else if (!mThird.equals(other.mThird)) {
 			return false;
 		}
 		return true;
@@ -166,7 +166,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	 * @return Fifth element of the tuple.
 	 */
 	public E5 getFifth() {
-		return m_Fifth;
+		return mFifth;
 	}
 
 	/**
@@ -175,7 +175,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	 * @return First element of the tuple.
 	 */
 	public E1 getFirst() {
-		return m_First;
+		return mFirst;
 	}
 
 	/**
@@ -184,7 +184,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	 * @return Fourth element of the tuple.
 	 */
 	public E4 getFourth() {
-		return m_Fourth;
+		return mFourth;
 	}
 
 	/**
@@ -193,7 +193,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	 * @return Second element of the tuple.
 	 */
 	public E2 getSecond() {
-		return m_Second;
+		return mSecond;
 	}
 
 	/**
@@ -202,7 +202,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	 * @return Sixth element of the tuple.
 	 */
 	public E6 getSixth() {
-		return m_Sixth;
+		return mSixth;
 	}
 
 	/**
@@ -211,7 +211,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	 * @return Third element of the tuple.
 	 */
 	public E3 getThird() {
-		return m_Third;
+		return mThird;
 	}
 
 	/*
@@ -223,12 +223,12 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_Fifth == null) ? 0 : m_Fifth.hashCode());
-		result = prime * result + ((m_First == null) ? 0 : m_First.hashCode());
-		result = prime * result + ((m_Fourth == null) ? 0 : m_Fourth.hashCode());
-		result = prime * result + ((m_Second == null) ? 0 : m_Second.hashCode());
-		result = prime * result + ((m_Sixth == null) ? 0 : m_Sixth.hashCode());
-		result = prime * result + ((m_Third == null) ? 0 : m_Third.hashCode());
+		result = prime * result + ((mFifth == null) ? 0 : mFifth.hashCode());
+		result = prime * result + ((mFirst == null) ? 0 : mFirst.hashCode());
+		result = prime * result + ((mFourth == null) ? 0 : mFourth.hashCode());
+		result = prime * result + ((mSecond == null) ? 0 : mSecond.hashCode());
+		result = prime * result + ((mSixth == null) ? 0 : mSixth.hashCode());
+		result = prime * result + ((mThird == null) ? 0 : mThird.hashCode());
 		return result;
 	}
 
@@ -239,7 +239,7 @@ public final class Hex<E1, E2, E3, E4, E5, E6> {
 	 */
 	@Override
 	public String toString() {
-		return "[" + m_First + ", " + m_Second + ", " + m_Third + ", " + m_Fourth + ", " + m_Fifth + ", " + m_Sixth
+		return "[" + mFirst + ", " + mSecond + ", " + mThird + ", " + mFourth + ", " + mFifth + ", " + mSixth
 				+ "]";
 	}
 

@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
-	private static ILogger m_Logger;
+	private static ILogger mLogger;
 	Boolean result1,result2;
 	
 	public Jeffery_Test_2(AutomataLibraryServices services, StateFactory<STATE> sf,

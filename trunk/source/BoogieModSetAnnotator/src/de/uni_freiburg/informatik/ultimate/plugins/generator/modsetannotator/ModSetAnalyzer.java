@@ -58,29 +58,29 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  */
 public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObserver {
 
-	private Map<String, Set<String>> m_ModifiedGlobals;
-	private Set<String> m_Globals;
-	private IUltimateServiceProvider m_Services;
+	private Map<String, Set<String>> mModifiedGlobals;
+	private Set<String> mGlobals;
+	private IUltimateServiceProvider mServices;
 	private ILogger logger;
-	private String m_CurrentProcedure;
-	private Map<String, Set<String>> m_CallGraph;
+	private String mCurrentProcedure;
+	private Map<String, Set<String>> mCallGraph;
 
 	public ModSetAnalyzer(IUltimateServiceProvider services) {
-		m_Services = services;
-		logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mServices = services;
+		logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	protected Map<String, Set<String>> getModifiedGlobals() {
-		return m_ModifiedGlobals;
+		return mModifiedGlobals;
 	}
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof Unit) {
 			Unit unit = (Unit) root;
-			m_Globals = new HashSet<String>();
-			m_ModifiedGlobals = new HashMap<String, Set<String>>();
-			m_CallGraph = new HashMap<String, Set<String>>();
+			mGlobals = new HashSet<String>();
+			mModifiedGlobals = new HashMap<String, Set<String>>();
+			mCallGraph = new HashMap<String, Set<String>>();
 			// First pass: Collect all global variable declarations
 			for (Declaration decl : unit.getDeclarations()) {
 				if (decl instanceof VariableDeclaration)
@@ -100,12 +100,12 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 	}
 
 	private void propagateModifies() {
-		for (Entry<String, Set<String>> proc : m_CallGraph.entrySet()) {
+		for (Entry<String, Set<String>> proc : mCallGraph.entrySet()) {
 			// TODO: do this only for graph roots
 			for (String callee : proc.getValue()) {
 				HashSet<String> visited = new HashSet<String>();
 				visited.add(proc.getKey());
-				Set<String> modifiedGlobals = m_ModifiedGlobals.get(proc.getKey());
+				Set<String> modifiedGlobals = mModifiedGlobals.get(proc.getKey());
 				assert(modifiedGlobals != null);
 				modifiedGlobals.addAll(getModifiesRecursive(visited, callee));
 			}
@@ -117,10 +117,10 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 		if (visited.contains(proc))
 			return result;
 		visited.add(proc);
-		Set<String> modifiedGlobals = m_ModifiedGlobals.get(proc);
+		Set<String> modifiedGlobals = mModifiedGlobals.get(proc);
 		if (modifiedGlobals != null)
 			result.addAll(modifiedGlobals);
-		Set<String> callees = m_CallGraph.get(proc);
+		Set<String> callees = mCallGraph.get(proc);
 		if (callees != null) {
 			for (String callee : callees) {
 				result.addAll(getModifiesRecursive(visited, callee));
@@ -150,22 +150,22 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 	private void processGlobalVariableDeclaration(VariableDeclaration varDecl) {
 		for (VarList varlist : varDecl.getVariables()) {
 			for (String id : varlist.getIdentifiers()) {
-				m_Globals.add(id);
+				mGlobals.add(id);
 			}
 		}
 	}
 
 	@Override
 	protected Declaration processDeclaration(Declaration decl) {
-		m_CurrentProcedure = null;
+		mCurrentProcedure = null;
 		if (decl instanceof Procedure) {
 			Procedure proc = ((Procedure) decl);
 			if (proc.getBody() != null) { // We are processing an implementation
 				if (logger.isDebugEnabled())
 					logger.debug("Processing procedure " + proc.getIdentifier());
-				m_CurrentProcedure = proc.getIdentifier();
-				m_ModifiedGlobals.put(m_CurrentProcedure, new HashSet<String>());
-				m_CallGraph.put(m_CurrentProcedure, new HashSet<String>());
+				mCurrentProcedure = proc.getIdentifier();
+				mModifiedGlobals.put(mCurrentProcedure, new HashSet<String>());
+				mCallGraph.put(mCurrentProcedure, new HashSet<String>());
 			}
 		}
 		return super.processDeclaration(decl);
@@ -174,22 +174,22 @@ public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObser
 	@Override
 	protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
 		String identifier = null;
-		if (m_CurrentProcedure != null && lhs instanceof VariableLHS) {
+		if (mCurrentProcedure != null && lhs instanceof VariableLHS) {
 			identifier = ((VariableLHS) lhs).getIdentifier();
-			if (m_Globals.contains(identifier))
-				m_ModifiedGlobals.get(m_CurrentProcedure).add(identifier);
+			if (mGlobals.contains(identifier))
+				mModifiedGlobals.get(mCurrentProcedure).add(identifier);
 		}
 		return super.processLeftHandSide(lhs);
 	}
 
 	@Override
 	protected Statement processStatement(Statement statement) {
-		if (m_CurrentProcedure != null && statement instanceof CallStatement) {
+		if (mCurrentProcedure != null && statement instanceof CallStatement) {
 			CallStatement call = (CallStatement) statement;
 			String method = call.getMethodName();
 			// Only add if it is not a recursive call
-			if (!method.equals(m_CurrentProcedure)) {
-				m_CallGraph.get(m_CurrentProcedure).add(method);
+			if (!method.equals(mCurrentProcedure)) {
+				mCallGraph.get(mCurrentProcedure).add(method);
 			}
 		}
 		return super.processStatement(statement);

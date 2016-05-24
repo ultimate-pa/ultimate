@@ -74,7 +74,7 @@ public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> 
 	/**
 	 * Game graph that is used for simulation calculation.
 	 */
-	private final AGameGraph<LETTER, STATE> m_Game;
+	private final AGameGraph<LETTER, STATE> mGame;
 
 	/**
 	 * Creates a new direct simulation with a given graph that tries to reduce
@@ -108,7 +108,7 @@ public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> 
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DIRECT);
 
 		game.setSimulationPerformance(getSimulationPerformance());
-		m_Game = game;
+		mGame = game;
 	}
 
 	/*
@@ -141,6 +141,6 @@ public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> 
 	 */
 	@Override
 	protected AGameGraph<LETTER, STATE> getGameGraph() {
-		return m_Game;
+		return mGame;
 	}
 }

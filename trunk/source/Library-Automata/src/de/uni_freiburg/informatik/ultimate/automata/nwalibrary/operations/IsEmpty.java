@@ -70,8 +70,8 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
  */
 
 public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	@Override
 	public String operationName() {
@@ -81,54 +81,54 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() +
-				". Operand " + m_nwa.sizeInformation();
+				". Operand " + mnwa.sizeInformation();
 	}
 	
 	@Override
 	public String exitMessage() {
-		if (m_acceptingRun == null) {
+		if (macceptingRun == null) {
 			return "Finished " + operationName() +
 				". No accepting run.";
 		}
 		else {
 			return "Finished " + operationName() +
-				". Found accepting run of length " + m_acceptingRun.getLength();
+				". Found accepting run of length " + macceptingRun.getLength();
 		}
 	}
 	
 	/**
 	 * Set of states in which the run we are searching has to begin.
 	 */
-	private final Collection<STATE> m_StartStates;
+	private final Collection<STATE> mStartStates;
 
 	/**
 	 * Set of states in which the run we are searching has to end.
 	 */
-	private final Collection<STATE> m_GoalStates;
+	private final Collection<STATE> mGoalStates;
 	
 	/**
 	 * If set, the goal states are exactly the accepting states of automaton 
-	 * m_nwa, the set m_GoalStates is null, and we use m_nwa to check if a 
+	 * mnwa, the set mGoalStates is null, and we use mnwa to check if a 
 	 * state is a goal state.
 	 */
-	private final boolean m_GoalStateIsAcceptingState;
+	private final boolean mGoalStateIsAcceptingState;
 	
 	/**
 	 * Set of states in which the run we are searching must not visit.
 	 */
-	private final Collection<STATE> m_ForbiddenStates;
+	private final Collection<STATE> mForbiddenStates;
 	
 	/**
 	 * INestedWordAutomaton for which we check emptiness.
 	 */
-	INestedWordAutomatonSimple<LETTER,STATE> m_nwa;
+	INestedWordAutomatonSimple<LETTER,STATE> mnwa;
 	
-	NestedRun<LETTER,STATE> m_acceptingRun;
+	NestedRun<LETTER,STATE> macceptingRun;
 	
 	/**
 	 * Pairs of states visited, but possibly not processed, so far.
 	 */
-	private final Map<STATE,Set<STATE>> m_visitedPairs = 
+	private final Map<STATE,Set<STATE>> mvisitedPairs = 
 		new HashMap<STATE,Set<STATE>>();
 	
 	/**
@@ -136,7 +136,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * processing a internal transition, a return transition or a computed 
 	 * summary
 	 */
-	private final LinkedList<DoubleDecker<STATE>> m_queue =
+	private final LinkedList<DoubleDecker<STATE>> mqueue =
 		new LinkedList<DoubleDecker<STATE>>();
 
 		
@@ -144,7 +144,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Queue of states that have to be processed and have been visited while
 	 * processing a call transition.
 	 */
-	private final LinkedList<DoubleDecker<STATE>> m_queueCall =
+	private final LinkedList<DoubleDecker<STATE>> mqueueCall =
 			new LinkedList<DoubleDecker<STATE>>();
 
 	/**
@@ -155,7 +155,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * the first state of the run and predK is stateK.  
 	 */
 	private final Map<STATE,
-	                  Map<STATE,NestedRun<LETTER,STATE>>> m_internalSubRun =
+	                  Map<STATE,NestedRun<LETTER,STATE>>> minternalSubRun =
 		new HashMap<STATE,Map<STATE,NestedRun<LETTER,STATE>>>();
 	
 	/**
@@ -167,7 +167,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private final Map<STATE,
 	                  Map<STATE,
-	                      Map<STATE,NestedRun<LETTER,STATE>>>> m_callSubRun =
+	                      Map<STATE,NestedRun<LETTER,STATE>>>> mcallSubRun =
 		new HashMap<STATE,
 		            Map<STATE,Map<STATE,NestedRun<LETTER,STATE>>>>();
 	
@@ -176,7 +176,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * second component of the state pair (pred,predK) for which (state,stateK)
 	 * was added to the reachability graph (for the first time).  
 	 */
-	private final Map<STATE,Map<STATE,STATE>> m_callFirst =
+	private final Map<STATE,Map<STATE,STATE>> mcallFirst =
 		new HashMap<STATE,Map<STATE,STATE>>();
 
 
@@ -185,10 +185,10 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * labeled to the incoming edge of (state,stateK) in the reachability graph.
 	 * The symbol of the run has to be a return symbol. The predecessor of
 	 * (state,stateK) in the reachability graph is (pred,predK), where pred is 
-	 * the first state of the run. predK can be obtained from m_returnPredStateK  
+	 * the first state of the run. predK can be obtained from mreturnPredStateK  
 	 */
 	private final Map<STATE,
-				      Map<STATE,NestedRun<LETTER,STATE>>> m_returnSubRun = 
+				      Map<STATE,NestedRun<LETTER,STATE>>> mreturnSubRun = 
 		new HashMap<STATE,Map<STATE,NestedRun<LETTER,STATE>>>();
 	
 	/**
@@ -197,7 +197,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * reachability graph.
 	 */
 	private final Map<STATE,
-	                  Map<STATE,STATE>> m_returnPredStateK = 
+	                  Map<STATE,STATE>> mreturnPredStateK = 
 		new HashMap<STATE,Map<STATE,STATE>>();
 	
 	
@@ -208,7 +208,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * of the return transition of this summary.
 	 */
 	private final Map<STATE,
-	                  Map<STATE,STATE>> m_summaryReturnPred =
+	                  Map<STATE,STATE>> msummaryReturnPred =
 		new HashMap<STATE,Map<STATE,STATE>>();
 
 	/**
@@ -217,7 +217,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * return transition of this summary.
 	 */
 	private final Map<STATE,
-	                  Map<STATE,LETTER>> m_summaryReturnSymbol =
+	                  Map<STATE,LETTER>> msummaryReturnSymbol =
 		new HashMap<STATE,Map<STATE,LETTER>>();
 
 
@@ -237,11 +237,11 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Corresponds to the stack-of-returned-elements-that-have-not-been-called
 	 * of the automaton but all elements are shifted by one.   
 	 */
-	Stack<STATE> m_reconstructionStack = new Stack<STATE>();
+	Stack<STATE> mreconstructionStack = new Stack<STATE>();
 
-	private NestedRun<LETTER,STATE> m_ReconstructionOneStepRun;
+	private NestedRun<LETTER,STATE> mReconstructionOneStepRun;
 
-	private STATE m_ReconstructionPredK;
+	private STATE mReconstructionPredK;
 
 
 	
@@ -251,17 +251,17 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	public IsEmpty(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_nwa = nwa;
-		dummyEmptyStackState = m_nwa.getEmptyStackState();
-		m_StartStates = Utils.constructHashSet(m_nwa.getInitialStates());
-		m_GoalStateIsAcceptingState = true;
-		m_GoalStates = null;
-		m_ForbiddenStates = Collections.emptySet();
-		m_Logger.info(startMessage());
-		m_acceptingRun = getAcceptingRun();
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mnwa = nwa;
+		dummyEmptyStackState = mnwa.getEmptyStackState();
+		mStartStates = Utils.constructHashSet(mnwa.getInitialStates());
+		mGoalStateIsAcceptingState = true;
+		mGoalStates = null;
+		mForbiddenStates = Collections.emptySet();
+		mLogger.info(startMessage());
+		macceptingRun = getAcceptingRun();
+		mLogger.info(exitMessage());
 	}
 	
 
@@ -275,34 +275,34 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomaton<LETTER,STATE> nwa, 
 			Set<STATE> startStates, Set<STATE> forbiddenStates, 
 			Set<STATE> goalStates) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_nwa = nwa;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mnwa = nwa;
 		assert nwa.getStates().containsAll(startStates) : "unknown states";
 		assert nwa.getStates().containsAll(goalStates) : "unknown states";
-		dummyEmptyStackState = m_nwa.getEmptyStackState();
-		m_StartStates = startStates;
-		m_GoalStateIsAcceptingState = false;
-		m_GoalStates = goalStates;
-		m_ForbiddenStates = forbiddenStates;
-		m_Logger.info(startMessage());
-		m_acceptingRun = getAcceptingRun();
-		m_Logger.info(exitMessage());
+		dummyEmptyStackState = mnwa.getEmptyStackState();
+		mStartStates = startStates;
+		mGoalStateIsAcceptingState = false;
+		mGoalStates = goalStates;
+		mForbiddenStates = forbiddenStates;
+		mLogger.info(startMessage());
+		macceptingRun = getAcceptingRun();
+		mLogger.info(exitMessage());
 	}
 	
 	/**
-	 * If we use the accepting states of m_nwa as goal states (in this case 
-	 * m_GoalStateIsAcceptingState is set and m_GoalStates is null) then we
+	 * If we use the accepting states of mnwa as goal states (in this case 
+	 * mGoalStateIsAcceptingState is set and mGoalStates is null) then we
 	 * return true iff state is an accepting state.
-	 * Otherwise we return true iff m_GoalStates.contains(state).
+	 * Otherwise we return true iff mGoalStates.contains(state).
 	 */
 	private boolean isGoalState(STATE state) {
-		if (m_GoalStateIsAcceptingState) {
-			assert m_GoalStates == null : 
-				"if we search accepting states, m_GoalStates is null";
-			return m_nwa.isFinal(state);
+		if (mGoalStateIsAcceptingState) {
+			assert mGoalStates == null : 
+				"if we search accepting states, mGoalStates is null";
+			return mnwa.isFinal(state);
 		} else {
-			return m_GoalStates.contains(state);
+			return mGoalStates.contains(state);
 		}
 	}
 	
@@ -314,7 +314,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private void enqueueAndMarkVisited(STATE state, STATE stateK) {
 		DoubleDecker<STATE> pair = new DoubleDecker<STATE>(stateK, state);
-		m_queue.addLast(pair);
+		mqueue.addLast(pair);
 		markVisited(state, stateK);
 	}
 	
@@ -325,7 +325,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private void enqueueAndMarkVisitedCall(STATE state, STATE callPred) {
 		DoubleDecker<STATE> pair = new DoubleDecker<STATE>(callPred, state);
-		m_queueCall.addLast(pair);
+		mqueueCall.addLast(pair);
 		markVisited(state, callPred);
 	}
 	
@@ -342,11 +342,11 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //	 * call transition.
 //	 */
 //	private IState<LETTER,STATE>[] dequeue() {
-//		if (!m_queue.isEmpty()) {
-//			return m_queue.removeFirst();
+//		if (!mqueue.isEmpty()) {
+//			return mqueue.removeFirst();
 //		}
 //		else {
-//			return m_queueCall.removeFirst();
+//			return mqueueCall.removeFirst();
 //		}
 //	}
 	/**
@@ -357,11 +357,11 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * summary.
 	 */
 	private DoubleDecker<STATE> dequeue() {
-		if (!m_queueCall.isEmpty()) {
-			return m_queueCall.removeFirst();
+		if (!mqueueCall.isEmpty()) {
+			return mqueueCall.removeFirst();
 		}
 		else {
-			return m_queue.removeFirst();
+			return mqueue.removeFirst();
 		}
 	}
 	
@@ -369,7 +369,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Is the queue (is internally represented by two queues) empty? 
 	 */
 	private boolean isQueueEmpty() {
-		return m_queue.isEmpty() && m_queueCall.isEmpty();
+		return mqueue.isEmpty() && mqueueCall.isEmpty();
 	}
 	
 	
@@ -377,10 +377,10 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Mark a state pair a visited. 
 	 */
 	private void markVisited(STATE state, STATE stateK) {
-		Set<STATE> callPreds = m_visitedPairs.get(state);
+		Set<STATE> callPreds = mvisitedPairs.get(state);
 		if (callPreds == null) {
 			callPreds = new HashSet<STATE>();
-			m_visitedPairs.put(state, callPreds);
+			mvisitedPairs.put(state, callPreds);
 		}
 		callPreds.add(stateK);
 	}
@@ -390,7 +390,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Was the state pair (state,stateK) already visited?
 	 */
 	private boolean wasVisited(STATE state, STATE stateK) {
-		Set<STATE> callPreds = m_visitedPairs.get(state);
+		Set<STATE> callPreds = mvisitedPairs.get(state);
 		if (callPreds == null) {
 			return false;
 		}
@@ -406,7 +406,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * null if the automaton does not accept any nested word.
 	 */
 	private NestedRun<LETTER,STATE> getAcceptingRun() {
-		for (STATE state : m_StartStates) {
+		for (STATE state : mStartStates) {
 			enqueueAndMarkVisited(state, dummyEmptyStackState);
 		}
 	
@@ -422,10 +422,10 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			processSummaries(state,stateK);
 			
 			for (OutgoingInternalTransition<LETTER, STATE> internalTransition : 
-											m_nwa.internalSuccessors(state)) {
+											mnwa.internalSuccessors(state)) {
 				LETTER symbol = internalTransition.getLetter();
 				STATE succ = internalTransition.getSucc();
-				if (!m_ForbiddenStates.contains(succ)) {
+				if (!mForbiddenStates.contains(succ)) {
 					if(!wasVisited(succ, stateK)) {
 						addRunInformationInternal(
 								succ,stateK,symbol,state,stateK);
@@ -435,10 +435,10 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			}
 
 			for (OutgoingCallTransition<LETTER, STATE> callTransition : 
-												m_nwa.callSuccessors(state)) {
+												mnwa.callSuccessors(state)) {
 				LETTER symbol = callTransition.getLetter();
 				STATE succ = callTransition.getSucc();
-				if (!m_ForbiddenStates.contains(succ)) {
+				if (!mForbiddenStates.contains(succ)) {
 					//add these information even in already visited
 					addRunInformationCall(succ, state, symbol, state, stateK);
 					if(!wasVisited(succ, state)) {
@@ -447,16 +447,16 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				}
 			}
 			
-			if (stateK == m_nwa.getEmptyStackState()) {
+			if (stateK == mnwa.getEmptyStackState()) {
 				//there is no return transition
 				continue;
 			}
 			
 			for (OutgoingReturnTransition<LETTER, STATE> returnTransition : 
-							m_nwa.returnSuccessorsGivenHier(state, stateK)) {
+							mnwa.returnSuccessorsGivenHier(state, stateK)) {
 				LETTER symbol = returnTransition.getLetter();
 				STATE succ = returnTransition.getSucc();
-				if (!m_ForbiddenStates.contains(succ)) {
+				if (!mForbiddenStates.contains(succ)) {
 					for (STATE stateKK : getCallStatesOfCallState(stateK) ) {
 						addSummary(stateK, succ, state, symbol);
 						if(!wasVisited(succ, stateKK)) {
@@ -478,12 +478,12 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * about the summary is fetched. 
 	 */
 	private void processSummaries(STATE state, STATE stateK) {
-		if (m_summaryReturnPred.containsKey(state)) {
-			assert(m_summaryReturnSymbol.containsKey(state));
+		if (msummaryReturnPred.containsKey(state)) {
+			assert(msummaryReturnSymbol.containsKey(state));
 			Map<STATE,STATE> succ2ReturnPred = 
-						m_summaryReturnPred.get(state);
+						msummaryReturnPred.get(state);
 			Map<STATE,LETTER> succ2ReturnSymbol = 
-						m_summaryReturnSymbol.get(state);
+						msummaryReturnSymbol.get(state);
 			for (STATE succ : succ2ReturnPred.keySet()) {
 				assert(succ2ReturnSymbol.containsKey(succ));
 				STATE returnPred = succ2ReturnPred.get(succ);
@@ -511,10 +511,10 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			STATE state,
 			STATE stateK) {
 		Map<STATE, NestedRun<LETTER,STATE>> succK2run = 
-													m_internalSubRun.get(succ);
+													minternalSubRun.get(succ);
 		if (succK2run == null) {
 			succK2run = new HashMap<STATE, NestedRun<LETTER,STATE>>();
-			m_internalSubRun.put(succ, succK2run);
+			minternalSubRun.put(succ, succK2run);
 		}
 		assert(succK2run.get(succK) == null);
 		NestedRun<LETTER,STATE> run = new NestedRun<LETTER,STATE>(
@@ -527,26 +527,26 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * about the predecessor (state,stateK) under a call transition and a
 	 * run of length two from state to succ.
 	 * If (succ,succK) was visited for the first time, store also stateK in
-	 * m_callFirst.
+	 * mcallFirst.
 	 */
 	private void addRunInformationCall(STATE succ,
 			STATE succK,
 			LETTER symbol,
 			STATE state,
 			STATE stateK) {
-//		m_Logger.debug("Call SubrunInformation: From ("+succ+","+succK+
+//		mLogger.debug("Call SubrunInformation: From ("+succ+","+succK+
 //			") can go to ("+state+","+stateK+")");
 		assert(state == succK);
 		Map<STATE, Map<STATE, NestedRun<LETTER,STATE>>> succK2stateK2Run = 
-				m_callSubRun.get(succ);
+				mcallSubRun.get(succ);
 		Map<STATE, STATE> succK2FirstStateK = 
-				m_callFirst.get(succ);
+				mcallFirst.get(succ);
 		if (succK2stateK2Run == null) {
 			succK2stateK2Run = 
 				new HashMap<STATE, Map<STATE, NestedRun<LETTER,STATE>>>();
-			m_callSubRun.put(succ,succK2stateK2Run);
+			mcallSubRun.put(succ,succK2stateK2Run);
 			succK2FirstStateK = new HashMap<STATE, STATE>();
-			m_callFirst.put(succ, succK2FirstStateK);
+			mcallFirst.put(succ, succK2FirstStateK);
 		}
 		if (!succK2FirstStateK.containsKey(succK)) {
 			succK2FirstStateK.put(succK, stateK);
@@ -571,7 +571,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Store for a state pair (succ,succK) in the reachability graph information
 	 * about the predecessor (state,stateK) under a return transition and a
 	 * run of length two from state to succ.
-	 * Store also succK to m_returnPredStateK.
+	 * Store also succK to mreturnPredStateK.
 	 */
 	private void addRunInformationReturn(STATE succ,
 			STATE succK,
@@ -579,15 +579,15 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			STATE state,
 			STATE stateK) {
 		Map<STATE, NestedRun<LETTER,STATE>> succK2SubRun = 
-									m_returnSubRun.get(succ);
+									mreturnSubRun.get(succ);
 		Map<STATE, STATE> succK2PredStateK = 
-									m_returnPredStateK.get(succ);
+									mreturnPredStateK.get(succ);
 		if (succK2SubRun == null) {
 			assert(succK2PredStateK == null);
 			succK2SubRun = new HashMap<STATE, NestedRun<LETTER,STATE>>();
-			m_returnSubRun.put(succ,succK2SubRun);
+			mreturnSubRun.put(succ,succK2SubRun);
 			succK2PredStateK = new HashMap<STATE, STATE>();
-			m_returnPredStateK.put(succ, succK2PredStateK);
+			mreturnPredStateK.put(succ, succK2PredStateK);
 		}
 		assert(!succK2SubRun.containsKey(succK));
 		assert(!succK2PredStateK.containsKey(succK));
@@ -604,7 +604,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * callState. 
 	 */
 	private Set<STATE> getCallStatesOfCallState(STATE callState) {
-		Set<STATE> callStatesOfCallStates = m_visitedPairs.get(callState);
+		Set<STATE> callStatesOfCallStates = mvisitedPairs.get(callState);
 		if (callStatesOfCallStates == null) {
 			return new HashSet<STATE>(0);
 		}
@@ -616,10 +616,10 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //	private void addCallStatesOfCallState(IState<LETTER,STATE> callState,
 //			                              IState<LETTER,STATE> callStateOfCallState) {
 //		Set<IState<LETTER,STATE>> callStatesOfCallStates = 
-//							m_CallStatesOfCallState.get(callState);
+//							mCallStatesOfCallState.get(callState);
 //		if (callStatesOfCallStates == null) {
 //			callStatesOfCallStates = new HashSet<IState<LETTER,STATE>>();
-//			m_CallStatesOfCallState.put(callState,callStatesOfCallStates);
+//			mCallStatesOfCallState.put(callState,callStatesOfCallStates);
 //		}
 //		callStatesOfCallStates.add(callStateOfCallState);
 //	}
@@ -633,15 +633,15 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 							STATE stateBeforeReturn,
 							LETTER returnSymbol) {
 		Map<STATE,STATE> succ2ReturnPred = 
-			m_summaryReturnPred.get(stateBeforeCall);
+			msummaryReturnPred.get(stateBeforeCall);
 		Map<STATE,LETTER> succ2ReturnSymbol = 
-			m_summaryReturnSymbol.get(stateBeforeCall);
+			msummaryReturnSymbol.get(stateBeforeCall);
 		if (succ2ReturnPred == null) {
 			assert(succ2ReturnSymbol == null);
 			succ2ReturnPred = new HashMap<STATE,STATE>();
-			m_summaryReturnPred.put(stateBeforeCall, succ2ReturnPred);
+			msummaryReturnPred.put(stateBeforeCall, succ2ReturnPred);
 			succ2ReturnSymbol = new HashMap<STATE,LETTER>();
-			m_summaryReturnSymbol.put(stateBeforeCall, succ2ReturnSymbol);
+			msummaryReturnSymbol.put(stateBeforeCall, succ2ReturnSymbol);
 			
 		}
 		//update only if there is not already an entry
@@ -662,10 +662,10 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * length two.
 	 */
 	private NestedRun<LETTER,STATE> constructRun(STATE state, STATE stateK) {
-//		m_Logger.debug("Reconstruction from " + state + " " + stateK);
+//		mLogger.debug("Reconstruction from " + state + " " + stateK);
 		NestedRun<LETTER,STATE> run = new NestedRun<LETTER,STATE>(state);
-		while (!m_StartStates.contains(state) ||
-				!m_reconstructionStack.isEmpty()) {
+		while (!mStartStates.contains(state) ||
+				!mreconstructionStack.isEmpty()) {
 			if (computeInternalSubRun(state, stateK)) {
 			}
 			else if (computeCallSubRun(state, stateK)) {
@@ -673,13 +673,13 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			else if (computeReturnSubRun(state, stateK)) {
 			}
 			else {
-				m_Logger.warn("No Run ending in pair "+state+ "  "+ stateK + 
-						" with reconstructionStack" + m_reconstructionStack);
+				mLogger.warn("No Run ending in pair "+state+ "  "+ stateK + 
+						" with reconstructionStack" + mreconstructionStack);
 				throw new AssertionError();
 			}
-			run = m_ReconstructionOneStepRun.concatenate(run);
+			run = mReconstructionOneStepRun.concatenate(run);
 			state = run.getStateAtPosition(0);
-			stateK = m_ReconstructionPredK;
+			stateK = mReconstructionPredK;
 		}
 		return run;
 	}
@@ -692,12 +692,12 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private boolean computeInternalSubRun(STATE state, STATE stateK) {
 		Map<STATE, NestedRun<LETTER,STATE>> k2InternalMap = 
-			m_internalSubRun.get(state);
+			minternalSubRun.get(state);
 		if (k2InternalMap != null) {
 			NestedRun<LETTER,STATE> run = k2InternalMap.get(stateK);
 			if (run != null) {
-				m_ReconstructionOneStepRun = run;
-				m_ReconstructionPredK = stateK;
+				mReconstructionOneStepRun = run;
+				mReconstructionPredK = stateK;
 				return true;
 			}
 		}
@@ -712,22 +712,22 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private boolean computeCallSubRun(STATE state, STATE stateK) {
 		Map<STATE, Map<STATE, NestedRun<LETTER,STATE>>> k2CallMap = 
-			m_callSubRun.get(state);
+			mcallSubRun.get(state);
 		if (k2CallMap != null) {
 			Map<STATE, NestedRun<LETTER,STATE>> callMap = k2CallMap.get(stateK);
 			if (callMap != null) {
-				if (m_reconstructionStack.isEmpty()) {
-					STATE predK = m_callFirst.get(state).get(stateK);
-					m_ReconstructionPredK = predK;
-					m_ReconstructionOneStepRun = callMap.get(predK);
+				if (mreconstructionStack.isEmpty()) {
+					STATE predK = mcallFirst.get(state).get(stateK);
+					mReconstructionPredK = predK;
+					mReconstructionOneStepRun = callMap.get(predK);
 					return true;
 				}
 				else {
-					STATE predKcandidate = m_reconstructionStack.peek();
+					STATE predKcandidate = mreconstructionStack.peek();
 					if (callMap.containsKey(predKcandidate)) {
-						m_ReconstructionOneStepRun = callMap.get(predKcandidate);
-						m_ReconstructionPredK = predKcandidate;
-						m_reconstructionStack.pop();
+						mReconstructionOneStepRun = callMap.get(predKcandidate);
+						mReconstructionPredK = predKcandidate;
+						mreconstructionStack.pop();
 						return true;
 					}
 //					throw new AssertionError();
@@ -745,17 +745,17 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private boolean computeReturnSubRun(STATE state, STATE stateK) {
 		Map<STATE, NestedRun<LETTER,STATE>> succK2SubRun = 
-			m_returnSubRun.get(state);
+			mreturnSubRun.get(state);
 		if (succK2SubRun != null) {
 			Map<STATE, STATE> succK2PredStateK = 
-				m_returnPredStateK.get(state);
+				mreturnPredStateK.get(state);
 			assert (succK2PredStateK != null);
 			NestedRun<LETTER,STATE> run = succK2SubRun.get(stateK);
 			STATE predK = succK2PredStateK.get(stateK);
 			if (run != null) {
-				m_reconstructionStack.push(stateK);
-				m_ReconstructionOneStepRun = run;
-				m_ReconstructionPredK = predK;
+				mreconstructionStack.push(stateK);
+				mReconstructionOneStepRun = run;
+				mReconstructionPredK = predK;
 				return true;
 			}
 		}
@@ -764,25 +764,25 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	@Override
 	public Boolean getResult() throws AutomataLibraryException {
-		return m_acceptingRun == null;
+		return macceptingRun == null;
 	}
 
 
 	public NestedRun<LETTER,STATE> getNestedRun() throws AutomataOperationCanceledException {
-		return m_acceptingRun;
+		return macceptingRun;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean correct = true;
-		if (m_acceptingRun == null) {
-			m_Logger.warn("Emptiness not double checked ");
+		if (macceptingRun == null) {
+			mLogger.warn("Emptiness not double checked ");
 		}
 		else {
-			m_Logger.info("Correctness of emptinessCheck not tested.");
-			correct = (new Accepts<LETTER, STATE>(m_Services, m_nwa, m_acceptingRun.getWord())).getResult();
-			m_Logger.info("Finished testing correctness of emptinessCheck");
+			mLogger.info("Correctness of emptinessCheck not tested.");
+			correct = (new Accepts<LETTER, STATE>(mServices, mnwa, macceptingRun.getWord())).getResult();
+			mLogger.info("Finished testing correctness of emptinessCheck");
 		}
 		return correct;
 	}

@@ -43,11 +43,11 @@ public class LdvRegression extends
 		AbstractTraceAbstractionTestSuite {
 	
 	
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
 
 
-	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+	private static final DirectoryFileEndingsPair[] mSVCOMP_Examples = {
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	/**
@@ -66,12 +66,12 @@ public class LdvRegression extends
 	 * because we assume that all settings files are in this folder.
 	 * 
 	 */
-	private static final String[] m_Settings = {
+	private static final String[] mSettings = {
 		"svcomp2015/svComp-64bit-precise-Automizer.epf",
 	};
 	
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
 	};
@@ -82,9 +82,9 @@ public class LdvRegression extends
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_SVCOMP_Examples);
+		for (String setting : mSettings) {
+			for (String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mSVCOMP_Examples);
 			}
 		}
 		return super.createTestCases();

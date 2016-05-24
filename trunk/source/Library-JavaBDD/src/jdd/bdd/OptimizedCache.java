@@ -27,7 +27,7 @@ public final class OptimizedCache extends SimpleCache {
 	protected int possible_bins_count;
 
 	/** we take note every time the cache is partially cleaned, for statistics... */
-	protected int num_partial_clears;
+	protected int numpartial_clears;
 
 	/** more statistics... */
 	protected long partial_count, partial_kept, partial_given_up;
@@ -47,7 +47,7 @@ public final class OptimizedCache extends SimpleCache {
 
 		partial_count = partial_kept= 0;
 		possible_bins_count = 0;
-		num_partial_clears = 0;
+		numpartial_clears = 0;
 
 		access_last_gc = 0;
 		cache_not_used_count = 0;
@@ -64,10 +64,10 @@ public final class OptimizedCache extends SimpleCache {
 		// "Configuration.MAX_KEEP_UNUSED_PARTIAL_CACHE" garbage collection, then we
 		// will wipe its contecnt since partial clean costs too much
 
-		if(access_last_gc == num_access)  cache_not_used_count++;
+		if(access_last_gc == numaccess)  cache_not_used_count++;
 		else cache_not_used_count = 0;
 
-		access_last_gc = num_access;
+		access_last_gc = numaccess;
 
 		return (cache_not_used_count > Configuration.MAX_KEEP_UNUSED_PARTIAL_CACHE);
 	}
@@ -121,7 +121,7 @@ public final class OptimizedCache extends SimpleCache {
 		else if(bdds == 2)  ok = partial_clean2(nt);
 		else if(bdds == 1)  ok = partial_clean1(nt);
 
-		num_partial_clears++;
+		numpartial_clears++;
 		partial_count += cache_size;	// for showStats
 		partial_kept  += ok;			// for showStats
 		possible_bins_count = ok;		// at this point ok = exact current bin-count
@@ -182,18 +182,18 @@ public final class OptimizedCache extends SimpleCache {
 
 	// --------------------------------------------------------------
 	public int getNumberOfPartialClears() {
-		return num_partial_clears;
+		return numpartial_clears;
 	}
 
 	// --------------------------------------------------------------
 
 	public void showStats() {
-		if(num_access != 0) {
+		if(numaccess != 0) {
 			JDDConsole.out.print(getName() + "-cache ");
 			JDDConsole.out.print("ld=" + computeLoadFactor() + "% ");
 			JDDConsole.out.print("sz="); Digits.printNumber1024(cache_size);
-			JDDConsole.out.print("accs="); Digits.printNumber1024(num_access);
-			JDDConsole.out.print("clrs=" + num_clears+ "/" + num_partial_clears + " ");
+			JDDConsole.out.print("accs="); Digits.printNumber1024(numaccess);
+			JDDConsole.out.print("clrs=" + numclears+ "/" + numpartial_clears + " ");
 
 			JDDConsole.out.print("hitr=" + computeHitRate() + "% ");
 			if(partial_count > 0) {
@@ -202,7 +202,7 @@ public final class OptimizedCache extends SimpleCache {
 			}
 
 			if(partial_given_up > 0)  JDDConsole.out.print("giveup=" +  partial_given_up + " ");
-			if(num_grows > 0) JDDConsole.out.print("grws=" + num_grows + " ");
+			if(numgrows > 0) JDDConsole.out.print("grws=" + numgrows + " ");
 
 			JDDConsole.out.println();
 		}

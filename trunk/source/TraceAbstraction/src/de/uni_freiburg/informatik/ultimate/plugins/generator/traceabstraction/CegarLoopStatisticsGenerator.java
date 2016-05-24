@@ -38,19 +38,19 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
 
 public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwatches implements IStatisticsDataProvider {
 
-	private Object m_Result;
-	private final StatisticsData m_EcData = new StatisticsData();
-	private final StatisticsData m_PuData = new StatisticsData();
-	private final StatisticsData m_TcData = new StatisticsData();
-	private final StatisticsData m_TiData = new StatisticsData();
-	private final StatisticsData m_InterpolantConsolidationBenchmarks = new StatisticsData();
-	private int m_StatesRemovedByMinimization = 0;
-	private int m_Iterations = 0;
-	private int m_AbsIntIterations = 0;
-	private SizeIterationPair m_BiggestAbstraction = CegarStatisticsType.getInstance().new SizeIterationPair(-1, -1);
-	private BackwardCoveringInformation m_BCI = new BackwardCoveringInformation(0, 0);
-	private int m_AbsIntStrong = 0;
-	private int m_TraceHistogramMaximum = 0;
+	private Object mResult;
+	private final StatisticsData mEcData = new StatisticsData();
+	private final StatisticsData mPuData = new StatisticsData();
+	private final StatisticsData mTcData = new StatisticsData();
+	private final StatisticsData mTiData = new StatisticsData();
+	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
+	private int mStatesRemovedByMinimization = 0;
+	private int mIterations = 0;
+	private int mAbsIntIterations = 0;
+	private SizeIterationPair mBiggestAbstraction = CegarStatisticsType.getInstance().new SizeIterationPair(-1, -1);
+	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
+	private int mAbsIntStrong = 0;
+	private int mTraceHistogramMaximum = 0;
 
 	@Override
 	public Collection<String> getKeys() {
@@ -58,58 +58,58 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	}
 
 	public void setResult(Object result) {
-		m_Result = result;
+		mResult = result;
 	}
 
 	public void addEdgeCheckerData(IStatisticsDataProvider ecbd) {
-		m_EcData.aggregateBenchmarkData(ecbd);
+		mEcData.aggregateBenchmarkData(ecbd);
 	}
 
 	public void addPredicateUnifierData(IStatisticsDataProvider pubd) {
-		m_PuData.aggregateBenchmarkData(pubd);
+		mPuData.aggregateBenchmarkData(pubd);
 	}
 
 	public void addTraceCheckerData(IStatisticsDataProvider tcbd) {
-		m_TcData.aggregateBenchmarkData(tcbd);
+		mTcData.aggregateBenchmarkData(tcbd);
 	}
 
 	public void addInterpolationConsolidationData(IStatisticsDataProvider tcbd) {
-		m_InterpolantConsolidationBenchmarks.aggregateBenchmarkData(tcbd);
+		mInterpolantConsolidationBenchmarks.aggregateBenchmarkData(tcbd);
 	}
 
 	public void addTotalInterpolationData(IStatisticsDataProvider tibd) {
-		m_TiData.aggregateBenchmarkData(tibd);
+		mTiData.aggregateBenchmarkData(tibd);
 	}
 
 	public void addBackwardCoveringInformation(BackwardCoveringInformation bci) {
-		m_BCI = new BackwardCoveringInformation(m_BCI, bci);
+		mBCI = new BackwardCoveringInformation(mBCI, bci);
 	}
 
 	public void announceStatesRemovedByMinimization(int statesRemoved) {
-		m_StatesRemovedByMinimization += statesRemoved;
+		mStatesRemovedByMinimization += statesRemoved;
 	}
 
 	public void announceNextIteration() {
-		m_Iterations++;
+		mIterations++;
 	}
 	
 	public void announceNextAbsIntIteration() {
-		m_AbsIntIterations++;
+		mAbsIntIterations++;
 	}
 	
 	public void announceStrongAbsInt() {
-		m_AbsIntStrong++;
+		mAbsIntStrong++;
 	}
 
 	public void reportAbstractionSize(int size, int iteration) {
-		if (size > m_BiggestAbstraction.getSize()) {
-			m_BiggestAbstraction = CegarStatisticsType.getInstance().new SizeIterationPair(size, iteration);
+		if (size > mBiggestAbstraction.getSize()) {
+			mBiggestAbstraction = CegarStatisticsType.getInstance().new SizeIterationPair(size, iteration);
 		}
 	}
 	
 	public void reportTraceHistogramMaximum(int maxCurrentTrace) {
-		if (maxCurrentTrace > m_TraceHistogramMaximum) {
-			m_TraceHistogramMaximum = maxCurrentTrace;
+		if (maxCurrentTrace > mTraceHistogramMaximum) {
+			mTraceHistogramMaximum = maxCurrentTrace;
 		}
 	}
 
@@ -118,7 +118,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case Result:
-			return m_Result;
+			return mResult;
 		case OverallTime:
 		case AutomataDifference:
 		case DeadEndRemovalTime:
@@ -132,29 +132,29 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				throw new AssertionError("clock still running: " + key);
 			}
 		case HoareTripleCheckerStatistics:
-			return m_EcData;
+			return mEcData;
 		case PredicateUnifierStatistics:
-			return m_PuData;
+			return mPuData;
 		case TraceCheckerStatistics:
-			return m_TcData;
+			return mTcData;
 		case InterpolantConsolidationStatistics:
-			return m_InterpolantConsolidationBenchmarks;
+			return mInterpolantConsolidationBenchmarks;
 		case TotalInterpolationStatistics:
-			return m_TiData;
+			return mTiData;
 		case StatesRemovedByMinimization:
-			return m_StatesRemovedByMinimization;
+			return mStatesRemovedByMinimization;
 		case OverallIterations:
-			return m_Iterations;
+			return mIterations;
 		case TraceHistogramMax:
-			return m_TraceHistogramMaximum;
+			return mTraceHistogramMaximum;
 		case AbstIntIterations:
-			return m_AbsIntIterations;
+			return mAbsIntIterations;
 		case AbstIntStrong:
-			return m_AbsIntStrong;			
+			return mAbsIntStrong;			
 		case BiggestAbstraction:
-			return m_BiggestAbstraction;
+			return mBiggestAbstraction;
 		case InterpolantCoveringCapability:
-			return m_BCI;
+			return mBCI;
 		default:
 			throw new AssertionError("unknown data");
 		}

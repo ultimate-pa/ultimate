@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 
 public class ArrayInterplationTest extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = {
+	private static final String[] mDirectories = {
 //		"examples/programs/regression",
 //		"examples/programs/quantifier/",
 //		"examples/programs/quantifier/regression",
@@ -51,12 +51,12 @@ public class ArrayInterplationTest extends
 		"examples/svcomp/ldv-regression/"
 	};
 	
-	private static final boolean m_TraceAbstractionBoogieWithBackwardPredicates = false;
-	private static final boolean m_TraceAbstractionBoogieWithForwardPredicates = false;
-	private static final boolean m_TraceAbstractionBoogieWithFPandBP = false;
-	private static final boolean m_TraceAbstractionCWithBackwardPredicates = false;
-	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;		
-	private static final boolean m_TraceAbstractionCWithFPandBP = false;
+	private static final boolean mTraceAbstractionBoogieWithBackwardPredicates = false;
+	private static final boolean mTraceAbstractionBoogieWithForwardPredicates = false;
+	private static final boolean mTraceAbstractionBoogieWithFPandBP = false;
+	private static final boolean mTraceAbstractionCWithBackwardPredicates = false;
+	private static final boolean mTraceAbstractionCWithForwardPredicates = true;		
+	private static final boolean mTraceAbstractionCWithFPandBP = false;
 	/**
 	 * {@inheritDoc}
 	 */
@@ -67,46 +67,46 @@ public class ArrayInterplationTest extends
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (m_TraceAbstractionBoogieWithForwardPredicates) {
+		if (mTraceAbstractionBoogieWithForwardPredicates) {
 			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".bpl"});
 		} 
-		if (m_TraceAbstractionBoogieWithBackwardPredicates) {
+		if (mTraceAbstractionBoogieWithBackwardPredicates) {
 			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/BackwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".bpl"});
 		}
-		if (m_TraceAbstractionBoogieWithFPandBP) {
+		if (mTraceAbstractionBoogieWithFPandBP) {
 			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicatesAndBackwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".bpl"});
 		}
-		if (m_TraceAbstractionCWithForwardPredicates) {
+		if (mTraceAbstractionCWithForwardPredicates) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/arrayInterpolationTest/ForwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".c", ".i"});
 		}
-		if (m_TraceAbstractionCWithBackwardPredicates) {
+		if (mTraceAbstractionCWithBackwardPredicates) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".c", ".i"});
 		}
-		if (m_TraceAbstractionCWithFPandBP) {
+		if (mTraceAbstractionCWithFPandBP) {
 			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicatesAndBackwardPredicates.epf",
-				    m_Directories,
+				    mDirectories,
 				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();

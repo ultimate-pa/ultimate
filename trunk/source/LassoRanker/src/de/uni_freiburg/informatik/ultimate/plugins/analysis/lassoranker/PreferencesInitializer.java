@@ -80,9 +80,9 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Allow bounded nonterminating executions";
 	public static final String LABEL_termination_analysis =
 			"Termination analysis";
-	public static final String LABEL_num_strict_invariants =
+	public static final String LABEL_numstrict_invariants =
 			"Number of strict supporting invariants";
-	public static final String LABEL_num_non_strict_invariants =
+	public static final String LABEL_numnon_strict_invariants =
 			"Number of non-strict supporting invariants";
 	public static final String LABEL_nondecreasing_invariants =
 			"Only non-decreasing invariants";
@@ -163,12 +163,12 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Combo,
 						AnalysisType.allChoices()),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_num_strict_invariants,
-						termination_settings.num_strict_invariants,
+						LABEL_numstrict_invariants,
+						termination_settings.numstrict_invariants,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_num_non_strict_invariants,
-						termination_settings.num_non_strict_invariants,
+						LABEL_numnon_strict_invariants,
+						termination_settings.numnon_strict_invariants,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_nondecreasing_invariants,
@@ -302,11 +302,11 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		settings.analysis =
 				store.getEnum(LABEL_termination_analysis,
 						AnalysisType.class);
-		settings.num_strict_invariants = store.getInt(
-				LABEL_num_strict_invariants
+		settings.numstrict_invariants = store.getInt(
+				LABEL_numstrict_invariants
 		);
-		settings.num_non_strict_invariants = store.getInt(
-				LABEL_num_non_strict_invariants
+		settings.numnon_strict_invariants = store.getInt(
+				LABEL_numnon_strict_invariants
 		);
 		settings.nondecreasing_invariants = store.getBoolean(
 				LABEL_nondecreasing_invariants

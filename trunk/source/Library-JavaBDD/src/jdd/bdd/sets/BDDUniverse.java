@@ -68,20 +68,20 @@ import jdd.util.math.*;
 public class BDDUniverse extends BDD implements Universe {
 	private int [] int_subdomains, int_bits;
 	private double domainsize;
-	private int num_subdomains, all, bits;
+	private int numsubdomains, all, bits;
 	private SubDomain [] subdomains;
 
 	public BDDUniverse(int [] domains) {
 		super(1000,1000);
 
-		num_subdomains = domains.length;
+		numsubdomains = domains.length;
 		int_subdomains = Array.clone(domains);
-		int_bits       = new int[num_subdomains];
-		subdomains     = new SubDomain[num_subdomains];
+		int_bits       = new int[numsubdomains];
+		subdomains     = new SubDomain[numsubdomains];
 
 		domainsize = 1.0;
 		bits = 0;
-		for(int i = 0; i < num_subdomains; i++) {
+		for(int i = 0; i < numsubdomains; i++) {
 			subdomains[i] = new SubDomain(this, int_subdomains[i]);
 			domainsize *= int_subdomains[i];
 			int_bits[i] = subdomains[i].bits;
@@ -89,7 +89,7 @@ public class BDDUniverse extends BDD implements Universe {
 		}
 		// calc the care-set
 		all = 1;
-		for(int i = 0; i < num_subdomains; i++) {
+		for(int i = 0; i < numsubdomains; i++) {
 			int tmp = ref( and(all, subdomains[i].all) );
 			deref(all);
 			all = tmp;
@@ -104,7 +104,7 @@ public class BDDUniverse extends BDD implements Universe {
 
 	/* packege */ int vectorToBDD(int [] assignments) {
 		int ret = 1;
-		for(int i = 0; i < num_subdomains; i++) {
+		for(int i = 0; i < numsubdomains; i++) {
 			if(assignments[i] != -1) {
 				int tmp = ref( and( ret,subdomains[i].numbers[ assignments[i] ] ) );
 				deref(ret);
@@ -118,7 +118,7 @@ public class BDDUniverse extends BDD implements Universe {
 	/** XXX: this one does not handle DONT-CAREs ! */
 	/* packege */ void vectorToMinterm(int [] assignments, boolean [] minterm) {
 		int index = 0;
-		for(int i = 0; i < num_subdomains; i++) {
+		for(int i = 0; i < numsubdomains; i++) {
 			if(assignments[i] != -1) {
 				// System.out.println("\nat index "  + index + ", automata " + i);
 				BDDUtil.numberToMinterm(assignments[i], int_bits[i], index, minterm);
@@ -131,14 +131,14 @@ public class BDDUniverse extends BDD implements Universe {
 
 	/*
 	void BDDToVector (int bdd, int [] vec) { // XXX: very time consuming
-		for(int i = 0; i < num_subdomains; i++)
+		for(int i = 0; i < numsubdomains; i++)
 			vec[i] = subdomains[i].find(bdd);
 	}
 	*/
 
 	public int cardinality(int [] x) {
 		int ret = 1;
-		for(int i = 0; i < num_subdomains; i++)
+		for(int i = 0; i < numsubdomains; i++)
 			if(x[i] == -1)
 				ret *= subdomains[i].getSize() ;
 		return ret;
@@ -155,7 +155,7 @@ public class BDDUniverse extends BDD implements Universe {
 
 	public double domainSize() { 	return domainsize; }
 
-	public int subdomainCount() { return num_subdomains; }
+	public int subdomainCount() { return numsubdomains; }
 
 	/** number of BDD bits (variables) allocated by this universe */
 	public int numberOfBits() {
@@ -181,7 +181,7 @@ public class BDDUniverse extends BDD implements Universe {
 
 	// ---- random member ----------------------
 	public void randomMember(int [] out) {
-		for(int i = 0; i < num_subdomains; i++) out[i] = (int)(Math.random() * int_subdomains[i]);
+		for(int i = 0; i < numsubdomains; i++) out[i] = (int)(Math.random() * int_subdomains[i]);
 	}
 
 	// ---- [satOneVector] more efficient minterm extraction ----------------------
@@ -192,7 +192,7 @@ public class BDDUniverse extends BDD implements Universe {
 		sat_curr = sat_level = sat_index = sat_bit = 0;
 		sat_next = subdomains[0].bits;
 		satOneVector_rec(bdd);
-		while(sat_index < num_subdomains) satOneVector_insert(false);	// if dont care, we choose '0'
+		while(sat_index < numsubdomains) satOneVector_insert(false);	// if dont care, we choose '0'
 		sat_vec = null;
 	}
 	private void satOneVector_insert(boolean x) {
@@ -200,7 +200,7 @@ public class BDDUniverse extends BDD implements Universe {
 		if(++sat_level == sat_next) {
 			sat_vec[sat_index++] = sat_curr;
 			sat_bit = sat_curr = 0;
-			if(sat_index < num_subdomains) sat_next += subdomains[sat_index].bits;
+			if(sat_index < numsubdomains) sat_next += subdomains[sat_index].bits;
 		} else sat_bit++;
 	}
 	private void satOneVector_rec(int bdd) {

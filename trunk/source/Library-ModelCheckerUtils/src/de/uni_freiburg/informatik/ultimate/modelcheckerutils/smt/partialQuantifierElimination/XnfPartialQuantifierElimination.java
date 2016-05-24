@@ -41,17 +41,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
  */
 
 public abstract class XnfPartialQuantifierElimination {
-	protected final Script m_Script;
-	protected final IUltimateServiceProvider m_Services; 
-	protected final ILogger m_Logger;
+	protected final Script mScript;
+	protected final IUltimateServiceProvider mServices; 
+	protected final ILogger mLogger;
 	
 	
 	public XnfPartialQuantifierElimination(Script script,
 			IUltimateServiceProvider services) {
 		super();
-		m_Script = script;
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		mScript = script;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 	}
 	public abstract String getName();
 	public abstract String getAcronym();

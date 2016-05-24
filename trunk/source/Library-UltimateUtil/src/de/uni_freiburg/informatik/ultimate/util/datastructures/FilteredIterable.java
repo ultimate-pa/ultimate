@@ -38,48 +38,48 @@ import de.uni_freiburg.informatik.ultimate.util.IPredicate;
  * @param <T>
  */
 public class FilteredIterable<T> implements Iterable<T> {
-	final Iterable<T> m_Iterable;
-	final IPredicate<T> m_Predicate;
+	final Iterable<T> mIterable;
+	final IPredicate<T> mPredicate;
 	
 	public FilteredIterable(Iterable<T> iterable, IPredicate<T> remainingElements) {
-		m_Iterable = iterable;
-		m_Predicate = remainingElements;
+		mIterable = iterable;
+		mPredicate = remainingElements;
 	}
 	
 	@Override
 	public Iterator<T> iterator() {
 		return new Iterator<T>() {
-			final Iterator<T> m_Iterator;
-			T m_next = null;
+			final Iterator<T> mIterator;
+			T mnext = null;
 			{
-				m_Iterator = m_Iterable.iterator();
-				if (m_Iterator.hasNext()) {
+				mIterator = mIterable.iterator();
+				if (mIterator.hasNext()) {
 					getNextThatSatisfiesPredicate();
 				}
 			}
 			private void getNextThatSatisfiesPredicate() {
-				if (m_Iterator.hasNext()) {
-					m_next = m_Iterator.next();
-					while (m_next != null && !m_Predicate.evaluate(m_next)) {
-						if (m_Iterator.hasNext()) {
-							m_next = m_Iterator.next();
+				if (mIterator.hasNext()) {
+					mnext = mIterator.next();
+					while (mnext != null && !mPredicate.evaluate(mnext)) {
+						if (mIterator.hasNext()) {
+							mnext = mIterator.next();
 						} else {
-							m_next = null;
+							mnext = null;
 						}
 					}
 				} else {
-					m_next = null;
+					mnext = null;
 				}
 			}
 
 			@Override
 			public boolean hasNext() {
-				return m_next != null;
+				return mnext != null;
 			}
 
 			@Override
 			public T next() {
-				T result = m_next;
+				T result = mnext;
 				getNextThatSatisfiesPredicate();
 				return result;
 			}

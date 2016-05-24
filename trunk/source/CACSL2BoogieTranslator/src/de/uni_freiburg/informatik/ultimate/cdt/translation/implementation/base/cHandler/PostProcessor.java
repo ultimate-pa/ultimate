@@ -101,14 +101,14 @@ public class PostProcessor {
 	private final Dispatcher mDispatcher;
 	private final ILogger mLogger;
 	
-	private final AExpressionTranslation m_ExpressionTranslation;
+	private final AExpressionTranslation mExpressionTranslation;
 
 	/*
 	 * Decides if the PostProcessor declares the special function that we use for
 	 * converting Boogie-Real to a Boogie-Int.
 	 * This is needed when we do a cast from float to int in C.
 	 */
-	public boolean m_DeclareToIntFunction = false;
+	public boolean mDeclareToIntFunction = false;
 
 	/**
 	 * Constructor.
@@ -117,7 +117,7 @@ public class PostProcessor {
 		mInitializedGlobals = new LinkedHashSet<String>();
 		mDispatcher = dispatcher;
 		mLogger = logger;
-		m_ExpressionTranslation = expressionTranslation;
+		mExpressionTranslation = expressionTranslation;
 	}
 
 
@@ -202,7 +202,7 @@ public class PostProcessor {
 //		Specification toIntSpec = new EnsuresSpecification(ignoreLoc, false, new IfThenElseExpression(ignoreLoc, inRealGeq0, roundDown, roundUp));
 //		decls.add(new Procedure(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, oneIntParam, new Specification[] { toIntSpec }, null));
 
-		if (m_DeclareToIntFunction ) {
+		if (mDeclareToIntFunction ) {
 			decls.add(new FunctionDeclaration(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, intParam));
 		}
 
@@ -286,8 +286,8 @@ public class PostProcessor {
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired() || memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
-				Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
-						translationUnitLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+				Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
+						translationUnitLoc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(translationUnitLoc,
 						new VariableLHS(translationUnitLoc, SFO.VALID),
 						new Expression[] { zero }) };

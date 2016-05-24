@@ -40,42 +40,42 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 
-	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Reach;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 
-	private List<NestedLassoRun<LETTER, STATE>> m_NestedLassoRuns;
-	private List<NestedLassoWord<LETTER>> m_NestedLassoWords;
+	private List<NestedLassoRun<LETTER, STATE>> mNestedLassoRuns;
+	private List<NestedLassoWord<LETTER>> mNestedLassoWords;
 
 	public LassoExtractor(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Operand = operand;
-		m_Logger.info(startMessage());
-		if (m_Operand instanceof NestedWordAutomatonReachableStates) {
-			m_Reach = (NestedWordAutomatonReachableStates<LETTER, STATE>) m_Operand;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mLogger.info(startMessage());
+		if (mOperand instanceof NestedWordAutomatonReachableStates) {
+			mReach = (NestedWordAutomatonReachableStates<LETTER, STATE>) mOperand;
 		} else {
-			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Operand);
+			mReach = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, mOperand);
 		}
-		m_Reach.getOrComputeAcceptingComponents();
-		m_NestedLassoRuns = m_Reach.getOrComputeAcceptingComponents().getAllNestedLassoRuns();
-		m_NestedLassoWords = new ArrayList<NestedLassoWord<LETTER>>(m_NestedLassoRuns.size());
-		if (m_NestedLassoRuns.isEmpty() && m_Reach.getOrComputeAcceptingComponents().getNestedLassoRun() == null) {
-			assert (new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Reach)).getResult();
+		mReach.getOrComputeAcceptingComponents();
+		mNestedLassoRuns = mReach.getOrComputeAcceptingComponents().getAllNestedLassoRuns();
+		mNestedLassoWords = new ArrayList<NestedLassoWord<LETTER>>(mNestedLassoRuns.size());
+		if (mNestedLassoRuns.isEmpty() && mReach.getOrComputeAcceptingComponents().getNestedLassoRun() == null) {
+			assert (new BuchiIsEmpty<LETTER, STATE>(mServices, mReach)).getResult();
 		} else {
-			for (NestedLassoRun<LETTER, STATE> nlr  : m_NestedLassoRuns) {
-				m_NestedLassoWords.add(nlr.getNestedLassoWord());
+			for (NestedLassoRun<LETTER, STATE> nlr  : mNestedLassoRuns) {
+				mNestedLassoWords.add(nlr.getNestedLassoWord());
 			}
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	@Override
 	public List<NestedLassoWord<LETTER>> getResult() throws AutomataLibraryException {
-		return m_NestedLassoWords;
+		return mNestedLassoWords;
 	}
 
 	@Override
@@ -86,13 +86,13 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand "
-				+ m_Operand.sizeInformation();
+				+ mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Found " + 
-					m_NestedLassoRuns.size() + " examples of accepted words.";
+					mNestedLassoRuns.size() + " examples of accepted words.";
 	}
 
 	@Override

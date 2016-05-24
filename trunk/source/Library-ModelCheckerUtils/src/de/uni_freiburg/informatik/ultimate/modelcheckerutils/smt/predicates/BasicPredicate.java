@@ -38,21 +38,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 	private static final long serialVersionUID = -2257982001512157622L;
-	protected final String[] m_Procedures;
-	protected Term m_Formula;
-	protected final Term m_ClosedFormula;
-	protected final Set<BoogieVar> m_Vars;
-	protected final int m_SerialNumber;
+	protected final String[] mProcedures;
+	protected Term mFormula;
+	protected final Term mClosedFormula;
+	protected final Set<BoogieVar> mVars;
+	protected final int mSerialNumber;
 	
 	
 	
 	public BasicPredicate(int serialNumber, String[] procedures, Term term, Set<BoogieVar> vars,
 			Term closedFormula) {
-		m_Formula = term;
-		m_ClosedFormula = closedFormula;
-		m_Procedures = procedures;
-		m_Vars = vars;
-		m_SerialNumber = serialNumber;
+		mFormula = term;
+		mClosedFormula = closedFormula;
+		mProcedures = procedures;
+		mVars = vars;
+		mSerialNumber = serialNumber;
 	}
 
 
@@ -72,39 +72,39 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field.equals("Procedures"))
-			return m_Procedures;
+			return mProcedures;
 		else if (field.equals("Formula"))
-			return m_Formula;
+			return mFormula;
 		else if (field.equals("Vars"))
-			return m_Vars;
+			return mVars;
 		else
 			throw new UnsupportedOperationException("Unknown field "+field);
 	}
 	
 	
 	public String[] getProcedures() {
-		return m_Procedures;
+		return mProcedures;
 	}
 
 	/**
-	 * @return the m_Assertion
+	 * @return the mAssertion
 	 */
 	public Term getFormula() {
-		return m_Formula;
+		return mFormula;
 	}
 	
 	public Term getClosedFormula() {
-		return m_ClosedFormula;
+		return mClosedFormula;
 	}
 
 	public Set<BoogieVar> getVars() {
-		return m_Vars;
+		return mVars;
 	}
 	
 	@Override
 	public String toString() {
-		String result = m_SerialNumber + "#";
-		result += m_Formula.toStringDirect();
+		String result = mSerialNumber + "#";
+		result += mFormula.toStringDirect();
 		return result;
 	}
 
@@ -114,7 +114,7 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 
 	@Override
 	public int hashCode() {
-		return m_SerialNumber;
+		return mSerialNumber;
 	}
 	
 }

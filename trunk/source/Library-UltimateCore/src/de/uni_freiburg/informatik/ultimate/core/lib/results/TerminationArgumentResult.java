@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
  *            program position class
  */
 public class TerminationArgumentResult<P extends IElement, E> extends AbstractResultAtElement<P> implements IResult {
-	private final String m_RankingFunctionDescription;
-	private final E[] m_RankingFunction;
-	private final E[] m_SupportingInvariants;
+	private final String mRankingFunctionDescription;
+	private final E[] mRankingFunction;
+	private final E[] mSupportingInvariants;
 	private final Class<E> mExprClazz;
 
 	/**
@@ -66,26 +66,26 @@ public class TerminationArgumentResult<P extends IElement, E> extends AbstractRe
 	public TerminationArgumentResult(P position, String plugin, E[] ranking_function, String rankingFunctionDescription,
 			E[] supporting_invariants, IBacktranslationService translatorSequence, Class<E> exprClazz) {
 		super(position, plugin, translatorSequence);
-		m_RankingFunction = ranking_function;
-		m_RankingFunctionDescription = rankingFunctionDescription;
-		m_SupportingInvariants = supporting_invariants;
+		mRankingFunction = ranking_function;
+		mRankingFunctionDescription = rankingFunctionDescription;
+		mSupportingInvariants = supporting_invariants;
 		mExprClazz = exprClazz;
 	}
 
 	@Override
 	public String getShortDescription() {
-		return "Found " + m_RankingFunctionDescription + " ranking function";
+		return "Found " + mRankingFunctionDescription + " ranking function";
 	}
 
 	@Override
 	public String getLongDescription() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Found a termination argument consisting of the ");
-		sb.append(m_RankingFunctionDescription);
+		sb.append(mRankingFunctionDescription);
 		sb.append(" ranking function");
 		sb.append(": [");
 		boolean needsComma = false;
-		for (E e : m_RankingFunction) {
+		for (E e : mRankingFunction) {
 			if (needsComma) {
 				sb.append(", ");
 			} else {
@@ -95,9 +95,9 @@ public class TerminationArgumentResult<P extends IElement, E> extends AbstractRe
 			sb.append(mTranslatorSequence.translateExpressionToString(e, mExprClazz));
 		}
 		sb.append("]");
-		if (m_SupportingInvariants.length > 0) {
+		if (mSupportingInvariants.length > 0) {
 			sb.append(" and the following supporting invariants: ");
-			for (E e : m_SupportingInvariants) {
+			for (E e : mSupportingInvariants) {
 				sb.append(mTranslatorSequence.translateExpressionToString(e, mExprClazz));
 			}
 		} else {
@@ -107,14 +107,14 @@ public class TerminationArgumentResult<P extends IElement, E> extends AbstractRe
 	}
 
 	public String getRankingFunctionDescription() {
-		return m_RankingFunctionDescription;
+		return mRankingFunctionDescription;
 	}
 
 	public E[] getRankingFunction() {
-		return m_RankingFunction;
+		return mRankingFunction;
 	}
 
 	public E[] getSupportingInvariants() {
-		return m_SupportingInvariants;
+		return mSupportingInvariants;
 	}
 }

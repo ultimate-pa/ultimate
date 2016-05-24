@@ -52,16 +52,16 @@ public abstract class AMemoryModel {
 	protected final static String s_ReadProcedurePrefix = "read~";
 	protected final static String s_WriteProcedurePrefix = "write~";
 	
-	protected final ITypeHandler m_TypeHandler;
-	protected final TypeSizes m_TypeSizes;
+	protected final ITypeHandler mTypeHandler;
+	protected final TypeSizes mTypeSizes;
 	
-	private final HeapDataArray m_PointerArray;
+	private final HeapDataArray mPointerArray;
 	
 	public AMemoryModel(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
-		m_TypeSizes = typeSizes;
-		m_TypeHandler = typeHandler;
+		mTypeSizes = typeSizes;
+		mTypeHandler = typeHandler;
 		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-       	m_PointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc), bytesizeOfStoredPointerComponents());
+       	mPointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc), bytesizeOfStoredPointerComponents());
 	}
 	
 	protected abstract int bytesizeOfStoredPointerComponents();
@@ -77,13 +77,13 @@ public abstract class AMemoryModel {
 	}
 	
 	public final String getReadPointerProcedureName() {
-		final HeapDataArray hda = m_PointerArray;
+		final HeapDataArray hda = mPointerArray;
 		return s_ReadProcedurePrefix + hda.getName();
 	}
 
 
 	public final String getWritePointerProcedureName() {
-		final HeapDataArray hda = m_PointerArray;
+		final HeapDataArray hda = mPointerArray;
 		return s_WriteProcedurePrefix + hda.getName();
 	}
 
@@ -91,7 +91,7 @@ public abstract class AMemoryModel {
 	public abstract HeapDataArray getDataHeapArray(PRIMITIVE primitive);
 	
 	public final HeapDataArray getPointerHeapArray() {
-		return m_PointerArray;
+		return mPointerArray;
 	}
 
 	public final Collection<HeapDataArray> getDataHeapArrays(RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
@@ -106,7 +106,7 @@ public abstract class AMemoryModel {
 	}
 	
 	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
-		if (hda == m_PointerArray) {
+		if (hda == mPointerArray) {
 			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 				return Collections.singletonList(new ReadWriteDefinition(
 						getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(), getPointerHeapArray().getASTType(), null));
@@ -122,36 +122,36 @@ public abstract class AMemoryModel {
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures);
 	
 	public class ReadWriteDefinition {
-		private final String m_ProcedureSuffix;
-		private final int m_Bytesize;
-		private final ASTType m_ASTType;
-		private final Set<PRIMITIVE> m_Primitives;
+		private final String mProcedureSuffix;
+		private final int mBytesize;
+		private final ASTType mASTType;
+		private final Set<PRIMITIVE> mPrimitives;
 		public ReadWriteDefinition(String procedureName, int bytesize, ASTType aSTType, Set<PRIMITIVE> primitives) {
 			super();
-			m_ProcedureSuffix = procedureName;
-			m_Bytesize = bytesize;
-			m_ASTType = aSTType;
-			m_Primitives = primitives;
+			mProcedureSuffix = procedureName;
+			mBytesize = bytesize;
+			mASTType = aSTType;
+			mPrimitives = primitives;
 		}
 		public String getReadProcedureName() {
-			return s_ReadProcedurePrefix + m_ProcedureSuffix;
+			return s_ReadProcedurePrefix + mProcedureSuffix;
 		}
 		public String getWriteProcedureName() {
-			return s_WriteProcedurePrefix + m_ProcedureSuffix;
+			return s_WriteProcedurePrefix + mProcedureSuffix;
 		}
 		public int getBytesize() {
-			return m_Bytesize;
+			return mBytesize;
 		}
 		public ASTType getASTType() {
-			return m_ASTType;
+			return mASTType;
 		}
 		public Set<PRIMITIVE> getPrimitives() {
-			return m_Primitives;
+			return mPrimitives;
 		}
 		@Override
 		public String toString() {
-			return "ReadWriteDefinition [m_ProcedureSuffix=" + m_ProcedureSuffix + ", m_Bytesize=" + m_Bytesize
-					+ ", m_ASTType=" + m_ASTType + ", m_Primitives=" + m_Primitives + "]";
+			return "ReadWriteDefinition [mProcedureSuffix=" + mProcedureSuffix + ", mBytesize=" + mBytesize
+					+ ", mASTType=" + mASTType + ", mPrimitives=" + mPrimitives + "]";
 		}
 	}
 

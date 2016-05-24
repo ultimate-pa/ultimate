@@ -47,38 +47,38 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class ParallelRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = -8148235363885204843L;
 	
-	private final AffineFunction[] m_ranking;
+	private final AffineFunction[] mranking;
 	public final int size;
 	
 	public ParallelRankingFunction(AffineFunction[] ranking) {
-		m_ranking = ranking;
+		mranking = ranking;
 		size = ranking.length;
 		assert(size > 0);
 	}
 	
 	@Override
 	public String getName() {
-		return m_ranking.length + "-parallel";
+		return mranking.length + "-parallel";
 	}
 
 	
 	@Override
 	public Set<RankVar> getVariables() {
 		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (AffineFunction af : m_ranking) {
+		for (AffineFunction af : mranking) {
 			vars.addAll(af.getVariables());
 		}
 		return vars;
 	}
 	
 	public AffineFunction[] getComponents() {
-		return m_ranking;
+		return mranking;
 	}
 	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(m_ranking.length);
+		sb.append(mranking.length);
 		sb.append("-parallel ranking function:\n");
 		sb.append("f = ");
 		for (int i = 0; i < size; ++i) {
@@ -86,7 +86,7 @@ public class ParallelRankingFunction extends RankingFunction {
 				sb.append(" + ");
 			}
 			sb.append("max{0, ");
-			sb.append(m_ranking[i]);
+			sb.append(mranking[i]);
 			sb.append("}");
 		}
 		return sb.toString();
@@ -97,7 +97,7 @@ public class ParallelRankingFunction extends RankingFunction {
 		final Term zero = script.numeral(BigInteger.ZERO);
 		Term[] summands = new Term[size];
 		for (int i = 0; i < size; ++i) {
-			Term f_term = m_ranking[i].asTerm(script);
+			Term f_term = mranking[i].asTerm(script);
 			Term cond = script.term(">", f_term, zero);
 			summands[i] = script.term("ite", cond, f_term, zero);
 		}
@@ -108,7 +108,7 @@ public class ParallelRankingFunction extends RankingFunction {
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		Ordinal o = Ordinal.ZERO;
 		for (int i = 0; i < size; ++i) {
-			Rational r = m_ranking[i].evaluate(assignment);
+			Rational r = mranking[i].evaluate(assignment);
 			if (r.compareTo(Rational.ZERO) > 0) {
 				o = o.add(Ordinal.fromInteger(r.ceil().numerator()));
 			}

@@ -136,194 +136,194 @@ public class BuchiCegarLoop {
 	 */
 	private boolean mLTLMode;
 
-	private final String m_Name;
+	private final String mName;
 
 	/**
 	 * Node of a recursive control flow graph which stores additional information about the
 	 */
-	protected final RootNode m_RootNode;
+	protected final RootNode mRootNode;
 
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
-	protected final SmtManager m_SmtManager;
+	protected final SmtManager mSmtManager;
 
-	protected final BinaryStatePredicateManager m_BinaryStatePredicateManager;
+	protected final BinaryStatePredicateManager mBinaryStatePredicateManager;
 
 	/**
 	 * Intermediate layer to encapsulate preferences.
 	 */
-	protected final TAPreferences m_Pref;
+	protected final TAPreferences mPref;
 
 	/**
 	 * Current Iteration of this CEGAR loop.
 	 */
-	protected int m_Iteration = 0;
+	protected int mIteration = 0;
 
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
-	protected NestedLassoRun<CodeBlock, IPredicate> m_Counterexample;
+	protected NestedLassoRun<CodeBlock, IPredicate> mCounterexample;
 
 	/**
-	 * Abstraction of this iteration. The language of m_Abstraction is a set of traces which is
+	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is
 	 * <ul>
 	 * <li>a superset of the feasible program traces.
 	 * <li>a subset of the traces which respect the control flow of of the program.
 	 */
-	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> m_Abstraction;
+	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> mAbstraction;
 
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
-	protected NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolAutomaton;
+	protected NestedWordAutomaton<CodeBlock, IPredicate> mInterpolAutomaton;
 
-	protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
-	protected final static Format m_PrintAutomataLabeling = Format.ATS;
+	protected IAutomaton<CodeBlock, IPredicate> mArtifactAutomaton;
+	protected final static Format mPrintAutomataLabeling = Format.ATS;
 
 	// used for the collection of statistics
-	int m_Infeasible = 0;
-	int m_RankWithoutSi = 0;
-	int m_RankWithSi = 0;
+	int mInfeasible = 0;
+	int mRankWithoutSi = 0;
+	int mRankWithSi = 0;
 
-	private final PredicateFactoryForInterpolantAutomata m_DefaultStateFactory;
-	private final PredicateFactoryResultChecking m_PredicateFactoryResultChecking;
+	private final PredicateFactoryForInterpolantAutomata mDefaultStateFactory;
+	private final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
-	private final HoareAnnotationFragments m_Haf;
+	private final HoareAnnotationFragments mHaf;
 
-	private final PredicateFactoryRefinement m_StateFactoryForRefinement;
+	private final PredicateFactoryRefinement mStateFactoryForRefinement;
 
-	private final BuchiAutomizerModuleDecompositionBenchmark m_MDBenchmark;
+	private final BuchiAutomizerModuleDecompositionBenchmark mMDBenchmark;
 
-	private final BuchiCegarLoopBenchmarkGenerator m_BenchmarkGenerator;
+	private final BuchiCegarLoopBenchmarkGenerator mBenchmarkGenerator;
 
 	private static final boolean s_ReduceAbstractionSize = true;
 
-	private final boolean m_Difference;
-	private final boolean m_UseDoubleDeckers;
-	private final BComplementationConstruction m_ComplementationConstruction;
-	private final BInterpolantAutomaton m_InterpolantAutomaton;
-	private final boolean m_BouncerStem;
-	private final boolean m_BouncerLoop;
-	private final boolean m_ScroogeNondeterminismStem;
-	private final boolean m_ScroogeNondeterminismLoop;
-	private final boolean m_CannibalizeLoop;
-	private final boolean m_ConstructTermcompProof;
-	private final TermcompProofBenchmark m_TermcompProofBenchmark;
+	private final boolean mDifference;
+	private final boolean mUseDoubleDeckers;
+	private final BComplementationConstruction mComplementationConstruction;
+	private final BInterpolantAutomaton mInterpolantAutomaton;
+	private final boolean mBouncerStem;
+	private final boolean mBouncerLoop;
+	private final boolean mScroogeNondeterminismStem;
+	private final boolean mScroogeNondeterminismLoop;
+	private final boolean mCannibalizeLoop;
+	private final boolean mConstructTermcompProof;
+	private final TermcompProofBenchmark mTermcompProofBenchmark;
 
-	private final INTERPOLATION m_Interpolation;
+	private final INTERPOLATION mInterpolation;
 
-	private final RefineBuchi m_RefineBuchi;
-	private final List<RefineBuchi.RefinementSetting> m_BuchiRefinementSettingSequence;
+	private final RefineBuchi mRefineBuchi;
+	private final List<RefineBuchi.RefinementSetting> mBuchiRefinementSettingSequence;
 
-	private final AutomataMinimization m_AutomataMinimization;
+	private final AutomataMinimization mAutomataMinimization;
 
-	private NonTerminationArgument m_NonterminationArgument;
+	private NonTerminationArgument mNonterminationArgument;
 
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 
 	private final IToolchainStorage mStorage;
 
-	private ToolchainCanceledException m_ToolchainCancelledException;
+	private ToolchainCanceledException mToolchainCancelledException;
 
 	public ToolchainCanceledException getToolchainCancelledException() {
-		return m_ToolchainCancelledException;
+		return mToolchainCancelledException;
 	}
 
 	public NonTerminationArgument getNonTerminationArgument() {
-		return m_NonterminationArgument;
+		return mNonterminationArgument;
 	}
 
 	public BuchiCegarLoop(RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
 		assert services != null;
 		mLTLMode = false;
-		m_Services = services;
+		mServices = services;
 		mStorage = storage;
-		mLogger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_MDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(m_Services.getBacktranslationService());
-		m_Name = "BuchiCegarLoop";
-		m_RootNode = rootNode;
-		m_SmtManager = smtManager;
-		m_BinaryStatePredicateManager = new BinaryStatePredicateManager(m_SmtManager, m_Services);
-		m_BenchmarkGenerator = new BuchiCegarLoopBenchmarkGenerator();
-		m_BenchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
+		mName = "BuchiCegarLoop";
+		mRootNode = rootNode;
+		mSmtManager = smtManager;
+		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mSmtManager, mServices);
+		mBenchmarkGenerator = new BuchiCegarLoopBenchmarkGenerator();
+		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		// this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
-		// m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable(),
-		// m_RootNode.getRootAnnot().getModGlobVarManager(),
-		// m_RootNode.getRootAnnot().getBoogie2SMT());
+		// mBspm.getUnseededVariable(), mBspm.getOldRankVariable(),
+		// mRootNode.getRootAnnot().getModGlobVarManager(),
+		// mRootNode.getRootAnnot().getBoogie2SMT());
 
-		m_Pref = taPrefs;
-		m_DefaultStateFactory = new PredicateFactoryForInterpolantAutomata(m_SmtManager, m_Pref);
-		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(m_SmtManager);
+		mPref = taPrefs;
+		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mSmtManager, mPref);
+		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(mSmtManager);
 
-		m_Haf = new HoareAnnotationFragments(mLogger, null, null);
-		m_StateFactoryForRefinement = new PredicateFactoryRefinement(m_RootNode.getRootAnnot().getProgramPoints(),
-				m_SmtManager, m_Pref, m_Pref.computeHoareAnnotation(), m_Haf, null);
+		mHaf = new HoareAnnotationFragments(mLogger, null, null);
+		mStateFactoryForRefinement = new PredicateFactoryRefinement(mRootNode.getRootAnnot().getProgramPoints(),
+				mSmtManager, mPref, mPref.computeHoareAnnotation(), mHaf, null);
 
 		RcpPreferenceProvider baPref = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 
-		m_UseDoubleDeckers = !baPref.getBoolean(PreferenceInitializer.LABEL_IgnoreDownStates);
-		m_Difference = baPref.getBoolean(PreferenceInitializer.LABEL_DeterminizationOnDemand);
-		m_InterpolantAutomaton = baPref.getEnum(PreferenceInitializer.LABEL_BuchiInterpolantAutomaton,
+		mUseDoubleDeckers = !baPref.getBoolean(PreferenceInitializer.LABEL_IgnoreDownStates);
+		mDifference = baPref.getBoolean(PreferenceInitializer.LABEL_DeterminizationOnDemand);
+		mInterpolantAutomaton = baPref.getEnum(PreferenceInitializer.LABEL_BuchiInterpolantAutomaton,
 				BInterpolantAutomaton.class);
-		m_ComplementationConstruction = baPref.getEnum(PreferenceInitializer.LABEL_BuchiComplementationConstruction,
+		mComplementationConstruction = baPref.getEnum(PreferenceInitializer.LABEL_BuchiComplementationConstruction,
 				BComplementationConstruction.class);
-		m_BouncerStem = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerStem);
-		m_BouncerLoop = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerLoop);
-		m_ScroogeNondeterminismStem = baPref.getBoolean(PreferenceInitializer.LABEL_ScroogeNondeterminismStem);
-		m_ScroogeNondeterminismLoop = baPref.getBoolean(PreferenceInitializer.LABEL_ScroogeNondeterminismLoop);
-		if ((m_ScroogeNondeterminismStem || m_ScroogeNondeterminismLoop)
-				&& m_InterpolantAutomaton != BInterpolantAutomaton.ScroogeNondeterminism) {
+		mBouncerStem = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerStem);
+		mBouncerLoop = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerLoop);
+		mScroogeNondeterminismStem = baPref.getBoolean(PreferenceInitializer.LABEL_ScroogeNondeterminismStem);
+		mScroogeNondeterminismLoop = baPref.getBoolean(PreferenceInitializer.LABEL_ScroogeNondeterminismLoop);
+		if ((mScroogeNondeterminismStem || mScroogeNondeterminismLoop)
+				&& mInterpolantAutomaton != BInterpolantAutomaton.ScroogeNondeterminism) {
 			throw new IllegalArgumentException("illegal combination of settings");
 		}
-		if ((!m_ScroogeNondeterminismStem && !m_ScroogeNondeterminismLoop)
-				&& m_InterpolantAutomaton == BInterpolantAutomaton.ScroogeNondeterminism) {
+		if ((!mScroogeNondeterminismStem && !mScroogeNondeterminismLoop)
+				&& mInterpolantAutomaton == BInterpolantAutomaton.ScroogeNondeterminism) {
 			throw new IllegalArgumentException("illegal combination of settings");
 		}
-		m_AutomataMinimization = baPref.getEnum(PreferenceInitializer.LABEL_AutomataMinimization,
+		mAutomataMinimization = baPref.getEnum(PreferenceInitializer.LABEL_AutomataMinimization,
 				AutomataMinimization.class);
-		m_CannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
-		m_Interpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
+		mCannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
+		mInterpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				INTERPOLATION.class);
-		InterpolationPreferenceChecker.check(Activator.PLUGIN_NAME, m_Interpolation);
-		m_ConstructTermcompProof = baPref.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
-		if (m_ConstructTermcompProof) {
-			m_TermcompProofBenchmark = new TermcompProofBenchmark(m_Services);
+		InterpolationPreferenceChecker.check(Activator.PLUGIN_NAME, mInterpolation);
+		mConstructTermcompProof = baPref.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
+		if (mConstructTermcompProof) {
+			mTermcompProofBenchmark = new TermcompProofBenchmark(mServices);
 		} else {
-			m_TermcompProofBenchmark = null;
+			mTermcompProofBenchmark = null;
 		}
 
-		m_RefineBuchi = new RefineBuchi(m_RootNode, m_SmtManager, m_Pref.dumpAutomata(), m_Difference,
-				m_DefaultStateFactory, m_StateFactoryForRefinement, m_UseDoubleDeckers, m_Pref.dumpPath(),
-				m_Pref.getAutomataFormat(), m_Interpolation, m_Services, mLogger);
-		m_BuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
-		switch (m_InterpolantAutomaton) {
+		mRefineBuchi = new RefineBuchi(mRootNode, mSmtManager, mPref.dumpAutomata(), mDifference,
+				mDefaultStateFactory, mStateFactoryForRefinement, mUseDoubleDeckers, mPref.dumpPath(),
+				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger);
+		mBuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
+		switch (mInterpolantAutomaton) {
 		case TwoStage:
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, false));
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
 			break;
 		case Staged:
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.Deterministic, true, false, false, false, false));
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.Deterministic, true, true, false, false, false));
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false));
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false));
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
 			break;
 		case LassoAutomaton:
 		case EagerNondeterminism:
 		case ScroogeNondeterminism:
 		case Deterministic:
-			m_BuchiRefinementSettingSequence
-					.add(m_RefineBuchi.new RefinementSetting(m_InterpolantAutomaton, m_BouncerStem, m_BouncerLoop,
-							m_ScroogeNondeterminismStem, m_ScroogeNondeterminismLoop, m_CannibalizeLoop));
+			mBuchiRefinementSettingSequence
+					.add(mRefineBuchi.new RefinementSetting(mInterpolantAutomaton, mBouncerStem, mBouncerLoop,
+							mScroogeNondeterminismStem, mScroogeNondeterminismLoop, mCannibalizeLoop));
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
@@ -331,7 +331,7 @@ public class BuchiCegarLoop {
 	}
 
 	NestedLassoRun<CodeBlock, IPredicate> getCounterexample() {
-		return m_Counterexample;
+		return mCounterexample;
 	}
 
 	static boolean emptyStem(NestedLassoRun<CodeBlock, IPredicate> nlr) {
@@ -340,16 +340,16 @@ public class BuchiCegarLoop {
 	}
 
 	public final Result iterate() throws IOException {
-		mLogger.info("Interprodecural is " + m_Pref.interprocedural());
-		mLogger.info("Hoare is " + m_Pref.computeHoareAnnotation());
-		mLogger.info("Compute interpolants for " + m_Interpolation);
-		mLogger.info("Backedges is " + m_Pref.interpolantAutomaton());
-		mLogger.info("Determinization is " + m_Pref.interpolantAutomatonEnhancement());
-		mLogger.info("Difference is " + m_Pref.differenceSenwa());
-		mLogger.info("Minimize is " + m_Pref.minimize());
+		mLogger.info("Interprodecural is " + mPref.interprocedural());
+		mLogger.info("Hoare is " + mPref.computeHoareAnnotation());
+		mLogger.info("Compute interpolants for " + mInterpolation);
+		mLogger.info("Backedges is " + mPref.interpolantAutomaton());
+		mLogger.info("Determinization is " + mPref.interpolantAutomatonEnhancement());
+		mLogger.info("Difference is " + mPref.differenceSenwa());
+		mLogger.info("Minimize is " + mPref.minimize());
 
-		m_Iteration = 0;
-		mLogger.info("======== Iteration " + m_Iteration + "==of CEGAR loop == " + m_Name + "========");
+		mIteration = 0;
+		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
 		// try {
 		getInitialAbstraction();
@@ -358,13 +358,13 @@ public class BuchiCegarLoop {
 		// return Result.TIMEOUT;
 		// }
 
-		if (m_Iteration <= m_Pref.watchIteration()
-				&& (m_Pref.artifact() == Artifact.ABSTRACTION || m_Pref.artifact() == Artifact.RCFG)) {
-			m_ArtifactAutomaton = m_Abstraction;
+		if (mIteration <= mPref.watchIteration()
+				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
+			mArtifactAutomaton = mAbstraction;
 		}
-		if (m_Pref.dumpAutomata()) {
-			String filename = m_RootNode.getFilename() + "_" + m_Name + "Abstraction" + m_Iteration;
-			writeAutomatonToFile(m_Services, m_Abstraction, m_Pref.dumpPath(), filename, m_Pref.getAutomataFormat(),
+		if (mPref.dumpAutomata()) {
+			String filename = mRootNode.getFilename() + "_" + mName + "Abstraction" + mIteration;
+			writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(),
 					"");
 		}
 
@@ -373,188 +373,188 @@ public class BuchiCegarLoop {
 			initalAbstractionCorrect = isAbstractionCorrect();
 		} catch (AutomataLibraryException e1) {
 			mLogger.warn("Verification cancelled");
-			m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
-			m_BenchmarkGenerator.setResult(Result.TIMEOUT);
-			m_ToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
+			mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
+			mBenchmarkGenerator.setResult(Result.TIMEOUT);
+			mToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
 			return Result.TIMEOUT;
 		}
 		if (initalAbstractionCorrect) {
-			m_MDBenchmark.reportNoRemainderModule();
-			m_BenchmarkGenerator.setResult(Result.TERMINATING);
+			mMDBenchmark.reportNoRemainderModule();
+			mBenchmarkGenerator.setResult(Result.TERMINATING);
 			return Result.TERMINATING;
 		}
 
-		for (m_Iteration = 1; m_Iteration <= m_Pref.maxIterations(); m_Iteration++) {
-			mLogger.info("======== Iteration " + m_Iteration + "============");
-			m_SmtManager.setIteration(m_Iteration);
-			m_BenchmarkGenerator.announceNextIteration();
+		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
+			mLogger.info("======== Iteration " + mIteration + "============");
+			mSmtManager.setIteration(mIteration);
+			mBenchmarkGenerator.announceNextIteration();
 
 			boolean abstractionCorrect;
 			try {
 				abstractionCorrect = isAbstractionCorrect();
 			} catch (AutomataLibraryException e1) {
 				mLogger.warn("Verification cancelled");
-				m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
-				if (m_ConstructTermcompProof) {
-					m_TermcompProofBenchmark.reportRemainderModule(false);
+				mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
+				if (mConstructTermcompProof) {
+					mTermcompProofBenchmark.reportRemainderModule(false);
 				}
-				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
-				m_ToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
+				mBenchmarkGenerator.setResult(Result.TIMEOUT);
+				mToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
 				return Result.TIMEOUT;
 			}
 			if (abstractionCorrect) {
-				m_MDBenchmark.reportNoRemainderModule();
-				if (m_ConstructTermcompProof) {
-					m_TermcompProofBenchmark.reportNoRemainderModule();
+				mMDBenchmark.reportNoRemainderModule();
+				if (mConstructTermcompProof) {
+					mTermcompProofBenchmark.reportNoRemainderModule();
 				}
-				m_BenchmarkGenerator.setResult(Result.TERMINATING);
+				mBenchmarkGenerator.setResult(Result.TERMINATING);
 				return Result.TERMINATING;
 			}
 
 			LassoChecker lassoChecker;
 			try {
-				m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
-				lassoChecker = new LassoChecker(m_Interpolation, m_SmtManager,
-						m_RootNode.getRootAnnot().getModGlobVarManager(),
-						m_RootNode.getRootAnnot().getBoogie2SMT().getAxioms(), m_BinaryStatePredicateManager,
-						m_Counterexample, generateLassoCheckerIdentifier(), m_Services, mStorage);
+				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
+				lassoChecker = new LassoChecker(mInterpolation, mSmtManager,
+						mRootNode.getRootAnnot().getModGlobVarManager(),
+						mRootNode.getRootAnnot().getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager,
+						mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage);
 				if (lassoChecker.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
 					// This allows us to verify Vincent's coolant examples
 					mLogger.info("Result of lasso check was UNKNOWN. I will concatenate loop to stem and try again.");
-					NestedRun<CodeBlock, IPredicate> newStem = m_Counterexample.getStem()
-							.concatenate(m_Counterexample.getLoop());
-					m_Counterexample = new NestedLassoRun<>(newStem, m_Counterexample.getLoop());
-					lassoChecker = new LassoChecker(m_Interpolation, m_SmtManager,
-							m_RootNode.getRootAnnot().getModGlobVarManager(),
-							m_RootNode.getRootAnnot().getBoogie2SMT().getAxioms(), m_BinaryStatePredicateManager,
-							m_Counterexample, generateLassoCheckerIdentifier(), m_Services, mStorage);
+					NestedRun<CodeBlock, IPredicate> newStem = mCounterexample.getStem()
+							.concatenate(mCounterexample.getLoop());
+					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
+					lassoChecker = new LassoChecker(mInterpolation, mSmtManager,
+							mRootNode.getRootAnnot().getModGlobVarManager(),
+							mRootNode.getRootAnnot().getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager,
+							mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage);
 				}
 			} catch (ToolchainCanceledException e) {
-				m_ToolchainCancelledException = e;
-				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
+				mToolchainCancelledException = e;
+				mBenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} finally {
-				m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
+				mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 			}
 
 			ContinueDirective cd = lassoChecker.getLassoCheckResult().getContinueDirective();
-			m_BenchmarkGenerator.reportLassoAnalysis(lassoChecker);
+			mBenchmarkGenerator.reportLassoAnalysis(lassoChecker);
 			try {
 				switch (cd) {
 				case REFINE_BOTH: {
 					BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
 					if (bspm.isLoopWithoutStemTerminating()) {
-						m_RankWithoutSi++;
+						mRankWithoutSi++;
 					} else {
-						m_RankWithSi++;
+						mRankWithSi++;
 					}
-					ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
+					ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					ProgramPoint hondaPP = hondaISLP.getProgramPoint();
 					TerminationArgumentResult<RcfgElement, Expression> tar = constructTAResult(
-							bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(),
-							m_Counterexample.getLoop().getWord());
-					m_MDBenchmark.reportRankingFunction(m_Iteration, tar);
+							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
+							mCounterexample.getLoop().getWord());
+					mMDBenchmark.reportRankingFunction(mIteration, tar);
 
 					INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
-					m_Abstraction = newAbstraction;
-					m_BinaryStatePredicateManager.clearPredicates();
+					mAbstraction = newAbstraction;
+					mBinaryStatePredicateManager.clearPredicates();
 
 					if (s_ReduceAbstractionSize) {
 						reduceAbstractionSize();
 					}
 
 					refineFinite(lassoChecker);
-					m_Infeasible++;
+					mInfeasible++;
 				}
 					break;
 				case REFINE_FINITE:
 					refineFinite(lassoChecker);
-					m_Infeasible++;
+					mInfeasible++;
 					break;
 
 				case REFINE_BUCHI:
 					BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
 					if (bspm.isLoopWithoutStemTerminating()) {
-						m_RankWithoutSi++;
+						mRankWithoutSi++;
 					} else {
-						m_RankWithSi++;
+						mRankWithSi++;
 					}
-					ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
+					ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					ProgramPoint hondaPP = hondaISLP.getProgramPoint();
 					TerminationArgumentResult<RcfgElement, Expression> tar = constructTAResult(
-							bspm.getTerminationArgument(), hondaPP, m_Counterexample.getStem().getWord(),
-							m_Counterexample.getLoop().getWord());
-					m_MDBenchmark.reportRankingFunction(m_Iteration, tar);
+							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
+							mCounterexample.getLoop().getWord());
+					mMDBenchmark.reportRankingFunction(mIteration, tar);
 
 					INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
-					m_Abstraction = newAbstraction;
-					m_BinaryStatePredicateManager.clearPredicates();
+					mAbstraction = newAbstraction;
+					mBinaryStatePredicateManager.clearPredicates();
 					break;
 				case REPORT_UNKNOWN:
-					m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
-					if (m_ConstructTermcompProof) {
-						m_TermcompProofBenchmark.reportRemainderModule(false);
+					mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
+					if (mConstructTermcompProof) {
+						mTermcompProofBenchmark.reportRemainderModule(false);
 					}
-					m_BenchmarkGenerator.setResult(Result.UNKNOWN);
+					mBenchmarkGenerator.setResult(Result.UNKNOWN);
 					return Result.UNKNOWN;
 				case REPORT_NONTERMINATION:
 					if (!lassoWasOverapproximated().isEmpty()) {
-						m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
-						if (m_ConstructTermcompProof) {
-							m_TermcompProofBenchmark.reportRemainderModule(false);
+						mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
+						if (mConstructTermcompProof) {
+							mTermcompProofBenchmark.reportRemainderModule(false);
 						}
-						m_BenchmarkGenerator.setResult(Result.UNKNOWN);
+						mBenchmarkGenerator.setResult(Result.UNKNOWN);
 						return Result.UNKNOWN;
 					}
-					m_NonterminationArgument = lassoChecker.getNonTerminationArgument();
-					m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), true);
-					if (m_ConstructTermcompProof) {
-						m_TermcompProofBenchmark.reportRemainderModule(true);
+					mNonterminationArgument = lassoChecker.getNonTerminationArgument();
+					mMDBenchmark.reportRemainderModule(mAbstraction.size(), true);
+					if (mConstructTermcompProof) {
+						mTermcompProofBenchmark.reportRemainderModule(true);
 					}
-					m_BenchmarkGenerator.setResult(Result.NONTERMINATING);
+					mBenchmarkGenerator.setResult(Result.NONTERMINATING);
 					return Result.NONTERMINATING;
 				default:
 					throw new AssertionError("impossible case");
 				}
-				mLogger.info("Abstraction has " + m_Abstraction.sizeInformation());
+				mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 				// s_Logger.info("Interpolant automaton has " +
-				// m_RefineBuchi.getInterpolAutomatonUsedInRefinement().sizeInformation());
+				// mRefineBuchi.getInterpolAutomatonUsedInRefinement().sizeInformation());
 
 				if (s_ReduceAbstractionSize) {
 					reduceAbstractionSize();
 				}
 
-				if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.ABSTRACTION) {
-					m_ArtifactAutomaton = m_Abstraction;
+				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
+					mArtifactAutomaton = mAbstraction;
 				}
 
-				if (m_Pref.dumpAutomata()) {
-					String filename = m_RootNode.getFilename() + "_" + "Abstraction" + m_Iteration;
-					writeAutomatonToFile(m_Services, m_Abstraction, m_Pref.dumpPath(), filename,
-							m_Pref.getAutomataFormat(), "");
+				if (mPref.dumpAutomata()) {
+					String filename = mRootNode.getFilename() + "_" + "Abstraction" + mIteration;
+					writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
+							mPref.getAutomataFormat(), "");
 				}
-				m_BenchmarkGenerator.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
+				mBenchmarkGenerator.reportAbstractionSize(mAbstraction.size(), mIteration);
 
 			} catch (AutomataOperationCanceledException e) {
-				m_ToolchainCancelledException = new ToolchainCanceledException(e.getClassOfThrower());
-				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
+				mToolchainCancelledException = new ToolchainCanceledException(e.getClassOfThrower());
+				mBenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (ToolchainCanceledException e) {
-				m_ToolchainCancelledException = e;
-				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
+				mToolchainCancelledException = e;
+				mBenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
-			m_InterpolAutomaton = null;
+			mInterpolAutomaton = null;
 		}
-		m_BenchmarkGenerator.setResult(Result.TIMEOUT);
+		mBenchmarkGenerator.setResult(Result.TIMEOUT);
 		return Result.TIMEOUT;
 	}
 
 	private Map<String, ILocation> lassoWasOverapproximated() {
-		NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
-		NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
+		NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
+		NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
 		Map<String, ILocation> overapproximations = new HashMap<>();
 		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(stem.asList()));
 		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(loop.asList()));
@@ -567,88 +567,88 @@ public class BuchiCegarLoop {
 	 * @throws AssertionError
 	 */
 	private void reduceAbstractionSize() throws AutomataOperationCanceledException, AssertionError {
-		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
+		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		try {
-			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
-					m_Abstraction)).getResult();
+			mAbstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+					mAbstraction)).getResult();
 		} finally {
-			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
+			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		}
-		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
+		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		try {
-			m_Abstraction = (new BuchiClosureNwa<>(
-					new AutomataLibraryServices(m_Services), m_Abstraction));
-			// m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, m_Abstraction)).getResult();
+			mAbstraction = (new BuchiClosureNwa<>(
+					new AutomataLibraryServices(mServices), mAbstraction));
+			// mAbstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(mServices, mAbstraction)).getResult();
 		} finally {
-			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
+			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		}
-		m_BenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
-		int statesBeforeMinimization = m_Abstraction.size();
-		mLogger.info("Abstraction has " + m_Abstraction.sizeInformation());
-		Collection<Set<IPredicate>> partition = computePartition(m_Abstraction);
+		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
+		int statesBeforeMinimization = mAbstraction.size();
+		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
+		Collection<Set<IPredicate>> partition = computePartition(mAbstraction);
 		try {
-			if (m_Abstraction.size() > 0) {
+			if (mAbstraction.size() > 0) {
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimize(partition);
-				m_Abstraction = minimized;
+				mAbstraction = minimized;
 			}
 		} catch (AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass(),
-					"minimizing automaton with " + m_Abstraction.size() + " states");
+					"minimizing automaton with " + mAbstraction.size() + " states");
 		} catch (AutomataLibraryException e) {
 			throw new AssertionError(e.getMessage());
 		} finally {
-			m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
+			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		}
-		int statesAfterMinimization = m_Abstraction.size();
-		m_BenchmarkGenerator.announceStatesRemovedByMinimization(statesBeforeMinimization - statesAfterMinimization);
-		mLogger.info("Abstraction has " + m_Abstraction.sizeInformation());
+		int statesAfterMinimization = mAbstraction.size();
+		mBenchmarkGenerator.announceStatesRemovedByMinimization(statesBeforeMinimization - statesAfterMinimization);
+		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 	}
 
 	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimize(Collection<Set<IPredicate>> partition)
 			throws AutomataOperationCanceledException, AutomataLibraryException {
 		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> result;
-		switch (m_AutomataMinimization) {
+		switch (mAutomataMinimization) {
 		case DelayedSimulation: {
-			BuchiReduce<CodeBlock, IPredicate> minimizeOp = new BuchiReduce<>(new AutomataLibraryServices(m_Services),
-					m_StateFactoryForRefinement, m_Abstraction);
+			BuchiReduce<CodeBlock, IPredicate> minimizeOp = new BuchiReduce<>(new AutomataLibraryServices(mServices),
+					mStateFactoryForRefinement, mAbstraction);
 			result = minimizeOp.getResult();
 			break;
 		}
 		case FairSimulation_WithoutSCC: {
 			ReduceBuchiFairSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairSimulation<>(
-					new AutomataLibraryServices(m_Services), m_StateFactoryForRefinement, m_Abstraction, false);
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction, false);
 			result = minimizeOp.getResult();
 			break;
 		}
 		case FairSimulation_WithSCC: {
 			ReduceBuchiFairSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairSimulation<>(
-					new AutomataLibraryServices(m_Services), m_StateFactoryForRefinement, m_Abstraction, true);
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction, true);
 			result = minimizeOp.getResult();
 			break;
 		}
 		case FairDirectSimulation: {
 			ReduceBuchiFairDirectSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairDirectSimulation<>(
-					new AutomataLibraryServices(m_Services), m_StateFactoryForRefinement, m_Abstraction, true);
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction, true);
 			result = minimizeOp.getResult();
 			break;
 		}
 		case MinimizeSevpa: {
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
-					new AutomataLibraryServices(m_Services), m_Abstraction, partition, m_StateFactoryForRefinement);
-			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
+					new AutomataLibraryServices(mServices), mAbstraction, partition, mStateFactoryForRefinement);
+			assert (minimizeOp.checkResult(mPredicateFactoryResultChecking));
 			result = minimizeOp.getResult();
 			break;
 		}
 		case None: {
-			result = m_Abstraction;
+			result = mAbstraction;
 			break;
 		}
 		case ShrinkNwa: {
 			ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
-					new AutomataLibraryServices(m_Services), m_StateFactoryForRefinement, m_Abstraction, partition,
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction, partition,
 					true, false, false, 200, false, 0, false, false);
-			assert minimizeOp.checkResult(m_StateFactoryForRefinement);
-			result = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
+			assert minimizeOp.checkResult(mStateFactoryForRefinement);
+			result = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 					minimizeOp.getResult())).getResult();
 			break;
 		}
@@ -660,53 +660,53 @@ public class BuchiCegarLoop {
 
 	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker)
 			throws AutomataOperationCanceledException {
-		m_BenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
 		BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
 				lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
 				lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
-				m_RootNode.getRootAnnot().getModGlobVarManager(), m_RootNode.getRootAnnot().getBoogie2SMT());
-		for (RefinementSetting rs : m_BuchiRefinementSettingSequence) {
+				mRootNode.getRootAnnot().getModGlobVarManager(), mRootNode.getRootAnnot().getBoogie2SMT());
+		for (RefinementSetting rs : mBuchiRefinementSettingSequence) {
 			// if (stage > 0) {
 			// s_Logger.info("Statistics: We needed stage " + stage);
 			// }
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = null;
 			try {
-				newAbstraction = m_RefineBuchi.refineBuchi(m_Abstraction, m_Counterexample, m_Iteration, rs,
-						lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation, m_BenchmarkGenerator,
-						m_ComplementationConstruction);
+				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, rs,
+						lassoChecker.getBinaryStatePredicateManager(), bmgvm, mInterpolation, mBenchmarkGenerator,
+						mComplementationConstruction);
 			} catch (AutomataOperationCanceledException e) {
-				m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				String runningTaskInfo = "applying " + e.getClassOfThrower().getSimpleName() + " in stage " + stage;
 				throw new ToolchainCanceledException(getClass(), runningTaskInfo);
 			} catch (ToolchainCanceledException e) {
-				m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				throw e;
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError(e.getMessage());
 			}
 			if (newAbstraction != null) {
-				if (m_ConstructTermcompProof) {
-					m_TermcompProofBenchmark.reportBuchiModule(m_Iteration,
-							m_RefineBuchi.getInterpolAutomatonUsedInRefinement());
+				if (mConstructTermcompProof) {
+					mTermcompProofBenchmark.reportBuchiModule(mIteration,
+							mRefineBuchi.getInterpolAutomatonUsedInRefinement());
 				}
-				m_BenchmarkGenerator.announceSuccessfullRefinementStage(stage);
+				mBenchmarkGenerator.announceSuccessfullRefinementStage(stage);
 				switch (rs.getInterpolantAutomaton()) {
 				case Deterministic:
 				case LassoAutomaton:
-					m_MDBenchmark.reportDeterminsticModule(m_Iteration,
-							m_RefineBuchi.getInterpolAutomatonUsedInRefinement().size());
+					mMDBenchmark.reportDeterminsticModule(mIteration,
+							mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
 					break;
 				case ScroogeNondeterminism:
 				case EagerNondeterminism:
-					m_MDBenchmark.reportNonDeterminsticModule(m_Iteration,
-							m_RefineBuchi.getInterpolAutomatonUsedInRefinement().size());
+					mMDBenchmark.reportNonDeterminsticModule(mIteration,
+							mRefineBuchi.getInterpolAutomatonUsedInRefinement().size());
 					break;
 				default:
 					throw new AssertionError("unsupported");
 				}
-				m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-				m_BenchmarkGenerator.addBackwardCoveringInformationBuchi(m_RefineBuchi.getBci());
+				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+				mBenchmarkGenerator.addBackwardCoveringInformationBuchi(mRefineBuchi.getBci());
 				return newAbstraction;
 			}
 			stage++;
@@ -716,33 +716,33 @@ public class BuchiCegarLoop {
 
 	private boolean isAbstractionCorrect() throws AutomataLibraryException {
 		BuchiIsEmpty<CodeBlock, IPredicate> ec = new BuchiIsEmpty<CodeBlock, IPredicate>(
-				new AutomataLibraryServices(m_Services), m_Abstraction);
+				new AutomataLibraryServices(mServices), mAbstraction);
 		if (ec.getResult()) {
 			return true;
 		} else {
-			m_Counterexample = ec.getAcceptingNestedLassoRun();
+			mCounterexample = ec.getAcceptingNestedLassoRun();
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Counterexample stem histogram "
-						+ (new HistogramOfIterable<CodeBlock>(m_Counterexample.getStem().getWord())));
+						+ (new HistogramOfIterable<CodeBlock>(mCounterexample.getStem().getWord())));
 				mLogger.info("Counterexample loop histogram "
-						+ (new HistogramOfIterable<CodeBlock>(m_Counterexample.getLoop().getWord())));
+						+ (new HistogramOfIterable<CodeBlock>(mCounterexample.getLoop().getWord())));
 			}
-			assert m_Counterexample.getLoop().getLength() > 1;
+			assert mCounterexample.getLoop().getLength() > 1;
 			return false;
 		}
 	}
 
 	private void getInitialAbstraction() {
-		CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(m_Services,
-				m_Pref.interprocedural(), m_SmtManager, mLogger);
+		CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(mServices,
+				mPref.interprocedural(), mSmtManager, mLogger);
 		Collection<ProgramPoint> acceptingNodes;
 		Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
-		for (Map<String, ProgramPoint> prog2pp : m_RootNode.getRootAnnot().getProgramPoints().values()) {
+		for (Map<String, ProgramPoint> prog2pp : mRootNode.getRootAnnot().getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
 
 		// check if we run in LTL mode and set accepting states accordingly
-		if (LTLPropertyCheck.getAnnotation(m_RootNode) != null) {
+		if (LTLPropertyCheck.getAnnotation(mRootNode) != null) {
 			mLTLMode = true;
 			acceptingNodes = new HashSet<ProgramPoint>();
 			for (ProgramPoint pp : allNodes) {
@@ -754,107 +754,107 @@ public class BuchiCegarLoop {
 			mLTLMode = false;
 			acceptingNodes = allNodes;
 		}
-		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(m_RootNode, m_DefaultStateFactory,
+		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(mRootNode, mDefaultStateFactory,
 				acceptingNodes);
 	}
 
 	private void refineFinite(LassoChecker lassoChecker) throws AutomataOperationCanceledException {
-		m_BenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final InterpolatingTraceChecker traceChecker;
 		final NestedRun<CodeBlock, IPredicate> run;
 		LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
 		if (lassoChecker.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 			// if both (stem and loop) are infeasible we take the smaller
 			// one.
-			int stemSize = m_Counterexample.getStem().getLength();
-			int loopSize = m_Counterexample.getLoop().getLength();
+			int stemSize = mCounterexample.getStem().getLength();
+			int loopSize = mCounterexample.getLoop().getLength();
 			if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE && loopSize <= stemSize) {
 				traceChecker = lassoChecker.getLoopCheck();
-				run = m_Counterexample.getLoop();
+				run = mCounterexample.getLoop();
 			} else {
 				traceChecker = lassoChecker.getStemCheck();
-				run = m_Counterexample.getStem();
+				run = mCounterexample.getStem();
 			}
 		} else if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
 			traceChecker = lassoChecker.getLoopCheck();
-			run = m_Counterexample.getLoop();
+			run = mCounterexample.getLoop();
 		} else {
 			assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
 			traceChecker = lassoChecker.getConcatCheck();
 			run = lassoChecker.getConcatenatedCounterexample();
 		}
-		BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_Services, traceChecker,
+		BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker,
 				mLogger);
-		m_BenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
+		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
 		constructInterpolantAutomaton(traceChecker, run);
 
-		ModifiableGlobalVariableManager modGlobVarManager = m_RootNode.getRootAnnot().getModGlobVarManager();
+		ModifiableGlobalVariableManager modGlobVarManager = mRootNode.getRootAnnot().getModGlobVarManager();
 		final IHoareTripleChecker solverHtc = new IncrementalHoareTripleChecker(
-				m_RootNode.getRootAnnot().getManagedScript(), modGlobVarManager, m_SmtManager.getBoogie2Smt());
+				mRootNode.getRootAnnot().getManagedScript(), modGlobVarManager, mSmtManager.getBoogie2Smt());
 		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, modGlobVarManager,
-				traceChecker.getPredicateUnifier(), m_SmtManager);
+				traceChecker.getPredicateUnifier(), mSmtManager);
 
-		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services, m_SmtManager,
-				modGlobVarManager, htc, m_Abstraction, m_InterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger,
+		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices, mSmtManager,
+				modGlobVarManager, htc, mAbstraction, mInterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger,
 				false, false);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(determinized,
-				true, m_DefaultStateFactory);
+				true, mDefaultStateFactory);
 		Difference<CodeBlock, IPredicate> diff = null;
 		try {
-			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_Abstraction,
-					determinized, psd, m_StateFactoryForRefinement, true);
+			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mAbstraction,
+					determinized, psd, mStateFactoryForRefinement, true);
 		} catch (AutomataLibraryException e) {
 			if (e instanceof AutomataOperationCanceledException) {
-				m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				throw (AutomataOperationCanceledException) e;
 			} else {
 				throw new AssertionError();
 			}
 		} catch (ToolchainCanceledException e) {
-			m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 			throw e;
 		}
 		determinized.switchToReadonlyMode();
-		if (m_Pref.dumpAutomata()) {
-			String filename = m_RootNode.getFilename() + "_" + "interpolAutomatonUsedInRefinement" + m_Iteration
+		if (mPref.dumpAutomata()) {
+			String filename = mRootNode.getFilename() + "_" + "interpolAutomatonUsedInRefinement" + mIteration
 					+ "after";
-			writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_Pref.dumpPath(), filename,
-					m_Pref.getAutomataFormat(), "");
+			writeAutomatonToFile(mServices, mInterpolAutomaton, mPref.dumpPath(), filename,
+					mPref.getAutomataFormat(), "");
 		}
-		if (m_ConstructTermcompProof) {
-			m_TermcompProofBenchmark.reportFiniteModule(m_Iteration,
-					m_RefineBuchi.getInterpolAutomatonUsedInRefinement());
+		if (mConstructTermcompProof) {
+			mTermcompProofBenchmark.reportFiniteModule(mIteration,
+					mRefineBuchi.getInterpolAutomatonUsedInRefinement());
 		}
-		m_MDBenchmark.reportTrivialModule(m_Iteration, m_InterpolAutomaton.size());
-		assert (new InductivityCheck(m_Services,
-				m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
-						m_RootNode.getRootAnnot().getManagedScript(), modGlobVarManager, m_SmtManager.getBoogie2Smt())))
+		mMDBenchmark.reportTrivialModule(mIteration, mInterpolAutomaton.size());
+		assert (new InductivityCheck(mServices,
+				mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
+						mRootNode.getRootAnnot().getManagedScript(), modGlobVarManager, mSmtManager.getBoogie2Smt())))
 								.getResult();
-		m_Abstraction = diff.getResult();
-		m_BenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
-		m_BenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		mAbstraction = diff.getResult();
+		mBenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
+		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 	}
 
 	protected void constructInterpolantAutomaton(InterpolatingTraceChecker traceChecker,
 			NestedRun<CodeBlock, IPredicate> run) throws AutomataOperationCanceledException {
-		CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(m_Services, traceChecker,
-				CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(m_Abstraction), m_SmtManager,
-				m_Abstraction.getStateFactory(), mLogger);
+		CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(mServices, traceChecker,
+				CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(mAbstraction), mSmtManager,
+				mAbstraction.getStateFactory(), mLogger);
 		iab.analyze();
-		m_InterpolAutomaton = iab.getInterpolantAutomaton();
+		mInterpolAutomaton = iab.getInterpolantAutomaton();
 
 		try {
-			assert ((new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_InterpolAutomaton,
+			assert ((new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mInterpolAutomaton,
 					run.getWord())).getResult()) : "Interpolant automaton broken!";
 		} catch (AutomataLibraryException e) {
 			throw new AssertionError(e);
 		}
-		// assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,
-		// m_Counterexample.getNestedLassoWord())).getResult()) :
+		// assert((new BuchiAccepts<CodeBlock, IPredicate>(mInterpolAutomaton,
+		// mCounterexample.getNestedLassoWord())).getResult()) :
 		// "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(),
-						m_RootNode.getRootAnnot().getModGlobVarManager(), m_SmtManager.getBoogie2Smt()))).getResult();
+		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true,
+				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
+						mRootNode.getRootAnnot().getModGlobVarManager(), mSmtManager.getBoogie2Smt()))).getResult();
 	}
 
 	private TerminationArgumentResult<RcfgElement, Expression> constructTAResult(
@@ -865,15 +865,15 @@ public class BuchiCegarLoop {
 		Expression[] supporting_invariants = new Expression[si_list.size()];
 		int i = 0;
 		for (SupportingInvariant si : terminationArgument.getSupportingInvariants()) {
-			supporting_invariants[i] = si.asExpression(m_SmtManager.getScript(),
-					m_RootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression());
+			supporting_invariants[i] = si.asExpression(mSmtManager.getScript(),
+					mRootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression());
 			++i;
 		}
 		TerminationArgumentResult<RcfgElement, Expression> result = new TerminationArgumentResult<RcfgElement, Expression>(
 				honda, Activator.PLUGIN_NAME,
-				rf.asLexExpression(m_SmtManager.getScript(),
-						m_RootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression()),
-				rf.getName(), supporting_invariants, m_Services.getBacktranslationService(), Expression.class);
+				rf.asLexExpression(mSmtManager.getScript(),
+						mRootNode.getRootAnnot().getBoogie2SMT().getTerm2Expression()),
+				rf.getName(), supporting_invariants, mServices.getBacktranslationService(), Expression.class);
 		return result;
 	}
 
@@ -920,11 +920,11 @@ public class BuchiCegarLoop {
 	}
 
 	public BuchiAutomizerModuleDecompositionBenchmark getMDBenchmark() {
-		return m_MDBenchmark;
+		return mMDBenchmark;
 	}
 
 	public TermcompProofBenchmark getTermcompProofBenchmark() {
-		return m_TermcompProofBenchmark;
+		return mTermcompProofBenchmark;
 	}
 
 	/**
@@ -933,12 +933,12 @@ public class BuchiCegarLoop {
 	 * 
 	 */
 	public String generateLassoCheckerIdentifier() {
-		String pureFilename = m_RootNode.getFilename();
-		return pureFilename + "_Iteration" + m_Iteration;
+		String pureFilename = mRootNode.getFilename();
+		return pureFilename + "_Iteration" + mIteration;
 	}
 
 	public BuchiCegarLoopBenchmarkGenerator getBenchmarkGenerator() {
-		return m_BenchmarkGenerator;
+		return mBenchmarkGenerator;
 	}
 
 	/**

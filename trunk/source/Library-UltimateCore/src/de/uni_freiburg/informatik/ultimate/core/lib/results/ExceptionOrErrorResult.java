@@ -37,14 +37,14 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptio
  * @author Matthias Heizmann
  */
 public class ExceptionOrErrorResult extends AbstractResult {
-	private final Throwable m_Throwable;
+	private final Throwable mThrowable;
 
 	public ExceptionOrErrorResult(String plugin, Throwable throwable) {
 		super(getPluginName(plugin, throwable));
 		if (throwable instanceof ToolchainExceptionWrapper) {
-			m_Throwable = ((ToolchainExceptionWrapper) throwable).getWrappedThrowable();
+			mThrowable = ((ToolchainExceptionWrapper) throwable).getWrappedThrowable();
 		} else {
-			m_Throwable = throwable;
+			mThrowable = throwable;
 		}
 	}
 
@@ -58,12 +58,12 @@ public class ExceptionOrErrorResult extends AbstractResult {
 
 	@Override
 	public String getShortDescription() {
-		return m_Throwable.getClass().getSimpleName() + ": " + m_Throwable.getMessage();
+		return mThrowable.getClass().getSimpleName() + ": " + mThrowable.getMessage();
 	}
 
 	@Override
 	public String getLongDescription() {
-		StackTraceElement[] stacktrace = m_Throwable.getStackTrace();
+		StackTraceElement[] stacktrace = mThrowable.getStackTrace();
 		String rtr = getPlugin() + ": " + getShortDescription();
 		if (stacktrace != null && stacktrace.length > 0) {
 			rtr = rtr + ": " + stacktrace[0].toString();

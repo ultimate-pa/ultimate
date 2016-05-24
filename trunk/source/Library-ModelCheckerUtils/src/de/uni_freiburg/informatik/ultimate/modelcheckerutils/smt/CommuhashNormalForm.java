@@ -66,17 +66,17 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  */
 public class CommuhashNormalForm {
 
-	private final IUltimateServiceProvider m_Services;
-	private final Script m_Script;
+	private final IUltimateServiceProvider mServices;
+	private final Script mScript;
 	
 	public CommuhashNormalForm(IUltimateServiceProvider services, Script script) {
 		super();
-		m_Services = services;
-		m_Script = script;
+		mServices = services;
+		mScript = script;
 	}
 	
 	public Term transform(Term term) {
-		ILogger logger = m_Services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		ILogger logger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		logger.debug(new DebugMessage(
 				"applying CommuhashNormalForm to formula of DAG size {0}", 
 				new DagSizePrinter(term)));
@@ -84,7 +84,7 @@ public class CommuhashNormalForm {
 		logger.debug(new DebugMessage(
 				"DAG size before CommuhashNormalForm {0}, DAG size after CommuhashNormalForm {1}", 
 				new DagSizePrinter(term), new DagSizePrinter(result)));
-		assert (Util.checkSat(m_Script, m_Script.term("distinct", term, result)) != LBool.SAT) : "CommuhashNormalForm transformation unsound";
+		assert (Util.checkSat(mScript, mScript.term("distinct", term, result)) != LBool.SAT) : "CommuhashNormalForm transformation unsound";
 		return result;
 	}
 	
@@ -129,8 +129,8 @@ public class CommuhashNormalForm {
 		}
 
 		private Term tryToTransformToPositiveNormalForm(Term simplified) throws NotAffineException {
-			AffineRelation affRel = new AffineRelation(m_Script, simplified, TransformInequality.STRICT2NONSTRICT);
-			Term pnf = affRel.positiveNormalForm(m_Script);
+			AffineRelation affRel = new AffineRelation(mScript, simplified, TransformInequality.STRICT2NONSTRICT);
+			Term pnf = affRel.positiveNormalForm(mScript);
 			return pnf;
 		}
 
@@ -150,13 +150,13 @@ public class CommuhashNormalForm {
 									BigInteger[] indices, Term[] params) {
 			Term[] sortedParams = sortByHashCode(params);
 			Term simplified = SmtUtils.termWithLocalSimplification(
-					m_Script, funcname, indices, sortedParams);
+					mScript, funcname, indices, sortedParams);
 			return simplified;
 		}
 
 		@Override
 		public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
-			final Term result = SmtUtils.quantifier(m_Script, 
+			final Term result = SmtUtils.quantifier(mScript, 
 					old.getQuantifier(), Arrays.asList(old.getVariables()), newBody);
 			setResult(result);
 		}

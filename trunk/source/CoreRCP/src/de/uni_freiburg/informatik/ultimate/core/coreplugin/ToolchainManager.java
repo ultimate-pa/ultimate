@@ -123,7 +123,7 @@ public class ToolchainManager {
 
 	private IModelManager createModelManager() {
 		String tmp_dir = new RcpPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(CorePreferenceInitializer.LABEL_MM_TMPDIRECTORY);
+				.getString(CorePreferenceInitializer.LABEL_MmTMPDIRECTORY);
 		return new PersistenceAwareModelManager(tmp_dir, mLogger);
 	}
 
@@ -371,7 +371,7 @@ public class ToolchainManager {
 				}
 
 				/*
-				 * for testing purposes only for(ISerialization ser : m_SerializationPlugins) { ser.serialize(root,
+				 * for testing purposes only for(ISerialization ser : mSerializationPlugins) { ser.serialize(root,
 				 * "c:\\test.txt"); INode in = ser.deserialize("c:\\test.txt"); if(in == in)
 				 * System.out.println(in.toString()); }
 				 */
@@ -399,7 +399,7 @@ public class ToolchainManager {
 		}
 
 		private final ISource selectParser(final File file) {
-			// how many parsers does m_SourcePlugins provide?
+			// how many parsers does mSourcePlugins provide?
 			ArrayList<ISource> usableParsers = new ArrayList<ISource>();
 			ISource parser = null;
 			List<String> parserIds = mPluginFactory.getPluginClassNames(ISource.class);

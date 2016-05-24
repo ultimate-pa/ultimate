@@ -39,31 +39,31 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  *
  */
 public class AutomataScriptLocation implements ILocation {
-	protected int m_StartLine;
-	protected int m_EndLine;
-	protected int m_StartColumn;
-	protected int m_EndColumn;
-	protected String m_FileName;
+	protected int mStartLine;
+	protected int mEndLine;
+	protected int mStartColumn;
+	protected int mEndColumn;
+	protected String mFileName;
 	
 	
 	
-	public AutomataScriptLocation(String m_FileName, int m_StartLine, int m_EndLine,
-			int m_StartColumn, int m_EndColumn) {
-		this.m_StartLine = m_StartLine;
-		this.m_EndLine = m_EndLine;
-		this.m_StartColumn = m_StartColumn;
-		this.m_EndColumn = m_EndColumn;
-		this.m_FileName = m_FileName;
+	public AutomataScriptLocation(String mFileName, int mStartLine, int mEndLine,
+			int mStartColumn, int mEndColumn) {
+		this.mStartLine = mStartLine;
+		this.mEndLine = mEndLine;
+		this.mStartColumn = mStartColumn;
+		this.mEndColumn = mEndColumn;
+		this.mFileName = mFileName;
 	}
 
-	public AutomataScriptLocation(String m_FileName) {
-		this.m_FileName = m_FileName;
+	public AutomataScriptLocation(String mFileName) {
+		this.mFileName = mFileName;
 	}
 
 
-	public AutomataScriptLocation(int m_StartLine, int m_EndLine) {
-		this.m_StartLine = m_StartLine;
-		this.m_EndLine = m_EndLine;
+	public AutomataScriptLocation(int mStartLine, int mEndLine) {
+		this.mStartLine = mStartLine;
+		this.mEndLine = mEndLine;
 	}
 	
 
@@ -72,16 +72,16 @@ public class AutomataScriptLocation implements ILocation {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Location: File \"");
-		builder.append(m_FileName);
+		builder.append(mFileName);
 		builder.append("\" at Line: ");
-		builder.append(m_StartLine);
+		builder.append(mStartLine);
 		builder.append(", Col: ");
-		builder.append(m_StartColumn);
+		builder.append(mStartColumn);
 //		
 //		builder.append(", Endline: ");
-//		builder.append(m_EndLine);
+//		builder.append(mEndLine);
 //		builder.append(", EndCol: ");
-//		builder.append(m_EndColumn);
+//		builder.append(mEndColumn);
 //	
 		return builder.toString();
 	}
@@ -96,7 +96,7 @@ public class AutomataScriptLocation implements ILocation {
 	@Override
 	public String getFileName() {
 		// TODO Auto-generated method stub
-		return m_FileName;
+		return mFileName;
 	}
 
 	/* (non-Javadoc)
@@ -105,7 +105,7 @@ public class AutomataScriptLocation implements ILocation {
 	@Override
 	public int getStartLine() {
 		// TODO Auto-generated method stub
-		return m_StartLine;
+		return mStartLine;
 	}
 
 	/* (non-Javadoc)
@@ -114,7 +114,7 @@ public class AutomataScriptLocation implements ILocation {
 	@Override
 	public int getEndLine() {
 		// TODO Auto-generated method stub
-		return m_EndLine;
+		return mEndLine;
 	}
 
 	/* (non-Javadoc)
@@ -123,7 +123,7 @@ public class AutomataScriptLocation implements ILocation {
 	@Override
 	public int getStartColumn() {
 		// TODO Auto-generated method stub
-		return m_StartColumn;
+		return mStartColumn;
 	}
 
 	/* (non-Javadoc)
@@ -132,7 +132,7 @@ public class AutomataScriptLocation implements ILocation {
 	@Override
 	public int getEndColumn() {
 		// TODO Auto-generated method stub
-		return m_EndColumn;
+		return mEndColumn;
 	}
 
 	/* (non-Javadoc)

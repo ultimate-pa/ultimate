@@ -49,24 +49,24 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  */
 public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 
-	private final Map<IPredicate,IPredicate> m_RankDecrease2RankEquality = 
+	private final Map<IPredicate,IPredicate> mRankDecrease2RankEquality = 
 			new HashMap<IPredicate,IPredicate>();
-	private final IHoareTripleChecker m_IHoareTripleChecker;
+	private final IHoareTripleChecker mIHoareTripleChecker;
 
 	
 	public BuchiHoareTripleChecker(IHoareTripleChecker iHoareTripleChecker) {
 		super();
-		m_IHoareTripleChecker = iHoareTripleChecker;
+		mIHoareTripleChecker = iHoareTripleChecker;
 	}
 
 
 	public void putDecreaseEqualPair(IPredicate rankDecreaseAndBound, IPredicate rankEquality) {
-		m_RankDecrease2RankEquality.put(rankDecreaseAndBound, rankEquality);
+		mRankDecrease2RankEquality.put(rankDecreaseAndBound, rankEquality);
 	}
 
 	
 	private IPredicate replaceIfRankDecreasePredicate(IPredicate p) {
-		IPredicate rankEq = m_RankDecrease2RankEquality.get(p);
+		IPredicate rankEq = mRankDecrease2RankEquality.get(p);
 		if (rankEq == null) {
 			return p;
 		} else {
@@ -78,13 +78,13 @@ public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
 		pre = replaceIfRankDecreasePredicate(pre);
-		return m_IHoareTripleChecker.checkInternal(pre, act, succ);
+		return mIHoareTripleChecker.checkInternal(pre, act, succ);
 	}
 
 	@Override
 	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
 		pre = replaceIfRankDecreasePredicate(pre);
-		return m_IHoareTripleChecker.checkCall(pre, act, succ);
+		return mIHoareTripleChecker.checkCall(pre, act, succ);
 	}
 
 	@Override
@@ -92,18 +92,18 @@ public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 			IReturnAction act, IPredicate succ) {
 		preLin = replaceIfRankDecreasePredicate(preLin);
 		preHier = replaceIfRankDecreasePredicate(preHier);
-		return m_IHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
+		return mIHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 	}
 
 
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return m_IHoareTripleChecker.getEdgeCheckerBenchmark();
+		return mIHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 
 
 	@Override
 	public void releaseLock() {
-		m_IHoareTripleChecker.releaseLock();
+		mIHoareTripleChecker.releaseLock();
 	}
 	
 

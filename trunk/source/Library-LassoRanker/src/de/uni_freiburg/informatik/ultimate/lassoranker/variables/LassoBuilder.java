@@ -60,37 +60,37 @@ public class LassoBuilder {
 	/**
 	 * The Boogie2SMT object
 	 */
-	private final Boogie2SMT m_boogie2smt;
+	private final Boogie2SMT mboogie2smt;
 	
 	/**
 	 * Collection of all generated replacement TermVariables
 	 */
-	private final Collection<TermVariable> m_termVariables;
+	private final Collection<TermVariable> mtermVariables;
 
 	/**
 	 * Conjunctive representation of the lassos during the preprocessing.
 	 */
-	private List<LassoUnderConstruction> m_LassosUC;
+	private List<LassoUnderConstruction> mLassosUC;
 	
-	private Collection<Lasso> m_Lassos;
+	private Collection<Lasso> mLassos;
 	
 	
 	/**
 	 * The script used to create terms in the transition formulas
 	 */
-	private final Script m_Script;
+	private final Script mScript;
 	
 	/**
 	 * Object that has to be used for getting and constructing ReplacementVars
 	 * that occur in this LassoBuilder.
 	 */
-	private final ReplacementVarFactory m_ReplacementVarFactory;
+	private final ReplacementVarFactory mReplacementVarFactory;
 
-	private PreprocessingBenchmark m_PreprocessingBenchmark;
+	private PreprocessingBenchmark mPreprocessingBenchmark;
 
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 
-	private final NlaHandling m_NlaHandling;
+	private final NlaHandling mNlaHandling;
 	
 	/**
 	 * Create a new LassoBuilder object from components
@@ -104,19 +104,19 @@ public class LassoBuilder {
 			TransFormula loop, NlaHandling nlaHandling) {
 		assert script != null;
 		assert boogie2smt != null;
-		m_Logger = logger;
-		m_Script = script;
-		m_boogie2smt = boogie2smt;
-		m_NlaHandling = nlaHandling;
-		m_termVariables = new ArrayList<TermVariable>();
+		mLogger = logger;
+		mScript = script;
+		mboogie2smt = boogie2smt;
+		mNlaHandling = nlaHandling;
+		mtermVariables = new ArrayList<TermVariable>();
 		
-		m_ReplacementVarFactory =
-				new ReplacementVarFactory(m_boogie2smt.getVariableManager());
+		mReplacementVarFactory =
+				new ReplacementVarFactory(mboogie2smt.getVariableManager());
 		
-		m_LassosUC = new ArrayList<>();
-		m_LassosUC.add(new LassoUnderConstruction(
-				TransFormulaLR.buildTransFormula(stem, m_ReplacementVarFactory),
-				TransFormulaLR.buildTransFormula(loop, m_ReplacementVarFactory)
+		mLassosUC = new ArrayList<>();
+		mLassosUC.add(new LassoUnderConstruction(
+				TransFormulaLR.buildTransFormula(stem, mReplacementVarFactory),
+				TransFormulaLR.buildTransFormula(loop, mReplacementVarFactory)
 			));
 	}
 	
@@ -124,25 +124,25 @@ public class LassoBuilder {
 	 * @return the script used to generate the transition formulas
 	 */
 	public Script getScript() {
-		return m_Script;
+		return mScript;
 	}
 	
 	/**
 	 * @return the associated Boogie2SMT object
 	 */
 	public Boogie2SMT getBoogie2SMT() {
-		return m_boogie2smt;
+		return mboogie2smt;
 	}
 	
 	public ReplacementVarFactory getReplacementVarFactory() {
-		return m_ReplacementVarFactory;
+		return mReplacementVarFactory;
 	}
 
 	/**
 	 * @return a collection of all new TermVariable's created with this object
 	 */
 	public Collection<TermVariable> getGeneratedTermVariables() {
-		return Collections.unmodifiableCollection(m_termVariables);
+		return Collections.unmodifiableCollection(mtermVariables);
 	}
 	
 //	/**
@@ -150,7 +150,7 @@ public class LassoBuilder {
 //	 * @return whether getStemComponentsTermination() == getStemComponentsNonTermination()
 //	 */
 //	public boolean isStemApproximated() {
-//		return m_stem_components_t != m_stem_components_nt;
+//		return mstem_components_t != mstem_components_nt;
 //	}
 //	
 //	/**
@@ -158,20 +158,20 @@ public class LassoBuilder {
 //	 * @return whether getLoopComponentsTermination() == getLoopComponentsNonTermination()
 //	 */
 //	public boolean isLoopApproximated() {
-//		return m_loop_components_t != m_loop_components_nt;
+//		return mloop_components_t != mloop_components_nt;
 //	}
 	
 	/**
 	 * @return the conjunction of lassos
 	 */
 	public List<LassoUnderConstruction> getLassosUC() {
-		return m_LassosUC;
+		return mLassosUC;
 	}
 	
 	
 	public void applyPreprocessor(LassoPreprocessor preprocessor) throws TermException {
 		ArrayList<LassoUnderConstruction> newLassos = new ArrayList<LassoUnderConstruction>();
-		for (LassoUnderConstruction lasso : m_LassosUC) {
+		for (LassoUnderConstruction lasso : mLassosUC) {
 			try {
 				newLassos.addAll(preprocessor.process(lasso));
 			} catch (ToolchainCanceledException tce) {
@@ -182,7 +182,7 @@ public class LassoBuilder {
 				throw new ToolchainCanceledException(getClass(), taskMessage);
 			}
 		}
-		m_LassosUC = newLassos;
+		mLassosUC = newLassos;
 	}
 	
 	
@@ -192,7 +192,7 @@ public class LassoBuilder {
 	 */
 	public boolean isSane() {
 		boolean sane = true;
-		for (LassoUnderConstruction luc : m_LassosUC) {
+		for (LassoUnderConstruction luc : mLassosUC) {
 			sane &= luc.getStem().auxVarsDisjointFromInOutVars();
 			sane &= luc.getStem().allAreInOutAux(luc.getStem().getFormula().getFreeVars()) == null;
 
@@ -212,16 +212,16 @@ public class LassoBuilder {
 	 *                       form
 	 */
 	public void constructPolyhedra() throws TermException {
-		int n = m_LassosUC.size();
+		int n = mLassosUC.size();
 		List<Lasso> lassos = new ArrayList<Lasso>(n);
 		for (int i = 0; i < n; ++i) {
-			TransFormulaLR stemTF = m_LassosUC.get(i).getStem();
-			TransFormulaLR loopTF = m_LassosUC.get(i).getLoop();
-			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, m_NlaHandling);
-			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, m_NlaHandling);
+			TransFormulaLR stemTF = mLassosUC.get(i).getStem();
+			TransFormulaLR loopTF = mLassosUC.get(i).getLoop();
+			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, mNlaHandling);
+			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, mNlaHandling);
 			lassos.add(new Lasso(stem, loop));
 		}
-		m_Lassos = lassos;
+		mLassos = lassos;
 	}
 	
 	/**
@@ -230,23 +230,23 @@ public class LassoBuilder {
 	 *                       form
 	 */
 	public Collection<Lasso> getLassos() {
-		return m_Lassos;
+		return mLassos;
 	}
 	
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		if (m_Lassos == null) {
+		if (mLassos == null) {
 			sb.append("Preprocessing has not been completed.\n");
 			
 			sb.append("Current lassos:\n");
-			for (LassoUnderConstruction luc : m_LassosUC) {
+			for (LassoUnderConstruction luc : mLassosUC) {
 				sb.append(luc);
 				sb.append(System.lineSeparator());
 			}
 		} else {
 			sb.append("Lassos:\n");
-			for (Lasso lasso : m_Lassos) {
+			for (Lasso lasso : mLassos) {
 				sb.append(lasso);
 				sb.append("\n");
 			}
@@ -268,20 +268,20 @@ public class LassoBuilder {
 	}
 	
 	public int computeMaxDagSize() {
-		return computeMaxDagSize(m_LassosUC);
+		return computeMaxDagSize(mLassosUC);
 	}
 
 	public void preprocess(LassoPreprocessor[] preProcessorsTermination, LassoPreprocessor[] preProcessorsNontermination) throws TermException {
-		m_PreprocessingBenchmark = new PreprocessingBenchmark(
+		mPreprocessingBenchmark = new PreprocessingBenchmark(
 				computeMaxDagSize());
 		// Apply preprocessors
 		for (LassoPreprocessor preprocessor : preProcessorsTermination) {
 			if (preprocessor == null) {
 				continue;
 			}
-			m_Logger.debug(preprocessor.getDescription());
+			mLogger.debug(preprocessor.getDescription());
 			applyPreprocessor(preprocessor);
-			m_PreprocessingBenchmark.addPreprocessingData(
+			mPreprocessingBenchmark.addPreprocessingData(
 						preprocessor.getDescription(), 
 						computeMaxDagSize());
 			assert isSane() : "lasso failed sanity check";
@@ -290,7 +290,7 @@ public class LassoBuilder {
 	}
 
 	public PreprocessingBenchmark getPreprocessingBenchmark() {
-		return m_PreprocessingBenchmark;
+		return mPreprocessingBenchmark;
 	}
 	
 

@@ -75,42 +75,42 @@ public class SmtManager {
 		IDLE, TRACECHECK, CODEBLOCKCHECK1, CODEBLOCKCHECK2, EDGECHECK
 	};
 	
-	private final boolean m_ExtendedDebugOutputInScript = false;
+	private final boolean mExtendedDebugOutputInScript = false;
 
-//	private Status m_Status = Status.IDLE;
+//	private Status mStatus = Status.IDLE;
 
-	private final Boogie2SMT m_Boogie2Smt;
-	private final Script m_Script;
-	private final ManagedScript m_ManagedScript;
-	// private final Map<String,ASTType> m_GlobalVars;
-	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
-	private int m_satProbNumber;
+	private final Boogie2SMT mBoogie2Smt;
+	private final Script mScript;
+	private final ManagedScript mManagedScript;
+	// private final Map<String,ASTType> mGlobalVars;
+	private final ModifiableGlobalVariableManager mModifiableGlobals;
+	private int msatProbNumber;
 
-	private ScopedHashMap<String, Term> m_IndexedConstants;
-	Set<BoogieVar> m_AssignedVars;
+	private ScopedHashMap<String, Term> mIndexedConstants;
+	Set<BoogieVar> mAssignedVars;
 
-	private int m_TrivialSatQueries = 0;
-	private int m_NontrivialSatQueries = 0;
+	private int mTrivialSatQueries = 0;
+	private int mNontrivialSatQueries = 0;
 
-	private int m_TrivialCoverQueries = 0;
-	private int m_NontrivialCoverQueries = 0;
+	private int mTrivialCoverQueries = 0;
+	private int mNontrivialCoverQueries = 0;
 
-	// int m_LazyEdgeCheckQueries = 0;
-	// int m_TrivialEdgeCheckQueries = 0;
-	// int m_NontrivialEdgeCheckQueries = 0;
+	// int mLazyEdgeCheckQueries = 0;
+	// int mTrivialEdgeCheckQueries = 0;
+	// int mNontrivialEdgeCheckQueries = 0;
 
-	private int m_VarSetMinimalSolverQueries = 0;
-	private long m_VarSetMinimalComputationTime = 0;
+	private int mVarSetMinimalSolverQueries = 0;
+	private long mVarSetMinimalComputationTime = 0;
 
-	long m_SatCheckTime = 0;
-	private long m_SatCheckSolverTime = 0;
-	private long m_TraceCheckTime = 0;
-	private long m_InterpolQuriesTime = 0;
-	private int m_InterpolQueries = 0;
+	long mSatCheckTime = 0;
+	private long mSatCheckSolverTime = 0;
+	private long mTraceCheckTime = 0;
+	private long mInterpolQuriesTime = 0;
+	private int mInterpolQueries = 0;
 
-	private int m_FreshVariableCouter = 0;
+	private int mFreshVariableCouter = 0;
 
-//	private long m_TraceCheckStartTime = Long.MIN_VALUE;
+//	private long mTraceCheckStartTime = Long.MIN_VALUE;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -123,22 +123,22 @@ public class SmtManager {
 	 * produce-interpolants mode)
 	 * 
 	 */
-	private final boolean m_InterpolationModeSwitchNeeded;
+	private final boolean mInterpolationModeSwitchNeeded;
 
 
 
-	private final PredicateFactory m_PredicateFactory;
+	private final PredicateFactory mPredicateFactory;
 
 	public SmtManager(Script script, Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
 			IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded, ManagedScript managedScript) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_InterpolationModeSwitchNeeded = interpolationModeSwitchNeeded;
-		m_Boogie2Smt = boogie2smt;
-		m_Script = script;
-		m_ManagedScript = managedScript;
-		m_ModifiableGlobals = modifiableGlobals;
-		m_PredicateFactory = new PredicateFactory(services, boogie2smt);
+		mInterpolationModeSwitchNeeded = interpolationModeSwitchNeeded;
+		mBoogie2Smt = boogie2smt;
+		mScript = script;
+		mManagedScript = managedScript;
+		mModifiableGlobals = modifiableGlobals;
+		mPredicateFactory = new PredicateFactory(services, boogie2smt);
 	}
 	
 	
@@ -148,108 +148,108 @@ public class SmtManager {
 //	}
 
 	// public Smt2Boogie getSmt2Boogie() {
-	// return m_Smt2Boogie;
+	// return mSmt2Boogie;
 	// }
 
 	public PredicateFactory getPredicateFactory() {
-		return m_PredicateFactory;
+		return mPredicateFactory;
 	}
 
 
 
 	public Boogie2SMT getBoogie2Smt() {
-		return m_Boogie2Smt;
+		return mBoogie2Smt;
 	}
 
 	public Script getScript() {
-		return m_Script;
+		return mScript;
 	}
 
 	private Term False() {
-		return m_Script.term("false");
+		return mScript.term("false");
 	}
 
 	private Term True() {
-		return m_Script.term("true");
+		return mScript.term("true");
 	}
 
 	@Deprecated
 	public int getNontrivialSatQueries() {
-		return m_NontrivialSatQueries;
+		return mNontrivialSatQueries;
 	}
 
 	@Deprecated
 	public int getTrivialSatQueries() {
-		return m_TrivialSatQueries;
+		return mTrivialSatQueries;
 	}
 
 	@Deprecated
 	public long getSatCheckSolverTime() {
-		return m_SatCheckSolverTime;
+		return mSatCheckSolverTime;
 	}
 
 	@Deprecated
 	public long getInterpolQuriesTime() {
-		return m_InterpolQuriesTime;
+		return mInterpolQuriesTime;
 	}
 
 	@Deprecated
 	public int getInterpolQueries() {
-		return m_InterpolQueries;
+		return mInterpolQueries;
 	}
 
 	@Deprecated
 	public long getTraceCheckTime() {
-		return m_TraceCheckTime;
+		return mTraceCheckTime;
 	}
 
 	@Deprecated
 	public long getSatCheckTime() {
-		return m_SatCheckTime;
+		return mSatCheckTime;
 	}
 
 	// public int getTrivialEdgeCheckQueries() {
-	// return m_TrivialEdgeCheckQueries;
+	// return mTrivialEdgeCheckQueries;
 	// }
 	//
 	// public int getLazyEdgeCheckQueries() {
-	// return m_LazyEdgeCheckQueries;
+	// return mLazyEdgeCheckQueries;
 	// }
 	//
 	// public int getNontrivialEdgeCheckQueries() {
-	// return m_NontrivialEdgeCheckQueries;
+	// return mNontrivialEdgeCheckQueries;
 	// }
 
 	@Deprecated
 	public int getTrivialCoverQueries() {
-		return m_TrivialCoverQueries;
+		return mTrivialCoverQueries;
 	}
 
 	@Deprecated
 	public int getNontrivialCoverQueries() {
-		return m_NontrivialCoverQueries;
+		return mNontrivialCoverQueries;
 	}
 
 	@Deprecated
 	public int getVarSetMinimalSolverQueries() {
-		return m_VarSetMinimalSolverQueries;
+		return mVarSetMinimalSolverQueries;
 	}
 
 	@Deprecated
 	public long getVarSetMinimalComputationTime() {
-		return m_VarSetMinimalComputationTime;
+		return mVarSetMinimalComputationTime;
 	}
 
 	public void setIteration(int iteration) {
-		m_satProbNumber = 0;
+		msatProbNumber = 0;
 	}
 
 	public int getSatProbNumber() {
-		return m_satProbNumber;
+		return msatProbNumber;
 	}
 
 	public VariableManager getVariableManager() {
-		return m_Boogie2Smt.getVariableManager();
+		return mBoogie2Smt.getVariableManager();
 	}
 	
 
@@ -284,54 +284,54 @@ public class SmtManager {
 	// Term formula, Term closedFormula) {
 	// assert isIdle();
 	// long startTime = System.nanoTime();
-	// m_Script.push(1);
-	// Term negated = m_Script.term("not", closedFormula);
+	// mScript.push(1);
+	// Term negated = mScript.term("not", closedFormula);
 	// assertTerm(negated);
 	// for (BoogieVar bv : boogieVars) {
 	// TermVariable[] vars = new TermVariable[1];
 	// vars[0] = bv.getTermVariable();
 	// Term[] values = new Term[1];
 	// values[0] = bv.getPrimedConstant();
-	// formula = m_Script.let(vars, values, formula);
+	// formula = mScript.let(vars, values, formula);
 	// formula = renameVarsToDefaultConstants(boogieVars, formula);
 	//
-	// m_Script.push(1);
+	// mScript.push(1);
 	// assertTerm(formula);
-	// LBool sat = m_Script.checkSat();
-	// m_VarSetMinimalSolverQueries++;
+	// LBool sat = mScript.checkSat();
+	// mVarSetMinimalSolverQueries++;
 	// if (sat == LBool.UNSAT) {
 	// // variable was not necessary
-	// m_Script.pop(2);
-	// m_VarSetMinimalComputationTime += (System.nanoTime() - startTime);
+	// mScript.pop(2);
+	// mVarSetMinimalComputationTime += (System.nanoTime() - startTime);
 	// return false;
 	// } else if (sat == LBool.SAT) {
-	// m_Script.pop(1);
+	// mScript.pop(1);
 	// } else if (sat == LBool.UNKNOWN) {
 	// throw new AssertionError("if this case occurs, ask Matthias");
 	// } else {
 	// throw new AssertionError();
 	// }
 	// }
-	// m_VarSetMinimalComputationTime += (System.nanoTime() - startTime);
-	// m_Script.pop(1);
+	// mVarSetMinimalComputationTime += (System.nanoTime() - startTime);
+	// mScript.pop(1);
 	// return true;
 	// }
 
 	public void startTraceCheck(Object lockClaimer) {
 		lock(lockClaimer);
-		m_Script.echo(new QuotedObject("starting trace check"));
-		if (m_InterpolationModeSwitchNeeded) {
-			m_Script.setOption(":produce-interpolants", true);
+		mScript.echo(new QuotedObject("starting trace check"));
+		if (mInterpolationModeSwitchNeeded) {
+			mScript.setOption(":produce-interpolants", true);
 		}
-		m_Script.push(1);
+		mScript.push(1);
 	}
 
 	public void endTraceCheck(Object lockOwner) {
-		if (m_InterpolationModeSwitchNeeded) {
-			m_Script.setOption(":produce-interpolants", false);
+		if (mInterpolationModeSwitchNeeded) {
+			mScript.setOption(":produce-interpolants", false);
 		}
-		m_Script.echo(new QuotedObject("finished trace check"));
-		m_Script.pop(1);
+		mScript.echo(new QuotedObject("finished trace check"));
+		mScript.pop(1);
 		unlock(lockOwner);
 	}
 	
@@ -346,22 +346,22 @@ public class SmtManager {
 	}
 
 	// public void push() {
-	// if (m_IndexedConstants != null) {
+	// if (mIndexedConstants != null) {
 	// throw new
 	// AssertionError("During Trace Abstration only one additional level on stack allowed");
 	// }
 	// else {
-	// m_IndexedConstants = new HashMap<String, Term>();
-	// m_Script.push(1);
+	// mIndexedConstants = new HashMap<String, Term>();
+	// mScript.push(1);
 	// }
 	// }
 	// public void pop() {
-	// if (m_IndexedConstants == null) {
+	// if (mIndexedConstants == null) {
 	// throw new AssertionError("Smt Manager has not pushed before");
 	// }
 	// else {
-	// m_IndexedConstants = null;
-	// m_Script.pop(1);
+	// mIndexedConstants = null;
+	// mScript.pop(1);
 	// }
 	// }
 
@@ -377,16 +377,16 @@ public class SmtManager {
 				throw e;
 			}
 		}
-		result = m_Script.checkSat();
-		m_SatCheckSolverTime += (System.nanoTime() - startTime);
-		m_NontrivialSatQueries++;
+		result = mScript.checkSat();
+		mSatCheckSolverTime += (System.nanoTime() - startTime);
+		mNontrivialSatQueries++;
 		if (result == LBool.UNKNOWN) {
-			Object info = m_Script.getInfo(":reason-unknown");
+			Object info = mScript.getInfo(":reason-unknown");
 			if (!(info instanceof ReasonUnknown)) {
-				m_Script.getInfo(":reason-unknown");
+				mScript.getInfo(":reason-unknown");
 			}
 			ReasonUnknown reason = (ReasonUnknown) info;
-			Object test = m_Script.getInfo(":reason-unknown");
+			Object test = mScript.getInfo(":reason-unknown");
 			switch (reason) {
 			case CRASHED:
 				throw new AssertionError("Solver crashed");
@@ -402,31 +402,31 @@ public class SmtManager {
 	public LBool assertTerm(Term term) {
 		long startTime = System.nanoTime();
 		LBool result = null;
-		result = m_Script.assertTerm(term);
-		m_SatCheckSolverTime += (System.nanoTime() - startTime);
+		result = mScript.assertTerm(term);
+		mSatCheckSolverTime += (System.nanoTime() - startTime);
 		return result;
 	}
 
 	public Term[] computeInterpolants(Term[] interpolInput, int[] startOfSubtree) {
 		long startTime = System.nanoTime();
-		Term[] result = m_Script.getInterpolants(interpolInput, startOfSubtree);
-		m_InterpolQuriesTime += (System.nanoTime() - startTime);
-		m_InterpolQueries++;
+		Term[] result = mScript.getInterpolants(interpolInput, startOfSubtree);
+		mInterpolQuriesTime += (System.nanoTime() - startTime);
+		mInterpolQueries++;
 		return result;
 	}
 
 	public Term[] computeInterpolants(Term[] interpolInput) {
 		long startTime = System.nanoTime();
-		Term[] result = m_Script.getInterpolants(interpolInput);
-		m_InterpolQuriesTime += (System.nanoTime() - startTime);
-		m_InterpolQueries++;
+		Term[] result = mScript.getInterpolants(interpolInput);
+		mInterpolQuriesTime += (System.nanoTime() - startTime);
+		mInterpolQueries++;
 		return result;
 	}
 
 
 
 	// public Predicate simplify(Predicate ps) {
-	// return m_PredicateFactory.newPredicate(ps.getProgramPoint(),
+	// return mPredicateFactory.newPredicate(ps.getProgramPoint(),
 	// simplify(ps.getFormula()),ps.getVars());
 	// }
 
@@ -445,7 +445,7 @@ public class SmtManager {
 		long startTime = System.nanoTime();
 
 		if (getPredicateFactory().isDontCare(ps1) || getPredicateFactory().isDontCare(ps2)) {
-			m_TrivialCoverQueries++;
+			mTrivialCoverQueries++;
 			return Script.LBool.UNKNOWN;
 		}
 
@@ -454,12 +454,12 @@ public class SmtManager {
 		LBool result = null;
 		// tivial case
 		if (formula1 == False() || formula2 == True()) {
-			m_TrivialCoverQueries++;
+			mTrivialCoverQueries++;
 			result = Script.LBool.UNSAT;
 		} else {
-			m_Script.push(1);
-			m_IndexedConstants = new ScopedHashMap<String, Term>();
-			Term negImpl = Util.and(m_Script, formula1, SmtUtils.not(m_Script, formula2));
+			mScript.push(1);
+			mIndexedConstants = new ScopedHashMap<String, Term>();
+			Term negImpl = Util.and(mScript, formula1, SmtUtils.not(mScript, formula2));
 
 			// replace all vars by constants
 			{
@@ -471,7 +471,7 @@ public class SmtManager {
 					values[i] = var.getDefaultConstant();
 					i++;
 				}
-				negImpl = m_Script.let(vars, values, negImpl);
+				negImpl = mScript.let(vars, values, negImpl);
 			}
 
 			{
@@ -483,39 +483,39 @@ public class SmtManager {
 					values[i] = var.getDefaultConstant();
 					i++;
 				}
-				negImpl = m_Script.let(vars, values, negImpl);
+				negImpl = mScript.let(vars, values, negImpl);
 			}
 
-			m_NontrivialCoverQueries++;
+			mNontrivialCoverQueries++;
 			result = checkSatisfiable(negImpl);
-			m_IndexedConstants = null;
-			m_Script.pop(1);
+			mIndexedConstants = null;
+			mScript.pop(1);
 		}
-		m_SatCheckTime += (System.nanoTime() - startTime);
+		mSatCheckTime += (System.nanoTime() - startTime);
 		return result;
 	}
 
 	public Validity isCovered(Object caller, Term formula1, Term formula2) {
-		assert (m_ManagedScript.isLockOwner(caller)) : "only lock owner may call";
+		assert (mManagedScript.isLockOwner(caller)) : "only lock owner may call";
 		long startTime = System.nanoTime();
 
 		final Validity result;
 		// tivial case
 		if (formula1 == False() || formula2 == True()) {
-			m_TrivialCoverQueries++;
+			mTrivialCoverQueries++;
 			result = Validity.VALID;
 		} else {
-			m_Script.push(1);
+			mScript.push(1);
 			assertTerm(formula1);
-			Term negFormula2 = m_Script.term("not", formula2);
+			Term negFormula2 = mScript.term("not", formula2);
 			assertTerm(negFormula2);
-			result = IHoareTripleChecker.lbool2validity(m_Script.checkSat());
-			m_NontrivialCoverQueries++;
-			m_Script.pop(1);
+			result = IHoareTripleChecker.lbool2validity(mScript.checkSat());
+			mNontrivialCoverQueries++;
+			mScript.pop(1);
 		}
-		m_SatCheckTime += (System.nanoTime() - startTime);
-		if (m_ExtendedDebugOutputInScript && result == Validity.UNKNOWN) {
-			m_Script.echo(new QuotedObject("Result of preceeding check-sat was UNKNOWN"));
+		mSatCheckTime += (System.nanoTime() - startTime);
+		if (mExtendedDebugOutputInScript && result == Validity.UNKNOWN) {
+			mScript.echo(new QuotedObject("Result of preceeding check-sat was UNKNOWN"));
 		}
 		return result;
 	}
@@ -545,7 +545,7 @@ public class SmtManager {
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		Term result = m_Script.let(vars, values, term);
+		Term result = mScript.let(vars, values, term);
 		result = (new FormulaUnLet()).unlet(result);
 		return result;
 	}
@@ -565,7 +565,7 @@ public class SmtManager {
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		Term result = m_Script.let(vars, values, term);
+		Term result = mScript.let(vars, values, term);
 		result = (new FormulaUnLet()).unlet(result);
 		return result;
 	}
@@ -582,7 +582,7 @@ public class SmtManager {
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		Term result = m_Script.let(vars, values, term);
+		Term result = mScript.let(vars, values, term);
 		result = (new FormulaUnLet()).unlet(result);
 		return result;
 	}
@@ -596,31 +596,31 @@ public class SmtManager {
 	// varString = var.getIdentifier();
 	// }
 	// String name = procString+ "_" + varString;
-	// Term constant = m_IndexedConstants.get(name);
+	// Term constant = mIndexedConstants.get(name);
 	// if (constant == null) {
 	// Sort resultSort =
-	// m_Boogie2Smt.getTypeSortTranslator().getSort(var.getIType(), null);
+	// mBoogie2Smt.getTypeSortTranslator().getSort(var.getIType(), null);
 	// Sort[] emptySorts = {};
-	// m_Script.declareFun(name, emptySorts, resultSort);
+	// mScript.declareFun(name, emptySorts, resultSort);
 	// Term[] emptyTerms = {};
-	// constant = m_Script.term(name, emptyTerms);
-	// m_IndexedConstants.put(name, constant);
+	// constant = mScript.term(name, emptyTerms);
+	// mIndexedConstants.put(name, constant);
 	// }
 	// return constant;
 	// }
 
 	// public Term getFreshConstant(TermVariable tv) {
-	// String name = "fresh_" + tv.getName() + m_FreshVariableCouter++;
+	// String name = "fresh_" + tv.getName() + mFreshVariableCouter++;
 	// Sort resultSort = tv.getSort();
 	// Sort[] emptySorts = {};
-	// m_Script.declareFun(name, emptySorts, resultSort);
+	// mScript.declareFun(name, emptySorts, resultSort);
 	// Term[] emptyTerms = {};
-	// return m_Script.term(name, emptyTerms);
+	// return mScript.term(name, emptyTerms);
 	// }
 
 	// public TermVariable getFreshTermVariable(String identifier, Sort sort) {
-	// String name = "fresh_" + identifier + m_FreshVariableCouter++;
-	// TermVariable result = m_Script.variable(name, sort);
+	// String name = "fresh_" + identifier + mFreshVariableCouter++;
+	// TermVariable result = mScript.variable(name, sort);
 	// return result;
 	// }
 
@@ -642,13 +642,13 @@ public class SmtManager {
 	// @Deprecated
 	// private Term getIndexedConstant(String varName, int index, Sort sort) {
 	// String name = "c_"+varName+"_"+index;
-	// Term result = m_IndexedConstants.get(name);
+	// Term result = mIndexedConstants.get(name);
 	// if (result == null) {
 	// Sort[] emptySorts = {};
-	// m_Script.declareFun(name, emptySorts, sort);
+	// mScript.declareFun(name, emptySorts, sort);
 	// Term[] emptyTerms = {};
-	// result = m_Script.term(name, emptyTerms);
-	// m_IndexedConstants.put(name, result);
+	// result = mScript.term(name, emptyTerms);
+	// mIndexedConstants.put(name, result);
 	// }
 	// return result;
 	// }
@@ -656,13 +656,13 @@ public class SmtManager {
 	// @Deprecated
 	// private Term getOldVarConstant(String varName, Sort sort) {
 	// String name = "c_"+varName+"_OLD";
-	// Term result = m_IndexedConstants.get(name);
+	// Term result = mIndexedConstants.get(name);
 	// if (result == null) {
 	// Sort[] emptySorts = {};
-	// m_Script.declareFun(name, emptySorts, sort);
+	// mScript.declareFun(name, emptySorts, sort);
 	// Term[] emptyTerms = {};
-	// result = m_Script.term(name, emptyTerms);
-	// m_IndexedConstants.put(name, result);
+	// result = mScript.term(name, emptyTerms);
+	// mIndexedConstants.put(name, result);
 	// }
 	// return result;
 	// }
@@ -708,8 +708,8 @@ public class SmtManager {
 				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}
 		}
-		Term renamedFormula = (new SafeSubstitution(m_Script, getVariableManager(), substitutionMapping)).transform(ps.getFormula());
-		renamedFormula = SmtUtils.simplify(m_Script, renamedFormula, mServices);
+		Term renamedFormula = (new SafeSubstitution(mScript, getVariableManager(), substitutionMapping)).transform(ps.getFormula());
+		renamedFormula = SmtUtils.simplify(mScript, renamedFormula, mServices);
 		IPredicate result = this.getPredicateFactory().newPredicate(renamedFormula);
 		return result;
 	}
@@ -753,9 +753,9 @@ public class SmtManager {
 	}
 
 	public LBool checkSatWithFreeVars(Term negation) {
-		LBool result = Util.checkSat(m_Script, negation);
+		LBool result = Util.checkSat(mScript, negation);
 		// if (result == LBool.UNKNOWN) {
-		// Object[] reason = m_Script.getInfo(":reason-unknown");
+		// Object[] reason = mScript.getInfo(":reason-unknown");
 		// }
 		// de.uni_freiburg.informatik.ultimate.smtinterpol.util.ReasonUnknown
 		// reasonUnknown = reason[0];
@@ -785,7 +785,7 @@ public class SmtManager {
 
 	// public Predicate newPredicate(ProgramPoint pp, Term term,
 	// Set<BoogieVar> vars) {
-	// Term closedFormula = computeClosedFormula(term, vars, m_Script);
+	// Term closedFormula = computeClosedFormula(term, vars, mScript);
 	// // if (varSetMinimalAssured && !varSetIsMinimal(vars, term,
 	// // closedFormula)) {
 	// // throw new AssertionError("VarSet not minimal");
@@ -802,9 +802,9 @@ public class SmtManager {
 	// }
 
 	// public SPredicate newTrueSPredicateWithHistory(ProgramPoint pp) {
-	// SPredicate predicate = new PredicateWithHistory(pp, m_SerialNumber++,
-	// m_NoProcedure, m_Script.term("true"),
-	// new HashSet<BoogieVar>(0), m_Script.term("true"), new
+	// SPredicate predicate = new PredicateWithHistory(pp, mSerialNumber++,
+	// mNoProcedure, mScript.term("true"),
+	// new HashSet<BoogieVar>(0), mScript.term("true"), new
 	// HashMap<Integer,Term>());
 	// return predicate;
 	// }
@@ -813,52 +813,52 @@ public class SmtManager {
 	// public SPredicate newSPredicate(ProgramPoint pp, String[] procedures,
 	// Term term,
 	// Set<BoogieVar> vars) {
-	// Term closedFormula = computeClosedFormula(term, vars, m_Script);
-	// SPredicate predicate = new SPredicate(pp, m_SerialNumber++, procedures,
+	// Term closedFormula = computeClosedFormula(term, vars, mScript);
+	// SPredicate predicate = new SPredicate(pp, mSerialNumber++, procedures,
 	// term, vars, closedFormula);
 	// return predicate;
 	// }
 
 //	public HoareAnnotation getNewHoareAnnotation(ProgramPoint pp) {
-//		return new HoareAnnotation(pp, m_SerialNumber++, this, mServices);
+//		return new HoareAnnotation(pp, mSerialNumber++, this, mServices);
 //	}
 
 	public ManagedScript getManagedScript() {
-		return m_ManagedScript;
+		return mManagedScript;
 	}
 
 //	Status getStatus() {
-//		return m_Status;
+//		return mStatus;
 //	}
 //
 //	void setStatus(Status status) {
-//		m_Status = status;
+//		mStatus = status;
 //	}
 	
 	public void lock(Object lockOwner) {
-		m_ManagedScript.lock(lockOwner);
+		mManagedScript.lock(lockOwner);
 	}
 	
 	public void unlock(Object lockOwner) {
-		m_ManagedScript.unlock(lockOwner);
+		mManagedScript.unlock(lockOwner);
 	}
 	
 	public boolean isLocked() {
-		return m_ManagedScript.isLocked();
+		return mManagedScript.isLocked();
 	}
 	
 	public boolean requestLockRelease() {
-		return m_ManagedScript.requestLockRelease();
+		return mManagedScript.requestLockRelease();
 	}
 	
 	boolean isLockOwner(Object allegedLockOwner) {
-		return m_ManagedScript.isLockOwner(allegedLockOwner);
+		return mManagedScript.isLockOwner(allegedLockOwner);
 	}
 
 
 
 	public ModifiableGlobalVariableManager getModifiableGlobals() {
-		return m_ModifiableGlobals;
+		return mModifiableGlobals;
 	}
 	
 	

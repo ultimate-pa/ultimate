@@ -46,15 +46,15 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation3;
 public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingConstraint<LETTER, STATE> {
 	
 	
-	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RanksOfPredecessorsNonAcceptingPredecessors;
-	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RanksOfPredecessorsNonAcceptingPredecessorsEven;
+	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> mRanksOfPredecessorsNonAcceptingPredecessors;
+	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> mRanksOfPredecessorsNonAcceptingPredecessorsEven;
 
 	public LevelRankingConstraintDrdCheck(INestedWordAutomatonSimple<LETTER, STATE> operand,
 			boolean predecessorOwasEmpty,
 			int userDefinedMaxRank, boolean useDoubleDeckers) {
 		super(operand, predecessorOwasEmpty, userDefinedMaxRank, useDoubleDeckers);
-		m_RanksOfPredecessorsNonAcceptingPredecessors = new HashRelation3<>();
-		m_RanksOfPredecessorsNonAcceptingPredecessorsEven = new HashRelation3<>();
+		mRanksOfPredecessorsNonAcceptingPredecessors = new HashRelation3<>();
+		mRanksOfPredecessorsNonAcceptingPredecessorsEven = new HashRelation3<>();
 	}
 	
 	/**
@@ -62,17 +62,17 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	 */
 	public LevelRankingConstraintDrdCheck() {
 		super();
-		m_RanksOfPredecessorsNonAcceptingPredecessors = null;
-		m_RanksOfPredecessorsNonAcceptingPredecessorsEven = null;
+		mRanksOfPredecessorsNonAcceptingPredecessors = null;
+		mRanksOfPredecessorsNonAcceptingPredecessorsEven = null;
 	}
 
 	@Override
 	protected void addConstaint(StateWithRankInfo<STATE> down, STATE up, Integer predecessorRank, boolean predecessorIsInO,
 			boolean predecessorIsAccepting) {
 		if (!predecessorIsAccepting) {
-			m_RanksOfPredecessorsNonAcceptingPredecessors.addTriple(down, up, predecessorRank);
+			mRanksOfPredecessorsNonAcceptingPredecessors.addTriple(down, up, predecessorRank);
 			if (isEven(predecessorRank)) {
-				m_RanksOfPredecessorsNonAcceptingPredecessorsEven.addTriple(down, up, predecessorRank);
+				mRanksOfPredecessorsNonAcceptingPredecessorsEven.addTriple(down, up, predecessorRank);
 			}
 		}
 		super.addConstaint(down, up, predecessorRank, predecessorIsInO, predecessorIsAccepting);
@@ -96,9 +96,9 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 		if (isNonAcceptingSink()) {
 			return false;
 		}
-		for (Entry<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> entry : m_LevelRanking.entrySet()) {
+		for (Entry<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> entry : mLevelRanking.entrySet()) {
 			for (STATE up : entry.getValue().keySet()) {
-				Set<Integer> predRanksOfNonAccepting = m_RanksOfPredecessorsNonAcceptingPredecessors.projectToTrd(entry.getKey(), up);
+				Set<Integer> predRanksOfNonAccepting = mRanksOfPredecessorsNonAcceptingPredecessors.projectToTrd(entry.getKey(), up);
 				if (predRanksOfNonAccepting.size() <= 1) {
 					return false;
 				} else {
@@ -129,16 +129,16 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	}
 	
 	public boolean nonAcceptingPredecessorsWithEvenRanksIsEmpty(StateWithRankInfo<STATE> down, STATE up) {
-		return m_RanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(down, up).isEmpty();
+		return mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(down, up).isEmpty();
 	}
 	
 	private boolean isEligibleForVoluntaryRankDecrease(StateWithRankInfo<STATE> down, STATE up, boolean allowDelayedRankDecrease) {
 		Integer constraint = getRank(down, up);
 		if (allowDelayedRankDecrease) {
-			return (isEven(constraint) && !m_Operand.isFinal(up));
+			return (isEven(constraint) && !mOperand.isFinal(up));
 		} else {
-			Set<Integer> nonAcceptingEvenranks = m_RanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(down, up);
-			return (isEven(constraint) && !m_Operand.isFinal(up) && nonAcceptingEvenranks.isEmpty());
+			Set<Integer> nonAcceptingEvenranks = mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(down, up);
+			return (isEven(constraint) && !mOperand.isFinal(up) && nonAcceptingEvenranks.isEmpty());
 		}
 	}
 

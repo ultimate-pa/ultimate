@@ -50,23 +50,23 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
  */
 public class ArrayCellRepVarConstructor {
 	
-	private final ReplacementVarFactory m_ReplacementVarFactory;
-	private final Script m_Script;
-	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayRepresentative2IndexRepresentative2ReplacementVar = new NestedMap2<>();
-	private final TransFormulaLRWithArrayInformation m_Stem;
-	private final TransFormulaLRWithArrayInformation m_Loop;
+	private final ReplacementVarFactory mReplacementVarFactory;
+	private final Script mScript;
+	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayRepresentative2IndexRepresentative2ReplacementVar = new NestedMap2<>();
+	private final TransFormulaLRWithArrayInformation mStem;
+	private final TransFormulaLRWithArrayInformation mLoop;
 	
 	public ArrayCellRepVarConstructor(
 			ReplacementVarFactory replacementVarFactory, Script script,
 			TransFormulaLRWithArrayInformation stemTfwai,
 			TransFormulaLRWithArrayInformation loopTfwai) {
 		super();
-		m_ReplacementVarFactory = replacementVarFactory;
-		m_Script = script;
-		m_Stem = stemTfwai;
-		m_Loop = loopTfwai;
-		constructRepVars(m_Stem);
-		constructRepVars(m_Loop);
+		mReplacementVarFactory = replacementVarFactory;
+		mScript = script;
+		mStem = stemTfwai;
+		mLoop = loopTfwai;
+		constructRepVars(mStem);
+		constructRepVars(mLoop);
 	}
 
 
@@ -97,11 +97,11 @@ public class ArrayCellRepVarConstructor {
 	private ReplacementVar getOrconstructReplacementVar(ArrayCellReplacementVarInformation acrvi) {
 		TermVariable array = acrvi.getArrayRepresentative();
 		ArrayIndex index = acrvi.getIndexRepresentative();
-		ArrayCellReplacementVarInformation repVarInfo = m_ArrayRepresentative2IndexRepresentative2ReplacementVar.get(array, index);
+		ArrayCellReplacementVarInformation repVarInfo = mArrayRepresentative2IndexRepresentative2ReplacementVar.get(array, index);
 		ReplacementVar repVar;
 		if (repVarInfo == null) {
 			repVar = constructReplacementVar(array, index);
-			m_ArrayRepresentative2IndexRepresentative2ReplacementVar.put(array, index, acrvi);
+			mArrayRepresentative2IndexRepresentative2ReplacementVar.put(array, index, acrvi);
 		} else {
 			repVar = repVarInfo.getReplacementVar();
 		}
@@ -114,14 +114,14 @@ public class ArrayCellRepVarConstructor {
 	 * cell array[index].
 	 */
 	private ReplacementVar constructReplacementVar(TermVariable array, ArrayIndex index) {
-			Term definition = SmtUtils.multiDimensionalSelect(m_Script, array, index);
-			ReplacementVar repVar = m_ReplacementVarFactory.getOrConstuctReplacementVar(definition);
+			Term definition = SmtUtils.multiDimensionalSelect(mScript, array, index);
+			ReplacementVar repVar = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
 		return repVar;
 	}
 
 
 	public NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> getArrayRepresentative2IndexRepresentative2ReplacementVar() {
-		return m_ArrayRepresentative2IndexRepresentative2ReplacementVar;
+		return mArrayRepresentative2IndexRepresentative2ReplacementVar;
 	}
 	
 	

@@ -96,7 +96,7 @@ public class ConstantTerm extends Term {
 	}
 
 	@Override
-	public void toStringHelper(ArrayDeque<Object> m_Todo) {
-		m_Todo.add(toString());
+	public void toStringHelper(ArrayDeque<Object> mTodo) {
+		mTodo.add(toString());
 	}
 }

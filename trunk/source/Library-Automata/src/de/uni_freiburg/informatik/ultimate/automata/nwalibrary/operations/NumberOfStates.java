@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class NumberOfStates<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	INestedWordAutomatonSimple<LETTER, STATE> m_Nwa;
+	INestedWordAutomatonSimple<LETTER, STATE> mNwa;
 	
 	public NumberOfStates(INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		m_Nwa = nwa;
+		mNwa = nwa;
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class NumberOfStates<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public Integer getResult() throws AutomataLibraryException {
-		return m_Nwa.size();
+		return mNwa.size();
 	}
 
 	@Override

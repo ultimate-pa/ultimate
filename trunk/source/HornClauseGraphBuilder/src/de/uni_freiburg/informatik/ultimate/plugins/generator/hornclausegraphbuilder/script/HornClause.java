@@ -37,7 +37,7 @@ public class HornClause {
 	 *   every argument position of the represented atom,
 	 *    which TermVariable in the transition formula represents that argument in the represented atom.
 	 */
-	Map<HornClausePredicateSymbol, ArrayList<TermVariable>> m_BodyPredToTermVariables;
+	Map<HornClausePredicateSymbol, ArrayList<TermVariable>> mBodyPredToTermVariables;
 	
 	/**
 	 * Stores for 
@@ -45,8 +45,8 @@ public class HornClause {
 	 *   every argument position of the represented atom,
 	 *    which TermVariable in the transition formula represents that argument in the represented atom.
 	 */
-	ArrayList<TermVariable> m_HeadPredTermVariables;
-	HornClausePredicateSymbol m_HeadPredicate;
+	ArrayList<TermVariable> mHeadPredTermVariables;
+	HornClausePredicateSymbol mHeadPredicate;
 	
-	Term m_TransitionFormula;
+	Term mTransitionFormula;
 }

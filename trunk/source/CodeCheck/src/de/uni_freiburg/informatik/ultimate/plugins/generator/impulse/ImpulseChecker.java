@@ -66,10 +66,10 @@ public class ImpulseChecker extends CodeChecker {
 	private final RedirectionFinder cloneFinder;
 	private int nodeIDs;
 	
-	public ImpulseChecker(IElement root, SmtManager m_smtManager, RootNode m_originalRoot, ImpRootNode m_graphRoot,
-			GraphWriter m_graphWriter, IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
-		super(root, m_smtManager, m_originalRoot, m_graphRoot,
-				m_graphWriter, edgeChecker, predicateUnifier, logger);
+	public ImpulseChecker(IElement root, SmtManager msmtManager, RootNode moriginalRoot, ImpRootNode mgraphRoot,
+			GraphWriter mgraphWriter, IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
+		super(root, msmtManager, moriginalRoot, mgraphRoot,
+				mgraphWriter, edgeChecker, predicateUnifier, logger);
 		cloneFinder = new RedirectionFinder(this);
 		nodeIDs = 0;
 	}
@@ -137,8 +137,8 @@ public class ImpulseChecker extends CodeChecker {
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
 				
-//				if (!GlobalSettings._instance.checkSatisfiability || m_smtManager.isInductiveReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
-//						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT)	
+//				if (!GlobalSettings._instance.checkSatisfiability || msmtManager.isInductiveReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
+//						(Return) edge.getStatement(), mpredicateUnifier.getFalsePredicate()) != LBool.UNSAT)	
 				if (!GlobalSettings._instance.checkSatisfiability || 
 						_edgeChecker.checkReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(), 
 								(IReturnAction) edge.getStatement(), edge.getTarget().getPredicate())
@@ -149,14 +149,14 @@ public class ImpulseChecker extends CodeChecker {
 				boolean result = !GlobalSettings._instance.checkSatisfiability;
 				if (!result) {
 					if (edge.getStatement() instanceof Call)
-//						result = m_smtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
-//								m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+//						result = msmtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
+//								mpredicateUnifier.getFalsePredicate()) != LBool.UNSAT;
 						result = _edgeChecker.checkCall(edge.getSource().getPredicate(), (ICallAction) edge.getStatement(), 
 								edge.getTarget().getPredicate())
 								 != Validity.VALID;
 					else
-//						result = m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
-//							m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+//						result = msmtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
+//							mpredicateUnifier.getFalsePredicate()) != LBool.UNSAT;
 						result = _edgeChecker.checkInternal(edge.getSource().getPredicate(), (IInternalAction) edge.getStatement(), 
 								edge.getTarget().getPredicate())
 								!= Validity.VALID;
@@ -187,7 +187,7 @@ public class ImpulseChecker extends CodeChecker {
 		/*
 		System.err.println("vor DFS");
 		visited = new HashSet<AnnotatedProgramPoint>();
-		dfsDEBUG(m_graphRoot, true);
+		dfsDEBUG(mgraphRoot, true);
 		System.err.println(String.format("Graph nodes: %s\n", visited));
 		System.err.println("Nach DFS");
 		
@@ -234,8 +234,8 @@ public class ImpulseChecker extends CodeChecker {
             // TODO: Handle the false predicate properly.
 			//if (clones[i].getPredicate().toString().endsWith("false"))
 			IPredicate annotation = clones[i].getPredicate();
-			if (m_predicateUnifier.getOrConstructPredicate(annotation.getFormula())
-		        .equals(m_predicateUnifier.getFalsePredicate()))
+			if (mpredicateUnifier.getOrConstructPredicate(annotation.getFormula())
+		        .equals(mpredicateUnifier.getFalsePredicate()))
 				clones[i].isolateNode();
 		}
 		return true;
@@ -350,7 +350,7 @@ public class ImpulseChecker extends CodeChecker {
 
 	/*
 	public boolean isStrongerPredicate(AnnotatedProgramPoint strongerNode, AnnotatedProgramPoint weakerNode) {
-		return m_smtManager.isCovered(strongerNode.getPredicate(), weakerNode.getPredicate()) == LBool.UNSAT;
+		return msmtManager.isCovered(strongerNode.getPredicate(), weakerNode.getPredicate()) == LBool.UNSAT;
 	}
 	*/
 	
@@ -429,10 +429,10 @@ public class ImpulseChecker extends CodeChecker {
 	boolean isStrongerPredicate(AnnotatedProgramPoint node1,
 			AnnotatedProgramPoint node2) {
 		
-		boolean result = m_predicateUnifier.getCoverageRelation().isCovered(node1.getPredicate(), node2.getPredicate()) == Validity.VALID;
+		boolean result = mpredicateUnifier.getCoverageRelation().isCovered(node1.getPredicate(), node2.getPredicate()) == Validity.VALID;
 		//System.err.printf("%s > %s  :: %s\n", predicate1, predicate2, result);
 		if (result) {
-			boolean converse = m_predicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(), node1.getPredicate()) == Validity.VALID;
+			boolean converse = mpredicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(), node1.getPredicate()) == Validity.VALID;
 			result &= !converse || (converse && node1._nodeID > node2._nodeID);
 		}
 		return result;

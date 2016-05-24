@@ -42,11 +42,11 @@ public class parse_action_table {
   public parse_action_table(Grammar grammar)
     {
       /* determine how many states we are working with */
-      int _num_states = grammar.lalr_states().size();
-      int _num_terminals = grammar.num_terminals();
+      int _numstates = grammar.lalr_states().size();
+      int _numterminals = grammar.numterminals();
 
       /* allocate the array and fill it in with empty rows */
-      table = new int[_num_states][_num_terminals+1];
+      table = new int[_numstates][_numterminals+1];
     }
 
   /*-----------------------------------------------------------*/
@@ -145,19 +145,19 @@ public class parse_action_table {
 	    combsize = lastidx;
 	}
 	
-      int _num_states = table.length;
-      short[] compressed = new short[_num_states + 2*(combsize)];
+      int _numstates = table.length;
+      short[] compressed = new short[_numstates + 2*(combsize)];
       /* Fill default actions */
-      for (int i = 0; i < _num_states; i++)
+      for (int i = 0; i < _numstates; i++)
 	{
-	  base_table[i] = (short) _num_states;
+	  base_table[i] = (short) _numstates;
 	  compressed[i] = (short) default_actions[i];
 	}
       /* Mark entries in comb as invalid */
       for (int i = 0; i < combsize; i++)
 	{
-	  compressed[_num_states+2*i] = (short) _num_states;
-	  compressed[_num_states+2*i+1] = 1;
+	  compressed[_numstates+2*i] = (short) _numstates;
+	  compressed[_numstates+2*i+1] = 1;
 	}
       for (CombRow row : rows)
 	{

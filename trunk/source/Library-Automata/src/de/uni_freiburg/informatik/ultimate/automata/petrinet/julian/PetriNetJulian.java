@@ -52,10 +52,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 
 	@SuppressWarnings("unused")
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 
 	private final Set<S> alphabet;
 	private final StateFactory<C> stateFactory;
@@ -70,26 +70,26 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	 * There is a natural number n such that every reachable marking consists of
 	 * n places.
 	 */
-	private final boolean m_ConstantTokenAmount;
+	private final boolean mConstantTokenAmount;
 
 	public PetriNetJulian(AutomataLibraryServices services, Set<S> alphabet,
 			StateFactory<C> stateFactory, boolean constantTokenAmount) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		this.alphabet = alphabet;
 		this.stateFactory = stateFactory;
-		this.m_ConstantTokenAmount = constantTokenAmount;
+		this.mConstantTokenAmount = constantTokenAmount;
 		assert (!constantTokenAmount() || transitionsPreserveTokenAmount());
 	}
 
 	public PetriNetJulian(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi<S, C> nwa)
 			throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		alphabet = nwa.getInternalAlphabet();
 		stateFactory = nwa.getStateFactory();
-		this.m_ConstantTokenAmount = true;
+		this.mConstantTokenAmount = true;
 		Map<C, Place<S, C>> state2place = new HashMap<C, Place<S, C>>();
 		for (C content : nwa.getStates()) {
 			// C content = state.getContent();
@@ -130,7 +130,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		// }
 
 		assert (!constantTokenAmount() || transitionsPreserveTokenAmount());
-		assert ResultChecker.petriNetJulian(m_Services, nwa, this);
+		assert ResultChecker.petriNetJulian(mServices, nwa, this);
 	}
 
 	public Place<S, C> addPlace(C content, boolean isInitial, boolean isFinal) {
@@ -233,7 +233,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	 * initial marking) during every run of the net
 	 */
 	public boolean constantTokenAmount() {
-		return m_ConstantTokenAmount;
+		return mConstantTokenAmount;
 	}
 
 	@Override
@@ -251,12 +251,12 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	public PetriNetRun<S, C> acceptingRun() throws AutomataLibraryException {
 		// NestedRun<S, C> test = getAcceptingNestedRun();
 		// System.out.print(test);
-		return (new PetriNetUnfolder<S, C>(m_Services, this, PetriNetUnfolder.order.ERV,
+		return (new PetriNetUnfolder<S, C>(mServices, this, PetriNetUnfolder.order.ERV,
 				false, true)).getAcceptingRun();
 	}
 
 	public NestedRun<S, C> getAcceptingNestedRun() throws AutomataLibraryException {
-		EmptinessPetruchio<S, C> ep = new EmptinessPetruchio<S, C>(m_Services, this);
+		EmptinessPetruchio<S, C> ep = new EmptinessPetruchio<S, C>(mServices, this);
 		NestedRun<S, C> result = ep.getResult();
 
 		// NestedRun<S,C> result = (new

@@ -55,11 +55,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	
-	private final AutomataLibraryServices m_Services;
-    private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+    private final ILogger mLogger;
 	
-	private final IPetriNet<S, C> m_Net;
-	private final NestedWordAutomaton<S,C> m_Result;
+	private final IPetriNet<S, C> mNet;
+	private final NestedWordAutomaton<S,C> mResult;
 
 	
 	@Override
@@ -70,33 +70,33 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() +
-			"Operand " + m_Net.sizeInformation();
+			"Operand " + mNet.sizeInformation();
 	}
 	
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + 
-				m_Result.sizeInformation();
+				mResult.sizeInformation();
 	}
 	
 	
 	public PetriNet2FiniteAutomaton(AutomataLibraryServices services, 
 			IPetriNet<S,C> net) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Net = net;
-		m_Logger.info(startMessage());
-		m_ContentFactory = net.getStateFactory();
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mNet = net;
+		mLogger.info(startMessage());
+		mContentFactory = net.getStateFactory();
 		Set<S> alphabet = new HashSet<S>(net.getAlphabet());
-		m_Result = new NestedWordAutomaton<S,C>(m_Services, alphabet,
+		mResult = new NestedWordAutomaton<S,C>(mServices, alphabet,
 									 new HashSet<S>(0),
 									 new HashSet<S>(0),
 									 net.getStateFactory());
 		getState(net.getInitialMarking(),true);
-		while (!m_Worklist.isEmpty()) {
-			Marking<S,C> marking = m_Worklist.remove(0);
+		while (!mWorklist.isEmpty()) {
+			Marking<S,C> marking = mWorklist.remove(0);
 			constructOutgoingTransitions(marking);
 		}
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	
@@ -109,14 +109,14 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	 * </ul>
  
 	 */
-	private final List<Marking<S,C>> m_Worklist = 
+	private final List<Marking<S,C>> mWorklist = 
 		new LinkedList<Marking<S,C>>();
 	/**
 	 * Maps a marking to the automaton state that represents this marking.
 	 */
-	Map<Marking<S,C>,C> m_Marking2State =
+	Map<Marking<S,C>,C> mMarking2State =
 		new HashMap<Marking<S,C>,C>();
-	StateFactory<C> m_ContentFactory;
+	StateFactory<C> mContentFactory;
 
 
 	
@@ -127,14 +127,14 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	 * constructed it is an initial state iff isInitial is true. 
 	 */
 	private C getState(Marking<S,C> marking, boolean isInitial) {
-		C state = m_Marking2State.get(marking);
+		C state = mMarking2State.get(marking);
 		if (state == null) {
-//			boolean isFinal = m_Net.getAcceptingMarkings().contains(marking);
-			boolean isFinal = m_Net.isAccepting(marking);
-			state = m_ContentFactory.getContentOnPetriNet2FiniteAutomaton(marking);
-			m_Result.addState(isInitial, isFinal, state);
-			m_Marking2State.put(marking,state);
-			m_Worklist.add(marking);
+//			boolean isFinal = mNet.getAcceptingMarkings().contains(marking);
+			boolean isFinal = mNet.isAccepting(marking);
+			state = mContentFactory.getContentOnPetriNet2FiniteAutomaton(marking);
+			mResult.addState(isInitial, isFinal, state);
+			mMarking2State.put(marking,state);
+			mWorklist.add(marking);
 		}
 		return state;
 	}
@@ -161,7 +161,7 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 			if (marking.isTransitionEnabled(transition)) {
 				Marking<S,C> succMarking = marking.fireTransition(transition);
 				C succState = getState(succMarking, false);
-				m_Result.addInternalTransition(state, transition.getSymbol(),
+				mResult.addInternalTransition(state, transition.getSymbol(),
 																	succState);
 				
 			}
@@ -193,7 +193,7 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 
 	
 	public INestedWordAutomatonOldApi<S,C> getResult() {
-		return m_Result;
+		return mResult;
 	}
 
 	@Override

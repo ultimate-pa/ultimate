@@ -40,23 +40,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class TAPreferences {
 
-	private final boolean m_Interprocedural;
-	private final int m_MaxIterations;
-	private final int m_watchIteration;
-	private final Artifact m_Artifact;
-	private final INTERPOLATION m_Interpolation;
-	private final InterpolantAutomaton m_InterpolantAutomaton;
-	private final boolean m_DumpAutomata;
-	private final Format m_AutomataFormat;
-	private final String m_DumpPath;
-	private final InterpolantAutomatonEnhancement m_Determiniation;
-	private final Minimization m_Minimize;
-	private final boolean m_Hoare;
-	private final Concurrency m_Concurrency;
-	private final boolean m_SeperateViolationCheck = true;
-	private final HoareTripleChecks m_HoareTripleChecks;
-	private RcpPreferenceProvider m_Prefs;
-	private final HoareAnnotationPositions m_HoareAnnotationPositions;
+	private final boolean mInterprocedural;
+	private final int mMaxIterations;
+	private final int mwatchIteration;
+	private final Artifact mArtifact;
+	private final INTERPOLATION mInterpolation;
+	private final InterpolantAutomaton mInterpolantAutomaton;
+	private final boolean mDumpAutomata;
+	private final Format mAutomataFormat;
+	private final String mDumpPath;
+	private final InterpolantAutomatonEnhancement mDeterminiation;
+	private final Minimization mMinimize;
+	private final boolean mHoare;
+	private final Concurrency mConcurrency;
+	private final boolean mSeperateViolationCheck = true;
+	private final HoareTripleChecks mHoareTripleChecks;
+	private RcpPreferenceProvider mPrefs;
+	private final HoareAnnotationPositions mHoareAnnotationPositions;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -77,52 +77,52 @@ public class TAPreferences {
 
 	public TAPreferences() {
 
-		m_Prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		mPrefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 
-		m_Interprocedural = m_Prefs
+		mInterprocedural = mPrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDUTAL);
 
-		m_MaxIterations = m_Prefs
+		mMaxIterations = mPrefs
 				.getInt(TraceAbstractionPreferenceInitializer.LABEL_ITERATIONS);
-		m_watchIteration = m_Prefs
+		mwatchIteration = mPrefs
 				.getInt(TraceAbstractionPreferenceInitializer.LABEL_WATCHITERATION);
 
-		m_Artifact = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ARTIFACT,
+		mArtifact = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ARTIFACT,
 				Artifact.class);
 
-		m_Hoare = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE,
+		mHoare = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE,
 				TraceAbstractionPreferenceInitializer.DEF_HOARE);
 		
-		m_HoareAnnotationPositions = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_Positions,
+		mHoareAnnotationPositions = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_Positions,
 				TraceAbstractionPreferenceInitializer.DEF_HOARE_POSITIONS, HoareAnnotationPositions.class);
 
-		m_Interpolation = m_Prefs.getEnum(
+		mInterpolation = mPrefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				INTERPOLATION.class);
 
-		m_InterpolantAutomaton = m_Prefs.getEnum(
+		mInterpolantAutomaton = mPrefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON,
 				InterpolantAutomaton.class);
 
-		m_DumpAutomata = m_Prefs
+		mDumpAutomata = mPrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMPAUTOMATA);
 		
-		m_AutomataFormat = m_Prefs.getEnum(
+		mAutomataFormat = mPrefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_AUTOMATAFORMAT,
 				Format.class);
 
-		m_DumpPath = m_Prefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
+		mDumpPath = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
 
-		m_Determiniation = m_Prefs.getEnum(
+		mDeterminiation = mPrefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_InterpolantAutomatonEnhancement,
 				InterpolantAutomatonEnhancement.class);
 		
-		m_HoareTripleChecks = m_Prefs.getEnum(
+		mHoareTripleChecks = mPrefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_HoareTripleChecks, HoareTripleChecks.class);
 
-		m_Minimize = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE,Minimization.class);
+		mMinimize = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE,Minimization.class);
 
-		m_Concurrency = m_Prefs.getEnum(
+		mConcurrency = mPrefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
 
 		if (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
@@ -130,7 +130,7 @@ public class TAPreferences {
 					+ "automaton not possible when using difference.");
 		}
 
-		if (m_watchIteration == 0
+		if (mwatchIteration == 0
 				&& (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON || artifact() == Artifact.INTERPOLANT_AUTOMATON)) {
 			throw new IllegalArgumentException("There is no interpolant"
 					+ "automaton in iteration 0.");
@@ -142,35 +142,35 @@ public class TAPreferences {
 	 * @return the interprocedural
 	 */
 	public boolean interprocedural() {
-		return m_Interprocedural;
+		return mInterprocedural;
 	}
 
 	public boolean allErrorLocsAtOnce() {
-		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
 	}
 	
 	public SolverMode solverMode() {
-		return m_Prefs.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+		return mPrefs.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 	}
 
 	public String commandExternalSolver() {
-		return m_Prefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
 	}
 	
 	public String logicForExternalSolver() {
-		String logicForExternalSolver = m_Prefs
+		String logicForExternalSolver = mPrefs
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		return logicForExternalSolver;
 	}
 	
 	public boolean dumpSmtScriptToFile() {
-		final boolean dumpSmtScriptToFile = m_Prefs
+		final boolean dumpSmtScriptToFile = mPrefs
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
 		return dumpSmtScriptToFile;
 	}
 
 	public String pathOfDumpedScript() {
-		final String pathOfDumpedScript  = m_Prefs
+		final String pathOfDumpedScript  = mPrefs
 				.getString(RcfgPreferenceInitializer.LABEL_Path);
 		return pathOfDumpedScript;
 	}
@@ -187,25 +187,25 @@ public class TAPreferences {
 	 * @return the maxIterations
 	 */
 	public int maxIterations() {
-		return m_MaxIterations;
+		return mMaxIterations;
 	}
 
 	/**
 	 * @return the prefObservedIteration
 	 */
 	public int watchIteration() {
-		return m_watchIteration;
+		return mwatchIteration;
 	}
 
 	/**
 	 * @return the artifact
 	 */
 	public Artifact artifact() {
-		return m_Artifact;
+		return mArtifact;
 	}
 
 	public boolean useSeparateSolverForTracechecks() {
-		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEPARATE_SOLVER);
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEPARATE_SOLVER);
 	}
 	
 	
@@ -214,87 +214,87 @@ public class TAPreferences {
 	 * @return the interpolatedLocs
 	 */
 	public INTERPOLATION interpolation() {
-		return m_Interpolation;
+		return mInterpolation;
 	}
 
 	/**
 	 * @return the additionalEdges
 	 */
 	public InterpolantAutomaton interpolantAutomaton() {
-		return m_InterpolantAutomaton;
+		return mInterpolantAutomaton;
 	}
 
 	/**
 	 * @return the dumpAutomata
 	 */
 	public boolean dumpAutomata() {
-		return m_DumpAutomata;
+		return mDumpAutomata;
 	}
 	
 	public Format getAutomataFormat() {
-		return m_AutomataFormat;
+		return mAutomataFormat;
 	}
 
 	/**
 	 * @return the dumpPath
 	 */
 	public String dumpPath() {
-		return m_DumpPath;
+		return mDumpPath;
 	}
 
 	/**
 	 * @return the determinization
 	 */
 	public InterpolantAutomatonEnhancement interpolantAutomatonEnhancement() {
-		return m_Determiniation;
+		return mDeterminiation;
 	}
 	
 
 
 	public HoareTripleChecks getHoareTripleChecks() {
-		return m_HoareTripleChecks;
+		return mHoareTripleChecks;
 	}
 
 	/**
 	 * @return the difference
 	 */
 	public boolean differenceSenwa() {
-		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DIFFERENCE_SENWA);
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DIFFERENCE_SENWA);
 	}
 
 	/**
 	 * @return the minimize
 	 */
 	public Minimization minimize() {
-		return m_Minimize;
+		return mMinimize;
 	}
 
 	public Concurrency getConcurrency() {
-		return m_Concurrency;
+		return mConcurrency;
 	}
 
 	public boolean computeHoareAnnotation() {
-		return m_Hoare;
+		return mHoare;
 	}
 	
 	public HoareAnnotationPositions getHoareAnnotationPositions() {
-		return m_HoareAnnotationPositions;
+		return mHoareAnnotationPositions;
 	}
 
 	public boolean seperateViolationCheck() {
-		return m_SeperateViolationCheck;
+		return mSeperateViolationCheck;
 	}
 
 	public boolean cutOffRequiresSameTransition() {
-		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CUTOFF);
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CUTOFF);
 	}
 
 	public boolean unfoldingToNet() {
-		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNFOLDING2NET);
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNFOLDING2NET);
 	}
 
 	public String order() {
-		return m_Prefs.getString(TraceAbstractionPreferenceInitializer.LABEL_ORDER);
+		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_ORDER);
 	}
 
 

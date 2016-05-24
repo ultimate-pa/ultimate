@@ -56,19 +56,19 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
 	/**
 	 * The resulting buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mResult;
 	/**
 	 * Service provider of Ultimate framework.
 	 */
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction
@@ -86,11 +86,11 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	 */
 	public CompareWithRandomAutomata(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Operand = operand;
-		m_Result = operand;
-		m_Logger.info(startMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mResult = operand;
+		mLogger.info(startMessage());
 
 		// Use operation with random automata
 		StateFactory<String> snf = (StateFactory<String>) new StringFactory();
@@ -105,7 +105,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {
-				m_Logger.info("Worked " + i + " automata");
+				mLogger.info("Worked " + i + " automata");
 			}
 
 			boolean useNwaInsteadDfaMethod = false;
@@ -122,7 +122,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 			}
 		}
 
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	/*
@@ -154,7 +154,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	 */
 	@Override
 	public Object getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	/*
@@ -176,6 +176,6 @@ public final class CompareWithRandomAutomata<LETTER, STATE> implements IOperatio
 	 */
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + m_Operand.sizeInformation();
+		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
 	}
 }

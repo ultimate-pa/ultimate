@@ -42,34 +42,34 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 public class Svcomp2016_PThreadFloat extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_32bit = {
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs_32bit = {
 		
 		/*** Category 3. Concurrency ***/
-		new DirectoryFileEndingsPair("examples/svcomp/pthread/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-atomic/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-ext/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-wmm/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/pthread-lit/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-races/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/pthread/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-atomic/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-ext/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-wmm/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/pthread-lit/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-races/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
 			
 		/*** Category 11. Floats ***/
-		new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/floats-cbmc-regression/", new String[]{ ".i", }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/float-benchs/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/floats-cbmc-regression/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/float-benchs/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 
 	};
 	
 	
-	private static final String[] m_CurrentBugs_32bit = {
+	private static final String[] mCurrentBugs_32bit = {
 		};
 	
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_64bit = {
+	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs_64bit = {
 	};
 	
-	private static final String[] m_CurrentBugs_64bit = {
+	private static final String[] mCurrentBugs_64bit = {
 	};
 
 	/**
@@ -80,16 +80,16 @@ public class Svcomp2016_PThreadFloat extends AbstractTraceAbstractionTestSuite {
 		return 60 * 1000;
 	}
 
-	private static final String[] m_Settings_32bit = {
+	private static final String[] mSettings_32bit = {
 		"svcomp2016/svcomp-Reach-32bit-Automizer_Default.epf",
 	};
 	
-	private static final String[] m_Settings_64bit = {
+	private static final String[] mSettings_64bit = {
 		"svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf",
 	};
 
 	
-	private static final String[] m_CToolchains = {
+	private static final String[] mCToolchains = {
 //		"AutomizerC.xml",
 		"AutomizerCInline.xml",
 	};
@@ -99,17 +99,17 @@ public class Svcomp2016_PThreadFloat extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings_32bit) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs_32bit);
-				addTestCase(toolchain, setting, m_CurrentBugs_32bit, new String[] {".c", ".i"});
+		for (String setting : mSettings_32bit) {
+			for (String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs_32bit);
+				addTestCase(toolchain, setting, mCurrentBugs_32bit, new String[] {".c", ".i"});
 			}
 		}
 		
-		for (String setting : m_Settings_64bit) {
-			for (String toolchain : m_CToolchains) {
-				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs_64bit);
-				addTestCase(toolchain, setting, m_CurrentBugs_64bit, new String[] {".c", ".i"});
+		for (String setting : mSettings_64bit) {
+			for (String toolchain : mCToolchains) {
+				addTestCase(toolchain, setting, mDirectoryFileEndingsPairs_64bit);
+				addTestCase(toolchain, setting, mCurrentBugs_64bit, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

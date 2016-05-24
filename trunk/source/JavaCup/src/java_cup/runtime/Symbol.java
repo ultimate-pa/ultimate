@@ -65,8 +65,8 @@ public class Symbol {
   Constructor for no value or l,r
 ***********************************/
 
-  public Symbol(int sym_num) {
-    this(sym_num, -1);
+  public Symbol(int symnum) {
+    this(symnum, -1);
     left = -1;
     right = -1;
   }
@@ -74,9 +74,9 @@ public class Symbol {
 /***********************************
   Constructor to give a start state
 ***********************************/
-  protected Symbol(int sym_num, int state)
+  protected Symbol(int symnum, int state)
     {
-      sym = sym_num;
+      sym = symnum;
       parse_state = state;
     }
 

@@ -44,8 +44,8 @@ import java.util.Map;
  * @param <V>
  */
 public class ConstructionCache<K, V> {
-	private final Map<K,V> m_Map = new HashMap<>();
-	private final IValueConstruction<K, V> m_ValueComputation;
+	private final Map<K,V> mMap = new HashMap<>();
+	private final IValueConstruction<K, V> mValueComputation;
 	
 	
 	/**
@@ -59,23 +59,23 @@ public class ConstructionCache<K, V> {
 	}
 	
 	public ConstructionCache(IValueConstruction<K, V> valueConstruction) {
-		m_ValueComputation = valueConstruction;
+		mValueComputation = valueConstruction;
 	}
 	
 	/**
 	 * Get value stored for key. Construct value if not already constructed.
 	 */
 	public V getOrConstuct(K key) {
-		V value = m_Map.get(key);
+		V value = mMap.get(key);
 		if (value == null) {
-			value = m_ValueComputation.constructValue(key);
-			m_Map.put(key, value);
+			value = mValueComputation.constructValue(key);
+			mMap.put(key, value);
 		}
 		return value;
 	}
 	
 	public Map<K, V> getMap() {
-		return Collections.unmodifiableMap(m_Map);
+		return Collections.unmodifiableMap(mMap);
 	}
 	
 

@@ -79,7 +79,7 @@ public class TermVariable extends Term {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void toStringHelper(ArrayDeque<Object> m_Todo) {
-		m_Todo.add(toString());
+	public void toStringHelper(ArrayDeque<Object> mTodo) {
+		mTodo.add(toString());
 	}
 }

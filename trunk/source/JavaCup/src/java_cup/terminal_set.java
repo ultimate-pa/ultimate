@@ -20,7 +20,7 @@ public class terminal_set {
     { 
       /* allocate the bitset at what is probably the right size */
       _grammar = g;
-      _elements = new long[((g.num_terminals()-1) >>> LOG_BITS_PER_UNIT)+1];
+      _elements = new long[((g.numterminals()-1) >>> LOG_BITS_PER_UNIT)+1];
     }
 
   /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -188,7 +188,7 @@ public class terminal_set {
     {
       StringBuilder result = new StringBuilder("{");
       String comma = "";
-      for (int t = 0; t < _grammar.num_terminals(); t++)
+      for (int t = 0; t < _grammar.numterminals(); t++)
 	{
 	  if (contains(t))
 	    {

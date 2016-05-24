@@ -90,19 +90,19 @@ public final class SearchElement<LETTER, STATE> {
 	/**
 	 * The down state of this element.
 	 */
-	private final VertexDownState<STATE> m_DownState;
+	private final VertexDownState<STATE> mDownState;
 	/**
 	 * Vertex down state that was used right before this search element.
 	 */
-	private final VertexDownState<STATE> m_History;
+	private final VertexDownState<STATE> mHistory;
 	/**
 	 * Summarize edge this element corresponds to.
 	 */
-	private final SummarizeEdge<LETTER, STATE> m_SummarizeEdge;
+	private final SummarizeEdge<LETTER, STATE> mSummarizeEdge;
 	/**
 	 * The vertex of this element.
 	 */
-	private final Vertex<LETTER, STATE> m_Vertex;
+	private final Vertex<LETTER, STATE> mVertex;
 
 	/**
 	 * Creates a new search element with a given vertex and a down state.
@@ -134,10 +134,10 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	public SearchElement(final Vertex<LETTER, STATE> vertex, final VertexDownState<STATE> downState,
 			final VertexDownState<STATE> history, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
-		m_Vertex = vertex;
-		m_DownState = downState;
-		m_History = history;
-		m_SummarizeEdge = summarizeEdge;
+		mVertex = vertex;
+		mDownState = downState;
+		mHistory = history;
+		mSummarizeEdge = summarizeEdge;
 	}
 
 	/*
@@ -157,18 +157,18 @@ public final class SearchElement<LETTER, STATE> {
 			return false;
 		}
 		SearchElement<?, ?> other = (SearchElement<?, ?>) obj;
-		if (m_DownState == null) {
-			if (other.m_DownState != null) {
+		if (mDownState == null) {
+			if (other.mDownState != null) {
 				return false;
 			}
-		} else if (!m_DownState.equals(other.m_DownState)) {
+		} else if (!mDownState.equals(other.mDownState)) {
 			return false;
 		}
-		if (m_Vertex == null) {
-			if (other.m_Vertex != null) {
+		if (mVertex == null) {
+			if (other.mVertex != null) {
 				return false;
 			}
-		} else if (!m_Vertex.equals(other.m_Vertex)) {
+		} else if (!mVertex.equals(other.mVertex)) {
 			return false;
 		}
 		return true;
@@ -180,7 +180,7 @@ public final class SearchElement<LETTER, STATE> {
 	 * @return The down state
 	 */
 	public VertexDownState<STATE> getDownState() {
-		return m_DownState;
+		return mDownState;
 	}
 
 	/**
@@ -191,7 +191,7 @@ public final class SearchElement<LETTER, STATE> {
 	 *         element.
 	 */
 	public VertexDownState<STATE> getHistory() {
-		return m_History;
+		return mHistory;
 	}
 
 	/**
@@ -201,7 +201,7 @@ public final class SearchElement<LETTER, STATE> {
 	 *         if not set.
 	 */
 	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
-		return m_SummarizeEdge;
+		return mSummarizeEdge;
 	}
 
 	/**
@@ -210,7 +210,7 @@ public final class SearchElement<LETTER, STATE> {
 	 * @return The vertex
 	 */
 	public Vertex<LETTER, STATE> getVertex() {
-		return m_Vertex;
+		return mVertex;
 	}
 
 	/*
@@ -222,8 +222,8 @@ public final class SearchElement<LETTER, STATE> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_DownState == null) ? 0 : m_DownState.hashCode());
-		result = prime * result + ((m_Vertex == null) ? 0 : m_Vertex.hashCode());
+		result = prime * result + ((mDownState == null) ? 0 : mDownState.hashCode());
+		result = prime * result + ((mVertex == null) ? 0 : mVertex.hashCode());
 		return result;
 	}
 
@@ -234,6 +234,6 @@ public final class SearchElement<LETTER, STATE> {
 	 */
 	@Override
 	public String toString() {
-		return "SearchElement [m_DownState=" + m_DownState + ", m_Vertex=" + m_Vertex + "]";
+		return "SearchElement [mDownState=" + mDownState + ", mVertex=" + mVertex + "]";
 	}
 }

@@ -92,13 +92,13 @@ public final class ISOIEC9899TC3 {
 		DECIMAL(10), 
 		HEXADECIMAL(16);
 		
-		private final int m_Base;
+		private final int mBase;
 		IntegerConstantType(int base) {
-			m_Base = base;
+			mBase = base;
 		}
 		
 		public int getBase() {
-			return m_Base;
+			return mBase;
 		}
 	}
 
@@ -386,9 +386,9 @@ public final class ISOIEC9899TC3 {
 	
 	private static class IntegerConstant {
 		
-		private final IntegerConstantType m_IntegerConstantType;
-		private final String m_Suffix;
-		private final BigInteger m_Value;
+		private final IntegerConstantType mIntegerConstantType;
+		private final String mSuffix;
+		private final BigInteger mValue;
 		public IntegerConstant(String valueWithPrefixAndSuffix) {
 			String valueWithPrefix = valueWithPrefixAndSuffix;
 			String suffix = "";
@@ -399,36 +399,36 @@ public final class ISOIEC9899TC3 {
 					break;
 				}
 			}
-			m_Suffix = suffix;
+			mSuffix = suffix;
 			final String valueAsString;
 			if (valueWithPrefix.startsWith(HEX_L0X) || valueWithPrefix.startsWith(HEX_U0X)) {
 				// val is a hexadecimal-constant
 				valueAsString = valueWithPrefix.substring(2);
-				m_IntegerConstantType = IntegerConstantType.HEXADECIMAL;
+				mIntegerConstantType = IntegerConstantType.HEXADECIMAL;
 			} else if (valueWithPrefix.startsWith(OCT_0)) {
 				valueAsString = valueWithPrefix;
-				m_IntegerConstantType = IntegerConstantType.OCTAL;
+				mIntegerConstantType = IntegerConstantType.OCTAL;
 			} else {
 				valueAsString = valueWithPrefix;
-				m_IntegerConstantType = IntegerConstantType.DECIMAL;
+				mIntegerConstantType = IntegerConstantType.DECIMAL;
 			}
-			m_Value = new BigInteger(valueAsString, m_IntegerConstantType.getBase());
+			mValue = new BigInteger(valueAsString, mIntegerConstantType.getBase());
 		}
 		
 		public BigInteger getValue() {
-			return m_Value;
+			return mValue;
 		}
 		public IntegerConstantType getIntegerConstantType() {
-			return m_IntegerConstantType;
+			return mIntegerConstantType;
 		}
 		public boolean hasUnsignedSuffix() {
-			return m_Suffix.contains("u") || m_Suffix.contains("U"); 
+			return mSuffix.contains("u") || mSuffix.contains("U"); 
 		}
 		public boolean hasLongLongSuffix() {
-			return m_Suffix.contains("ll") || m_Suffix.contains("LL"); 
+			return mSuffix.contains("ll") || mSuffix.contains("LL"); 
 		}
 		public boolean hasLongSuffix() {
-			return !hasLongLongSuffix() && (m_Suffix.contains("l") || m_Suffix.contains("L")); 
+			return !hasLongLongSuffix() && (mSuffix.contains("l") || mSuffix.contains("L")); 
 		}
 	}
 	

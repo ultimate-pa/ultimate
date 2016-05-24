@@ -58,11 +58,11 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 */
 	public static final boolean sBlueAtoms = true;
 	
-	protected Script m_script = null;
-	protected TerminationArgumentSynthesizer m_tas = null;
-	protected Collection<RankVar> m_variables = null;
+	protected Script mscript = null;
+	protected TerminationArgumentSynthesizer mtas = null;
+	protected Collection<RankVar> mvariables = null;
 	
-	private boolean m_initialized = false;
+	private boolean minitialized = false;
 	
 	/**
 	 * Initialize the template and affiliate this template with a particular
@@ -73,11 +73,11 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 * @param tas the parent TerminationArgumentSynthesizer
 	 */
 	public final void init(TerminationArgumentSynthesizer tas) {
-		m_tas = tas;
-		m_script = tas.getScript();
-		m_variables = tas.getRankVars();
+		mtas = tas;
+		mscript = tas.getScript();
+		mvariables = tas.getRankVars();
 		_init();
-		m_initialized = true;
+		minitialized = true;
 	}
 	
 	/**
@@ -89,9 +89,9 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 * Check if the template was properly initialized using init()
 	 */
 	protected void checkInitialized() {
-		assert(m_initialized);
-		assert(m_tas != null);
-		assert(m_variables != null);
+		assert(minitialized);
+		assert(mtas != null);
+		assert(mvariables != null);
 	}
 	
 	
@@ -154,9 +154,9 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 * @return the new variable as a term
 	 */
 	protected Term newDelta(String name) {
-		Term delta = m_tas.newConstant(name, "Real");
-		Term t = m_script.term(">", delta, m_script.decimal("0"));
-		m_script.assertTerm(t);
+		Term delta = mtas.newConstant(name, "Real");
+		Term t = mscript.term(">", delta, mscript.decimal("0"));
+		mscript.assertTerm(t);
 		return delta;
 	}
 }

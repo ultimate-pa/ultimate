@@ -36,34 +36,34 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class HeapDataArray {
-	private final String m_Name;
-	private final ASTType m_ASTType;
-	private final int m_Size;
+	private final String mName;
+	private final ASTType mASTType;
+	private final int mSize;
 	public HeapDataArray(String name, ASTType aSTType, int size) {
 		super();
-		m_Name = name;
-		m_ASTType = aSTType;
-		m_Size = size;
+		mName = name;
+		mASTType = aSTType;
+		mSize = size;
 	}
 	public String getName() {
-		return m_Name;
+		return mName;
 	}
 	public ASTType getASTType() {
-		return m_ASTType;
+		return mASTType;
 	}
 	public String getVariableName() {
 		return SFO.MEMORY + "_" + getName();
 	}
 	public int getSize() {
-		return m_Size;
+		return mSize;
 	}
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_ASTType == null) ? 0 : m_ASTType.hashCode());
-		result = prime * result + ((m_Name == null) ? 0 : m_Name.hashCode());
-		result = prime * result + m_Size;
+		result = prime * result + ((mASTType == null) ? 0 : mASTType.hashCode());
+		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
+		result = prime * result + mSize;
 		return result;
 	}
 	@Override
@@ -75,23 +75,23 @@ public class HeapDataArray {
 		if (getClass() != obj.getClass())
 			return false;
 		HeapDataArray other = (HeapDataArray) obj;
-		if (m_ASTType == null) {
-			if (other.m_ASTType != null)
+		if (mASTType == null) {
+			if (other.mASTType != null)
 				return false;
-		} else if (!m_ASTType.equals(other.m_ASTType))
+		} else if (!mASTType.equals(other.mASTType))
 			return false;
-		if (m_Name == null) {
-			if (other.m_Name != null)
+		if (mName == null) {
+			if (other.mName != null)
 				return false;
-		} else if (!m_Name.equals(other.m_Name))
+		} else if (!mName.equals(other.mName))
 			return false;
-		if (m_Size != other.m_Size)
+		if (mSize != other.mSize)
 			return false;
 		return true;
 	}
 	@Override
 	public String toString() {
-		return "HeapDataArray [m_Name=" + m_Name + ", m_ASTType=" + m_ASTType + ", m_Size=" + m_Size + "]";
+		return "HeapDataArray [mName=" + mName + ", mASTType=" + mASTType + ", mSize=" + mSize + "]";
 	}
 	
 	

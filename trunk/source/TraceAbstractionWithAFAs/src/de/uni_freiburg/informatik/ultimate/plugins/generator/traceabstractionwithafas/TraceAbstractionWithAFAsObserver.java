@@ -73,16 +73,16 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	 * should be passed to the next plugin. The Successors of this node exactly
 	 * the initial nodes of procedures.
 	 */
-	private IElement m_graphroot = null;
+	private IElement mgraphroot = null;
 
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage m_ToolchainStorage;
+	private final IToolchainStorage mToolchainStorage;
 
 	private final ILogger mLogger;
 
 	public TraceAbstractionWithAFAsObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
 		mServices = services;
-		m_ToolchainStorage = storage;
+		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
@@ -102,7 +102,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		}
 
 		TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, taBenchmarks, taPrefs,
-				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, m_ToolchainStorage);
+				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 
 		Result result = cegarLoop.iterate();
 		
@@ -201,7 +201,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	 * @return the root of the CFG.
 	 */
 	public IElement getRoot() {
-		return m_graphroot;
+		return mgraphroot;
 	}
 
 }

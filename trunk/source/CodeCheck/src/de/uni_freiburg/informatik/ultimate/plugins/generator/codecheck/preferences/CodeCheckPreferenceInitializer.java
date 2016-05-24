@@ -51,7 +51,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	}
 	
 	public enum RedirectionStrategy {
-		No_Strategy, FIRST, RANDOM, RANDOM_STRONGEST
+		No_Strategy, FIRST, RANDOM, RANDOmSTRONGEST
 	}
 
 	public static final String LABEL_CHECKER = "the checking algorithm to use";
@@ -75,7 +75,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	
 	public static final String LABEL_DEF_RED = "Default Redirection";
 	
-	public static final String LABEL_RM_FALSE = "Remove False Nodes Manually";
+	public static final String LABEL_RmFALSE = "Remove False Nodes Manually";
 	
 	public static final String LABEL_CHK_SAT = "Check edges satisfiability";
 	
@@ -110,11 +110,11 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	
 	public static final int DEF_ITERATIONS = -1;
 	
-	public static final RedirectionStrategy DEF_REDIRECTION = RedirectionStrategy.RANDOM_STRONGEST;
+	public static final RedirectionStrategy DEF_REDIRECTION = RedirectionStrategy.RANDOmSTRONGEST;
 	
 	public static final boolean DEF_DEF_RED = false;
 	
-	public static final boolean DEF_RM_FALSE = false;
+	public static final boolean DEF_RmFALSE = false;
 	
 	public static final boolean DEF_CHK_SAT = false;
 
@@ -199,8 +199,8 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 					DEF_DEF_RED, PreferenceType.Boolean),
 			new UltimatePreferenceItem<Boolean>(LABEL_CHK_SAT,
 					DEF_CHK_SAT, PreferenceType.Boolean),
-			new UltimatePreferenceItem<Boolean>(LABEL_RM_FALSE,
-					DEF_RM_FALSE, PreferenceType.Boolean),
+			new UltimatePreferenceItem<Boolean>(LABEL_RmFALSE,
+					DEF_RmFALSE, PreferenceType.Boolean),
 		};
 	}
 

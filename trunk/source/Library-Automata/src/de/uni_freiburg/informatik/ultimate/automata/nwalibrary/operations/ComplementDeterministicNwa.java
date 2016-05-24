@@ -45,17 +45,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
  */
 public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
-	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
 	public ComplementDeterministicNwa(INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		if (operand instanceof DeterminizeNwa) {
-			m_Operand = operand;
+			mOperand = operand;
 		} else if (operand instanceof TotalizeNwa) {
-			m_Operand = operand;
+			mOperand = operand;
 		} else if ((operand instanceof NestedWordAutomaton) 
 				&& ((NestedWordAutomaton<LETTER, STATE>) operand).isDeterministic() 
 				&& ((NestedWordAutomaton<LETTER, STATE>) operand).isTotal()) {
-			m_Operand = operand;
+			mOperand = operand;
 		} else {
 			throw new IllegalArgumentException("input not known to be deterministic");
 		}
@@ -63,84 +63,84 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 	
 	@Override
 	public Iterable<STATE> getInitialStates() {
-		return m_Operand.getInitialStates();
+		return mOperand.getInitialStates();
 	}
 
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
-		return m_Operand.getInternalAlphabet();
+		return mOperand.getInternalAlphabet();
 	}
 
 	@Override
 	public Set<LETTER> getCallAlphabet() {
-		return m_Operand.getCallAlphabet();
+		return mOperand.getCallAlphabet();
 	}
 
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
-		return m_Operand.getReturnAlphabet();
+		return mOperand.getReturnAlphabet();
 	}
 
 	@Override
 	public StateFactory<STATE> getStateFactory() {
-		return m_Operand.getStateFactory();
+		return mOperand.getStateFactory();
 	}
 	
 	@Override
 	public boolean isInitial(STATE state) {
-		return m_Operand.isInitial(state);
+		return mOperand.isInitial(state);
 	}
 
 	@Override
 	public boolean isFinal(STATE state) {
-		return !m_Operand.isFinal(state);
+		return !mOperand.isFinal(state);
 	}
 
 
 
 	@Override
 	public STATE getEmptyStackState() {
-		return m_Operand.getEmptyStackState();
+		return mOperand.getEmptyStackState();
 	}
 
 	@Override
 	public Set<LETTER> lettersInternal(STATE state) {
-		return m_Operand.getInternalAlphabet();
+		return mOperand.getInternalAlphabet();
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(STATE state) {
-		return m_Operand.getCallAlphabet();
+		return mOperand.getCallAlphabet();
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(STATE state) {
-		return m_Operand.getReturnAlphabet();
+		return mOperand.getReturnAlphabet();
 	}
 
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
-		return m_Operand.internalSuccessors(state, letter);
+		return mOperand.internalSuccessors(state, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state) {
-		return m_Operand.internalSuccessors(state);
+		return mOperand.internalSuccessors(state);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
-		return m_Operand.callSuccessors(state, letter);
+		return mOperand.callSuccessors(state, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
-		return m_Operand.callSuccessors(state);
+		return mOperand.callSuccessors(state);
 	}
 
 
@@ -148,13 +148,13 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
-		return m_Operand.returnSucccessors(state, hier, letter);
+		return mOperand.returnSucccessors(state, hier, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
-		return m_Operand.returnSuccessorsGivenHier(state, hier);
+		return mOperand.returnSuccessorsGivenHier(state, hier);
 	}
 
 	@Override

@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class NwaToUltimateModel<LETTER,STATE> {
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	public NwaToUltimateModel(AutomataLibraryServices services) {
 		super();
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
 
 	public IElement getUltimateModelOfNwa(INestedWordAutomatonSimple<LETTER,STATE> nwaSimple) throws AutomataOperationCanceledException {
@@ -58,7 +58,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 		if (nwaSimple instanceof INestedWordAutomaton) {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) nwaSimple;
 		} else {
-			nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, nwaSimple);
+			nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(mServices, nwaSimple);
 		}
 		AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
 					" initial states",false);	
@@ -90,7 +90,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 				else {
 					succVSN = new AutomatonState(succState,
 							nwa.isFinal(succState));
-					m_Logger.debug("Creating Node: " + succVSN.toString());
+					mLogger.debug("Creating Node: " + succVSN.toString());
 					constructed.put(succState,succVSN);
 					queue.add(succState);
 				}
@@ -107,7 +107,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 				} else {
 					succVSN = new AutomatonState(succState,
 							nwa.isFinal(succState));
-					m_Logger.debug("Creating Node: " + succVSN.toString());
+					mLogger.debug("Creating Node: " + succVSN.toString());
 					constructed.put(succState, succVSN);
 					queue.add(succState);
 				}
@@ -123,7 +123,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 						succVSN = constructed.get(succState);
 					} else {
 						succVSN = new AutomatonState(succState,nwa.isFinal(succState));
-						m_Logger.debug("Creating Node: " + succVSN.toString());
+						mLogger.debug("Creating Node: " + succVSN.toString());
 						constructed.put(succState, succVSN);
 						queue.add(succState);
 					}

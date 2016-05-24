@@ -47,24 +47,24 @@ public class TermException extends Exception {
 	public static final String s_ExpectedApplicationTerm = "Expected application term";
 	public static final String s_UnknownSubclassOfTerm = "Stumbled upon a Term of unknown subclass";
 	
-	protected final Term m_term;
+	protected final Term mterm;
 	
 	public TermException(String message, Term term) {
 		super(message);
-		m_term = term;
+		mterm = term;
 	}
 	
 	/**
 	 * @return the associated term
 	 */
 	public Term getTerm() {
-		return m_term;
+		return mterm;
 	}
 	
 	@Override
 	public String toString() {
-		if (m_term != null) {
-			return super.toString() + " @term: " + m_term;
+		if (mterm != null) {
+			return super.toString() + " @term: " + mterm;
 		} else {
 			return super.toString();
 		}

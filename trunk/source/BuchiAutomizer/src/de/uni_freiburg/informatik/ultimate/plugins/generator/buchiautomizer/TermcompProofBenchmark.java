@@ -43,51 +43,51 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 
-	private final TreeMap<Integer, String> m_ModuleFinite = new TreeMap<Integer, String>();
-	private final TreeMap<Integer, String> m_ModuleBuchi = new TreeMap<Integer, String>();
+	private final TreeMap<Integer, String> mModuleFinite = new TreeMap<Integer, String>();
+	private final TreeMap<Integer, String> mModuleBuchi = new TreeMap<Integer, String>();
 	/**
 	 * Is there a remainder module? A remainder module contains remaining traces
 	 * if decomposition into modules failed. Null if yet unknown.
 	 */
-	private Boolean m_HasRemainderModule;
-	private boolean m_RemainderModuleNonterminationKnown;
+	private Boolean mHasRemainderModule;
+	private boolean mRemainderModuleNonterminationKnown;
 
 	public TermcompProofBenchmark(IUltimateServiceProvider services) {
-		m_Services = services;
+		mServices = services;
 	}
 
 	void reportFiniteModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "finiteAutomatonIteration" + iteration, Format.ATS, automaton))
+		String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "finiteAutomatonIteration" + iteration, Format.ATS, automaton))
 				.getDefinitionAsString();
-		m_ModuleFinite.put(iteration, stringRepresentation);
+		mModuleFinite.put(iteration, stringRepresentation);
 	}
 
 	void reportBuchiModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "buchiAutomatonIteration" + iteration, Format.ATS, automaton))
+		String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "buchiAutomatonIteration" + iteration, Format.ATS, automaton))
 				.getDefinitionAsString();
-		m_ModuleBuchi.put(iteration, stringRepresentation);
+		mModuleBuchi.put(iteration, stringRepresentation);
 	}
 
 	void reportRemainderModule(boolean nonterminationKnown) {
-		assert m_HasRemainderModule == null : "remainder module already reported";
-		m_HasRemainderModule = true;
-		m_RemainderModuleNonterminationKnown = nonterminationKnown;
+		assert mHasRemainderModule == null : "remainder module already reported";
+		mHasRemainderModule = true;
+		mRemainderModuleNonterminationKnown = nonterminationKnown;
 	}
 
 	void reportNoRemainderModule() {
-		assert m_HasRemainderModule == null : "remainder module already reported";
-		m_HasRemainderModule = false;
+		assert mHasRemainderModule == null : "remainder module already reported";
+		mHasRemainderModule = false;
 	}
 
 	@Override
 	public String toString() {
-		if (m_HasRemainderModule == null) {
+		if (mHasRemainderModule == null) {
 			return "Decomposition not yet finished";
 		}
-		if (m_HasRemainderModule) {
-			if (m_RemainderModuleNonterminationKnown) {
+		if (mHasRemainderModule) {
+			if (mRemainderModuleNonterminationKnown) {
 				return "Program is not terminating, hence no termination proof";
 			} else {
 				return "Unable to prove termination";
@@ -96,11 +96,11 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 			StringBuilder sb = new StringBuilder();
 			sb.append("Your program was decomposed into the following automata ");
 			sb.append(System.lineSeparator());
-			for (Entry<Integer, String> entry : m_ModuleFinite.entrySet()) {
+			for (Entry<Integer, String> entry : mModuleFinite.entrySet()) {
 				sb.append(entry.getValue());
 				sb.append(System.lineSeparator());
 			}
-			for (Entry<Integer, String> entry : m_ModuleBuchi.entrySet()) {
+			for (Entry<Integer, String> entry : mModuleBuchi.entrySet()) {
 				sb.append(entry.getValue());
 				sb.append(System.lineSeparator());
 			}

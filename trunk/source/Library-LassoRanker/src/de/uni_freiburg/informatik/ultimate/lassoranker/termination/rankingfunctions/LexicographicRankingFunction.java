@@ -47,26 +47,26 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class LexicographicRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = -7426526617632086331L;
 	
-	private final RankingFunction[] m_Parts;
+	private final RankingFunction[] mParts;
 	
 	public LexicographicRankingFunction(RankingFunction[] parts) {
 		assert(parts.length >= 1);
-		m_Parts = parts;
+		mParts = parts;
 	}
 	
 	@Override
 	public String getName() {
-		return m_Parts.length + "-lex";
+		return mParts.length + "-lex";
 	}
 	
 	public RankingFunction[] getComponents() {
-		return m_Parts;
+		return mParts;
 	}
 	
 	@Override
 	public Set<RankVar> getVariables() {
 		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (RankingFunction rf : m_Parts) {
+		for (RankingFunction rf : mParts) {
 			vars.addAll(rf.getVariables());
 		}
 		return vars;
@@ -75,7 +75,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(m_Parts.length);
+		sb.append(mParts.length);
 		sb.append("-lexicographic ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
@@ -87,11 +87,11 @@ public class LexicographicRankingFunction extends RankingFunction {
 			first = false;
 		}
 		sb.append(") = <");
-		for (int i = 0; i < m_Parts.length; ++i) {
+		for (int i = 0; i < mParts.length; ++i) {
 			if (i > 0) {
 				sb.append(",  ");
 			}
-			sb.append(m_Parts[i]);
+			sb.append(mParts[i]);
 		}
 		sb.append(">");
 		return sb.toString();
@@ -100,8 +100,8 @@ public class LexicographicRankingFunction extends RankingFunction {
 	@Override
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
 		List<Term> lex = new ArrayList<Term>();
-		for (int i = 0; i < m_Parts.length; ++i) {
-			Term[] lex_part = m_Parts[i].asLexTerm(script);
+		for (int i = 0; i < mParts.length; ++i) {
+			Term[] lex_part = mParts[i].asLexTerm(script);
 			for (int j = 0; j < lex_part.length; ++j) {
 				lex.add(lex_part[j]);
 			}
@@ -114,8 +114,8 @@ public class LexicographicRankingFunction extends RankingFunction {
 		Ordinal o = Ordinal.ZERO;
 		// TODO
 //		Ordinal w_pow = Ordinal.ONE;
-//		for (int i = m_Parts.length - 1; i >= 0; --i) {
-//			Ordinal a = m_Parts[i].evaluate(assignment);
+//		for (int i = mParts.length - 1; i >= 0; --i) {
+//			Ordinal a = mParts[i].evaluate(assignment);
 //			if (r.compareTo(Rational.ZERO) > 0) {
 //				BigInteger k = r.ceil().numerator();
 //				o = o.add(w_pow.mult(Ordinal.fromInteger(k)));

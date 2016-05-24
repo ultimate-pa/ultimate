@@ -44,30 +44,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class PredicateFactoryResultChecking extends StateFactory<IPredicate> {
 	
-	protected final SmtManager m_SmtManager;
+	protected final SmtManager mSmtManager;
 	private final String s_StateLabel = 
 			"auxiliary predicate that should only be used while checking correctness of automata operations";
 	
 	public PredicateFactoryResultChecking(SmtManager smtManager) {
-		m_SmtManager = smtManager;
+		mSmtManager = smtManager;
 	}
 	
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
-		return m_SmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
 	
 	@Override
 	public IPredicate determinize(Map<IPredicate, Set<IPredicate>> down2up) {
-		return m_SmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
 	
 	public IPredicate createSinkStateContent() {
-		return m_SmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
 
 	@Override
 	public IPredicate createEmptyStackState(){
-		return m_SmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
 
 	@Override
@@ -78,28 +78,28 @@ public class PredicateFactoryResultChecking extends StateFactory<IPredicate> {
 	
 	@Override
 	public IPredicate minimize(Collection<IPredicate> states) {
-		return m_SmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
 	
 	@Override
 	public IPredicate senwa(IPredicate entry, IPredicate state) {
 		assert false : "still used?";
-		return m_SmtManager.getPredicateFactory().newDontCarePredicate(((SPredicate) state).getProgramPoint());
+		return mSmtManager.getPredicateFactory().newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
 
 	@Override
 	public IPredicate buchiComplementFKV(LevelRankingState compl) {
-		return m_SmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
 
 	@Override
 	public IPredicate intersectBuchi(IPredicate s1, IPredicate s2, int track) {
-		return m_SmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
 	
 	@Override
 	public IPredicate getContentOnConcurrentProduct(IPredicate c1,
 			IPredicate c2) {
-		return m_SmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
 	}
 }

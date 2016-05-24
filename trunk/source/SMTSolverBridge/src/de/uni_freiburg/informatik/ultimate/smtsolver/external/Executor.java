@@ -87,7 +87,7 @@ class Executor {
 	}
 
 	private void createProcess() throws IOException {
-		// m_Logger = ILogger.getRootLogger();
+		// mLogger = ILogger.getRootLogger();
 		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
 		// TODO:
 		// Let all processes terminate when the toolchain terminates

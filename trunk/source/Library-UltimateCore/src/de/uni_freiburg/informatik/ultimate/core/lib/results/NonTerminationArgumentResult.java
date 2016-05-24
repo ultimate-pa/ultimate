@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * ...
  * </pre>
  * 
- * The general form is x + Y*(sum_i J^i)*1 where
+ * The general form is x + Y*(sumi J^i)*1 where
  * <ul>
  * <li>x is the initial state state_init
  * <li>Y is a matrix with the rays as columns
@@ -123,7 +123,7 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 			// sb.append(BoogieStatementPrettyPrinter.print(entry.getKey()));
 			sb.append(var);
 			// sb.append(BackTranslationWorkaround.backtranslate(
-			// m_TranslatorSequence, entry.getKey()));
+			// mTranslatorSequence, entry.getKey()));
 			// TODO: apply backtranslation?
 			sb.append("=");
 			sb.append(entry.getValue());

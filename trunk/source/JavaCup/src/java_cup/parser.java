@@ -562,28 +562,28 @@ parser.done_parsing();
           // new_symbol_id ::= symbol_id 
           case 25:
             {
-              java_cup.runtime.Symbol sym_id$ = CUP$stack.get(CUP$size - 1);
-              String sym_id = (String) sym_id$.value;
+              java_cup.runtime.Symbol symid$ = CUP$stack.get(CUP$size - 1);
+              String symid = (String) symid$.value;
  
 	  /* see if this terminal has been declared before */
-	  if (symbols.get(sym_id) != null)
+	  if (symbols.get(symid) != null)
 	    {
 	      /* issue a message */
-	      ErrorManager.getManager().emit_error("Symbol \"" + sym_id + 
-			   "\" has already been declared", sym_id$);
+	      ErrorManager.getManager().emit_error("Symbol \"" + symid + 
+			   "\" has already been declared", symid$);
 	    }
 	  else
 	    {
 	      /* build the symbol and put it in the symbol table */
 	      symbol sym;
 	      if (_cur_is_nonterm) 
-	      	sym = grammar.add_non_terminal(sym_id, _cur_symbol_type);
+	      	sym = grammar.add_non_terminal(symid, _cur_symbol_type);
 	      else
-	      	sym = grammar.add_terminal(sym_id, _cur_symbol_type);
-	      symbols.put(sym_id, sym);
+	      	sym = grammar.add_terminal(symid, _cur_symbol_type);
+	      symbols.put(symid, sym);
 	    }
 	
-              return parser.getSymbolFactory().newSymbol("new_symbol_id", 17, sym_id$, sym_id$);
+              return parser.getSymbolFactory().newSymbol("new_symbol_id", 17, symid$, symid$);
             }
 
           // preced ::= PRECEDENCE assoc precterminal_list SEMI 

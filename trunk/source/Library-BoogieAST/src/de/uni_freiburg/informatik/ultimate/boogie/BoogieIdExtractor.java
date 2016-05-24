@@ -44,12 +44,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
  */
 public final class BoogieIdExtractor extends BoogieTransformer {
 
-		private final Set<String> m_Ids = new HashSet<>();
+		private final Set<String> mIds = new HashSet<>();
 
 		@Override
 		public Expression processExpression(Expression expr) {
 			if(expr instanceof IdentifierExpression){
-				m_Ids.add(((IdentifierExpression) expr).getIdentifier());
+				mIds.add(((IdentifierExpression) expr).getIdentifier());
 			}
 			return super.processExpression(expr);
 		}
@@ -57,13 +57,13 @@ public final class BoogieIdExtractor extends BoogieTransformer {
 		@Override
 		protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
 			if (lhs instanceof VariableLHS) {
-				m_Ids.add(((VariableLHS) lhs).getIdentifier());
+				mIds.add(((VariableLHS) lhs).getIdentifier());
 			}
 			return super.processLeftHandSide(lhs);
 		}
 
 		public Set<String> getIds() {
-			return m_Ids;
+			return mIds;
 		}
 	
 }

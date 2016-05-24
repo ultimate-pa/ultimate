@@ -50,84 +50,84 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class SenwaWalker<LETTER,STATE> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	
-	protected Senwa<LETTER,STATE> m_TraversedSenwa;
+	protected Senwa<LETTER,STATE> mTraversedSenwa;
 
 	
 	/**
 	 * STATEs that are already known but have not yet been visited.
 	 */
-	private final List<STATE> m_Worklist = new LinkedList<STATE>();
+	private final List<STATE> mWorklist = new LinkedList<STATE>();
 	
 	/**
 	 * STATEs that have already been marked. (Which means already visited or in
 	 * the worklist.)
 	 */
-	private final Set<STATE> m_Marked = new HashSet<STATE>();
+	private final Set<STATE> mMarked = new HashSet<STATE>();
 	
 	
 	/**
 	 * We remove afterwards all dead ends iff set to true.
 	 */
-	protected boolean m_RemoveDeadEnds;
+	protected boolean mRemoveDeadEnds;
 	
 	/**
 	 * We remove afterwards all non-live states iff set to true.
 	 */
-	protected boolean m_RemoveNonLiveStates = false;
+	protected boolean mRemoveNonLiveStates = false;
 	
 	
 	/**
 	 * DoubleDeckers that have been constructed but do not occur in any
 	 * accepting run of the automaton.
 	 */
-	private Map<STATE,Set<STATE>> m_RemovedDoubleDeckers = new HashMap<STATE,Set<STATE>>();
+	private Map<STATE,Set<STATE>> mRemovedDoubleDeckers = new HashMap<STATE,Set<STATE>>();
 	
 	/**
 	 * DoubleDeckers which occur on an accepting run.
 	 */
 	protected Set<DoubleDecker<STATE>> doubleDeckersThatCanReachFinal;
-	protected Map<STATE,STATE> m_CallSuccOfRemovedDown;
+	protected Map<STATE,STATE> mCallSuccOfRemovedDown;
 	
 	/**
 	 * 
 	 */
 	protected DoubleDecker<STATE> auxilliaryEmptyStackDoubleDecker;
 	
-	protected ISuccessorVisitor<LETTER, STATE> m_SuccVisit;
-	private long m_DeadEndRemovalTime;
+	protected ISuccessorVisitor<LETTER, STATE> mSuccVisit;
+	private long mDeadEndRemovalTime;
 	
 	public SenwaWalker(AutomataLibraryServices services, Senwa<LETTER,STATE> senwa, ISuccessorVisitor<LETTER, STATE> succVisit, boolean removeDeadEnds) throws AutomataLibraryException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_TraversedSenwa = senwa;
-		m_SuccVisit = succVisit;
-		m_RemoveDeadEnds = removeDeadEnds;
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mTraversedSenwa = senwa;
+		mSuccVisit = succVisit;
+		mRemoveDeadEnds = removeDeadEnds;
 		traverseDoubleDeckerGraph();
 	}
 	
 
 	
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
-		return m_TraversedSenwa;
+		return mTraversedSenwa;
 	}
 	
 	
 	
 	/**
 	 * True iff the STATE state has been marked. A DoubleDecker
-	 * is marked iff it has been visited or is in the m_Worklist.
+	 * is marked iff it has been visited or is in the mWorklist.
 	 */
 	private final boolean wasMarked(STATE state) {
-		return m_Marked.contains(state);
+		return mMarked.contains(state);
 	}
 	
 
 	private final void mark(STATE state) {
-		m_Marked.add(state);
+		mMarked.add(state);
 	}
 	
 	
@@ -136,10 +136,10 @@ public class SenwaWalker<LETTER,STATE> {
 	 * Add STATE state to worklist if it has not yet been marked.
 	 */
 	private final void enqueueAndMark(STATE state) {
-		assert m_TraversedSenwa.getStates().contains(state);
+		assert mTraversedSenwa.getStates().contains(state);
 		if (!wasMarked(state)) {
 			mark(state);
-			m_Worklist.add(state);
+			mWorklist.add(state);
 		}
 	}
 	
@@ -151,10 +151,10 @@ public class SenwaWalker<LETTER,STATE> {
 //	private final void addSummary(STATE summaryPred,
 //							STATE summarySucc, STATE returnPred) {
 //		Map<STATE,STATE> summarySuccessors = 
-//			m_CallReturnSummary.get(summaryPred);
+//			mCallReturnSummary.get(summaryPred);
 //		if (summarySuccessors == null) {
 //			summarySuccessors = new HashMap<STATE,STATE>();
-//			m_CallReturnSummary.put(summaryPred, summarySuccessors);
+//			mCallReturnSummary.put(summaryPred, summarySuccessors);
 //		}
 //		summarySuccessors.put(summarySucc, returnPred);
 //		enqueueSummarySuccs(summaryPred, summarySucc, returnPred);
@@ -170,15 +170,15 @@ public class SenwaWalker<LETTER,STATE> {
 //	 */
 //	private final void enqueueSummarySuccs(STATE summaryPred,
 //			STATE summarySucc, STATE returnPred) {
-//		for (STATE summaryPreDown : m_Marked_Up2Down.get(summaryPred)) {
+//		for (STATE summaryPreDown : mMarked_Up2Down.get(summaryPred)) {
 //			DoubleDecker<STATE> doubleDecker = 
 //				new DoubleDecker<STATE>(summaryPreDown, summaryPred);
 //			DoubleDecker<STATE> summarySuccDoubleDecker = 
 //				new DoubleDecker<STATE>(summaryPreDown, summarySucc);
 //			DoubleDecker<STATE> summaryReturnPred = 
 //				new DoubleDecker<STATE>(summaryPred, returnPred);
-//			memorizePredecessor(summarySuccDoubleDecker, summaryReturnPred, m_ReturnPredecessors);
-//			memorizePredecessor(summarySuccDoubleDecker, doubleDecker, m_SummaryPredecessors);
+//			memorizePredecessor(summarySuccDoubleDecker, summaryReturnPred, mReturnPredecessors);
+//			memorizePredecessor(summarySuccDoubleDecker, doubleDecker, mSummaryPredecessors);
 //			enqueueAndMark(summarySuccDoubleDecker);
 //		}
 //	}
@@ -190,7 +190,7 @@ public class SenwaWalker<LETTER,STATE> {
 //	 * (<i>down</i>,<i>up</i>) has been visited so far.
 //	 */
 //	private final Set<STATE> getKnownDownStates(STATE up) {
-//		Set<STATE> downStates = m_Marked_Up2Down.get(up);
+//		Set<STATE> downStates = mMarked_Up2Down.get(up);
 //		if (downStates == null) {
 //			return new HashSet<STATE>(0);
 //		}
@@ -204,10 +204,10 @@ public class SenwaWalker<LETTER,STATE> {
 //	 * (<i>down</i>,<i>up</i>) has been visited so far.
 //	 */
 //	private final Set<STATE> getKnownUpStates(STATE up) {
-//		if (m_Marked_Down2Up == null) {
+//		if (mMarked_Down2Up == null) {
 //			throw new UnsupportedOperationException("Up states not computeted");
 //		}
-//		Set<STATE> upStates = m_Marked_Down2Up.get(up);
+//		Set<STATE> upStates = mMarked_Down2Up.get(up);
 //		if (upStates == null) {
 //			return new HashSet<STATE>(0);
 //		}
@@ -218,80 +218,80 @@ public class SenwaWalker<LETTER,STATE> {
 
 	
 	protected final void traverseDoubleDeckerGraph() throws AutomataLibraryException {
-		Iterable<STATE> initialStates = m_SuccVisit.getInitialStates();
+		Iterable<STATE> initialStates = mSuccVisit.getInitialStates();
 		for (STATE state : initialStates) {
 			enqueueAndMark(state);
 		}
 		
-		while(!m_Worklist.isEmpty()) {
-			STATE state = m_Worklist.remove(0);
-			assert m_TraversedSenwa.getStates().contains(state);
+		while(!mWorklist.isEmpty()) {
+			STATE state = mWorklist.remove(0);
+			assert mTraversedSenwa.getStates().contains(state);
 			
-			Iterable<STATE> internalSuccs =	m_SuccVisit.visitAndGetInternalSuccessors(state);
+			Iterable<STATE> internalSuccs =	mSuccVisit.visitAndGetInternalSuccessors(state);
 			for (STATE succ : internalSuccs) {
 				enqueueAndMark(succ);
 			}
-			Iterable<STATE> callSuccs = m_SuccVisit.visitAndGetCallSuccessors(state);
+			Iterable<STATE> callSuccs = mSuccVisit.visitAndGetCallSuccessors(state);
 			for (STATE succ : callSuccs) {
 				enqueueAndMark(succ);
-				assert (succ == m_TraversedSenwa.getEntry(succ) || 
-						m_TraversedSenwa.getEntry(succ) == null);
+				assert (succ == mTraversedSenwa.getEntry(succ) || 
+						mTraversedSenwa.getEntry(succ) == null);
 				ArrayList<STATE> moduleStates = new ArrayList<STATE>();
-				moduleStates.addAll( m_TraversedSenwa.getModuleStates(succ));
+				moduleStates.addAll( mTraversedSenwa.getModuleStates(succ));
 				for (STATE moduleState : moduleStates) {
 					Iterable<STATE> returnSuccs = 
-							m_SuccVisit.visitAndGetReturnSuccessors(moduleState, state);
+							mSuccVisit.visitAndGetReturnSuccessors(moduleState, state);
 					for (STATE retSucc : returnSuccs) {
 						enqueueAndMark(retSucc);
 					}
 
 				}
-				assert m_TraversedSenwa.getCallPredecessors(succ).contains(state);
+				assert mTraversedSenwa.getCallPredecessors(succ).contains(state);
 			}
 			
-			STATE entry = m_TraversedSenwa.getEntry(state);
-			for (LETTER call : m_TraversedSenwa.lettersCallIncoming(entry)) {
-				for (STATE hier : m_TraversedSenwa.predCall(entry, call)) {
+			STATE entry = mTraversedSenwa.getEntry(state);
+			for (LETTER call : mTraversedSenwa.lettersCallIncoming(entry)) {
+				for (STATE hier : mTraversedSenwa.predCall(entry, call)) {
 					Iterable<STATE> returnSuccs = 
-							m_SuccVisit.visitAndGetReturnSuccessors(state, hier);
+							mSuccVisit.visitAndGetReturnSuccessors(state, hier);
 					for (STATE retSucc : returnSuccs) {
 						enqueueAndMark(retSucc);
 					}
 				}
 			}
 			
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			
 			
 		}
-		m_Logger.info("Result " + m_TraversedSenwa.sizeInformation());
-		if (m_RemoveDeadEnds && m_RemoveNonLiveStates) {
+		mLogger.info("Result " + mTraversedSenwa.sizeInformation());
+		if (mRemoveDeadEnds && mRemoveNonLiveStates) {
 			throw new IllegalArgumentException("RemoveDeadEnds and RemoveNonLiveStates is set");
 		}
 
-		if (m_RemoveDeadEnds) {
-//			new TestFileWriter(m_TraversedNwa, "TheAutomaotn", TestFileWriter.Labeling.TOSTRING);
+		if (mRemoveDeadEnds) {
+//			new TestFileWriter(mTraversedNwa, "TheAutomaotn", TestFileWriter.Labeling.TOSTRING);
 			removeStatesThatCanNotReachFinal(false);
-			if (m_TraversedSenwa.getInitialStates().isEmpty()) {
-				assert m_TraversedSenwa.getStates().isEmpty();
-				m_TraversedSenwa = getTotalizedEmptyAutomaton();
+			if (mTraversedSenwa.getInitialStates().isEmpty()) {
+				assert mTraversedSenwa.getStates().isEmpty();
+				mTraversedSenwa = getTotalizedEmptyAutomaton();
 			}
-			m_Logger.info("After removal of dead ends " + m_TraversedSenwa.sizeInformation());
+			mLogger.info("After removal of dead ends " + mTraversedSenwa.sizeInformation());
 
 		}
-		if (m_RemoveNonLiveStates) {
-//			m_Logger.warn("Minimize before non-live removal: " + 
-//		((NestedWordAutomaton<LETTER,STATE>) (new MinimizeDfa<LETTER, STATE>(m_TraversedNwa)).getResult()).sizeInformation());
+		if (mRemoveNonLiveStates) {
+//			mLogger.warn("Minimize before non-live removal: " + 
+//		((NestedWordAutomaton<LETTER,STATE>) (new MinimizeDfa<LETTER, STATE>(mTraversedNwa)).getResult()).sizeInformation());
 			removeNonLiveStates();
-//			m_Logger.warn("Minimize after non-live removal: " + 
-//		((NestedWordAutomaton<LETTER,STATE>) (new MinimizeDfa<LETTER, STATE>(m_TraversedNwa)).getResult()).sizeInformation());
-			if (m_TraversedSenwa.getInitialStates().isEmpty()) {
-				assert m_TraversedSenwa.getStates().isEmpty();
-//				m_TraversedSenwa = getTotalizedEmptyAutomaton();
+//			mLogger.warn("Minimize after non-live removal: " + 
+//		((NestedWordAutomaton<LETTER,STATE>) (new MinimizeDfa<LETTER, STATE>(mTraversedNwa)).getResult()).sizeInformation());
+			if (mTraversedSenwa.getInitialStates().isEmpty()) {
+				assert mTraversedSenwa.getStates().isEmpty();
+//				mTraversedSenwa = getTotalizedEmptyAutomaton();
 			}
-			m_Logger.info("After removal of nonLiveStates " + m_TraversedSenwa.sizeInformation());
+			mLogger.info("After removal of nonLiveStates " + mTraversedSenwa.sizeInformation());
 		}
 
 		
@@ -299,11 +299,11 @@ public class SenwaWalker<LETTER,STATE> {
 	
 	protected Senwa<LETTER,STATE> getTotalizedEmptyAutomaton() {
 		Senwa<LETTER,STATE> emptyAutomaton = new Senwa<LETTER,STATE>(
-				m_Services, 
-				m_TraversedSenwa.getInternalAlphabet(), 
-				m_TraversedSenwa.getCallAlphabet(), 
-				m_TraversedSenwa.getReturnAlphabet(), 
-				m_TraversedSenwa.getStateFactory());
+				mServices, 
+				mTraversedSenwa.getInternalAlphabet(), 
+				mTraversedSenwa.getCallAlphabet(), 
+				mTraversedSenwa.getReturnAlphabet(), 
+				mTraversedSenwa.getStateFactory());
 		STATE sinkState = emptyAutomaton.getStateFactory().createSinkStateContent();
 		emptyAutomaton.addState(sinkState, true, false, sinkState);
 		
@@ -340,11 +340,11 @@ public class SenwaWalker<LETTER,STATE> {
 		
 		// Set used to compute the states that can never reach the final state
 		// initialized with all states and narrowed by the algorithm
-		Set<STATE> statesNeverReachFinal = new HashSet<STATE>(m_TraversedSenwa.getStates());
+		Set<STATE> statesNeverReachFinal = new HashSet<STATE>(mTraversedSenwa.getStates());
 
 //		Set<DoubleDecker<STATE>> acceptingDoubleDeckers = new HashSet<DoubleDecker<STATE>>();
-//		for (STATE finalState : m_TraversedSenwa.getFinalStates()) {
-//			Set<STATE> finalsDownStates = m_Marked_Up2Down.get(finalState);
+//		for (STATE finalState : mTraversedSenwa.getFinalStates()) {
+//			Set<STATE> finalsDownStates = mMarked_Up2Down.get(finalState);
 //			for (STATE downStatesOfFinal : finalsDownStates) {
 //				DoubleDecker<STATE> summary =	new DoubleDecker<STATE>(downStatesOfFinal, finalState);
 //				acceptingDoubleDeckers.add(summary);
@@ -355,30 +355,30 @@ public class SenwaWalker<LETTER,STATE> {
 		
 		//Computation of nonReturnAncestors
 		ancestorSearchWorklist = new LinkedList<STATE>();
-		for (STATE state : m_TraversedSenwa.getFinalStates()) {
+		for (STATE state : mTraversedSenwa.getFinalStates()) {
 			statesNeverReachFinal.remove(state);
 		}
-		ancestorSearchWorklist.addAll(m_TraversedSenwa.getFinalStates());
+		ancestorSearchWorklist.addAll(mTraversedSenwa.getFinalStates());
 		while (!ancestorSearchWorklist.isEmpty()) {
 			STATE state = ancestorSearchWorklist.removeFirst();
 			statesNeverReachFinal.remove(state);
-			for (LETTER letter: m_TraversedSenwa.lettersInternalIncoming(state)) {
-				for (STATE pred : m_TraversedSenwa.predInternal(state, letter)) {
+			for (LETTER letter: mTraversedSenwa.lettersInternalIncoming(state)) {
+				for (STATE pred : mTraversedSenwa.predInternal(state, letter)) {
 					boolean wasContained = statesNeverReachFinal.remove(pred);
 					if (wasContained) {
 						ancestorSearchWorklist.add(pred);
 					}
 				}
 			}
-			for (LETTER letter: m_TraversedSenwa.lettersCallIncoming(state)) {
-				for (STATE pred : m_TraversedSenwa.predCall(state, letter)) {
+			for (LETTER letter: mTraversedSenwa.lettersCallIncoming(state)) {
+				for (STATE pred : mTraversedSenwa.predCall(state, letter)) {
 					boolean wasContained = statesNeverReachFinal.remove(pred);
 					if (wasContained) {
 						ancestorSearchWorklist.add(pred);
 					}
 				}
 			}
-			for (IncomingReturnTransition<LETTER, STATE> inTrans : m_TraversedSenwa.returnPredecessors(state)) {
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : mTraversedSenwa.returnPredecessors(state)) {
 				STATE pred = inTrans.getLinPred();
 				boolean wasContained = statesNeverReachFinal.remove(pred);
 				if (wasContained) {
@@ -409,37 +409,37 @@ public class SenwaWalker<LETTER,STATE> {
 		
 //		//some states are not removed but loose inital property
 //		Set<STATE> statesThatShouldNotBeInitialAnyMore = new HashSet<STATE>();
-//		for (STATE state : m_TraversedSenwa.getInitialStates()) {
+//		for (STATE state : mTraversedSenwa.getInitialStates()) {
 //			if (statesNeverReachFinal.contains(state)) {
 //				continue;
 //			}
-//			DoubleDecker<STATE> dd = new DoubleDecker<STATE>(m_TraversedSenwa.getEmptyStackState(), state);
+//			DoubleDecker<STATE> dd = new DoubleDecker<STATE>(mTraversedSenwa.getEmptyStackState(), state);
 //			if (doubleDeckersThatCanReachFinal.contains(dd)) {
 //				continue;
 //			}
 //			statesThatShouldNotBeInitialAnyMore.add(state);
 //		}
 //		for (STATE state : statesThatShouldNotBeInitialAnyMore) {
-//			m_TraversedSenwa.makeStateNonIntial(state);
-//			m_Logger.warn("The following state is not final any more: " +state);
+//			mTraversedSenwa.makeStateNonIntial(state);
+//			mLogger.warn("The following state is not final any more: " +state);
 //		}
 		
 		// remove states which can not reach final, but postpone removal of
 		// entrys and remove them at last.
 		Collection<STATE> entrysNeverReachFinal = new ArrayList<STATE>();
 		for (STATE state : statesNeverReachFinal) {
-			if (m_TraversedSenwa.isEntry(state)) {
+			if (mTraversedSenwa.isEntry(state)) {
 				entrysNeverReachFinal.add(state);
 			} else {
-				m_TraversedSenwa.removeState(state);
+				mTraversedSenwa.removeState(state);
 			}
 		}
 		for (STATE state : entrysNeverReachFinal) {
-			m_TraversedSenwa.removeState(state);
+			mTraversedSenwa.removeState(state);
 		}
 		
 		boolean atLeastOneStateRemoved = !statesNeverReachFinal.isEmpty();
-		m_DeadEndRemovalTime += (System.currentTimeMillis() - startTime);
+		mDeadEndRemovalTime += (System.currentTimeMillis() - startTime);
 		return atLeastOneStateRemoved;
 	}
 	
@@ -451,19 +451,19 @@ public class SenwaWalker<LETTER,STATE> {
 	// _before_ because on removal we want to be able to access all states
 	// of the automaton
 	private void announceRemovalOfDoubleDeckers(Set<STATE> statesGoingToBeRemoved) {
-		m_CallSuccOfRemovedDown = new HashMap<STATE,STATE>();		
+		mCallSuccOfRemovedDown = new HashMap<STATE,STATE>();		
 
 		/**
 		 * DoubleDeckers that have been constructed but do not occur in any
 		 * accepting run of the automaton.
 		 */
 		for (STATE up : statesGoingToBeRemoved) {
-			STATE entry = m_TraversedSenwa.getEntry(up);
-			for (STATE down : m_TraversedSenwa.getCallPredecessors(entry)) {
-				Set<STATE> downStates = m_RemovedDoubleDeckers.get(up);
+			STATE entry = mTraversedSenwa.getEntry(up);
+			for (STATE down : mTraversedSenwa.getCallPredecessors(entry)) {
+				Set<STATE> downStates = mRemovedDoubleDeckers.get(up);
 				if (downStates == null) {
 					downStates = new HashSet<STATE>();
-					m_RemovedDoubleDeckers.put(up, downStates);
+					mRemovedDoubleDeckers.put(up, downStates);
 				}
 				downStates.add(down);
 
@@ -473,7 +473,7 @@ public class SenwaWalker<LETTER,STATE> {
 							" several outgoing call transitions Hoare annotation might be incorrect.");
 				} else if (downCallSuccs.size() == 1){
 					STATE callSucc = downCallSuccs.iterator().next();
-					m_CallSuccOfRemovedDown.put(down, callSucc);
+					mCallSuccOfRemovedDown.put(down, callSucc);
 				} else {
 					assert downCallSuccs.isEmpty();
 				}
@@ -488,9 +488,9 @@ public class SenwaWalker<LETTER,STATE> {
 	 */
 	private Set<STATE> computeState2CallSuccs(STATE state) {
 		Set<STATE> callSuccs = new HashSet<STATE>();
-		if (state != m_TraversedSenwa.getEmptyStackState()) {
-			for (LETTER letter : m_TraversedSenwa.lettersCall(state)) {
-				callSuccs.addAll(m_TraversedSenwa.succCall(state, letter));
+		if (state != mTraversedSenwa.getEmptyStackState()) {
+			for (LETTER letter : mTraversedSenwa.lettersCall(state)) {
+				callSuccs.addAll(mTraversedSenwa.succCall(state, letter));
 			}
 		}
 		return callSuccs;
@@ -506,19 +506,19 @@ public class SenwaWalker<LETTER,STATE> {
 	 * Return true iff state has successors
 	 */
 	private boolean hasSuccessors(STATE state) {
-		for (LETTER symbol : m_TraversedSenwa.lettersInternal(state)) {
-			if (!m_TraversedSenwa.succInternal(state, symbol).isEmpty()) {
+		for (LETTER symbol : mTraversedSenwa.lettersInternal(state)) {
+			if (!mTraversedSenwa.succInternal(state, symbol).isEmpty()) {
 				return true;
 			}
 		}
-		for (LETTER symbol : m_TraversedSenwa.lettersCall(state)) {
-			if (!m_TraversedSenwa.succCall(state, symbol).isEmpty()) {
+		for (LETTER symbol : mTraversedSenwa.lettersCall(state)) {
+			if (!mTraversedSenwa.succCall(state, symbol).isEmpty()) {
 				return true;
 			}
 		}
-		for (LETTER symbol : m_TraversedSenwa.lettersReturn(state)) {
-			for (STATE hier : m_TraversedSenwa.hierPred(state, symbol)) {
-				if (!m_TraversedSenwa.succReturn(state, hier, symbol).isEmpty()) {
+		for (LETTER symbol : mTraversedSenwa.lettersReturn(state)) {
+			for (STATE hier : mTraversedSenwa.hierPred(state, symbol)) {
+				if (!mTraversedSenwa.succReturn(state, hier, symbol).isEmpty()) {
 					return true;
 				}
 			}
@@ -534,14 +534,14 @@ public class SenwaWalker<LETTER,STATE> {
 	private final boolean removeAcceptingStatesWithoutSuccessors() {
 
 		ArrayList<STATE> finalStatesWithoutSuccessor = new ArrayList<STATE>();
-		for (STATE accepting : m_TraversedSenwa.getFinalStates()) {
+		for (STATE accepting : mTraversedSenwa.getFinalStates()) {
 			if (!hasSuccessors(accepting)) {
 				finalStatesWithoutSuccessor.add(accepting);
 			}
 		}
 		boolean atLeastOneStateRemoved = !finalStatesWithoutSuccessor.isEmpty();
 		for (STATE finalStateWithoutSuccessor : finalStatesWithoutSuccessor) {
-			m_TraversedSenwa.removeState(finalStateWithoutSuccessor);	
+			mTraversedSenwa.removeState(finalStateWithoutSuccessor);	
 		}		
 		return atLeastOneStateRemoved;
 	}
@@ -562,19 +562,19 @@ public class SenwaWalker<LETTER,STATE> {
 
 
 	public Map<STATE,STATE> getCallSuccOfRemovedDown() {
-		if (m_CallSuccOfRemovedDown == null || m_RemovedDoubleDeckers == null) {
+		if (mCallSuccOfRemovedDown == null || mRemovedDoubleDeckers == null) {
 			throw new AssertionError("Request computation when removing");
 		}
-		return m_CallSuccOfRemovedDown;
+		return mCallSuccOfRemovedDown;
 	}
 
 
 
 	public Map<STATE,Set<STATE>> getRemovedDoubleDeckers() {
-		if (m_CallSuccOfRemovedDown == null || m_RemovedDoubleDeckers == null) {
+		if (mCallSuccOfRemovedDown == null || mRemovedDoubleDeckers == null) {
 			throw new AssertionError("Request computation when removing");
 		}
-		return m_RemovedDoubleDeckers;
+		return mRemovedDoubleDeckers;
 	}
 	
 	public interface ISuccessorVisitor<LETTER, STATE> {
@@ -603,7 +603,7 @@ public class SenwaWalker<LETTER,STATE> {
 	}
 	
 	public long getDeadEndRemovalTime() {
-		return m_DeadEndRemovalTime;
+		return mDeadEndRemovalTime;
 	}
 
 	

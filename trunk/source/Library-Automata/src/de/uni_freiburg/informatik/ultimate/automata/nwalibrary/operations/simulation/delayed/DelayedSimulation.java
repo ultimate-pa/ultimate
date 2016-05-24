@@ -76,7 +76,7 @@ public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE>
 	/**
 	 * Game graph that is used for simulation calculation.
 	 */
-	private final DelayedGameGraph<LETTER, STATE> m_Game;
+	private final DelayedGameGraph<LETTER, STATE> mGame;
 
 	/**
 	 * Creates a new delayed simulation that tries to reduce the given buechi
@@ -109,8 +109,8 @@ public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE>
 					throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DELAYED);
 
-		m_Game = game;
-		m_Game.setSimulationPerformance(getSimulationPerformance());
+		mGame = game;
+		mGame.setSimulationPerformance(getSimulationPerformance());
 	}
 
 	/*
@@ -121,6 +121,6 @@ public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE>
 	 */
 	@Override
 	protected AGameGraph<LETTER, STATE> getGameGraph() {
-		return m_Game;
+		return mGame;
 	}
 }

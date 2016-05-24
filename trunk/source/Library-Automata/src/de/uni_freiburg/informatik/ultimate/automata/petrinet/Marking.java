@@ -47,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.InhibitorTra
 public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 	
-	private final Set<Place<S, C>> m_Places;
+	private final Set<Place<S, C>> mPlaces;
 
 	public Marking(Set<Place<S, C>> places) {
-		m_Places = places;
+		mPlaces = places;
 	}
 
 	/**
@@ -58,7 +58,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return
 	 */
 	public boolean contains(Place<S, C> p) {
-		return m_Places.contains(p);
+		return mPlaces.contains(p);
 	}
 
 	/**
@@ -67,7 +67,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @see java.util.Set#containsAll(java.util.Collection)
 	 */
 	public boolean containsAll(Collection<?> c) {
-		return m_Places.containsAll(c);
+		return mPlaces.containsAll(c);
 	}
 	
 	/**
@@ -77,7 +77,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 */
 	public boolean containsAny(Collection<Place<S, C>> places) {
 		for (Place<S, C> place : places) {
-			if (m_Places.contains(place))
+			if (mPlaces.contains(place))
 				return true;
 		}
 		return false;
@@ -88,7 +88,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @see java.util.Set#isEmpty()
 	 */
 	public boolean isEmpty() {
-		return m_Places.isEmpty();
+		return mPlaces.isEmpty();
 	}
 
 	/**
@@ -96,7 +96,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @see java.util.Set#iterator()
 	 */
 	public Iterator<Place<S, C>> iterator() {
-		return m_Places.iterator();
+		return mPlaces.iterator();
 	}
 
 	/**
@@ -104,7 +104,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @see java.util.Set#size()
 	 */
 	public int size() {
-		return m_Places.size();
+		return mPlaces.size();
 	}
 
 	/*
@@ -122,10 +122,10 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		Marking<S, C> other = (Marking<S, C>) obj;
-		if (m_Places == null) {
-			if (other.m_Places != null)
+		if (mPlaces == null) {
+			if (other.mPlaces != null)
 				return false;
-		} else if (!m_Places.equals(other.m_Places))
+		} else if (!mPlaces.equals(other.mPlaces))
 			return false;
 		return true;
 	}
@@ -140,7 +140,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((m_Places == null) ? 0 : m_Places.hashCode());
+				+ ((mPlaces == null) ? 0 : mPlaces.hashCode());
 		return result;
 	}
 
@@ -154,7 +154,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 			if (containsAny(it.getInhibitors()))
 				return false;
 		}
-		return m_Places.containsAll(transition.getPredecessors());
+		return mPlaces.containsAll(transition.getPredecessors());
 	}
 
 //	/**
@@ -163,7 +163,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 //	 * @param other
 //	 */
 //	public void add(Marking<S, C> other) {
-//		m_Places.addAll(other.m_Places);
+//		mPlaces.addAll(other.mPlaces);
 //	}
 
 	/**
@@ -174,7 +174,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return
 	 */
 	public Marking<S, C> fireTransition(ITransition<S, C> transition) {
-		HashSet<Place<S, C>> resultSet = new HashSet<Place<S, C>>(m_Places);
+		HashSet<Place<S, C>> resultSet = new HashSet<Place<S, C>>(mPlaces);
 		resultSet.removeAll(transition.getPredecessors());
 		resultSet.addAll(transition.getSuccessors());
 		return new Marking<S, C>(resultSet);
@@ -186,25 +186,25 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return true if the
 	 */
 	public boolean undoTransition(ITransition<S, C> transition) {
-		if (!m_Places.containsAll(transition.getSuccessors()))
+		if (!mPlaces.containsAll(transition.getSuccessors()))
 			return false;
-		m_Places.removeAll(transition.getSuccessors());
-		m_Places.addAll(transition.getPredecessors());
+		mPlaces.removeAll(transition.getSuccessors());
+		mPlaces.addAll(transition.getPredecessors());
 		return true;
 	}
 
 	@Deprecated
 	public Marking(Collection<Place<S, C>> places) {
-		m_Places = new HashSet<Place<S, C>>(places);
+		mPlaces = new HashSet<Place<S, C>>(places);
 	}
 
 	@Deprecated
 	public Set<Place<S, C>> getPlaces() {
-		return m_Places;
+		return mPlaces;
 	}
 	
 	public String toString() {
-		return this.m_Places.toString();
+		return this.mPlaces.toString();
 	}
 
 }

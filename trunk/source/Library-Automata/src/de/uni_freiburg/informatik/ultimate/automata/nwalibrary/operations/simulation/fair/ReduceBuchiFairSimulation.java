@@ -216,7 +216,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			boolean errorOccurred = false;
 			errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
 //			try {
-//				errorOccurred = !operation.checkResult(operation.m_StateFactory);
+//				errorOccurred = !operation.checkResult(operation.mStateFactory);
 //			} catch (AutomataLibraryException e) {
 //				e.printStackTrace();
 //			}
@@ -258,33 +258,33 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		FairSimulation<LETTER, STATE> simulationNoSCC;
 		ILogger logger = null;
 		if (useLogger) {
-			logger = operation.m_Logger;
+			logger = operation.mLogger;
 		}
 
 		// Create instance of other version
-		if (operation.m_UseSCCs) {
+		if (operation.mUseSCCs) {
 			operationSCC = operation;
-			simulationSCC = operationSCC.m_Simulation;
+			simulationSCC = operationSCC.mSimulation;
 
 			if (logNoErrorDebug)
 				logMessage("Start Cross-Simulation without SCC...", logger);
 
-			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.m_Services, operation.m_StateFactory,
-					operation.m_Operand, false);
-			simulationNoSCC = operationNoSCC.m_Simulation;
+			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
+					operation.mOperand, false);
+			simulationNoSCC = operationNoSCC.mSimulation;
 			if (logNoErrorDebug)
 				logMessage("", logger);
 		} else {
 			if (logNoErrorDebug)
 				logMessage("Start Cross-Simulation with SCC...", logger);
-			operationSCC = new ReduceBuchiFairSimulation<>(operation.m_Services, operation.m_StateFactory,
-					operation.m_Operand, true);
-			simulationSCC = operationSCC.m_Simulation;
+			operationSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
+					operation.mOperand, true);
+			simulationSCC = operationSCC.mSimulation;
 			if (logNoErrorDebug)
 				logMessage("", logger);
 
 			operationNoSCC = operation;
-			simulationNoSCC = operationNoSCC.m_Simulation;
+			simulationNoSCC = operationNoSCC.mSimulation;
 		}
 
 		// Start comparing results
@@ -359,11 +359,11 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 
 		// Check operation correctness
 		try {
-			if (!operationSCC.checkResult(operation.m_StateFactory)) {
+			if (!operationSCC.checkResult(operation.mStateFactory)) {
 				logMessage("OperationSCC is not correct.", logger);
 				errorOccurred = true;
 			}
-			if (!operationNoSCC.checkResult(operation.m_StateFactory)) {
+			if (!operationNoSCC.checkResult(operation.mStateFactory)) {
 				logMessage("OperationNoSCC is not correct.", logger);
 				errorOccurred = true;
 			}
@@ -373,7 +373,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 
 		if (errorOccurred) {
 			logMessage("End comparing results, a problem occurred. Logging buechi...", logger);
-			logMessage(operation.m_Operand.toString(), logger);
+			logMessage(operation.mOperand.toString(), logger);
 		} else {
 			if (logNoErrorDebug)
 				logMessage("End comparing results, no problem occurred.", logger);
@@ -403,33 +403,33 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mOperand;
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mResult;
 	/**
 	 * Service provider of Ultimate framework.
 	 */
-	private final AutomataLibraryServices m_Services;
+	private final AutomataLibraryServices mServices;
 	/**
 	 * Simulation used for operation.
 	 */
-	private final FairSimulation<LETTER, STATE> m_Simulation;
+	private final FairSimulation<LETTER, STATE> mSimulation;
 	/**
 	 * State factory used for state creation.
 	 */
-	private final StateFactory<STATE> m_StateFactory;
+	private final StateFactory<STATE> mStateFactory;
 
 	/**
 	 * If the simulation calculation should be optimized using SCC, Strongly
 	 * Connected Components.
 	 */
-	private final boolean m_UseSCCs;
+	private final boolean mUseSCCs;
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
@@ -570,32 +570,32 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
 			final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
-		m_Services = services;
-		m_StateFactory = stateFactory;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_Operand = operand;
-		m_UseSCCs = useSCCs;
-		m_Logger.info(startMessage());
-		m_Logger.debug("Starting generation of Fair Game Graph...");
+		mServices = services;
+		mStateFactory = stateFactory;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mOperand = operand;
+		mUseSCCs = useSCCs;
+		mLogger.info(startMessage());
+		mLogger.debug("Starting generation of Fair Game Graph...");
 		simulation.getGameGraph().generateGameGraphFromAutomaton();
-		m_Simulation = simulation;
+		mSimulation = simulation;
 		simulation.doSimulation();
-		m_Result = m_Simulation.getResult();
+		mResult = mSimulation.getResult();
 
 		// Debugging flag
 		if (checkOperationDeeply) {
-			m_Logger.info("Start testing correctness of operation deeply...");
+			mLogger.info("Start testing correctness of operation deeply...");
 			boolean operationIsNotCorrect = checkOperationDeep(this, false, true);
 			if (operationIsNotCorrect) {
-				m_Logger.info("End testing correctness of operation deeply, it is not correct.");
+				mLogger.info("End testing correctness of operation deeply, it is not correct.");
 				// throw new AssertionError("The operation " + operationName() +
 				// " returned a false result.");
 			} else {
-				m_Logger.info("End testing correctness of operation deeply, it is correct.");
+				mLogger.info("End testing correctness of operation deeply, it is correct.");
 			}
 		}
 
-		m_Logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 
 	/*
@@ -607,9 +607,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	@SuppressWarnings("deprecation")
 	@Override
 	public boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
-		boolean correct = ResultChecker.reduceBuchi(m_Services, m_Operand, m_Result);
-		m_Logger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
+		boolean correct = ResultChecker.reduceBuchi(mServices, mOperand, mResult);
+		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 
@@ -621,7 +621,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + m_Result.sizeInformation();
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 
 	/*
@@ -631,7 +631,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataLibraryException {
-		return m_Result;
+		return mResult;
 	}
 
 	/*
@@ -653,6 +653,6 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + m_Operand.sizeInformation();
+		return "Start " + operationName() + ". Operand has " + mOperand.sizeInformation();
 	}
 }

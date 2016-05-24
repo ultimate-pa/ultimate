@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  */
 public final class TestUtil {
 
-	private static final long PSEUDO_RANDOM_FILE_SELECTION_SEED = 19120623;
+	private static final long PSEUDO_RANDOmFILE_SELECTION_SEED = 19120623;
 
 	/**
 	 * Select n files from a collection of files in a pseudo-random and deterministic way.
@@ -78,7 +78,7 @@ public final class TestUtil {
 			return files;
 		} else {
 			final List<File> shuffle = new ArrayList<>(files);
-			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
+			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOmFILE_SELECTION_SEED));
 			return new ArrayList<>(shuffle.subList(0, n));
 		}
 	}

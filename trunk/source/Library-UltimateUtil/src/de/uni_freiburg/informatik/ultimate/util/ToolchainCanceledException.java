@@ -38,19 +38,19 @@ public class ToolchainCanceledException extends RuntimeException {
 	private static final long serialVersionUID = 7090759880566576629L;
 	
 	public final static String s_Message = "Timeout or Toolchain cancelled by user";
-	private final Class<?> m_ClassOfThrower; 
-	private final String m_RunningTaskInfo;
+	private final Class<?> mClassOfThrower; 
+	private final String mRunningTaskInfo;
 
 	public ToolchainCanceledException(Class<?> thrower) {
 		super(s_Message);
-		m_ClassOfThrower = thrower;
-		m_RunningTaskInfo = null;
+		mClassOfThrower = thrower;
+		mRunningTaskInfo = null;
 	}
 	
 	public ToolchainCanceledException(Class<?> thrower, String runningTaskInfo) {
 		super(s_Message);
-		m_ClassOfThrower = thrower;
-		m_RunningTaskInfo = runningTaskInfo;
+		mClassOfThrower = thrower;
+		mRunningTaskInfo = runningTaskInfo;
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class ToolchainCanceledException extends RuntimeException {
 	 * @return
 	 */
 	public Class<?> getClassOfThrower() {
-		return m_ClassOfThrower;
+		return mClassOfThrower;
 	}
 
 	/**
@@ -74,7 +74,7 @@ public class ToolchainCanceledException extends RuntimeException {
 	 * exponential space complexity was applied to problem of input size 23).
 	 */
 	public String getRunningTaskInfo() {
-		return m_RunningTaskInfo;
+		return mRunningTaskInfo;
 	}
 	
 	public String prettyPrint() {

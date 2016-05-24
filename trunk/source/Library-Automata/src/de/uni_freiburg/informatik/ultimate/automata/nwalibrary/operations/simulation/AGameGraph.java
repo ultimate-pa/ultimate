@@ -83,71 +83,71 @@ public abstract class AGameGraph<LETTER, STATE> {
 	/**
 	 * The underlying buechi automaton from which the game graph gets generated.
 	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> mBuechi;
 	/**
 	 * Data structure that allows a fast access to {@link DuplicatorVertex}
 	 * objects by using their representation:<br/>
 	 * <b>(State of spoiler or q0, Letter spoiler used before, State of
 	 * duplicator or q1, bit)</b>.
 	 */
-	private final NestedMap4<STATE, STATE, LETTER, Boolean, DuplicatorVertex<LETTER, STATE>> m_BuechiStatesToGraphDuplicatorVertex;
+	private final NestedMap4<STATE, STATE, LETTER, Boolean, DuplicatorVertex<LETTER, STATE>> mBuechiStatesToGraphDuplicatorVertex;
 	/**
 	 * Data structure that allows a fast access to {@link SpoilerVertex} objects
 	 * by using their representation:<br/>
 	 * <b>(State of spoiler or q0, State of duplicator or q1, bit)</b>.
 	 */
-	private final NestedMap3<STATE, STATE, Boolean, SpoilerVertex<LETTER, STATE>> m_BuechiStatesToGraphSpoilerVertex;
+	private final NestedMap3<STATE, STATE, Boolean, SpoilerVertex<LETTER, STATE>> mBuechiStatesToGraphSpoilerVertex;
 	/**
 	 * Set of all {@link DuplicatorVertex} objects the game graph holds.
 	 */
-	private final HashSet<DuplicatorVertex<LETTER, STATE>> m_DuplicatorVertices;
+	private final HashSet<DuplicatorVertex<LETTER, STATE>> mDuplicatorVertices;
 	/**
 	 * The upper bound which, as counter interpreted, represents at which point
 	 * one can be sure that vertices with priority 1 can be visited infinite
 	 * times without visiting priority 0.<br/>
 	 * In general this is the <b>number of vertices with priority 1 plus 1</b>.
 	 */
-	private int m_GlobalInfinity;
+	private int mGlobalInfinity;
 	/**
 	 * The logger used by the Ultimate framework.
 	 */
-	private final ILogger m_Logger;
+	private final ILogger mLogger;
 	/**
 	 * Holds information about the performance of the simulation after usage.
 	 */
-	private SimulationPerformance m_Performance;
+	private SimulationPerformance mPerformance;
 	/**
 	 * Data structure that allows a fast access to predecessors of a given
 	 * vertex in the game graph.
 	 */
-	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_Predecessors;
+	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> mPredecessors;
 	/**
 	 * Timer used for responding to timeouts and operation cancellation.
 	 */
-	private final IProgressAwareTimer m_ProgressTimer;
+	private final IProgressAwareTimer mProgressTimer;
 	/**
 	 * Data structure that allows a fast access to push-over predecessors of a
 	 * given vertex in the game graph.
 	 */
-	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_PushOverPredecessors;
+	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> mPushOverPredecessors;
 	/**
 	 * Data structure that allows a fast access to push-over successors of a
 	 * given vertex in the game graph.
 	 */
-	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_PushOverSuccessors;
+	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> mPushOverSuccessors;
 	/**
 	 * Set of all {@link SpoilerVertex} objects the game graph holds.
 	 */
-	private final HashSet<SpoilerVertex<LETTER, STATE>> m_SpoilerVertices;
+	private final HashSet<SpoilerVertex<LETTER, STATE>> mSpoilerVertices;
 	/**
 	 * State factory used for state creation.
 	 */
-	private final StateFactory<STATE> m_StateFactory;
+	private final StateFactory<STATE> mStateFactory;
 	/**
 	 * Data structure that allows a fast access to successors of a given vertex
 	 * in the game graph.
 	 */
-	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_Successors;
+	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> mSuccessors;
 
 	/**
 	 * Creates a new game graph object that initializes all needed data
@@ -174,21 +174,21 @@ public abstract class AGameGraph<LETTER, STATE> {
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi) throws AutomataOperationCanceledException {
 		// We assume the automaton has no dead ends, this is a requirement for
 		// the algorithm to work correctly.
-		m_Buechi = buechi;
+		mBuechi = buechi;
 
-		m_ProgressTimer = progressTimer;
-		m_Logger = logger;
-		m_StateFactory = stateFactory;
-		m_DuplicatorVertices = new HashSet<>();
-		m_SpoilerVertices = new HashSet<>();
-		m_Successors = new HashMap<>();
-		m_PushOverSuccessors = new HashMap<>();
-		m_Predecessors = new HashMap<>();
-		m_PushOverPredecessors = new HashMap<>();
-		m_BuechiStatesToGraphSpoilerVertex = new NestedMap3<>();
-		m_BuechiStatesToGraphDuplicatorVertex = new NestedMap4<>();
-		m_GlobalInfinity = 0;
-		m_Performance = null;
+		mProgressTimer = progressTimer;
+		mLogger = logger;
+		mStateFactory = stateFactory;
+		mDuplicatorVertices = new HashSet<>();
+		mSpoilerVertices = new HashSet<>();
+		mSuccessors = new HashMap<>();
+		mPushOverSuccessors = new HashMap<>();
+		mPredecessors = new HashMap<>();
+		mPushOverPredecessors = new HashMap<>();
+		mBuechiStatesToGraphSpoilerVertex = new NestedMap3<>();
+		mBuechiStatesToGraphDuplicatorVertex = new NestedMap4<>();
+		mGlobalInfinity = 0;
+		mPerformance = null;
 	}
 
 	/**
@@ -198,8 +198,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            Vertex to add
 	 */
 	public void addDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
-		m_DuplicatorVertices.add(vertex);
-		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
+		mDuplicatorVertices.add(vertex);
+		mBuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
 				vertex);
 	}
 
@@ -214,16 +214,16 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public void addEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
 		// Update successor information
-		if (!m_Successors.containsKey(src)) {
-			m_Successors.put(src, new HashSet<>());
+		if (!mSuccessors.containsKey(src)) {
+			mSuccessors.put(src, new HashSet<>());
 		}
-		m_Successors.get(src).add(dest);
+		mSuccessors.get(src).add(dest);
 
 		// Update predecessor information
-		if (!m_Predecessors.containsKey(dest)) {
-			m_Predecessors.put(dest, new HashSet<>());
+		if (!mPredecessors.containsKey(dest)) {
+			mPredecessors.put(dest, new HashSet<>());
 		}
-		m_Predecessors.get(dest).add(src);
+		mPredecessors.get(dest).add(src);
 	}
 
 	/**
@@ -237,16 +237,16 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public void addPushOverEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
 		// Update successor information
-		if (!m_PushOverSuccessors.containsKey(src)) {
-			m_PushOverSuccessors.put(src, new HashSet<>());
+		if (!mPushOverSuccessors.containsKey(src)) {
+			mPushOverSuccessors.put(src, new HashSet<>());
 		}
-		m_PushOverSuccessors.get(src).add(dest);
+		mPushOverSuccessors.get(src).add(dest);
 
 		// Update predecessor information
-		if (!m_PushOverPredecessors.containsKey(dest)) {
-			m_PushOverPredecessors.put(dest, new HashSet<>());
+		if (!mPushOverPredecessors.containsKey(dest)) {
+			mPushOverPredecessors.put(dest, new HashSet<>());
 		}
-		m_PushOverPredecessors.get(dest).add(src);
+		mPushOverPredecessors.get(dest).add(src);
 	}
 
 	/**
@@ -256,8 +256,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            Vertex to add
 	 */
 	public void addSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
-		m_SpoilerVertices.add(vertex);
-		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), vertex);
+		mSpoilerVertices.add(vertex);
+		mBuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), vertex);
 	}
 
 	/**
@@ -289,7 +289,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return The underlying automaton.
 	 */
 	public INestedWordAutomatonOldApi<LETTER, STATE> getAutomaton() {
-		return m_Buechi;
+		return mBuechi;
 	}
 
 	/**
@@ -298,7 +298,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return The size of the underlying automaton.
 	 */
 	public int getAutomatonSize() {
-		return m_Buechi.size();
+		return mBuechi.size();
 	}
 
 	/**
@@ -318,7 +318,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public DuplicatorVertex<LETTER, STATE> getDuplicatorVertex(final STATE q0, final STATE q1, final LETTER a,
 			final boolean bit) {
-		return m_BuechiStatesToGraphDuplicatorVertex.get(q0, q1, a, bit);
+		return mBuechiStatesToGraphDuplicatorVertex.get(q0, q1, a, bit);
 	}
 
 	/**
@@ -329,7 +329,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *         game graph has.
 	 */
 	public Set<DuplicatorVertex<LETTER, STATE>> getDuplicatorVertices() {
-		return Collections.unmodifiableSet(m_DuplicatorVertices);
+		return Collections.unmodifiableSet(mDuplicatorVertices);
 	}
 
 	/**
@@ -342,7 +342,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return The global infinity
 	 */
 	public int getGlobalInfinity() {
-		return m_GlobalInfinity;
+		return mGlobalInfinity;
 	}
 
 	/**
@@ -352,7 +352,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return The internal used field for duplicator vertices.
 	 */
 	public HashSet<DuplicatorVertex<LETTER, STATE>> getInternalDuplicatorVerticesField() {
-		return m_DuplicatorVertices;
+		return mDuplicatorVertices;
 	}
 
 	/**
@@ -362,7 +362,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return The internal used field for spoiler vertices.
 	 */
 	public HashSet<SpoilerVertex<LETTER, STATE>> getInternalSpoilerVerticesField() {
-		return m_SpoilerVertices;
+		return mSpoilerVertices;
 	}
 
 	/**
@@ -373,7 +373,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *         has that do have successors.
 	 */
 	public Set<Vertex<LETTER, STATE>> getNonDeadEndVertices() {
-		return Collections.unmodifiableSet(m_Successors.keySet());
+		return Collections.unmodifiableSet(mSuccessors.keySet());
 	}
 
 	/**
@@ -387,7 +387,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public Set<Vertex<LETTER, STATE>> getPredecessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasPredecessors(vertex)) {
-			return Collections.unmodifiableSet(m_Predecessors.get(vertex));
+			return Collections.unmodifiableSet(mPredecessors.get(vertex));
 		} else {
 			return null;
 		}
@@ -420,7 +420,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public Set<Vertex<LETTER, STATE>> getPushOverPredecessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasPushOverPredecessors(vertex)) {
-			return Collections.unmodifiableSet(m_PushOverPredecessors.get(vertex));
+			return Collections.unmodifiableSet(mPushOverPredecessors.get(vertex));
 		} else {
 			return null;
 		}
@@ -437,7 +437,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public Set<Vertex<LETTER, STATE>> getPushOverSuccessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasPushOverSuccessors(vertex)) {
-			return Collections.unmodifiableSet(m_PushOverSuccessors.get(vertex));
+			return Collections.unmodifiableSet(mPushOverSuccessors.get(vertex));
 		} else {
 			return null;
 		}
@@ -449,7 +449,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return The size of the game graph which is the number of all vertices.
 	 */
 	public int getSize() {
-		return m_SpoilerVertices.size() + m_DuplicatorVertices.size();
+		return mSpoilerVertices.size() + mDuplicatorVertices.size();
 	}
 
 	/**
@@ -466,7 +466,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *         <tt>null</tt> if there is no such.
 	 */
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {
-		return m_BuechiStatesToGraphSpoilerVertex.get(q0, q1, bit);
+		return mBuechiStatesToGraphSpoilerVertex.get(q0, q1, bit);
 	}
 
 	/**
@@ -477,7 +477,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *         graph has.
 	 */
 	public Set<SpoilerVertex<LETTER, STATE>> getSpoilerVertices() {
-		return Collections.unmodifiableSet(m_SpoilerVertices);
+		return Collections.unmodifiableSet(mSpoilerVertices);
 	}
 
 	/**
@@ -491,7 +491,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public Set<Vertex<LETTER, STATE>> getSuccessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasSuccessors(vertex)) {
-			return Collections.unmodifiableSet(m_Successors.get(vertex));
+			return Collections.unmodifiableSet(mSuccessors.get(vertex));
 		} else {
 			return null;
 		}
@@ -503,8 +503,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return All {@link Vertex} objects the game graph has.
 	 */
 	public Set<Vertex<LETTER, STATE>> getVertices() {
-		HashSet<Vertex<LETTER, STATE>> result = new HashSet<>(m_SpoilerVertices);
-		result.addAll(m_DuplicatorVertices);
+		HashSet<Vertex<LETTER, STATE>> result = new HashSet<>(mSpoilerVertices);
+		result.addAll(mDuplicatorVertices);
 		return result;
 	}
 
@@ -516,7 +516,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return True if the vertex has predecessors, false if not.
 	 */
 	public boolean hasPredecessors(final Vertex<LETTER, STATE> vertex) {
-		return m_Predecessors.containsKey(vertex);
+		return mPredecessors.containsKey(vertex);
 	}
 
 	/**
@@ -527,7 +527,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return True if the vertex has push-over predecessors, false if not.
 	 */
 	public boolean hasPushOverPredecessors(final Vertex<LETTER, STATE> vertex) {
-		return m_PushOverPredecessors.containsKey(vertex);
+		return mPushOverPredecessors.containsKey(vertex);
 	}
 
 	/**
@@ -538,7 +538,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return True if the vertex has push-over successors, false if not.
 	 */
 	public boolean hasPushOverSuccessors(final Vertex<LETTER, STATE> vertex) {
-		return m_PushOverSuccessors.containsKey(vertex);
+		return mPushOverSuccessors.containsKey(vertex);
 	}
 
 	/**
@@ -549,7 +549,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return True if the vertex has successors, false if not.
 	 */
 	public boolean hasSuccessors(final Vertex<LETTER, STATE> vertex) {
-		return m_Successors.containsKey(vertex);
+		return mSuccessors.containsKey(vertex);
 	}
 
 	/**
@@ -557,7 +557,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * For more information see {@link #getGlobalInfinity()}.
 	 */
 	public void increaseGlobalInfinity() {
-		m_GlobalInfinity++;
+		mGlobalInfinity++;
 	}
 
 	/**
@@ -567,8 +567,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            The vertex to remove
 	 */
 	public void removeDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
-		m_DuplicatorVertices.remove(vertex);
-		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
+		mDuplicatorVertices.remove(vertex);
+		mBuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.getLetter(), vertex.isB(),
 				null);
 	}
 
@@ -583,18 +583,18 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public void removeEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
 		// Update successor information
-		if (m_Successors.get(src) != null) {
-			m_Successors.get(src).remove(dest);
-			if (m_Successors.get(src).size() == 0) {
-				m_Successors.remove(src);
+		if (mSuccessors.get(src) != null) {
+			mSuccessors.get(src).remove(dest);
+			if (mSuccessors.get(src).size() == 0) {
+				mSuccessors.remove(src);
 			}
 		}
 
 		// Update predecessor information
-		if (m_Predecessors.get(dest) != null) {
-			m_Predecessors.get(dest).remove(src);
-			if (m_Predecessors.get(dest).size() == 0) {
-				m_Predecessors.remove(dest);
+		if (mPredecessors.get(dest) != null) {
+			mPredecessors.get(dest).remove(src);
+			if (mPredecessors.get(dest).size() == 0) {
+				mPredecessors.remove(dest);
 			}
 		}
 	}
@@ -610,18 +610,18 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public void removePushOverEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
 		// Update successor information
-		if (m_PushOverSuccessors.get(src) != null) {
-			m_PushOverSuccessors.get(src).remove(dest);
-			if (m_PushOverSuccessors.get(src).size() == 0) {
-				m_PushOverSuccessors.remove(src);
+		if (mPushOverSuccessors.get(src) != null) {
+			mPushOverSuccessors.get(src).remove(dest);
+			if (mPushOverSuccessors.get(src).size() == 0) {
+				mPushOverSuccessors.remove(src);
 			}
 		}
 
 		// Update predecessor information
-		if (m_PushOverPredecessors.get(dest) != null) {
-			m_PushOverPredecessors.get(dest).remove(src);
-			if (m_PushOverPredecessors.get(dest).size() == 0) {
-				m_PushOverPredecessors.remove(dest);
+		if (mPushOverPredecessors.get(dest) != null) {
+			mPushOverPredecessors.get(dest).remove(src);
+			if (mPushOverPredecessors.get(dest).size() == 0) {
+				mPushOverPredecessors.remove(dest);
 			}
 		}
 	}
@@ -633,8 +633,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            The vertex to remove
 	 */
 	public void removeSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
-		m_SpoilerVertices.remove(vertex);
-		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), null);
+		mSpoilerVertices.remove(vertex);
+		mBuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(), vertex.isB(), null);
 	}
 
 	/**
@@ -644,7 +644,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            Simulation performance to set.
 	 */
 	public void setSimulationPerformance(final SimulationPerformance simulationPerformance) {
-		m_Performance = simulationPerformance;
+		mPerformance = simulationPerformance;
 	}
 
 	/**
@@ -848,7 +848,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return The logger used by the Ultimate framework.
 	 */
 	protected ILogger getLogger() {
-		return m_Logger;
+		return mLogger;
 	}
 
 	/**
@@ -859,7 +859,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *         cancellation.
 	 */
 	protected IProgressAwareTimer getProgressTimer() {
-		return m_ProgressTimer;
+		return mProgressTimer;
 	}
 
 	/**
@@ -868,7 +868,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return The performance object of the corresponding simulation.
 	 */
 	protected SimulationPerformance getSimulationPerformance() {
-		return m_Performance;
+		return mPerformance;
 	}
 
 	/**
@@ -877,7 +877,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @return The state factory used for state creation
 	 */
 	protected StateFactory<STATE> getStateFactory() {
-		return m_StateFactory;
+		return mStateFactory;
 	}
 
 	/**
@@ -888,6 +888,6 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            The number to set
 	 */
 	protected void setGlobalInfinity(final int globalInfinity) {
-		m_GlobalInfinity = globalInfinity;
+		mGlobalInfinity = globalInfinity;
 	}
 }

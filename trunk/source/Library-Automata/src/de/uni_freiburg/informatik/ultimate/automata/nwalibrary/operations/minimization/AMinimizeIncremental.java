@@ -50,7 +50,7 @@ public abstract class AMinimizeIncremental<LETTER, STATE>
 	/**
 	 * The interrupt.
 	 */
-	protected final Interrupt m_interrupt;
+	protected final Interrupt minterrupt;
 	
 	/**
 	 * This constructor should be called by all subclasses and only by them.
@@ -65,8 +65,8 @@ public abstract class AMinimizeIncremental<LETTER, STATE>
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) {
 		super(services, stateFactory, name, operand);
-		m_interrupt = interrupt;
-		assert ((m_interrupt == null) || (! m_interrupt.getStatus())) :
+		minterrupt = interrupt;
+		assert ((minterrupt == null) || (! minterrupt.getStatus())) :
 			"The interrupt tells to terminate right at the beginning.";
 	}
 }

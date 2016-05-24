@@ -65,26 +65,26 @@ public class AffineTerm extends Term {
 	/**
 	 * Map from Variables to coeffcients. Coefficient Zero is forbidden.
 	 */
-	private final Map<Term, Rational> m_Variable2Coefficient;
+	private final Map<Term, Rational> mVariable2Coefficient;
 	
 	/**
 	 * Affine constant.
 	 */
-	private final Rational m_Constant;
+	private final Rational mConstant;
 	
 	/**
 	 * Sort of this term. E.g, "Int" or "Real".
 	 */
-	private final Sort m_Sort;
+	private final Sort mSort;
 	
 	/**
 	 * AffineTerm that represents the Rational r of sort sort. 
 	 */
 	public AffineTerm(Sort s, Rational r) {
 		super(0);
-		m_Sort = s;
-		m_Constant = r;
-		m_Variable2Coefficient = Collections.emptyMap();
+		mSort = s;
+		mConstant = r;
+		mVariable2Coefficient = Collections.emptyMap();
 	}
 	
 	/**
@@ -92,9 +92,9 @@ public class AffineTerm extends Term {
 	 */
 	public AffineTerm(TermVariable tv) {
 		super(0);
-		m_Sort = tv.getSort();
-		m_Constant = Rational.ZERO;
-		m_Variable2Coefficient = 
+		mSort = tv.getSort();
+		mConstant = Rational.ZERO;
+		mVariable2Coefficient = 
 				Collections.singletonMap((Term) tv, Rational.ONE);
 	}
 	
@@ -104,9 +104,9 @@ public class AffineTerm extends Term {
 	 */
 	public AffineTerm(ApplicationTerm appTerm) {
 		super(0);
-		m_Sort = appTerm.getSort();
-		m_Constant = Rational.ZERO;
-		m_Variable2Coefficient = 
+		mSort = appTerm.getSort();
+		mConstant = Rational.ZERO;
+		mVariable2Coefficient = 
 				Collections.singletonMap((Term) appTerm, Rational.ONE);
 
 	}
@@ -118,32 +118,32 @@ public class AffineTerm extends Term {
 	 */
 	public AffineTerm(Sort s, Term[] terms, Rational[] coefficients, Rational constant) {
 		super(0);
-		m_Sort = s;
-		m_Constant = constant;
+		mSort = s;
+		mConstant = constant;
 		if (terms.length != coefficients.length) {
 			throw new IllegalArgumentException(
 					"numer of variables and coefficients different");
 		}
 		switch (terms.length) {
 		case 0:
-			m_Variable2Coefficient = Collections.emptyMap();
+			mVariable2Coefficient = Collections.emptyMap();
 			break;
 		case 1:
 			Term variable = terms[0];
 			checkIfTermIsLegalVariable(variable);
 			if (coefficients[0].equals(Rational.ZERO)) {
-				m_Variable2Coefficient = Collections.emptyMap();
+				mVariable2Coefficient = Collections.emptyMap();
 			} else {
-				m_Variable2Coefficient = 
+				mVariable2Coefficient = 
 						Collections.singletonMap(variable, coefficients[0]);
 			}
 			break;
 		default:
-			m_Variable2Coefficient = new HashMap<Term, Rational>();
+			mVariable2Coefficient = new HashMap<Term, Rational>();
 			for (int i=0; i<terms.length; i++) {
 				checkIfTermIsLegalVariable(terms[i]);
 				if (!coefficients[i].equals(Rational.ZERO)) {
-					m_Variable2Coefficient.put(terms[i], coefficients[i]);
+					mVariable2Coefficient.put(terms[i], coefficients[i]);
 				}
 			}
 		}
@@ -167,38 +167,38 @@ public class AffineTerm extends Term {
 	 */
 	public AffineTerm(AffineTerm... affineTerms) {
 		super(0);
-		m_Sort = affineTerms[0].getSort();
-		m_Variable2Coefficient = new HashMap<Term, Rational>();
+		mSort = affineTerms[0].getSort();
+		mVariable2Coefficient = new HashMap<Term, Rational>();
 		Rational constant = Rational.ZERO;
 		for (AffineTerm affineTerm : affineTerms) {
 			for (Map.Entry<Term, Rational> summand :
-					affineTerm.m_Variable2Coefficient.entrySet()) {
-				assert summand.getKey().getSort() == m_Sort : 
-					"Sort mismatch: " + summand.getKey().getSort() + " vs. " + m_Sort;
-				final Rational coeff = m_Variable2Coefficient.get(summand.getKey());
+					affineTerm.mVariable2Coefficient.entrySet()) {
+				assert summand.getKey().getSort() == mSort : 
+					"Sort mismatch: " + summand.getKey().getSort() + " vs. " + mSort;
+				final Rational coeff = mVariable2Coefficient.get(summand.getKey());
 				if (coeff == null) {
-					m_Variable2Coefficient.put(summand.getKey(), summand.getValue());
+					mVariable2Coefficient.put(summand.getKey(), summand.getValue());
 				} else {
 					final Rational newCoeff;
-					if (BitvectorUtils.isBitvectorSort(m_Sort)) {
-						newCoeff = bringValueInRange(coeff.add(summand.getValue()), m_Sort);
+					if (BitvectorUtils.isBitvectorSort(mSort)) {
+						newCoeff = bringValueInRange(coeff.add(summand.getValue()), mSort);
 					} else {
 						newCoeff = coeff.add(summand.getValue());
 					}
 					if (newCoeff.equals(Rational.ZERO)) {
-						m_Variable2Coefficient.remove(summand.getKey());
+						mVariable2Coefficient.remove(summand.getKey());
 					} else {
-						m_Variable2Coefficient.put(summand.getKey(), newCoeff);
+						mVariable2Coefficient.put(summand.getKey(), newCoeff);
 					}
 				}
 			}
-			if (BitvectorUtils.isBitvectorSort(m_Sort)) {
-				constant = bringValueInRange(constant.add(affineTerm.m_Constant), m_Sort);
+			if (BitvectorUtils.isBitvectorSort(mSort)) {
+				constant = bringValueInRange(constant.add(affineTerm.mConstant), mSort);
 			} else {
-				constant = constant.add(affineTerm.m_Constant);
+				constant = constant.add(affineTerm.mConstant);
 			}
 		}
-		m_Constant = constant;
+		mConstant = constant;
 	}
 
 	/**
@@ -207,21 +207,21 @@ public class AffineTerm extends Term {
 	public AffineTerm(AffineTerm affineTerm, Rational multiplier) {
 		super(0);
 		if (multiplier.equals(Rational.ZERO)) {
-			m_Sort = affineTerm.getSort();
-			m_Constant = Rational.ZERO;
-			m_Variable2Coefficient = Collections.emptyMap();
+			mSort = affineTerm.getSort();
+			mConstant = Rational.ZERO;
+			mVariable2Coefficient = Collections.emptyMap();
 		} else {
-			m_Variable2Coefficient = new HashMap<Term, Rational>();
-			m_Sort = affineTerm.getSort();
-			if (BitvectorUtils.isBitvectorSort(m_Sort)) {
-				m_Constant = bringValueInRange(affineTerm.m_Constant.mul(multiplier), m_Sort);
+			mVariable2Coefficient = new HashMap<Term, Rational>();
+			mSort = affineTerm.getSort();
+			if (BitvectorUtils.isBitvectorSort(mSort)) {
+				mConstant = bringValueInRange(affineTerm.mConstant.mul(multiplier), mSort);
 			} else {
-				assert m_Sort.isNumericSort();
-				m_Constant = affineTerm.m_Constant.mul(multiplier);
+				assert mSort.isNumericSort();
+				mConstant = affineTerm.mConstant.mul(multiplier);
 			}
 			for (Map.Entry<Term, Rational> summand :
-				affineTerm.m_Variable2Coefficient.entrySet()) {
-				m_Variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
+				affineTerm.mVariable2Coefficient.entrySet()) {
+				mVariable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
 			}
 		}
 	}
@@ -250,9 +250,9 @@ public class AffineTerm extends Term {
 	 */
 	public AffineTerm() {
 		super(0);
-		m_Variable2Coefficient = null;
-		m_Constant = null;
-		m_Sort = null;
+		mVariable2Coefficient = null;
+		mConstant = null;
+		mSort = null;
 	}
 	
 	/**
@@ -260,13 +260,13 @@ public class AffineTerm extends Term {
 	 * translation process, e.g., if original term was not linear.
 	 */
 	public boolean isErrorTerm() {
-		if (m_Variable2Coefficient == null) {
-			assert m_Constant == null;
-			assert m_Sort == null;
+		if (mVariable2Coefficient == null) {
+			assert mConstant == null;
+			assert mSort == null;
 			return true;
 		} else {
-			assert m_Constant != null;
-			assert m_Sort != null;
+			assert mConstant != null;
+			assert mSort != null;
 			return false;
 		}
 	}
@@ -276,29 +276,29 @@ public class AffineTerm extends Term {
 	 * @return whether this affine term is just a constant
 	 */
 	public boolean isConstant() {
-		return m_Variable2Coefficient.isEmpty();
+		return mVariable2Coefficient.isEmpty();
 	}
 	
 	/**
 	 * @return whether this affine term is zero
 	 */
 	public boolean isZero() {
-		return m_Constant.equals(Rational.ZERO)
-				&& m_Variable2Coefficient.isEmpty();
+		return mConstant.equals(Rational.ZERO)
+				&& mVariable2Coefficient.isEmpty();
 	}
 	
 	/**
 	 * @return the constant summand of this affine term
 	 */
 	public Rational getConstant() {
-		return m_Constant;
+		return mConstant;
 	}
 	
 	/**
 	 * @return unmodifiable map where each variable is mapped to its coefficient. 
 	 */
 	public Map<Term, Rational> getVariable2Coefficient() {
-		return Collections.unmodifiableMap(m_Variable2Coefficient);
+		return Collections.unmodifiableMap(mVariable2Coefficient);
 	}
 	
 	/**
@@ -307,29 +307,29 @@ public class AffineTerm extends Term {
 	 */
 	public Term toTerm(Script script) {
 		Term[] summands;
-		if (m_Constant.equals(Rational.ZERO)) {
-			summands = new Term[m_Variable2Coefficient.size()];
+		if (mConstant.equals(Rational.ZERO)) {
+			summands = new Term[mVariable2Coefficient.size()];
 		} else {
-			summands = new Term[m_Variable2Coefficient.size() + 1];
+			summands = new Term[mVariable2Coefficient.size() + 1];
 		}
 		int i = 0;
 		for (Map.Entry<Term, Rational> entry :
-				m_Variable2Coefficient.entrySet()) {
+				mVariable2Coefficient.entrySet()) {
 			assert !entry.getValue().equals(Rational.ZERO) : 
 								"zero is no legal coefficient in AffineTerm";
 			if (entry.getValue().equals(Rational.ONE)) {
 				summands[i] = entry.getKey();
 			} else {
-				Term coeff = SmtUtils.rational2Term(script, entry.getValue(), m_Sort);
-				summands[i] = SmtUtils.mul(script, m_Sort, coeff, entry.getKey()); 
+				Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
+				summands[i] = SmtUtils.mul(script, mSort, coeff, entry.getKey()); 
 			}
 			++i;
 		}
-		if (!m_Constant.equals(Rational.ZERO)) {
-			assert m_Constant.isIntegral() || m_Sort.getName().equals("Real");
-			summands[i] = SmtUtils.rational2Term(script, m_Constant, m_Sort);
+		if (!mConstant.equals(Rational.ZERO)) {
+			assert mConstant.isIntegral() || mSort.getName().equals("Real");
+			summands[i] = SmtUtils.rational2Term(script, mConstant, mSort);
 		}
-		Term result = SmtUtils.sum(script, m_Sort, summands);
+		Term result = SmtUtils.sum(script, mSort, summands);
 		return result;
 	}
 	
@@ -340,15 +340,15 @@ public class AffineTerm extends Term {
 		}
 		StringBuilder sb = new StringBuilder();
 		for (Map.Entry<Term, Rational> entry :
-				m_Variable2Coefficient.entrySet()) {
+				mVariable2Coefficient.entrySet()) {
 			sb.append(entry.getValue().isNegative() ? " - " : " + ");
 			sb.append(entry.getValue().abs() + "*" + entry.getKey());
 		}
-		if (!m_Constant.equals(Rational.ZERO) || sb.length() == 0) {
-			if (m_Constant.isNegative() || sb.length() > 0) {
-				sb.append(m_Constant.isNegative() ? " - " : " + ");
+		if (!mConstant.equals(Rational.ZERO) || sb.length() == 0) {
+			if (mConstant.isNegative() || sb.length() > 0) {
+				sb.append(mConstant.isNegative() ? " - " : " + ");
 			}
-			sb.append(m_Constant.abs());
+			sb.append(mConstant.abs());
 		}
 		String result = sb.toString();
 		if (result.charAt(0) == ' ') {
@@ -360,11 +360,11 @@ public class AffineTerm extends Term {
 	
 	@Override
 	public Sort getSort() {
-		return m_Sort;
+		return mSort;
 	}
 	
 	@Override
-	public void toStringHelper(ArrayDeque<Object> m_Todo) {
+	public void toStringHelper(ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException(
 				"This is an auxilliary Term and not supported by the solver");
 	}

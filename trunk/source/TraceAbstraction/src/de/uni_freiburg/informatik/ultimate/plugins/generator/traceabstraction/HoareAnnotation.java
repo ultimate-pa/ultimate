@@ -65,9 +65,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * Specifies properties of a state in a graph representation of a system. These
  * properties are
  * <ul>
- * <li>Name of a location m_LocationName</li>
- * <li>Name of a procedure m_ProcedureName</li>
- * <li>Possible valuations of variables in this state m_StateFormulas</li>
+ * <li>Name of a location mLocationName</li>
+ * <li>Name of a procedure mProcedureName</li>
+ * <li>Possible valuations of variables in this state mStateFormulas</li>
  * </ul>
  * 
  * @author heizmann@informatik.uni-freiburg.de
@@ -80,18 +80,18 @@ public class HoareAnnotation extends SPredicate {
 	private static final long serialVersionUID = 72852101509650437L;
 	
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 
-	private final Script m_Script;
-	private final Boogie2SMT m_Boogie2Smt;
-	private final PredicateFactory m_PredicateFactory;
-	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
+	private final Script mScript;
+	private final Boogie2SMT mBoogie2Smt;
+	private final PredicateFactory mPredicateFactory;
+	private final ModifiableGlobalVariableManager mModifiableGlobals;
 
-	private final Map<Term, Term> m_Precondition2Invariant = new HashMap<Term, Term>();
-	private boolean m_IsUnknown = false;
+	private final Map<Term, Term> mPrecondition2Invariant = new HashMap<Term, Term>();
+	private boolean mIsUnknown = false;
 
-	private boolean m_FormulaHasBeenComputed = false;
-	private Term m_ClosedFormula;
+	private boolean mFormulaHasBeenComputed = false;
+	private Term mClosedFormula;
 	private static final boolean s_AvoidImplications = true;
 	
 
@@ -102,11 +102,11 @@ public class HoareAnnotation extends SPredicate {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, boogie2smt.getScript().term(
 				"true"), new HashSet<BoogieVar>(), null);
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		m_Services = services;
-		m_Boogie2Smt = boogie2smt;
-		m_PredicateFactory = predicateFactory;
-		m_Script = boogie2smt.getScript();
-		m_ModifiableGlobals = modifiableGlobals;
+		mServices = services;
+		mBoogie2Smt = boogie2smt;
+		mPredicateFactory = predicateFactory;
+		mScript = boogie2smt.getScript();
+		mModifiableGlobals = modifiableGlobals;
 	}
 
 	/**
@@ -124,9 +124,9 @@ public class HoareAnnotation extends SPredicate {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "Precondition2InvariantMapping")
-			return m_Precondition2Invariant;
+			return mPrecondition2Invariant;
 		else if (field == "StateIsUnknown")
-			return m_IsUnknown;
+			return mIsUnknown;
 		else if (field == "Precondition2InvariantMappingAsStrings")
 			return getPrecondition2InvariantMappingAsStrings();
 		else
@@ -134,68 +134,68 @@ public class HoareAnnotation extends SPredicate {
 	}
 
 	public void addInvariant(IPredicate procPrecond, IPredicate locInvar) {
-		if (m_FormulaHasBeenComputed) {
+		if (mFormulaHasBeenComputed) {
 			throw new UnsupportedOperationException("Once Formula has been"
 					+ " computed it is not allowed to add new Formulas");
 		}
-		if (m_PredicateFactory.isDontCare(procPrecond) || m_PredicateFactory.isDontCare(locInvar)) {
-			this.m_IsUnknown = true;
+		if (mPredicateFactory.isDontCare(procPrecond) || mPredicateFactory.isDontCare(locInvar)) {
+			this.mIsUnknown = true;
 			return;
 		}
-		m_Vars.addAll(procPrecond.getVars());
-		m_Vars.addAll(locInvar.getVars());
+		mVars.addAll(procPrecond.getVars());
+		mVars.addAll(locInvar.getVars());
 		Term procPrecondFormula = procPrecond.getFormula();
-		// procPrecondFormula = (new SimplifyDDA(m_Script,
+		// procPrecondFormula = (new SimplifyDDA(mScript,
 		// s_Logger)).getSimplifiedTerm(procPrecondFormula);
 		Term locInvarFormula = locInvar.getFormula();
-		Term invarForPrecond = m_Precondition2Invariant.get(procPrecondFormula);
+		Term invarForPrecond = mPrecondition2Invariant.get(procPrecondFormula);
 		if (invarForPrecond == null) {
 			invarForPrecond = locInvarFormula;
 		} else {
-			invarForPrecond = Util.and(m_Script, invarForPrecond, locInvarFormula);
+			invarForPrecond = Util.and(mScript, invarForPrecond, locInvarFormula);
 		}
-		// invarForPrecond = (new SimplifyDDA(m_Script,
+		// invarForPrecond = (new SimplifyDDA(mScript,
 		// s_Logger)).getSimplifiedTerm(invarForPrecond);
-		// procPrecondFormula = (new SimplifyDDA(m_Script,
+		// procPrecondFormula = (new SimplifyDDA(mScript,
 		// s_Logger)).getSimplifiedTerm(procPrecondFormula);
-		m_Precondition2Invariant.put(procPrecondFormula, invarForPrecond);
+		mPrecondition2Invariant.put(procPrecondFormula, invarForPrecond);
 	}
 
 	@Override
 	public Term getFormula() {
-		if (!m_FormulaHasBeenComputed) {
+		if (!mFormulaHasBeenComputed) {
 			computeFormula();
-			m_FormulaHasBeenComputed = true;
+			mFormulaHasBeenComputed = true;
 		}
-		return m_Formula;
+		return mFormula;
 	}
 	
 	@Override
 	public Term getClosedFormula() {
-		if (!m_FormulaHasBeenComputed) {
+		if (!mFormulaHasBeenComputed) {
 			computeFormula();
-			m_FormulaHasBeenComputed = true;
+			mFormulaHasBeenComputed = true;
 		}
-		return m_ClosedFormula;
+		return mClosedFormula;
 	}
 
 	private void computeFormula() {
 		for (Term precond : getPrecondition2Invariant().keySet()) {
 			Term invariant = getPrecondition2Invariant().get(precond);
-			invariant = SmtUtils.simplify(m_Script, invariant, m_Services); 
-			Term precondTerm = Util.implies(m_Script, precond, invariant);
+			invariant = SmtUtils.simplify(mScript, invariant, mServices); 
+			Term precondTerm = Util.implies(mScript, precond, invariant);
 			if (s_AvoidImplications) {
-				precondTerm = (new Nnf(m_Script, m_Services, m_Boogie2Smt.getVariableManager(), QuantifierHandling.KEEP)).transform(precondTerm);
+				precondTerm = (new Nnf(mScript, mServices, mBoogie2Smt.getVariableManager(), QuantifierHandling.KEEP)).transform(precondTerm);
 			}
 			mLogger.debug("In " + this + " holds " + invariant + " for precond " + precond);
-			m_Formula = Util.and(m_Script, m_Formula, precondTerm);
+			mFormula = Util.and(mScript, mFormula, precondTerm);
 		}
-		m_Formula = substituteOldVarsOfNonModifiableGlobals(getProgramPoint().getProcedure(), m_Vars,
-				m_Formula);
-		m_Formula = SmtUtils.simplify(m_Script, m_Formula, m_Services); 
-		m_Formula = getPositiveNormalForm(m_Formula);
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(m_Formula, m_Boogie2Smt);
-		m_ClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), m_Script);
+		mFormula = substituteOldVarsOfNonModifiableGlobals(getProgramPoint().getProcedure(), mVars,
+				mFormula);
+		mFormula = SmtUtils.simplify(mScript, mFormula, mServices); 
+		mFormula = getPositiveNormalForm(mFormula);
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(mFormula, mBoogie2Smt);
+		mClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), mScript);
 	}
 	
 	
@@ -205,7 +205,7 @@ public class HoareAnnotation extends SPredicate {
 	 * the oldvar from vars.
 	 */
 	public Term substituteOldVarsOfNonModifiableGlobals(String proc, Set<BoogieVar> vars, Term term) {
-		final Set<BoogieVar> oldVarsOfmodifiableGlobals = m_ModifiableGlobals.getOldVarsAssignment(proc)
+		final Set<BoogieVar> oldVarsOfmodifiableGlobals = mModifiableGlobals.getOldVarsAssignment(proc)
 				.getAssignedVars();
 		List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
 
@@ -224,7 +224,7 @@ public class HoareAnnotation extends SPredicate {
 
 		TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] substValues = replacers.toArray(new Term[replacers.size()]);
-		Term result = m_Script.let(substVars, substValues, term);
+		Term result = mScript.let(substVars, substValues, term);
 		result = (new FormulaUnLet()).unlet(result);
 
 		for (BoogieVar bv : replacedOldVars) {
@@ -236,27 +236,27 @@ public class HoareAnnotation extends SPredicate {
 	
 
 	private Term getPositiveNormalForm(Term term) {
-		Script script = m_Script;
-		Term result = (new AffineSubtermNormalizer(m_Script, mLogger)).transform(term);
+		Script script = mScript;
+		Term result = (new AffineSubtermNormalizer(mScript, mLogger)).transform(term);
 		assert (Util.checkSat(script, script.term("distinct", term, result)) != LBool.SAT);
 		return result;
 	}
 
 	/**
-	 * @return the m_FormulaMapping
+	 * @return the mFormulaMapping
 	 */
 	public Map<Term, Term> getPrecondition2Invariant() {
-		return m_Precondition2Invariant;
+		return mPrecondition2Invariant;
 	}
 
 	@Override
 	public boolean isUnknown() {
-		return m_IsUnknown;
+		return mIsUnknown;
 	}
 
 	public Map<String, String> getPrecondition2InvariantMappingAsStrings() {
 		HashMap<String, String> result = new HashMap<String, String>();
-		for (Entry<Term, Term> entry : m_Precondition2Invariant.entrySet()) {
+		for (Entry<Term, Term> entry : mPrecondition2Invariant.entrySet()) {
 			result.put(entry.getKey().toStringDirect(), entry.getValue().toStringDirect());
 		}
 		return result;

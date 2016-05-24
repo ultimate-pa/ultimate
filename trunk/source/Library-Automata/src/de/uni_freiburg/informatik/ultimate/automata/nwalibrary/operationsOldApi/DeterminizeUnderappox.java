@@ -69,10 +69,10 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	@Override
 	protected Collection<STATE> getInitialStates() {
 		ArrayList<STATE> resInitials = 
-			new ArrayList<STATE>(m_Operand.getInitialStates().size());
+			new ArrayList<STATE>(mOperand.getInitialStates().size());
 		DeterminizedState<LETTER,STATE> detState = stateDeterminizer.initialState();
 		STATE resState = stateDeterminizer.getState(detState);
-		((NestedWordAutomaton<LETTER,STATE>) m_TraversedNwa).addState(true, detState.allFinal(m_Operand), resState);
+		((NestedWordAutomaton<LETTER,STATE>) mTraversedNwa).addState(true, detState.allFinal(mOperand), resState);
 		det2res.put(detState,resState);
 		res2det.put(resState, detState);
 		resInitials.add(resState);
@@ -95,7 +95,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 		}
 		else {
 			STATE resState = stateDeterminizer.getState(detState);
-			((NestedWordAutomaton<LETTER,STATE>) m_TraversedNwa).addState(false, detState.allFinal(m_Operand), resState);
+			((NestedWordAutomaton<LETTER,STATE>) mTraversedNwa).addState(false, detState.allFinal(mOperand), resState);
 			det2res.put(detState,resState);
 			res2det.put(resState,detState);
 			return resState;
@@ -105,7 +105,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, S
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws AutomataOperationCanceledException {
-		return m_TraversedNwa;
+		return mTraversedNwa;
 	}
 
 }

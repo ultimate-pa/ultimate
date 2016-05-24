@@ -49,18 +49,18 @@ public class UnionFind<E> {
 	/**
 	 * Maps an element to its equivalence class.
 	 */
-	Map<E,Set<E>> m_EquivalenceClass = new HashMap<E,Set<E>>();
+	Map<E,Set<E>> mEquivalenceClass = new HashMap<E,Set<E>>();
 	/**
 	 * Maps an equivalence class to its representative.
 	 */
-	Map<Set<E>,E> m_Representative = new HashMap<Set<E>,E>();
+	Map<Set<E>,E> mRepresentative = new HashMap<Set<E>,E>();
 
 	/**
 	 * Returns the representative of the equivalence class of element e.
 	 */
 	public E find(E e) {
-		Set<E> set = m_EquivalenceClass.get(e);
-		return m_Representative.get(set);
+		Set<E> set = mEquivalenceClass.get(e);
+		return mRepresentative.get(set);
 	}
 
 	/**
@@ -68,13 +68,13 @@ public class UnionFind<E> {
 	 * element e.
 	 */
 	public void makeEquivalenceClass(E e) {
-		if (m_EquivalenceClass.containsKey(e)) {
+		if (mEquivalenceClass.containsKey(e)) {
 			throw new IllegalArgumentException("Already contained " + e);
 		}
 		Set<E> result = new HashSet<E>();
 		result.add(e);
-		m_EquivalenceClass.put(e, result);
-		m_Representative.put(result, e);
+		mEquivalenceClass.put(e, result);
+		mRepresentative.put(result, e);
 	}
 
 	/**
@@ -82,16 +82,16 @@ public class UnionFind<E> {
 	 * not have to be the representatives of this equivalence classes).
 	 */
 	public void union(E e1, E e2) {
-		Set<E> set1 = m_EquivalenceClass.get(e1);
-		Set<E> set2 = m_EquivalenceClass.get(e2);
-		E set1rep = m_Representative.get(set1);
-		m_Representative.remove(set1);
-		m_Representative.remove(set2);
+		Set<E> set1 = mEquivalenceClass.get(e1);
+		Set<E> set2 = mEquivalenceClass.get(e2);
+		E set1rep = mRepresentative.get(set1);
+		mRepresentative.remove(set1);
+		mRepresentative.remove(set2);
 		set1.addAll(set2);
 		for (E e : set2) {
-			m_EquivalenceClass.put(e, set1);
+			mEquivalenceClass.put(e, set1);
 		} 
-		m_Representative.put(set1, set1rep);
+		mRepresentative.put(set1, set1rep);
 	}
 	
 	/**
@@ -99,7 +99,7 @@ public class UnionFind<E> {
 	 * equivalence class.
 	 */
 	public Collection<E> getAllRepresentatives() {
-		return m_Representative.values();
+		return mRepresentative.values();
 	}
 
 	/**
@@ -107,12 +107,12 @@ public class UnionFind<E> {
 	 * (Returned set also contains e).
 	 */
 	public Set<E> getEquivalenceClassMembers(E e) {
-		return Collections.unmodifiableSet(m_EquivalenceClass.get(e));
+		return Collections.unmodifiableSet(mEquivalenceClass.get(e));
 	}
 
 	@Override
 	public String toString() {
-		return m_Representative.toString();
+		return mRepresentative.toString();
 	}
 	
 	/**

@@ -44,7 +44,7 @@ public class BinaryExpressionAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = 561094736879070816L;
-	private BinaryOperatorAST m_operator;
+	private BinaryOperatorAST moperator;
 	
 	public BinaryExpressionAST(ILocation loc) {
 		super(loc);
@@ -56,8 +56,8 @@ public class BinaryExpressionAST extends AtsASTNode {
 	 * 
 	 */
 	private void setBothTypesTo(Class<?> type) {
-		m_returnType = type;
-		m_expectingType = type;
+		mreturnType = type;
+		mexpectingType = type;
 	}
 	
 	public BinaryExpressionAST(ILocation loc, AtsASTNode leftChild, AtsASTNode rightChild) {
@@ -69,7 +69,7 @@ public class BinaryExpressionAST extends AtsASTNode {
 
 	
 	public void setOperator(BinaryOperatorAST op) {
-		m_operator = op;
+		moperator = op;
 		// If the operator is '+' and if one of the operands has type 'String'
 		// then the operation is 'String concatenation' and not 'Addition'
 		// therefore the return type is 'String.
@@ -85,15 +85,15 @@ public class BinaryExpressionAST extends AtsASTNode {
 	
 	public BinaryOperatorAST getOperator()
 	{
-		return m_operator;
+		return moperator;
 	}
 
 	public String getOperatorAsString() {
-		return operatorToString(m_operator);
+		return operatorToString(moperator);
 	}
 	@Override
 	public String toString() {
-		return "BinaryExpression [Operator: " + operatorToString(m_operator) + "]";
+		return "BinaryExpression [Operator: " + operatorToString(moperator) + "]";
 	}
 	
 	private String operatorToString(BinaryOperatorAST bo) {
@@ -108,10 +108,10 @@ public class BinaryExpressionAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		if (m_children.size() == 2) {
-			return m_children.get(0).getAsString() + 
-		           operatorToString(m_operator) + 
-				   m_children.get(1).getAsString();
+		if (mchildren.size() == 2) {
+			return mchildren.get(0).getAsString() + 
+		           operatorToString(moperator) + 
+				   mchildren.get(1).getAsString();
 		} else {
 			return "";
 		}

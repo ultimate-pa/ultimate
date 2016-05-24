@@ -63,22 +63,22 @@ public abstract class CFG2Automaton {
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	
-	private final RootAnnot m_RootAnnot;
-	private final SmtManager m_SmtManager;
-	private final StateFactory<IPredicate> m_ContentFactory;
-	protected ArrayList<NestedWordAutomaton<CodeBlock, IPredicate>> m_Automata;
+	private final RootAnnot mRootAnnot;
+	private final SmtManager mSmtManager;
+	private final StateFactory<IPredicate> mContentFactory;
+	protected ArrayList<NestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
 
-	private CodeBlock m_SharedVarsInit;
-	private static final String m_InitProcedure = "~init";
+	private CodeBlock mSharedVarsInit;
+	private static final String mInitProcedure = "~init";
 
 	public CFG2Automaton(RootNode rootNode, StateFactory<IPredicate> contentFactory, SmtManager smtManager,
 			IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		// m_RootNode = rootNode;
-		m_RootAnnot = rootNode.getRootAnnot();
-		m_ContentFactory = contentFactory;
-		m_SmtManager = smtManager;
+		// mRootNode = rootNode;
+		mRootAnnot = rootNode.getRootAnnot();
+		mContentFactory = contentFactory;
+		mSmtManager = smtManager;
 	}
 
 	public abstract Object getResult();
@@ -91,40 +91,40 @@ public abstract class CFG2Automaton {
 			throw new IllegalArgumentException("Concurrent programs reqire" + "atomic block encoding.");
 		}
 
-		if (!m_RootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(m_InitProcedure)) {
-			throw new IllegalArgumentException("Concurrent program needs procedure " + m_InitProcedure
+		if (!mRootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(mInitProcedure)) {
+			throw new IllegalArgumentException("Concurrent program needs procedure " + mInitProcedure
 					+ " to initialize shared variables");
 		}
 
 		int numberOfProcedures;
-		if (m_RootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(m_InitProcedure)) {
-			numberOfProcedures = m_RootAnnot.getBoogieDeclarations().getProcImplementation().size() - 1;
+		if (mRootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(mInitProcedure)) {
+			numberOfProcedures = mRootAnnot.getBoogieDeclarations().getProcImplementation().size() - 1;
 			mLogger.debug("Program has procedure to initialize shared variables");
 		} else {
-			numberOfProcedures = m_RootAnnot.getBoogieDeclarations().getProcImplementation().size();
+			numberOfProcedures = mRootAnnot.getBoogieDeclarations().getProcImplementation().size();
 			mLogger.debug("No procedure to initialize shared variables");
 		}
 		mLogger.debug("Found " + numberOfProcedures + "Procedures");
 
-		m_Automata = new ArrayList<NestedWordAutomaton<CodeBlock, IPredicate>>(numberOfProcedures);
+		mAutomata = new ArrayList<NestedWordAutomaton<CodeBlock, IPredicate>>(numberOfProcedures);
 
-		m_SharedVarsInit = extractPrecondition();
+		mSharedVarsInit = extractPrecondition();
 
-		for (String proc : m_RootAnnot.getBoogieDeclarations().getProcImplementation().keySet()) {
-			if (proc.equals(m_InitProcedure)) {
+		for (String proc : mRootAnnot.getBoogieDeclarations().getProcImplementation().keySet()) {
+			if (proc.equals(mInitProcedure)) {
 				continue;
 			}
-			ProgramPoint entry = m_RootAnnot.getEntryNodes().get(proc);
-			m_Automata.add(getNestedWordAutomaton(entry));
+			ProgramPoint entry = mRootAnnot.getEntryNodes().get(proc);
+			mAutomata.add(getNestedWordAutomaton(entry));
 		}
-		assert (m_Automata.size() == numberOfProcedures);
+		assert (mAutomata.size() == numberOfProcedures);
 
 	}
 
 	private CodeBlock extractPrecondition() {
-		assert (m_RootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(m_InitProcedure));
-		ProgramPoint entry = m_RootAnnot.getEntryNodes().get(m_InitProcedure);
-		ProgramPoint exit = m_RootAnnot.getExitNodes().get(m_InitProcedure);
+		assert (mRootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(mInitProcedure));
+		ProgramPoint entry = mRootAnnot.getEntryNodes().get(mInitProcedure);
+		ProgramPoint exit = mRootAnnot.getExitNodes().get(mInitProcedure);
 		List<CodeBlock> codeBlocks = new ArrayList<CodeBlock>();
 
 		ProgramPoint current = entry;
@@ -136,7 +136,7 @@ public abstract class CFG2Automaton {
 			codeBlocks.add(succSS);
 			current = (ProgramPoint) succSS.getTarget();
 		}
-		return m_RootAnnot.getCodeBlockFactory().constructSequentialComposition(entry, exit,
+		return mRootAnnot.getCodeBlockFactory().constructSequentialComposition(entry, exit,
 				true, false, codeBlocks);
 	}
 
@@ -175,7 +175,7 @@ public abstract class CFG2Automaton {
 		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>(0);
 
 		// add transAnnot from sharedVars initialization
-		internalAlphabet.add(m_SharedVarsInit);
+		internalAlphabet.add(mSharedVarsInit);
 
 		for (ProgramPoint locNode : allNodes) {
 			if (locNode.getOutgoingNodes() != null)
@@ -200,7 +200,7 @@ public abstract class CFG2Automaton {
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet, returnAlphabet, m_ContentFactory);
+				new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet, returnAlphabet, mContentFactory);
 
 		IPredicate procedureInitialState = null;
 
@@ -209,8 +209,8 @@ public abstract class CFG2Automaton {
 		// add states
 		for (ProgramPoint locNode : allNodes) {
 			boolean isErrorLocation = locNode.isErrorLocation();
-			final Term trueTerm = m_SmtManager.getScript().term("true");
-			IPredicate automatonState = m_SmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm);
+			final Term trueTerm = mSmtManager.getScript().term("true");
+			IPredicate automatonState = mSmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm);
 			nwa.addState(false, isErrorLocation, automatonState);
 			nodes2States.put(locNode, automatonState);
 			if (locNode == initialNode) {
@@ -239,13 +239,13 @@ public abstract class CFG2Automaton {
 		}
 
 		mLogger.debug("Step: SharedVarsInit part");
-		ProgramPoint entryOfInitProc = (ProgramPoint) m_SharedVarsInit.getSource();
-		final Term trueTerm = m_SmtManager.getScript().term("true");
-		IPredicate initialContent = m_SmtManager.getPredicateFactory().newSPredicate(entryOfInitProc, trueTerm);
+		ProgramPoint entryOfInitProc = (ProgramPoint) mSharedVarsInit.getSource();
+		final Term trueTerm = mSmtManager.getScript().term("true");
+		IPredicate initialContent = mSmtManager.getPredicateFactory().newSPredicate(entryOfInitProc, trueTerm);
 		nwa.addState(true, false, initialContent);
 		IPredicate automatonSuccState;
 		automatonSuccState = procedureInitialState;
-		nwa.addInternalTransition(initialContent, m_SharedVarsInit, automatonSuccState);
+		nwa.addInternalTransition(initialContent, mSharedVarsInit, automatonSuccState);
 
 		return nwa;
 	}

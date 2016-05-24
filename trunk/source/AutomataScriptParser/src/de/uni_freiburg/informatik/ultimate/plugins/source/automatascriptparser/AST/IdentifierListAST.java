@@ -45,20 +45,20 @@ public class IdentifierListAST extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = -7741847124495330627L;
-	private List<String> m_idList;
+	private List<String> midList;
 	
 	
 	public IdentifierListAST(ILocation loc) {
 		super(loc);
-		m_idList = new ArrayList<String>();
+		midList = new ArrayList<String>();
 	}
 	
 	public void addId(String id) {
-		m_idList.add(id);
+		midList.add(id);
 	}
 	
 	public List<String> getIdentifierList() {
-		return m_idList;
+		return midList;
 	}
 	
 	/**
@@ -67,7 +67,7 @@ public class IdentifierListAST extends AtsASTNode {
 	 * @return the identifier at index i, or throws an exception
 	 */
 	public String getIdentifier(int i) {
-		return m_idList.get(i);
+		return midList.get(i);
 	}
 	
 	// Some methods needed for petri nets
@@ -76,13 +76,13 @@ public class IdentifierListAST extends AtsASTNode {
 	 * @return true iff it contains exactly 2 identifiers, otherwise false.
 	 */
 	public boolean isPair() {
-		return (m_idList.size() == 2);
+		return (midList.size() == 2);
 	}
 
 	@Override
 	public String getAsString() {
 		StringBuilder builder = new StringBuilder();
-		for (String id : m_idList) {
+		for (String id : midList) {
 			builder.append(id + " ");
 		}
 		return builder.toString();

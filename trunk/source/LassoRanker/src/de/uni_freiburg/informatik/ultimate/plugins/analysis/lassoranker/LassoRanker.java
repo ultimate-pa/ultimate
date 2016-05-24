@@ -50,8 +50,8 @@ public class LassoRanker implements IAnalysis {
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 	
-	private LassoRankerObserver m_Observer;
-	private ModelType m_InputDefinition;
+	private LassoRankerObserver mObserver;
+	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 
@@ -91,13 +91,13 @@ public class LassoRanker implements IAnalysis {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.m_InputDefinition = graphType;
+		this.mInputDefinition = graphType;
 	}
 
 	//@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new LassoRankerObserver(mServices, mStorage);
-		return Collections.singletonList((IObserver) m_Observer);
+		mObserver = new LassoRankerObserver(mServices, mStorage);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 	
 	public ModelType getOutputDefinition() {
@@ -106,7 +106,7 @@ public class LassoRanker implements IAnalysis {
 		 * Adapt it if necessary. Otherwise remove this todo-tag.
 		 */
 		return new ModelType(Activator.PLUGIN_ID,
-				m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+				mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 	
 	@Override

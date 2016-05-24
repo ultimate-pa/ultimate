@@ -22,8 +22,8 @@ public final class DoubleCache extends CacheBase {
 	public double answer;
 
 	private int cache_bits, shift_bits, cache_size, cache_mask;
-	private int possible_bins_count, num_clears, num_partial_clears, num_grows;
-	private long  num_access, partial_count, partial_kept;
+	private int possible_bins_count, numclears, numpartial_clears, numgrows;
+	private long  numaccess, partial_count, partial_kept;
 	private long hit,miss, last_hit, last_access; // cache hits and misses, hit/acces-count since last grow
 
 	/**
@@ -38,13 +38,13 @@ public final class DoubleCache extends CacheBase {
 		this.cache_size = (1 << cache_bits);
 		this.cache_mask = cache_size -1;
 
-		num_grows = 0;
-		num_access = 0;
+		numgrows = 0;
+		numaccess = 0;
 		hit = miss = last_hit = last_access = 0;
 		partial_count = partial_kept= 0;
 
 		this.possible_bins_count = 0;
-		this.num_clears =  num_partial_clears = 0;
+		this.numclears =  numpartial_clears = 0;
 
 		in = Allocator.allocateIntArray(cache_size);
 		out = Allocator.allocateDoubleArray(cache_size);
@@ -66,14 +66,14 @@ public final class DoubleCache extends CacheBase {
 
 	/**
 	 * see if we are allowed to grow this cache.
-	 * We grow the cache if (num_grows < MAX_SIMPLECACHE_GROWS) and the hit-rate since the last
+	 * We grow the cache if (numgrows < MAX_SIMPLECACHE_GROWS) and the hit-rate since the last
 	 * grow is larger than MIN_SIMPLECACHE_HITRATE_TO_GROW.
 	 *
 	 */
 
 	private boolean may_grow() {
-		if(num_grows < Configuration.maxSimplecacheGrows) {
-			long acs = (num_access - last_access);
+		if(numgrows < Configuration.maxSimplecacheGrows) {
+			long acs = (numaccess - last_access);
 
 			// only when we have "MIN_SIMPLECACHE_ACCESS_TO_GROW %" or more access', we have enough information to decide
 			// whether we can grow cache or not (beside, if acs == 0, we will get a div by 0 below :)
@@ -86,10 +86,10 @@ public final class DoubleCache extends CacheBase {
 			if(rate > Configuration.minSimplecacheHitrateToGrow) {
 				// store information needed to compute the next after-last-grow-hitrate
 				last_hit = hit;
-				last_access = num_access;
+				last_access = numaccess;
 
 				// register a grow and return true
-				num_grows ++;
+				numgrows ++;
 				return true;
 			}
 		}
@@ -102,7 +102,7 @@ public final class DoubleCache extends CacheBase {
 	public void invalidate_cache() {
 		Array.set(in, -1);
 		possible_bins_count = 0;
-		num_clears++;
+		numclears++;
 	}
 
 
@@ -124,7 +124,7 @@ public final class DoubleCache extends CacheBase {
 		out = null;	out = Allocator.allocateDoubleArray(cache_size);
 		Array.set(in, -1);
 		possible_bins_count = 0;
-		num_clears++;
+		numclears++;
 	}
 
 	// ---[ these operations clean only invalid nodes ] ----------------------
@@ -147,7 +147,7 @@ public final class DoubleCache extends CacheBase {
 	 */
 	public void invalidate_cache(NodeTable nt) {
 		if(possible_bins_count == 0) return;
-		num_partial_clears++;
+		numpartial_clears++;
 
 		int ok = 0;
 
@@ -183,7 +183,7 @@ public final class DoubleCache extends CacheBase {
 	 * from SimpleCache.hash_value before doing any more cache-operations!
 	 */
 	public final boolean lookup(int a) {
-		num_access++;
+		numaccess++;
 		int hash = a & cache_mask;
 		if(in[hash] == a){
 			hit++;
@@ -214,12 +214,12 @@ public final class DoubleCache extends CacheBase {
 	}
 
 	public double computeHitRate() { // hit-rate since the last clear
-		if(num_access == 0) return 0;
-		return ((int)((hit * 10000) / ( num_access ))) / 100.0;
+		if(numaccess == 0) return 0;
+		return ((int)((hit * 10000) / ( numaccess ))) / 100.0;
 	}
 
 	public long getAccessCount() {
-		return num_access;
+		return numaccess;
 	}
 
 	public int getCacheSize() {
@@ -227,33 +227,33 @@ public final class DoubleCache extends CacheBase {
 	}
 
 	public int getNumberOfClears() {
-		return num_clears;
+		return numclears;
 	}
 
 	public int getNumberOfPartialClears() {
-		return num_partial_clears;
+		return numpartial_clears;
 	}
 
 	public int getNumberOfGrows() {
-		return num_grows;
+		return numgrows;
 	}
 
 	// --------------------------------------------------------------
 
 	public void showStats() {
-		if(num_access != 0) {
+		if(numaccess != 0) {
 			JDDConsole.out.print(getName() + "-cache ");
 			JDDConsole.out.print("ld=" + computeLoadFactor() + "% ");
 			JDDConsole.out.print("sz="); Digits.printNumber1024(cache_size);
-			JDDConsole.out.print("accs="); Digits.printNumber1024(num_access);
-			JDDConsole.out.print("clrs=" + num_clears+ "/" + num_partial_clears + " ");
+			JDDConsole.out.print("accs="); Digits.printNumber1024(numaccess);
+			JDDConsole.out.print("clrs=" + numclears+ "/" + numpartial_clears + " ");
 
 			JDDConsole.out.print("hitr=" + computeHitRate() + "% ");
 			if(partial_count > 0) {
 				double pck = ((int)(10000.0 * partial_kept / partial_count)) / 100.0;
 				JDDConsole.out.print("pck=" +  pck + "% ");
 			}
-			if(num_grows > 0) JDDConsole.out.print("grws=" + num_grows + " ");
+			if(numgrows > 0) JDDConsole.out.print("grws=" + numgrows + " ");
 
 			JDDConsole.out.println();
 		}

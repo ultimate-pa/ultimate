@@ -51,13 +51,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  */
 public class PrenexNormalForm extends TermTransformer {
 	
-	private final Script m_Script;
-	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
+	private final Script mScript;
+	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
 
 	public PrenexNormalForm(Script script, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
-		m_Script = script;
-		m_FreshTermVariableConstructor = freshTermVariableConstructor;
+		mScript = script;
+		mFreshTermVariableConstructor = freshTermVariableConstructor;
 	}
 
 	@Override
@@ -94,14 +94,14 @@ public class PrenexNormalForm extends TermTransformer {
 	private Term pullQuantifiersNot(Term[] newArgs) {
 		assert newArgs.length == 1 : "no not";
 		final Term notArg = newArgs[0];
-		final QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script, notArg);
+		final QuantifierSequence quantifierSequence = new QuantifierSequence(mScript, notArg);
 		final Term inner = quantifierSequence.getInnerTerm();
 		final List<QuantifierSequence.QuantifiedVariables> qVarSeq = quantifierSequence.getQuantifierBlocks();
-		Term result = SmtUtils.not(m_Script, inner);
+		Term result = SmtUtils.not(mScript, inner);
 		for (int i = qVarSeq.size()-1; i>=0; i--) {
 			final QuantifierSequence.QuantifiedVariables quantifiedVars = qVarSeq.get(i);
 			final int resultQuantifier = (quantifiedVars.getQuantifier() + 1) % 2;
-			result = SmtUtils.quantifier(m_Script, resultQuantifier, 
+			result = SmtUtils.quantifier(mScript, resultQuantifier, 
 					quantifiedVars.getVariables(), result);
 		}
 		return result;
@@ -112,10 +112,10 @@ public class PrenexNormalForm extends TermTransformer {
 		final HashSet<TermVariable> freeVariables = new HashSet<>();
 		for (int i=0; i<newArgs.length; i++) {
 			freeVariables.addAll(Arrays.asList(newArgs[i].getFreeVars()));
-			quantifierSequences[i] = new QuantifierSequence(m_Script, newArgs[i]);
+			quantifierSequences[i] = new QuantifierSequence(mScript, newArgs[i]);
 		}
-		final Term result = QuantifierSequence.mergeQuantifierSequences(m_Script, 
-				m_FreshTermVariableConstructor, appTerm.getFunction().getName(), 
+		final Term result = QuantifierSequence.mergeQuantifierSequences(mScript, 
+				mFreshTermVariableConstructor, appTerm.getFunction().getName(), 
 				quantifierSequences, freeVariables);
 		return result;
 	}
@@ -130,7 +130,7 @@ public class PrenexNormalForm extends TermTransformer {
 	@Override
 	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
 		if (SmtUtils.isQuantifiedFormulaWithSameQuantifier(old.getQuantifier(), newBody) != null) {
-			final Term result = SmtUtils.quantifier(m_Script, old.getQuantifier(), 
+			final Term result = SmtUtils.quantifier(mScript, old.getQuantifier(), 
 					Arrays.asList(old.getVariables()), newBody);
 			setResult(result);
 		} else {
@@ -141,7 +141,7 @@ public class PrenexNormalForm extends TermTransformer {
 	@Override
 	public void postConvertAnnotation(AnnotatedTerm old, Annotation[] newAnnots, Term newBody) {
 		setResult(newBody);
-//		Term result = m_Script.annotate(newBody, newAnnots);
+//		Term result = mScript.annotate(newBody, newAnnots);
 //		setResult(result);
 //		throw new UnsupportedOperationException("not yet implemented: annotations");
 	}

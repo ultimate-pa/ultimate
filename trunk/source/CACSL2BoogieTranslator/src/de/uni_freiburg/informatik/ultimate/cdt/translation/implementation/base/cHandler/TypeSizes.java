@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @author Matthias Heizmann
  */
 public class TypeSizes {
-	private final boolean m_UseFixedTypeSizes;
+	private final boolean mUseFixedTypeSizes;
 	
 	private final int sizeOfBoolType;
 	private final int sizeOfCharType;
@@ -75,7 +75,7 @@ public class TypeSizes {
 	
 
 	public TypeSizes(RcpPreferenceProvider ups) {
-		m_UseFixedTypeSizes = 
+		mUseFixedTypeSizes = 
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		sizeOfVoidType = 1;
 		sizeOfBoolType = 
@@ -135,7 +135,7 @@ public class TypeSizes {
 	
 
 	public boolean useFixedTypeSizes() {
-		return m_UseFixedTypeSizes;
+		return mUseFixedTypeSizes;
 	}
 	
 	

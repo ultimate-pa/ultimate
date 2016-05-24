@@ -235,20 +235,20 @@ public class SimplifyDDA extends NonRecursive {
 							mNegated, params[mParamCtr], mContext));
 				} else if (mParamCtr < params.length) {
 					// The context contains:
-					//  param[len-1] ... param[m_paramCtr] 
-					//      simplify(param[m_paramCtr-2])... simplify(param[0])
-					// we need to replace param[m_paramCtr]
-					// by simplify(param[m_paramCtr-1]).
+					//  param[len-1] ... param[mparamCtr] 
+					//      simplify(param[mparamCtr-2])... simplify(param[0])
+					// we need to replace param[mparamCtr]
+					// by simplify(param[mparamCtr-1]).
 					/*  this is dangerous:  the simplified formulas may depend
 					 * on their context, therefore we cannot simply merge them.
-					for (int i = 0; i < m_paramCtr; i++) {
-						m_context.pop();
+					for (int i = 0; i < mparamCtr; i++) {
+						mcontext.pop();
 					}
-					for (int i = m_paramCtr-1; i >= 0; i--) {
+					for (int i = mparamCtr-1; i >= 0; i--) {
 						Term sibling = simplifier.negateSibling(
 							params[i], connective, i, params.length);
 						sibling = simplifier.createSimplify(sibling);
-						m_context.push(sibling);
+						mcontext.push(sibling);
 					}
 					*/
 					mContext.pop();
@@ -257,8 +257,8 @@ public class SimplifyDDA extends NonRecursive {
 							mNegated, params[mParamCtr], mContext));
 				} else {
 					/*
-					for (int i = 0; i < m_paramCtr-1; i++) {
-						m_context.pop();
+					for (int i = 0; i < mparamCtr-1; i++) {
+						mcontext.pop();
 					}
 					*/
 				}
@@ -690,7 +690,7 @@ public class SimplifyDDA extends NonRecursive {
 	 * @param mTerm whose Sort is Boolean
 	 */
 	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
-//		m_Logger.debug("Simplifying " + term);
+//		mLogger.debug("Simplifying " + term);
 		/* We can only simplify boolean terms. */
 		if (!inputTerm.getSort().getName().equals("Bool"))
 			return inputTerm;

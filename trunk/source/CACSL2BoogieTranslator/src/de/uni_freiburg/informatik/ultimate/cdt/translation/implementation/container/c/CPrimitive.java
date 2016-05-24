@@ -100,17 +100,17 @@ public class CPrimitive extends CType {
         VOID(GENERALPRIMITIVE.VOID);
         
         PRIMITIVE(GENERALPRIMITIVE generalprimitive) {
-    		m_Generalprimitive = generalprimitive;
+    		mGeneralprimitive = generalprimitive;
     	}
         
-    	private final GENERALPRIMITIVE m_Generalprimitive;
+    	private final GENERALPRIMITIVE mGeneralprimitive;
     	
     	public boolean isIntegertype() {
-    		return m_Generalprimitive == GENERALPRIMITIVE.INTTYPE;
+    		return mGeneralprimitive == GENERALPRIMITIVE.INTTYPE;
     	}
     	
     	public boolean isFloatingtype() {
-    		return m_Generalprimitive == GENERALPRIMITIVE.FLOATTYPE;
+    		return mGeneralprimitive == GENERALPRIMITIVE.FLOATTYPE;
     	}
     }
     

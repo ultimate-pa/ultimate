@@ -86,37 +86,37 @@ public final class SimulationPerformance {
 	/**
 	 * Holds all counting measures that are monitored.
 	 */
-	private final LinkedHashMap<ECountingMeasure, Integer> m_CountingMeasures;
+	private final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
 	/**
 	 * If the simulation uses SCC optimization or not.
 	 */
-	private final boolean m_IsUsingSCCs;
+	private final boolean mIsUsingSCCs;
 	/**
 	 * Name for the performance object to distinguish it from others.
 	 */
-	private String m_Name;
+	private String mName;
 	/**
 	 * If the performance object represents a simulation that has thrown an out
 	 * of memory error.
 	 */
-	private boolean m_OutOfMemory;
+	private boolean mOutOfMemory;
 	/**
 	 * The type of the simulation that is monitored.
 	 */
-	private final ESimulationType m_SimType;
+	private final ESimulationType mSimType;
 	/**
 	 * If the performance object represents a simulation that has timed out.
 	 */
-	private boolean m_TimedOut;
+	private boolean mTimedOut;
 
 	/**
 	 * Holds all time measures that are monitored.
 	 */
-	private final LinkedHashMap<ETimeMeasure, List<Long>> m_TimeMeasures;
+	private final LinkedHashMap<ETimeMeasure, List<Long>> mTimeMeasures;
 	/**
 	 * Holds all starting timestamps for monitored time measures.
 	 */
-	private final LinkedHashMap<ETimeMeasure, Long> m_TimeMeasureStartTimes;
+	private final LinkedHashMap<ETimeMeasure, Long> mTimeMeasureStartTimes;
 
 	/**
 	 * Creates a simulation performance object that monitors the performance of
@@ -128,14 +128,14 @@ public final class SimulationPerformance {
 	 *            If the simulation uses a SCC optimization
 	 */
 	public SimulationPerformance(final ESimulationType simType, final boolean isUsingSCCs) {
-		m_SimType = simType;
-		m_TimeMeasures = new LinkedHashMap<>();
-		m_TimeMeasureStartTimes = new LinkedHashMap<>();
-		m_CountingMeasures = new LinkedHashMap<>();
-		m_IsUsingSCCs = isUsingSCCs;
-		m_TimedOut = false;
-		m_OutOfMemory = false;
-		m_Name = "";
+		mSimType = simType;
+		mTimeMeasures = new LinkedHashMap<>();
+		mTimeMeasureStartTimes = new LinkedHashMap<>();
+		mCountingMeasures = new LinkedHashMap<>();
+		mIsUsingSCCs = isUsingSCCs;
+		mTimedOut = false;
+		mOutOfMemory = false;
+		mName = "";
 	}
 
 	/**
@@ -177,10 +177,10 @@ public final class SimulationPerformance {
 	 *            Duration to add
 	 */
 	public void addTimeMeasureValue(final ETimeMeasure type, final long duration) {
-		if (!m_TimeMeasures.containsKey(type)) {
-			m_TimeMeasures.put(type, new LinkedList<>());
+		if (!mTimeMeasures.containsKey(type)) {
+			mTimeMeasures.put(type, new LinkedList<>());
 		}
-		m_TimeMeasures.get(type).add(duration);
+		mTimeMeasures.get(type).add(duration);
 	}
 
 	/**
@@ -193,10 +193,10 @@ public final class SimulationPerformance {
 	 *         {@link #NO_COUNTING_RESULT}.
 	 */
 	public int getCountingMeasureResult(final ECountingMeasure type) {
-		if (!m_CountingMeasures.containsKey(type)) {
+		if (!mCountingMeasures.containsKey(type)) {
 			return NO_COUNTING_RESULT;
 		}
-		return m_CountingMeasures.get(type);
+		return mCountingMeasures.get(type);
 	}
 
 	/**
@@ -205,7 +205,7 @@ public final class SimulationPerformance {
 	 * @return The counting measures.
 	 */
 	public LinkedHashMap<ECountingMeasure, Integer> getCountingMeasures() {
-		return m_CountingMeasures;
+		return mCountingMeasures;
 	}
 
 	/**
@@ -214,7 +214,7 @@ public final class SimulationPerformance {
 	 * @return The name of the object.
 	 */
 	public String getName() {
-		return m_Name;
+		return mName;
 	}
 
 	/**
@@ -223,7 +223,7 @@ public final class SimulationPerformance {
 	 * @return The type of the simulation monitored.
 	 */
 	public ESimulationType getSimType() {
-		return m_SimType;
+		return mSimType;
 	}
 
 	/**
@@ -238,7 +238,7 @@ public final class SimulationPerformance {
 	 * @return The time measure result to get
 	 */
 	public long getTimeMeasureResult(final ETimeMeasure type, final EMultipleDataOption option) {
-		List<Long> measureList = m_TimeMeasures.get(type);
+		List<Long> measureList = mTimeMeasures.get(type);
 		if (measureList == null || measureList.isEmpty()) {
 			return NO_TIME_RESULT;
 		}
@@ -278,7 +278,7 @@ public final class SimulationPerformance {
 	 * @return All results of a given time measure.
 	 */
 	public List<Long> getTimeMeasureResults(final ETimeMeasure type) {
-		return m_TimeMeasures.get(type);
+		return mTimeMeasures.get(type);
 	}
 
 	/**
@@ -287,7 +287,7 @@ public final class SimulationPerformance {
 	 * @return The time measures.
 	 */
 	public LinkedHashMap<ETimeMeasure, List<Long>> getTimeMeasures() {
-		return m_TimeMeasures;
+		return mTimeMeasures;
 	}
 
 	/**
@@ -298,7 +298,7 @@ public final class SimulationPerformance {
 	 *         timed out.
 	 */
 	public boolean hasTimedOut() {
-		return m_TimedOut;
+		return mTimedOut;
 	}
 
 	/**
@@ -309,11 +309,11 @@ public final class SimulationPerformance {
 	 *            Type of the counting measure to increase
 	 */
 	public void increaseCountingMeasure(final ECountingMeasure type) {
-		if (!m_CountingMeasures.containsKey(type)) {
-			m_CountingMeasures.put(type, 1);
+		if (!mCountingMeasures.containsKey(type)) {
+			mCountingMeasures.put(type, 1);
 		} else {
-			int counter = m_CountingMeasures.get(type);
-			m_CountingMeasures.put(type, counter + 1);
+			int counter = mCountingMeasures.get(type);
+			mCountingMeasures.put(type, counter + 1);
 		}
 	}
 
@@ -325,7 +325,7 @@ public final class SimulationPerformance {
 	 *         throen an out of memory error.
 	 */
 	public boolean isOutOfMemory() {
-		return m_OutOfMemory;
+		return mOutOfMemory;
 	}
 
 	/**
@@ -334,7 +334,7 @@ public final class SimulationPerformance {
 	 * @return If the monitored simulation uses a SCC simulation.
 	 */
 	public boolean isUsingSCCs() {
-		return m_IsUsingSCCs;
+		return mIsUsingSCCs;
 	}
 
 	/**
@@ -342,7 +342,7 @@ public final class SimulationPerformance {
 	 * simulation has thrown an out of memory error.
 	 */
 	public void outOfMemory() {
-		m_OutOfMemory = true;
+		mOutOfMemory = true;
 	}
 
 	/**
@@ -355,7 +355,7 @@ public final class SimulationPerformance {
 	 */
 	public void setCountingMeasure(final ECountingMeasure type, final int counter) {
 		if (counter != 0) {
-			m_CountingMeasures.put(type, counter);
+			mCountingMeasures.put(type, counter);
 		}
 	}
 
@@ -366,7 +366,7 @@ public final class SimulationPerformance {
 	 *            The name to set
 	 */
 	public void setName(final String name) {
-		m_Name = name;
+		mName = name;
 	}
 
 	/**
@@ -377,7 +377,7 @@ public final class SimulationPerformance {
 	 */
 	public void startTimeMeasure(final ETimeMeasure type) {
 		long startTime = System.currentTimeMillis();
-		m_TimeMeasureStartTimes.put(type, startTime);
+		mTimeMeasureStartTimes.put(type, startTime);
 	}
 
 	/**
@@ -390,8 +390,8 @@ public final class SimulationPerformance {
 	 */
 	public long stopTimeMeasure(final ETimeMeasure type) {
 		long endTime = System.currentTimeMillis();
-		long startTime = m_TimeMeasureStartTimes.get(type);
-		if (!m_TimeMeasureStartTimes.containsKey(type)) {
+		long startTime = mTimeMeasureStartTimes.get(type);
+		if (!mTimeMeasureStartTimes.containsKey(type)) {
 			startTime = 0;
 		}
 		long duration = endTime - startTime;
@@ -404,7 +404,7 @@ public final class SimulationPerformance {
 	 * simulation timed out.
 	 */
 	public void timeOut() {
-		m_TimedOut = true;
+		mTimedOut = true;
 	}
 
 	/**
@@ -416,10 +416,10 @@ public final class SimulationPerformance {
 	 *            Duration to save
 	 */
 	private void saveTimeMeasureResult(final ETimeMeasure type, final long duration) {
-		List<Long> measureList = m_TimeMeasures.get(type);
+		List<Long> measureList = mTimeMeasures.get(type);
 		if (measureList == null) {
 			measureList = new LinkedList<Long>();
-			m_TimeMeasures.put(type, measureList);
+			mTimeMeasures.put(type, measureList);
 		}
 		measureList.add(duration);
 	}

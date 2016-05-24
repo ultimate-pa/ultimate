@@ -53,7 +53,7 @@ public class BDD extends NodeTable {
 	// protected static final int CACHE_SIMPLIFY = 1;
 
 
-	protected int num_vars, last_sat_vars;
+	protected int numvars, last_sat_vars;
 	protected SimpleCache op_cache, relprod_cache, not_cache, ite_cache, quant_cache;
 	protected SimpleCache replace_cache;
 	protected DoubleCache sat_cache;
@@ -105,7 +105,7 @@ public class BDD extends NodeTable {
 		// WONT GROW. BDD => double
 		sat_cache = new DoubleCache("SAT", cache_size / Configuration.bddSatcountDiv);
 
-		num_vars = 0;
+		numvars = 0;
 		last_sat_vars = -1; // not assigned yet
 		varset_last = -1; // invalid
 		varset_vec = Allocator.allocateBooleanArray(24); // 24 is just a default number
@@ -146,14 +146,14 @@ public class BDD extends NodeTable {
 	// ---------------------------------------------------------------
 
 	/** how many BDD variables do we have ?? */
-	public int numberOfVariables() { return num_vars; }
+	public int numberOfVariables() { return numvars; }
 
 	/** create a new BDD variable */
 	public int createVar() {
-		int var = work_stack[work_stack_tos++] = mk(num_vars, 0, 1);
-		int nvar = mk(num_vars, 1, 0);
+		int var = work_stack[work_stack_tos++] = mk(numvars, 0, 1);
+		int nvar = mk(numvars, 1, 0);
 		work_stack_tos--;
-		num_vars++;
+		numvars++;
 
 		saturate(var);
 		saturate(nvar);
@@ -163,25 +163,25 @@ public class BDD extends NodeTable {
 
 
 		// we want to keep the work stack at least so large
-		int need = 6 * num_vars + 1;
+		int need = 6 * numvars + 1;
 		if(work_stack.length < need) {
 			work_stack = Array.resize(work_stack, work_stack_tos, need);
 		}
 
-		if(varset_vec.length < num_vars) {
-			varset_vec = Allocator.allocateBooleanArray(num_vars * 3);
-			sign_vec = Allocator.allocateBooleanArray(num_vars * 3); // same size!
+		if(varset_vec.length < numvars) {
+			varset_vec = Allocator.allocateBooleanArray(numvars * 3);
+			sign_vec = Allocator.allocateBooleanArray(numvars * 3); // same size!
 		}
 
 
-		if(support_buffer.length < num_vars)
-			support_buffer = new boolean[num_vars * 3];
+		if(support_buffer.length < numvars)
+			support_buffer = new boolean[numvars * 3];
 
-		tree_depth_changed(num_vars); // MUST be called
+		tree_depth_changed(numvars); // MUST be called
 
-		// we used to have -1 there, but "num_vars" will make life easier in satCount() etc.
-		setAll(0, num_vars, 0, 0);
-		setAll(1, num_vars, 1, 1);
+		// we used to have -1 there, but "numvars" will make life easier in satCount() etc.
+		setAll(0, numvars, 0, 0);
+		setAll(1, numvars, 1, 1);
 
 		return var;
 	}
@@ -227,7 +227,7 @@ public class BDD extends NodeTable {
 	 * @see #forall
 	 */
 	public final int cube(boolean [] v) {
-		int last = 1, len = Math.min(v.length, num_vars);
+		int last = 1, len = Math.min(v.length, numvars);
 		for(int i = 0; i < len; i++) {
 			int var = len - i - 1;
 			work_stack[work_stack_tos++] = last;
@@ -260,7 +260,7 @@ public class BDD extends NodeTable {
 	 * @see #minterm
 	 */
 	public final int minterm(boolean [] v) {
-		int last = 1, len = Math.min(v.length, num_vars);
+		int last = 1, len = Math.min(v.length, numvars);
 		for(int i = 0; i < len; i++) {
 			int var = len - i - 1;
 			work_stack[work_stack_tos++] = last;
@@ -716,8 +716,8 @@ public class BDD extends NodeTable {
 	private void varset(int bdd) {
 		Test.check(bdd > 1, "BAD varset");
 
-		// for(int i = 0; i < num_vars; i++) varset_vec[i] = false;
-		for(int i = num_vars; i != 0; ) varset_vec[--i] = false;
+		// for(int i = 0; i < numvars; i++) varset_vec[i] = false;
+		for(int i = numvars; i != 0; ) varset_vec[--i] = false;
 
 		while( bdd > 1) {
 			// this assume that BDD variables grow from root. otherwise, varset_last will be incorrect
@@ -730,7 +730,7 @@ public class BDD extends NodeTable {
 	private void varset_signed(int bdd) {
 		Test.check(bdd > 1, "BAD varset");
 
-		for(int i = 0; i < num_vars; i++) varset_vec[i] = false;
+		for(int i = 0; i < numvars; i++) varset_vec[i] = false;
 		while( bdd > 1) {
 			// XXX: this assumes correct order on varset_last, does not apply to Z-BDDs for example!
 			varset_last = getVar(bdd);
@@ -1046,8 +1046,8 @@ public class BDD extends NodeTable {
 	}
 
 	// ----- [ permutaion ] ----------------------
-	private int [] perm_vec;
-	private int perm_last, perm_var, perm_id;
+	private int [] permvec;
+	private int permlast, permvar, permid;
 
 	/**
 	 * create a Permutation vector for a given variable permutation.<br>
@@ -1083,37 +1083,37 @@ public class BDD extends NodeTable {
 	 * @see #createPermutation
 	 */
 	public int replace(int bdd, Permutation perm) {
-		perm_vec = perm.perm;
-		perm_last = perm.last;
-		perm_id   = perm.id;
+		permvec = perm.perm;
+		permlast = perm.last;
+		permid   = perm.id;
 		int ret = replace_rec( bdd );
-		perm_vec = null; // help GC ?
+		permvec = null; // help GC ?
 		return ret;
 	}
 
 	/**
 	 * recusrive part of replace.
-	 * <p> uses the variables perm_vec, perm_id and perm_last and sets perm_var
+	 * <p> uses the variables permvec, permid and permlast and sets permvar
 	 */
 	private final int replace_rec(int bdd) {
-		if(bdd < 2 || getVar(bdd) > perm_last)	return bdd;
+		if(bdd < 2 || getVar(bdd) > permlast)	return bdd;
 
 
-		if(replace_cache.lookup(bdd, perm_id)) return replace_cache.answer;
+		if(replace_cache.lookup(bdd, permid)) return replace_cache.answer;
 		int hash = replace_cache.hash_value;
 
 		int l = work_stack[work_stack_tos++] = replace_rec( getLow(bdd) );
 		int h = work_stack[work_stack_tos++] = replace_rec( getHigh(bdd) );
 
-		perm_var = perm_vec[ getVar(bdd) ];
+		permvar = permvec[ getVar(bdd) ];
 		l = mkAndOrder(l,h);
 
 		work_stack_tos -= 2;
-		replace_cache.insert(hash, bdd, perm_id, l );
+		replace_cache.insert(hash, bdd, permid, l );
 		return l;
 	}
 
-	/** mk but with possible bad order between var and l or h. uses the variable perm_var */
+	/** mk but with possible bad order between var and l or h. uses the variable permvar */
 	private final int mkAndOrder(int l, int h) {
 
 		// XXX: do we need a cache here??
@@ -1121,9 +1121,9 @@ public class BDD extends NodeTable {
 
 		int vl = getVar(l);
 		int vh = getVar(h);
-		if(perm_var < vl && perm_var < vh) return mk(perm_var, l, h);
+		if(permvar < vl && permvar < vh) return mk(permvar, l, h);
 
-		Test.check(perm_var != vl && perm_var != vh, "Replacing to a variable already in the BDD");
+		Test.check(permvar != vl && permvar != vh, "Replacing to a variable already in the BDD");
 
 
 		int x, y, v = vl;
@@ -1249,8 +1249,8 @@ public class BDD extends NodeTable {
 	public double satCount(int bdd) {
 
 		// if the number of variables has changed since the last time, the cache is invalid!
-		if(last_sat_vars != -1 && last_sat_vars != num_vars) sat_cache.invalidate_cache();
-		last_sat_vars = num_vars;
+		if(last_sat_vars != -1 && last_sat_vars != numvars) sat_cache.invalidate_cache();
+		last_sat_vars = numvars;
 
 		return Math.pow(2, getVar(bdd)) * satCount_rec(bdd);
 	}
@@ -1327,7 +1327,7 @@ public class BDD extends NodeTable {
 	 * if buffer is null, a new vector is created otherwise  buffer is used an returned </pre>
 	 */
 	public int [] oneSat(int bdd, int [] buffer) {
-		if(buffer == null) buffer = new int[num_vars];
+		if(buffer == null) buffer = new int[numvars];
 
 		oneSat_buffer = buffer;
 		Array.set(buffer, -1);
@@ -1456,10 +1456,10 @@ public class BDD extends NodeTable {
 	public void printDot(String fil, int bdd) {	BDDPrinter.printDot(fil, bdd, this, nodeNames);	}
 
 	/**  possibly using dont-cares, print satisfying assignment od this BDD */
-	public void printSet(int bdd) {	BDDPrinter.printSet(bdd, num_vars, this, null);	}
+	public void printSet(int bdd) {	BDDPrinter.printSet(bdd, numvars, this, null);	}
 
 	/** print the cubes (true assignment) for the minterms in this BDD */
-	public void printCubes(int bdd) {	BDDPrinter.printSet(bdd, num_vars, this, nodeNames);	}
+	public void printCubes(int bdd) {	BDDPrinter.printSet(bdd, numvars, this, nodeNames);	}
 
 	/**
 	 * Change the default node-naming procedure, for advanced users only!
@@ -1671,7 +1671,7 @@ public class BDD extends NodeTable {
 
 		/*
 		NOT WORKING ANYMORE (new cache structre)
-		// test perm_cache hit first:
+		// test permcache hit first:
 		int hit1 = jdd.replace_cache.getHitRate();
 		jdd.replace( v2v4, perm4); // repeat some operations
 		Test.check(jdd.replace_cache.getHitRate() > hit1, "Replace cache working (?)");

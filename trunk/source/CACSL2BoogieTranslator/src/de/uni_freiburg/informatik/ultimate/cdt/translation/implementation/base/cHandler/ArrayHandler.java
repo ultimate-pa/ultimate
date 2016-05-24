@@ -70,11 +70,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  */
 public class ArrayHandler {
 	
-	private POINTER_CHECKMODE m_checkArrayAccessOffHeap;
+	private POINTER_CHECKMODE mcheckArrayAccessOffHeap;
 
 	public ArrayHandler() {
 		RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		m_checkArrayAccessOffHeap = 
+		mcheckArrayAccessOffHeap = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, POINTER_CHECKMODE.class);
 	}
 
@@ -208,7 +208,7 @@ public class ArrayHandler {
 	private void addArrayBoundsCheckForCurrentIndex(Dispatcher main, 
 			ILocation loc, RValue currentIndex,
 			RValue currentDimension, ExpressionResult exprResult) {
-		if (m_checkArrayAccessOffHeap  == POINTER_CHECKMODE.IGNORE) {
+		if (mcheckArrayAccessOffHeap  == POINTER_CHECKMODE.IGNORE) {
 			// do not check anything
 			return;
 		}
@@ -233,7 +233,7 @@ public class ArrayHandler {
 					currentDimension.getValue(), (CPrimitive) currentDimension.getCType());
 			inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		}
-		switch (m_checkArrayAccessOffHeap) {
+		switch (mcheckArrayAccessOffHeap) {
 		case ASSERTandASSUME:
 			Statement assertStm = new AssertStatement(loc, inRange);
 			Check chk = new Check(Spec.ARRAY_INDEX);

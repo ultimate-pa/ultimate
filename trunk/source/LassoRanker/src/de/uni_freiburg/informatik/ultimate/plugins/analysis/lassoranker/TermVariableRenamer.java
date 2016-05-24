@@ -45,10 +45,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
  * @author Matthias Heizmann
  */
 public class TermVariableRenamer {
-	private final Script m_Script;
+	private final Script mScript;
 	
 	public TermVariableRenamer(Script script) {
-		m_Script = script;
+		mScript = script;
 	}
 	
 	/**
@@ -129,7 +129,7 @@ public class TermVariableRenamer {
 			i++;
 		}
 		try {
-			formula = m_Script.let(vars, newVars, formula);
+			formula = mScript.let(vars, newVars, formula);
 		} catch (SMTLIBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -141,7 +141,7 @@ public class TermVariableRenamer {
 	private TermVariable getNewTermVariable(BoogieVar var, TermVariable tv, String prefix) {
 		TermVariable result = null;
 		try {
-			result =  m_Script.variable(prefix +"_" +var.getIdentifier(), tv.getSort());
+			result =  mScript.variable(prefix +"_" +var.getIdentifier(), tv.getSort());
 		} catch (SMTLIBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

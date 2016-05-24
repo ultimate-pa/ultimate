@@ -123,17 +123,17 @@ public abstract class Dispatcher {
 	protected final IUltimateServiceProvider mServices;
 	
 
-	private final TypeSizes m_TypeSizes;
+	private final TypeSizes mTypeSizes;
 
-	private final TranslationSettings m_TranslationSettings;
+	private final TranslationSettings mTranslationSettings;
 
 	public Dispatcher(CACSL2BoogieBacktranslator backtranslator, IUltimateServiceProvider services, ILogger logger) {
 		this.backtranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
 		mPreferences = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		m_TypeSizes = new TypeSizes(mPreferences);
-		m_TranslationSettings = new TranslationSettings(mPreferences);
+		mTypeSizes = new TypeSizes(mPreferences);
+		mTranslationSettings = new TranslationSettings(mPreferences);
 	}
 
 	/**
@@ -334,23 +334,23 @@ public abstract class Dispatcher {
 	}
 
 	public TypeSizes getTypeSizes() {
-		return m_TypeSizes;
+		return mTypeSizes;
 	}
 	
 	public TranslationSettings getTranslationSettings() {
-		return m_TranslationSettings;
+		return mTranslationSettings;
 	}
 
 	public class TranslationSettings {
-		private final POINTER_CHECKMODE m_DivisionByZero;
+		private final POINTER_CHECKMODE mDivisionByZero;
 
 		public TranslationSettings(RcpPreferenceProvider preferences) {
-			m_DivisionByZero = 
+			mDivisionByZero = 
 					preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO, POINTER_CHECKMODE.class);
 		}
 
 		public POINTER_CHECKMODE getDivisionByZero() {
-			return m_DivisionByZero;
+			return mDivisionByZero;
 		}
 		
 		

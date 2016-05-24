@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition,AutomatonState, AutomatonTransition> {
 	private static final long serialVersionUID = 264254789648279608L;
 	
-	private final String m_Name;
+	private final String mName;
 	
 	public AutomatonState(Object content, boolean isAccepting) {
 		
@@ -53,11 +53,11 @@ public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonS
 			annotations.put("Content", (IAnnotations) content);
 		}
 		
-		m_Name = String.valueOf(content);
+		mName = String.valueOf(content);
 	}
 	
 	public String toString() {
-		return m_Name;
+		return mName;
 	}
 
 	@Override

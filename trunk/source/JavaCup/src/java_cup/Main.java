@@ -116,7 +116,7 @@ public class Main {
   private boolean opt_old_lr_values = true;
 
   /** User option -- should symbols be put in a class or an interface? [CSA] */
-  private boolean sym_interface = false;
+  private boolean syminterface = false;
 
   /**
    * User option -- should generator suppress references to
@@ -130,7 +130,7 @@ public class Main {
   /** Timing data -- when did we start */
   private long start_time = 0;
   /** Timing data -- when did we end preliminaries */
-  private long prelim_end = 0;
+  private long prelimend = 0;
   /** Timing data -- when did we end parsing */
   private long parse_end = 0;
   /** Timing data -- when did we end checking */
@@ -171,7 +171,7 @@ public class Main {
     {
       boolean did_output = false;
 
-      prelim_end = System.currentTimeMillis();
+      prelimend = System.currentTimeMillis();
 
       /* parse spec into internal data structures */
       if (print_progress)
@@ -251,7 +251,7 @@ public class Main {
       System.err.println();
       System.err
 	  .println("Usage: "
-	      + version.program_name
+	      + version.programname
 	      + " [options] [filename]\n"
 	      + "  and expects a specification file on standard input if no filename is given.\n"
 	      + "  Legal options include:\n"
@@ -440,7 +440,7 @@ public class Main {
       /* CSA 12/21/97 */
       else if (option.equals("interface"))
 	{
-	  sym_interface = true;
+	  syminterface = true;
 	  return true;
 	}
       /* CSA 23-Jul-1999 */
@@ -732,7 +732,7 @@ public class Main {
       reduce_check_end = System.currentTimeMillis();
 
       /* if we have more conflicts than we expected issue a message and die */
-      if (grammar.num_conflicts() > expect_conflicts)
+      if (grammar.numconflicts() > expect_conflicts)
 	{
 	  ErrorManager.getManager().emit_error(
 	      "*** More conflicts encountered than expected "
@@ -747,7 +747,7 @@ public class Main {
   /** Call the emit routines necessary to write out the generated parser. */
   private void emit_parser(Grammar grammar)
     {
-      emit.symbols(symbol_class_file, grammar, include_non_terms, sym_interface);
+      emit.symbols(symbol_class_file, grammar, include_non_terms, syminterface);
       emit.parser(parser_class_file, grammar,
 	  suppress_scanner,
 	  opt_lr_values, opt_old_lr_values, opt_java15);
@@ -794,16 +794,16 @@ public class Main {
 	  + plural(ErrorManager.getManager().getWarningCount()));
 
       /* basic stats */
-      System.err.print("  " + grammar.num_terminals() + " terminal"
-	  + plural(grammar.num_terminals()) + ", ");
-      System.err.print(grammar.num_non_terminals() + " non-terminal"
-	  + plural(grammar.num_non_terminals()) + ", and ");
-      System.err.println(grammar.num_productions() + " production"
-	  + plural(grammar.num_productions()) + " declared, ");
+      System.err.print("  " + grammar.numterminals() + " terminal"
+	  + plural(grammar.numterminals()) + ", ");
+      System.err.print(grammar.numnon_terminals() + " non-terminal"
+	  + plural(grammar.numnon_terminals()) + ", and ");
+      System.err.println(grammar.numproductions() + " production"
+	  + plural(grammar.numproductions()) + " declared, ");
       System.err.print("  producing " + grammar.lalr_states().size()
 	  + " unique parse states,");
-      System.err.println(" " + grammar.num_actions() + " unique action"
-	  + plural(grammar.num_actions()) + ". ");
+      System.err.println(" " + grammar.numactions() + " unique action"
+	  + plural(grammar.numactions()) + ". ");
 
       /* unused symbols */
       System.err.println("  " + emit.unused_term + " terminal"
@@ -816,8 +816,8 @@ public class Main {
 	  + plural(emit.not_reduced) + " never reduced.");
 
       /* conflicts */
-      System.err.println("  " + grammar.num_conflicts() + " conflict"
-	  + plural(grammar.num_conflicts()) + " detected" + " ("
+      System.err.println("  " + grammar.numconflicts() + " conflict"
+	  + plural(grammar.numconflicts()) + " detected" + " ("
 	  + expect_conflicts + " expected).");
 
       /* code location */
@@ -847,9 +847,9 @@ public class Main {
       System.err.println("    Total time       "
 	  + timestr(final_time - start_time, total_time));
       System.err.println("      Startup        "
-	  + timestr(prelim_end - start_time, total_time));
+	  + timestr(prelimend - start_time, total_time));
       System.err.println("      Parse          "
-	  + timestr(parse_end - prelim_end, total_time));
+	  + timestr(parse_end - prelimend, total_time));
       if (check_end != 0)
 	System.err.println("      Checking       "
 	    + timestr(check_end - parse_end, total_time));

@@ -63,8 +63,8 @@ import petruchio.interfaces.petrinet.Transition;
 
 public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	
-	private final AutomataLibraryServices m_Services;
-	private final ILogger m_Logger;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
 	
 	@Override
 	public String operationName() {
@@ -74,7 +74,7 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	@Override
 	public String startMessage() {
 		return "Start emptinessPetruchio. " +
-				"Operand " + m_NetJulian.sizeInformation();
+				"Operand " + mNetJulian.sizeInformation();
 	}
 	
 	@Override
@@ -84,21 +84,21 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 
 
 
-	final PetruchioWrapper<S, C> m_Petruchio;
+	final PetruchioWrapper<S, C> mPetruchio;
 
-	final PetriNetJulian<S,C> m_NetJulian;
+	final PetriNetJulian<S,C> mNetJulian;
 
-	NestedRun<S,C> m_AcceptedRun = null;
+	NestedRun<S,C> mAcceptedRun = null;
 	
 	public EmptinessPetruchio(AutomataLibraryServices services, 
 			PetriNetJulian<S,C> net) {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		m_NetJulian = net;
-		m_Logger.info(startMessage());
-		m_Petruchio = new PetruchioWrapper<S,C>(m_Services, net);
-		m_AcceptedRun = constructAcceptingRun();
-		m_Logger.info(exitMessage());
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mNetJulian = net;
+		mLogger.info(startMessage());
+		mPetruchio = new PetruchioWrapper<S,C>(mServices, net);
+		mAcceptedRun = constructAcceptingRun();
+		mLogger.info(exitMessage());
 	}
 	
 	
@@ -111,14 +111,14 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	 * Here each marking will be null instead. 
 	 */
 	private NestedRun<S,C> constructAcceptingRun() {
-		m_Logger.debug("Net has "+m_NetJulian.getPlaces().size()+ " Places");
-		m_Logger.debug("Net has "+m_NetJulian.getTransitions().size()+ " Transitions");
+		mLogger.debug("Net has "+mNetJulian.getPlaces().size()+ " Places");
+		mLogger.debug("Net has "+mNetJulian.getTransitions().size()+ " Transitions");
 		
 		// construct single invariant p_1 + ... + p_n where p_i \in places
 		Collection<Map<Place, Integer>> invariants = new ArrayList<Map<Place, Integer>>(1);
 		Map<Place, Integer> theInvariant = 
-			new IdentityHashMap<Place, Integer>(m_Petruchio.getNet().getPlaces().size());
-		for(Place pPetruchio : m_Petruchio.getNet().getPlaces()) {
+			new IdentityHashMap<Place, Integer>(mPetruchio.getNet().getPlaces().size());
+		for(Place pPetruchio : mPetruchio.getNet().getPlaces()) {
 		   theInvariant.put(pPetruchio, Integer.valueOf(1));
 		}
 		invariants.add(theInvariant);
@@ -126,19 +126,19 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 		// construct the following target:
 		// at least one of { {p_j} | p_j \in Paccepting } is coverable
 		Collection<Map<Place, Integer>> targets = new ArrayList<Map<Place, Integer>>();
-		for(de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> pAcceptingJulian : m_NetJulian.getAcceptingPlaces()) {
+		for(de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S,C> pAcceptingJulian : mNetJulian.getAcceptingPlaces()) {
 			// construct single target pAccepting >= 1
-			Place pAcceptingPetruchio = m_Petruchio.getpJulian2pPetruchio().get(pAcceptingJulian);
+			Place pAcceptingPetruchio = mPetruchio.getpJulian2pPetruchio().get(pAcceptingJulian);
 			Map<Place, Integer> placeWithOneToken = new IdentityHashMap<Place, Integer>();
 			placeWithOneToken.put(pAcceptingPetruchio,1);
 			targets.add(placeWithOneToken);
 		}
 		
-		m_Logger.debug("Check coverability of " + m_NetJulian.getAcceptingPlaces().toString());
-		m_Logger.warn(targets);
+		mLogger.debug("Check coverability of " + mNetJulian.getAcceptingPlaces().toString());
+		mLogger.warn(targets);
 		SimpleList<Transition> tracePetruchio = 
-			Backward.checkCoverability(m_Petruchio.getNet(), targets);//, invariants);
-		m_Logger.debug("done");
+			Backward.checkCoverability(mPetruchio.getNet(), targets);//, invariants);
+		mLogger.debug("done");
 		
 		if (tracePetruchio == null) {
 			return null;
@@ -167,7 +167,7 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 			return result;
 		}
 		for(Transition tPetruchio : tracePetruchio) {
-			S symbol = m_Petruchio.gettPetruchio2tJulian().get(tPetruchio).getSymbol();
+			S symbol = mPetruchio.gettPetruchio2tJulian().get(tPetruchio).getSymbol();
 			NestedRun<S,C> oneStepSubrun = 
 				new NestedRun<S,C>(null, symbol,NestedWord.INTERNAL_POSITION, null);
 			result = result.concatenate(oneStepSubrun);
@@ -177,22 +177,22 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	
 	
 	public NestedRun<S,C> getResult() throws AutomataLibraryException {
-		return m_AcceptedRun;
+		return mAcceptedRun;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
-		m_Logger.info("Testing correctness of emptinessCheck");
+		mLogger.info("Testing correctness of emptinessCheck");
 
 		boolean correct = true;
-		if (m_AcceptedRun == null) {
-			NestedRun<S, C> automataRun = (new IsEmpty<S, C>(m_Services, (new PetriNet2FiniteAutomaton<S, C>(m_Services, m_NetJulian)).getResult())).getNestedRun();
+		if (mAcceptedRun == null) {
+			NestedRun<S, C> automataRun = (new IsEmpty<S, C>(mServices, (new PetriNet2FiniteAutomaton<S, C>(mServices, mNetJulian)).getResult())).getNestedRun();
 			correct = (automataRun == null);
 		} else {
-			correct =  m_NetJulian.accepts(m_AcceptedRun.getWord());
+			correct =  mNetJulian.accepts(mAcceptedRun.getWord());
 		}
-		m_Logger.info("Finished testing correctness of emptinessCheck");
+		mLogger.info("Finished testing correctness of emptinessCheck");
 		return correct;
 	}
 

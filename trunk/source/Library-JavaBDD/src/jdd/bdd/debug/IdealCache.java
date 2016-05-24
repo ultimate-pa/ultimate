@@ -52,8 +52,8 @@ import java.util.*;
 	public int answer, hash_value;
 	private Hashtable ht;
 	private IdealElement query;	// a lightweight object
-	private int num_clears;
-	private long num_access;
+	private int numclears;
+	private long numaccess;
 	private long hit, miss; // cache hits and misses, hit/acces-count since last grow
 
 	/**
@@ -67,10 +67,10 @@ import java.util.*;
 		this.query = new IdealElement(0,0,0,-1);
 
 
-		num_access = 0;
+		numaccess = 0;
 		hit = miss = 0;
 
-		num_clears = 0;
+		numclears = 0;
 		hash_value = -1; // never valid
 	}
 
@@ -83,7 +83,7 @@ import java.util.*;
 	/** just wipe the cache */
 	public void invalidate_cache() {
 		ht.clear();
-		num_clears++;
+		numclears++;
 	}
 
 	public void free_or_grow() {		invalidate_cache();	}
@@ -121,7 +121,7 @@ import java.util.*;
 	}
 
 	public final boolean lookup(int a, int b, int c) {
-		num_access++;
+		numaccess++;
 		query.set(a,b,c);
 		Object obj = ht.get(query);
 		if(obj == null) {
@@ -142,13 +142,13 @@ import java.util.*;
 	}
 
 	public double computeHitRate() { // hit-rate since the last clear
-		if(num_access == 0) return 0;
-		return ((int)((hit * 10000) / ( num_access ))) / 100.0;
+		if(numaccess == 0) return 0;
+		return ((int)((hit * 10000) / ( numaccess ))) / 100.0;
 	}
 
-	public long getAccessCount() {		return num_access; }
+	public long getAccessCount() {		return numaccess; }
 	public int getCacheSize() { return getSize(); }
-	public int getNumberOfClears() {		return num_clears;	}
+	public int getNumberOfClears() {		return numclears;	}
 	public int getNumberOfPartialClears() {		return 0;	}
 	public int getNumberOfGrows() { return 0;			}
 
@@ -158,12 +158,12 @@ import java.util.*;
 	// --------------------------------------------------------------
 
 	public void showStats() {
-		if(num_access != 0) {
+		if(numaccess != 0) {
 			JDDConsole.out.print(getName() + "-cache ");
 			JDDConsole.out.print("ld=" + computeLoadFactor() + "% ");
 			JDDConsole.out.print("sz="); Digits.printNumber( ht.size() );
-			JDDConsole.out.print("accs="); Digits.printNumber(num_access);
-			JDDConsole.out.print("clrs=" + num_clears+ "/0 ");
+			JDDConsole.out.print("accs="); Digits.printNumber(numaccess);
+			JDDConsole.out.print("clrs=" + numclears+ "/0 ");
 			JDDConsole.out.print("hitr=" + computeHitRate() + "% ");
 			JDDConsole.out.println();
 		}

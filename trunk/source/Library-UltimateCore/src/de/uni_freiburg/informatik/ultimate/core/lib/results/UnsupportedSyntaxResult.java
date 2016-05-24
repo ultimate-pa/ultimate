@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 public class UnsupportedSyntaxResult<ELEM extends IElement> 
 						extends AbstractResult implements IResultWithLocation {
 	
-	private final ELEM m_Position;
-	protected final IBacktranslationService m_TranslatorSequence;
-	private final ILocation m_Location;
-	private String m_LongDescription;
+	private final ELEM mPosition;
+	protected final IBacktranslationService mTranslatorSequence;
+	private final ILocation mLocation;
+	private String mLongDescription;
 
 	/**
 	 * @param location
@@ -54,19 +54,19 @@ public class UnsupportedSyntaxResult<ELEM extends IElement>
 	public UnsupportedSyntaxResult(ELEM position, String plugin, 
 			IBacktranslationService translatorSequence, String longDescription) {
 		super(plugin);
-		m_Position = position;
-		m_TranslatorSequence = translatorSequence;
-		m_Location = null;
-		m_LongDescription = longDescription;
+		mPosition = position;
+		mTranslatorSequence = translatorSequence;
+		mLocation = null;
+		mLongDescription = longDescription;
 	}
 	
 	public UnsupportedSyntaxResult(String plugin, ILocation location,
 			String longDescription) {
 		super(plugin);
-		m_Position = null;
-		m_TranslatorSequence = null;
-		m_Location = location;
-		m_LongDescription = longDescription;
+		mPosition = null;
+		mTranslatorSequence = null;
+		mLocation = location;
+		mLongDescription = longDescription;
 	}
 
 	@Override
@@ -76,21 +76,21 @@ public class UnsupportedSyntaxResult<ELEM extends IElement>
 
 	@Override
 	public String getLongDescription() {
-		return m_LongDescription;
+		return mLongDescription;
 	}
 	
 	public final ILocation getLocation() {
-		assert ((m_Position == null) ^ (m_Location == null)) : 
+		assert ((mPosition == null) ^ (mLocation == null)) : 
 			"exactly one has to be non-null";
-		if (m_Position != null) {
-			return m_Position.getPayload().getLocation();
+		if (mPosition != null) {
+			return mPosition.getPayload().getLocation();
 		} else {
-			return m_Location;
+			return mLocation;
 		}
 	}
 
 	public final ELEM getElement() {
-		return m_Position;
+		return mPosition;
 	}
 
 	

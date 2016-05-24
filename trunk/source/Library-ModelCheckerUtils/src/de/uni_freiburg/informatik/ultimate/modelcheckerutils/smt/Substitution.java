@@ -46,23 +46,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  *
  */
 public class Substitution {
-	private final Map<TermVariable,Term> m_Mapping;
-	private final Script m_Script;
+	private final Map<TermVariable,Term> mMapping;
+	private final Script mScript;
 	
 	private final static boolean USE_SAFE_SUBSTITUTION = true;
 
 	public Substitution(Map<TermVariable, Term> mapping, Script script) {
-		m_Mapping = mapping;
+		mMapping = mapping;
 		assert SmtUtils.neitherKeyNorValueIsNull(mapping) : "null in substitution";
-		m_Script = script;
+		mScript = script;
 	}
 	
 	public Term transform(Term term) {
 		Term result = withLet(term);
 		if (USE_SAFE_SUBSTITUTION) {
 			Term resultSS = withSS(term);
-			assert (Util.checkSat(m_Script, 
-					m_Script.term("distinct", result, resultSS)) != LBool.SAT) : 
+			assert (Util.checkSat(mScript, 
+					mScript.term("distinct", result, resultSS)) != LBool.SAT) : 
 						"Bug in safe substitution.";
 			result = resultSS;
 		}
@@ -70,27 +70,27 @@ public class Substitution {
 	}
 	
 	private Term withLet(Term term) {
-		TermVariable[] vars = new TermVariable[m_Mapping.size()];
-		Term[] values = new Term[m_Mapping.size()];
+		TermVariable[] vars = new TermVariable[mMapping.size()];
+		Term[] values = new Term[mMapping.size()];
 		int i=0;
-		for (Entry<TermVariable, Term> entry : m_Mapping.entrySet()) {
+		for (Entry<TermVariable, Term> entry : mMapping.entrySet()) {
 			vars[i] = entry.getKey();
 			assert vars[i] != null : "substitution of null";
 			values[i] = entry.getValue(); 
 			assert values[i] != null : "substitution by null";
 			i++;
 		}
-		Term result = m_Script.let(vars, values, term);
+		Term result = mScript.let(vars, values, term);
 		result = new FormulaUnLet().unlet(result);
 		return result;
 	}
 	
 	private Term withSS(Term term) {
 		Map<Term, Term> mapping = new HashMap<Term, Term>();
-		for (Entry<TermVariable, Term> entry : m_Mapping.entrySet()) {
+		for (Entry<TermVariable, Term> entry : mMapping.entrySet()) {
 			mapping.put(entry.getKey(), entry.getValue());
 		}
-		Term result = (new SafeSubstitution(m_Script, mapping)).transform(term);
+		Term result = (new SafeSubstitution(mScript, mapping)).transform(term);
 		return result;
 	}
 
