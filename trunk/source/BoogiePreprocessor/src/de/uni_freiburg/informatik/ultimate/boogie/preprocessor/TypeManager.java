@@ -72,17 +72,17 @@ public class TypeManager {
 
 	public BoogieType getPrimitiveType(String typeName) {
 		if (typeName.equals("int"))
-			return BoogieType.intType;
+			return BoogieType.TYPE_INT;
 		else if (typeName == "real")
-			return BoogieType.realType;
+			return BoogieType.TYPE_REAL;
 		else if (typeName == "bool")
-			return BoogieType.boolType;
+			return BoogieType.TYPE_BOOL;
 		else if (typeName.startsWith("bv")) {
 			int length = Integer.parseInt(typeName.substring(2));
 			return BoogieType.createBitvectorType(length);
 		} else {
 			mLogger.fatal("getPrimitiveType called with unknown type " + typeName + "!");
-			return BoogieType.errorType;
+			return BoogieType.TYPE_ERROR;
 		}
 	}
 
@@ -98,7 +98,7 @@ public class TypeManager {
 			if (placeholderType != null) {
 				if (numParam != 0) {
 					mLogger.error("Bounded type " + name + " used with arguments.");
-					return BoogieType.errorType;
+					return BoogieType.TYPE_ERROR;
 				}
 				return placeholderType;
 			}
@@ -109,17 +109,17 @@ public class TypeManager {
 			TypeDeclaration decl = declarations.get(name);
 			if (decl == null) {
 				mLogger.error("Type " + name + " is never defined.");
-				return BoogieType.errorType;
+				return BoogieType.TYPE_ERROR;
 			}
 			resolve(decl);
 		}
 		TypeConstructor tc = typeConstructors.get(name);
 		if (tc == null) /* cyclic definition, already reported */
-			return BoogieType.errorType;
+			return BoogieType.TYPE_ERROR;
 
 		if (tc.getParamCount() != numParam) {
 			mLogger.error("Type " + name + " used with wrong number of arguments.");
-			return BoogieType.errorType;
+			return BoogieType.TYPE_ERROR;
 		}
 		BoogieType[] typeArgs = new BoogieType[numParam];
 		for (int i : tc.getParamOrder()) {
@@ -180,7 +180,7 @@ public class TypeManager {
 			boogieType = resolveStructType((StructType) type, markUsed);
 		else {
 			mLogger.fatal("Unknown ASTType " + type);
-			boogieType = BoogieType.errorType;
+			boogieType = BoogieType.TYPE_ERROR;
 		}
 		type.setBoogieType(boogieType);
 		return boogieType;

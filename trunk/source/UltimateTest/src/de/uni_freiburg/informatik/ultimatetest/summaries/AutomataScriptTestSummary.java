@@ -93,7 +93,7 @@ public class AutomataScriptTestSummary implements ITestSummary {
 			throw new AssertionError("expected single benchmark result");
 		} else {
 			Benchmark benchmark = benchmarkSingleton.iterator().next();
-			double time = benchmark.getElapsedTime(de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator.s_PLUGIN_NAME, TimeUnit.SECONDS);
+			double time = benchmark.getElapsedTime(de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator.PLUGIN_NAME, TimeUnit.SECONDS);
 			mResults.add(new SummaryEntry(threeValuedResult, message, time, ultimateRunDefinition.getInput()[0]));
 		}
 		

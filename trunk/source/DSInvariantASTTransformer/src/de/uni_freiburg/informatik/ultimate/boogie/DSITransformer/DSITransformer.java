@@ -48,9 +48,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 public class DSITransformer implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = "DSITransformer";
-	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-
 	private DSITransformerObserver mObserver;
 	private ModelType mInputType;
 	private IUltimateServiceProvider mServices;
@@ -67,12 +64,12 @@ public class DSITransformer implements IGenerator {
 	}
 
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return "DSITransformer";
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		mObserver = new DSITransformerObserver(mServices.getLoggingService().getLogger(s_PLUGIN_ID));
+		mObserver = new DSITransformerObserver(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		return Collections.singletonList((IObserver) mObserver);
 	}
 
@@ -85,7 +82,7 @@ public class DSITransformer implements IGenerator {
 	}
 
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	/**

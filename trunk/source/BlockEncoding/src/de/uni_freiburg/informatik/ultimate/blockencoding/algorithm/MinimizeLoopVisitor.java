@@ -108,12 +108,12 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 				reVisitNodes.addAll(Arrays.asList(super
 						.applyMinimizationRules(outgoing.getTarget())));
 			}
-			s_Logger.debug("Sequential Composition of one incoming with multiple outgoing edges for: "
+			mLogger.debug("Sequential Composition of one incoming with multiple outgoing edges for: "
 					+ node);
 			ArrayList<MinimizedNode> checkForParallelMerge = new ArrayList<MinimizedNode>();
 
 			if (checkForSequentialMerge(node)) {
-				s_Logger.debug("Merging Sequential Node : " + node);
+				mLogger.debug("Merging Sequential Node : " + node);
 				checkForParallelMerge.addAll(mergeSequential(incoming,
 						node.getMinimalOutgoingEdgeLevel()));
 				reVisitNodes.addAll(checkForParallelMerge);
@@ -170,8 +170,8 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 			}
 		}
 		incoming.getSource().addNewOutgoingEdgeLevel(outgoingList, null);
-		visitedEdges.add(incoming);
-		visitedEdges.addAll(outgoing);
+		mVisitedEdges.add(incoming);
+		mVisitedEdges.addAll(outgoing);
 		notReachableNodes.add(incoming.getTarget());
 		return reVisitNodes;
 
@@ -196,11 +196,11 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 			for (IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
 				// We do not include self-loops
 				if (edge.getTarget() == node) {
-					s_Logger.info("Found a self-loop, should not happen");
+					mLogger.info("Found a self-loop, should not happen");
 					return false;
 				}
 				if (targetNodes.contains(edge.getTarget())) {
-					s_Logger.info("Found Parallel Nodes, should not happen");
+					mLogger.info("Found Parallel Nodes, should not happen");
 					return false;
 				}
 				targetNodes.add(edge.getTarget());

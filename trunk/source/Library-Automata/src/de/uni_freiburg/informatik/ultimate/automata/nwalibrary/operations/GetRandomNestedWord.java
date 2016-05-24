@@ -54,7 +54,7 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	private final List<LETTER> mCallAlphabet;
 	private final List<LETTER> mReturnAlphabet;
 	
-	private final static int s_TemporaryPendingCall = -7;
+	private final static int TEMPORARY_PENDING_CALL = -7;
 	
 	private final NestedWord<LETTER> mResult;
 	
@@ -139,7 +139,7 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 			double inORcaORre = mRandom.nextDouble();
 			if (inORcaORre < probabilityCall) {
 				word[i] = getRandomLetter(mCallAlphabet);
-				nestingRelation[i] = s_TemporaryPendingCall;
+				nestingRelation[i] = TEMPORARY_PENDING_CALL;
 				callPositionStack.push(i);
 				pendingCalls++;
 			} else if (pendingCalls > 0 && inORcaORre < probabilityCall + probabilityReturn ) {
@@ -152,7 +152,7 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 				if (mInternalAlphabet.isEmpty()) {
 					// if internal alphabet is empty we use a call instead
 					word[i] = getRandomLetter(mCallAlphabet);
-					nestingRelation[i] = s_TemporaryPendingCall;
+					nestingRelation[i] = TEMPORARY_PENDING_CALL;
 					callPositionStack.push(i);
 					pendingCalls++;
 				} else {

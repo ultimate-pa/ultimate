@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
@@ -94,7 +93,7 @@ public class MinModelConverter {
 		RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
 		ModelUtils.copyAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
-		boolean simplify = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		boolean simplify = (new RcpPreferenceProvider((String) Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 		mConvertVisitor = new ConversionVisitor(mBoogie2SMT, root, getRatingHeuristic(), mServices, simplify);
 		for (RCFGEdge edge : root.getOutgoingEdges()) {

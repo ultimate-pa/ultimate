@@ -193,8 +193,8 @@ public class FunctionInliner extends BoogieTransformer
 						Expression[] funcParams = params.toArray(new Expression[params.size()]); 
 						Expression funcApp = new FunctionApplication(fdecl.getLocation(), fdecl.getOutParam().getType().getBoogieType(), fdecl.getIdentifier(), funcParams);
 						Trigger funcTrigger = new Trigger(fdecl.getLocation(), new Expression[] {funcApp} );
-						Expression funcEq = new BinaryExpression(fdecl.getLocation(), PrimitiveType.boolType, BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
-						Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), PrimitiveType.boolType, true, fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
+						Expression funcEq = new BinaryExpression(fdecl.getLocation(), PrimitiveType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
+						Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), PrimitiveType.TYPE_BOOL, true, fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
 						Axiom fdeclAxiom = new Axiom(fdecl.getLocation(),  
 								                     new Attribute[0], funcDecl);
 						newDeclarations.add(new FunctionDeclaration(fdecl.getLocation(),  

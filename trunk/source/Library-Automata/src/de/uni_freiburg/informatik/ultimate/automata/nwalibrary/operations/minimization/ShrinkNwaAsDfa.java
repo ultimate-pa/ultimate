@@ -114,19 +114,19 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		super(services, stateFactory, "shrinkNwaAsDfa", operand);
 		
 		mdoubleDecker = considerNeutralStates
-				? (IDoubleDeckerAutomaton<LETTER, STATE>) moperand
+				? (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand
 				: null;
 		mstateFactory = (stateFactory == null)
-				? moperand.getStateFactory()
+				? mOperand.getStateFactory()
 				: stateFactory;
 		mpartition = new Partition();
 		mids = 0;
 		mworkList = new WorkList();
 		
 		// must be the last part of the constructor
-		s_logger.info(startMessage());
+		mLogger.info(startMessage());
 		minimize(equivalenceClasses, includeMapping);
-		s_logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	// --- [start] main methods --- //
@@ -186,7 +186,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			}
 		}
 		
-		s_logger.info("Finished analysis, constructing result of size " +
+		mLogger.info("Finished analysis, constructing result of size " +
 				mpartition.mequivalenceClasses.size());
 				
 		// automaton construction
@@ -205,8 +205,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final HashSet<STATE> finals = new HashSet<STATE>();
 			final HashSet<STATE> nonfinals = new HashSet<STATE>();
 			
-			for (STATE state : moperand.getStates()) {
-				if (moperand.isFinal(state)) {
+			for (STATE state : mOperand.getStates()) {
+				if (mOperand.isFinal(state)) {
 					finals.add(state);
 				} else {
 					nonfinals.add(state);
@@ -423,7 +423,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		@Override
 		public void nextState(final STATE state) {
-			miterator = moperand.internalPredecessors(state).iterator();
+			miterator = mOperand.internalPredecessors(state).iterator();
 		}
 		
 		@Override
@@ -457,7 +457,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		@Override
 		public void nextState(final STATE state) {
-			miterator = moperand.callPredecessors(state).iterator();
+			miterator = mOperand.callPredecessors(state).iterator();
 		}
 		
 		@Override
@@ -490,7 +490,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		@Override
 		public void nextState(final STATE state) {
-			miterator = moperand.returnPredecessors(state).iterator();
+			miterator = mOperand.returnPredecessors(state).iterator();
 		}
 		
 		@Override
@@ -524,9 +524,9 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final Iterator<STATE> it = equivalenceClass.iterator();
 			assert (it
 					.hasNext()) : "Empty equivalence classes should be avoided.";
-			final boolean isFinal = moperand.isFinal(it.next());
+			final boolean isFinal = mOperand.isFinal(it.next());
 			while (it.hasNext()) {
-				if (isFinal != moperand.isFinal(it.next())) {
+				if (isFinal != mOperand.isFinal(it.next())) {
 					return false;
 				}
 			}
@@ -561,7 +561,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		public Partition() {
 			mequivalenceClasses = new LinkedList<EquivalenceClass>();
 			mstate2EquivalenceClass = new HashMap<STATE, EquivalenceClass>(
-					computeHashSetCapacity(moperand.size()));
+					computeHashSetCapacity(mOperand.size()));
 		}
 		
 		/**
@@ -876,7 +876,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		public AWorkList() {
 			mqueue = new PriorityQueue<EquivalenceClass>(
-					Math.max(moperand.size(), 1),
+					Math.max(mOperand.size(), 1),
 					new Comparator<EquivalenceClass>() {
 						@Override
 						public int compare(EquivalenceClass ec1,
@@ -979,7 +979,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		 * @param includeMapping true iff mapping old to new state is needed
 		 */
 		public ShrinkNwaResult(final boolean includeMapping) {
-			moldNwa = moperand;
+			moldNwa = mOperand;
 			mfinals = new HashSet<STATE>();
 			mnonfinals = new HashSet<STATE>();
 			minitialStates = new HashSet<STATE>();
@@ -1029,7 +1029,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			}
 			
 			// preprocessing: ignore call and return loops for finite automata
-			final boolean isNwa = (moperand.getCallAlphabet().size() > 0);
+			final boolean isNwa = (mOperand.getCallAlphabet().size() > 0);
 			
 			// transitions
 			for (final EquivalenceClass ec : mpartition.mequivalenceClasses) {

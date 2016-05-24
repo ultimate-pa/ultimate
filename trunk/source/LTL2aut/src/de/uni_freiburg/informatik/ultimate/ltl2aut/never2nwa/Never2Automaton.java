@@ -307,7 +307,7 @@ public class Never2Automaton {
 
 		} else if (branch instanceof BoolLiteral) {
 			return new CheckableExpression(
-					new BooleanLiteral(null, BoogieType.boolType, ((BoolLiteral) branch).getValue()), null);
+					new BooleanLiteral(null, BoogieType.TYPE_BOOL, ((BoolLiteral) branch).getValue()), null);
 		} else if (branch instanceof ComperativeOperator) {
 			BinaryExpression.Operator op;
 			switch (((ComperativeOperator) branch).getType()) {

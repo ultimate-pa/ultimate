@@ -69,19 +69,19 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 		} else if (op == BinaryExpression.Operator.COMPNEQ) {
 		    throw new UnsupportedOperationException();
 		} else if (op == BinaryExpression.Operator.LOGICAND) {
-			if (type1.equals(PrimitiveType.boolType) && type2.equals(PrimitiveType.boolType)) {
+			if (type1.equals(PrimitiveType.TYPE_BOOL) && type2.equals(PrimitiveType.TYPE_BOOL)) {
 				return "and";
 			} else {
 			    return "bvand";
 			}
 		} else if (op == BinaryExpression.Operator.LOGICOR) {
-			if (type1.equals(PrimitiveType.boolType) && type2.equals(PrimitiveType.boolType)) {
+			if (type1.equals(PrimitiveType.TYPE_BOOL) && type2.equals(PrimitiveType.TYPE_BOOL)) {
 				return "or";
 			} else {
 			    return "bvor";
 			}
 		} else if (op == BinaryExpression.Operator.LOGICIMPLIES) {
-			if (type1.equals(PrimitiveType.boolType) && type2.equals(PrimitiveType.boolType)) {
+			if (type1.equals(PrimitiveType.TYPE_BOOL) && type2.equals(PrimitiveType.TYPE_BOOL)) {
 				return "=>";
 			} else {
 			    throw new AssertionError("LOGICIMPLIES of this type not allowed");
@@ -119,7 +119,7 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	@Override
 	public String opTranslation(UnaryExpression.Operator op, IType type) {
 		if (op == UnaryExpression.Operator.LOGICNEG) {
-			if (type.equals(PrimitiveType.boolType)) {
+			if (type.equals(PrimitiveType.TYPE_BOOL)) {
 				return "not";
 			} else {
 				throw new AssertionError("LOGICNEG of this type not allowed");
@@ -133,8 +133,8 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	@Override
 	public String funcApplication(String funcIdentifier, IType[] argumentTypes) {
 		if (argumentTypes.length == 2 
-				&& argumentTypes[0].equals(PrimitiveType.intType) 
-				&& argumentTypes[1].equals(PrimitiveType.intType)) {
+				&& argumentTypes[0].equals(PrimitiveType.TYPE_INT) 
+				&& argumentTypes[1].equals(PrimitiveType.TYPE_INT)) {
 			if (funcIdentifier.equals("~bitwiseAnd")) {
 				return "bvand";
 			} else if (funcIdentifier.equals("~bitwiseOr")) {

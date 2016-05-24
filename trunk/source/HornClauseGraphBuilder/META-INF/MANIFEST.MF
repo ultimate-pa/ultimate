@@ -3,7 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: HornClauseGraphBuilder
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuilder.Activator
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
  Library-log4j,

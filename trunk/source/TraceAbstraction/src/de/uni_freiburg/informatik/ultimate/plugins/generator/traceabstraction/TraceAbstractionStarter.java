@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -425,7 +424,7 @@ public class TraceAbstractionStarter {
 	}
 
 	private boolean interpolationModeSwitchNeeded() {
-		SolverMode solver = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		SolverMode solver = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		if (solver == SolverMode.External_PrincessInterpolationMode) {
 			return true;

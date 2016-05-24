@@ -303,7 +303,7 @@ public class BoogieParser implements ISource {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override

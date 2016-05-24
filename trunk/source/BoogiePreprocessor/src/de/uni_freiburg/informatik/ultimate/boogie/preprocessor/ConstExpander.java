@@ -132,18 +132,18 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 						/*
 						 * FIXME : ask Jochen about storage class
 						 */null);
-						Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+						Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, cid, pid);
 						if (polist == null)
 							polist = partorder;
 						else
-							polist = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+							polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 									BinaryExpression.Operator.LOGICAND, partorder, polist);
 					}
 					if (polist != null) {
 						newDecls.add(new Axiom(c.getLocation(), new Attribute[0], polist));
 					}
-					polist = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+					polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPEQ, cid, var);
 					for (ParentEdge p : parents) {
 						String parent = p.getIdentifier();
@@ -165,18 +165,18 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 							}
 							childList.add(child);
 						}
-						Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+						Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, pid, var);
-						polist = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+						polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICOR, partorder, polist);
 					}
-					Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+					Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPPO, cid, var);
-					Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+					Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.LOGICIMPLIES, lhs, polist);
 					VarList vl = new VarList(c.getLocation(), new String[] { "$$" }, asttype);
 					Trigger trigger = new Trigger(c.getLocation(), new Expression[] { lhs });
-					Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.boolType, true,
+					Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.TYPE_BOOL, true,
 							new String[0], new VarList[] { vl }, new Attribute[] { trigger }, impl);
 
 					newDecls.add(new Axiom(c.getLocation(), new Attribute[0], quant));
@@ -191,7 +191,7 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 					/*
 					 * FIXME : ask Jochen about storage class
 					 */null);
-					Expression polist = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+					Expression polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPEQ, var, pid);
 					List<String> childList = childrens.get(parent);
 					if (childList == null)
@@ -201,18 +201,18 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 						/*
 						 * FIXME : ask Jochen about storage class
 						 */null);
-						Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+						Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, var, cid);
-						polist = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+						polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICOR, partorder, polist);
 					}
-					Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+					Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPPO, var, pid);
-					Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.boolType,
+					Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
 							BinaryExpression.Operator.LOGICIMPLIES, lhs, polist);
 					VarList vl = new VarList(c.getLocation(), new String[] { "$$" }, asttype);
 					Trigger trigger = new Trigger(c.getLocation(), new Expression[] { lhs });
-					Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.boolType, true,
+					Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.TYPE_BOOL, true,
 							new String[0], new VarList[] { vl }, new Attribute[] { trigger }, impl);
 
 					newDecls.add(new Axiom(c.getLocation(), new Attribute[0], quant));
@@ -242,7 +242,7 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 					/*
 					 * FIXME: ask Jochen about storage class
 					 */null);
-					pre = new BinaryExpression(null, PrimitiveType.boolType, BinaryExpression.Operator.COMPEQ, p1id,
+					pre = new BinaryExpression(null, PrimitiveType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, p1id,
 							p2id);
 				}
 				for (String c1 : uniqueChildrens.get(p1)) {
@@ -259,30 +259,30 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 						 */null);
 						Expression pre2 = pre;
 						if (!uniqueValues.contains(c1) || !uniqueValues.contains(c2)) {
-							Expression neq = new BinaryExpression(null, PrimitiveType.boolType,
+							Expression neq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 									BinaryExpression.Operator.COMPNEQ, c1id, c2id);
 							if (pre == null)
 								pre2 = neq;
 							else
-								pre2 = new BinaryExpression(null, PrimitiveType.boolType,
+								pre2 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 										BinaryExpression.Operator.LOGICAND, pre, neq);
 						}
-						Expression po1 = new BinaryExpression(null, PrimitiveType.boolType,
+						Expression po1 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, var, c1id);
-						Expression po2 = new BinaryExpression(null, PrimitiveType.boolType,
+						Expression po2 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, var2, c2id);
-						Expression lhs = new BinaryExpression(null, PrimitiveType.boolType,
+						Expression lhs = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICAND, po1, po2);
-						Expression diseq = new BinaryExpression(null, PrimitiveType.boolType,
+						Expression diseq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPNEQ, var, var2);
-						Expression impl = new BinaryExpression(null, PrimitiveType.boolType,
+						Expression impl = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICIMPLIES, lhs, diseq);
 						VarList vl = new VarList(null, new String[] { "$$", "$$2" }, asttype);
 						Trigger trigger = new Trigger(null, new Expression[] { po1, po2 });
-						Expression ax = new QuantifierExpression(null, PrimitiveType.boolType, true, new String[0],
+						Expression ax = new QuantifierExpression(null, PrimitiveType.TYPE_BOOL, true, new String[0],
 								new VarList[] { vl }, new Attribute[] { trigger }, impl);
 						if (pre2 != null)
-							ax = new BinaryExpression(null, PrimitiveType.boolType,
+							ax = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 									BinaryExpression.Operator.LOGICIMPLIES, pre2, ax);
 
 						newDecls.add(new Axiom(null, new Attribute[0], ax));
@@ -323,7 +323,7 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 			for (int j = i + 1; j < identifiers.size(); j++) {
 				String ident2 = identifiers.get(j);
 				IdentifierExpression id2 = new IdentifierExpression(null, type, ident2, declInfo);
-				Expression diseq = new BinaryExpression(null, PrimitiveType.boolType,
+				Expression diseq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
 						BinaryExpression.Operator.COMPNEQ, id1, id2);
 				/*
 				 * Add the axioms one by one. This prevents the syntax tree from

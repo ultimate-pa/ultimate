@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
@@ -117,7 +116,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
 
-		boolean s_TransformToCNF = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		boolean s_TransformToCNF = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,

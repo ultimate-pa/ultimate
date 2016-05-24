@@ -123,7 +123,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * Boolean variable for determining to run the algorithm with or without
 	 * producing tasks for parallel execution.
 	 */
-	private static boolean s_parallel = false;
+	private static boolean sParallel = false;
 	/**
 	 * Reference on task queue for enqueueing the produced tasks.
 	 */
@@ -146,7 +146,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 *            otherwise.
 	 */
 	public static void setParallelFlag(boolean parallel) {
-		s_parallel = parallel;
+		sParallel = parallel;
 	}
 
 	/**
@@ -227,7 +227,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		// mfinalPartition = Collections.synchronizedList(new
 		// LinkedList<HashSet<Integer>>());
 		initialize();
-		if (!s_parallel) {
+		if (!sParallel) {
 			executeAlgorithm();
 		}
 		assert (mstate2int != null && mint2state != null);
@@ -259,7 +259,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		mstate2int = state2int;
 		initialize();
 		assert (mstate2int != null && mint2state != null);
-		if (!s_parallel) {
+		if (!sParallel) {
 			executeAlgorithm();
 		}
 	}
@@ -279,7 +279,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		// mrunTime = bean.getThreadCpuTime(Thread.currentThread().getId())
 		// / Math.pow(10, 9);
 		// s_logger.info("Hopcroft2 CPU Time: " + mrunTime + "sec");
-		s_logger.info(exitMessage());
+		mLogger.info(exitMessage());
 
 	}
 
@@ -375,8 +375,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * Minimize the input automaton using Hopcroft's algorithm.
 	 */
 	private void minimizeDfaHopcroft() {
-		if (s_parallel) {
-			s_logger.info("HOP: " + startMessage());
+		if (sParallel) {
+			mLogger.info("HOP: " + startMessage());
 		}
 
 		while (mworklist.iterator().hasNext()) {
@@ -439,7 +439,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 						}
 
 						// Create HelpIncremental
-						if (s_parallel && HelpIncremental) {
+						if (sParallel && HelpIncremental) {
 							assert (mincrementalAlgorithm != null);
 							try {
 								mtaskQueue.put(new HelpIncremental(
@@ -579,7 +579,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 
 	@Override
 	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		if (s_parallel) {
+		if (sParallel) {
 			if (mresult == null) {
 				mresult = constructResult();
 			}

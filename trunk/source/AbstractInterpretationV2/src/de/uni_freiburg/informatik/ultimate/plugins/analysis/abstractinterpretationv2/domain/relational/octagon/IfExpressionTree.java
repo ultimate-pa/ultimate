@@ -95,7 +95,7 @@ public final class IfExpressionTree {
 		final Expression elseCondition;
 		Expression thenCondition = expr.getCondition();
 		if (thenCondition instanceof WildcardExpression) {
-			thenCondition = elseCondition = new BooleanLiteral(thenCondition.getLocation(), BoogieType.boolType, true);
+			thenCondition = elseCondition = new BooleanLiteral(thenCondition.getLocation(), BoogieType.TYPE_BOOL, true);
 		} else {
 			// note: condition may contain further IfThenElseExpressions, which will not be removed.
 			elseCondition = exprTransformer.logicNegCached(thenCondition);

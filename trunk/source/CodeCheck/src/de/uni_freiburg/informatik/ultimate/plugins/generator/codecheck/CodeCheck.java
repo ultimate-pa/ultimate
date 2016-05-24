@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
  */
 public class CodeCheck implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
+	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private CodeCheckObserver mObserver;
 	private ModelType mInputDefinition;
@@ -102,7 +102,7 @@ public class CodeCheck implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override

@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -74,7 +73,7 @@ public abstract class CFG2Automaton {
 	public CFG2Automaton(RootNode rootNode, StateFactory<IPredicate> contentFactory, SmtManager smtManager,
 			IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// mRootNode = rootNode;
 		mRootAnnot = rootNode.getRootAnnot();
 		mContentFactory = contentFactory;
@@ -85,7 +84,7 @@ public abstract class CFG2Automaton {
 
 	protected void constructProcedureAutomata() {
 
-		CodeBlockSize codeBlockSize = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID)).getEnum(
+		CodeBlockSize codeBlockSize = (new RcpPreferenceProvider((String) Activator.PLUGIN_ID)).getEnum(
 				RcfgPreferenceInitializer.LABEL_CodeBlockSize, RcfgPreferenceInitializer.CodeBlockSize.class);
 		if (codeBlockSize != CodeBlockSize.SingleStatement) {
 			throw new IllegalArgumentException("Concurrent programs reqire" + "atomic block encoding.");

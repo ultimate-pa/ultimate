@@ -52,7 +52,7 @@ public class TypeSortTranslatorBitvectorWorkaround extends TypeSortTranslator {
 	}
 
 	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
-		if (boogieType.equals(PrimitiveType.intType)) {
+		if (boogieType.equals(PrimitiveType.TYPE_INT)) {
 			BigInteger[] sortIndices = { BigInteger.valueOf(32) };
 			return mScript.sort("BitVec", sortIndices);
 		} else {

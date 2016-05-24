@@ -212,9 +212,9 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			mthreads.add(new WorkingThread("HelperThread" + i));
 			mthreads.get(i).start();
 		}
-		s_logger.info("MAIN: Start execution of Incremental algorithm.");
+		mLogger.info("MAIN: Start execution of Incremental algorithm.");
 		mincrementalThread.start();
-		s_logger.info("MAIN: Start execution of Hopcroft algorithm.");
+		mLogger.info("MAIN: Start execution of Hopcroft algorithm.");
 		mhopcroftThread.start();
 
 		synchronized (this) {
@@ -228,7 +228,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		}
 
 		// Interrupt all threads
-		s_logger.info("MAIN: Result available. Start interrupting working threads.");
+		mLogger.info("MAIN: Result available. Start interrupting working threads.");
 		measureTime();
 
 		for (Thread thread : mthreads) {
@@ -244,9 +244,9 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		mincrementalThread.interrupt();
 		mhopcroftThread.interrupt();
 		minterrupt.setStatus();
-		s_logger.info("MAIN: Interrupting working threads finished.");
+		mLogger.info("MAIN: Interrupting working threads finished.");
 
-		s_logger.info("MAIN: Start postprocessing result.");
+		mLogger.info("MAIN: Start postprocessing result.");
 		try {
 			mresult = mresultGetter.call();
 		} catch (Exception e) {
@@ -254,12 +254,12 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		}
 
 		msb = createConsoleOutput();
-		s_logger.info(msb);
+		mLogger.info(msb);
 
 		// Set parallel flags of both algorithms to false again.
 		MinimizeDfaHopcroftParallel.setParallelFlag(false);
 		MinimizeDfaAmrParallel.setParallelFlag(false);
-		s_logger.info("MAIN: " + exitMessage());
+		mLogger.info("MAIN: " + exitMessage());
 	}
 
 	/**
@@ -381,7 +381,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 					if (!this.isInterrupted()) {
 						task.run();
 					}
-					s_logger.info("MAIN: Size of task queue: "
+					mLogger.info("MAIN: Size of task queue: "
 							+ mtaskQueue.size());
 				} catch (InterruptedException e) {
 					this.interrupt();
@@ -447,7 +447,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			try {
 				if (mchooseAlgorithm.equals(Algorithm.Hopcroft)) {
 
-					s_logger.info("moep1");
+					mLogger.info("moep1");
 					malgorithm = new MinimizeDfaHopcroftParallel<LETTER, STATE>(
 							mServices, moperand.getStateFactory(),
 							(INestedWordAutomaton<LETTER, STATE>) moperand,
@@ -456,28 +456,28 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 					if (isInterrupted()) {
 						return;
 					}
-					s_logger.info("moep2");
+					mLogger.info("moep2");
 					mhopcroftAlgorithm = (MinimizeDfaHopcroftParallel) malgorithm;
 					mhopcroftAlgorithmInitialized = true;
 
 					synchronized (minterrupt) {
 						if (mincrementalAlgorithmInitialized) {
-							s_logger.info("moep3a");
+							mLogger.info("moep3a");
 							synchronized (mincrementalAlgorithm) {
 								minterrupt.notify();
 							}
 						} else {
-							s_logger.info("moep3b");
+							mLogger.info("moep3b");
 							minterrupt.wait();
 						}
 					}
-					s_logger.info("moep4");
+					mLogger.info("moep4");
 					mhopcroftAlgorithm.minimizeParallel(mtaskQueue,
 							mincrementalAlgorithm);
-					s_logger.info("moep5");
+					mLogger.info("moep5");
 
 				} else {
-					s_logger.info("miep1");
+					mLogger.info("miep1");
 					malgorithm = new MinimizeDfaAmrParallel<LETTER, STATE>(
 							mServices, moperand.getStateFactory(), moperand,
 							minterrupt, mint2state, mstate2int);
@@ -485,23 +485,23 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 					if (isInterrupted()) {
 						return;
 					}
-					s_logger.info("miep2");
+					mLogger.info("miep2");
 					mincrementalAlgorithm = (MinimizeDfaAmrParallel) malgorithm;
 					mincrementalAlgorithmInitialized = true;
 					synchronized (minterrupt) {
 						if (mhopcroftAlgorithmInitialized) {
-							s_logger.info("miep3a");
+							mLogger.info("miep3a");
 							minterrupt.notify();
 						} else {
-							s_logger.info("miep3b");
+							mLogger.info("miep3b");
 
 							minterrupt.wait();
 						}
 					}
-					s_logger.info("miep4");
+					mLogger.info("miep4");
 					mincrementalAlgorithm.minimizeParallel(mtaskQueue,
 							mhopcroftAlgorithm);
-					s_logger.info("miep5");
+					mLogger.info("miep5");
 				}
 
 				if (isInterrupted()) {

@@ -563,12 +563,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (secondGotoEdge == null) {
 			replacement = mCbf.constructStatementSequence(null, null,
 					new AssumeStatement(gotoEdge.getPayload().getLocation(),
-							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.boolType, true)));
+							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 		} else {
 			replacement = mCbf.constructStatementSequence(null, null,
 					new AssumeStatement(gotoEdge.getPayload().getLocation(),
-							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.boolType, true)));
+							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
 		}

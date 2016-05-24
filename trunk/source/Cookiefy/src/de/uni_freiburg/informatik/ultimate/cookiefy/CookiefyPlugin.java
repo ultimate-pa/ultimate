@@ -40,9 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 public class CookiefyPlugin implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = "Cookiefy";
-	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-
 	private CookiefyAlgorithm mCookiefyAlgorithm;
 	private ModelType mInputType;
 	private ILogger mLogger;
@@ -58,7 +55,7 @@ public class CookiefyPlugin implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return this.mCookiefyAlgorithm.getRoot();
+		return mCookiefyAlgorithm.getRoot();
 	}
 
 	@Override
@@ -79,7 +76,7 @@ public class CookiefyPlugin implements IGenerator {
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		this.mInputType = graphType;
+		mInputType = graphType;
 	}
 
 	@Override
@@ -102,12 +99,12 @@ public class CookiefyPlugin implements IGenerator {
 
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -124,14 +121,14 @@ public class CookiefyPlugin implements IGenerator {
 
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
-		mLogger = services.getLoggingService().getLogger(s_PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 	}
 
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

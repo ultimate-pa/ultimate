@@ -497,7 +497,7 @@ public class ProductGenerator {
 
 			// we add a self loop that will be used later
 			final StatementSequence seq = mCodeblockFactory.constructStatementSequence(helper, helper,
-					generateNeverClaimAssumeStatement(new BooleanLiteral(null, BoogieType.boolType, true)));
+					generateNeverClaimAssumeStatement(new BooleanLiteral(null, BoogieType.TYPE_BOOL, true)));
 			mapNewEdge2OldEdge(seq, null);
 
 			// determine what kind of loop has to be added to this state based

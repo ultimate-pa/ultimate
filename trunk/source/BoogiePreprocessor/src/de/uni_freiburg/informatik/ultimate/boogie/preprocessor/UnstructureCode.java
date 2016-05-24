@@ -297,7 +297,7 @@ public class UnstructureCode extends BaseObserver {
 				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			} else {
 				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(),
-						new BooleanLiteral(stmt.getCondition().getLocation(), BoogieType.boolType, true));
+						new BooleanLiteral(stmt.getCondition().getLocation(), BoogieType.TYPE_BOOL, true));
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
 				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			}
@@ -312,7 +312,7 @@ public class UnstructureCode extends BaseObserver {
 				postCreateStatement(origStmt, new Label(origStmt.getLocation(), done));
 				postCreateStatementFromCond(origStmt,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
-								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
+								BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
 						true);
 				mReachable = true;
 			}
@@ -338,7 +338,7 @@ public class UnstructureCode extends BaseObserver {
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				postCreateStatementFromCond(origStmt,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
-								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
+								BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
 						true);
 			}
 			unstructureBlock(stmt.getElsePart());

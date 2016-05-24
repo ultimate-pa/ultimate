@@ -83,7 +83,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 			"The input automaton contains call or return transitions.";
 		
 		mresult = minimize();
-		s_logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	/**
@@ -95,7 +95,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 */
 	private INestedWordAutomaton<LETTER, STATE> minimize()
 			throws AutomataLibraryException {
-		INestedWordAutomaton<LETTER, STATE> automaton = moperand;
+		INestedWordAutomaton<LETTER, STATE> automaton = mOperand;
 		for (int i = 0; i < 2; ++i) {
 			super.checkForContinuation();
 			automaton = reverse(automaton);

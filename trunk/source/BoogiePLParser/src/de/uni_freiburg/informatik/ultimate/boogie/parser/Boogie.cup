@@ -48,9 +48,9 @@ parser code {:
             position = mFilename + ":EOF";
         }
 		
-		mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID).error(position + ": syntax error");
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new SyntaxErrorResult(Activator.s_PLUGIN_ID, loc, String.valueOf(sym)));
+		mServices.getLoggingService().getLogger(Activator.PLUGIN_ID).error(position + ": syntax error");
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new SyntaxErrorResult(Activator.PLUGIN_ID, loc, String.valueOf(sym)));
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 :}

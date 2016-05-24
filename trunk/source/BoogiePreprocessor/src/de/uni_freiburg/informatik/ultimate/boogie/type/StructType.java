@@ -160,7 +160,7 @@ public class StructType extends BoogieType {
     @Override
     protected boolean isUnifiableTo(int depth, BoogieType other,
             ArrayList<BoogieType> subst) {
-        if (this == other || other == errorType)
+        if (this == other || other == TYPE_ERROR)
             return true;
         if (!(other instanceof StructType))
             return false;

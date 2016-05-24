@@ -126,7 +126,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	
 	
 	public CodeCheckPreferenceInitializer() {
-		super(Activator.s_PLUGIN_ID, "CodeCheck");
+		super(Activator.PLUGIN_ID, "CodeCheck");
 	}
 	
 	@Override

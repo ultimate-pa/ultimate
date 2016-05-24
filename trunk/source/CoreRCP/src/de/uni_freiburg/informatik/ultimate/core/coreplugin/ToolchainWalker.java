@@ -179,7 +179,7 @@ final class ToolchainWalker implements IToolchainCancel {
 		try {
 			pc.run();
 		} catch (ToolchainCanceledException e) {
-			String longDescription = ToolchainCanceledException.s_Message + " while executing "
+			String longDescription = ToolchainCanceledException.MESSAGE + " while executing "
 					+ e.getClassOfThrower().getSimpleName();
 			if (e.getRunningTaskInfo() != null) {
 				longDescription += " during the following task: " + e.getRunningTaskInfo();

@@ -56,7 +56,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	public AutomataScriptInterpreterObserver(IUltimateServiceProvider services) {
 		assert services != null;
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override

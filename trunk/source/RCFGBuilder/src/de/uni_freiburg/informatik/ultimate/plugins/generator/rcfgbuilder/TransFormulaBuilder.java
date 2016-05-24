@@ -63,7 +63,7 @@ public class TransFormulaBuilder {
 	public TransFormulaBuilder(Boogie2SMT boogie2smt, IUltimateServiceProvider services) {
 		mServices = services;
 		mBoogie2smt = boogie2smt;
-		mSimplifyCodeBlocks = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		mSimplifyCodeBlocks = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 	}
 

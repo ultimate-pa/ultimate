@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
  */
 public class LoadSourceFilesAction extends RunToolchainAction implements IWorkbenchAction {
 
-	private static final String s_DIALOG_NAME = "Open Source ... ";
+	private static final String DIALOG_NAME = "Open Source ... ";
 
 	/**
 	 * 
@@ -61,7 +61,7 @@ public class LoadSourceFilesAction extends RunToolchainAction implements IWorkbe
 	 */
 	public LoadSourceFilesAction(final IWorkbenchWindow window, final ICore<ToolchainListType> icore,
 			final GuiController controller, ILogger logger) {
-		super(logger, window, icore, controller, LoadSourceFilesAction.class.getName(), s_DIALOG_NAME,
+		super(logger, window, icore, controller, LoadSourceFilesAction.class.getName(), DIALOG_NAME,
 				IImageKeys.LOADSOURCEFILES);
 	}
 
@@ -70,7 +70,7 @@ public class LoadSourceFilesAction extends RunToolchainAction implements IWorkbe
 	 */
 	@Override
 	public final void run() {
-		final File[] fp = getInputFilesFromUser(s_DIALOG_NAME);
+		final File[] fp = getInputFilesFromUser(DIALOG_NAME);
 		if (fp == null || fp.length <= 0) {
 			return;
 		}

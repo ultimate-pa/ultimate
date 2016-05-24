@@ -59,7 +59,7 @@ public class TypeParameters {
 				if (placeHolders[i] < 0) {
 					/* We cannot know which place holder (if any) will be taken*/
 					if (!markUsed)
-						return BoogieType.errorType;
+						return BoogieType.TYPE_ERROR;
 					placeHolders[i] = preserveOrder ? i : numUsed;
 					if (preserveOrder)
 						order[numUsed] = i;

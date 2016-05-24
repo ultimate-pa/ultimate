@@ -29,9 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -40,36 +40,34 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * This is the superclass of all minimization classes.
- * It provides a correctness check for all subclasses and an optional DFA check
- * for subclasses that only work for DFAs.
+ * This is the superclass of all minimization classes. It provides a correctness check for all subclasses and an
+ * optional DFA check for subclasses that only work for DFAs.
  * 
- * Since the classes of the <code>NwaLibrary.Operations</code> package must
- * automatically execute their operations from within the constructor call, the
- * correctness check cannot be inherited automatically. Hence all implementing
+ * Since the classes of the <code>NwaLibrary.Operations</code> package must automatically execute their operations from
+ * within the constructor call, the correctness check cannot be inherited automatically. Hence all implementing
  * subclasses must explicitly call the respective method themselves.
  * 
  * @author Christian Schilling
  */
 public abstract class AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-	
+
 	protected final AutomataLibraryServices mServices;
 	/**
 	 * The logger.
 	 */
-	protected final ILogger s_logger;
-	
+	protected final ILogger mLogger;
+
 	/**
 	 * The operation name.
 	 */
-	protected final String mname;
-	
+	protected final String mName;
+
 	/**
 	 * The input automaton.
 	 */
-	protected final INestedWordAutomaton<LETTER, STATE> moperand;
-	
+	protected final INestedWordAutomaton<LETTER, STATE> mOperand;
+
 	/**
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */
@@ -78,133 +76,135 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	/**
 	 * This constructor should be called by all subclasses and only by them.
 	 * 
-	 * @param name operation name
-	 * @param operand input automaton
+	 * @param name
+	 *            operation name
+	 * @param operand
+	 *            input automaton
 	 */
 	protected AMinimizeNwa(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		mServices = services;
-		s_logger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mname = name;
-		moperand = operand;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mName = name;
+		mOperand = operand;
 		mStateFactory = stateFactory;
-		s_logger.info(startMessage());
+		mLogger.info(startMessage());
 	}
-	
+
 	@Override
 	public final String operationName() {
-		return mname;
+		return mName;
 	}
-	
+
 	@Override
 	public final String startMessage() {
 		return "Start " + operationName() + ". Operand has " +
-			moperand.sizeInformation();
+				mOperand.sizeInformation();
 	}
-	
+
 	@Override
 	public final String exitMessage() {
 		return "Finished " + operationName() + ". Reduced states from " +
-				moperand.size() + " to " + getResult().size() + ".";
+				mOperand.size() + " to " + getResult().size() + ".";
 	}
-	
+
 	@Override
-	public abstract INestedWordAutomatonSimple<LETTER,STATE> getResult();
-	
+	public abstract INestedWordAutomatonSimple<LETTER, STATE> getResult();
+
 	@Override
 	public final boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		s_logger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + operationName());
 		final String message;
-		
-		if (checkInclusion(moperand, getResult(), stateFactory)) {
-			if (checkInclusion(getResult(), moperand, stateFactory)) {
-				s_logger.info("Finished testing correctness of " +
+
+		if (checkInclusion(mOperand, getResult(), stateFactory)) {
+			if (checkInclusion(getResult(), mOperand, stateFactory)) {
+				mLogger.info("Finished testing correctness of " +
 						operationName());
 				return true;
-			}
-			else {
+			} else {
 				message = "The result recognizes less words than before.";
 			}
-		}
-		else {
+		} else {
 			message = "The result recognizes more words than before.";
 		}
-		
-		ResultChecker.writeToFileIfPreferred(mServices, 
+
+		ResultChecker.writeToFileIfPreferred(mServices,
 				operationName() + " failed",
 				message,
-				moperand);
+				mOperand);
 		return false;
 	}
-	
+
 	/**
-	 * This method checks language inclusion of the first automaton wrt. the
-	 * second automaton.
-	 *  
-	 * @param subset automaton describing the subset language
-	 * @param superset automaton describing the superset language
-	 * @param stateFactory state factory
+	 * This method checks language inclusion of the first automaton wrt. the second automaton.
+	 * 
+	 * @param subset
+	 *            automaton describing the subset language
+	 * @param superset
+	 *            automaton describing the superset language
+	 * @param stateFactory
+	 *            state factory
 	 * @return true iff language is included
-	 * @throws AutomataLibraryException thrown by inclusion check
+	 * @throws AutomataLibraryException
+	 *             thrown by inclusion check
 	 */
 	private final boolean checkInclusion(
 			final INestedWordAutomatonSimple<LETTER, STATE> subset,
 			final INestedWordAutomatonSimple<LETTER, STATE> superset,
 			final StateFactory<STATE> stateFactory)
-				throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(mServices, 
+			throws AutomataLibraryException {
+		return ResultChecker.nwaLanguageInclusion(mServices,
 				ResultChecker.getOldApiNwa(mServices, subset),
 				ResultChecker.getOldApiNwa(mServices, superset),
 				stateFactory) == null;
 	}
-	
+
 	/**
 	 * This method checks whether the input automaton is a DFA.
 	 * 
-	 * That means the automaton must be deterministic and must not contain any
-	 * call and return transitions.
+	 * That means the automaton must be deterministic and must not contain any call and return transitions.
 	 * 
 	 * @return true iff input automaton is a DFA
-	 * @throws AutomataLibraryException thrown by determinism check
+	 * @throws AutomataLibraryException
+	 *             thrown by determinism check
 	 */
 	protected final boolean checkForDfa() throws AutomataLibraryException {
 		return (checkForDeterminism() && checkForFiniteAutomaton());
 	}
-	
+
 	/**
 	 * This method checks whether the input automaton is deterministic.
 	 * 
 	 * @return true iff automaton is deterministic
-	 * @throws AutomataLibraryException thrown by determinism check
+	 * @throws AutomataLibraryException
+	 *             thrown by determinism check
 	 */
 	protected final boolean checkForDeterminism()
 			throws AutomataLibraryException {
-		return new IsDeterministic<LETTER, STATE>(mServices, moperand).
-				checkResult(moperand.getStateFactory());
+		return new IsDeterministic<LETTER, STATE>(mServices, mOperand).checkResult(mOperand.getStateFactory());
 	}
-	
+
 	/**
-	 * This method checks whether the automaton is a finite automaton.
-	 * That means it must not contain any call and return letter.
+	 * This method checks whether the automaton is a finite automaton. That means it must not contain any call and
+	 * return letter.
 	 * 
-	 * NOTE: Return transitions would not do any harm when no call transitions
-	 *       exist, but they are considered bad nevertheless.
-	 * NOTE: The method checks something stronger, namely that the respective
-	 *       alphabets are empty.
+	 * NOTE: Return transitions would not do any harm when no call transitions exist, but they are considered bad
+	 * nevertheless. NOTE: The method checks something stronger, namely that the respective alphabets are empty.
 	 * 
 	 * @return true iff automaton contains no call and return letters
 	 */
 	protected final boolean checkForFiniteAutomaton() {
-		return ((moperand.getCallAlphabet().size() == 0) &&
-				(moperand.getReturnAlphabet().size() == 0));
+		return ((mOperand.getCallAlphabet().size() == 0) &&
+				(mOperand.getReturnAlphabet().size() == 0));
 	}
-	
+
 	/**
 	 * This method throws an exception iff the operation should be terminated.
 	 * 
-	 * @throws AutomataOperationCanceledException thrown to enforce termination.
+	 * @throws AutomataOperationCanceledException
+	 *             thrown to enforce termination.
 	 */
 	protected final void checkForContinuation()
 			throws AutomataLibraryException {
@@ -212,12 +212,13 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}
-	
+
 	/**
-	 * This method computes the capacity size for hash sets and hash maps
-	 * given the expected number of elements to avoid resizing. 
+	 * This method computes the capacity size for hash sets and hash maps given the expected number of elements to avoid
+	 * resizing.
 	 * 
-	 * @param size expected number of elements before resizing
+	 * @param size
+	 *            expected number of elements before resizing
 	 * @return the parameter for initializing the hash structure
 	 */
 	protected final int computeHashCap(int size) {

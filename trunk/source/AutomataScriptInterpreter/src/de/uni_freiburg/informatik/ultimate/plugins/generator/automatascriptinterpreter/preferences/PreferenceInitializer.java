@@ -45,7 +45,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String Default_Path = ".";
 
 	public PreferenceInitializer() {
-		super(Activator.s_PLUGIN_ID, Activator.s_PLUGIN_NAME);
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 
 	@Override

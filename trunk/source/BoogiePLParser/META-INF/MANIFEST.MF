@@ -3,7 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: BoogieParser Plug-in
 Bundle-SymbolicName: BoogieParser;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.parser.Activator
 Bundle-Vendor: Ultimate@Uni
 Require-Bundle: Library-UltimateCore, 
  UltimateCore,

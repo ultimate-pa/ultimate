@@ -115,12 +115,12 @@ public class BinaryStatePredicateManager {
 		mScript = smtManager.getScript();
 		mSmtManager = smtManager;
 		Boogie2SMT boogie2Smt = smtManager.getBoogie2Smt();
-		mUnseededVariable = constructGlobalBoogieVar(s_UnseededIdentifier, boogie2Smt, BoogieType.boolType);
+		mUnseededVariable = constructGlobalBoogieVar(s_UnseededIdentifier, boogie2Smt, BoogieType.TYPE_BOOL);
 
 		mOldRankVariables = new BoogieNonOldVar[s_MaxLexComponents];
 		for (int i = 0; i < s_MaxLexComponents; i++) {
 			String name = s_OldRankIdentifier + i;
-			mOldRankVariables[i] = constructGlobalBoogieVar(name, boogie2Smt, BoogieType.intType);
+			mOldRankVariables[i] = constructGlobalBoogieVar(name, boogie2Smt, BoogieType.TYPE_INT);
 		}
 	}
 

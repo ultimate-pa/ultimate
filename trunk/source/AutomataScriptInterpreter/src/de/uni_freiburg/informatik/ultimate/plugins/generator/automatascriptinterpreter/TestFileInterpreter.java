@@ -635,8 +635,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		FINISHED, TIMEOUT, ERROR, OUTOFMEMORY
 	};
 
-	public static final String s_AssertionHoldsMessage = "Assertion holds.";
-	public static final String s_AssertionViolatedMessage = "Assertion violated!";
+	public static final String sAssertionHoldsMessage = "Assertion holds.";
+	public static final String sAssertionViolatedMessage = "Assertion violated!";
 
 	/**
 	 * If an error occurred during the interpretation this is set to true and further interpretation is aborted.
@@ -648,7 +648,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		readPreferences();
 		assert services != null;
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mVariables = new HashMap<String, Object>();
 		mFlow = Flow.NORMAL;
 		mAutomataInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
@@ -669,7 +669,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	private void readPreferences() {
-		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		mPrintAutomataToFile = prefs.getBoolean(PreferenceInitializer.Name_WriteToFile);
 		mPath = prefs.getString(PreferenceInitializer.Name_Path);
 	}
@@ -1062,12 +1062,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 			result = arguments.get(0);
 			if (result instanceof Boolean) {
 				if ((Boolean) result) {
-					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
-							mServices.getBacktranslationService(), s_AssertionHoldsMessage, oe.getAsString(),
+					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.PLUGIN_ID,
+							mServices.getBacktranslationService(), sAssertionHoldsMessage, oe.getAsString(),
 							Severity.INFO));
 				} else {
-					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
-							mServices.getBacktranslationService(), s_AssertionViolatedMessage, oe.getAsString(),
+					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.PLUGIN_ID,
+							mServices.getBacktranslationService(), sAssertionViolatedMessage, oe.getAsString(),
 							Severity.ERROR));
 				}
 			} else {
@@ -1293,7 +1293,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		mLogger.info("----------------- Test Summary -----------------");
 		boolean oneOrMoreAssertionsFailed = false;
 		for (GenericResultAtElement<AtsASTNode> test : mResultOfAssertStatements) {
-			mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, test);
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, test);
 			if (test.getSeverity() == Severity.ERROR) {
 				oneOrMoreAssertionsFailed = true;
 			}
@@ -1323,8 +1323,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else {
 			throw new AssertionError();
 		}
-		IResult result = new AutomataScriptInterpreterOverallResult(Activator.s_PLUGIN_ID, overallResult, errorMessage);
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		IResult result = new AutomataScriptInterpreterOverallResult(Activator.PLUGIN_ID, overallResult, errorMessage);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		reportToLogger(loggerSeverity, result.getLongDescription());
 	}
 
@@ -1348,12 +1348,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private void reportToUltimate(Severity sev, String longDescr, String shortDescr, AtsASTNode node) {
 		IResult result;
 		if (node == null) {
-			result = new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr, sev);
+			result = new GenericResult(Activator.PLUGIN_ID, shortDescr, longDescr, sev);
 		} else {
-			result = new GenericResultAtElement<AtsASTNode>(node, Activator.s_PLUGIN_ID,
+			result = new GenericResultAtElement<AtsASTNode>(node, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), shortDescr, longDescr, sev);
 		}
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
 	/**

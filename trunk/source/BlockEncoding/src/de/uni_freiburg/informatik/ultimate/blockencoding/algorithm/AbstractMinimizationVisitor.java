@@ -61,11 +61,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public abstract class AbstractMinimizationVisitor implements IMinimizationVisitor {
 
-	protected HashSet<IMinimizedEdge> visitedEdges;
+	protected HashSet<IMinimizedEdge> mVisitedEdges;
 
 	protected HashSet<MinimizedNode> notReachableNodes;
 
-	protected static ILogger s_Logger;
+	protected final ILogger mLogger;
 
 	private HashMap<ProgramPoint, MinimizedNode> referenceNodeMap;
 
@@ -80,9 +80,9 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 	 * structures
 	 */
 	protected AbstractMinimizationVisitor(ILogger logger) {
-		s_Logger = logger;
-		this.visitedEdges = new HashSet<IMinimizedEdge>();
-		this.notReachableNodes = new HashSet<MinimizedNode>();
+		mLogger = logger;
+		mVisitedEdges = new HashSet<IMinimizedEdge>();
+		notReachableNodes = new HashSet<MinimizedNode>();
 		referenceNodeMap = new HashMap<ProgramPoint, MinimizedNode>();
 		referenceEdgeMap = new HashMap<CodeBlock, IMinimizedEdge>();
 		referenceToMethodEntry = new HashMap<String, MinimizedNode>();
@@ -105,7 +105,7 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 		if (!referenceNodeMap.containsKey(node.getOriginalNode())) {
 			referenceNodeMap.put(node.getOriginalNode(), node);
 		}
-		visitedEdges.clear();
+		mVisitedEdges.clear();
 		notReachableNodes.clear();
 		containsCallReturnEdge = false;
 		referenceToMethodEntry.put(node.getOriginalNode().getProcedure(), node);
@@ -163,8 +163,8 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 					}
 				}
 
-				if (!visitedEdges.contains(edge)) {
-					visitedEdges.add(edge);
+				if (!mVisitedEdges.contains(edge)) {
+					mVisitedEdges.add(edge);
 					if (edge.getTarget() != null) {
 						internalVisitNode(edge.getTarget());
 					}

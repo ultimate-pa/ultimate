@@ -212,7 +212,7 @@ public class Expression2Term {
 				String equalityFuncname = mOperationTranslator.opTranslation(
 						BinaryExpression.Operator.COMPEQ, binexp.getLeft().getType(), binexp.getRight().getType());
 				String negationFuncname = mOperationTranslator.opTranslation(
-						UnaryExpression.Operator.LOGICNEG, PrimitiveType.boolType);
+						UnaryExpression.Operator.LOGICNEG, PrimitiveType.TYPE_BOOL);
 				BigInteger[] indices = new BigInteger[0];
             	return SmtUtils.termWithLocalSimplification(mScript, 
             			negationFuncname, indices,

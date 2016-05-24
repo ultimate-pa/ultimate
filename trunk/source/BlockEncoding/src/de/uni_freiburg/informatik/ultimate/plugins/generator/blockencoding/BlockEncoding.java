@@ -49,9 +49,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.prefe
  */
 public class BlockEncoding implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-
 	private MinModelConversionObserver mConversionObserver;
 	private BlockEncodingObserver mBlockEncodingObserver;
 	private ModelType mInputDefinition;
@@ -59,17 +56,17 @@ public class BlockEncoding implements IGenerator {
 
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
 	public void init() {
-		ILogger logger = mServices.getLoggingService().getLogger(s_PLUGIN_ID);
+		ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mConversionObserver = new MinModelConversionObserver(mServices);
 		mBlockEncodingObserver = new BlockEncodingObserver(logger, mServices);
 	}

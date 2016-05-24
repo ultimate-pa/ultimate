@@ -80,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.WeakestPrecondition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
@@ -136,10 +135,10 @@ public class CfgBuilder {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBacktranslator = backtranslator;
-		mAddAssumeForEachAssert = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		mAddAssumeForEachAssert = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
 
-		mCodeBlockSize = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		mCodeBlockSize = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
 		String pathAndFilename = unit.getPayload().getLocation().getFileName();
@@ -148,7 +147,7 @@ public class CfgBuilder {
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
 		boolean blackHolesArrays = false;
-		boolean bitvectorInsteadInt = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		boolean bitvectorInsteadInt = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
 		mBoogie2smt = new Boogie2SMT(mScript, mBoogieDeclarations, blackHolesArrays, bitvectorInsteadInt, mServices);
 		mRootAnnot = new RootAnnot(mServices, mBoogieDeclarations, mBoogie2smt, mBacktranslator);
@@ -164,24 +163,24 @@ public class CfgBuilder {
 	 */
 	private Script constructAndInitializeSolver(IUltimateServiceProvider services, IToolchainStorage storage,
 			String filename) {
-		final SolverMode solverMode = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		final SolverMode solverMode = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
-		final boolean dumpSmtScriptToFile = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		final boolean dumpSmtScriptToFile = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
-		final String pathOfDumpedScript = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		final String pathOfDumpedScript = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_Path);
 
-		final String commandExternalSolver = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		final String commandExternalSolver = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
 
-		final boolean dumpUsatCoreTrackBenchmark = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		final boolean dumpUsatCoreTrackBenchmark = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
 
-		final boolean dumpMainTrackBenchmark = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		final boolean dumpMainTrackBenchmark = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
 
-		final String logicForExternalSolver = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		final String logicForExternalSolver = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		final Settings solverSettings = SolverBuilder.constructSolverSettings(
 				filename, solverMode, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
@@ -239,7 +238,7 @@ public class CfgBuilder {
 		}
 		// mRootAnnot.mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
 		// mBoogieDeclarations.getModifiedVars(), mBoogie2smt);
-		mCodeBlockSize = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		mCodeBlockSize = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 		if (mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 			new LargeBlockEncoding();
@@ -256,7 +255,7 @@ public class CfgBuilder {
 		if (expr == null) {
 			return null;
 		} else {
-			return new UnaryExpression(expr.getLocation(), PrimitiveType.boolType, UnaryExpression.Operator.LOGICNEG,
+			return new UnaryExpression(expr.getLocation(), PrimitiveType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
 					expr);
 		}
 	}
@@ -510,7 +509,7 @@ public class CfgBuilder {
 			assertAndAssumeEnsures();
 
 			// Remove auxiliary GotoTransitions
-			boolean removeGotoEdges = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+			boolean removeGotoEdges = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 					.getBoolean(RcfgPreferenceInitializer.LABEL_RemoveGotoEdges);
 			if (removeGotoEdges) {
 				mLogger.debug("Starting removal of auxiliaryGotoTransitions");
@@ -573,7 +572,7 @@ public class CfgBuilder {
 		 *         true.
 		 */
 		private List<EnsuresSpecification> getDummyEnsuresSpecifications(ILocation loc) {
-			Expression dummyExpr = new BooleanLiteral(loc, BoogieType.boolType, true);
+			Expression dummyExpr = new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true);
 			EnsuresSpecification dummySpec = new EnsuresSpecification(loc, false, dummyExpr);
 			ArrayList<EnsuresSpecification> dummySpecs = new ArrayList<EnsuresSpecification>(1);
 			dummySpecs.add(dummySpec);
@@ -585,7 +584,7 @@ public class CfgBuilder {
 		 *         true.
 		 */
 		private List<RequiresSpecification> getDummyRequiresSpecifications() {
-			Expression dummyExpr = new BooleanLiteral(null, BoogieType.boolType, true);
+			Expression dummyExpr = new BooleanLiteral(null, BoogieType.TYPE_BOOL, true);
 			RequiresSpecification dummySpec = new RequiresSpecification(null, false, dummyExpr);
 			ArrayList<RequiresSpecification> dummySpecs = new ArrayList<RequiresSpecification>(1);
 			dummySpecs.add(dummySpec);
@@ -947,7 +946,7 @@ public class CfgBuilder {
 				// Hence the error location would be erroneously reachable from
 				// the final location.
 				assumeSafe = new AssumeStatement(st.getLocation(),
-						new BooleanLiteral(st.getLocation(), BoogieType.boolType, true));
+						new BooleanLiteral(st.getLocation(), BoogieType.TYPE_BOOL, true));
 			}
 			passAllAnnotations(st, assumeSafe);
 			mBacktranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
@@ -1146,7 +1145,7 @@ public class CfgBuilder {
 		final boolean mSimplifyCodeBlocks;
 
 		public LargeBlockEncoding() {
-			mSimplifyCodeBlocks = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+			mSimplifyCodeBlocks = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 					.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 
 			for (String proc : mRootAnnot.mLocNodes.keySet()) {

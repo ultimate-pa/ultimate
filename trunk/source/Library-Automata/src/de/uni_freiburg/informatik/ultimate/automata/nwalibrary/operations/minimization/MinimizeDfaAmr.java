@@ -179,7 +179,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
     		mstack = null;
     		mhashCapNoTuples = 0;
     		
-    		mresult = moperand;
+    		mresult = mOperand;
     	}
     	else {
     		mstate2int = new HashMap<STATE, Integer>(msize);
@@ -214,7 +214,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
     		
 			mresult = minimize();
 		}
-		s_logger.info(exitMessage());
+		mLogger.info(exitMessage());
 	}
 	
 	/**
@@ -241,7 +241,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 */
 	private void preprocess() {
 		int i = -1;
-		for (final STATE state : moperand.getStates()) {
+		for (final STATE state : mOperand.getStates()) {
 			mint2state.add(state);
 			
 			assert (mstate2int.get(state) == null) :
@@ -328,11 +328,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		// TODO this is naive, think about a faster implementation
 		for (int i = 0; i < msize; ++i) {
 			final STATE state1 = mint2state.get(i);
-			final boolean isFirstFinal = moperand.isFinal(state1);
+			final boolean isFirstFinal = mOperand.isFinal(state1);
 			
 			for (int j = i + 1; j < msize; ++j) {
 				final STATE state2 = mint2state.get(j);
-				if (moperand.isFinal(state2) ^ isFirstFinal) {
+				if (mOperand.isFinal(state2) ^ isFirstFinal) {
 					mneq.add(new Tuple(i, j));
 				}
 				/*
@@ -342,12 +342,12 @@ public class MinimizeDfaAmr<LETTER, STATE>
 				else if (moptionNeqTrans) {
 					final HashSet<LETTER> letters = new HashSet<LETTER>();
 					for (final OutgoingInternalTransition<LETTER, STATE> out :
-							moperand.internalSuccessors(state1)) {
+							mOperand.internalSuccessors(state1)) {
 						letters.add(out.getLetter());
 					}
 					boolean broken = false;
 					for (final OutgoingInternalTransition<LETTER, STATE> out :
-    						moperand.internalSuccessors(state2)) {
+    						mOperand.internalSuccessors(state2)) {
 						if (! letters.remove(out.getLetter())) {
 							mneq.add(new Tuple(i, j));
 							broken = true;
@@ -451,26 +451,26 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		 * NOTE: This could be problematic with nondeterministic automata.
 		 */
 		for (final OutgoingInternalTransition<LETTER, STATE> out :
-				moperand.internalSuccessors(firstState)) {
+				mOperand.internalSuccessors(firstState)) {
 			final LETTER letter = out.getLetter();
-			assert (moperand.internalSuccessors(secondState,
+			assert (mOperand.internalSuccessors(secondState,
 					letter) != null);
 			
 			int succP = find(mstate2int.get(out.getSucc()));
 			int succQ;
 			
 			if (moptionNeqTrans) {
-				assert (moperand.internalSuccessors(secondState,
+				assert (mOperand.internalSuccessors(secondState,
 							letter).iterator().hasNext()) :
 					"States with different outgoing transitions " +
 					"should have been marked as not equivalent.";
 				
-				succQ = find(mstate2int.get(moperand.internalSuccessors(
+				succQ = find(mstate2int.get(mOperand.internalSuccessors(
 						secondState, letter).iterator().next().getSucc()));
 			}
 			else {
 				final Iterator<OutgoingInternalTransition<LETTER, STATE>> out2
-						= moperand.internalSuccessors(
+						= mOperand.internalSuccessors(
 								secondState, letter).iterator();
 				if (out2.hasNext()) {
 					succQ = find(mstate2int.get(out2.next().getSucc()));
@@ -499,8 +499,8 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		
 		if (! moptionNeqTrans) {
 			for (final OutgoingInternalTransition<LETTER, STATE> out :
-				moperand.internalSuccessors(secondState)) {
-				if (! moperand.internalSuccessors(
+				mOperand.internalSuccessors(secondState)) {
+				if (! mOperand.internalSuccessors(
 						firstState, out.getLetter()).iterator().hasNext()) {
 					return false;
 				}
@@ -522,13 +522,13 @@ public class MinimizeDfaAmr<LETTER, STATE>
 				computeMapState2Equiv();
 		
 		// construct result
-		final StateFactory<STATE> stateFactory = moperand.getStateFactory();
+		final StateFactory<STATE> stateFactory = mOperand.getStateFactory();
 		NestedWordAutomaton<LETTER, STATE> result =
 				new NestedWordAutomaton<LETTER, STATE>(
 						mServices, 
-						moperand.getInternalAlphabet(),
-						moperand.getCallAlphabet(),
-						moperand.getReturnAlphabet(),
+						mOperand.getInternalAlphabet(),
+						mOperand.getCallAlphabet(),
+						mOperand.getReturnAlphabet(),
 						stateFactory);
 		
 		// mapping from old state to new state
@@ -537,10 +537,10 @@ public class MinimizeDfaAmr<LETTER, STATE>
 						computeHashCap(state2equivStates.size()));
 		
 		// add states
-		assert (moperand.getInitialStates().iterator().hasNext()) :
+		assert (mOperand.getInitialStates().iterator().hasNext()) :
 			"There is no initial state in the automaton.";
 		final int initRepresentative = find(mstate2int.get(
-				moperand.getInitialStates().iterator().next()));
+				mOperand.getInitialStates().iterator().next()));
 		for (final Entry<Integer, ? extends Collection<STATE>> entry :
 				state2equivStates.entrySet()) {
 			final int representative = entry.getKey();
@@ -552,7 +552,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			assert (equivStates.iterator().hasNext()) :
 				"There is no equivalent state in the collection.";
 			result.addState((representative == initRepresentative),
-					moperand.isFinal(equivStates.iterator().next()),
+					mOperand.isFinal(equivStates.iterator().next()),
 					newSTate);
 		}
 		
@@ -563,7 +563,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		 */
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> out :
-					moperand.internalSuccessors(
+					mOperand.internalSuccessors(
 							mint2state.get(oldStateInt))) {
 				result.addInternalTransition(
 						oldState2newState.get(oldStateInt),

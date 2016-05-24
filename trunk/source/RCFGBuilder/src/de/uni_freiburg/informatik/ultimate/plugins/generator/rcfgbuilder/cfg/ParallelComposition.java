@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
@@ -119,7 +118,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		mPrettyPrinted = prettyPrinted;
 
-		boolean s_TransformToCNF = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		boolean s_TransformToCNF = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = TransFormula.parallelComposition(mLogger, mServices, getSerialNumer(), boogie2smt,

@@ -63,12 +63,12 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 
 	@Override
 	public Expression makeFalse() {
-		return new BooleanLiteral(null, BoogieType.boolType, false);
+		return new BooleanLiteral(null, BoogieType.TYPE_BOOL, false);
 	}
 
 	@Override
 	public Expression makeTrue() {
-		return new BooleanLiteral(null, BoogieType.boolType, true);
+		return new BooleanLiteral(null, BoogieType.TYPE_BOOL, true);
 	}
 
 	@Override
@@ -102,7 +102,7 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 			if (left == null) {
 				continue;
 			}
-			right = new BinaryExpression(left.getLocation(), BoogieType.boolType, op, left, right);
+			right = new BinaryExpression(left.getLocation(), BoogieType.TYPE_BOOL, op, left, right);
 			if (!unifiedOperandsIterator.hasNext()) {
 				// System.out.println("New Binop: " +
 				// BoogiePrettyPrinter.print(right));
@@ -141,7 +141,7 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 
 	@Override
 	public Expression makeNot(final Expression operand) {
-		return new UnaryExpression(operand.getLocation(), BoogieType.boolType, UnaryExpression.Operator.LOGICNEG,
+		return new UnaryExpression(operand.getLocation(), BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
 				operand);
 	}
 
@@ -273,11 +273,11 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		if (atom instanceof BinaryExpression) {
 			final BinaryExpression binexp = (BinaryExpression) atom;
 			if (binexp.getOperator() == Operator.COMPNEQ) {
-				final Expression left = new BinaryExpression(atom.getLocation(), BoogieType.boolType, Operator.COMPLT,
+				final Expression left = new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, Operator.COMPLT,
 						binexp.getLeft(), binexp.getRight());
-				final Expression right = new BinaryExpression(atom.getLocation(), BoogieType.boolType, Operator.COMPGT,
+				final Expression right = new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, Operator.COMPGT,
 						binexp.getLeft(), binexp.getRight());
-				return new BinaryExpression(atom.getLocation(), BoogieType.boolType, Operator.LOGICOR, left, right);
+				return new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, Operator.LOGICOR, left, right);
 			}
 		}
 		return atom;
@@ -326,11 +326,11 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 			default:
 				throw new UnsupportedOperationException("Unknown operator");
 			}
-			return new BinaryExpression(atom.getLocation(), BoogieType.boolType, negatedOp, binexp.getLeft(),
+			return new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, negatedOp, binexp.getLeft(),
 					binexp.getRight());
 		} else if (atom instanceof BooleanLiteral) {
 			final BooleanLiteral lit = (BooleanLiteral) atom;
-			return new BooleanLiteral(lit.getLocation(), BoogieType.boolType, !lit.getValue());
+			return new BooleanLiteral(lit.getLocation(), BoogieType.TYPE_BOOL, !lit.getValue());
 		} else if (atom instanceof UnaryExpression) {
 			final UnaryExpression uexp = (UnaryExpression) atom;
 			switch (uexp.getOperator()) {

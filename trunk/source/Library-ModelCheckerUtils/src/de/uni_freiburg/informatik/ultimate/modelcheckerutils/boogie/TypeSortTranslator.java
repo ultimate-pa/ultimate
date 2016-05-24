@@ -76,7 +76,7 @@ public class TypeSortTranslator {
 			// variable in the Boogie program but we translate a boolean
 			// term e.g., "true".
 			Sort boolSort = mScript.sort("Bool");
-			IType boolType = BoogieType.boolType;
+			IType boolType = BoogieType.TYPE_BOOL;
 			mtype2sort.put(boolType, boolSort);
 			msort2type.put(boolSort, boolType);
 		}
@@ -165,13 +165,13 @@ public class TypeSortTranslator {
 	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
 		Sort result;
 		if (boogieType instanceof PrimitiveType) {
-			if (boogieType.equals(PrimitiveType.boolType)) {
+			if (boogieType.equals(PrimitiveType.TYPE_BOOL)) {
 				result = mScript.sort("Bool");
-			} else if (boogieType.equals(PrimitiveType.intType)) {
+			} else if (boogieType.equals(PrimitiveType.TYPE_INT)) {
 				result = mScript.sort("Int");
-			} else if (boogieType.equals(PrimitiveType.realType)) {
+			} else if (boogieType.equals(PrimitiveType.TYPE_REAL)) {
 				result = mScript.sort("Real");
-			} else if (boogieType.equals(PrimitiveType.errorType)) {
+			} else if (boogieType.equals(PrimitiveType.TYPE_ERROR)) {
 				throw new IllegalArgumentException("BoogieAST contains type " +
 						"errors. This plugin supports only BoogieASTs without type errors");
 			} else if (((PrimitiveType) boogieType).getTypeCode() > 0) {

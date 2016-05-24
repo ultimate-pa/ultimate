@@ -36,8 +36,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.increm
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * 
@@ -83,13 +82,10 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		Collection<LETTER> letter1,letter2,newLetterSet;
 		private final AutomataLibraryServices mServices;
 		public StateFactory<STATE> stateFactory;
-		private ILogger s_Logger;
 		public NfaUnion(AutomataLibraryServices services,StateFactory<STATE> sf,INestedWordAutomatonSimple<LETTER,STATE> in1,INestedWordAutomatonSimple<LETTER,STATE> in2){
 			mServices=services;
 			stateFactory =sf;
-			//s_Logger = (ILogger) mServices.getLoggingService();
-			s_Logger = mLogger;
-			s_Logger.info(startMessage());
+			mLogger.info(startMessage());
 			orgin = in1;
 			target = in2;
 			letter1=orgin.getInternalAlphabet();
@@ -98,7 +94,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			newLetterSet.addAll(letter1);
 			newLetterSet.addAll(letter2);
 			union();
-			s_Logger.info(exitMessage());
+			mLogger.info(exitMessage());
 		}
 		public void union(){
 			result = new NestedWordAutomaton<LETTER, STATE>(mServices,(Set<LETTER>)newLetterSet,null,null,stateFactory);
@@ -185,6 +181,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		public NestedWordAutomaton<LETTER,STATE> getResult()throws AutomataOperationCanceledException {
 			return result;
 		}
+		@Override
 		public boolean checkResult(StateFactory<STATE> stateFactory)
 				throws AutomataOperationCanceledException {
 			return true;
@@ -815,6 +812,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			letter = let;
 			succ = node;
 		}
+		@Override
 		public LETTER getLetter(){
 			return letter;
 		}
@@ -958,6 +956,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 	}
 	
+	@Override
 	public NestedRun<LETTER,STATE> getCounterexample(){
 		if(workingAutomata.errorNodes.peekFirst()!=null){
 			if(counterExampleFlag==0){
@@ -1058,6 +1057,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		return true;
 	}
 	
+	@Override
 	public Boolean getResult(){
 		if(workingAutomata.errorNodes.peekFirst()==null){
 			return true;

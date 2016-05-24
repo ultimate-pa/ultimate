@@ -252,13 +252,13 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			mwriter2 = null;
 		}
 		
-		if (moperand instanceof IDoubleDeckerAutomaton) {
-			mdoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)moperand;
+		if (mOperand instanceof IDoubleDeckerAutomaton) {
+			mdoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)mOperand;
 		} else {
 			mdoubleDecker = null;
 		}
 		mstateFactory = (stateFactory == null)
-				? moperand.getStateFactory()
+				? mOperand.getStateFactory()
 				: stateFactory;
 		mpartition = new Partition();
 		mids = 0;
@@ -319,9 +319,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		}
 		
 		// must be the last part of the constructor
-		s_logger.info(startMessage());
+		mLogger.info(startMessage());
 		minimize(isFiniteAutomaton, equivalenceClasses, includeMapping);
-		s_logger.info(exitMessage());
+		mLogger.info(exitMessage());
 		
 		if (STATISTICS) {
 			mwholeTime += new GregorianCalendar().getTimeInMillis();
@@ -621,7 +621,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				}
 			}
 			
-			s_logger.info("Finished analysis, constructing result of size " +
+			mLogger.info("Finished analysis, constructing result of size " +
 					mpartition.mequivalenceClasses.size());
 			
 			// automaton construction
@@ -647,7 +647,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				HashMap<EquivalenceClass, HashSet<STATE>>>();
 		for (final STATE state : a.mstates) {
 			final Iterator<IncomingReturnTransition<LETTER, STATE>> transitions
-					= moperand.returnPredecessors(state).iterator();
+					= mOperand.returnPredecessors(state).iterator();
 			while (transitions.hasNext()) {
 				final IncomingReturnTransition<LETTER, STATE> transition =
 						transitions.next();
@@ -708,7 +708,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				HashMap<STATE, HashSet<STATE>>>();
 		for (final STATE state : a.mstates) {
 			final Iterator<IncomingReturnTransition<LETTER, STATE>> transitions =
-					moperand.returnPredecessors(state).iterator();
+					mOperand.returnPredecessors(state).iterator();
 			while (transitions.hasNext()) {
 				final IncomingReturnTransition<LETTER, STATE> transition =
 						transitions.next();
@@ -764,7 +764,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				new HashMap<LETTER, HashSet<STATE>>();
 		for (final STATE state : a.mstates) {
 			final Iterator<IncomingReturnTransition<LETTER, STATE>> transitions =
-					moperand.returnPredecessors(state).iterator();
+					mOperand.returnPredecessors(state).iterator();
 			while (transitions.hasNext()) {
 				final IncomingReturnTransition<LETTER, STATE> transition =
 						transitions.next();
@@ -815,7 +815,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		for (final STATE lin : linEc.mstates) {
 			final HashSet<STATE> hiers = new HashSet<STATE>();
 			final Iterator<OutgoingReturnTransition<LETTER, STATE>>
-				transitions = moperand.returnSuccessors(lin).iterator();
+				transitions = mOperand.returnSuccessors(lin).iterator();
 			if (transitions.hasNext()) {
 				do {
 					hiers.add(transitions.next().getHierPred());
@@ -863,7 +863,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		for (final STATE lin : linEc.mstates) {
 			final HashSet<STATE> hiers = new HashSet<STATE>();
 			final Iterator<OutgoingReturnTransition<LETTER, STATE>>
-				transitions = moperand.returnSuccessors(lin).iterator();
+				transitions = mOperand.returnSuccessors(lin).iterator();
 			if (transitions.hasNext()) {
 				do {
 					hiers.add(transitions.next().getHierPred());
@@ -901,7 +901,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				new HashSet<EquivalenceClass>();
 		for (final STATE lin : linEc.mstates) {
 			final Iterator<IncomingReturnTransition<LETTER, STATE>> transitions
-					= moperand.returnPredecessors(lin).iterator();
+					= mOperand.returnPredecessors(lin).iterator();
 			while (transitions.hasNext()) {
 				hierEcs.add(mpartition.mstate2EquivalenceClass.get(
 						transitions.next().getHierPred()));
@@ -920,7 +920,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						continue;
 					}
 					final Iterator<OutgoingReturnTransition<LETTER, STATE>>
-						transitions = moperand.returnSuccessorsGivenHier(
+						transitions = mOperand.returnSuccessorsGivenHier(
 								lin, hier).iterator();
 					final HashMap<EquivalenceClass, HashSet<STATE>> succEc2lins
 						= new HashMap<EquivalenceClass, HashSet<STATE>>();
@@ -981,13 +981,13 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final HashSet<STATE> finals = new HashSet<STATE>();
 			final HashSet<STATE> nonfinals = new HashSet<STATE>();
 			
-			for (STATE state : moperand.getStates()) {
-				if (msplitAllCallPreds && (moperand.callSuccessors(state).
+			for (STATE state : mOperand.getStates()) {
+				if (msplitAllCallPreds && (mOperand.callSuccessors(state).
 							iterator().hasNext())) {
 					mpartition.addEcInitialization(
 							Collections.singleton(state));
 				}
-				else if (moperand.isFinal(state)) {
+				else if (mOperand.isFinal(state)) {
 					finals.add(state);
 				}
 				else {
@@ -1160,7 +1160,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			
 			for (final STATE succ : succEc.mstates) {
 				final Iterator<IncomingReturnTransition<LETTER, STATE>> edges =
-						moperand.returnPredecessors(succ).iterator();
+						mOperand.returnPredecessors(succ).iterator();
 				if (edges.hasNext()) {
 					incomingReturns = true;
 					do {
@@ -1723,7 +1723,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		for (final STATE succ : succEc.mstates) {
 			for (final IncomingReturnTransition<LETTER, STATE> edge :
-				moperand.returnPredecessors(succ)) {
+				mOperand.returnPredecessors(succ)) {
 				final EquivalenceClass linEc = state2ec.get(edge.getLinPred());
 				HashSet<IncomingReturnTransition <LETTER, STATE>> edges =
 						linEc2trans.get(linEc);
@@ -1931,7 +1931,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		for (final STATE succ : succEc.mstates) {
 			for (final IncomingReturnTransition<LETTER, STATE> edge :
-				moperand.returnPredecessors(succ)) {
+				mOperand.returnPredecessors(succ)) {
 				final EquivalenceClass hierEc =
 						state2ec.get(edge.getHierPred());
 				HashSet<EquivalenceClass> linEcs = hierEc2linEcs.get(hierEc);
@@ -1984,7 +1984,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				inner: for (final STATE lin : linEc.mstates) {
 					if (mdoubleDecker.isDoubleDecker(lin, hier)) {
 						final Iterator<OutgoingReturnTransition<LETTER, STATE>>
-							edges = moperand.returnSuccessorsGivenHier(lin,
+							edges = mOperand.returnSuccessorsGivenHier(lin,
 									hier).iterator();
 						if (edges.hasNext()) {
 							do {
@@ -2183,7 +2183,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		boolean broke = (oldHiers.size() == 0);
 		outer: for (final STATE lin : lins) {
 			for (final OutgoingReturnTransition<LETTER, STATE> edge :
-					moperand.returnSuccessors(lin)) {
+					mOperand.returnSuccessors(lin)) {
 				final STATE hier = edge.getHierPred();
 				if (oldHiers.add(hier)) {
 					newHiers.add(hier);
@@ -2211,7 +2211,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				}
 				
 				final Iterator<OutgoingReturnTransition<LETTER, STATE>> edges =
-						moperand.returnSuccessorsGivenHier(lin, hier).
+						mOperand.returnSuccessorsGivenHier(lin, hier).
 						iterator();
 				if (edges.hasNext()) {
 					final HashMap<LETTER, HashSet<STATE>> transitions =
@@ -2382,7 +2382,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @param ec the equivalence class
 	 */
 	private void splitRandom(EquivalenceClass ec) {
-		if (moperand.callSuccessors(ec.mstates.iterator().next()).
+		if (mOperand.callSuccessors(ec.mstates.iterator().next()).
 				iterator().hasNext()) {
 			splitRandomEqual(ec);
 		}
@@ -2428,7 +2428,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		HashSet<STATE> returns = new HashSet<STATE>(size);
 		for (final STATE state : oldStates) {
-			if (moperand.returnSuccessors(state).iterator().hasNext()) {
+			if (mOperand.returnSuccessors(state).iterator().hasNext()) {
 				returns.add(state);
 				if (returns.size() == g_threshold) {
 					newClasses.add(returns);
@@ -2565,7 +2565,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		@Override
 		public void nextState(final STATE state) {
-			miterator = moperand.internalPredecessors(state).iterator();
+			miterator = mOperand.internalPredecessors(state).iterator();
 		}
 		
 		@Override
@@ -2597,7 +2597,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		@Override
 		public void nextState(final STATE state) {
-			miterator = moperand.callPredecessors(state).iterator();
+			miterator = mOperand.callPredecessors(state).iterator();
 		}
 		
 		@Override
@@ -2630,9 +2630,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final Iterator<STATE> it = equivalenceClass.iterator();
 			assert (it.hasNext()) :
 				"Empty equivalence classes should be avoided.";
-			final boolean isFinal = moperand.isFinal(it.next());
+			final boolean isFinal = mOperand.isFinal(it.next());
 			while (it.hasNext()) {
-				if (isFinal != moperand.isFinal(it.next())) {
+				if (isFinal != mOperand.isFinal(it.next())) {
 					return false;
 				}
 			}
@@ -2711,14 +2711,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			IOutgoingHelper<LETTER, STATE> {
 		@Override
 		public int size() {
-			return moperand.getInternalAlphabet().size();
+			return mOperand.getInternalAlphabet().size();
 		}
 		
 		@Override
 		public Set<LETTER> letters(STATE state) {
 			assert (assertLetters(state));
 			
-			return moperand.lettersInternal(state);
+			return mOperand.lettersInternal(state);
 		}
 
 		@Override
@@ -2729,12 +2729,12 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		@Override
 		public boolean assertLetters(STATE state) {
 			final Collection<LETTER> model =
-					moperand.lettersInternal(state);
+					mOperand.lettersInternal(state);
 			
 			final HashSet<LETTER> checker = new HashSet<LETTER>(
 					computeHashSetCapacity(model.size()));
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
-					moperand.internalSuccessors(state).iterator();
+					mOperand.internalSuccessors(state).iterator();
 			while (it.hasNext()) {
 				checker.add(it.next().getLetter());
 			}
@@ -2759,14 +2759,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			IOutgoingHelper<LETTER, STATE> {
 		@Override
 		public int size() {
-			return moperand.getCallAlphabet().size();
+			return mOperand.getCallAlphabet().size();
 		}
 		
 		@Override
 		public Set<LETTER> letters(STATE state) {
 			assert assertLetters(state);
 			
-			return moperand.lettersCall(state);
+			return mOperand.lettersCall(state);
 		}
 		
 		@Override
@@ -2777,12 +2777,12 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		@Override
 		public boolean assertLetters(STATE state) {
 			final Collection<LETTER> model =
-					moperand.lettersCall(state);
+					mOperand.lettersCall(state);
 			
 			final HashSet<LETTER> checker = new HashSet<LETTER>(
 					computeHashSetCapacity(model.size()));
 			final Iterator<OutgoingCallTransition<LETTER, STATE>> it =
-					moperand.callSuccessors(state).iterator();
+					mOperand.callSuccessors(state).iterator();
 			while (it.hasNext()) {
 				checker.add(it.next().getLetter());
 			}
@@ -2985,7 +2985,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		public Partition() {
 			mequivalenceClasses = new LinkedList<EquivalenceClass>();
 			mstate2EquivalenceClass = new HashMap<STATE, EquivalenceClass>(
-					computeHashSetCapacity(moperand.size()));
+					computeHashSetCapacity(mOperand.size()));
 		}
 		
 		/**
@@ -3259,7 +3259,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				// own predecessors
 				for (final STATE state : mstates) {
 					for (final IncomingReturnTransition<LETTER, STATE>
-							transition : moperand.returnPredecessors(state)) {
+							transition : mOperand.returnPredecessors(state)) {
 						mreturnSplitCorrectnessEcs.add(
 								mpartition.mstate2EquivalenceClass.get(
 										transition.getLinPred()));
@@ -3268,7 +3268,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				// parent predecessors
 				for (final STATE state : parent.mstates) {
 					for (final IncomingReturnTransition<LETTER, STATE>
-							transition : moperand.returnPredecessors(state)) {
+							transition : mOperand.returnPredecessors(state)) {
 						mreturnSplitCorrectnessEcs.add(
 								mpartition.mstate2EquivalenceClass.get(
 										transition.getLinPred()));
@@ -3369,7 +3369,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						}
 						
 						final Iterator<OutgoingReturnTransition
-							<LETTER, STATE>> edges = moperand.
+							<LETTER, STATE>> edges = mOperand.
 							returnSuccessorsGivenHier(lin, hier).
 							iterator();
 						if (edges.hasNext()) {
@@ -3680,7 +3680,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		public AWorkList() {
 			mqueue = new PriorityQueue<EquivalenceClass>(
-					Math.max(moperand.size(), 1),
+					Math.max(mOperand.size(), 1),
 					new Comparator<EquivalenceClass>() {
 						@Override
 						public int compare(EquivalenceClass ec1,
@@ -3853,7 +3853,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				final Partition partition) {
 			if (DEBUG)
 				System.out.println("\n---- constructing result...");
-			moldNwa = moperand;
+			moldNwa = mOperand;
 			mfinals = new HashSet<STATE>();
 			mnonfinals = includeMapping
 					? null
@@ -3907,7 +3907,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			}
 			
 			// preprocessing: ignore call and return loops for finite automata
-			final boolean isNwa = (moperand.getCallAlphabet().size() > 0);
+			final boolean isNwa = (mOperand.getCallAlphabet().size() > 0);
 			
 			// transitions
 			for (final EquivalenceClass ec : partition.mequivalenceClasses)

@@ -161,7 +161,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	CodeCheckObserver(IUltimateServiceProvider services, IToolchainStorage toolchainStorage) {
 		mservices = services;
-		mLogger = mservices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mservices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mtoolchainStorage = toolchainStorage;
 	}
 
@@ -241,7 +241,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void readPreferencePage() {
-		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.s_PLUGIN_ID);
+		RcpPreferenceProvider prefs = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 
 		GlobalSettings.init();
 
@@ -632,9 +632,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		} else {
 			String shortDescription = "Unable to decide if program is safe!";
 			String longDescription = "Unable to decide if program is safe!";
-			GenericResult result = new GenericResult(Activator.s_PLUGIN_NAME, shortDescription, longDescription,
+			GenericResult result = new GenericResult(Activator.PLUGIN_NAME, shortDescription, longDescription,
 					Severity.INFO);
-			mservices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+			mservices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		}
 
 		return false;
@@ -756,7 +756,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
 		String shortDescription = "Ultimate CodeCheck benchmark data";
-		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
+		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		// s_Logger.warn(res.getLongDescription());
 
 		reportResult(res);
@@ -770,12 +770,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (ProgramPoint errorLoc : errorLocs) {
-				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME, errorLoc,
+				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.PLUGIN_NAME, errorLoc,
 						mservices.getBacktranslationService());
 				reportResult(pResult);
 			}
 		}
-		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, longDescription);
+		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, longDescription);
 		reportResult(result);
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
@@ -787,13 +787,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 
 		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Expression>(getErrorPP(pe),
-				Activator.s_PLUGIN_NAME, mservices.getBacktranslationService(), pe));
+				Activator.PLUGIN_NAME, mservices.getBacktranslationService(), pe));
 	}
 
 	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, mservices.getBacktranslationService(), pe, unproabilityReasons);
+				Activator.PLUGIN_NAME, errorPP, mservices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
@@ -812,14 +812,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
-					Activator.s_PLUGIN_NAME, mservices.getBacktranslationService(), timeOutMessage);
+					Activator.PLUGIN_NAME, mservices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			// s_Logger.warn(timeOutMessage);
 		}
 	}
 
 	private void reportResult(IResult res) {
-		mservices.getResultService().reportResult(Activator.s_PLUGIN_ID, res);
+		mservices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
 
 	// Debug

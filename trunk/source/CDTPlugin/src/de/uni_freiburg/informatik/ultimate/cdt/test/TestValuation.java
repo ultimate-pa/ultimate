@@ -61,26 +61,26 @@ public class TestValuation implements IValuation {
 		switch (index) {
 		case 0:
 			map.put("x",
-					new SimpleEntry<IType, List<String>>(BoogieType.intType,
+					new SimpleEntry<IType, List<String>>(BoogieType.TYPE_INT,
 							new ArrayList<String>(Arrays.asList("11"))));
 			return map;
 		case 1:
 			map.put("names",
 					new SimpleEntry<IType, List<String>>(BoogieType
 							.createArrayType(3,
-									new BoogieType[] { BoogieType.intType },
-									BoogieType.intType), new ArrayList<String>(
+									new BoogieType[] { BoogieType.TYPE_INT },
+									BoogieType.TYPE_INT), new ArrayList<String>(
 							Arrays.asList("Stefan", "Alex", "Markus"))));
 			return map;
 		default:
 			map.put("x",
-					new SimpleEntry<IType, List<String>>(BoogieType.intType,
+					new SimpleEntry<IType, List<String>>(BoogieType.TYPE_INT,
 							new ArrayList<String>(Arrays.asList("11"))));
 			map.put("y",
-					new SimpleEntry<IType, List<String>>(BoogieType.intType,
+					new SimpleEntry<IType, List<String>>(BoogieType.TYPE_INT,
 							new ArrayList<String>(Arrays.asList("4711"))));
 			map.put("counter",
-					new SimpleEntry<IType, List<String>>(BoogieType.intType,
+					new SimpleEntry<IType, List<String>>(BoogieType.TYPE_INT,
 							new ArrayList<String>(Arrays.asList("133423421"))));
 			return map;
 		}

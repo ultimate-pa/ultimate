@@ -41,12 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.hornclausegraphbuil
 
 public class HornClauseGraphBuilder implements IGenerator {
 	
-	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
-	public static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-	
-	
 	private HornClauseGraphBuilderObserver mObserver;
-//	private ModelType mInputDefinition;
 
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mToolchainStorage;
@@ -54,31 +49,26 @@ public class HornClauseGraphBuilder implements IGenerator {
 
 	@Override
 	public ModelType getOutputDefinition() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean isGuiRequired() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public ModelQuery getModelQuery() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public List<String> getDesiredToolID() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setInputDefinition(ModelType graphType) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -105,18 +95,17 @@ public class HornClauseGraphBuilder implements IGenerator {
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -126,7 +115,6 @@ public class HornClauseGraphBuilder implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

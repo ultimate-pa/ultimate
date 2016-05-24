@@ -47,9 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
  */
 public class LassoRanker implements IAnalysis {
 
-	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-	
 	private LassoRankerObserver mObserver;
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
@@ -60,7 +57,7 @@ public class LassoRanker implements IAnalysis {
 	 */
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	/**
@@ -68,7 +65,7 @@ public class LassoRanker implements IAnalysis {
 	 */
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	/**

@@ -72,7 +72,7 @@ public class PrimitiveType extends BoogieType {
 			ArrayList<BoogieType> subst) {
 		if (other instanceof PlaceholderType)
 			return other.isUnifiableTo(depth, this, subst);
-		return this == errorType || other == errorType || this == other;
+		return this == TYPE_ERROR || other == TYPE_ERROR || this == other;
 	}
 
 	//@Override
@@ -107,7 +107,7 @@ public class PrimitiveType extends BoogieType {
 	//@Override
 	protected boolean unify(int depth, BoogieType other,
 			BoogieType[] substitution) {
-		return this == errorType || other == errorType || this == other;
+		return this == TYPE_ERROR || other == TYPE_ERROR || this == other;
 	}
 
 	public int getTypeCode() {

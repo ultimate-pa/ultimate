@@ -53,9 +53,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
  */
 public class BuchiAutomizer implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-
 	private ILogger mLogger;
 
 	private BuchiAutomizerObserver mObserver;
@@ -65,12 +62,12 @@ public class BuchiAutomizer implements IGenerator {
 
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override

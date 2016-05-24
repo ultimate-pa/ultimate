@@ -270,8 +270,8 @@ public class AutomataScriptParser implements ISource {
 		if (mServices == null) {
 			throw new IllegalStateException();
 		}
-		SyntaxErrorResult res = new SyntaxErrorResult(Activator.s_PLUGIN_ID, loc, longMessage);
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, res);
+		SyntaxErrorResult res = new SyntaxErrorResult(Activator.PLUGIN_ID, loc, longMessage);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 		mLogger.info(shortMessage + " " + longMessage);
 	}
 
@@ -331,12 +331,12 @@ public class AutomataScriptParser implements ISource {
 
 	@Override
 	public String getPluginName() {
-		return Activator.s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return Activator.s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -361,7 +361,7 @@ public class AutomataScriptParser implements ISource {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override

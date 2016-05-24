@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -336,7 +335,7 @@ public class SmtManager {
 	}
 	
 	private boolean interpolationModeSwitchNeeded() {
-		SolverMode solver = (new RcpPreferenceProvider(RCFGBuilder.s_PLUGIN_ID))
+		SolverMode solver = (new RcpPreferenceProvider(Activator.PLUGIN_ID))
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		if (solver == SolverMode.External_PrincessInterpolationMode) {
 			return true;

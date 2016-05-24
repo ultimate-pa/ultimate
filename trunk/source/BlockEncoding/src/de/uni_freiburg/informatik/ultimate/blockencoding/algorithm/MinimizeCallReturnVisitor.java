@@ -60,9 +60,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 
-	private static ILogger s_Logger;
+	private ILogger mLogger;
 
-	private HashSet<MinimizedNode> actualCallStack;
+	private HashSet<MinimizedNode> mActualCallStack;
 
 	/**
 	 * We need this list of nodes where we replaced an call edge by substitution.
@@ -76,14 +76,14 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * 
 	 */
 	public MinimizeCallReturnVisitor(ILogger logger, AbstractMinimizationVisitor amVisitor) {
-		s_Logger = logger;
+		mLogger = logger;
 		nodesForReVisit = new HashSet<MinimizedNode>();
 		this.amVisitor = amVisitor;
 	}
 
 	@Override
 	public void visitNode(MinimizedNode node) {
-		actualCallStack = new HashSet<MinimizedNode>();
+		mActualCallStack = new HashSet<MinimizedNode>();
 		internalVisitNode(node);
 	}
 
@@ -96,7 +96,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	private void internalVisitNode(MinimizedNode node) {
 		// By calling this method, the parameter node is the the method head
 		// --> we check the edges for Call-Edges
-		actualCallStack.add(node);
+		mActualCallStack.add(node);
 		IMinimizedEdge substituteEdge = null;
 		IMinimizedEdge[] edges = null;
 		// we need a copy of the incoming edge list
@@ -135,12 +135,12 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 						// recursively
 						// Check if we already visited this metod entry node on
 						// the call stack
-						if (actualCallStack
+						if (mActualCallStack
 								.contains(substituteEdge.getTarget())) {
-							s_Logger.debug("Detected a Cycle in the Call-Stack :"
+							mLogger.debug("Detected a Cycle in the Call-Stack :"
 									+ substituteEdge.getTarget()
 									+ " / "
-									+ actualCallStack);
+									+ mActualCallStack);
 							// we have a cycle in the call stack, so we stop the
 							// minimization here
 							substituteEdge = null;
@@ -312,7 +312,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 */
 	private void minimizeCallReturnEdge(IBasicEdge callEdge,
 			IMinimizedEdge substitute) {
-		MinimizedNode callingNode = (MinimizedNode) callEdge.getSource();
+		MinimizedNode callingNode = callEdge.getSource();
 		// Note: It is possible that callingNode has more than two outgoing
 		// edges!
 		// --> we have to care for the edges which should be part of the new
@@ -339,7 +339,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 
 		// Now we search the corresponding ReturnEdge
 		IBasicEdge returnEdge = null;
-		MinimizedNode returningNode = (MinimizedNode) summaryEdge.getTarget();
+		MinimizedNode returningNode = summaryEdge.getTarget();
 		for (IMinimizedEdge edge : returningNode.getMinimalIncomingEdgeLevel()) {
 			if (edge.isBasicEdge()
 					&& ((IBasicEdge) edge).getOriginalEdge() instanceof Return) {
@@ -350,12 +350,12 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		if (returnEdge == null) {
 			throw new IllegalStateException("There should be an returnEdge");
 		}
-		s_Logger.debug("Add Return: " + substitute + " / " + returnEdge);
+		mLogger.debug("Add Return: " + substitute + " / " + returnEdge);
 		// We build our new Substitute Edge Call + Sub + Return
 		// Later Call and Return have to be replaced (to true)!
 		substitute = new ConjunctionEdge(substitute, returnEdge);
 		// now we add the Summary to the substitution (to false)!
-		s_Logger.debug("Handle Summary: " + summaryEdge + " / " + substitute);
+		mLogger.debug("Handle Summary: " + summaryEdge + " / " + substitute);
 		//substitute = new DisjunctionEdge(summaryEdge, substitute);
 		// Now substitute the Call / Return / Summary edges
 		callNodeOutEdges.add(substitute);
@@ -367,7 +367,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		returnEdge.getSource().addNewOutgoingEdgeLevel(outgoingList, substitute);
 
 		if (returningNode.getMinimalIncomingEdgeLevel().size() > 2) {
-			s_Logger.warn("Node at this point should only have Return and"
+			mLogger.warn("Node at this point should only have Return and"
 					+ " Summary as incoming edges!");
 		}
 

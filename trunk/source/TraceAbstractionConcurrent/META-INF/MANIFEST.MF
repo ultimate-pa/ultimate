@@ -3,7 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: TraceAbstractionConcurrent
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.Activator
 Require-Bundle: UltimateCore, 
  Library-log4j,
  Library-UltimateUtil,

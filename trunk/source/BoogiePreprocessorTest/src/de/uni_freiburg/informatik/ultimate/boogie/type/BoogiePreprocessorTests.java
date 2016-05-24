@@ -41,16 +41,16 @@ public class BoogiePreprocessorTests {
 		TypeConstructor field = new TypeConstructor("Field", false, 1, o1);
 		BoogieType msetType = BoogieType.createArrayType
 			(0, new BoogieType[] { BoogieType.createPlaceholderType(0) }, 
-					BoogieType.intType);
+					BoogieType.TYPE_INT);
 		System.err.println("Test1: "+msetType);
 		TypeConstructor multiSet = new TypeConstructor("MultiSet", true, 1, o1, msetType);
 		BoogieType testType = BoogieType.createConstructedType(multiSet, 
-				BoogieType.intType);
+				BoogieType.TYPE_INT);
 		System.err.println("Test2: "+testType+ " = "+ testType.getUnderlyingType());
 		
 		BoogieType heapType = BoogieType.createArrayType
 		(1, new BoogieType[] { 
-				BoogieType.intType,
+				BoogieType.TYPE_INT,
 				BoogieType.createConstructedType(field, new BoogieType[] { BoogieType.createPlaceholderType(0) })
 		}, BoogieType.createPlaceholderType(0));
 		System.err.println("Test3: "+heapType+ " = "+ heapType.getUnderlyingType());
@@ -78,12 +78,12 @@ public class BoogiePreprocessorTests {
 		System.err.println("Test9: "+testType+ " = "+ testType.getUnderlyingType());
 		testType = BoogieType.createConstructedType(genHeap, testType);
 		System.err.println("TestA: "+testType+ " = "+ testType.getUnderlyingType());
-		testType = testType.substitutePlaceholders(new BoogieType[] { BoogieType.intType });
+		testType = testType.substitutePlaceholders(new BoogieType[] { BoogieType.TYPE_INT });
 		System.err.println("TestB: "+testType+ " = "+ testType.getUnderlyingType());
 		
 		FunctionSignature cm = new FunctionSignature(0, new String[] {"heap","this"}, 
-				new BoogieType[] { heapType, BoogieType.intType},
-				null, BoogieType.boolType);
+				new BoogieType[] { heapType, BoogieType.TYPE_INT},
+				null, BoogieType.TYPE_BOOL);
 		System.err.println("function C.m"+cm+";");
 		assertTrue(true);
 	}

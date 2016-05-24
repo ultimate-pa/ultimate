@@ -3,7 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Cookiefy
 Bundle-SymbolicName: Cookiefy;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.cookiefy.Activator
 Require-Bundle: Library-log4j,
  Library-UltimateCore,
  Library-BoogieAST,

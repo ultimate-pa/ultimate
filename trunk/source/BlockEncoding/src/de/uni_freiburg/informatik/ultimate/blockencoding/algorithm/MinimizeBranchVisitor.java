@@ -77,7 +77,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		// First check is for parallel edges, we want to merge
 		IMinimizedEdge[] parallelEdges = checkForParallelMerge(node);
 		if (parallelEdges.length == 2) {
-			s_Logger.debug("Parallel Merge: " + parallelEdges[0] + " v "
+			mLogger.debug("Parallel Merge: " + parallelEdges[0] + " v "
 					+ parallelEdges[1]);
 			reVisitNodes.add(mergeParallel(parallelEdges[0], parallelEdges[1]));
 		}
@@ -85,15 +85,15 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		if (checkForSequentialMerge(node)) {
 			IMinimizedEdge out = node.getMinimalOutgoingEdgeLevel().get(0);
 			IMinimizedEdge in = node.getMinimalIncomingEdgeLevel().get(0);
-			if (visitedEdges.contains(in) && visitedEdges.contains(out)) {
+			if (mVisitedEdges.contains(in) && mVisitedEdges.contains(out)) {
 				return reVisitNodes.toArray(new MinimizedNode[0]);
 			}
-			s_Logger.debug("Sequential Merge: " + in + " /\\ " + out);
+			mLogger.debug("Sequential Merge: " + in + " /\\ " + out);
 			MinimizedNode[] succNodes = mergeSequential(in, out);
 
 			// In every case we revisit the merged node
-			visitedEdges.add(out);
-			visitedEdges.add(in);
+			mVisitedEdges.add(out);
+			mVisitedEdges.add(in);
 			for (MinimizedNode succ : succNodes) {
 				reVisitNodes.add(succ);
 			}
@@ -249,8 +249,8 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		// merge the parallel ones
 		// new ParallelComposition((ProgramPoint) edge1.getSource(),
 		// (ProgramPoint) edge1.getTarget(), boogie2smt, edge1, edge2);
-		visitedEdges.add(edge1);
-		visitedEdges.add(edge2);
+		mVisitedEdges.add(edge1);
+		mVisitedEdges.add(edge2);
 		return disjunction.getSource();
 	}
 
@@ -300,8 +300,8 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 		}
 		conjunction.getTarget().addNewIncomingEdgeLevel(incomingList);
 		// new SequentialComposition(pre, succ, boogie2smt, edge1, edge2);
-		visitedEdges.add(edge1);
-		visitedEdges.add(edge2);
+		mVisitedEdges.add(edge1);
+		mVisitedEdges.add(edge2);
 		notReachableNodes.add(edge1.getTarget());
 		return new MinimizedNode[] { conjunction.getTarget() };
 	}

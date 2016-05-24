@@ -72,18 +72,18 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 	protected MinimizedNode[] applyMinimizationRules(MinimizedNode node) {
 		// check if sequential merge is possible
 		if (checkIfSequentialMergePossible(node)) {
-			s_Logger.error("Sequential Minimization is possible -> so Minimization is not complete");
-			s_Logger.info("Node: " + node);
-			s_Logger.info("Incoming Edges: " + node.getIncomingEdges());
-			s_Logger.info("Outgoing Edges: " + node.getOutgoingEdges());
+			mLogger.error("Sequential Minimization is possible -> so Minimization is not complete");
+			mLogger.info("Node: " + node);
+			mLogger.info("Incoming Edges: " + node.getIncomingEdges());
+			mLogger.info("Outgoing Edges: " + node.getOutgoingEdges());
 			return new MinimizedNode[0];
 		}
 		// check if parallel merge is possible
 		if (checkIfParallelMergePossible(node)) {
-			s_Logger.error("Parallel Minimization is possible -> so Minimization is not complete");
-			s_Logger.info("Node: " + node);
-			s_Logger.info("Incoming Edges: " + node.getIncomingEdges());
-			s_Logger.info("Outgoing Edges: " + node.getOutgoingEdges());
+			mLogger.error("Parallel Minimization is possible -> so Minimization is not complete");
+			mLogger.info("Node: " + node);
+			mLogger.info("Incoming Edges: " + node.getIncomingEdges());
+			mLogger.info("Outgoing Edges: " + node.getOutgoingEdges());
 			return new MinimizedNode[0];
 		}
 		return new MinimizedNode[0];
@@ -132,11 +132,11 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 			for (IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
 				// We do not include self-loops
 				if (edge.getTarget() == node) {
-					s_Logger.info("Found a self-loop, should not happen");
+					mLogger.info("Found a self-loop, should not happen");
 					return false;
 				}
 				if (targetNodes.contains(edge.getTarget())) {
-					s_Logger.info("Found Parallel Nodes, should not happen");
+					mLogger.info("Found Parallel Nodes, should not happen");
 					return false;
 				}
 				targetNodes.add(edge.getTarget());

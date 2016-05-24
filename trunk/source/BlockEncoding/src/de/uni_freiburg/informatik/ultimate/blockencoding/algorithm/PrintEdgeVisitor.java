@@ -54,7 +54,7 @@ public class PrintEdgeVisitor extends AbstractMinimizationVisitor {
 	@Override
 	protected MinimizedNode[] applyMinimizationRules(MinimizedNode node) {
 		for (IMinimizedEdge edge : node.getMinimalOutgoingEdgeLevel()) {
-			s_Logger.debug("Visit Edge: " + edge.toString());
+			mLogger.debug("Visit Edge: " + edge.toString());
 		}
 		return new MinimizedNode[0];
 	}

@@ -54,12 +54,12 @@ public class AutomataScriptInterpreter implements IGenerator {
 
 	@Override
 	public String getPluginName() {
-		return Activator.s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return Activator.s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public class AutomataScriptInterpreter implements IGenerator {
 		 * TODO This generated method body only assumes a standard case. Adapt
 		 * it if necessary. Otherwise remove this todo-tag.
 		 */
-		return new ModelType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override

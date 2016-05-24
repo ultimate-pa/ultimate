@@ -36,13 +36,13 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 public class Condition<S, C> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
 
-	static int s_SerialNumberCounter = 0;
+	private static int sSerialNumberCounter = 0;
 	
 	private final Event<S, C> mPredecessor;
 	private final Collection<Event<S, C>> mSuccessors;
 	private final Place<S, C> mPlace;
 	
-	private final int mSerialNumber = s_SerialNumberCounter++;
+	private final int mSerialNumber = sSerialNumberCounter++;
 
 	public Condition(Event<S, C> predecessor, Place<S, C> place) {
 		this.mPredecessor = predecessor;
@@ -66,6 +66,7 @@ public class Condition<S, C> implements Serializable {
 		return mPlace;
 	}
 	
+	@Override
 	public String toString() {
 		return "c" + mSerialNumber +  ":CorrespPlace: " + mPlace.toString(); 
 	}

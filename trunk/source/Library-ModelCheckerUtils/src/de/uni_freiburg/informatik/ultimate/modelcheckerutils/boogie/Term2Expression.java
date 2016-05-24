@@ -269,7 +269,7 @@ public class Term2Expression implements Serializable {
 		if (params.length != 2) {
 			throw new AssertionError("mod has two parameters");
 		}
-		return new BinaryExpression(null, BoogieType.intType, Operator.ARITHMOD, params[0], params[1]);
+		return new BinaryExpression(null, BoogieType.TYPE_INT, Operator.ARITHMOD, params[0], params[1]);
 	}
 
 	private ArrayStoreExpression translateStore(ApplicationTerm term) {
@@ -523,18 +523,18 @@ public class Term2Expression implements Serializable {
 	}
 	
 	private Expression chainable(Operator op, IType type, Expression[] params) {
-		assert(type == BoogieType.boolType);
+		assert(type == BoogieType.TYPE_BOOL);
 		Expression result = new BinaryExpression(null, type, op, params[0], params[1]);
 		Expression chain;
 		for (int i=1;i<params.length-1; i++) {
 			chain = new BinaryExpression(null, type, op, params[i], params[i+1]);
-			result = new BinaryExpression(null, BoogieType.boolType, Operator.LOGICAND, result, chain);
+			result = new BinaryExpression(null, BoogieType.TYPE_BOOL, Operator.LOGICAND, result, chain);
 		}
 		return result;
 	}
 
 	private Expression pairwise(Operator op, IType type, Expression[] params) {
-		assert(type == BoogieType.boolType);
+		assert(type == BoogieType.TYPE_BOOL);
 		Expression result = new BinaryExpression(null, type, op, params[0], params[1]);
 		Expression neq;
 			for (int i=0; i<params.length-1; i++) {
@@ -543,7 +543,7 @@ public class Term2Expression implements Serializable {
 						continue;
 					}
 					neq = new BinaryExpression(null, type, op, params[j], params[j+1]);
-					result = new BinaryExpression(null, BoogieType.boolType, Operator.LOGICAND, result, neq);
+					result = new BinaryExpression(null, BoogieType.TYPE_BOOL, Operator.LOGICAND, result, neq);
 				}
 			}
 		return result;
@@ -551,7 +551,7 @@ public class Term2Expression implements Serializable {
 	
 	
 	private Expression xor(Expression[] params) {
-		IType type = BoogieType.boolType;
+		IType type = BoogieType.TYPE_BOOL;
 		Operator iff = Operator.LOGICIFF;
 		UnaryExpression.Operator neg = UnaryExpression.Operator.LOGICNEG;
 		Expression result = params[0];

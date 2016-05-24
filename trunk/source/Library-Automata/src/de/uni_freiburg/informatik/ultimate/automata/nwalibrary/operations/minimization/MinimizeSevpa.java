@@ -150,7 +150,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		// must be the last part of the constructor
 		minimize(equivalenceClasses);
 		mMinimizationFinished = true;
-		s_logger.info(exitMessage());
+		mLogger.info(exitMessage());
 
 		if (STATISTICS) {
 			System.out.println("positive splits: " + msplitsWithChange);
@@ -172,7 +172,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 					throws AutomataOperationCanceledException {
 		
 		// intermediate container for the states
-		StatesContainer states = new StatesContainer(moperand);
+		StatesContainer states = new StatesContainer(mOperand);
 		
 		// cancel if signal is received
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -182,7 +182,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 	
 		// merge non-distinguishable states
 		mnwa = mergeStates(states, equivalenceClasses);
-		s_logger.debug("Size after merging identical states: " + mnwa.size());
+		mLogger.debug("Size after merging identical states: " + mnwa.size());
 	}
 	
 	/**
@@ -208,13 +208,13 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		else {
 			assert (mPartition == null &&
 					assertStatesSeparation(equivalenceClasses));
-			mPartition = new Partition(moperand, states.size());
+			mPartition = new Partition(mOperand, states.size());
 			
 			for (Set<STATE> ecSet : equivalenceClasses) { 
 				assert ecSet.size() > 0; 
 				mPartition.addEquivalenceClass( 
 						new EquivalenceClass(ecSet, 
-								moperand.isFinal(ecSet.iterator().next()))); 
+								mOperand.isFinal(ecSet.iterator().next()))); 
 			} 
 
 		}
@@ -245,9 +245,9 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		for (final Set<STATE> equivalenceClass : equivalenceClasses) {
 			final Iterator<STATE> it = equivalenceClass.iterator();
 			assert (it.hasNext());
-			final boolean isFinal = moperand.isFinal(it.next());
+			final boolean isFinal = mOperand.isFinal(it.next());
 			while (it.hasNext()) {
-				if (isFinal != moperand.isFinal(it.next())) {
+				if (isFinal != mOperand.isFinal(it.next())) {
 					return false;
 				}
 			}
@@ -275,11 +275,11 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		// make a copy here if states container has no sets
 		else {
 			finals = new HashSet<STATE>(
-					computeHashSetCapacity(moperand.getFinalStates().size()));
+					computeHashSetCapacity(mOperand.getFinalStates().size()));
 			nonfinals = new HashSet<STATE>(computeHashSetCapacity(
-					moperand.size() - moperand.getFinalStates().size()));
-			for (STATE state : moperand.getStates()) {
-				if (moperand.isFinal(state)) {
+					mOperand.size() - mOperand.getFinalStates().size()));
+			for (STATE state : mOperand.getStates()) {
+				if (mOperand.isFinal(state)) {
 					finals.add(state);
 				}
 				else {
@@ -290,7 +290,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		
 		// create partition object
 		Partition partition =
-				new Partition(moperand, finals.size() + nonfinals.size());
+				new Partition(mOperand, finals.size() + nonfinals.size());
 		
 		// set up the initial equivalence classes
 		
@@ -351,13 +351,13 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 						STATE state = iterator.next();
 						
 						internalLetters.addAll(
-								moperand.lettersInternalIncoming(state));
+								mOperand.lettersInternalIncoming(state));
 						callLetters.addAll(
-								moperand.lettersCallIncoming(state));
+								mOperand.lettersCallIncoming(state));
 						returnLetters.addAll(
-								moperand.lettersReturnIncoming(state));
+								mOperand.lettersReturnIncoming(state));
 						returnLettersOutgoing.addAll(
-								moperand.lettersReturn(state));
+								mOperand.lettersReturn(state));
 					}
 				}
 				else {
@@ -370,7 +370,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 						STATE state = iterator.next();
 						
 						returnLetters.addAll(
-								moperand.lettersReturnIncoming(state));
+								mOperand.lettersReturnIncoming(state));
 					}
 				}
 				
@@ -938,8 +938,8 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 		// initialize result automaton
 		NestedWordAutomaton<LETTER, STATE> result =
 			new NestedWordAutomaton<LETTER, STATE>(mServices, 
-				moperand.getInternalAlphabet(), moperand.getCallAlphabet(),
-				moperand.getReturnAlphabet(), moperand.getStateFactory());
+				mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(),
+				mOperand.getReturnAlphabet(), mOperand.getStateFactory());
 		
 		/*
 		 * make sure every equivalence class has its representative
@@ -962,7 +962,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			STATE representative = mPartition.getRepresentative(stateFirst);
 			
 			// internal successors
-			for (LETTER l : moperand.lettersInternal(stateFirst)) {
+			for (LETTER l : mOperand.lettersInternal(stateFirst)) {
 				for (OutgoingInternalTransition<LETTER, STATE> trans :
 						mPartition.succInternal(stateFirst, l)) {
 					final STATE next = trans.getSucc();
@@ -974,7 +974,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			}
 			
 			// call successors
-			for (LETTER l : moperand.lettersCall(stateFirst)) {
+			for (LETTER l : mOperand.lettersCall(stateFirst)) {
 				for (OutgoingCallTransition<LETTER, STATE> trans :
 						mPartition.succCall(stateFirst, l)) {
 					final STATE next = trans.getSucc();
@@ -991,7 +991,7 @@ public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> imp
 			 * transitions need not be possible from all states.
 			 */
 			for (STATE stateRet : ec.getCollection()) {
-				for (LETTER l : moperand.lettersReturn(stateRet)) {
+				for (LETTER l : mOperand.lettersReturn(stateRet)) {
 					for (STATE hier : mPartition.hierPred(stateRet, l)) {
 						for (OutgoingReturnTransition<LETTER, STATE> trans :
 								mPartition.succReturn(stateRet, hier, l)) {

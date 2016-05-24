@@ -38,11 +38,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -351,12 +351,7 @@ public class BuchiCegarLoop {
 		mIteration = 0;
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
-		// try {
 		getInitialAbstraction();
-		// } catch (OperationCanceledException e1) {
-		// s_Logger.warn("Verification cancelled");
-		// return Result.TIMEOUT;
-		// }
 
 		if (mIteration <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
@@ -667,9 +662,6 @@ public class BuchiCegarLoop {
 				lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
 				mRootNode.getRootAnnot().getModGlobVarManager(), mRootNode.getRootAnnot().getBoogie2SMT());
 		for (RefinementSetting rs : mBuchiRefinementSettingSequence) {
-			// if (stage > 0) {
-			// s_Logger.info("Statistics: We needed stage " + stage);
-			// }
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = null;
 			try {
 				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, rs,

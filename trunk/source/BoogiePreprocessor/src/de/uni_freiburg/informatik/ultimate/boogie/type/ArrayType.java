@@ -148,7 +148,7 @@ public class ArrayType extends BoogieType {
 
 	//@Override
 	protected boolean unify(int depth, BoogieType other, BoogieType[] substitution) {
-		if (other == errorType)
+		if (other == TYPE_ERROR)
 			return true;
 		if (!(other instanceof ArrayType))
 			return false;
@@ -176,7 +176,7 @@ public class ArrayType extends BoogieType {
 
 	//@Override
 	protected boolean isUnifiableTo(int depth, BoogieType other, ArrayList<BoogieType> subst) {
-		if (this == other || other == errorType)
+		if (this == other || other == TYPE_ERROR)
 			return true;
 		if (other instanceof PlaceholderType)
 			return other.isUnifiableTo(depth, this, subst);

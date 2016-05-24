@@ -65,29 +65,29 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 	/**
 	 * the object under test.
 	 */
-	private PrintEdgeVisitor rcfgVisitor;
+	private PrintEdgeVisitor mRcfgVisitor;
 
 	/**
 	 * Base node of the RCFG to test.
 	 */
-	private RCFGNode rcfgNode;
+	private RCFGNode mRcfgNode;
 
-	private ILogger s_Logger;
+	private ILogger mLogger;
 
-	private HashSet<RCFGNode> visitedOrigNodes;
+	private HashSet<RCFGNode> mVisitedOrigNodes;
 
-	private HashSet<MinimizedNode> visitedMinNodes;
+	private HashSet<MinimizedNode> mVisitedMinNodes;
 
 
 	@Before
 	protected void setUp() throws Exception {
-		rcfgNode = RCFGStore.getRCFG();
-		s_Logger = ExecuteUnitTestObserver.getLogger();
-		rcfgVisitor = new PrintEdgeVisitor(s_Logger);
-		visitedOrigNodes = new HashSet<RCFGNode>();
-		visitedMinNodes = new HashSet<MinimizedNode>();
+		mRcfgNode = RCFGStore.getRCFG();
+		mLogger = ExecuteUnitTestObserver.getLogger();
+		mRcfgVisitor = new PrintEdgeVisitor(mLogger);
+		mVisitedOrigNodes = new HashSet<RCFGNode>();
+		mVisitedMinNodes = new HashSet<MinimizedNode>();
 		// output the start node
-		RootNode rootNode = (RootNode) rcfgNode;
+		RootNode rootNode = (RootNode) mRcfgNode;
 		String fileName = "";
 		for (String key : rootNode.getRootAnnot().getEntryNodes().keySet()) {
 			if (key.equals("ULTIMATE.init") || key.equals("ULTIMATE.start")) {
@@ -97,14 +97,14 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 					.getPayload().getLocation().getFileName();
 			break;
 		}
-		s_Logger.error("Start Test on File: " + fileName);
+		mLogger.error("Start Test on File: " + fileName);
 	}
 
 	@Test
 	public void testInitializationForGivenRCFG() {
-		s_Logger.info("Start Testing the intialization of MinModel");
-		assertTrue(rcfgNode instanceof RootNode);
-		for (RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
+		mLogger.info("Start Testing the intialization of MinModel");
+		assertTrue(mRcfgNode instanceof RootNode);
+		for (RCFGEdge edge : mRcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
 			assertTrue(edge.getTarget() instanceof ProgramPoint);
 			ProgramPoint methodEntryNode = (ProgramPoint) edge.getTarget();
@@ -113,7 +113,7 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 			assertNull(minEntryNode.getOutgoingEdges());
 			assertNull(minEntryNode.getIncomingEdges());
 			// run the visitor which initializes the model
-			rcfgVisitor.visitNode(minEntryNode);
+			mRcfgVisitor.visitNode(minEntryNode);
 			assertNotNull(minEntryNode.getOutgoingEdges());
 			assertNotNull(minEntryNode.getIncomingEdges());
 			// now we compare the original and the initialized graph
@@ -123,8 +123,8 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 
 	private void compareOriginalAndMinimizedGraph(ProgramPoint originalNode,
 			MinimizedNode minNode) {
-		if (visitedMinNodes.contains(minNode)
-				&& visitedOrigNodes.contains(originalNode)) {
+		if (mVisitedMinNodes.contains(minNode)
+				&& mVisitedOrigNodes.contains(originalNode)) {
 			return;
 		}
 		assertEquals(minNode.getOriginalNode(), originalNode);
@@ -144,8 +144,8 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 		for (int i = 0; i < minNodeList.size(); i++) {
 			compareOriginalAndMinimizedGraph(origNodeList.get(i),
 					minNodeList.get(i));
-			visitedMinNodes.add(minNodeList.get(i));
-			visitedOrigNodes.add(origNodeList.get(i));
+			mVisitedMinNodes.add(minNodeList.get(i));
+			mVisitedOrigNodes.add(origNodeList.get(i));
 		}
 	}
 
