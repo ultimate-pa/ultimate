@@ -519,7 +519,7 @@ public abstract class AExpressionTranslation {
 //		throw new UnsupportedSyntaxException(loc, "conversion from float to float not yet implemented");
 		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
 		Expression oldExpression = rexp.lrVal.getValue();
-		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
+		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] { getRoundingMode(), oldExpression});
 		RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.lrVal = rValue;
 	}

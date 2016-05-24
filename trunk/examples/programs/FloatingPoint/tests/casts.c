@@ -11,13 +11,19 @@ int main()
   float y = 4.321324f;
   long double z = 2.5456786543456l;
 
-  int a = (int) x;
+ // int a = (int) x;
   float b = (float) x;
   long double c = (long double) x;
   float d = (float) z;
   double e = (double) y;
   double f = (double) z;
   long double g = (long double) y;
+  float h = (float) e;
+
+  if (y != h)
+  {
+    //@assert \false;
+  }
 
   return 0;
 }
