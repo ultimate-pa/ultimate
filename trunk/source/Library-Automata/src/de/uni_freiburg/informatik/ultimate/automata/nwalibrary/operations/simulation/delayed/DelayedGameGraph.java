@@ -172,18 +172,14 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				considerVertex = !mBuechi.isFinal(v.getQ0()) || mBuechi.isFinal(v.getQ0());
 			}
 
-			final boolean skip = (mBuechi.isFinal(v.getQ0())
-					&& (mBuechi.isFinal(v.getQ1()) ^ mBuechi.isFinal(v.getQ0()) ^ v.isB()));
 			{
-				// 2016-05-03 Matthias: I had some doubts about operator
-				// precedence
-				// added assert, remove if tested well enough.
-				boolean skipOld = (mBuechi.isFinal(v.getQ0()) && mBuechi.isFinal(v.getQ1())) ^ v.isB()
-						^ mBuechi.isFinal(v.getQ0());
-				assert skipOld == skip : "unexpected operator precedence";
+				// 2016-05-03 Matthias: we have some doubts if old 
+				// implementation is correct
+				boolean skipVertex = (mBuechi.isFinal(v.getQ0()) && mBuechi.isFinal(v.getQ1())) 
+						^ v.isB() ^ mBuechi.isFinal(v.getQ0());
+				assert considerVertex != skipVertex : "old implementation incorrect";
 			}
-			assert considerVertex != skip : "old implementation incorrect";
-
+			
 			if (considerVertex) {
 				if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
 					table[states.indexOf(v.getQ0())][states.indexOf(v.getQ1())] = true;
