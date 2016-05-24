@@ -638,10 +638,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		String prefixedFunctionName = "~" + functionName;
 		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, "to_fp" ) });
-			Attribute[] attributes;
+			Attribute[] attributes = null;
 			ASTType paramASTType = m_TypeHandler.ctype2asttype(loc, oldType);
 			ASTType[] params;
+			ASTType roundingMode = new NamedType(loc,"RoundingMode", new ASTType[0]);
 			if (newType.isFloatingType()) {
 				int[] indices = new int[2];
 				if (newType.getType().equals(CPrimitive.PRIMITIVE.FLOAT)) {
@@ -657,12 +657,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					indices[1] = 113;
 				}
 				attributes = generateAttributes(loc, "to_fp", indices);
-				ASTType roundingMode = new NamedType(loc,"RoundingMode", new ASTType[0]);
-				params = new ASTType[]{roundingMode, paramASTType};
 			} else {
-				attributes = new Attribute[] { attribute };
-				params = new ASTType[]{paramASTType};
+				if (newType.getType().equals(CPrimitive.PRIMITIVE.INT)) {
+					attributes = generateAttributes(loc, "fp.to_sbv", new int[] { 32 });
+				} else if (newType.getType().equals(CPrimitive.PRIMITIVE.LONG) || newType.getType().equals(CPrimitive.PRIMITIVE.LONGLONG)) {
+					attributes = generateAttributes(loc, "fp.to_sbv", new int[] { 64 });
+				} 
 			}
+			params = new ASTType[]{roundingMode, paramASTType};
 			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, newType);
 			
 			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, params);
