@@ -42,7 +42,10 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
- * 
+ * Constructs the quotient for a given NWA and an equivalence relation on its
+ * states.
+ * The equivalence relation has to be given as a {@link UnionFind} data 
+ * structure.
  * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
  */
 public class QuotientNwaConstructor<LETTER, STATE>  {

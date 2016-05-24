@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * Copyright (C) 2016 University of Freiburg
+ * 
+ * This file is part of the ULTIMATE Automata Library.
+ * 
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
+ * containing parts covered by the terms of the Eclipse Public License, the 
+ * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat2;
 
 import java.util.ArrayList;
@@ -11,22 +37,63 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation;
 
-public class MaxSatSolver<V> {
+/**
+ * MAX-SAT solver for Horn clauses.
+ * The satisfying assignment returned by this solver is a locally optimal 
+ * solution in the following sense. If you replace one false-assignment to
+ * a variable by a true-assignment then the resulting mapping is not a valid
+ * assignment any more.
+ * There is no guarantee that this locally optimal solution does not have to
+ * be a globally optimal solution (which is a solution in which the number
+ * of true-assigned variables is maximal).  
+ * @author Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
+ * @param <V> Kind of objects that are used as variables.
+ */
+public class MaxHornSatSolver<V> {
+	
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
+	
 	
 	private final Map<V,VariableStatus> mVariables = new HashMap<V,VariableStatus>();
 	private final Set<V> mUnsetVariables = new LinkedHashSet<V>();
 	private final LinkedHashSet<Clause> mClausesWithOneUnsetVariable = new LinkedHashSet<>();
+	private boolean mConjunctionEquivalentToFalse = false;
+	private List<Clause> mClausesMarkedForRemoval = new ArrayList<>();
 	
 	private final HashRelation<V, Clause> mOccursPositive = new HashRelation<>();
 	private final HashRelation<V, Clause> mOccursNegative = new HashRelation<>();
 	private int mDecisions = 0;
-	private boolean mConjunctionEquivalentToFalse = false;
-	private List<Clause> mClausesMarkedForRemoval = new ArrayList<>();
-	private int mWrongDecisions = 0;
 	
+	private int mWrongDecisions = 0;
+	private int mClauses = 0;
+	/**
+	 * A clause is trivial if we were able to evaluate it to true when it 
+	 * was added.
+	 */
+	private int mTrivialClauses = 0;
+	private int mCurrentLiveClauses = 0;
+	private int mMaxLiveClauses = 0;
+	
+	
+	
+	public MaxHornSatSolver(AutomataLibraryServices services) {
+		super();
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+	}
+
+	/**
+	 * Add a new variable. Variables have to be added before they can be
+	 * used in Horn clauses.
+	 */
 	public void addVariable(V var) {
 		VariableStatus oldValue = mVariables.put(var, VariableStatus.UNSET);
 		if (oldValue != null) {
@@ -34,7 +101,16 @@ public class MaxSatSolver<V> {
 		}
 		mUnsetVariables.add(var);
 	}
-	
+
+	/**
+	 * Add a new Horn clause. We call the variables on the left-hand side
+	 * negativeAtoms and the variable on the right-hand side the positive
+	 * atom. 
+	 * @param negativeAtoms array of non-null variables
+	 * @param positiveAtom variable that may be null. If the variable is null
+	 * it considered as true. If you want to assert only a negative atom, you
+	 * have to use null as positive Atom
+	 */
 	public void addHornClause(V[] negativeAtoms, V positiveAtom) {
 		final V[] positiveAtoms;
 		if (positiveAtom == null) {
@@ -48,8 +124,13 @@ public class MaxSatSolver<V> {
 			throw new UnsupportedOperationException("only legal before decisions were made");
 		}
 		if (clause.isEquivalentToTrue()) {
+			mClauses++;
+			mTrivialClauses++;
 			// clause is true and can be ignored if we will never backtrack
 		} else {
+			mClauses++;
+			mCurrentLiveClauses++;
+			mMaxLiveClauses = Math.max(mMaxLiveClauses, mCurrentLiveClauses);
 			if (clause.isEquivalentToFalse()) {
 				mConjunctionEquivalentToFalse = true;
 				throw new UnsupportedOperationException("clause set is equivalent to false");
@@ -65,27 +146,45 @@ public class MaxSatSolver<V> {
 					mClausesWithOneUnsetVariable.add(clause);
 				}
 			}
+			propagateAll();
 		}
 	}
 	
-	public void solve() {
+	/**
+	 * Solve the given MAX-SAT problem for the given set of Horn clauses.
+	 * @return true iff the given set of Horn clauses is satisfiable.
+	 */
+	public boolean solve() throws AutomataOperationCanceledException {
 		propagateAll();
 		makeClauseRemovalPersistent();
 		while(!mUnsetVariables.isEmpty()) {
 			decideOne();
 			if (mConjunctionEquivalentToFalse == true) {
-				throw new AssertionError("unsolvable");
+				return false;
+			}
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
+		StringBuilder sb = new StringBuilder();
+		sb.append("Clauses: ").append(mClauses);
+		sb.append(" (thereof " + mTrivialClauses + " trivial clauses)");
+		sb.append(" MaxLiveClauses: ").append(mMaxLiveClauses);
+		sb.append(" Decisions : ").append(mDecisions);
+		sb.append(" (thereof " + mWrongDecisions + " wrong decisions)");
+		mLogger.info(sb.toString());
+		return true;
 	}
 	
 	
-	
+	/**
+	 * @return The locally optimal satisfying assignment.
+	 */
 	public Map<V, VariableStatus> getValues() {
 		return Collections.unmodifiableMap(mVariables);
 	}
 
-	public void decideOne() {
+	private void decideOne() {
 		mDecisions++;
 		Iterator<V> it = mUnsetVariables.iterator();
 		V var = it.next();
@@ -119,14 +218,14 @@ public class MaxSatSolver<V> {
 		assert (mConjunctionEquivalentToFalse == false) : "resetting variable did not help";
 	}
 
-	public void propagateAll() {
+	private void propagateAll() {
 		while (!mClausesWithOneUnsetVariable.isEmpty() && !mConjunctionEquivalentToFalse) {
 			propagateOne();
 		}
 	}
 	
-	public void propagateOne() {
-		final Iterator<MaxSatSolver<V>.Clause> it = mClausesWithOneUnsetVariable.iterator();
+	private void propagateOne() {
+		final Iterator<MaxHornSatSolver<V>.Clause> it = mClausesWithOneUnsetVariable.iterator();
 		final Clause clause = it.next();
 		it.remove();
 		final Pair<V, Boolean> unsetAtom = clause.getUnsetAtom();
@@ -187,6 +286,7 @@ public class MaxSatSolver<V> {
 		for (Clause clause : clauses) {
 			removeClause(clause);
 		}
+		mCurrentLiveClauses = mCurrentLiveClauses - clauses.size();
 	}
 	
 
@@ -205,6 +305,11 @@ public class MaxSatSolver<V> {
 	
 	enum ClauseStatus { TRUE, FALSE, NEITHER }
 	
+	/**
+	 * Clause used by the MAX-SAT solver. Although there is only one
+	 * positive atom in Horn clauses, this class allows one to use
+	 * several positive atoms.
+	 */
 	private class Clause {
 		private final V[] mPositiveAtoms;
 		private final V[] mNegativeAtoms;
