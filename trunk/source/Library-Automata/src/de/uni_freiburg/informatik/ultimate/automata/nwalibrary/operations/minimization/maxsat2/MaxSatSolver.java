@@ -159,8 +159,10 @@ public class MaxSatSolver<V> {
 				m_ClausesMarkedForRemoval.add(clause);
 				m_ClausesWithOneUnsetVariable.remove(clause);
 			} else {
-				if (clause.getUnsetAtoms() == 0) {
+				if (clause.getUnsetAtoms() == 1) {
 					m_ClausesWithOneUnsetVariable.add(clause);
+				} else {
+					assert clause.getUnsetAtoms() > 1;
 				}
 			}
 		}
@@ -172,8 +174,10 @@ public class MaxSatSolver<V> {
 				m_ClausesMarkedForRemoval.add(clause);
 				m_ClausesWithOneUnsetVariable.remove(clause);
 			} else {
-				if (clause.getUnsetAtoms() == 0) {
+				if (clause.getUnsetAtoms() == 1) {
 					m_ClausesWithOneUnsetVariable.add(clause);
+				} else {
+					assert clause.getUnsetAtoms() > 1;
 				}
 			}
 		}
@@ -317,7 +321,6 @@ public class MaxSatSolver<V> {
 			final StringBuilder sb = new StringBuilder();
 			Iterator<V> it = Arrays.asList(m_NegativeAtoms).iterator();
 			while(it.hasNext()) {
-				sb.append("not ");
 				sb.append(it.next());
 				if (it.hasNext()) {
 					sb.append(" /\\ ");
