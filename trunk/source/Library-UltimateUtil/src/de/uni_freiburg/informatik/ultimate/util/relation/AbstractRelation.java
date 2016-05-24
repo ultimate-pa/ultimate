@@ -89,7 +89,7 @@ public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 		if (rangeElems == null) {
 			result = false;
 		} else {
-			result = rangeElems.remove(rangeElems);
+			result = rangeElems.remove(rangeElem);
 			if (rangeElems.isEmpty()) {
 				mMap.remove(domainElem);
 			}
