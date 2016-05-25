@@ -35,12 +35,16 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -202,7 +206,6 @@ public final class ISOIEC9899TC3 {
 					throw new IllegalArgumentException("not a rounding Mode");
 				}
 			}
-			
 
 			// if there is a float-suffix: throw it away
 			for (final String s : SUFFIXES_FLOAT) {
@@ -211,6 +214,7 @@ public final class ISOIEC9899TC3 {
 					floatType = s;
 				}
 			}
+			
 			if (value.contains("e")) {
 				final int eLocatation = value.indexOf("e");
 				final String floatString = value.substring(0, eLocatation);
@@ -267,15 +271,54 @@ public final class ISOIEC9899TC3 {
 			final String functionName;
 			final IntegerLiteral eb = new IntegerLiteral(loc, Integer.toString(exponentLength));
 			final IntegerLiteral sb = new IntegerLiteral(loc, Integer.toString(significantLength));
+			final Expression[] indices;
+			final Attribute[] attributes;
+			
 			if (value.equals("NAN") || value.equals("nan")) {
 				functionName = "NaN";
 				arguments = new Expression[]{eb, sb};
 			} else if (value.equals("INFINITY")) {
-				functionName = "+oo";
-				arguments = new Expression[]{eb, sb};
+				indices = new Expression[]{eb, sb};
+				if (exponentLength == 8) {
+					functionName = "infinityFloat";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.FLOAT));
+				} else if (exponentLength == 11) {
+					functionName = "infinityDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.DOUBLE));
+				} else if (exponentLength == 15) {
+					functionName = "infinityLongDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+oo")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.LONGDOUBLE));
+				} else {
+					throw new IllegalArgumentException();
+				}
+				arguments = new Expression[]{};
 			} else if (floatVal.compareTo(BigDecimal.ZERO) == 0) {
-				functionName = "+zero";
-				arguments = new Expression[] {eb, sb};
+				indices = new Expression[]{eb, sb};
+				if (exponentLength == 8) {
+					functionName = "zeroFloat";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.FLOAT));
+				} else if (exponentLength == 11) {
+					functionName = "zeroDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.DOUBLE));
+				} else if (exponentLength == 15) {
+					functionName = "zeroLongDouble";
+					attributes = new Attribute []{ new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER,
+							new Expression[]{new StringLiteral(loc, "+zero")}), new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, indices)};  
+					functionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, false, new CPrimitive(PRIMITIVE.LONGDOUBLE));
+				} else {
+					throw new IllegalArgumentException();
+				}
+				arguments = new Expression[] {};
 			} else {
 				if (resultType.toString().equals("FLOAT")){
 					functionName = "declareFloat";
