@@ -34,9 +34,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
@@ -214,11 +211,34 @@ public final class ISOIEC9899TC3 {
 			}
 			if (value.contains("e")) {
 				int eLocatation = value.indexOf("e");
-				String partA = value.substring(0, eLocatation);
-				String partB = value.substring(eLocatation + 1, value.length());
-				BigDecimal A = new BigDecimal(partA);
-				int B = Integer.valueOf(partB);
-				value = A.multiply(new BigDecimal("10").pow(B)).toString();
+				String floatString = value.substring(0, eLocatation);
+				String exponentString = value.substring(eLocatation + 1, value.length());
+				BigDecimal base = new BigDecimal(floatString);
+				if (exponentString.startsWith("0")) {
+					while (exponentString.startsWith("0")) {
+						exponentString = exponentString.substring(1);
+					}	
+				} else if (exponentString.startsWith("+") || exponentString.startsWith("-")) {
+					if (exponentString.substring(1, 2).equals("0")) {
+						while (exponentString.substring(1, 2).equals("0")) {
+							exponentString = exponentString.substring(0,1) + exponentString.substring(2, exponentString.length());
+						}
+					}
+				}
+				
+				int exponentValue = Integer.valueOf(exponentString);
+				if (exponentValue < 0) {
+					while (exponentValue < 0) {
+						base = base.multiply(new BigDecimal("0.1"));
+						exponentValue++;
+					}
+				} else {
+					while (exponentValue > 0) {
+						base = base.multiply(new BigDecimal("10"));
+						exponentValue--;						
+					}
+				}
+				value = base.toString();
 			}
 			
 			BigDecimal floatVal = new BigDecimal(value);
@@ -270,29 +290,29 @@ public final class ISOIEC9899TC3 {
 				/* This way of calculating Floating Point Constants has an error in it and would need to be fixed
 				 * before it can be used
 				 * 
-				final BigDecimal twoPointZero = new BigDecimal("2.0");
-				// calculate exponent value and value of the significant
-				while (floatVal.compareTo(twoPointZero) == 1) {
-					floatVal = floatVal.divide(twoPointZero);
-					exponentValue++;
-				}
-				String floatValString = floatVal.toString();
-				if (floatValString.contains(".")) {
-					floatValString = floatValString.substring(0, 1) + floatValString.substring(2, floatValString.length());
-				}
-				if (resultType.toString().equals("FLOAT")){
-					functionName = "declareFloat";
-				} else if (resultType.toString().equals("DOUBLE")) {
-					functionName = "declareDouble";
-				} else if (resultType.toString().equals("LONGDOUBLE")) {
-					functionName = "declareLongDouble";
-				} else {
-					throw new IllegalArgumentException();
-				}
-				exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
-				significant = new BitvecLiteral(loc, floatValString, significantLength);
-				arguments = new Expression[]{sign, exponent, significant};
-				*/
+				 * final BigDecimal twoPointZero = new BigDecimal("2.0");
+				 * // calculate exponent value and value of the significant
+				 * while (floatVal.compareTo(twoPointZero) == 1) {
+				 *  	floatVal = floatVal.divide(twoPointZero);
+				 *  	exponentValue++;
+				 * }
+				 * String floatValString = floatVal.toString();
+				 * if (floatValString.contains(".")) {
+				 *  	floatValString = floatValString.substring(0, 1) + floatValString.substring(2, floatValString.length());
+				 * }
+				 * if (resultType.toString().equals("FLOAT")){
+				 * 	functionName = "declareFloat";
+				 * } else if (resultType.toString().equals("DOUBLE")) {
+				 *  	functionName = "declareDouble";
+				 * } else if (resultType.toString().equals("LONGDOUBLE")) {
+				 *  	functionName = "declareLongDouble";
+				 * } else {
+				 *  	throw new IllegalArgumentException();
+				 * }
+				 * exponent = new BitvecLiteral(loc, Integer.toString(exponentValue), exponentLength);
+				 * significant = new BitvecLiteral(loc, floatValString, significantLength);
+				 * arguments = new Expression[]{sign, exponent, significant};
+				 */
 			}
 			
 			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, arguments);
