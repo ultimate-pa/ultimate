@@ -130,8 +130,12 @@ public class InterpolationTest_Reach_Bitvector extends AbstractTraceAbstractionT
 		"automizer/interpolation/bitvector/Reach-32bit-Z3-IcWp-Bitvector.epf",
 		"automizer/interpolation/bitvector/Reach-32bit-Z3-WpLv-Bitvector.epf",
 		"automizer/interpolation/bitvector/Reach-32bit-Z3-Wp-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-FPandBP-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-CVC4-IcSpLv-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-CVC4-IcWpLv-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-CVC4-FPandBP-Bitvector.epf",
 	};
-//	"automizer/interpolation/Reach-32bit-Z3-FPandBP-Bitvector.epf",
+
 	
 	private static final String[] mCToolchains = {
 //		"AutomizerC.xml",
